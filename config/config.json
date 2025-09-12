@@ -1,0 +1,67 @@
+{
+  "version": "1.1",
+  "features": {
+    "wyckoff": true,
+    "liquidity_basic": true,
+    "enhanced_stops": true,
+    "tp_ladder": true,
+    "signal_ttl": true,
+    "confidence_floor": true,
+    "dynamic_ttl": true
+  },
+  "signals": {
+    "confidence_threshold": 0.7,
+    "weights": {
+      "wyckoff": 0.6,
+      "liquidity": 0.4
+    }
+  },
+  "wyckoff": {
+    "lookback_bars": 50,
+    "bias_hysteresis_bars": 2
+  },
+  "range": {
+    "time_in_range_bars_min": 20,
+    "net_progress_threshold": 0.25
+  },
+  "risk": {
+    "account_risk_percent": 1.0,
+    "max_risk_per_trade": 200.0,
+    "stop": {
+      "method": "swing_with_atr_guardrail",
+      "atr_mult": 2.0
+    },
+    "tp_ladder": {
+      "tp1": {
+        "r": 1.0,
+        "pct": 33,
+        "action": "move_stop_to_breakeven"
+      },
+      "tp2": {
+        "r": 2.0,
+        "pct": 33,
+        "action": "trail_remainder"
+      },
+      "tp3": {
+        "r": 3.0,
+        "pct": 34,
+        "action": "liquidate_or_hard_trail"
+      },
+      "range_mode_multiplier": 0.8
+    },
+    "ttl_bars": 18,
+    "ttl_dynamic": {
+      "min": 8,
+      "max": 30,
+      "atr_period": 14,
+      "atr_high_pct": 0.015,
+      "atr_low_pct": 0.007,
+      "delta_high_vol": 4,
+      "delta_low_vol": -3,
+      "trend_bonus": 3,
+      "range_penalty": -3,
+      "range_penetration_thresh": 0.25
+    },
+    "trail_mode": "swing"
+  }
+}
