@@ -10,10 +10,13 @@
     "dynamic_ttl": true
   },
   "signals": {
-    "confidence_threshold": 0.7,
+    "confidence_threshold": 0.72,
     "weights": {
       "wyckoff": 0.6,
-      "liquidity": 0.4
+      "liquidity": 0.4,
+      "smt": 0.0,
+      "macro": 0.0,
+      "temporal": 0.0
     }
   },
   "wyckoff": {
