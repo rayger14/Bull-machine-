@@ -26,11 +26,44 @@ def load_csv_to_series(file_path: str, symbol: str = "UNKNOWN", timeframe: str =
         if len(invalid) > 0:
             logging.warning(f"Dropping {len(invalid)} invalid OHLC rows")
             df = df.drop(invalid.index)
-        # timestamp handling
+        # timestamp handling with unit autodetection for numeric epoch values
         ts_col = next((c for c in ['timestamp','datetime','date','time'] if c in df.columns), None)
         if ts_col:
-            df[ts_col] = pd.to_datetime(df[ts_col])
-            df['ts'] = (df[ts_col] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
+            # Try numeric epoch detection first
+            if pd.api.types.is_numeric_dtype(df[ts_col]):
+                sample = int(df[ts_col].dropna().iloc[-1]) if len(df[ts_col].dropna()) > 0 else 0
+                # Heuristic thresholds (common scales)
+                # ns: >= 1e18, us: >=1e15, ms: >=1e12, s: >=1e9
+                unit = None
+                if abs(sample) >= 1e18:
+                    unit = 'ns'
+                elif abs(sample) >= 1e15:
+                    unit = 'us'
+                elif abs(sample) >= 1e12:
+                    unit = 'ms'
+                elif abs(sample) >= 1e9:
+                    unit = 's'
+                # fallback: if unit still None but values look small (<1e6) treat as seconds indices
+                try:
+                    if unit:
+                        df[ts_col] = pd.to_datetime(df[ts_col], unit=unit, utc=True)
+                    else:
+                        # maybe tiny ints (like 1,2,3) — treat as seconds since epoch if > 1000, else as index
+                        if sample > 1000:
+                            df[ts_col] = pd.to_datetime(df[ts_col], unit='s', utc=True)
+                        else:
+                            # not an epoch — fallback to sequential index timestamps
+                            df['ts'] = range(len(df))
+                    if 'ts' not in df.columns:
+                        df['ts'] = (df[ts_col] - pd.Timestamp("1970-01-01", tz='UTC')) // pd.Timedelta('1s')
+                except Exception:
+                    # fallback to string parse
+                    df[ts_col] = pd.to_datetime(df[ts_col], utc=True, errors='coerce')
+                    df['ts'] = (df[ts_col] - pd.Timestamp("1970-01-01", tz='UTC')) // pd.Timedelta('1s')
+            else:
+                # string-like timestamps
+                df[ts_col] = pd.to_datetime(df[ts_col], utc=True, errors='coerce')
+                df['ts'] = (df[ts_col] - pd.Timestamp("1970-01-01", tz='UTC')) // pd.Timedelta('1s')
         else:
             df['ts'] = range(len(df))
         for c in required_cols:
