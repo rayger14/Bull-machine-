@@ -2,6 +2,62 @@ import numpy as np
 from typing import List, Dict, Tuple
 from .types import Series, Bar
 
+def _nearly_equal(a: float, b: float, tol: float) -> bool:
+    return abs(a - b) <= tol * max(1.0, (abs(a) + abs(b)) / 2.0)
+
+def detect_sweep_displacement(
+    series: Series,
+    window: int = 20,
+    equal_tol: float = 0.001,      # 0.1% “equal high/low”
+    impulse_pct: float = 0.01      # 1% displacement impulse bar
+) -> bool:
+    """
+    Detect a simple 'liquidity sweep → impulse displacement' pattern in the last `window` bars.
+    Heuristic:
+      - Bullish case: price sweeps prior equal lows (within equal_tol) then prints an up impulse bar (> impulse_pct).
+      - Bearish case: price sweeps prior equal highs then prints a down impulse bar.
+    This is deliberately light-weight for v1.1.
+    """
+    n = len(series.bars)
+    if n < max(10, window):
+        return False
+    bars = series.bars[-window:]
+
+    # find clusters of equal highs/lows (last half vs first half)
+    mid = len(bars) // 2
+    first = bars[:mid]
+    last  = bars[mid:]
+
+    prior_highs = [b.high for b in first]
+    prior_lows  = [b.low  for b in first]
+    last_highs  = [b.high for b in last]
+    last_lows   = [b.low  for b in last]
+
+    # equal highs/lows from prior segment (proxy for liquidity)
+    if not prior_highs or not prior_lows:
+        return False
+
+    # take representative equal levels as medians
+    import statistics as _stats
+    eq_high = _stats.median(prior_highs)
+    eq_low  = _stats.median(prior_lows)
+
+    # check if last segment swept above eq_high or below eq_low
+    swept_high = any(h > eq_high and _nearly_equal(h, eq_high, equal_tol) for h in last_highs)
+    swept_low  = any(l < eq_low  and _nearly_equal(l, eq_low,  equal_tol) for l in last_lows)
+
+    # displacement: check last bar vs previous close
+    c0 = last[-2].close if len(last) >= 2 else bars[-2].close
+    c1 = last[-1].close
+    move = (c1 - c0) / max(1e-12, c0)
+
+    # Bullish: swept lows then +impulse; Bearish: swept highs then -impulse
+    if swept_low and move >= impulse_pct:
+        return True
+    if swept_high and move <= -impulse_pct:
+        return True
+    return False
+
 def calculate_atr(series: Series, period: int = 14) -> float:
     """Calculate Average True Range (simple moving)."""
     if len(series.bars) < period + 1:

@@ -25,8 +25,8 @@ def get_v1_1_defaults() -> Dict[str, Any]:
             "dynamic_ttl": True
         },
         "signals": {
-            "confidence_threshold": 0.70,
-            "weights": {"wyckoff": 0.60, "liquidity": 0.40}
+            "confidence_threshold": 0.72,
+            "weights": {"wyckoff": 0.60, "liquidity": 0.40, "smt": 0.0, "macro": 0.0, "temporal": 0.0}
         },
         "wyckoff": {"lookback_bars": 50, "bias_hysteresis_bars": 2},
         "range": {"time_in_range_bars_min": 20, "net_progress_threshold": 0.25},

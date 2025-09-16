@@ -1,0 +1,651 @@
+diff --git a/.bm_state.json b/.bm_state.json
+new file mode 100644
+index 0000000..879d0fd
+--- /dev/null
++++ b/.bm_state.json
+@@ -0,0 +1,5 @@
++{
++  "prev_bias": "short",
++  "last_signal_ts": 1755288000,
++  "last_exit_ts": null
++}
+\ No newline at end of file
+diff --git a/bull_machine.egg-info/PKG-INFO b/bull_machine.egg-info/PKG-INFO
+new file mode 100644
+index 0000000..cb20919
+--- /dev/null
++++ b/bull_machine.egg-info/PKG-INFO
+@@ -0,0 +1,10 @@
++Metadata-Version: 2.4
++Name: bull_machine
++Version: 1.1
++Summary: Bull Machine v1.1 - Algorithmic Trading Engine
++Requires-Python: >=3.8
++Requires-Dist: pandas>=2.0
++Requires-Dist: numpy>=1.24
++Dynamic: requires-dist
++Dynamic: requires-python
++Dynamic: summary
+diff --git a/bull_machine.egg-info/SOURCES.txt b/bull_machine.egg-info/SOURCES.txt
+new file mode 100644
+index 0000000..256e456
+--- /dev/null
++++ b/bull_machine.egg-info/SOURCES.txt
+@@ -0,0 +1,32 @@
++README.md
++setup.py
++bull_machine/__init__.py
++bull_machine.egg-info/PKG-INFO
++bull_machine.egg-info/SOURCES.txt
++bull_machine.egg-info/dependency_links.txt
++bull_machine.egg-info/entry_points.txt
++bull_machine.egg-info/requires.txt
++bull_machine.egg-info/top_level.txt
++bull_machine/app/__init__.py
++bull_machine/app/main.py
++bull_machine/config/__init__.py
++bull_machine/config/loader.py
++bull_machine/core/__init__.py
++bull_machine/core/types.py
++bull_machine/core/utils.py
++bull_machine/io/__init__.py
++bull_machine/io/feeders.py
++bull_machine/modules/__init__.py
++bull_machine/modules/liquidity/__init__.py
++bull_machine/modules/liquidity/basic.py
++bull_machine/modules/wyckoff/__init__.py
++bull_machine/modules/wyckoff/analyzer.py
++bull_machine/risk/__init__.py
++bull_machine/risk/planner.py
++bull_machine/signals/__init__.py
++bull_machine/signals/fusion.py
++bull_machine/signals/gating.py
++bull_machine/state/__init__.py
++bull_machine/state/store.py
++tests/test_bull_machine.py
++tests/test_fusion_weights.py
+\ No newline at end of file
+diff --git a/bull_machine.egg-info/dependency_links.txt b/bull_machine.egg-info/dependency_links.txt
+new file mode 100644
+index 0000000..8b13789
+--- /dev/null
++++ b/bull_machine.egg-info/dependency_links.txt
+@@ -0,0 +1 @@
++
+diff --git a/bull_machine.egg-info/entry_points.txt b/bull_machine.egg-info/entry_points.txt
+new file mode 100644
+index 0000000..2a2bf74
+--- /dev/null
++++ b/bull_machine.egg-info/entry_points.txt
+@@ -0,0 +1,2 @@
++[console_scripts]
++bull-machine = bull_machine.app.main:main
+diff --git a/bull_machine.egg-info/requires.txt b/bull_machine.egg-info/requires.txt
+new file mode 100644
+index 0000000..5580e6b
+--- /dev/null
++++ b/bull_machine.egg-info/requires.txt
+@@ -0,0 +1,2 @@
++pandas>=2.0
++numpy>=1.24
+diff --git a/bull_machine.egg-info/top_level.txt b/bull_machine.egg-info/top_level.txt
+new file mode 100644
+index 0000000..a189df1
+--- /dev/null
++++ b/bull_machine.egg-info/top_level.txt
+@@ -0,0 +1 @@
++bull_machine
+diff --git a/bull_machine/app/main.py b/bull_machine/app/main.py
+index 2bd7a21..9087db5 100644
+--- a/bull_machine/app/main.py
++++ b/bull_machine/app/main.py
+@@ -9,19 +9,46 @@ from ..signals.fusion import combine as combine_signals
+ from ..signals.gating import assign_ttl
+ from ..risk.planner import plan as plan_risk
+ from ..state.store import load_state, save_state
++from ..core.utils import detect_sweep_displacement
+ 
+ def setup_logging():
+     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', handlers=[logging.StreamHandler(sys.stdout)])
+ 
+-def run_bull_machine_v1_1(csv_file: str, account_balance: float = 10000) -> dict:
++def run_bull_machine_v1_1(csv_file: str, account_balance: float = 10000, override_signals: dict = None) -> dict:
+     logging.info("Bull Machine v1.1 Starting...")
+     logging.info(f"Processing: {csv_file}")
+     try:
+         config = load_config()
++        # Apply runtime overrides intelligently:
++        # - if override contains 'signals', merge into config['signals']
++        # - if override contains top-level keys (like 'liquidity'), merge into those keys
++        # - otherwise, place simple keys into config['signals'] for backward compatibility
++        if override_signals:
++            for k, v in override_signals.items():
++                # If the override is explicitly for signals, merge there
++                if k == 'signals' and isinstance(v, dict):
++                    config.setdefault('signals', {}).update(v)
++                    continue
++                # Known top-level sections that should accept dict merges
++                top_level_sections = {'liquidity', 'wyckoff', 'risk', 'range', 'signals', 'features'}
++                if isinstance(v, dict) and k in top_level_sections:
++                    config.setdefault(k, {}).update(v)
++                    continue
++                # If the key already exists at top-level and both are dicts, merge
++                if k in config and isinstance(config.get(k), dict) and isinstance(v, dict):
++                    config[k].update(v)
++                    continue
++                # Otherwise treat it as a signals override for backward compatibility
++                config.setdefault('signals', {})[k] = v
+         logging.info(f"Config version: {config.get('version','unknown')}")
+         logging.info(f"Dynamic TTL: {'Enabled' if config.get('features',{}).get('dynamic_ttl', False) else 'Disabled'}")
+         state = load_state()
+         series = load_csv_to_series(csv_file)
++        # Compute sweep→displacement flag (for range allow-list)
++        try:
++            state['had_recent_sweep_displacement'] = detect_sweep_displacement(series)
++        except Exception:
++            state['had_recent_sweep_displacement'] = False
+         result = {'action':'no_trade','version':'1.1'}
+         if config['features'].get('wyckoff', True):
+             logging.info("Running Wyckoff analysis...")
+@@ -41,11 +68,37 @@ def run_bull_machine_v1_1(csv_file: str, account_balance: float = 10000) -> dict
+         else:
+             logging.warning("Liquidity analysis disabled")
+             return result
++        # --- Debug logs: numeric values used by the fusion gate ---
++        signals_cfg = config.get('signals', {})
++        thr = signals_cfg.get('confidence_threshold', 0.70)
++        weights = signals_cfg.get('weights', {'wyckoff': 0.60, 'liquidity': 0.40})
++        wyckoff_conf = (wres.phase_confidence + wres.trend_confidence) / 2
++        liq_conf = lres.score
+         logging.info("Running Signal Fusion...")
+-        signal = combine_signals(wres, lres, config, state)
++        logging.info(f"   Fusion debug: wyckoff_conf={wyckoff_conf:.3f}, phase_conf={wres.phase_confidence:.3f}, trend_conf={wres.trend_confidence:.3f}")
++        logging.info(f"   Fusion debug: liquidity_score={liq_conf:.3f}, liquidity_pressure={lres.pressure}")
++        logging.info(f"   Fusion debug: fvgs={len(lres.fvgs)}, order_blocks={len(lres.order_blocks)}")
++        logging.info(f"   Fusion debug: threshold={thr}, weights={weights}")
++        if getattr(wres, 'range', None):
++            rng = wres.range
++            logging.info(f"   Range model: within_range={rng.get('within_range')}, penetration={rng.get('penetration'):.3f}, height={rng.get('height'):.2f}")
++
++        signal, fuse_reason = combine_signals(wres, lres, config, state)
+         if signal is None:
+-            logging.info("   No signal generated")
+-            result['reason'] = 'insufficient_confluence_or_range_suppressed'
++            # Fusion breakdown snapshot for diagnostics when requested
++            if signals_cfg.get('_fusion_breakdown'):
++                try:
++                    w_w = signals_cfg.get('weights', {}).get('wyckoff', 0.60)
++                    l_w = signals_cfg.get('weights', {}).get('liquidity', 0.40)
++                    wy_conf = (wres.phase_confidence + wres.trend_confidence) / 2.0
++                    combined = wy_conf * w_w + lres.score * l_w
++                    logging.info(
++                        f"[FUSION] wy={wy_conf:.3f}*{w_w:.2f} + liq={lres.score:.3f}*{l_w:.2f} = {combined:.3f} (threshold={signals_cfg.get('confidence_threshold', 0.72):.2f})"
++                    )
++                except Exception:
++                    pass
++            logging.info(f"   No signal generated: {fuse_reason}")
++            result['reason'] = fuse_reason or 'no_signal'
+             return result
+         signal = assign_ttl(signal, series, config, wres)
+         logging.info(f"   Signal: {signal.side} with confidence {signal.confidence:.2f}")
+@@ -53,9 +106,42 @@ def run_bull_machine_v1_1(csv_file: str, account_balance: float = 10000) -> dict
+         logging.info(f"   Reasons: {', '.join(signal.reasons)}")
+         logging.info("Planning risk management...")
+         plan = plan_risk(series, signal, config, account_balance)
++
++        # Optionally print a compact fusion log for debugging
++        if signals_cfg.get('_fusion_breakdown'):
++            fusion_log = {
++                "bar_idx": signal.ts,
++                "symbol": getattr(series, 'symbol', 'UNKNOWN'),
++                "tf": getattr(series, 'timeframe', 'UNKNOWN'),
++                "wyckoff": {
++                    "phase": wres.phase,
++                    "phase_conf": wres.phase_confidence,
++                    "trend_conf": wres.trend_confidence,
++                    "regime": wres.regime
++                },
++                "liquidity": {
++                    "score": lres.score,
++                    "pressure": lres.pressure,
++                    "fvgs": len(lres.fvgs),
++                    "obs": len(lres.order_blocks)
++                },
++                "range": getattr(wres, 'range', None),
++                "combined_conf": signal.confidence,
++                "decision": "enter",
++                "reasons": signal.reasons
++            }
++            print(f"[FUSION_LOG] {fusion_log}")
++
+         print(f"\n=== TRADE PLAN GENERATED ===")
+         print(f"Direction: {signal.side.upper()}")
+-        print(f"Entry: {plan.entry:.2f}")
++        # entry price uses the last bar close; show the corresponding datetime (UTC)
++        try:
++            from datetime import datetime
++            entry_ts = series.bars[-1].ts
++            entry_dt = datetime.utcfromtimestamp(int(entry_ts)).isoformat() + 'Z'
++        except Exception:
++            entry_dt = 'unknown'
++        print(f"Entry: {plan.entry:.2f}  (Entry time UTC: {entry_dt})")
+         print(f"Stop: {plan.stop:.2f}")
+         print(f"Size: {plan.size:.4f}")
+         print(f"Risk: ${abs(plan.entry - plan.stop) * plan.size:.2f}")
+@@ -76,8 +162,48 @@ def main():
+     p = argparse.ArgumentParser(description='Bull Machine v1.1')
+     p.add_argument('--csv', required=True, help='CSV file path')
+     p.add_argument('--balance', type=float, default=10000, help='Account balance')
++    p.add_argument('--enter-threshold', type=float, default=None, help='Temporary override for signal entry confidence threshold')
++    p.add_argument('--threshold', type=float, help='Override fusion confidence threshold, e.g. 0.72')
++    p.add_argument('--weights', type=str, default=None, help='JSON string or path to JSON file to override fusion weights e.g. "{\"wyckoff\":0.6,\"liquidity\":0.4}"')
++    p.add_argument('--liquidity-floor', type=float, help='Override liquidity context floor, e.g. 0.20')
++    p.add_argument('--fusion-breakdown', action='store_true', help='Always print fusion math breakdown')
+     args = p.parse_args()
+-    result = run_bull_machine_v1_1(args.csv, args.balance)
++    # allow runtime override of entry threshold
++    override = {}
++    if args.enter_threshold is not None:
++        override['confidence_threshold'] = float(args.enter_threshold)
++    if args.weights is not None:
++        import json, os
++        wtxt = args.weights
++        parsed = None
++        # if it's a file path, load it
++        if os.path.exists(wtxt):
++            try:
++                with open(wtxt, 'r') as fh:
++                    parsed = json.load(fh)
++            except Exception as e:
++                logging.error(f"Failed to read weights file: {e}")
++        else:
++            try:
++                parsed = json.loads(wtxt)
++            except Exception as e:
++                logging.error(f"Failed to parse weights JSON: {e}")
++        if isinstance(parsed, dict):
++            override['weights'] = parsed
++    # support shorthand --threshold
++    if getattr(args, 'threshold', None) is not None:
++        override['confidence_threshold'] = float(args.threshold)
++    # liquidity floor override
++    if getattr(args, 'liquidity_floor', None) is not None:
++        override.setdefault('liquidity', {})['context_floor'] = float(args.liquidity_floor)
++    # fusion breakdown flag (propagate via signals overrides)
++    if getattr(args, 'fusion_breakdown', False):
++        override.setdefault('signals', {})['_fusion_breakdown'] = True
++
++    if override:
++        result = run_bull_machine_v1_1(args.csv, args.balance, override_signals=override)
++    else:
++        result = run_bull_machine_v1_1(args.csv, args.balance)
+     if result['action'] == 'enter_trade':
+         print("\n✅ TRADE SIGNAL GENERATED")
+     else:
+diff --git a/bull_machine/config/loader.py b/bull_machine/config/loader.py
+index 1d6a912..04ed81c 100644
+--- a/bull_machine/config/loader.py
++++ b/bull_machine/config/loader.py
+@@ -25,8 +25,8 @@ def get_v1_1_defaults() -> Dict[str, Any]:
+             "dynamic_ttl": True
+         },
+         "signals": {
+-            "confidence_threshold": 0.70,
+-            "weights": {"wyckoff": 0.60, "liquidity": 0.40}
++            "confidence_threshold": 0.72,
++            "weights": {"wyckoff": 0.60, "liquidity": 0.40, "smt": 0.0, "macro": 0.0, "temporal": 0.0}
+         },
+         "wyckoff": {"lookback_bars": 50, "bias_hysteresis_bars": 2},
+         "range": {"time_in_range_bars_min": 20, "net_progress_threshold": 0.25},
+diff --git a/bull_machine/core/utils.py b/bull_machine/core/utils.py
+index cfe4265..23e3259 100644
+--- a/bull_machine/core/utils.py
++++ b/bull_machine/core/utils.py
+@@ -2,6 +2,62 @@ import numpy as np
+ from typing import List, Dict, Tuple
+ from .types import Series, Bar
+ 
++def _nearly_equal(a: float, b: float, tol: float) -> bool:
++    return abs(a - b) <= tol * max(1.0, (abs(a) + abs(b)) / 2.0)
++
++def detect_sweep_displacement(
++    series: Series,
++    window: int = 20,
++    equal_tol: float = 0.001,      # 0.1% “equal high/low”
++    impulse_pct: float = 0.01      # 1% displacement impulse bar
++) -> bool:
++    """
++    Detect a simple 'liquidity sweep → impulse displacement' pattern in the last `window` bars.
++    Heuristic:
++      - Bullish case: price sweeps prior equal lows (within equal_tol) then prints an up impulse bar (> impulse_pct).
++      - Bearish case: price sweeps prior equal highs then prints a down impulse bar.
++    This is deliberately light-weight for v1.1.
++    """
++    n = len(series.bars)
++    if n < max(10, window):
++        return False
++    bars = series.bars[-window:]
++
++    # find clusters of equal highs/lows (last half vs first half)
++    mid = len(bars) // 2
++    first = bars[:mid]
++    last  = bars[mid:]
++
++    prior_highs = [b.high for b in first]
++    prior_lows  = [b.low  for b in first]
++    last_highs  = [b.high for b in last]
++    last_lows   = [b.low  for b in last]
++
++    # equal highs/lows from prior segment (proxy for liquidity)
++    if not prior_highs or not prior_lows:
++        return False
++
++    # take representative equal levels as medians
++    import statistics as _stats
++    eq_high = _stats.median(prior_highs)
++    eq_low  = _stats.median(prior_lows)
++
++    # check if last segment swept above eq_high or below eq_low
++    swept_high = any(h > eq_high and _nearly_equal(h, eq_high, equal_tol) for h in last_highs)
++    swept_low  = any(l < eq_low  and _nearly_equal(l, eq_low,  equal_tol) for l in last_lows)
++
++    # displacement: check last bar vs previous close
++    c0 = last[-2].close if len(last) >= 2 else bars[-2].close
++    c1 = last[-1].close
++    move = (c1 - c0) / max(1e-12, c0)
++
++    # Bullish: swept lows then +impulse; Bearish: swept highs then -impulse
++    if swept_low and move >= impulse_pct:
++        return True
++    if swept_high and move <= -impulse_pct:
++        return True
++    return False
++
+ def calculate_atr(series: Series, period: int = 14) -> float:
+     """Calculate Average True Range (simple moving)."""
+     if len(series.bars) < period + 1:
+diff --git a/bull_machine/io/feeders.py b/bull_machine/io/feeders.py
+index a92aa4b..7a3d4d6 100644
+--- a/bull_machine/io/feeders.py
++++ b/bull_machine/io/feeders.py
+@@ -26,11 +26,44 @@ def load_csv_to_series(file_path: str, symbol: str = "UNKNOWN", timeframe: str =
+         if len(invalid) > 0:
+             logging.warning(f"Dropping {len(invalid)} invalid OHLC rows")
+             df = df.drop(invalid.index)
+-        # timestamp handling
++        # timestamp handling with unit autodetection for numeric epoch values
+         ts_col = next((c for c in ['timestamp','datetime','date','time'] if c in df.columns), None)
+         if ts_col:
+-            df[ts_col] = pd.to_datetime(df[ts_col])
+-            df['ts'] = (df[ts_col] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
++            # Try numeric epoch detection first
++            if pd.api.types.is_numeric_dtype(df[ts_col]):
++                sample = int(df[ts_col].dropna().iloc[-1]) if len(df[ts_col].dropna()) > 0 else 0
++                # Heuristic thresholds (common scales)
++                # ns: >= 1e18, us: >=1e15, ms: >=1e12, s: >=1e9
++                unit = None
++                if abs(sample) >= 1e18:
++                    unit = 'ns'
++                elif abs(sample) >= 1e15:
++                    unit = 'us'
++                elif abs(sample) >= 1e12:
++                    unit = 'ms'
++                elif abs(sample) >= 1e9:
++                    unit = 's'
++                # fallback: if unit still None but values look small (<1e6) treat as seconds indices
++                try:
++                    if unit:
++                        df[ts_col] = pd.to_datetime(df[ts_col], unit=unit, utc=True)
++                    else:
++                        # maybe tiny ints (like 1,2,3) — treat as seconds since epoch if > 1000, else as index
++                        if sample > 1000:
++                            df[ts_col] = pd.to_datetime(df[ts_col], unit='s', utc=True)
++                        else:
++                            # not an epoch — fallback to sequential index timestamps
++                            df['ts'] = range(len(df))
++                    if 'ts' not in df.columns:
++                        df['ts'] = (df[ts_col] - pd.Timestamp("1970-01-01", tz='UTC')) // pd.Timedelta('1s')
++                except Exception:
++                    # fallback to string parse
++                    df[ts_col] = pd.to_datetime(df[ts_col], utc=True, errors='coerce')
++                    df['ts'] = (df[ts_col] - pd.Timestamp("1970-01-01", tz='UTC')) // pd.Timedelta('1s')
++            else:
++                # string-like timestamps
++                df[ts_col] = pd.to_datetime(df[ts_col], utc=True, errors='coerce')
++                df['ts'] = (df[ts_col] - pd.Timestamp("1970-01-01", tz='UTC')) // pd.Timedelta('1s')
+         else:
+             df['ts'] = range(len(df))
+         for c in required_cols:
+diff --git a/bull_machine/modules/liquidity/basic.py b/bull_machine/modules/liquidity/basic.py
+index ecc51a6..86d7cf8 100644
+--- a/bull_machine/modules/liquidity/basic.py
++++ b/bull_machine/modules/liquidity/basic.py
+@@ -9,29 +9,58 @@ def analyze(series: Series, bias: str, cfg: dict) -> LiquidityResult:
+         order_blocks = _detect_order_blocks(series)
+         score = _calculate_liquidity_score(fvgs, order_blocks, bias)
+         pressure = _determine_pressure(fvgs, order_blocks, bias)
+-        return LiquidityResult(score=score, pressure=pressure, fvgs=fvgs, order_blocks=order_blocks)
++        # Detailed debug logging for liquidity elements
++        logging.info(f"   Detailed Liquidity: {len(fvgs)} FVGs, {len(order_blocks)} OBs detected")
++        for i, f in enumerate(fvgs):
++            logging.info(f"     FVG[{i}] direction={f.get('direction')} strength={f.get('strength'):.3f} size={f.get('size'):.2f} start={f.get('start_idx')} end={f.get('end_idx')}")
++        for i, ob in enumerate(order_blocks):
++            logging.info(f"     OB[{i}] direction={ob.get('direction')} strength={ob.get('strength'):.3f} idx={ob.get('idx')} impulse={ob.get('impulse_strength'):.3f}")
+     except Exception as e:
+         logging.error(f"Liquidity analysis error: {e}")
+         return LiquidityResult(score=0.0, pressure='neutral', fvgs=[], order_blocks=[])
+ 
++    # Enforce spec gates + diagnostics
++    context_floor = cfg.get("liquidity", {}).get("context_floor", 0.45)
++    raw_score = score
++    score = 0.0 if raw_score < context_floor else raw_score
++
++    try:
++        aligned_fvgs = sum(
++            1 for f in fvgs if (bias == 'long' and f['direction']=='bullish')
++                            or (bias == 'short' and f['direction']=='bearish')
++        )
++        aligned_obs = sum(
++            1 for o in order_blocks if (bias == 'long' and o['direction']=='bullish')
++                                    or (bias == 'short' and o['direction']=='bearish')
++        )
++        logging.info(
++            f"[LIQ] raw={raw_score:.3f} floor={context_floor:.2f} gated={score:.3f} "
++            f"(aligned FVGs={aligned_fvgs}, aligned OBs={aligned_obs}, "
++            f"total FVGs={len(fvgs)}, total OBs={len(order_blocks)})"
++        )
++    except Exception:
++        pass
++
++    return LiquidityResult(score=score, pressure=pressure, fvgs=fvgs, order_blocks=order_blocks)
++
+ def _detect_fvgs(series: Series) -> List[Dict]:
+     fvgs: List[Dict] = []
+     if len(series.bars) < 3: return fvgs
+     for i in range(2, len(series.bars)):
+         b1, b2, b3 = series.bars[i-2], series.bars[i-1], series.bars[i]
+-        # Bullish FVG: gap between b1.low and b3.high
+-        if b1.low > b3.high:
+-            gap = b1.low - b3.high
++        # Bullish FVG (gap up): bar1.high < bar3.low
++        if b1.high < b3.low:
++            gap = b3.low - b1.high
+             if b3.close and gap / b3.close > 0.001:
+                 fvgs.append({'type':'fvg','direction':'bullish','start_idx':i-2,'end_idx':i,
+-                             'top': b1.low, 'bottom': b3.high, 'size': gap,
++                             'top': b3.low, 'bottom': b1.high, 'size': gap,
+                              'strength': min((gap / b3.close)*100, 0.9)})
+-        # Bearish FVG: gap between b3.low and b1.high
+-        elif b1.high < b3.low:
+-            gap = b3.low - b1.high
++        # Bearish FVG (gap down): bar1.low > bar3.high
++        elif b1.low > b3.high:
++            gap = b1.low - b3.high
+             if b3.close and gap / b3.close > 0.001:
+                 fvgs.append({'type':'fvg','direction':'bearish','start_idx':i-2,'end_idx':i,
+-                             'top': b3.low, 'bottom': b1.high, 'size': gap,
++                             'top': b1.low, 'bottom': b3.high, 'size': gap,
+                              'strength': min((gap / b3.close)*100, 0.9)})
+     return fvgs[-10:]
+ 
+diff --git a/bull_machine/signals/fusion.py b/bull_machine/signals/fusion.py
+index 3bcf284..b6ef681 100644
+--- a/bull_machine/signals/fusion.py
++++ b/bull_machine/signals/fusion.py
+@@ -1,33 +1,67 @@
+ import logging
+-from typing import Optional, List
+-from ..core.types import WyckoffResult, LiquidityResult, Signal
++from typing import Optional, List, Tuple
++from ..core.types import WyckoffResult, LiquidityResult, Signal, Series
++from ..core.utils import detect_sweep_displacement
+ 
+-def combine(w: WyckoffResult, l: LiquidityResult, cfg: dict, state: dict) -> Optional[Signal]:
+-    """Combine Wyckoff + Liquidity with range suppression and confidence floor."""
++def combine(w: WyckoffResult, l: LiquidityResult, cfg: dict, state: dict) -> Tuple[Optional[Signal], Optional[str]]:
++    """Combine Wyckoff + Liquidity with range suppression and confidence floor.
++
++    Returns a tuple (Signal|None, reason|None). Reason is a short machine-friendly string
++    explaining why no signal was produced when Signal is None.
++    """
+     try:
+         signals_cfg = cfg.get('signals', {})
+-        thr = signals_cfg.get('confidence_threshold', 0.70)
+-        weights = signals_cfg.get('weights', {'wyckoff': 0.60, 'liquidity': 0.40})
+-        wyckoff_conf = (w.phase_confidence + w.trend_confidence)/2
+-        liq_conf = l.score
+-        combined = wyckoff_conf * weights['wyckoff'] + liq_conf * weights['liquidity']
+-        if combined < thr: return None
+-        if _is_range_suppressed(w, cfg): return None
++        thr = signals_cfg.get('confidence_threshold', 0.72)
++        weights = signals_cfg.get('weights', {'wyckoff': 0.60, 'liquidity': 0.40, 'smt':0.0, 'macro':0.0, 'temporal':0.0})
++        # assemble available confidence sources
++        confidences = {
++            'wyckoff': (w.phase_confidence + w.trend_confidence)/2,
++            'liquidity': l.score,
++            'smt': 0.0,
++            'macro': 0.0,
++            'temporal': 0.0,
++        }
++        # compute weighted combined confidence using only keys present in both dicts
++        num = 0.0
++        denom = 0.0
++        for k, wk in weights.items():
++            if k in confidences and wk and wk > 0:
++                num += confidences.get(k, 0.0) * wk
++                denom += wk
++        combined = (num / denom) if denom > 0 else 0.0
++        if combined < thr:
++            return None, 'confidence_below_threshold'
++        if _is_range_suppressed(w, l, cfg, state):
++            return None, 'range_suppressed'
+         side = _determine_signal_side(w, l)
+-        if side == 'neutral': return None
++        if side == 'neutral':
++            return None, 'side_neutral'
+         reasons = _build_signal_reasons(w, l, combined)
+         ttl_bars = cfg.get('risk',{}).get('ttl_bars', 18)
+-        return Signal(ts=0, side=side, confidence=combined, reasons=reasons, ttl_bars=ttl_bars)
++        return Signal(ts=0, side=side, confidence=combined, reasons=reasons, ttl_bars=ttl_bars), None
+     except Exception as e:
+         logging.error(f"Fusion error: {e}")
+-        return None
++        return None, 'fusion_error'
+ 
+-def _is_range_suppressed(w: WyckoffResult, cfg: dict) -> bool:
++def _is_range_suppressed(w: WyckoffResult, l: LiquidityResult, cfg: dict, state: dict) -> bool:
++    """Check if signal should be suppressed due to ranging conditions"""
+     range_cfg = cfg.get('range', {})
+-    net_thresh = range_cfg.get('net_progress_threshold', 0.25)
+-    if w.range and w.regime in ['ranging','accumulation']:
+-        if w.range.get('within_range') and w.range.get('penetration',1.0) < net_thresh:
++    time_in_range_min = range_cfg.get('time_in_range_bars_min', 20)
++    net_progress_threshold = range_cfg.get('net_progress_threshold', 0.25)
++    liq_cfg = cfg.get('liquidity', {})
++    candidate_min = liq_cfg.get('candidate_min', 0.65)
++
++    # Only consider suppression when Wyckoff marks the chart as ranging
++    if w.range and w.regime in ['ranging']:
++        within = w.range.get('within_range', False)
++        shallow = w.range.get('penetration', 1.0) < net_progress_threshold
++        # Allow ONLY if we have sweep→displacement NOW and liquidity is strong
++        # (Use live detection to avoid stale state)
++        had_sweep_disp = bool(state.get('had_recent_sweep_displacement', False))
++        strong_liq = (l.score >= candidate_min)
++        if within and shallow and not (had_sweep_disp and strong_liq):
+             return True
++
+     return False
+ 
+ def _determine_signal_side(w: WyckoffResult, l: LiquidityResult) -> str:
+diff --git a/config/config.json b/config/config.json
+index 497b69f..2094f50 100644
+--- a/config/config.json
++++ b/config/config.json
+@@ -10,10 +10,13 @@
+     "dynamic_ttl": true
+   },
+   "signals": {
+-    "confidence_threshold": 0.7,
++    "confidence_threshold": 0.72,
+     "weights": {
+       "wyckoff": 0.6,
+-      "liquidity": 0.4
++      "liquidity": 0.4,
++      "smt": 0.0,
++      "macro": 0.0,
++      "temporal": 0.0
+     }
+   },
+   "wyckoff": {
+diff --git a/tests/sample_long_trend.csv b/tests/sample_long_trend.csv
+new file mode 100644
+index 0000000..7420906
+--- /dev/null
++++ b/tests/sample_long_trend.csv
+@@ -0,0 +1 @@
++timestamp,open,high,low,close,volume
+diff --git a/tests/test_fusion_weights.py b/tests/test_fusion_weights.py
+new file mode 100644
+index 0000000..d72f0c6
+--- /dev/null
++++ b/tests/test_fusion_weights.py
+@@ -0,0 +1,38 @@
++import json
++from bull_machine.signals.fusion import combine
++from bull_machine.core.types import WyckoffResult, LiquidityResult
++
++class DummyW:
++    def __init__(self, phase_conf=0.8, trend_conf=0.8, bias='long', phase='markup'):
++        self.phase_confidence = phase_conf
++        self.trend_confidence = trend_conf
++        self.bias = bias
++        self.phase = phase
++        self.regime = 'trend'
++        self.range = None
++
++class DummyL:
++    def __init__(self, score=0.5, pressure='bullish'):
++        self.score = score
++        self.pressure = pressure
++        self.fvgs = []
++        self.order_blocks = []
++
++
++def test_fusion_respects_weights_high_wyckoff():
++    w = DummyW(phase_conf=0.9, trend_conf=0.9)
++    l = DummyL(score=0.1, pressure='bullish')
++    cfg = {'signals': {'confidence_threshold': 0.5, 'weights': {'wyckoff': 1.0, 'liquidity': 0.0}}}
++    signal, reason = combine(w, l, cfg, {})
++    assert signal is not None
++    assert signal.confidence > 0.8
++
++
++def test_fusion_respects_weights_high_liquidity():
++    w = DummyW(phase_conf=0.2, trend_conf=0.2)
++    l = DummyL(score=0.9, pressure='bullish')
++    cfg = {'signals': {'confidence_threshold': 0.5, 'weights': {'wyckoff': 0.0, 'liquidity': 1.0}}}
++    signal, reason = combine(w, l, cfg, {})
++    assert signal is not None
++    assert signal.confidence > 0.8
++
