@@ -5,6 +5,9 @@ from ..config.loader import load_config
 from ..io.feeders import load_csv_to_series
 from ..modules.wyckoff.analyzer import analyze as analyze_wyckoff
 from ..modules.liquidity.basic import analyze as analyze_liquidity
+from ..modules.liquidity.advanced import AdvancedLiquidityAnalyzer
+from ..modules.fusion.advanced import AdvancedFusionEngine
+from ..modules.risk.advanced import AdvancedRiskManager
 from ..signals.fusion import combine as combine_signals
 from ..signals.gating import assign_ttl
 from ..risk.planner import plan as plan_risk
@@ -13,6 +16,110 @@ from ..core.utils import detect_sweep_displacement
 
 def setup_logging():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', handlers=[logging.StreamHandler(sys.stdout)])
+
+def run_bull_machine_v1_2_1(csv_file: str, account_balance: float = 10000, override_signals: dict = None) -> dict:
+    """Bull Machine v1.2.1 with advanced confluence layers"""
+    logging.info("Bull Machine v1.2.1 Starting...")
+    logging.info(f"Processing: {csv_file}")
+    try:
+        # Load v1.2.1 config
+        import json
+        import os
+        config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'config_v1_2_1.json')
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+
+        if override_signals:
+            for k, v in override_signals.items():
+                if k == 'fusion' and isinstance(v, dict):
+                    config.setdefault('fusion', {}).update(v)
+                else:
+                    config.setdefault('fusion', {})[k] = v
+
+        logging.info(f"Config version: {config.get('version','unknown')}")
+
+        state = load_state()
+        series = load_csv_to_series(csv_file)
+
+        result = {'action':'no_trade','version':'1.2.1'}
+
+        # Wyckoff analysis
+        if config['features'].get('wyckoff', True):
+            logging.info("Running Wyckoff analysis...")
+            wres = analyze_wyckoff(series, config, state)
+            logging.info(f"   {wres.regime} regime, phase {wres.phase}, bias {wres.bias}")
+            logging.info(f"   Confidence: phase={wres.phase_confidence:.2f}, trend={wres.trend_confidence:.2f}")
+            result['wyckoff'] = wres
+        else:
+            logging.warning("Wyckoff analysis disabled")
+            return result
+
+        # Advanced Liquidity analysis
+        if config['features'].get('advanced_liquidity', True):
+            logging.info("Running Advanced Liquidity analysis...")
+            liq_analyzer = AdvancedLiquidityAnalyzer(config)
+            lres = liq_analyzer.analyze(series, wres)
+            logging.info(f"   Score: {lres.get('overall_score', 0):.2f}")
+            result['liquidity'] = lres
+        else:
+            logging.warning("Advanced Liquidity analysis disabled")
+            return result
+
+        # Create modules data for fusion
+        modules_data = {
+            'wyckoff': wres,
+            'liquidity': lres,
+            'structure': {'bos_strength': 0.0},  # Placeholder
+            'momentum': {'score': 0.0},          # Placeholder
+            'volume': {'score': 0.0},            # Placeholder
+            'context': {'score': 0.0},           # Placeholder
+            'series': series,
+            'state': state
+        }
+
+        # Advanced Fusion
+        if config['features'].get('advanced_fusion', True):
+            logging.info("Running Advanced Fusion...")
+            fusion_engine = AdvancedFusionEngine(config)
+            fusion_result = fusion_engine.fuse(modules_data)
+
+            if fusion_result.signal is None:
+                logging.info(f"   No signal generated: {fusion_result.breakdown.get('veto_reason', 'insufficient_confidence')}")
+                result['reason'] = fusion_result.breakdown.get('veto_reason', 'no_signal')
+                return result
+
+            signal = fusion_result.signal
+            logging.info(f"   Signal: {signal.side} with confidence {signal.confidence:.2f}")
+            result['signal'] = signal
+        else:
+            logging.warning("Advanced Fusion disabled")
+            return result
+
+        # Advanced Risk Management
+        if config['features'].get('volatility_scaling', True):
+            logging.info("Planning advanced risk management...")
+            risk_manager = AdvancedRiskManager(config)
+            plan = risk_manager.plan_trade(series, signal, account_balance)
+        else:
+            # Fallback to basic risk planning
+            plan = plan_risk(series, signal, config, account_balance)
+
+        print(f"\n=== TRADE PLAN GENERATED (v1.2.1) ===")
+        print(f"Direction: {signal.side.upper()}")
+        print(f"Entry: {plan.entry:.2f}")
+        print(f"Stop: {plan.stop:.2f}")
+        print(f"Size: {plan.size:.4f}")
+        print(f"Risk: ${abs(plan.entry - plan.stop) * plan.size:.2f}")
+
+        state['prev_bias'] = wres.bias
+        state['last_signal_ts'] = signal.ts
+        save_state(state)
+
+        return {'action':'enter_trade','signal':signal,'risk_plan':plan,'wyckoff':wres,'liquidity':lres,'version':'1.2.1'}
+
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        return {'action':'error','message':str(e)}
 
 def run_bull_machine_v1_1(csv_file: str, account_balance: float = 10000, override_signals: dict = None) -> dict:
     logging.info("Bull Machine v1.1 Starting...")
@@ -159,9 +266,10 @@ def run_bull_machine_v1_1(csv_file: str, account_balance: float = 10000, overrid
 
 def main():
     setup_logging()
-    p = argparse.ArgumentParser(description='Bull Machine v1.1')
+    p = argparse.ArgumentParser(description='Bull Machine v1.1/v1.2.1')
     p.add_argument('--csv', required=True, help='CSV file path')
     p.add_argument('--balance', type=float, default=10000, help='Account balance')
+    p.add_argument('--version', choices=['1.1', '1.2.1'], default='1.2.1', help='Version to run (default: 1.2.1)')
     p.add_argument('--enter-threshold', type=float, default=None, help='Temporary override for signal entry confidence threshold')
     p.add_argument('--threshold', type=float, help='Override fusion confidence threshold, e.g. 0.72')
     p.add_argument('--weights', type=str, default=None, help='JSON string or path to JSON file to override fusion weights e.g. "{\"wyckoff\":0.6,\"liquidity\":0.4}"')
@@ -200,10 +308,17 @@ def main():
     if getattr(args, 'fusion_breakdown', False):
         override.setdefault('signals', {})['_fusion_breakdown'] = True
 
-    if override:
-        result = run_bull_machine_v1_1(args.csv, args.balance, override_signals=override)
-    else:
-        result = run_bull_machine_v1_1(args.csv, args.balance)
+    # Choose version
+    if args.version == '1.2.1':
+        if override:
+            result = run_bull_machine_v1_2_1(args.csv, args.balance, override_signals=override)
+        else:
+            result = run_bull_machine_v1_2_1(args.csv, args.balance)
+    else:  # v1.1
+        if override:
+            result = run_bull_machine_v1_1(args.csv, args.balance, override_signals=override)
+        else:
+            result = run_bull_machine_v1_1(args.csv, args.balance)
     if result['action'] == 'enter_trade':
         print("\n✅ TRADE SIGNAL GENERATED")
     else:

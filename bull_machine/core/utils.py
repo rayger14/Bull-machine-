@@ -58,6 +58,16 @@ def detect_sweep_displacement(
         return True
     return False
 
+def find_swing_high_low(series: Series, lookback: int = 20) -> tuple:
+    """Find swing high and low in recent bars"""
+    if len(series.bars) < lookback:
+        return series.bars[-1].high, series.bars[-1].low
+
+    recent = series.bars[-lookback:]
+    swing_high = max(bar.high for bar in recent)
+    swing_low = min(bar.low for bar in recent)
+    return swing_high, swing_low
+
 def calculate_atr(series: Series, period: int = 14) -> float:
     """Calculate Average True Range (simple moving)."""
     if len(series.bars) < period + 1:
