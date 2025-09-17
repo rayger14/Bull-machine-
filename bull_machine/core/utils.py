@@ -44,7 +44,7 @@ def detect_sweep_displacement(
 
     # check if last segment swept above eq_high or below eq_low
     swept_high = any(h > eq_high and _nearly_equal(h, eq_high, equal_tol) for h in last_highs)
-    swept_low  = any(l < eq_low  and _nearly_equal(l, eq_low,  equal_tol) for l in last_lows)
+    swept_low  = any(low < eq_low  and _nearly_equal(low, eq_low,  equal_tol) for low in last_lows)
 
     # displacement: check last bar vs previous close
     c0 = last[-2].close if len(last) >= 2 else bars[-2].close
