@@ -1,0 +1,62 @@
+{
+  "version": "1.2.1",
+  "features": {
+    "wyckoff": true,
+    "advanced_liquidity": true,
+    "advanced_fusion": true,
+    "veto_system": true,
+    "trend_filter": true,
+    "volatility_scaling": true,
+    "multi_tf_sync": false
+  },
+  "fusion": {
+    "weights": {
+      "wyckoff": 0.30,
+      "liquidity": 0.25,
+      "structure": 0.20,
+      "momentum": 0.10,
+      "volume": 0.10,
+      "context": 0.05
+    },
+    "enter_threshold": 0.35,
+    "volatility_shock_sigma": 4.0,
+    "trend_alignment_threshold": 0.60
+  },
+  "liquidity": {
+    "tick_size": 0.01,
+    "sweep_recent_bars": 5,
+    "fvg_threshold": 0.002,
+    "ob_threshold": 0.002,
+    "premium_discount_levels": [0.382, 0.5, 0.618]
+  },
+  "risk": {
+    "account_risk_percent": 1.0,
+    "max_risk_percent": 1.25,
+    "max_risk_per_trade": 150.0,
+    "stop": {
+      "method": "swing_with_atr_guardrail",
+      "atr_mult": 3.0,
+      "swing_buffer": 0.001,
+      "volatility_scaling": true,
+      "target_volatility": 0.012
+    },
+    "tp": {
+      "tp1_r": 1.0,
+      "tp2_r": 2.0,
+      "tp3_r": 4.0,
+      "tp1_size": 0.4,
+      "tp2_size": 0.4,
+      "tp3_size": 0.2,
+      "move_to_be": true,
+      "trail_remainder": true
+    }
+  },
+  "ttl": {
+    "base_ttl": 15,
+    "max_ttl": 30,
+    "min_ttl": 10,
+    "confidence_factor": 0.5,
+    "volatility_factor": 0.3,
+    "phase_factor": 0.2
+  }
+}
