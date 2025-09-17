@@ -46,4 +46,15 @@ class RiskPlan:
     stop: float
     size: float
     tp_levels: List[Dict]      # [{'name':'tp1','r':1.0,'price':..., 'pct':33, 'action':'...'}, ...]
-    rules: Dict                # {'be_at':'tp1','trail_at':'tp2','trail_mode':'swing','ttl_bars':18}
+    rules: Dict = None         # {'be_at':'tp1','trail_at':'tp2','trail_mode':'swing','ttl_bars':18}
+    stop_type: str = 'atr'     # Additional fields for v1.2.1
+    risk_amount: float = 0.0
+    risk_percent: float = 0.0
+    profile: str = 'swing'
+    expected_r: float = 2.5
+
+@dataclass
+class FusionResult:
+    signal: Optional[Signal]
+    breakdown: Dict            # {'scores': {...}, 'vetoes': [...], 'veto_reason': '...'}
+    raw_scores: Dict          # individual module scores before weighting

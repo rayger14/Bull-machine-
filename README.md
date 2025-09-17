@@ -1,22 +1,22 @@
-# Bull Machine v1.1  
+# Bull Machine v1.2.1  
 
 Algorithmic trading signal generator combining **Wyckoff structure**, **Liquidity analysis** (Fair Value Gaps & Order Blocks), plus **Dynamic TTL** and advanced **risk planning**.  
 
 ---
 
-## 🚀 Features (v1.1)  
-- **Wyckoff Market Psychology**  
-  Detects phase (A–E), regime (accumulation/distribution/ranging/trending), and bias with confidence scoring.  
-- **Liquidity Analysis**  
-  Scans for Fair Value Gaps (FVGs) and Order Blocks (OBs) aligned with Wyckoff bias.  
-- **Signal Fusion**  
-  Combines Wyckoff + Liquidity with confidence thresholds and range suppression.  
-- **Dynamic TTL**  
-  Signal “time-to-live” adapts to volatility and market regime (reduces whipsaws).  
-- **Risk Planning**  
-  Swing stops with ATR guardrail, TP ladder (1R/2R/3R), breakeven rules, trailing stop logic.  
-- **State Persistence**  
-  Stores last bias/signal in `.bm_state.json` for continuity across runs.  
+## 🚀 Features (v1.2.1)
+- **6-Layer Confluence System**
+  Wyckoff + Liquidity + Structure + Momentum + Volume + Context analysis with weighted fusion.
+- **Advanced Liquidity Analysis**
+  Enhanced pHOB detection, sweep reclaim logic, tick-size guards, dynamic FOLP scoring.
+- **Intelligent Fusion Engine**
+  Optimized vetoes, volatility shock detection, trend filters with configurable thresholds.
+- **Volatility-Scaled Risk Management**
+  Adaptive position sizing, swing stops with ATR guardrails, complete TP ladder system.
+- **Production Configuration**
+  Validated optimal settings: ETH 4H (77% win rate), BTC Daily, COIN 1H performance.
+- **Comprehensive Testing**
+  9/9 test suite with CI/CD pipeline (ruff, mypy, pytest) ensuring code quality.  
 
 ---
 

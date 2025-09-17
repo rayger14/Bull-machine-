@@ -45,9 +45,10 @@ def analyze(series: Series, bias: str, cfg: dict) -> LiquidityResult:
 
 def _detect_fvgs(series: Series) -> List[Dict]:
     fvgs: List[Dict] = []
-    if len(series.bars) < 3: return fvgs
+    if len(series.bars) < 3:
+        return fvgs
     for i in range(2, len(series.bars)):
-        b1, b2, b3 = series.bars[i-2], series.bars[i-1], series.bars[i]
+        b1, _, b3 = series.bars[i-2], series.bars[i-1], series.bars[i]
         # Bullish FVG (gap up): bar1.high < bar3.low
         if b1.high < b3.low:
             gap = b3.low - b1.high
@@ -66,7 +67,8 @@ def _detect_fvgs(series: Series) -> List[Dict]:
 
 def _detect_order_blocks(series: Series) -> List[Dict]:
     obs: List[Dict] = []
-    if len(series.bars) < 5: return obs
+    if len(series.bars) < 5:
+        return obs
     for i in range(3, len(series.bars)):
         start_price = series.bars[i-3].close
         end_price = series.bars[i].close
@@ -94,15 +96,20 @@ def _detect_order_blocks(series: Series) -> List[Dict]:
     return obs[-8:]
 
 def _calculate_liquidity_score(fvgs: List[Dict], obs: List[Dict], bias: str) -> float:
-    if not fvgs and not obs: return 0.0
+    if not fvgs and not obs:
+        return 0.0
     total_score = 0.0
     total_weight = 0.0
     for f in fvgs:
         if (bias == 'long' and f['direction']=='bullish') or (bias=='short' and f['direction']=='bearish'):
-            w = 0.6; total_score += f['strength'] * w; total_weight += w
+            w = 0.6
+            total_score += f['strength'] * w
+            total_weight += w
     for ob in obs:
         if (bias == 'long' and ob['direction']=='bullish') or (bias=='short' and ob['direction']=='bearish'):
-            w = 0.8; total_score += ob['strength'] * w; total_weight += w
+            w = 0.8
+            total_score += ob['strength'] * w
+            total_weight += w
     return (total_score / total_weight) if total_weight > 0 else 0.0
 
 def _determine_pressure(fvgs: List[Dict], obs: List[Dict], bias: str) -> str:

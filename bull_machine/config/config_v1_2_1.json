@@ -1,0 +1,80 @@
+{
+  "version": "1.2.1",
+  "features": {
+    "wyckoff": true,
+    "advanced_liquidity": true,
+    "advanced_fusion": true,
+    "veto_system": true,
+    "trend_filter": true,
+    "volatility_scaling": true
+  },
+  "fusion": {
+    "weights": {
+      "wyckoff": 0.30,
+      "liquidity": 0.25,
+      "structure": 0.20,
+      "momentum": 0.10,
+      "volume": 0.10,
+      "context": 0.05
+    },
+    "enter_threshold": 0.35,
+    "veto_enabled": true,
+    "volatility_shock_sigma": 4.0,
+    "trend_alignment_threshold": 0.60
+  },
+  "liquidity": {
+    "min_displacement_zscore": 2.0,
+    "phob_lookback": 50,
+    "phob_mitigation_pct": 75,
+    "sweep_penetration": 0.002,
+    "sweep_reclaim_bars": 3,
+    "sweep_recent_bars": 5,
+    "tick_size": 0.01,
+    "context_floor": 0.3
+  },
+  "range": {
+    "time_in_range_bars_min": 20,
+    "net_progress_threshold": 0.25,
+    "oscillation_threshold": 3
+  },
+  "risk": {
+    "account_risk_percent": 1.0,
+    "max_risk_percent": 1.25,
+    "max_risk_per_trade": 150.0,
+    "stop": {
+      "method": "swing_with_atr_guardrail",
+      "atr_mult": 3.0,
+      "swing_buffer": 0.001,
+      "volatility_scaling": true,
+      "target_volatility": 0.012
+    },
+    "tp_ladder": {
+      "tp1": {
+        "r": 1.0,
+        "pct": 25,
+        "action": "move_stop_to_breakeven"
+      },
+      "tp2": {
+        "r": 2.5,
+        "pct": 35,
+        "action": "trail_remainder"
+      },
+      "tp3": {
+        "r": 4.5,
+        "pct": 40,
+        "action": "liquidate_or_hard_trail"
+      }
+    }
+  },
+  "wyckoff": {
+    "lookback_bars": 50,
+    "bias_hysteresis_bars": 2
+  },
+  "momentum": {
+    "rsi_period": 14
+  },
+  "volume": {
+    "sma_period": 20,
+    "expansion_threshold": 1.5
+  }
+}
