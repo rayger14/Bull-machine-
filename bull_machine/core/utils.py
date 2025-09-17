@@ -44,7 +44,7 @@ def detect_sweep_displacement(
 
     # check if last segment swept above eq_high or below eq_low
     swept_high = any(h > eq_high and _nearly_equal(h, eq_high, equal_tol) for h in last_highs)
-    swept_low  = any(l < eq_low  and _nearly_equal(l, eq_low,  equal_tol) for l in last_lows)
+    swept_low  = any(low < eq_low  and _nearly_equal(low, eq_low,  equal_tol) for low in last_lows)
 
     # displacement: check last bar vs previous close
     c0 = last[-2].close if len(last) >= 2 else bars[-2].close
@@ -57,16 +57,6 @@ def detect_sweep_displacement(
     if swept_high and move <= -impulse_pct:
         return True
     return False
-
-def find_swing_high_low(series: Series, lookback: int = 20) -> tuple:
-    """Find swing high and low in recent bars"""
-    if len(series.bars) < lookback:
-        return series.bars[-1].high, series.bars[-1].low
-
-    recent = series.bars[-lookback:]
-    swing_high = max(bar.high for bar in recent)
-    swing_low = min(bar.low for bar in recent)
-    return swing_high, swing_low
 
 def calculate_atr(series: Series, period: int = 14) -> float:
     """Calculate Average True Range (simple moving)."""
