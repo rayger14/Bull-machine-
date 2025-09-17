@@ -8,6 +8,10 @@ from ..modules.liquidity.basic import analyze as analyze_liquidity
 from ..modules.liquidity.advanced import AdvancedLiquidityAnalyzer
 from ..modules.fusion.advanced import AdvancedFusionEngine
 from ..modules.risk.advanced import AdvancedRiskManager
+from ..modules.structure.advanced import AdvancedStructureAnalyzer
+from ..modules.momentum.advanced import AdvancedMomentumAnalyzer
+from ..modules.volume.advanced import AdvancedVolumeAnalyzer
+from ..modules.context.advanced import AdvancedContextAnalyzer
 from ..signals.fusion import combine as combine_signals
 from ..signals.gating import assign_ttl
 from ..risk.planner import plan as plan_risk
@@ -65,14 +69,31 @@ def run_bull_machine_v1_2_1(csv_file: str, account_balance: float = 10000, overr
             logging.warning("Advanced Liquidity analysis disabled")
             return result
 
+        # Run additional module analyses
+        structure_analyzer = AdvancedStructureAnalyzer(config)
+        sres = structure_analyzer.analyze(series, wres)
+        logging.info(f"   Structure score: {sres.get('bos_strength', 0):.2f}")
+
+        momentum_analyzer = AdvancedMomentumAnalyzer(config)
+        mres = momentum_analyzer.analyze(series, wres)
+        logging.info(f"   Momentum score: {mres.get('score', 0):.2f}")
+
+        volume_analyzer = AdvancedVolumeAnalyzer(config)
+        vres = volume_analyzer.analyze(series, wres)
+        logging.info(f"   Volume score: {vres.get('score', 0):.2f}")
+
+        context_analyzer = AdvancedContextAnalyzer(config)
+        cres = context_analyzer.analyze(series, wres)
+        logging.info(f"   Context score: {cres.get('score', 0):.2f}")
+
         # Create modules data for fusion
         modules_data = {
             'wyckoff': wres,
             'liquidity': lres,
-            'structure': {'bos_strength': 0.0},  # Placeholder
-            'momentum': {'score': 0.0},          # Placeholder
-            'volume': {'score': 0.0},            # Placeholder
-            'context': {'score': 0.0},           # Placeholder
+            'structure': sres,
+            'momentum': mres,
+            'volume': vres,
+            'context': cres,
             'series': series,
             'state': state
         }

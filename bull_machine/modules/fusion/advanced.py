@@ -7,12 +7,20 @@ class AdvancedFusionEngine:
     def __init__(self, config: dict):
         self.config = config
         self.fusion_cfg = config.get('fusion', {})
-        self.enter_threshold = self.fusion_cfg.get('enter_threshold', 0.74)
+        self.enter_threshold = self.fusion_cfg.get('enter_threshold', 0.40)
 
     # Stubs (assuming real implementations exist in your repo)
     def _calculate_module_scores(self, modules_data: Dict) -> Dict[str, float]:
+        # Fix: Use combined confidence like v1.1.2, not just trend_confidence
+        wy = modules_data.get("wyckoff")
+        wyckoff_score = 0.0
+        if wy:
+            phase_conf = getattr(wy, "phase_confidence", 0.0)
+            trend_conf = getattr(wy, "trend_confidence", 0.0)
+            wyckoff_score = (phase_conf + trend_conf) / 2
+
         return {
-            "wyckoff": getattr(modules_data.get("wyckoff"), "trend_confidence", 0.0),
+            "wyckoff": wyckoff_score,
             "liquidity": modules_data.get("liquidity", {}).get("overall_score", 0.0),
             "structure": modules_data.get("structure", {}).get("bos_strength", 0.0),
             "momentum": modules_data.get("momentum", {}).get("score", 0.0),
@@ -40,9 +48,9 @@ class AdvancedFusionEngine:
         wy = modules_data.get('wyckoff')
         liq = modules_data.get('liquidity', {})
 
-        # Early Wyckoff phase veto (A/B) unless strong confluence
+        # Early Wyckoff phase veto (A/B) unless strong confluence - Fixed threshold
         if isinstance(wy, WyckoffResult) and wy.phase in ['A', 'B']:
-            allow = (wy.phase_confidence > 0.8) or (liq.get('overall_score', 0) > 0.7) \
+            allow = (wy.phase_confidence > 0.6) or (liq.get('overall_score', 0) > 0.7) \
                     or (liq.get('sweeps') and any(s.get('reclaimed') for s in liq['sweeps']))
             if not allow:
                 vetoes.append('early_wyckoff_phase')

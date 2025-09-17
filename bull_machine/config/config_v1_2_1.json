@@ -6,22 +6,21 @@
     "advanced_fusion": true,
     "veto_system": true,
     "trend_filter": true,
-    "volatility_scaling": true,
-    "psychology_lite": false
+    "volatility_scaling": true
   },
   "fusion": {
     "weights": {
-      "wyckoff": 0.3,
+      "wyckoff": 0.30,
       "liquidity": 0.25,
-      "structure": 0.2,
-      "momentum": 0.1,
-      "volume": 0.1,
+      "structure": 0.20,
+      "momentum": 0.10,
+      "volume": 0.10,
       "context": 0.05
     },
-    "enter_threshold": 0.74,
+    "enter_threshold": 0.35,
     "veto_enabled": true,
-    "volatility_shock_sigma": 3.0,
-    "trend_alignment_threshold": 0.85
+    "volatility_shock_sigma": 4.0,
+    "trend_alignment_threshold": 0.60
   },
   "liquidity": {
     "min_displacement_zscore": 2.0,

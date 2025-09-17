@@ -27,6 +27,10 @@ def simulate_trade(signal, risk_plan, entry_bar, future_bars, bar_idx) -> Dict[s
     side = signal.side if hasattr(signal, 'side') else signal['side']
     tp_levels = risk_plan.tp_levels if hasattr(risk_plan, 'tp_levels') else risk_plan['tp_levels']
 
+    # Respect signal TTL
+    ttl = getattr(signal, 'ttl_bars', 20) if hasattr(signal, 'ttl_bars') else 20
+    future_bars = future_bars[:ttl]  # Limit to TTL window
+
     initial_size = 1.0
     remaining_size = 1.0
     total_pnl = 0.0
@@ -77,6 +81,28 @@ def simulate_trade(signal, risk_plan, entry_bar, future_bars, bar_idx) -> Dict[s
             }
 
         # TP handling would be here in user's full implementation (left as-is)
+
+    # TTL timeout
+    if future_bars:
+        final_price = future_bars[-1].close
+        exit_pnl = (final_price - entry_price) * remaining_size if side == 'long' else (entry_price - final_price) * remaining_size
+        total_pnl += exit_pnl
+        timeout_r = calculate_single_r(entry_price, stop_price, final_price, side)
+        total_r = calculate_weighted_r(exits + [{'r': timeout_r, 'size': remaining_size}], initial_size)
+        return {
+            'entry_bar_idx': bar_idx,
+            'exit_bar_idx': bar_idx + len(future_bars),
+            'side': side,
+            'entry_price': entry_price,
+            'final_exit_price': final_price,
+            'stop_price': stop_price,
+            'initial_size': initial_size,
+            'r': total_r,
+            'pnl': total_pnl,
+            'exit_reason': 'ttl_timeout',
+            'bars_held': len(future_bars),
+            'exits': exits
+        }
     return {}
 
 # TTL respect (usage example in your run loop):
