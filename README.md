@@ -43,8 +43,8 @@ Advanced algorithmic trading system with **Multi-Timeframe Sync**, **7-Layer Con
 
 Clone the repo and install dependencies:  
 ```bash
-git clone https://github.com/yourusername/bull_machine.git
-cd bull_machine
+git clone https://github.com/rayger14/Bull-machine-.git
+cd Bull-machine-
 pip install -r requirements.txt
 ```
 
