@@ -27,15 +27,60 @@ class BacktestEngine:
                     signal = strategy_fn(sym, tf, window)
                     if not signal: continue
                     action = signal.get('action','flat')
+
+                    # Check stop/TP fills before processing new signals
+                    stop_tp_fills = self.broker.mark(bar.name, sym, bar['close'])
+                    if stop_tp_fills:
+                        for fill in stop_tp_fills:
+                            self.portfolio.on_fill(sym, fill['side'], fill['price'], fill['size_filled'], fill['fee'])
+                            trades.append({
+                                "ts": bar.name, "symbol": sym, "tf": tf,
+                                "action": fill['side'], "price": float(fill['price']),
+                                "size": float(fill['size_filled']), "fee": float(fill['fee']),
+                                "pnl": float(fill.get('pnl', 0.0)),
+                                "reason": fill.get('reason', '')
+                            })
+
                     if action in ('long','short'):
-                        fill = self.broker.submit(ts=bar.name, symbol=sym, side=action, size=signal.get('size',1.0), price_hint=bar['close'])
-                        self.portfolio.on_fill(sym, action, fill['price'], fill['size_filled'], fill['fee'])
-                        trades.append({"ts":bar.name, "symbol":sym, "tf":tf, "action":f"enter_{action}", "price":float(fill['price']), "size":float(fill['size_filled']), "fee":float(fill['fee']), "pnl":0.0})
+                        # Check exposure limits before opening position
+                        risk_amount = signal.get('size', 1.0) * bar['close']  # Rough estimate
+                        current_equity = self.portfolio.equity()
+
+                        if self.portfolio.can_add(action, risk_amount, current_equity):
+                            risk_plan = signal.get('risk_plan')
+                            fill = self.broker.submit(
+                                ts=bar.name, symbol=sym, side=action,
+                                size=signal.get('size',1.0), price_hint=bar['close'],
+                                risk_plan=risk_plan
+                            )
+                            self.portfolio.on_fill(sym, action, fill['price'], fill['size_filled'], fill['fee'])
+                            trades.append({
+                                "ts": bar.name, "symbol": sym, "tf": tf,
+                                "action": f"enter_{action}", "price": float(fill['price']),
+                                "size": float(fill['size_filled']), "fee": float(fill['fee']),
+                                "pnl": 0.0,
+                                "reasons": signal.get('reasons', [])
+                            })
+                        else:
+                            # Log exposure limit rejection
+                            trades.append({
+                                "ts": bar.name, "symbol": sym, "tf": tf,
+                                "action": "rejected", "price": float(bar['close']),
+                                "size": 0.0, "fee": 0.0, "pnl": 0.0,
+                                "reason": "exposure_limit"
+                            })
+
                     elif action == 'exit':
-                        fill = self.broker.close(ts=bar.name, symbol=sym)
+                        fill = self.broker.close(ts=bar.name, symbol=sym, price=bar['close'])
                         if fill.get('ts'):
                             self.portfolio.on_fill(sym, 'exit', fill['price'], fill['size_filled'], fill['fee'])
-                            trades.append({"ts":bar.name, "symbol":sym, "tf":tf, "action":"exit", "price":float(fill['price']), "size":float(fill['size_filled']), "fee":float(fill['fee']), "pnl":0.0})
+                            trades.append({
+                                "ts": bar.name, "symbol": sym, "tf": tf,
+                                "action": "exit", "price": float(fill['price']),
+                                "size": float(fill['size_filled']), "fee": float(fill['fee']),
+                                "pnl": float(fill.get('pnl', 0.0))
+                            })
+
                     self.portfolio.mark(sym, float(bar['close']))
                     equity_rows.append({"ts":bar.name, "symbol":sym, "equity": self.portfolio.equity()})
         trades_df = pd.DataFrame(trades)

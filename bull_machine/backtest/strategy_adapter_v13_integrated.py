@@ -129,12 +129,28 @@ def strategy_from_df(symbol: str, tf: str, df_window: pd.DataFrame,
                 entry - risk_per_unit * 3.0   # TP3: 3R
             ]
 
+            # Build TP levels in broker-compatible format
+            tp_levels = [
+                {'price': tp_ladder[0], 'r': 1.0, 'pct': 33, 'name': 'tp1'},
+                {'price': tp_ladder[1], 'r': 2.0, 'pct': 33, 'name': 'tp2'},
+                {'price': tp_ladder[2], 'r': 3.0, 'pct': 34, 'name': 'tp3'}
+            ]
+
+            risk_plan = {
+                'entry': entry,
+                'stop': stop,
+                'size': position_size,
+                'tp_levels': tp_levels,
+                'rules': {'be_at': 'tp1', 'trail_at': 'tp2', 'trail_mode': 'swing'}
+            }
+
             return {
                 'action': signal.get('side', 'flat'),
                 'size': position_size,
                 'confidence': signal.get('confidence', 0.5),
                 'stop': stop,
-                'tp': tp_ladder,
+                'tp': tp_ladder,  # Legacy format
+                'risk_plan': risk_plan,  # New broker format
                 'risk_pct': risk_amount / balance,
                 'reasons': signal.get('reasons', []),
                 'mtf_sync': result.get('mtf_sync')

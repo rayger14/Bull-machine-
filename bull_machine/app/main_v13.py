@@ -63,10 +63,10 @@ def resample_to_timeframes(df: pd.DataFrame, htf: str = "1D",
         except Exception as e:
             logging.warning(f"Could not parse timestamp column: {e}")
             # Fall back to synthetic
-            df.index = pd.date_range(start="2024-01-01", periods=len(df), freq="1H", tz=None)
+            df.index = pd.date_range(start="2024-01-01", periods=len(df), freq="1h", tz=None)
     elif not isinstance(df.index, pd.DatetimeIndex):
         # No timestamp, create synthetic
-        df.index = pd.date_range(start="2024-01-01", periods=len(df), freq="1H", tz=None)
+        df.index = pd.date_range(start="2024-01-01", periods=len(df), freq="1h", tz=None)
         logging.info("Using synthetic datetime index for resampling")
 
     result = {}
@@ -322,7 +322,7 @@ def run_bull_machine_v1_3(csv_file: str,
         context_result = context_analyzer.analyze(series_ltf, wyckoff_result)
 
         logging.info(f"Wyckoff: {wyckoff_result.regime}/{wyckoff_result.phase}, Bias: {wyckoff_result.bias}")
-        logging.info(f"Liquidity Score: {liquidity_result.overall_score:.2f}, Pressure: {liquidity_result.pressure}")
+        logging.info(f"Liquidity Score: {liquidity_result.score:.2f}, Pressure: {liquidity_result.pressure}")
 
         # MTF SYNC DECISION
         if mtf_config.get("enabled", False) and htf_range:

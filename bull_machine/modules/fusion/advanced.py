@@ -88,9 +88,37 @@ class FusionEngineV1_3:
         self.base_threshold = self.config.get("signals", {}).get("enter_threshold", 0.35)
 
     def fuse(self, modules: Dict[str, Any], sync_report: Optional[Any] = None) -> Optional[Signal]:
+        # Schema validation to catch field drift early
+        self._validate_modules(modules)
+
         wy = modules.get("wyckoff")
+        liq = modules.get("liquidity")
+
+        # Safe field access with fallbacks
         side = getattr(wy, "bias", "neutral") if wy else "neutral"
+        liq_score = self._safe_get_score(liq) if liq else 0.0
+
         # TODO: real weighting + veto/raise; safe default returns None unless clear bias.
         if side not in ("long", "short"):
             return None
         return Signal(ts=0, side=side, confidence=max(0.36, self.base_threshold), reasons=["fusion scaffold"], ttl_bars=10)
+
+    def _validate_modules(self, modules: Dict[str, Any]):
+        """Validate module schemas to catch field drift early"""
+        wy = modules.get("wyckoff")
+        liq = modules.get("liquidity")
+
+        if wy:
+            self._require(wy, ["bias", "phase", "regime", "phase_confidence", "trend_confidence"], "WyckoffResult")
+        if liq:
+            self._require(liq, ["score", "pressure", "fvgs", "order_blocks"], "LiquidityResult")
+
+    def _require(self, obj, keys, label):
+        """Ensure required fields exist on object"""
+        missing = [k for k in keys if not hasattr(obj, k)]
+        if missing:
+            raise ValueError(f"{label} missing fields: {missing}")
+
+    def _safe_get_score(self, liq_result):
+        """Safe access for liquidity score with fallbacks"""
+        return getattr(liq_result, "score", getattr(liq_result, "overall_score", 0.0)) or 0.0
