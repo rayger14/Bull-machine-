@@ -44,9 +44,9 @@ jobs:
       run: |
         # Run basic tests first
         python tests/test_basic.py
-        # Run comprehensive v1.2.1 tests
-        python tests/test_v121_comprehensive.py
-        # Run pytest if available
+        # Run v1.3.0 MTF gate tests
+        python -m pytest tests/test_mtf_gate.py -v
+        # Run all remaining tests
         pytest tests/ -v || echo "pytest completed with issues"
 
     - name: Production validation
