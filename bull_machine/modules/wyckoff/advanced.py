@@ -73,25 +73,21 @@ except Exception:
         timeframe: str = "1H"
         symbol: str = "UNKNOWN"
 
-class AdvancedMomentumAnalyzer:
+class AdvancedWyckoffAnalyzer:
     """
     Expected by v1.3 pipeline:
-      - analyze(series, config) -> Dict[str, Any]
-    TODO: displacement, reluctant vs aggressive, volatility shocks.
+      - analyze(series, state) -> WyckoffResult
+    TODO: implement phases (A–E), regime, hysteresis, TTL, confidence, and range.
     """
     def __init__(self, config: Optional[Dict] = None):
         self.config = config or {}
 
-    def analyze(self, df_or_series: Any, config: Optional[Dict] = None) -> Dict[str, Any]:
-        """
-        Returns:
-          { "score": float, "shock": bool, "notes":[...] }
-        TODO: displacement, reluctant vs aggressive, volatility shocks.
-        """
-        return {"score": 0.0, "shock": False, "notes": ["momentum.advanced scaffold"]}
-
-# Backward compatibility function
-def analyze(df_or_series: Any, config: Optional[Dict] = None) -> Dict[str, Any]:
-    """Backward compatibility function"""
-    analyzer = AdvancedMomentumAnalyzer(config)
-    return analyzer.analyze(df_or_series, config)
+    def analyze(self, series: Series, state: Optional[Dict] = None) -> WyckoffResult:
+        return WyckoffResult(
+            regime="neutral",
+            phase="neutral",
+            bias="neutral",
+            phase_confidence=0.0,
+            trend_confidence=0.0,
+            range={"high": 0.0, "low": 0.0, "mid": 0.0}
+        )

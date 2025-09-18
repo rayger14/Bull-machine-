@@ -5,7 +5,7 @@ from bull_machine.backtest.datafeed import DataFeed
 from bull_machine.backtest.broker import PaperBroker
 from bull_machine.backtest.portfolio import Portfolio
 from bull_machine.backtest.engine import BacktestEngine
-from bull_machine.backtest.strategy_adapter_v13 import strategy_from_df
+from bull_machine.backtest.strategy_adapter_v13_integrated import strategy_from_df
 
 def main():
     p = argparse.ArgumentParser()

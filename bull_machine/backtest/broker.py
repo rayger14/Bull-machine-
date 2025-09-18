@@ -1,14 +1,14 @@
 
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 @dataclass
 class Position:
     side: str          # 'long'|'short'
     size: float
     entry: float
-    stop: float | None = None
-    tp: list[float] | None = None
+    stop: Optional[float] = None
+    tp: Optional[list[float]] = None
 
 class PaperBroker:
     def __init__(self, fee_bps=2, slippage_bps=3, spread_bps=1, partial_fill=True):

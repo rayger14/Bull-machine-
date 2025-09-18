@@ -4,7 +4,7 @@ import pandas as pd
 
 TF_MAP = {
     '1m':'1T','5m':'5T','15m':'15T','30m':'30T',
-    '1H':'1H','2H':'2H','4H':'4H','8H':'8H','12H':'12H',
+    '1H':'1h','2H':'2h','4H':'4h','8H':'8h','12H':'12h',
     '1D':'1D','1W':'1W','1M':'1M'
 }
 
@@ -23,7 +23,7 @@ class DataFeed:
                     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s', errors='coerce')
                 df = df.set_index('timestamp')
             else:
-                df.index = pd.date_range('2018-01-01', periods=len(df), freq='1H')
+                df.index = pd.date_range('2018-01-01', periods=len(df), freq='1h')
             for col in ['open','high','low','close']:
                 if col not in df.columns: raise ValueError(f"{sym}: missing column '{col}'")
             if 'volume' not in df.columns:

@@ -153,7 +153,7 @@ def test_full_backtest_pipeline():
         }
 
         # Create synthetic data
-        dates = pd.date_range(start='2024-01-01', periods=100, freq='1H')
+        dates = pd.date_range(start='2024-01-01', periods=100, freq='1h')
         price = 50000
         data = []
 
@@ -170,8 +170,12 @@ def test_full_backtest_pipeline():
 
         df = pd.DataFrame(data).set_index('time')
 
+        # Save test data to temporary CSV
+        temp_csv = 'test_btc_data.csv'
+        df.reset_index().to_csv(temp_csv, index=False)
+
         # Setup components
-        datafeed = DataFeed({'BTCUSD': df})
+        datafeed = DataFeed({'BTCUSD': temp_csv})
         broker = PaperBroker(fee_bps=10)
         portfolio = Portfolio(10000)
         engine = BacktestEngine(config, datafeed, broker, portfolio)
@@ -186,6 +190,9 @@ def test_full_backtest_pipeline():
         print(f"✅ Backtest completed:")
         print(f"   Metrics: {result['metrics']}")
         print(f"   Artifacts: {result['artifacts']}")
+
+        # Cleanup
+        os.remove(temp_csv)
 
         return True
 
