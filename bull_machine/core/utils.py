@@ -1,104 +1,91 @@
-import numpy as np
-from typing import List, Dict, Tuple
-from .types import Series, Bar
+"""Bull Machine v1.3 - Core Utility Functions"""
 
-def _nearly_equal(a: float, b: float, tol: float) -> bool:
-    return abs(a - b) <= tol * max(1.0, (abs(a) + abs(b)) / 2.0)
+from typing import List, Dict, Optional
 
-def detect_sweep_displacement(
-    series: Series,
-    window: int = 20,
-    equal_tol: float = 0.001,      # 0.1% “equal high/low”
-    impulse_pct: float = 0.01      # 1% displacement impulse bar
-) -> bool:
+def extract_key_levels(liquidity_result) -> List[Dict]:
     """
-    Detect a simple 'liquidity sweep → impulse displacement' pattern in the last `window` bars.
-    Heuristic:
-      - Bullish case: price sweeps prior equal lows (within equal_tol) then prints an up impulse bar (> impulse_pct).
-      - Bearish case: price sweeps prior equal highs then prints a down impulse bar.
-    This is deliberately light-weight for v1.1.
+    Extract key price levels from liquidity analysis.
+
+    Returns:
+        List of dictionaries with:
+        - 'type': 'fvg'|'ob'|'phob'|'sweep'
+        - 'price': float (mid-price for ranges, exact for points)
+        - 'direction': 'bullish'|'bearish'|'neutral'
     """
-    n = len(series.bars)
-    if n < max(10, window):
-        return False
-    bars = series.bars[-window:]
+    levels = []
 
-    # find clusters of equal highs/lows (last half vs first half)
-    mid = len(bars) // 2
-    first = bars[:mid]
-    last  = bars[mid:]
+    # Extract FVGs
+    if hasattr(liquidity_result, 'fvgs'):
+        for fvg in liquidity_result.fvgs:
+            levels.append({
+                'type': 'fvg',
+                'price': (fvg['high'] + fvg['low']) / 2,  # Mid-price
+                'direction': fvg.get('direction', 'neutral')
+            })
 
-    prior_highs = [b.high for b in first]
-    prior_lows  = [b.low  for b in first]
-    last_highs  = [b.high for b in last]
-    last_lows   = [b.low  for b in last]
+    # Extract Order Blocks
+    if hasattr(liquidity_result, 'order_blocks'):
+        for ob in liquidity_result.order_blocks:
+            levels.append({
+                'type': 'ob',
+                'price': (ob['high'] + ob['low']) / 2,  # Mid-price
+                'direction': ob.get('direction', 'neutral')
+            })
 
-    # equal highs/lows from prior segment (proxy for liquidity)
-    if not prior_highs or not prior_lows:
-        return False
+    # Extract pHOBs (premium/discount HOBs)
+    if hasattr(liquidity_result, 'phobs'):
+        for phob in liquidity_result.phobs:
+            levels.append({
+                'type': 'phob',
+                'price': phob['price'],
+                'direction': phob.get('direction', 'neutral')
+            })
 
-    # take representative equal levels as medians
-    import statistics as _stats
-    eq_high = _stats.median(prior_highs)
-    eq_low  = _stats.median(prior_lows)
+    # Extract sweep levels
+    if hasattr(liquidity_result, 'sweeps'):
+        for sweep in liquidity_result.sweeps:
+            levels.append({
+                'type': 'sweep',
+                'price': sweep['level'],
+                'direction': 'bullish' if sweep.get('reclaimed') else 'bearish'
+            })
 
-    # check if last segment swept above eq_high or below eq_low
-    swept_high = any(h > eq_high and _nearly_equal(h, eq_high, equal_tol) for h in last_highs)
-    swept_low  = any(low < eq_low  and _nearly_equal(low, eq_low,  equal_tol) for low in last_lows)
+    # Sort by price for easier processing
+    levels.sort(key=lambda x: x['price'])
 
-    # displacement: check last bar vs previous close
-    c0 = last[-2].close if len(last) >= 2 else bars[-2].close
-    c1 = last[-1].close
-    move = (c1 - c0) / max(1e-12, c0)
+    return levels
 
-    # Bullish: swept lows then +impulse; Bearish: swept highs then -impulse
-    if swept_low and move >= impulse_pct:
-        return True
-    if swept_high and move <= -impulse_pct:
-        return True
-    return False
+def calculate_range_position(price: float, low: float, high: float) -> float:
+    """
+    Calculate position within range (0=bottom, 0.5=middle, 1=top).
 
-def calculate_atr(series: Series, period: int = 14) -> float:
-    """Calculate Average True Range (simple moving)."""
-    if len(series.bars) < period + 1:
-        return 0.0
-    true_ranges = []
-    for i in range(1, len(series.bars)):
-        curr = series.bars[i]
-        prev = series.bars[i-1]
-        tr = max(
-            curr.high - curr.low,
-            abs(curr.high - prev.close),
-            abs(curr.low - prev.close)
-        )
-        true_ranges.append(tr)
-    if len(true_ranges) < period:
-        return (sum(true_ranges) / max(1, len(true_ranges)))
-    return sum(true_ranges[-period:]) / period
+    Args:
+        price: Current price
+        low: Range low
+        high: Range high
 
-def find_swing_high_low(series: Series, lookback: int = 20) -> Tuple[float, float]:
-    """Find recent swing high and low within lookback bars."""
-    bars = series.bars[-lookback:] if len(series.bars) >= lookback else series.bars
-    if not bars:
-        return 0.0, 0.0
-    swing_high = max(bar.high for bar in bars)
-    swing_low = min(bar.low for bar in bars)
-    return swing_high, swing_low
+    Returns:
+        Float between 0 and 1 representing position in range
+    """
+    if high <= low:
+        return 0.5
 
-def detect_structure_breaks(series: Series, lookback: int = 10) -> Dict:
-    """Detect simple CHoCH/BOS-like conditions (heuristic)."""
-    if len(series.bars) < lookback + 5:
-        return {'choch_bull': False, 'choch_bear': False, 'bos_strength': 0.3}
-    recent_bars = series.bars[-lookback:]
-    current_price = series.bars[-1].close
-    recent_highs = [bar.high for bar in recent_bars[:-2]]
-    recent_lows = [bar.low for bar in recent_bars[:-2]]
-    max_recent_high = max(recent_highs) if recent_highs else current_price
-    min_recent_low = min(recent_lows) if recent_lows else current_price
-    choch_bull = current_price > max_recent_high
-    choch_bear = current_price < min_recent_low
-    return {
-        'choch_bull': choch_bull,
-        'choch_bear': choch_bear,
-        'bos_strength': 0.7 if (choch_bull or choch_bear) else 0.3
-    }
+    position = (price - low) / (high - low)
+    return max(0.0, min(1.0, position))
+
+def is_premium_zone(price: float, low: float, high: float, threshold: float = 0.618) -> bool:
+    """Check if price is in premium zone (above threshold)"""
+    position = calculate_range_position(price, low, high)
+    return position >= threshold
+
+def is_discount_zone(price: float, low: float, high: float, threshold: float = 0.382) -> bool:
+    """Check if price is in discount zone (below threshold)"""
+    position = calculate_range_position(price, low, high)
+    return position <= threshold
+
+def is_equilibrium_zone(price: float, low: float, high: float,
+                        lower_threshold: float = 0.45,
+                        upper_threshold: float = 0.55) -> bool:
+    """Check if price is in equilibrium zone (middle)"""
+    position = calculate_range_position(price, low, high)
+    return lower_threshold <= position <= upper_threshold
