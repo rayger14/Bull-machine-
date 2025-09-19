@@ -1,0 +1,74 @@
+{
+  "run_id": "v1_4_production_btc_eth",
+  "data": {
+    "sources": {
+      "BTCUSD_1D": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 1D_85c84.csv",
+      "BTCUSD_4H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 240_c2b76.csv",
+      "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv",
+      "ETHUSD_1D": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 1D_64942.csv",
+      "ETHUSD_4H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 240_1d04a.csv",
+      "ETHUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 60_2f4ab.csv"
+    },
+    "timeframes": ["1D", "4H", "1H"],
+    "primary_timeframe": "1H"
+  },
+  "broker": {
+    "fee_bps": 10,
+    "slippage_bps": 5,
+    "spread_bps": 2,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 100000,
+    "max_position_pct": 10,
+    "max_exposure_pct": 50,
+    "risk_per_trade_pct": 1.0
+  },
+  "risk": {
+    "stop_method": "atr",
+    "atr_mult": 2.0,
+    "tp_ladder": {
+      "tp1": {"r_multiple": 1.0, "size_pct": 50, "action": "move_stop_to_breakeven"},
+      "tp2": {"r_multiple": 2.0, "size_pct": 30, "action": "trail_stop"},
+      "tp3": {"r_multiple": 3.0, "size_pct": 20, "action": "close"}
+    }
+  },
+  "engine": {
+    "lookback_bars": 250,
+    "seed": 42,
+    "allow_shorts": true,
+    "pyramiding": false
+  },
+  "walkforward": {
+    "enable": true,
+    "train_bars": 1500,
+    "test_bars": 500,
+    "step_bars": 250,
+    "reoptimize": false
+  },
+  "strategy": {
+    "version": "v1.3",
+    "config": "bull_machine/config/production.json",
+    "mtf_enabled": true,
+    "enter_threshold": 0.35,
+    "exit_threshold": 0.20
+  },
+  "reporting": {
+    "generate_plots": true,
+    "save_trades_csv": true,
+    "save_equity_csv": true,
+    "save_summary_json": true,
+    "save_report_md": true
+  },
+  "meta": {
+    "description": "Bull Machine v1.4 Production Backtest - BTC/ETH Multi-Timeframe",
+    "version": "1.4.0",
+    "created": "2025-09-18",
+    "notes": [
+      "Production backtest with real BTC/ETH data",
+      "MTF sync enabled with v1.3 engine",
+      "Full risk management with TP ladder",
+      "Walk-forward validation enabled"
+    ]
+  }
+}
