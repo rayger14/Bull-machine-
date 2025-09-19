@@ -1,6 +1,8 @@
 
 from dataclasses import dataclass
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
+import pandas as pd
+import logging
 
 @dataclass
 class TPLevel:
@@ -43,23 +45,53 @@ class PaperBroker:
             self.realized_pnl += pnl - fee
             self.positions.pop(symbol, None)
 
-        # Create TP levels from risk plan
+        # Auto-compute risk management if not provided
+        stop_price = None
         tp_levels = None
-        if risk_plan and risk_plan.get('tp_levels'):
+
+        if risk_plan:
+            stop_price = risk_plan.get('stop')
+            if risk_plan.get('tp_levels'):
+                tp_levels = [
+                    TPLevel(
+                        price=tp['price'],
+                        size_pct=tp.get('pct', 33),
+                        r_multiple=tp.get('r', 1.0)
+                    ) for tp in risk_plan['tp_levels']
+                ]
+
+        # Auto-compute if missing (Option A - guarantee every entry has exits)
+        if stop_price is None:
+            # Default: 2% stop loss
+            stop_price = px * 0.98 if side == 'long' else px * 1.02
+
+        if tp_levels is None:
+            # Default TP ladder: 1R/2R/3R with 40/30/30 split
+            risk_per_unit = abs(px - stop_price)
             tp_levels = [
                 TPLevel(
-                    price=tp['price'],
-                    size_pct=tp.get('pct', 33),
-                    r_multiple=tp.get('r', 1.0)
-                ) for tp in risk_plan['tp_levels']
+                    price=px + risk_per_unit if side == 'long' else px - risk_per_unit,
+                    size_pct=40,
+                    r_multiple=1.0
+                ),
+                TPLevel(
+                    price=px + 2*risk_per_unit if side == 'long' else px - 2*risk_per_unit,
+                    size_pct=30,
+                    r_multiple=2.0
+                ),
+                TPLevel(
+                    price=px + 3*risk_per_unit if side == 'long' else px - 3*risk_per_unit,
+                    size_pct=30,
+                    r_multiple=3.0
+                )
             ]
 
-        # Create new position with risk management
+        # Create new position with guaranteed risk management
         self.positions[symbol] = Position(
             side=side,
             size=size,
             entry=px,
-            stop=risk_plan.get('stop') if risk_plan else None,
+            stop=stop_price,
             tp_levels=tp_levels
         )
 
@@ -87,13 +119,22 @@ class PaperBroker:
             "fee": fee, "pnl": pnl, "reason": "manual_close"
         }
 
-    def mark(self, ts, symbol, price):
-        """Mark position to market and check for stop/TP fills"""
+    def mark(self, ts, symbol, price, exit_signal=None):
+        """Mark position to market and check for stop/TP fills or exit signals"""
         pos = self.positions.get(symbol)
         if not pos:
             return None
 
         fills = []
+
+        # Handle exit signal if provided (highest priority)
+        if exit_signal:
+            exit_fill = self._process_exit_signal(ts, symbol, pos, price, exit_signal)
+            if exit_fill:
+                fills.extend(exit_fill if isinstance(exit_fill, list) else [exit_fill])
+                # Check if position was completely closed
+                if symbol not in self.positions:
+                    return fills
 
         # Check stop loss
         if pos.stop and self._should_stop_fill(pos, price):
@@ -113,6 +154,14 @@ class PaperBroker:
                     if tp.r_multiple >= 1.0 and not pos.be_moved:
                         pos.stop = pos.entry
                         pos.be_moved = True
+
+            # Check if position should be completely closed (all TPs hit or size < threshold)
+            if pos.size <= 0.001 or all(tp.filled for tp in pos.tp_levels):
+                if pos.size > 0.001:
+                    # Close remaining position at market
+                    final_fill = self._close_remaining_position(ts, symbol, pos, price)
+                    fills.append(final_fill)
+                self.positions.pop(symbol, None)
 
         return fills if fills else None
 
@@ -163,4 +212,151 @@ class PaperBroker:
             "ts": ts, "symbol": symbol, "side": f"tp{tp.r_multiple:.0f}",
             "price": fill_price, "size_filled": fill_size,
             "fee": fee, "pnl": pnl, "reason": f"take_profit_{tp.r_multiple:.0f}R"
+        }
+
+    def _close_remaining_position(self, ts, symbol, pos: Position, price: float) -> Dict[str, Any]:
+        """Close any remaining position size at market"""
+        fill_price = self._apply_costs(price, 'short' if pos.side == 'long' else 'long')
+        fee = (self.fee_bps * 1e-4) * fill_price * pos.size
+
+        pnl = ((fill_price - pos.entry) * pos.size if pos.side == 'long'
+               else (pos.entry - fill_price) * pos.size)
+        self.realized_pnl += pnl - fee
+
+        return {
+            "ts": ts, "symbol": symbol, "side": "close_remaining",
+            "price": fill_price, "size_filled": pos.size,
+            "fee": fee, "pnl": pnl, "reason": "auto_close_remaining"
+        }
+
+    def _process_exit_signal(self, ts, symbol, pos: Position, price: float, exit_signal) -> Optional[List[Dict[str, Any]]]:
+        """
+        Process an exit signal and execute the appropriate action.
+
+        Args:
+            ts: Timestamp
+            symbol: Trading symbol
+            pos: Current position
+            price: Current market price
+            exit_signal: ExitSignal object
+
+        Returns:
+            List of fill dictionaries if action taken, None otherwise
+        """
+        try:
+            from bull_machine.strategy.exits.types import ExitAction
+
+            action = exit_signal.action
+            fills = []
+
+            if action == ExitAction.FULL_EXIT:
+                # Close entire position at market
+                fill = self._execute_exit_signal_close(ts, symbol, pos, price, exit_signal, 1.0)
+                fills.append(fill)
+                self.positions.pop(symbol, None)
+
+            elif action == ExitAction.PARTIAL_EXIT:
+                # Close partial position
+                exit_pct = getattr(exit_signal, 'exit_percentage', 0.5)
+                fill = self._execute_exit_signal_close(ts, symbol, pos, price, exit_signal, exit_pct)
+                fills.append(fill)
+
+                # Reduce position size
+                pos.size *= (1.0 - exit_pct)
+
+                # If remaining size is tiny, close completely
+                if pos.size <= 0.001:
+                    remaining_fill = self._close_remaining_position(ts, symbol, pos, price)
+                    fills.append(remaining_fill)
+                    self.positions.pop(symbol, None)
+
+            elif action == ExitAction.TIGHTEN_STOP:
+                # Update stop loss to new tighter level
+                new_stop = getattr(exit_signal, 'new_stop_price', None)
+                if new_stop and self._is_valid_stop_update(pos, new_stop):
+                    old_stop = pos.stop
+                    pos.stop = new_stop
+                    logging.info(f"Tightened stop for {symbol}: {old_stop:.2f} -> {new_stop:.2f}")
+
+                    # Return info about stop update (not a trade fill)
+                    fills.append({
+                        "ts": ts, "symbol": symbol, "side": "stop_update",
+                        "old_stop": old_stop, "new_stop": new_stop,
+                        "reason": f"exit_signal_{exit_signal.exit_type.value}"
+                    })
+
+            elif action == ExitAction.FLIP_POSITION:
+                # Close current position and open reverse position
+                close_fill = self._execute_exit_signal_close(ts, symbol, pos, price, exit_signal, 1.0)
+                fills.append(close_fill)
+
+                # Open reverse position
+                flip_side = getattr(exit_signal, 'flip_bias', 'short' if pos.side == 'long' else 'long')
+                flip_fill = self.submit(ts, symbol, flip_side, pos.size, price)
+                fills.append(flip_fill)
+
+            return fills if fills else None
+
+        except Exception as e:
+            logging.error(f"Error processing exit signal for {symbol}: {e}")
+            return None
+
+    def _execute_exit_signal_close(self, ts, symbol, pos: Position, price: float,
+                                  exit_signal, exit_percentage: float) -> Dict[str, Any]:
+        """Execute position close due to exit signal."""
+        close_size = pos.size * exit_percentage
+        fill_price = self._apply_costs(price, 'short' if pos.side == 'long' else 'long')
+        fee = (self.fee_bps * 1e-4) * fill_price * close_size
+
+        pnl = ((fill_price - pos.entry) * close_size if pos.side == 'long'
+               else (pos.entry - fill_price) * close_size)
+        self.realized_pnl += pnl - fee
+
+        return {
+            "ts": ts, "symbol": symbol,
+            "side": f"exit_{exit_signal.exit_type.value}",
+            "price": fill_price, "size_filled": close_size,
+            "fee": fee, "pnl": pnl,
+            "reason": f"exit_signal_{exit_signal.exit_type.value}",
+            "confidence": exit_signal.confidence,
+            "urgency": exit_signal.urgency,
+            "exit_percentage": exit_percentage
+        }
+
+    def _is_valid_stop_update(self, pos: Position, new_stop: float) -> bool:
+        """Check if stop update is valid (tighter than current)."""
+        if pos.side == 'long':
+            # For long positions, new stop should be higher (tighter)
+            return new_stop > pos.stop
+        else:
+            # For short positions, new stop should be lower (tighter)
+            return new_stop < pos.stop
+
+    def get_position_data(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """
+        Get position data formatted for exit signal evaluation.
+
+        Args:
+            symbol: Trading symbol
+
+        Returns:
+            Position data dict or None if no position
+        """
+        pos = self.positions.get(symbol)
+        if not pos:
+            return None
+
+        # Calculate current PnL percentage (approximate)
+        current_pnl_pct = 0.0  # Would need current price to calculate accurately
+
+        return {
+            'symbol': symbol,
+            'bias': pos.side,
+            'size': pos.size,
+            'entry_time': pd.Timestamp.now(),  # Would need to track actual entry time
+            'entry_price': pos.entry,
+            'stop_price': pos.stop,
+            'pnl_pct': current_pnl_pct,
+            'be_moved': pos.be_moved,
+            'trail_active': pos.trail_active
         }
