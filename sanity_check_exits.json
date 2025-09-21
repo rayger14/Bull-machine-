@@ -1,5 +1,5 @@
 {
-  "run_id": "baseline_exits_on",
+  "run_id": "sanity_check_exit_params",
   "data": {
     "sources": {
       "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"
@@ -53,11 +53,10 @@
       "min_bars_in_pos": 4
     },
     "time_stop": {
-      "max_bars_1h": 24,
+      "max_bars_1h": 20,
       "max_bars_4h": 8,
       "max_bars_1d": 4
-    },
-    "emit_exit_debug": true
+    }
   },
   "logging": {
     "level": "INFO",

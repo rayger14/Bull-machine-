@@ -8,6 +8,7 @@ import numpy as np
 from typing import Dict, Any, Optional, List
 import logging
 import json
+import os
 from pathlib import Path
 
 from .types import ExitSignal, ExitEvaluationResult
@@ -20,14 +21,25 @@ class ExitSignalEvaluator:
     Evaluates multiple exit conditions and prioritizes signals.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], out_dir: str = "."):
         """
         Initialize with configuration for all exit detectors.
 
         Args:
             config: Exit system configuration
+            out_dir: Output directory for diagnostic files
         """
         self.config = config
+
+        # DIAGNOSTIC: Log and dump config to prove it reaches evaluator
+        logging.info("EXIT_EVAL_INIT cfg=%s", json.dumps(config, sort_keys=True))
+        try:
+            config_dump_path = os.path.join(out_dir, "exit_cfg_applied.json")
+            with open(config_dump_path, "w") as f:
+                json.dump(config, f, indent=2, sort_keys=True)
+            logging.info("EXIT_EVAL_INIT config dumped to %s", config_dump_path)
+        except Exception as e:
+            logging.warning("EXIT_EVAL_INIT failed to dump config: %s", e)
 
         # Initialize detectors
         choch_config = config.get('choch_against', {})

@@ -21,9 +21,22 @@ class CHoCHAgainstDetector:
     """
 
     def __init__(self, config: Dict[str, Any]):
+        # STEP 3: Kill silent fallbacks and use sweep parameter names
+        # Use bars_confirm (from sweep) not confirmation_bars (legacy name)
+        if "bars_confirm" not in config:
+            raise ValueError(f"CHOCH missing required key bars_confirm in {list(config.keys())}")
+
         self.min_break_strength = config.get('min_break_strength', 0.6)
-        self.confirmation_bars = config.get('confirmation_bars', 2)
+        self.bars_confirm = int(config["bars_confirm"])  # STEP 3: Use sweep parameter name
         self.volume_confirmation_required = config.get('volume_confirmation', True)
+
+        # STEP 2: Echo effective config at init
+        effective_config = {
+            "min_break_strength": self.min_break_strength,
+            "bars_confirm": self.bars_confirm,
+            "volume_confirmation": self.volume_confirmation_required
+        }
+        logging.info("EXIT_EVAL_APPLIED choch_against=%s", effective_config)
 
     def evaluate(self, symbol: str, position_bias: str,
                  mtf_data: Dict[str, pd.DataFrame],
@@ -127,6 +140,15 @@ class CHoCHAgainstDetector:
                         volume_confirmation=volume_confirmed
                     )
 
+                    # STEP 2: Attach effective parameters to signal for irrefutable tracing
+                    effective_params = {
+                        "min_break_strength": self.min_break_strength,
+                        "bars_confirm": self.bars_confirm,
+                        "volume_confirmation": self.volume_confirmation_required,
+                        "break_strength": break_strength,
+                        "tf": timeframe
+                    }
+
                     return ExitSignal(
                         timestamp=current_bar,
                         symbol=symbol,
@@ -135,7 +157,10 @@ class CHoCHAgainstDetector:
                         confidence=confidence,
                         urgency=urgency,
                         reasons=[f"Bearish CHoCH on {timeframe}", f"Break strength: {break_strength:.2f}"],
-                        context={'choch': context.__dict__}
+                        context={
+                            'choch': context.__dict__,
+                            'effective_params': effective_params  # STEP 2: Irrefutable parameter tracing
+                        }
                     )
 
         return None
@@ -180,6 +205,15 @@ class CHoCHAgainstDetector:
                         volume_confirmation=volume_confirmed
                     )
 
+                    # STEP 2: Attach effective parameters to signal for irrefutable tracing
+                    effective_params = {
+                        "min_break_strength": self.min_break_strength,
+                        "bars_confirm": self.bars_confirm,
+                        "volume_confirmation": self.volume_confirmation_required,
+                        "break_strength": break_strength,
+                        "tf": timeframe
+                    }
+
                     return ExitSignal(
                         timestamp=current_bar,
                         symbol=symbol,
@@ -188,7 +222,10 @@ class CHoCHAgainstDetector:
                         confidence=confidence,
                         urgency=urgency,
                         reasons=[f"Bullish CHoCH on {timeframe}", f"Break strength: {break_strength:.2f}"],
-                        context={'choch': context.__dict__}
+                        context={
+                            'choch': context.__dict__,
+                            'effective_params': effective_params  # STEP 2: Irrefutable parameter tracing
+                        }
                     )
 
         return None
@@ -236,10 +273,28 @@ class MomentumFadeDetector:
     """
 
     def __init__(self, config: Dict[str, Any]):
+        # STEP 3: Kill silent fallbacks and use sweep parameter names
+        # Use drop_pct (from sweep) as the main momentum threshold
+        if "drop_pct" not in config:
+            raise ValueError(f"MOMENTUM missing required key drop_pct in {list(config.keys())}")
+
         self.rsi_period = config.get('rsi_period', 14)
-        self.rsi_divergence_threshold = config.get('rsi_divergence_threshold', 0.7)
+        self.drop_pct = float(config["drop_pct"])  # STEP 3: Use sweep parameter name
         self.volume_decline_threshold = config.get('volume_decline_threshold', 0.3)
         self.velocity_threshold = config.get('velocity_threshold', 0.4)
+        self.lookback = config.get('lookback', 6)
+        self.min_bars_in_pos = config.get('min_bars_in_pos', 4)
+
+        # STEP 2: Echo effective config at init
+        effective_config = {
+            "rsi_period": self.rsi_period,
+            "drop_pct": self.drop_pct,
+            "volume_decline_threshold": self.volume_decline_threshold,
+            "velocity_threshold": self.velocity_threshold,
+            "lookback": self.lookback,
+            "min_bars_in_pos": self.min_bars_in_pos
+        }
+        logging.info("EXIT_EVAL_APPLIED momentum_fade=%s", effective_config)
 
     def evaluate(self, symbol: str, position_bias: str,
                  mtf_data: Dict[str, pd.DataFrame],
@@ -272,7 +327,8 @@ class MomentumFadeDetector:
             # Check for momentum fade
             fade_score = self._calculate_fade_score(df, position_bias)
 
-            if fade_score >= self.rsi_divergence_threshold:
+            # STEP 3: Use drop_pct (from sweep) as the main threshold, not rsi_divergence_threshold
+            if fade_score >= self.drop_pct:
                 confidence = min(0.85, fade_score)
                 urgency = 0.6  # Momentum fades are less urgent than structure breaks
 
@@ -291,6 +347,17 @@ class MomentumFadeDetector:
                     timeframes_affected=['1H']
                 )
 
+                # STEP 2: Attach effective parameters to signal for irrefutable tracing
+                effective_params = {
+                    "rsi_period": self.rsi_period,
+                    "drop_pct": self.drop_pct,
+                    "volume_decline_threshold": self.volume_decline_threshold,
+                    "velocity_threshold": self.velocity_threshold,
+                    "lookback": self.lookback,
+                    "min_bars_in_pos": self.min_bars_in_pos,
+                    "fade_score": fade_score
+                }
+
                 signal = ExitSignal(
                     timestamp=current_bar,
                     symbol=symbol,
@@ -299,7 +366,10 @@ class MomentumFadeDetector:
                     confidence=confidence,
                     urgency=urgency,
                     reasons=[f"Momentum fade score: {fade_score:.2f}"],
-                    context={'momentum': context.__dict__}
+                    context={
+                        'momentum': context.__dict__,
+                        'effective_params': effective_params  # STEP 2: Irrefutable parameter tracing
+                    }
                 )
 
                 if action == ExitAction.PARTIAL_EXIT:
@@ -427,13 +497,26 @@ class TimeStopEvaluator:
         # Store config for later access
         self.config = config
 
-        # Accept both the new per-TF keys and legacy bars_max
-        legacy = config.get("bars_max")
-        self.max_bars_1h = int(config.get("max_bars_1h", legacy if legacy is not None else 168))
-        self.max_bars_4h = int(config.get("max_bars_4h", legacy//4 if legacy else 42))
-        self.max_bars_1d = int(config.get("max_bars_1d", legacy//24 if legacy else 10))
+        # STEP 2: Remove silent fallbacks and use ONLY backtest-level config
+        # No strategy-level shadowing, no legacy fallbacks unless explicitly missing
+        if "max_bars_1h" not in config:
+            raise ValueError(f"TIME_STOP missing required key max_bars_1h in {list(config.keys())}")
+
+        self.max_bars_1h = int(config["max_bars_1h"])
+        self.max_bars_4h = int(config.get("max_bars_4h", 42))
+        self.max_bars_1d = int(config.get("max_bars_1d", 10))
         self.performance_threshold = config.get('performance_threshold', 0.1)  # 10% gain to justify time
         self.time_decay_start = config.get('time_decay_start', 0.7)  # Start decay at 70% of max time
+
+        # STEP 2: Echo effective config at init
+        effective_config = {
+            "max_bars_1h": self.max_bars_1h,
+            "max_bars_4h": self.max_bars_4h,
+            "max_bars_1d": self.max_bars_1d,
+            "performance_threshold": self.performance_threshold,
+            "time_decay_start": self.time_decay_start
+        }
+        logging.info("EXIT_EVAL_APPLIED time_stop=%s", effective_config)
 
     def evaluate(self, symbol: str, position_data: Dict[str, Any],
                  current_bar: pd.Timestamp) -> Optional[ExitSignal]:
@@ -510,6 +593,18 @@ class TimeStopEvaluator:
                 performance_vs_time=current_pnl_pct / time_ratio if time_ratio > 0 else 0
             )
 
+            # STEP 2: Attach effective parameters to signal for irrefutable tracing
+            effective_params = {
+                "max_bars_1h": self.max_bars_1h,
+                "max_bars_4h": self.max_bars_4h,
+                "max_bars_1d": self.max_bars_1d,
+                "performance_threshold": self.performance_threshold,
+                "time_decay_start": self.time_decay_start,
+                "bars_held": bars_held,
+                "limit": max_bars,
+                "tf": timeframe
+            }
+
             signal = ExitSignal(
                 timestamp=current_bar,
                 symbol=symbol,
@@ -518,7 +613,10 @@ class TimeStopEvaluator:
                 confidence=confidence,
                 urgency=urgency,
                 reasons=[reason],
-                context={'time_stop': context.__dict__}
+                context={
+                    'time_stop': context.__dict__,
+                    'effective_params': effective_params  # STEP 2: Irrefutable parameter tracing
+                }
             )
 
             if action == ExitAction.PARTIAL_EXIT:

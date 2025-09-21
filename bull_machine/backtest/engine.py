@@ -13,17 +13,28 @@ class BacktestEngine:
         self.portfolio = portfolio
         self.exit_evaluator = exit_evaluator
 
-        # Initialize exit evaluator if config provided
-        if not self.exit_evaluator and 'exit_signals' in cfg:
+        # Store config for later evaluator initialization
+        self._init_cfg = cfg
+
+    def run(self, strategy_fn: Callable, symbols: List[str], tfs: List[str], out_dir: str = "out") -> dict:
+        # DEBUG: Check initialization conditions
+        print(f"🔧 DEBUG: exit_evaluator={self.exit_evaluator}, exit_signals_in_cfg={'exit_signals' in self._init_cfg}")
+        if 'exit_signals' in self._init_cfg:
+            print(f"🔧 DEBUG: exit_signals.enabled={self._init_cfg['exit_signals'].get('enabled')}")
+
+        # Initialize exit evaluator with out_dir now that we have it
+        if not self.exit_evaluator and 'exit_signals' in self._init_cfg:
             try:
                 from bull_machine.strategy.exits import ExitSignalEvaluator
-                self.exit_evaluator = ExitSignalEvaluator(cfg['exit_signals'])
+                print(f"🔧 DEBUG: Creating ExitSignalEvaluator with out_dir={out_dir}")
+                self.exit_evaluator = ExitSignalEvaluator(self._init_cfg['exit_signals'], out_dir)
+                print(f"🔧 DEBUG: ExitSignalEvaluator created successfully: {self.exit_evaluator}")
                 logging.info("[ENGINE] Exit signal evaluator initialized from config")
-            except ImportError as e:
+            except Exception as e:
+                print(f"🔧 DEBUG: Exception creating ExitSignalEvaluator: {e}")
                 logging.warning(f"[ENGINE] Could not initialize exit evaluator: {e}")
                 self.exit_evaluator = None
 
-    def run(self, strategy_fn: Callable, symbols: List[str], tfs: List[str], out_dir: str = "out") -> dict:
         trades = []
         equity_rows = []
         lookback = self.cfg.get('engine',{}).get('lookback_bars', 250)

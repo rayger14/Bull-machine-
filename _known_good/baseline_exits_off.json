@@ -1,5 +1,5 @@
 {
-  "run_id": "validation_conservative_10k",
+  "run_id": "baseline_exits_off",
   "data": {
     "sources": {
       "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"
@@ -21,12 +21,12 @@
     "partial_fill": true
   },
   "portfolio": {
-    "starting_cash": 10000,
+    "starting_cash": 100000,
     "exposure_cap_pct": 0.60,
     "max_positions": 4
   },
   "engine": {
-    "lookback_bars": 250,
+    "lookback_bars": 50,
     "seed": 42
   },
   "strategy": {
@@ -40,27 +40,13 @@
   },
   "exit_signals": {
     "enabled": false,
-    "enabled_exits": ["choch_against", "momentum_fade", "time_stop"],
-    "emit_exit_edge_logs": true,
-    "choch_against": {
-      "swing_lookback": 3,
-      "bars_confirm": 2,
-      "min_break_strength": 0.05
-    },
-    "momentum_fade": {
-      "lookback": 6,
-      "drop_pct": 0.20,
-      "min_bars_in_pos": 4
-    },
-    "time_stop": {
-      "max_bars_1h": 24,
-      "max_bars_4h": 8,
-      "max_bars_1d": 4
-    }
+    "enabled_exits": [],
+    "emit_exit_edge_logs": false,
+    "emit_exit_debug": false
   },
   "logging": {
     "level": "INFO",
     "emit_fusion_debug": false,
-    "emit_exit_debug": true
+    "emit_exit_debug": false
   }
 }
