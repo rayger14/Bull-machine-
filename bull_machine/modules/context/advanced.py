@@ -84,11 +84,66 @@ class AdvancedContextAnalyzer:
 
     def analyze(self, df_or_series: Any, config: Optional[Dict] = None) -> Dict[str, Any]:
         """
+        Enhanced context analysis with quality scoring.
         Returns:
-          { "score": float, "risk_off": bool, "notes":[...] }
-        TODO: macro pulse/SMT hooks; keep light until external feeds exist.
+          { "score": float, "quality": float, "bias": str, "risk_off": bool, "notes":[...] }
         """
-        return {"score": 0.0, "risk_off": False, "notes": ["context.advanced scaffold"]}
+        try:
+            # Handle different input types
+            if hasattr(df_or_series, 'bars'):
+                bars = df_or_series.bars
+                if len(bars) < 5:
+                    return self._neutral_result("insufficient bars")
+
+                closes = [bar.close for bar in bars[-5:]]
+                volumes = [getattr(bar, 'volume', 0) for bar in bars[-5:]]
+            else:
+                return self._neutral_result("unsupported format")
+
+            # Simple context analysis: recent trend strength
+            price_change = (closes[-1] - closes[0]) / max(closes[0], 1e-6)
+            avg_volume = sum(volumes) / len(volumes) if volumes else 1
+
+            # Determine market context
+            if abs(price_change) > 0.02:  # 2% move
+                if price_change > 0:
+                    bias = "long"
+                    score = 0.5
+                else:
+                    bias = "short"
+                    score = 0.5
+                risk_off = False
+            else:
+                # Low volatility/consolidation
+                bias = "neutral"
+                score = 0.3
+                risk_off = avg_volume < sum(volumes[-2:]) / 2  # Declining volume
+
+            # Quality based on data availability and consistency
+            data_quality = min(1.0, len(closes) / 5.0)
+            trend_quality = min(1.0, abs(price_change) * 25)  # Higher quality with clear trends
+            quality = (data_quality + trend_quality) / 2.0
+
+            return {
+                "score": min(1.0, max(0.0, score)),
+                "quality": min(1.0, max(0.0, quality)),
+                "bias": bias,
+                "risk_off": risk_off,
+                "notes": [f"price_change: {price_change:.3f}", f"quality: {quality:.2f}"]
+            }
+
+        except Exception as e:
+            return self._neutral_result(f"analysis error: {str(e)}")
+
+    def _neutral_result(self, note: str) -> Dict[str, Any]:
+        """Return neutral context result."""
+        return {
+            "score": 0.0,
+            "quality": 0.0,
+            "bias": "neutral",
+            "risk_off": False,
+            "notes": [note]
+        }
 
 # Backward compatibility function
 def analyze(df_or_series: Any, config: Optional[Dict] = None) -> Dict[str, Any]:

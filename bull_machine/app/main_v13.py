@@ -315,7 +315,7 @@ def run_bull_machine_v1_3(csv_file: str,
 
         # Run analyses
         wyckoff_result = wyckoff_analyzer.analyze(series_ltf)
-        liquidity_result = liquidity_analyzer.analyze(series_ltf, wyckoff_result)
+        liquidity_result = liquidity_analyzer.analyze(series_ltf, wyckoff_result.bias)
         structure_result = structure_analyzer.analyze(series_ltf, wyckoff_result)
         momentum_result = momentum_analyzer.analyze(series_ltf, wyckoff_result)
         volume_result = volume_analyzer.analyze(series_ltf, wyckoff_result)

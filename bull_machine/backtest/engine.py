@@ -63,6 +63,9 @@ class BacktestEngine:
 
                 signal_count = 0
                 for i in range(lookback, len(df_tf)):
+                    # Update position aging for all positions at start of each bar
+                    self.broker.update_position_aging(current_bar_idx=i, timeframe=tf)
+
                     # 🚀 PERFORMANCE FIX 3: Pass index instead of window copy
                     bar = df_tf.iloc[i-1]
                     signal = strategy_fn(sym, tf, df_tf, i)  # Pass (df, index) not window
@@ -104,14 +107,22 @@ class BacktestEngine:
                     if not signal:
                         continue
                     action = signal.get('action','flat')
+                    confidence = signal.get('confidence', 0.0)
+
+                    logging.info(f"ENGINE_RECV side={action} conf={confidence:.3f} sym={sym}")
 
                     if action in ('long','short'):
-                        # Check exposure limits before opening position
-                        risk_amount = signal.get('size', 1.0) * bar['close']  # Rough estimate
+                        # Check exposure limits using proper risk calculation
                         current_equity = self.portfolio.equity()
+                        risk_plan = signal.get('risk_plan')
+                        base_risk_pct = self.cfg.get('risk', {}).get('base_risk_pct', 0.01)
 
-                        if self.portfolio.can_add(action, risk_amount, current_equity):
+                        can_add_result, reason = self.portfolio.can_add(action, risk_plan, current_equity, base_risk_pct)
+
+                        if can_add_result:
                             risk_plan = signal.get('risk_plan')
+                            stop_price = risk_plan.get('stop_price', 0.0) if risk_plan else 0.0
+                            logging.info(f"PRE_TRADE symbol={sym} side={action} price={bar['close']:.4f} stop={stop_price:.4f} risk%={base_risk_pct:.4f}")
                             logging.info(f"[ENGINE] Opening {action} position for {sym} @ {bar['close']:.4f}, size={signal.get('size',1.0)}")
                             fill = self.broker.submit(
                                 ts=bar.name, symbol=sym, side=action,
@@ -129,7 +140,8 @@ class BacktestEngine:
                             })
                             logging.info(f"[ENGINE] Trade executed: {fill}")
                         else:
-                            logging.warning(f"[ENGINE] Trade rejected due to risk limits: {action} {sym} @ {bar['close']:.4f}")
+                            logging.info(f"PRE_TRADE_REJECT reason={reason}")
+                            logging.warning(f"[ENGINE] Trade rejected: {action} {sym} @ {bar['close']:.4f} - {reason}")
 
                     elif action == 'exit':
                         fill = self.broker.close(ts=bar.name, symbol=sym, price=bar['close'])
@@ -153,6 +165,11 @@ class BacktestEngine:
         metrics.update(trade_metrics(trades_df if not trades_df.empty else pd.DataFrame(columns=['action','pnl'])))
         metrics.update(equity_metrics(eq_df if not eq_df.empty else pd.DataFrame(columns=['equity'])))
         artifacts = write_report(self.cfg.get('run_id','v1_4_demo'), self.cfg, metrics, trades_df, eq_df, out_dir)
+
+        # Save exit counts telemetry if exit evaluator exists
+        if self.exit_evaluator:
+            self.exit_evaluator.save_exit_counts(out_dir)
+
         return {"metrics": metrics, "artifacts": artifacts}
 
     def _evaluate_exit_signals(self, symbol: str, cached_frames: Dict, current_bar) -> Optional[object]:
@@ -184,7 +201,6 @@ class BacktestEngine:
                 return None
 
             # Update position data with current market info
-            position_data['entry_time'] = current_bar.name  # Approximate for now
             position_data['pnl_pct'] = self._calculate_current_pnl_pct(
                 position_data, current_bar['close']
             )

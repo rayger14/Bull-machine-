@@ -84,11 +84,84 @@ class AdvancedMomentumAnalyzer:
 
     def analyze(self, df_or_series: Any, config: Optional[Dict] = None) -> Dict[str, Any]:
         """
+        Enhanced momentum analysis with quality scoring.
         Returns:
-          { "score": float, "shock": bool, "notes":[...] }
-        TODO: displacement, reluctant vs aggressive, volatility shocks.
+          { "score": float, "quality": float, "direction": str, "shock": bool, "notes":[...] }
         """
-        return {"score": 0.0, "shock": False, "notes": ["momentum.advanced scaffold"]}
+        try:
+            # Handle different input types
+            if hasattr(df_or_series, 'bars'):
+                bars = df_or_series.bars
+                if len(bars) < 10:
+                    return self._neutral_result("insufficient bars")
+
+                closes = [bar.close for bar in bars[-10:]]
+                highs = [bar.high for bar in bars[-10:]]
+                lows = [bar.low for bar in bars[-10:]]
+                volumes = [getattr(bar, 'volume', 0) for bar in bars[-10:]]
+            else:
+                return self._neutral_result("unsupported format")
+
+            # Calculate momentum indicators
+            current_close = closes[-1]
+            prev_close = closes[-2] if len(closes) >= 2 else current_close
+
+            # Simple momentum: recent price change
+            momentum_change = (current_close - closes[0]) / max(closes[0], 1e-6)
+
+            # Calculate displacement quality (large moves vs churn)
+            recent_range = max(highs[-5:]) - min(lows[-5:])
+            total_range = max(highs) - min(lows)
+            displacement_ratio = recent_range / max(total_range, 1e-6)
+
+            # Volume confirmation
+            avg_volume = sum(volumes) / len(volumes) if volumes else 1
+            recent_volume = volumes[-1] if volumes else 1
+            volume_ratio = recent_volume / max(avg_volume, 1e-6)
+
+            # Determine direction and score
+            if abs(momentum_change) < 0.005:  # Less than 0.5% change
+                direction = "neutral"
+                score = 0.1
+            elif momentum_change > 0:
+                direction = "long"
+                score = min(0.8, abs(momentum_change) * 20)  # Scale momentum
+            else:
+                direction = "short"
+                score = min(0.8, abs(momentum_change) * 20)
+
+            # Boost score with volume confirmation
+            if volume_ratio > 1.2:  # Above average volume
+                score *= 1.2
+
+            # Calculate quality based on displacement vs churn
+            quality = displacement_ratio * 0.6 + min(1.0, volume_ratio) * 0.4
+
+            # Check for volatility shock
+            shock = displacement_ratio > 0.8 and volume_ratio > 2.0
+
+            return {
+                "score": min(1.0, max(0.0, score)),
+                "quality": min(1.0, max(0.0, quality)),
+                "direction": direction,
+                "shock": shock,
+                "break_strength": displacement_ratio,
+                "notes": [f"momentum: {momentum_change:.3f}", f"vol_ratio: {volume_ratio:.2f}"]
+            }
+
+        except Exception as e:
+            return self._neutral_result(f"analysis error: {str(e)}")
+
+    def _neutral_result(self, note: str) -> Dict[str, Any]:
+        """Return neutral momentum result."""
+        return {
+            "score": 0.0,
+            "quality": 0.0,
+            "direction": "neutral",
+            "shock": False,
+            "break_strength": 0.0,
+            "notes": [note]
+        }
 
 # Backward compatibility function
 def analyze(df_or_series: Any, config: Optional[Dict] = None) -> Dict[str, Any]:

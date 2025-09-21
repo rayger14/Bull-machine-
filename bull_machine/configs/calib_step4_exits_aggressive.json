@@ -1,0 +1,101 @@
+{
+  "run_id": "calib_step4_exits_aggressive",
+  "data": {
+    "sources": {
+      "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv",
+      "ETHUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 60_2f4ab.csv"
+    },
+    "timeframes": [
+      "1H"
+    ]
+  },
+  "broker": {
+    "fee_bps": 10,
+    "slippage_bps": 5,
+    "spread_bps": 2,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 100000,
+    "exposure_cap_pct": 0.6,
+    "max_positions": 8
+  },
+  "engine": {
+    "lookback_bars": 100,
+    "seed": 42
+  },
+  "strategy": {
+    "version": "v1.4",
+    "config": "bull_machine/configs/diagnostic_v14_step4_config.json"
+  },
+  "risk": {
+    "base_risk_pct": 0.008,
+    "max_risk_per_trade": 0.02,
+    "min_stop_pct": 0.0008,
+    "tp_ladder": {
+      "tp1": {
+        "r_multiple": 1.0,
+        "size_pct": 33,
+        "action": "move_stop_to_breakeven"
+      },
+      "tp2": {
+        "r_multiple": 2.0,
+        "size_pct": 33,
+        "action": "trail_stop"
+      },
+      "tp3": {
+        "r_multiple": 3.0,
+        "size_pct": 34,
+        "action": "hold"
+      }
+    }
+  },
+  "exit_signals": {
+    "enabled_exits": [
+      "choch_against",
+      "momentum_fade",
+      "time_stop"
+    ],
+    "priority_order": [
+      "choch_against",
+      "momentum_fade",
+      "time_stop"
+    ],
+    "min_confidence": 0.3,
+    "choch_against": {
+      "enabled": true,
+      "ltf_bars": 1,
+      "htf_bars": 1
+    },
+    "momentum_fade": {
+      "enabled": true,
+      "lookback": 3,
+      "drop_pct": 0.15,
+      "partial_pct": 0.5
+    },
+    "time_stop": {
+      "enabled": true,
+      "max_bars_1h": 10,
+      "max_bars_4h": 2,
+      "max_bars_1d": 1
+    },
+    "safety": {
+      "exit_rate_cap": 0.8,
+      "min_hold_bars": 1
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "emit_fusion_debug": true,
+    "emit_exit_debug": true
+  },
+  "meta": {
+    "description": "Step 4: Aggressive exits test to confirm exit system works",
+    "notes": [
+      "Very aggressive CHoCH: 1-bar swings",
+      "Aggressive momentum fade: 3-bar lookback, 15% drop",
+      "Short time stop: 10 bars maximum hold",
+      "Test to confirm exits can trigger"
+    ]
+  }
+}

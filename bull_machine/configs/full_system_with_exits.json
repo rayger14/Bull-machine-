@@ -15,7 +15,8 @@
   },
   "portfolio": {
     "starting_cash": 100000,
-    "exposure_cap_pct": 0.8
+    "exposure_cap_pct": 0.8,
+    "max_positions": 16
   },
   "engine": {
     "lookback_bars": 100,

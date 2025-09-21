@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 from typing import Dict, Any, Optional, List
 import logging
+import json
+from pathlib import Path
 
 from .types import ExitSignal, ExitEvaluationResult
 from .rules import CHoCHAgainstDetector, MomentumFadeDetector, TimeStopEvaluator
@@ -45,6 +47,14 @@ class ExitSignalEvaluator:
             'choch_against', 'momentum_fade', 'time_stop'
         ])
 
+        # Exit tracking for telemetry
+        self.exit_counts = {
+            'choch_against': 0,
+            'momentum_fade': 0,
+            'time_stop': 0,
+            'none': 0
+        }
+
         logging.info(f"ExitSignalEvaluator initialized with exits: {self.enabled_exits}")
 
     def evaluate_exits(self, symbol: str, position_data: Dict[str, Any],
@@ -65,36 +75,51 @@ class ExitSignalEvaluator:
         result = ExitEvaluationResult()
         position_bias = position_data.get('bias', 'long')
 
+        # Track signals for telemetry
+        choch_sig = None
+        mom_sig = None
+        time_sig = None
+
         try:
             # 1. CHoCH-Against Detection
             if 'choch_against' in self.enabled_exits:
-                choch_signal = self.choch_detector.evaluate(
+                choch_sig = self.choch_detector.evaluate(
                     symbol, position_bias, mtf_data, current_bar
                 )
-                if choch_signal and choch_signal.confidence >= self.min_confidence:
-                    result.add_signal(choch_signal)
-                    logging.debug(f"CHoCH-Against signal: {choch_signal.confidence:.2f}")
+                if choch_sig and choch_sig.confidence >= self.min_confidence:
+                    result.add_signal(choch_sig)
+                    logging.debug(f"CHoCH-Against signal: {choch_sig.confidence:.2f}")
 
             # 2. Momentum Fade Detection
             if 'momentum_fade' in self.enabled_exits:
-                momentum_signal = self.momentum_detector.evaluate(
+                mom_sig = self.momentum_detector.evaluate(
                     symbol, position_bias, mtf_data, current_bar
                 )
-                if momentum_signal and momentum_signal.confidence >= self.min_confidence:
-                    result.add_signal(momentum_signal)
-                    logging.debug(f"Momentum fade signal: {momentum_signal.confidence:.2f}")
+                if mom_sig and mom_sig.confidence >= self.min_confidence:
+                    result.add_signal(mom_sig)
+                    logging.debug(f"Momentum fade signal: {mom_sig.confidence:.2f}")
 
             # 3. Time Stop Evaluation
             if 'time_stop' in self.enabled_exits:
-                time_signal = self.time_evaluator.evaluate(
+                time_sig = self.time_evaluator.evaluate(
                     symbol, position_data, current_bar
                 )
-                if time_signal and time_signal.confidence >= self.min_confidence:
-                    result.add_signal(time_signal)
-                    logging.debug(f"Time stop signal: {time_signal.confidence:.2f}")
+                if time_sig and time_sig.confidence >= self.min_confidence:
+                    result.add_signal(time_sig)
+                    logging.debug(f"Time stop signal: {time_sig.confidence:.2f}")
 
         except Exception as e:
             logging.error(f"Exit evaluation error for {symbol}: {e}")
+
+        # EXIT_SCAN telemetry log
+        chosen = self.get_action_recommendation(result) if result.has_signals() else None
+        logging.debug(
+            f"[EXIT_SCAN] sym={symbol} bar={current_bar} side={position_bias} "
+            f"choch={choch_sig.exit_type.value if choch_sig else '-'} "
+            f"mom={mom_sig.exit_type.value if mom_sig else '-'} "
+            f"time={time_sig.exit_type.value if time_sig else '-'} -> "
+            f"chosen={chosen.exit_type.value if chosen else '-'}"
+        )
 
         # Log results
         if result.has_signals():
@@ -102,6 +127,7 @@ class ExitSignalEvaluator:
                         f"max confidence: {result.max_confidence:.2f}")
         else:
             logging.debug(f"No exit signals for {symbol}")
+            self.exit_counts['none'] += 1
 
         return result
 
@@ -124,6 +150,11 @@ class ExitSignalEvaluator:
 
         if prioritized_signals:
             recommended = prioritized_signals[0]
+            # Track exit counts for telemetry
+            exit_type = recommended.exit_type.value
+            if exit_type in self.exit_counts:
+                self.exit_counts[exit_type] += 1
+
             logging.info(f"Recommended exit: {recommended.exit_type.value} "
                         f"(confidence: {recommended.confidence:.2f}, "
                         f"urgency: {recommended.urgency:.2f})")
@@ -156,6 +187,16 @@ class ExitSignalEvaluator:
                    signal.urgency * 0.2)
 
         return sorted(signals, key=signal_priority_score, reverse=True)
+
+    def save_exit_counts(self, output_dir: str):
+        """Save exit counts telemetry to JSON file."""
+        output_path = Path(output_dir) / "exit_counts.json"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(output_path, 'w') as f:
+            json.dump(self.exit_counts, f, indent=2)
+
+        logging.info(f"Exit counts saved to {output_path}: {self.exit_counts}")
 
 
 class MTFDesyncEvaluator:

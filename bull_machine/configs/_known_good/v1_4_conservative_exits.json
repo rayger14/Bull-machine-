@@ -1,0 +1,68 @@
+{
+  "run_id": "v1_4_conservative_exits",
+  "symbols": ["BTCUSD_1H"],
+  "timeframes": ["1H"],
+  "start_date": "2025-06-13",
+  "end_date": "2025-09-18",
+  "strategy": {
+    "enter_threshold": 0.30,
+    "hold_threshold": 0.27,
+    "wyckoff": {
+      "weight": 0.30,
+      "quality_floor": 0.40
+    },
+    "liquidity": {
+      "weight": 0.25,
+      "quality_floor": 0.40
+    },
+    "structure": {
+      "weight": 0.20,
+      "quality_floor": 0.45
+    },
+    "momentum": {
+      "weight": 0.05,
+      "quality_floor": 0.15
+    },
+    "volume": {
+      "weight": 0.05,
+      "quality_floor": 0.15
+    },
+    "context": {
+      "weight": 0.03
+    },
+    "fusion": {
+      "exceptional_confluence_threshold": 1.1,
+      "triad_rule": {
+        "enabled": true,
+        "required_core_layers": 2
+      }
+    }
+  },
+  "exit_signals": {
+    "enabled_exits": ["choch_against", "momentum_fade", "time_stop"],
+    "choch_against": {
+      "swing_lookback": 3,
+      "bars_confirm": 2,
+      "min_break_strength": 0.05
+    },
+    "momentum_fade": {
+      "lookback": 6,
+      "drop_pct": 0.20,
+      "min_bars_in_pos": 4
+    },
+    "time_stop": {
+      "max_bars_1h": 24,
+      "max_bars_4h": 8,
+      "max_bars_1d": 4
+    }
+  },
+  "risk": {
+    "base_risk_pct": 0.005,
+    "max_risk_per_trade": 0.02,
+    "max_gross_exposure": 0.6,
+    "max_concurrent_positions": 8
+  },
+  "engine": {
+    "lookback_bars": 250
+  }
+}

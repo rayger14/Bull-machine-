@@ -21,6 +21,13 @@ class Position:
     be_moved: bool = False      # breakeven moved flag
     trail_active: bool = False  # trailing stop active
 
+    # Position aging fields (immutable after first entry)
+    opened_at_ts: Optional[int] = None      # FIRST fill timestamp (epoch seconds) - never changes
+    opened_at_idx: Optional[int] = None     # FIRST fill bar index - never changes
+    timeframe: str = "1H"                   # trading timeframe
+    bars_held: int = 0                      # current age in bars (updated per bar)
+    last_update_idx: int = 0                # bookkeeping for last update
+
 class PaperBroker:
     def __init__(self, fee_bps=2, slippage_bps=3, spread_bps=1, partial_fill=True):
         self.fee_bps = fee_bps
@@ -86,16 +93,92 @@ class PaperBroker:
                 )
             ]
 
-        # Create new position with guaranteed risk management
-        self.positions[symbol] = Position(
-            side=side,
-            size=size,
-            entry=px,
-            stop=stop_price,
-            tp_levels=tp_levels
-        )
+        # Handle position creation/scaling with aging support
+        existing_pos = self.positions.get(symbol)
+
+        if existing_pos is None:
+            # NEW position - set immutable open markers
+            self.positions[symbol] = Position(
+                side=side,
+                size=size,
+                entry=px,
+                stop=stop_price,
+                tp_levels=tp_levels,
+                opened_at_ts=ts,
+                opened_at_idx=getattr(self, '_current_bar_idx', 0),  # Will be set by engine
+                timeframe=getattr(self, '_current_timeframe', '1H'),
+                bars_held=0,
+                last_update_idx=getattr(self, '_current_bar_idx', 0)
+            )
+        else:
+            # SCALE-IN to existing position - preserve opened_at_* fields
+            if existing_pos.side == side:
+                # Same side scale-in: weighted average price, sum size
+                new_size = existing_pos.size + size
+                if new_size > 0:
+                    existing_pos.entry = (existing_pos.entry * existing_pos.size + px * size) / new_size
+                existing_pos.size = new_size
+                existing_pos.stop = stop_price  # Update stop to new level
+                existing_pos.tp_levels = tp_levels  # Update TP levels
+                existing_pos.last_update_idx = getattr(self, '_current_bar_idx', 0)
+                # KEEP opened_at_ts, opened_at_idx unchanged!
+            else:
+                # Different side - this should have been handled by reversal logic above
+                logging.warning(f"Unexpected different side entry for {symbol}: {existing_pos.side} -> {side}")
+                # Create new position anyway
+                self.positions[symbol] = Position(
+                    side=side,
+                    size=size,
+                    entry=px,
+                    stop=stop_price,
+                    tp_levels=tp_levels,
+                    opened_at_ts=ts,
+                    opened_at_idx=getattr(self, '_current_bar_idx', 0),
+                    timeframe=getattr(self, '_current_timeframe', '1H'),
+                    bars_held=0,
+                    last_update_idx=getattr(self, '_current_bar_idx', 0)
+                )
+
+        import logging
+        import json
+
+        # Basic entry log
+        logging.info(f"BROKER_ENTER_OK symbol={symbol} side={side} size={size:.4f} price={px:.4f}")
+
+        # Comprehensive entry log with structured data
+        pos = self.positions[symbol]  # Position was just created/updated
+        position_type = "NEW" if existing_pos is None else "SCALE_IN"
+        entry_log = {
+            "event": "ENTRY",
+            "timestamp": ts.isoformat() if hasattr(ts, 'isoformat') else str(ts),
+            "symbol": symbol,
+            "side": side,
+            "size": size,
+            "price": px,
+            "fee": fee,
+            "position_type": position_type,
+            "position_size": pos.size,
+            "position_entry": pos.entry,
+            "opened_at_ts": pos.opened_at_ts.isoformat() if hasattr(pos.opened_at_ts, 'isoformat') else str(pos.opened_at_ts) if pos.opened_at_ts is not None else None,
+            "opened_at_idx": pos.opened_at_idx,
+            "bars_held": pos.bars_held,
+            "timeframe": pos.timeframe
+        }
+        logging.info(f"ENTRY_DETAILED: {json.dumps(entry_log)}")
 
         return {"ts": ts, "symbol": symbol, "side": side, "price": px, "size_filled": size, "fee": fee, "slippage": 0.0}
+
+    def update_position_aging(self, current_bar_idx: int, timeframe: str = "1H"):
+        """Update bars_held for all positions based on current bar index."""
+        self._current_bar_idx = current_bar_idx
+        self._current_timeframe = timeframe
+
+        for symbol, pos in self.positions.items():
+            if pos.opened_at_idx is not None:
+                pos.bars_held = max(0, current_bar_idx - pos.opened_at_idx)
+                pos.last_update_idx = current_bar_idx
+                logging.debug(f"[AGING] {symbol}: bars_held={pos.bars_held} "
+                             f"(current_idx={current_bar_idx} - opened_at={pos.opened_at_idx})")
 
     def close(self, ts, symbol, price=None) -> Dict[str, Any]:
         """Manually close position"""
@@ -312,6 +395,40 @@ class PaperBroker:
                else (pos.entry - fill_price) * close_size)
         self.realized_pnl += pnl - fee
 
+        # Calculate R multiple and other metrics
+        r_multiple = None
+        if pos.stop:
+            risk_per_unit = abs(pos.entry - pos.stop)
+            if risk_per_unit > 0:
+                r_multiple = pnl / (risk_per_unit * close_size)
+
+        # Comprehensive exit log with structured data
+        import logging
+        import json
+
+        exit_log = {
+            "event": "EXIT",
+            "timestamp": str(ts),
+            "symbol": symbol,
+            "side": pos.side,
+            "exit_type": exit_signal.exit_type.value,
+            "exit_size": close_size,
+            "exit_percentage": exit_percentage,
+            "exit_price": fill_price,
+            "entry_price": pos.entry,
+            "pnl": pnl,
+            "r_multiple": r_multiple,
+            "fee": fee,
+            "confidence": exit_signal.confidence,
+            "urgency": exit_signal.urgency,
+            "position_duration_bars": pos.bars_held,
+            "timeframe": pos.timeframe,
+            "opened_at_ts": pos.opened_at_ts.isoformat() if hasattr(pos.opened_at_ts, 'isoformat') else str(pos.opened_at_ts) if pos.opened_at_ts is not None else None,
+            "opened_at_idx": pos.opened_at_idx,
+            "realized_pnl_total": self.realized_pnl
+        }
+        logging.info(f"EXIT_DETAILED: {json.dumps(exit_log)}")
+
         return {
             "ts": ts, "symbol": symbol,
             "side": f"exit_{exit_signal.exit_type.value}",
@@ -353,10 +470,16 @@ class PaperBroker:
             'symbol': symbol,
             'bias': pos.side,
             'size': pos.size,
-            'entry_time': pd.Timestamp.now(),  # Would need to track actual entry time
+            'entry_time': pos.opened_at_ts.isoformat() if hasattr(pos.opened_at_ts, 'isoformat') else str(pos.opened_at_ts) if pos.opened_at_ts is not None else None,  # Use actual opened timestamp
             'entry_price': pos.entry,
             'stop_price': pos.stop,
             'pnl_pct': current_pnl_pct,
             'be_moved': pos.be_moved,
-            'trail_active': pos.trail_active
+            'trail_active': pos.trail_active,
+            # Include new aging fields
+            'bars_held': pos.bars_held,
+            'timeframe': pos.timeframe,
+            'opened_at_ts': pos.opened_at_ts,
+            'opened_at_idx': pos.opened_at_idx,
+            'last_update_idx': pos.last_update_idx
         }

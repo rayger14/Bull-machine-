@@ -1,0 +1,22 @@
+{
+  "cfg_hash": "6c8bf5d1b83e085a",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": -1309.393954097312,
+    "avg_win": 596.5520963744868,
+    "cagr": NaN,
+    "entries": 2002,
+    "expectancy": -810.9157562816108,
+    "max_dd": 101044.32992632489,
+    "sharpe": 0.28192708320591586,
+    "trades": 65,
+    "win_rate": 0.26153846153846155
+  },
+  "notes": [
+    "Wyckoff floor: 0.30, Liquidity: 0.25, Structure: 0.25",
+    "Test at sweet spot threshold from Step 1",
+    "Monitor trade count vs selectivity"
+  ],
+  "run_id": "threshold_calibration_step2_quality_floors",
+  "seed": 42
+}

@@ -7,7 +7,7 @@ Claude Code should fill in TODOs to make them production-ready.
 
 from typing import Any, Dict, List, Optional
 try:
-    from bull_machine.core.types import WyckoffResult, LiquidityResult, Signal, BiasCtx, RangeCtx, SyncReport, Series
+    from bull_machine.core.types import WyckoffResult, LiquidityResult, Signal, BiasCtx, RangeCtx, SyncReport, Series, RiskPlan
 except Exception:
     from dataclasses import dataclass, field
     @dataclass
@@ -72,6 +72,17 @@ except Exception:
         bars: List[Any] = field(default_factory=list)
         timeframe: str = "1H"
         symbol: str = "UNKNOWN"
+    @dataclass
+    class RiskPlan:
+        entry: float = 0.0
+        stop: float = 0.0
+        size: float = 0.0
+        tp_levels: List[Dict] = field(default_factory=list)
+        rules: Dict = field(default_factory=dict)
+        risk_amount: float = 0.0
+        risk_percent: float = 0.0
+        profile: str = "standard"
+        expected_r: float = 0.0
 
 class AdvancedRiskManager:
     """
@@ -108,6 +119,25 @@ class AdvancedRiskManager:
             ],
             "rules": {"be_at": "tp1", "trail_at": "tp2", "trail_mode": "swing"}
         }
+
+    def plan_trade(self, series: Series, signal: Signal, balance: float = 10000.0) -> RiskPlan:
+        """
+        Plan trade for v1.3 pipeline. Returns RiskPlan object.
+        """
+        plan_dict = self.plan_risk(series, signal, self.config, balance)
+
+        # Convert to RiskPlan object
+        return RiskPlan(
+            entry=plan_dict["entry"],
+            stop=plan_dict["stop"],
+            size=plan_dict["size"],
+            tp_levels=plan_dict["tp_levels"],
+            rules=plan_dict["rules"],
+            risk_amount=balance * 0.01,
+            risk_percent=1.0,
+            profile="standard",
+            expected_r=2.0
+        )
 
 # Backward compatibility function
 def plan_risk(series: Series, signal: Signal, config: Optional[Dict] = None, balance: float = 10000.0) -> Dict[str, Any]:

@@ -424,9 +424,14 @@ class TimeStopEvaluator:
     """
 
     def __init__(self, config: Dict[str, Any]):
-        self.max_bars_1h = config.get('max_bars_1h', 168)  # 1 week default
-        self.max_bars_4h = config.get('max_bars_4h', 42)   # 1 week default
-        self.max_bars_1d = config.get('max_bars_1d', 10)   # 10 days default
+        # Store config for later access
+        self.config = config
+
+        # Accept both the new per-TF keys and legacy bars_max
+        legacy = config.get("bars_max")
+        self.max_bars_1h = int(config.get("max_bars_1h", legacy if legacy is not None else 168))
+        self.max_bars_4h = int(config.get("max_bars_4h", legacy//4 if legacy else 42))
+        self.max_bars_1d = int(config.get("max_bars_1d", legacy//24 if legacy else 10))
         self.performance_threshold = config.get('performance_threshold', 0.1)  # 10% gain to justify time
         self.time_decay_start = config.get('time_decay_start', 0.7)  # Start decay at 70% of max time
 
@@ -444,29 +449,42 @@ class TimeStopEvaluator:
             ExitSignal if time stop triggered, None otherwise
         """
 
-        entry_time = position_data.get('entry_time')
+        # Use new position aging system
+        bars_held = position_data.get('bars_held', 0)
+        timeframe = position_data.get('timeframe', '1H')
         current_pnl_pct = position_data.get('pnl_pct', 0.0)
 
-        if not entry_time:
-            return None
+        # Debug logging for time stop evaluation
+        logging.info(f"[TIME_STOP_DEBUG] sym={symbol} bar={current_bar} "
+                     f"bars_held={bars_held} timeframe={timeframe} pnl_pct={current_pnl_pct}")
+
+        # Determine max bars based on timeframe (with backward compatibility)
+        tf_key_map = {
+            "1H": "max_bars_1h",
+            "4H": "max_bars_4h",
+            "1D": "max_bars_1d",
+        }
+        tf_key = tf_key_map.get(timeframe)
+
+        if tf_key and tf_key in self.config:
+            max_bars = self.config[tf_key]
+        else:
+            # Fall back to legacy bars_max or defaults
+            max_bars = self.config.get("bars_max", self.max_bars_1h)
+
+        # Calculate time decay factor using bars_held
+        time_ratio = bars_held / max_bars if max_bars > 0 else 0
+
+        logging.info(f"[TIME_STOP_DEBUG] {symbol}: bars_held={bars_held} "
+                     f"max_bars={max_bars} time_ratio={time_ratio:.3f}")
 
         try:
-            # Calculate time in position
-            time_diff = current_bar - entry_time
-            bars_in_trade = int(time_diff.total_seconds() / 3600)  # Convert to hours
-
-            # Determine max bars based on primary timeframe
-            max_bars = self.max_bars_1h  # Default to 1H
-
-            # Calculate time decay factor
-            time_ratio = bars_in_trade / max_bars
-
             if time_ratio >= 1.0:
                 # Maximum time exceeded - hard stop
                 confidence = 0.9
                 urgency = 0.9
                 action = ExitAction.FULL_EXIT
-                reason = f"Maximum hold time exceeded ({bars_in_trade}h > {max_bars}h)"
+                reason = f"Maximum hold time exceeded ({bars_held} bars > {max_bars} bars)"
 
             elif time_ratio >= self.time_decay_start:
                 # In decay zone - evaluate performance vs time
@@ -486,7 +504,7 @@ class TimeStopEvaluator:
                 return None
 
             context = TimeStopContext(
-                bars_in_trade=bars_in_trade,
+                bars_in_trade=bars_held,
                 max_bars_allowed=max_bars,
                 time_decay_factor=time_ratio,
                 performance_vs_time=current_pnl_pct / time_ratio if time_ratio > 0 else 0

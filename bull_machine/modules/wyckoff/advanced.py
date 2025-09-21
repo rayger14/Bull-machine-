@@ -83,7 +83,83 @@ class AdvancedWyckoffAnalyzer:
         self.config = config or {}
 
     def analyze(self, series: Series, state: Optional[Dict] = None) -> WyckoffResult:
-        return WyckoffResult(
+        if not series or not series.bars or len(series.bars) < 20:
+            return WyckoffResult(
+                regime="neutral",
+                phase="neutral",
+                bias="neutral",
+                phase_confidence=0.0,
+                trend_confidence=0.0,
+                range={"high": 0.0, "low": 0.0, "mid": 0.0},
+                notes=["insufficient data"]
+            )
+
+        try:
+            bars = series.bars
+            recent_bars = bars[-20:] if len(bars) >= 20 else bars
+
+            # Simple trend analysis
+            highs = [bar.high for bar in recent_bars]
+            lows = [bar.low for bar in recent_bars]
+            closes = [bar.close for bar in recent_bars]
+
+            if not highs or not lows or not closes:
+                return self._neutral_result("invalid bar data")
+
+            # Calculate trend
+            recent_high = max(highs[-10:])
+            recent_low = min(lows[-10:])
+            current_close = closes[-1]
+
+            # Simple bias logic
+            range_size = recent_high - recent_low
+            if range_size == 0:
+                return self._neutral_result("zero range")
+
+            position_in_range = (current_close - recent_low) / range_size
+
+            # Determine bias based on position in recent range
+            if position_in_range > 0.7:
+                bias = "long"
+                confidence = min(0.8, position_in_range)
+            elif position_in_range < 0.3:
+                bias = "short"
+                confidence = min(0.8, 1.0 - position_in_range)
+            else:
+                bias = "neutral"
+                confidence = 0.1
+
+            # Simple trend confirmation
+            ma_short = sum(closes[-5:]) / 5 if len(closes) >= 5 else current_close
+            ma_long = sum(closes[-10:]) / 10 if len(closes) >= 10 else current_close
+
+            trend_conf = 0.3
+            if ma_short > ma_long * 1.01:  # 1% threshold
+                trend_conf = 0.6
+            elif ma_short < ma_long * 0.99:
+                trend_conf = 0.6
+
+            # Calculate quality based on phase clarity and trend strength
+            quality = (confidence + trend_conf) / 2.0
+
+            result = WyckoffResult(
+                regime="accumulation" if bias == "long" else "distribution" if bias == "short" else "neutral",
+                phase="A" if confidence > 0.5 else "neutral",
+                bias=bias,
+                phase_confidence=confidence,
+                trend_confidence=trend_conf,
+                range={"high": recent_high, "low": recent_low, "mid": (recent_high + recent_low) / 2}
+            )
+
+            # Add quality attribute for enhanced fusion
+            result.quality = quality
+            return result
+
+        except Exception as e:
+            return self._neutral_result(f"analysis error: {str(e)}")
+
+    def _neutral_result(self, note: str) -> WyckoffResult:
+        result = WyckoffResult(
             regime="neutral",
             phase="neutral",
             bias="neutral",
@@ -91,3 +167,6 @@ class AdvancedWyckoffAnalyzer:
             trend_confidence=0.0,
             range={"high": 0.0, "low": 0.0, "mid": 0.0}
         )
+        # Add quality attribute for enhanced fusion
+        result.quality = 0.0
+        return result
