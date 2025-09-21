@@ -1,0 +1,38 @@
+{
+  "run_id": "optimized_btc_eth_backtest",
+  "data": {
+    "sources": {
+      "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv",
+      "ETHUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 60_2f4ab.csv"
+    },
+    "timeframes": ["1H"]
+  },
+  "broker": {
+    "fee_bps": 10,
+    "slippage_bps": 5,
+    "spread_bps": 2,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 100000,
+    "exposure_cap_pct": 0.5
+  },
+  "engine": {
+    "lookback_bars": 50,
+    "seed": 42
+  },
+  "strategy": {
+    "version": "optimized",
+    "config": "config/production.json"
+  },
+  "meta": {
+    "description": "High-performance optimized backtest",
+    "optimizations": [
+      "Cached resampling per (symbol, TF)",
+      "Index-based access (no window copies)",
+      "Precomputed rolling features (vectorized)",
+      "Throttled MTF context updates",
+      "Minimal logging in inner loop"
+    ]
+  }
+}

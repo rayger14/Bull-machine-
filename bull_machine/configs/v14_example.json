@@ -1,0 +1,39 @@
+{
+  "run_id": "v1_4_smoke",
+  "data": {
+    "sources": {},
+    "timeframes": [
+      "1D",
+      "4H",
+      "1H"
+    ]
+  },
+  "broker": {
+    "fee_bps": 2,
+    "slippage_bps": 3,
+    "spread_bps": 1,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 100000
+  },
+  "engine": {
+    "lookback_bars": 250,
+    "seed": 42
+  },
+  "walkforward": {
+    "enable": false,
+    "train_bars": 2000,
+    "test_bars": 500,
+    "step_bars": 250
+  },
+  "strategy": {
+    "version": "v1.3",
+    "config": "config/production.json"
+  },
+  "meta": {
+    "notes": [
+      "v1.4 scaffold release"
+    ]
+  }
+}

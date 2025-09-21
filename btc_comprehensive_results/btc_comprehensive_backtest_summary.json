@@ -1,0 +1,22 @@
+{
+  "cfg_hash": "34415c6f0869d2ff",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": -736.3347789512611,
+    "avg_win": 0.0,
+    "cagr": -0.0031254369748255906,
+    "expectancy": -736.3347789512611,
+    "max_dd": 14748.530718276408,
+    "sharpe": 0.03255137833982296,
+    "trades": 4,
+    "win_rate": 0.0
+  },
+  "notes": [
+    "Comprehensive BTC analysis with 539 bars of 4H data",
+    "Enhanced signal generation and risk management",
+    "Lower threshold for more trade opportunities",
+    "Higher position sizing for realistic results"
+  ],
+  "run_id": "btc_comprehensive_backtest",
+  "seed": 42
+}

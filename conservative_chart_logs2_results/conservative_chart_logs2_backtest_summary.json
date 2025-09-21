@@ -1,0 +1,23 @@
+{
+  "cfg_hash": "15e422bdbcf38063",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": -112.59704585527807,
+    "avg_win": 0.0,
+    "cagr": -0.026440466779193206,
+    "expectancy": -112.59704585527807,
+    "max_dd": 5683.201891769113,
+    "sharpe": 0.04506971700359023,
+    "trades": 61,
+    "win_rate": 0.0
+  },
+  "notes": [
+    "Conservative approach: Higher threshold (0.40)",
+    "Focus on BTC and ETH only",
+    "Wider TP targets for better R:R",
+    "Lower position sizing (1%)",
+    "Quality over quantity"
+  ],
+  "run_id": "conservative_chart_logs2_backtest",
+  "seed": 42
+}

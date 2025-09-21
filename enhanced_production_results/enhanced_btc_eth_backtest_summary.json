@@ -1,0 +1,22 @@
+{
+  "cfg_hash": "358e2fde5daaa24c",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": -1151.7327510477942,
+    "avg_win": 0.0,
+    "cagr": -0.6476235568794738,
+    "expectancy": -1151.7327510477942,
+    "max_dd": 27192.71400557329,
+    "sharpe": -0.2688136669281348,
+    "trades": 12,
+    "win_rate": 0.0
+  },
+  "notes": [
+    "Enhanced v1.4 with intelligent signal generation",
+    "HTF/MTF stride caching for performance",
+    "Boundary logging for analysis",
+    "Production-ready risk management"
+  ],
+  "run_id": "enhanced_btc_eth_backtest",
+  "seed": 42
+}

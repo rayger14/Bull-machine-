@@ -1,0 +1,23 @@
+{
+  "cfg_hash": "28003d155a0112a0",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": -654.3352320862167,
+    "avg_win": 490.4800432228266,
+    "cagr": -0.9072822844643382,
+    "entries": 102,
+    "expectancy": 408.707523557895,
+    "max_dd": 54567.20989811328,
+    "sharpe": -0.4295360677394278,
+    "trades": 28,
+    "win_rate": 0.9285714285714286
+  },
+  "notes": [
+    "Uses 100 lookback bars for faster execution",
+    "1% base risk per trade with 3R TP ladder",
+    "50% max exposure cap to prevent over-leverage",
+    "Multi-timeframe analysis: 1D bias + 4H structure + 1H execution"
+  ],
+  "run_id": "focused_btc_eth_backtest",
+  "seed": 42
+}

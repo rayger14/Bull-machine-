@@ -1,94 +1,170 @@
-from typing import Dict, List
-from ...core.types import Series, WyckoffResult
+
+"""Advanced module scaffolds for Bull Machine v1.2.1 / v1.3.
+
+These implement the **interfaces** expected by main_v13.py and friends.
+Claude Code should fill in TODOs to make them production-ready.
+"""
+
+from typing import Any, Dict, List, Optional
+try:
+    from bull_machine.core.types import WyckoffResult, LiquidityResult, Signal, BiasCtx, RangeCtx, SyncReport, Series
+except Exception:
+    from dataclasses import dataclass, field
+    @dataclass
+    class WyckoffResult:
+        regime: str = "neutral"
+        phase: str = "neutral"
+        bias: str = "neutral"
+        phase_confidence: float = 0.0
+        trend_confidence: float = 0.0
+        range: Optional[Dict] = None
+        notes: List[str] = field(default_factory=list)
+        @property
+        def confidence(self) -> float:
+            return (self.phase_confidence + self.trend_confidence) / 2.0
+    @dataclass
+    class LiquidityResult:
+        score: float = 0.0
+        pressure: str = "neutral"
+        fvgs: List[Dict] = field(default_factory=list)
+        order_blocks: List[Dict] = field(default_factory=list)
+        sweeps: List[Dict] = field(default_factory=list)
+        phobs: List[Dict] = field(default_factory=list)
+        metadata: Dict = field(default_factory=dict)
+    @dataclass
+    class Signal:
+        ts: int = 0
+        side: str = "neutral"
+        confidence: float = 0.0
+        reasons: List[str] = field(default_factory=list)
+        ttl_bars: int = 0
+        metadata: Dict = field(default_factory=dict)
+        mtf_sync: Optional[Any] = None
+    @dataclass
+    class BiasCtx:
+        tf: str = "1H"
+        bias: str = "neutral"
+        confirmed: bool = False
+        strength: float = 0.0
+        bars_confirmed: int = 0
+        ma_distance: float = 0.0
+        trend_quality: float = 0.0
+    @dataclass
+    class RangeCtx:
+        tf: str = "1H"
+        low: float = 0.0
+        high: float = 0.0
+        mid: float = 0.0
+    @dataclass
+    class SyncReport:
+        htf: BiasCtx = BiasCtx()
+        mtf: BiasCtx = BiasCtx()
+        ltf_bias: str = "neutral"
+        nested_ok: bool = False
+        eq_magnet: bool = False
+        desync: bool = False
+        decision: str = "raise"
+        threshold_bump: float = 0.0
+        alignment_score: float = 0.0
+        notes: List[str] = field(default_factory=list)
+    @dataclass
+    class Series:
+        bars: List[Any] = field(default_factory=list)
+        timeframe: str = "1H"
+        symbol: str = "UNKNOWN"
 
 class AdvancedMomentumAnalyzer:
-    """v1.2.1 Momentum Analyzer - Scaffolded for future implementation"""
-    def __init__(self, config: dict):
-        self.config = config
-        self.momentum_cfg = config.get('momentum', {})
-        self.rsi_period = self.momentum_cfg.get('rsi_period', 14)
+    """
+    Expected by v1.3 pipeline:
+      - analyze(series, config) -> Dict[str, Any]
+    TODO: displacement, reluctant vs aggressive, volatility shocks.
+    """
+    def __init__(self, config: Optional[Dict] = None):
+        self.config = config or {}
 
-    def _calculate_rsi(self, series: Series, period: int = None) -> float:
-        """Basic RSI calculation - simplified"""
-        if period is None:
-            period = self.rsi_period
+    def analyze(self, df_or_series: Any, config: Optional[Dict] = None) -> Dict[str, Any]:
+        """
+        Enhanced momentum analysis with quality scoring.
+        Returns:
+          { "score": float, "quality": float, "direction": str, "shock": bool, "notes":[...] }
+        """
+        try:
+            # Handle different input types
+            if hasattr(df_or_series, 'bars'):
+                bars = df_or_series.bars
+                if len(bars) < 10:
+                    return self._neutral_result("insufficient bars")
 
-        if len(series.bars) < period + 1:
-            return 0.5  # Neutral
+                closes = [bar.close for bar in bars[-10:]]
+                highs = [bar.high for bar in bars[-10:]]
+                lows = [bar.low for bar in bars[-10:]]
+                volumes = [getattr(bar, 'volume', 0) for bar in bars[-10:]]
+            else:
+                return self._neutral_result("unsupported format")
 
-        prices = [bar.close for bar in series.bars[-(period + 1):]]
-        gains, losses = [], []
+            # Calculate momentum indicators
+            current_close = closes[-1]
+            prev_close = closes[-2] if len(closes) >= 2 else current_close
 
-        for i in range(1, len(prices)):
-            change = prices[i] - prices[i-1]
-            gains.append(max(change, 0))
-            losses.append(max(-change, 0))
+            # Simple momentum: recent price change
+            momentum_change = (current_close - closes[0]) / max(closes[0], 1e-6)
 
-        if not gains or not losses:
-            return 0.5
+            # Calculate displacement quality (large moves vs churn)
+            recent_range = max(highs[-5:]) - min(lows[-5:])
+            total_range = max(highs) - min(lows)
+            displacement_ratio = recent_range / max(total_range, 1e-6)
 
-        avg_gain = sum(gains) / len(gains)
-        avg_loss = sum(losses) / len(losses)
+            # Volume confirmation
+            avg_volume = sum(volumes) / len(volumes) if volumes else 1
+            recent_volume = volumes[-1] if volumes else 1
+            volume_ratio = recent_volume / max(avg_volume, 1e-6)
 
-        if avg_loss == 0:
-            return 1.0
+            # Determine direction and score
+            if abs(momentum_change) < 0.005:  # Less than 0.5% change
+                direction = "neutral"
+                score = 0.1
+            elif momentum_change > 0:
+                direction = "long"
+                score = min(0.8, abs(momentum_change) * 20)  # Scale momentum
+            else:
+                direction = "short"
+                score = min(0.8, abs(momentum_change) * 20)
 
-        rs = avg_gain / avg_loss
-        rsi = 1 - (1 / (1 + rs))
-        return rsi
+            # Boost score with volume confirmation
+            if volume_ratio > 1.2:  # Above average volume
+                score *= 1.2
 
-    def _calculate_ema_slope(self, series: Series, period: int = 20) -> float:
-        """EMA slope calculation - simplified"""
-        if len(series.bars) < period:
-            return 0.0
+            # Calculate quality based on displacement vs churn
+            quality = displacement_ratio * 0.6 + min(1.0, volume_ratio) * 0.4
 
-        # Simple EMA approximation
-        prices = [bar.close for bar in series.bars[-period:]]
-        ema = prices[0]
-        alpha = 2.0 / (period + 1)
+            # Check for volatility shock
+            shock = displacement_ratio > 0.8 and volume_ratio > 2.0
 
-        for price in prices[1:]:
-            ema = alpha * price + (1 - alpha) * ema
+            return {
+                "score": min(1.0, max(0.0, score)),
+                "quality": min(1.0, max(0.0, quality)),
+                "direction": direction,
+                "shock": shock,
+                "break_strength": displacement_ratio,
+                "notes": [f"momentum: {momentum_change:.3f}", f"vol_ratio: {volume_ratio:.2f}"]
+            }
 
-        # Slope: compare current EMA with price from 5 bars ago
-        if len(series.bars) >= 5:
-            old_price = series.bars[-5].close
-            slope = (ema - old_price) / old_price
-            return max(min(slope * 10, 1.0), -1.0)  # Scale and bound
-        return 0.0
+        except Exception as e:
+            return self._neutral_result(f"analysis error: {str(e)}")
 
-    def _momentum_divergence(self, series: Series, wyckoff_result: WyckoffResult) -> float:
-        """Detect momentum divergence - placeholder"""
-        # Simplified: compare price direction vs momentum direction
-        rsi = self._calculate_rsi(series)
-        slope = self._calculate_ema_slope(series)
-
-        # Momentum score based on alignment
-        if wyckoff_result and wyckoff_result.bias == 'long':
-            # For long bias, want RSI > 50 and positive slope
-            score = (rsi - 0.5) * 2 + max(slope, 0)
-        elif wyckoff_result and wyckoff_result.bias == 'short':
-            # For short bias, want RSI < 50 and negative slope
-            score = (0.5 - rsi) * 2 + max(-slope, 0)
-        else:
-            score = 0.0
-
-        return max(min(score, 0.8), 0.0)
-
-    def analyze(self, series: Series, wyckoff_result: WyckoffResult) -> Dict:
-        """Main momentum analysis"""
-        rsi = self._calculate_rsi(series)
-        slope = self._calculate_ema_slope(series)
-        divergence = self._momentum_divergence(series, wyckoff_result)
-
-        # Combined momentum score
-        momentum_score = (abs(rsi - 0.5) * 2 + abs(slope) + divergence) / 3
-        momentum_score = min(momentum_score, 0.8)  # Cap for safety
-
+    def _neutral_result(self, note: str) -> Dict[str, Any]:
+        """Return neutral momentum result."""
         return {
-            'score': momentum_score,
-            'rsi': rsi,
-            'ema_slope': slope,
-            'divergence': divergence,
-            'direction': 'bullish' if slope > 0 else 'bearish'
+            "score": 0.0,
+            "quality": 0.0,
+            "direction": "neutral",
+            "shock": False,
+            "break_strength": 0.0,
+            "notes": [note]
         }
+
+# Backward compatibility function
+def analyze(df_or_series: Any, config: Optional[Dict] = None) -> Dict[str, Any]:
+    """Backward compatibility function"""
+    analyzer = AdvancedMomentumAnalyzer(config)
+    return analyzer.analyze(df_or_series, config)

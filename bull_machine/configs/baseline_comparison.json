@@ -1,0 +1,46 @@
+{
+  "run_id": "baseline_no_exit_signals",
+  "data": {
+    "sources": {
+      "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv",
+      "ETHUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 60_2f4ab.csv"
+    },
+    "timeframes": ["1H"]
+  },
+  "broker": {
+    "fee_bps": 10,
+    "slippage_bps": 5,
+    "spread_bps": 2,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 100000,
+    "exposure_cap_pct": 0.8,
+    "max_positions": 16
+  },
+  "engine": {
+    "lookback_bars": 100,
+    "seed": 42
+  },
+  "strategy": {
+    "version": "v1.4",
+    "config": "config/diagnostic_v14_config.json"
+  },
+  "risk": {
+    "base_risk_pct": 0.005,
+    "max_risk_per_trade": 0.01,
+    "tp_ladder": {
+      "tp1": {"r_multiple": 1.0, "size_pct": 33, "action": "move_stop_to_breakeven"},
+      "tp2": {"r_multiple": 2.0, "size_pct": 33, "action": "trail_stop"},
+      "tp3": {"r_multiple": 3.0, "size_pct": 34, "action": "hold"}
+    }
+  },
+  "meta": {
+    "description": "Baseline system without exit signals for comparison",
+    "notes": [
+      "Increased max_positions to 16 for fair comparison",
+      "Same broker auto-exit system",
+      "No intelligent exit signals"
+    ]
+  }
+}
