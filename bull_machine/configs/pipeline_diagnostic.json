@@ -1,0 +1,37 @@
+{
+  "run_id": "pipeline_diagnostic",
+  "data": {
+    "sources": {
+      "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv",
+      "ETHUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 60_2f4ab.csv"
+    },
+    "timeframes": ["1H"]
+  },
+  "broker": {
+    "fee_bps": 0,
+    "slippage_bps": 0,
+    "spread_bps": 0,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 100000,
+    "exposure_cap_pct": 0.95,
+    "max_positions": 50
+  },
+  "engine": {
+    "lookback_bars": 100,
+    "seed": 42
+  },
+  "strategy": {
+    "version": "v1.4",
+    "config": "bull_machine/configs/diagnostic_v14_config.json"
+  },
+  "risk": {
+    "base_risk_pct": 0.02,
+    "max_risk_per_trade": 0.95,
+    "min_stop_pct": 0.0005
+  },
+  "meta": {
+    "description": "Pipeline diagnostic config - minimal restrictions"
+  }
+}

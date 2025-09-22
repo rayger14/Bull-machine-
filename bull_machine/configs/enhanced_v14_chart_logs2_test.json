@@ -1,0 +1,71 @@
+{
+  "run_id": "enhanced_v14_chart_logs2_test",
+  "data": {
+    "sources": {
+      "BTC": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 240_c2b76.csv",
+      "ETH": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 240_1d04a.csv",
+      "SPY": "/Users/raymondghandchi/Downloads/Chart logs 2/BATS_SPY, 240_48e36.csv"
+    },
+    "timeframes": ["1D", "4H", "1H"]
+  },
+  "broker": {
+    "fee_bps": 5,
+    "slippage_bps": 3,
+    "spread_bps": 1,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 10000
+  },
+  "engine": {
+    "lookback_bars": 100,
+    "seed": 42
+  },
+  "strategy": {
+    "version": "enhanced_v1.4",
+    "config": "bull_machine/configs/enhanced_v14_config.json"
+  },
+  "logging": {
+    "level": "trades"
+  },
+  "mode": {
+    "fusion_profile": "full_v14_enhanced",
+    "enter_threshold": 0.45,
+    "min_score_delta": 0.02,
+    "strict_mtf": true,
+    "eq_magnet_gate": true
+  },
+  "weights": {
+    "wyckoff": 0.30,
+    "liquidity": 0.25,
+    "structure": 0.20,
+    "momentum": 0.10,
+    "volume": 0.10,
+    "context": 0.05
+  },
+  "quality_floors": {
+    "wyckoff": 0.55,
+    "liquidity": 0.50,
+    "structure": 0.50,
+    "momentum": 0.45,
+    "volume": 0.45,
+    "context": 0.40
+  },
+  "align_boosts": {
+    "triad": 1.15,
+    "momentum": 1.10,
+    "volume": 1.05
+  },
+  "penalties": {
+    "edge_no_reclaim": 0.03,
+    "weak_break": 0.03,
+    "frvp_chop": 0.02
+  },
+  "cooldowns": {
+    "after_stop_bars": 8,
+    "min_spacing_bars": 6
+  },
+  "meta": {
+    "notes": ["Enhanced v1.4 with quality gates test on Chart Logs 2"]
+  }
+}

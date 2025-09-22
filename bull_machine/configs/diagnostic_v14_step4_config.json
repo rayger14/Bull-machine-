@@ -1,0 +1,93 @@
+{
+  "run_id": "calib_step4_exits_strategy",
+  "fusion": {
+    "enter_threshold": 0.30,
+    "hold_threshold": 0.27,
+    "weights": {
+      "wyckoff": 0.30,
+      "liquidity": 0.25,
+      "structure": 0.20,
+      "momentum": 0.10,
+      "volume": 0.10,
+      "context": 0.05
+    },
+    "quality_floors": {
+      "wyckoff": 0.35,
+      "liquidity": 0.35,
+      "structure": 0.40,
+      "momentum": 0.12,
+      "volume": 0.15,
+      "context": 0.15
+    },
+    "triad": {
+      "require": true,
+      "members": ["wyckoff", "structure", "liquidity"],
+      "min_pass": 2,
+      "override": {
+        "enabled": true,
+        "if_sum_of_two_cores_ge": 1.10
+      }
+    },
+    "layer_caps": {
+      "volume": 0.25,
+      "context": 0.30
+    },
+    "min_variance_guard": {
+      "momentum": 0.08,
+      "volume": 0.12,
+      "context": 0.15
+    },
+    "hysteresis": {
+      "enter": 0.30,
+      "hold": 0.27
+    },
+    "mtf": {
+      "gate": true,
+      "enabled": true
+    },
+    "eq_magnet_gate": false
+  },
+  "exits": {
+    "enabled": true,
+    "precedence": ["choch_against", "momentum_fade", "time_stop"],
+    "rules": {
+      "choch_against": {
+        "enabled": true,
+        "ltf_bars": 2,
+        "htf_bars": 2,
+        "min_swing_pct": 0.005
+      },
+      "momentum_fade": {
+        "enabled": true,
+        "lookback": 6,
+        "drop_pct": 0.45,
+        "partial_pct": 0.33,
+        "method": "rsi_divergence"
+      },
+      "time_stop": {
+        "enabled": true,
+        "bars_max": 72,
+        "urgency": "low"
+      }
+    },
+    "safety": {
+      "exit_rate_cap": 0.40,
+      "min_hold_bars": 6,
+      "max_partial_exits": 2
+    }
+  },
+  "mode": {
+    "enter_threshold": 0.30,
+    "hold_threshold": 0.27
+  },
+  "meta": {
+    "description": "Step 4: Conservative exits with production-safe defaults",
+    "notes": [
+      "Conservative floors: wyckoff 0.35, structure 0.40, liquidity 0.35",
+      "Exit precedence: CHoCH > Momentum > Time",
+      "Hysteresis: enter 0.30, hold 0.27",
+      "Safety: 40% exit rate cap, 6-bar minimum hold",
+      "Target metrics: +8-12pt win rate, -25-40% max DD"
+    ]
+  }
+}

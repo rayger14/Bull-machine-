@@ -1,0 +1,19 @@
+{
+  "cfg_hash": "cbb172f43908a8cb",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": 0.0,
+    "avg_win": 0.0,
+    "cagr": 0.0,
+    "expectancy": 0.0,
+    "max_dd": 0.0,
+    "sharpe": 0.0,
+    "trades": 0,
+    "win_rate": 0.0
+  },
+  "notes": [
+    "Enhanced v1.4 with quality gates test on Chart Logs 2"
+  ],
+  "run_id": "enhanced_v14_chart_logs2_test",
+  "seed": 42
+}

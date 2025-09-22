@@ -1,0 +1,73 @@
+{
+  "run_id": "v1_4_with_exit_signals",
+  "data": {
+    "sources": {
+      "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv",
+      "ETHUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 60_2f4ab.csv"
+    },
+    "timeframes": ["1H"]
+  },
+  "broker": {
+    "fee_bps": 10,
+    "slippage_bps": 5,
+    "spread_bps": 2,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 100000,
+    "exposure_cap_pct": 0.8,
+    "max_positions": 16
+  },
+  "engine": {
+    "lookback_bars": 100,
+    "seed": 42
+  },
+  "strategy": {
+    "version": "v1.4",
+    "config": "config/diagnostic_v14_config.json"
+  },
+  "risk": {
+    "base_risk_pct": 0.005,
+    "max_risk_per_trade": 0.01,
+    "tp_ladder": {
+      "tp1": {"r_multiple": 1.0, "size_pct": 33, "action": "move_stop_to_breakeven"},
+      "tp2": {"r_multiple": 2.0, "size_pct": 33, "action": "trail_stop"},
+      "tp3": {"r_multiple": 3.0, "size_pct": 34, "action": "hold"}
+    }
+  },
+  "exit_signals": {
+    "enabled_exits": ["choch_against", "momentum_fade", "time_stop"],
+    "min_confidence": 0.65,
+    "priority_order": ["choch_against", "momentum_fade", "time_stop"],
+
+    "choch_against": {
+      "min_break_strength": 0.5,
+      "confirmation_bars": 1,
+      "volume_confirmation": false
+    },
+
+    "momentum_fade": {
+      "rsi_period": 14,
+      "rsi_divergence_threshold": 0.6,
+      "volume_decline_threshold": 0.25,
+      "velocity_threshold": 0.3
+    },
+
+    "time_stop": {
+      "max_bars_1h": 72,
+      "max_bars_4h": 18,
+      "max_bars_1d": 5,
+      "performance_threshold": 0.05,
+      "time_decay_start": 0.6
+    }
+  },
+  "meta": {
+    "description": "Complete v1.4 system with intelligent exit signals",
+    "notes": [
+      "Includes CHoCH-Against, Momentum Fade, and Time Stop exits",
+      "Professional risk management with TP ladder",
+      "Lowered exit thresholds for more active management",
+      "3-day max hold time for faster position cycling"
+    ]
+  }
+}

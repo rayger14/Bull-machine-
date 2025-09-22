@@ -1,0 +1,46 @@
+{
+  "run_id": "threshold_calibration_step3b_tighter_floors",
+  "data": {
+    "sources": {
+      "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv",
+      "ETHUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 60_2f4ab.csv"
+    },
+    "timeframes": ["1H"]
+  },
+  "broker": {
+    "fee_bps": 10,
+    "slippage_bps": 5,
+    "spread_bps": 2,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 100000,
+    "exposure_cap_pct": 0.65,
+    "max_positions": 6
+  },
+  "engine": {
+    "lookback_bars": 100,
+    "seed": 42
+  },
+  "strategy": {
+    "version": "v1.4",
+    "config": "bull_machine/configs/diagnostic_v14_step3b_config.json"
+  },
+  "risk": {
+    "base_risk_pct": 0.0075,
+    "max_risk_per_trade": 0.05,
+    "tp_ladder": {
+      "tp1": {"r_multiple": 1.0, "size_pct": 33, "action": "move_stop_to_breakeven"},
+      "tp2": {"r_multiple": 2.0, "size_pct": 33, "action": "trail_stop"},
+      "tp3": {"r_multiple": 3.0, "size_pct": 34, "action": "hold"}
+    }
+  },
+  "meta": {
+    "description": "Step 3b: Tighter floors for maximum selectivity",
+    "notes": [
+      "Tighter floors: wyckoff 0.44, liquidity 0.40, structure 0.47",
+      "Higher triad override threshold (1.15)",
+      "Test maximum selectivity approach"
+    ]
+  }
+}

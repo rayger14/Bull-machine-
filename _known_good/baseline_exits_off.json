@@ -1,0 +1,52 @@
+{
+  "run_id": "baseline_exits_off",
+  "data": {
+    "sources": {
+      "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"
+    },
+    "timeframes": ["1H"],
+    "schema": {
+      "timestamp": {"name": "time", "unit": "s"},
+      "open": "open",
+      "high": "high",
+      "low": "low",
+      "close": "close",
+      "volume": "volume"
+    }
+  },
+  "broker": {
+    "fee_bps": 10,
+    "slippage_bps": 5,
+    "spread_bps": 2,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 100000,
+    "exposure_cap_pct": 0.60,
+    "max_positions": 4
+  },
+  "engine": {
+    "lookback_bars": 50,
+    "seed": 42
+  },
+  "strategy": {
+    "version": "v1.4",
+    "config": "bull_machine/configs/diagnostic_v14_step4_config.json"
+  },
+  "risk": {
+    "base_risk_pct": 0.008,
+    "max_risk_per_trade": 0.02,
+    "min_stop_pct": 0.001
+  },
+  "exit_signals": {
+    "enabled": false,
+    "enabled_exits": [],
+    "emit_exit_edge_logs": false,
+    "emit_exit_debug": false
+  },
+  "logging": {
+    "level": "INFO",
+    "emit_fusion_debug": false,
+    "emit_exit_debug": false
+  }
+}

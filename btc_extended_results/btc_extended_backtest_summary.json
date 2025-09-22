@@ -1,0 +1,22 @@
+{
+  "cfg_hash": "b25fa6b9c3a4291d",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": -907.4696136766858,
+    "avg_win": 0.0,
+    "cagr": 0.007392090751910496,
+    "expectancy": -907.4696136766858,
+    "max_dd": 14110.526199777116,
+    "sharpe": 0.04045123968575149,
+    "trades": 7,
+    "win_rate": 0.0
+  },
+  "notes": [
+    "Extended BTC backtest with lower signal threshold (0.25)",
+    "Treating 4H data as 1H for more granular analysis",
+    "Enhanced Wyckoff weighting for trend detection",
+    "Moderate risk sizing for consistent results"
+  ],
+  "run_id": "btc_extended_backtest",
+  "seed": 42
+}

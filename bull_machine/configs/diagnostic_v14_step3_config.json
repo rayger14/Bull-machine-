@@ -1,0 +1,61 @@
+{
+  "run_id": "calib_step3_smart_floors",
+  "fusion": {
+    "enter_threshold": 0.30,
+    "weights": {
+      "wyckoff": 0.30,
+      "liquidity": 0.25,
+      "structure": 0.20,
+      "momentum": 0.10,
+      "volume": 0.10,
+      "context": 0.05
+    },
+    "quality_floors": {
+      "wyckoff": 0.42,
+      "liquidity": 0.38,
+      "structure": 0.45,
+      "momentum": 0.12,
+      "volume": 0.18,
+      "context": 0.22
+    },
+    "triad": {
+      "require": true,
+      "members": ["wyckoff", "structure", "liquidity"],
+      "min_pass": 2,
+      "override": {
+        "enabled": true,
+        "if_sum_of_two_cores_ge": 1.10
+      }
+    },
+    "layer_caps": {
+      "volume": 0.25,
+      "context": 0.30
+    },
+    "min_variance_guard": {
+      "momentum": 0.08,
+      "volume": 0.12,
+      "context": 0.15
+    },
+    "hysteresis": {
+      "enter": 0.30,
+      "hold": 0.27
+    },
+    "mtf": {
+      "gate": false
+    },
+    "eq_magnet_gate": false
+  },
+  "mode": {
+    "enter_threshold": 0.30
+  },
+  "meta": {
+    "description": "Step 3: Smart quality floors based on observed score bands",
+    "notes": [
+      "Conservative floors just above neutral plateaus (0.10-0.40)",
+      "Triad override for exceptional confluence (sum >= 1.10)",
+      "Layer caps to normalize flat layers",
+      "Variance guards to down-weight low-variance layers",
+      "Hysteresis to reduce churn"
+    ]
+  }
+}
