@@ -67,6 +67,15 @@ class ExitSignalEvaluator:
             'none': 0
         }
 
+        # Enhanced telemetry tracking
+        self.exit_applications = []  # Track each application with details
+        self.parameter_usage = {
+            'choch_against': {'triggered': 0, 'evaluated': 0, 'params_used': choch_config},
+            'momentum_fade': {'triggered': 0, 'evaluated': 0, 'params_used': momentum_config},
+            'time_stop': {'triggered': 0, 'evaluated': 0, 'params_used': time_config}
+        }
+        self.out_dir = out_dir
+
         logging.info(f"ExitSignalEvaluator initialized with exits: {self.enabled_exits}")
 
     def evaluate_exits(self, symbol: str, position_data: Dict[str, Any],
@@ -95,29 +104,35 @@ class ExitSignalEvaluator:
         try:
             # 1. CHoCH-Against Detection
             if 'choch_against' in self.enabled_exits:
+                self.parameter_usage['choch_against']['evaluated'] += 1
                 choch_sig = self.choch_detector.evaluate(
                     symbol, position_bias, mtf_data, current_bar
                 )
                 if choch_sig and choch_sig.confidence >= self.min_confidence:
                     result.add_signal(choch_sig)
+                    self.parameter_usage['choch_against']['triggered'] += 1
                     logging.debug(f"CHoCH-Against signal: {choch_sig.confidence:.2f}")
 
             # 2. Momentum Fade Detection
             if 'momentum_fade' in self.enabled_exits:
+                self.parameter_usage['momentum_fade']['evaluated'] += 1
                 mom_sig = self.momentum_detector.evaluate(
                     symbol, position_bias, mtf_data, current_bar
                 )
                 if mom_sig and mom_sig.confidence >= self.min_confidence:
                     result.add_signal(mom_sig)
+                    self.parameter_usage['momentum_fade']['triggered'] += 1
                     logging.debug(f"Momentum fade signal: {mom_sig.confidence:.2f}")
 
             # 3. Time Stop Evaluation
             if 'time_stop' in self.enabled_exits:
+                self.parameter_usage['time_stop']['evaluated'] += 1
                 time_sig = self.time_evaluator.evaluate(
                     symbol, position_data, current_bar
                 )
                 if time_sig and time_sig.confidence >= self.min_confidence:
                     result.add_signal(time_sig)
+                    self.parameter_usage['time_stop']['triggered'] += 1
                     logging.debug(f"Time stop signal: {time_sig.confidence:.2f}")
 
         except Exception as e:
@@ -167,6 +182,18 @@ class ExitSignalEvaluator:
             if exit_type in self.exit_counts:
                 self.exit_counts[exit_type] += 1
 
+            # Track detailed application
+            application_record = {
+                'timestamp': recommended.timestamp.isoformat() if hasattr(recommended.timestamp, 'isoformat') else str(recommended.timestamp),
+                'symbol': recommended.symbol,
+                'exit_type': exit_type,
+                'confidence': recommended.confidence,
+                'urgency': recommended.urgency,
+                'reasons': recommended.reasons,
+                'context': recommended.context
+            }
+            self.exit_applications.append(application_record)
+
             logging.info(f"Recommended exit: {recommended.exit_type.value} "
                         f"(confidence: {recommended.confidence:.2f}, "
                         f"urgency: {recommended.urgency:.2f})")
@@ -209,6 +236,102 @@ class ExitSignalEvaluator:
             json.dump(self.exit_counts, f, indent=2)
 
         logging.info(f"Exit counts saved to {output_path}: {self.exit_counts}")
+
+    def save_comprehensive_telemetry(self, output_dir: str):
+        """Save comprehensive exit telemetry including parameter usage and applications."""
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # 1. Save exits_applied.json - detailed applications
+        exits_applied_path = output_dir / "exits_applied.json"
+        exits_applied_data = {
+            "total_applications": len(self.exit_applications),
+            "applications_by_type": {
+                exit_type: len([app for app in self.exit_applications if app['exit_type'] == exit_type])
+                for exit_type in ['choch_against', 'momentum_fade', 'time_stop']
+            },
+            "detailed_applications": self.exit_applications,
+            "summary": self.exit_counts
+        }
+
+        with open(exits_applied_path, 'w') as f:
+            json.dump(exits_applied_data, f, indent=2)
+        logging.info(f"Exits applied telemetry saved to {exits_applied_path}")
+
+        # 2. Save parameter_usage.json - prove parameters are used
+        parameter_usage_path = output_dir / "parameter_usage.json"
+        parameter_telemetry = {
+            "parameter_effectiveness": {
+                exit_type: {
+                    "evaluated_count": data['evaluated'],
+                    "triggered_count": data['triggered'],
+                    "trigger_rate": data['triggered'] / data['evaluated'] if data['evaluated'] > 0 else 0.0,
+                    "parameters_applied": data['params_used']
+                }
+                for exit_type, data in self.parameter_usage.items()
+            },
+            "global_stats": {
+                "total_evaluations": sum(data['evaluated'] for data in self.parameter_usage.values()),
+                "total_triggers": sum(data['triggered'] for data in self.parameter_usage.values()),
+                "overall_trigger_rate": (
+                    sum(data['triggered'] for data in self.parameter_usage.values()) /
+                    sum(data['evaluated'] for data in self.parameter_usage.values())
+                    if sum(data['evaluated'] for data in self.parameter_usage.values()) > 0 else 0.0
+                )
+            },
+            "enabled_exits": self.enabled_exits,
+            "min_confidence": self.min_confidence,
+            "priority_order": self.priority_order
+        }
+
+        with open(parameter_usage_path, 'w') as f:
+            json.dump(parameter_telemetry, f, indent=2)
+        logging.info(f"Parameter usage telemetry saved to {parameter_usage_path}")
+
+        # 3. Save layer_masks.json - fusion probe data (placeholder for now)
+        layer_masks_path = output_dir / "layer_masks.json"
+        layer_masks_data = {
+            "fusion_layers": {
+                "choch_layer": {
+                    "active": 'choch_against' in self.enabled_exits,
+                    "evaluation_count": self.parameter_usage['choch_against']['evaluated'],
+                    "trigger_count": self.parameter_usage['choch_against']['triggered'],
+                    "mask_applied": self.parameter_usage['choch_against']['triggered'] > 0
+                },
+                "momentum_layer": {
+                    "active": 'momentum_fade' in self.enabled_exits,
+                    "evaluation_count": self.parameter_usage['momentum_fade']['evaluated'],
+                    "trigger_count": self.parameter_usage['momentum_fade']['triggered'],
+                    "mask_applied": self.parameter_usage['momentum_fade']['triggered'] > 0
+                },
+                "time_layer": {
+                    "active": 'time_stop' in self.enabled_exits,
+                    "evaluation_count": self.parameter_usage['time_stop']['evaluated'],
+                    "trigger_count": self.parameter_usage['time_stop']['triggered'],
+                    "mask_applied": self.parameter_usage['time_stop']['triggered'] > 0
+                }
+            },
+            "layer_interaction": {
+                "total_layers": len(self.enabled_exits),
+                "active_layers": len([exit for exit in self.enabled_exits
+                                    if self.parameter_usage.get(exit, {}).get('triggered', 0) > 0]),
+                "fusion_effectiveness": len([exit for exit in self.enabled_exits
+                                           if self.parameter_usage.get(exit, {}).get('triggered', 0) > 0]) / len(self.enabled_exits) if self.enabled_exits else 0.0
+            }
+        }
+
+        with open(layer_masks_path, 'w') as f:
+            json.dump(layer_masks_data, f, indent=2)
+        logging.info(f"Layer masks telemetry saved to {layer_masks_path}")
+
+        # Also save traditional exit_counts.json for backward compatibility
+        self.save_exit_counts(str(output_dir))
+
+        print(f"\n🔍 TELEMETRY SAVED:")
+        print(f"  • exits_applied.json - {len(self.exit_applications)} applications tracked")
+        print(f"  • parameter_usage.json - {sum(data['evaluated'] for data in self.parameter_usage.values())} evaluations")
+        print(f"  • layer_masks.json - {len(self.enabled_exits)} fusion layers")
+        print(f"  • exit_counts.json - {sum(self.exit_counts.values())} total exits")
 
 
 class MTFDesyncEvaluator:

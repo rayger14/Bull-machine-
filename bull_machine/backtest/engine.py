@@ -177,9 +177,9 @@ class BacktestEngine:
         metrics.update(equity_metrics(eq_df if not eq_df.empty else pd.DataFrame(columns=['equity'])))
         artifacts = write_report(self.cfg.get('run_id','v1_4_demo'), self.cfg, metrics, trades_df, eq_df, out_dir)
 
-        # Save exit counts telemetry if exit evaluator exists
+        # Save comprehensive exit telemetry if exit evaluator exists
         if self.exit_evaluator:
-            self.exit_evaluator.save_exit_counts(out_dir)
+            self.exit_evaluator.save_comprehensive_telemetry(out_dir)
 
         return {"metrics": metrics, "artifacts": artifacts}
 
