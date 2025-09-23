@@ -1,0 +1,20 @@
+{
+  "extends": "configs/v141/system_config.json",
+  "profile": "balanced",
+  "description": "Balanced v1.4.1 profile - Default settings with proven parameters",
+
+  "risk_management": {
+    "position_size_pct": 0.8,
+    "max_risk_per_trade": 0.008,
+    "max_positions": 8,
+    "drawdown_limit": 0.15
+  },
+
+  "exits_overrides": {
+    "time_stop": {
+      "max_bars_1h": 36,
+      "max_bars_4h": 24,
+      "max_bars_1d": 18
+    }
+  }
+}

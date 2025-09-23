@@ -1,0 +1,46 @@
+{
+  "extends": "configs/v141/system_config.json",
+  "profile": "aggressive",
+  "description": "Aggressive v1.4.1 profile - Higher frequency, more risk",
+
+  "risk_management": {
+    "position_size_pct": 1.2,
+    "max_risk_per_trade": 0.012,
+    "max_positions": 12,
+    "drawdown_limit": 0.20
+  },
+
+  "signals": {
+    "enter_threshold": 0.70,
+    "aggregate_floor": 0.32,
+    "context_floor": 0.25,
+    "mtf_threshold": 0.55,
+    "cooldown_bars": 3
+  },
+
+  "quality_floors": {
+    "wyckoff": 0.35,
+    "liquidity": 0.30,
+    "structure": 0.25,
+    "momentum": 0.25,
+    "volume": 0.25,
+    "context": 0.20,
+    "mtf": 0.40
+  },
+
+  "exits_overrides": {
+    "time_stop": {
+      "max_bars_1h": 24,
+      "max_bars_4h": 18,
+      "max_bars_1d": 12
+    },
+    "markup_sow_ut_warning": {
+      "veto_needed": 4,
+      "trail_atr_buffer_R": 0.25
+    },
+    "global_veto": {
+      "aggregate_floor": 0.35,
+      "context_floor": 0.25
+    }
+  }
+}

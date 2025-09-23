@@ -1,0 +1,229 @@
+"""
+7-Layer Confluence Fusion Engine
+Combines all layer scores with v1.4.1 weights and guardrails
+"""
+
+import pandas as pd
+import numpy as np
+from typing import Dict, Optional, List
+import logging
+
+
+class FusionEngineV141:
+    """
+    Enhanced fusion engine for v1.4.1 with proper weights and guardrails.
+    """
+
+    def __init__(self, config: Dict):
+        """Initialize with configuration."""
+        self.config = config
+        self.weights = config.get('weights', self._default_weights())
+        self.features = config.get('features', {})
+        self.thresholds = config.get('signals', {})
+
+        # Validate weights sum to 1.0
+        weight_sum = sum(self.weights.values())
+        if abs(weight_sum - 1.0) > 0.01:
+            logging.warning(f"Weights sum to {weight_sum:.3f}, normalizing...")
+            self.weights = {k: v / weight_sum for k, v in self.weights.items()}
+
+        logging.info(f"Fusion engine v1.4.1 initialized with weights: {self.weights}")
+
+    def _default_weights(self) -> Dict[str, float]:
+        """Default v1.4.1 layer weights."""
+        return {
+            'wyckoff': 0.30,
+            'liquidity': 0.25,
+            'structure': 0.15,
+            'momentum': 0.15,
+            'volume': 0.15,
+            'context': 0.05,
+            'mtf': 0.10
+        }
+
+    def fuse_scores(self, layer_scores: Dict[str, float],
+                   quality_floors: Dict[str, float] = None) -> Dict:
+        """
+        Fuse individual layer scores into final confluence score.
+
+        Args:
+            layer_scores: Dict of layer name -> score (0-1)
+            quality_floors: Optional per-layer minimum quality thresholds
+
+        Returns:
+            Dict with fusion results and metadata
+        """
+
+        if not layer_scores:
+            return {
+                'aggregate': 0.0,
+                'weighted_score': 0.0,
+                'layer_contributions': {},
+                'global_veto': True,
+                'reason': 'no_layer_scores'
+            }
+
+        # Apply quality floors if provided
+        filtered_scores = {}
+        for layer, score in layer_scores.items():
+            floor = quality_floors.get(layer, 0.0) if quality_floors else 0.0
+            if score >= floor:
+                filtered_scores[layer] = score
+            else:
+                logging.debug(f"Layer {layer} score {score:.3f} below floor {floor:.3f}")
+
+        # Check for missing critical layers
+        required_layers = ['wyckoff', 'liquidity', 'structure']
+        missing_critical = [l for l in required_layers if l not in filtered_scores]
+
+        if missing_critical:
+            return {
+                'aggregate': 0.0,
+                'weighted_score': 0.0,
+                'layer_contributions': {},
+                'global_veto': True,
+                'reason': f'missing_critical_layers: {missing_critical}'
+            }
+
+        # Calculate weighted contributions
+        contributions = {}
+        total_weight = 0
+
+        for layer, weight in self.weights.items():
+            if layer in filtered_scores:
+                # Apply Bojan capping for v1.4.1
+                if layer == 'bojan':
+                    score = min(0.6, filtered_scores[layer])  # Cap Bojan influence
+                else:
+                    score = filtered_scores[layer]
+
+                contributions[layer] = score * weight
+                total_weight += weight
+
+        # Normalize by actual total weight (in case some layers missing)
+        if total_weight > 0:
+            weighted_score = sum(contributions.values()) / total_weight
+        else:
+            weighted_score = 0.0
+
+        # Calculate simple aggregate (unweighted mean)
+        aggregate = sum(filtered_scores.values()) / len(filtered_scores) if filtered_scores else 0.0
+
+        # Global veto checks
+        global_veto = self._check_global_veto(aggregate, filtered_scores)
+
+        # MTF gate (if enabled)
+        mtf_gate = self._check_mtf_gate(filtered_scores)
+
+        result = {
+            'aggregate': aggregate,
+            'weighted_score': weighted_score,
+            'layer_contributions': contributions,
+            'global_veto': global_veto,
+            'mtf_gate': mtf_gate,
+            'total_weight': total_weight,
+            'layers_active': list(filtered_scores.keys()),
+            'reason': 'success' if not global_veto else 'global_veto'
+        }
+
+        logging.debug(f"Fusion result: agg={aggregate:.3f}, weighted={weighted_score:.3f}, "
+                     f"veto={global_veto}, layers={len(filtered_scores)}")
+
+        return result
+
+    def _check_global_veto(self, aggregate: float, layer_scores: Dict) -> bool:
+        """Check for global veto conditions."""
+
+        # Aggregate too low
+        min_aggregate = self.thresholds.get('aggregate_floor', 0.35)
+        if aggregate < min_aggregate:
+            return True
+
+        # Context stress (macro events)
+        context_floor = self.thresholds.get('context_floor', 0.30)
+        if layer_scores.get('context', 1.0) < context_floor:
+            return True
+
+        # Critical layer failure
+        if layer_scores.get('wyckoff', 0) < 0.25:
+            return True
+
+        return False
+
+    def _check_mtf_gate(self, layer_scores: Dict) -> bool:
+        """Check MTF alignment gate."""
+
+        if not self.features.get('mtf_gate_enabled', True):
+            return True  # Pass if gate disabled
+
+        mtf_score = layer_scores.get('mtf', 1.0)
+        mtf_threshold = self.thresholds.get('mtf_threshold', 0.60)
+
+        return mtf_score >= mtf_threshold
+
+    def should_enter(self, fusion_result: Dict) -> bool:
+        """
+        Determine if conditions are met for trade entry.
+        """
+
+        if fusion_result['global_veto']:
+            return False
+
+        if not fusion_result['mtf_gate']:
+            return False
+
+        # Use weighted score for entry decisions
+        enter_threshold = self.thresholds.get('enter_threshold', 0.72)
+        return fusion_result['weighted_score'] >= enter_threshold
+
+    def run_ablation(self, df: pd.DataFrame, layer_configs: Dict) -> Dict:
+        """
+        Run ablation study to measure layer contributions.
+        """
+
+        sets = [
+            ['wyckoff'],
+            ['wyckoff', 'liquidity'],
+            ['wyckoff', 'liquidity', 'structure'],
+            ['wyckoff', 'liquidity', 'structure', 'momentum'],
+            ['wyckoff', 'liquidity', 'structure', 'momentum', 'volume'],
+            ['wyckoff', 'liquidity', 'structure', 'momentum', 'volume', 'context'],
+            ['wyckoff', 'liquidity', 'structure', 'momentum', 'volume', 'context', 'mtf']
+        ]
+
+        if self.features.get('bojan', False):
+            # Add Bojan to full set
+            sets.append(['wyckoff', 'liquidity', 'structure', 'momentum', 'volume', 'context', 'mtf', 'bojan'])
+
+        results = {}
+
+        for layer_set in sets:
+            # Mock layer scores for ablation
+            mock_scores = {}
+            for layer in layer_set:
+                if layer == 'wyckoff':
+                    mock_scores[layer] = 0.75
+                elif layer == 'liquidity':
+                    mock_scores[layer] = 0.70
+                elif layer == 'bojan':
+                    mock_scores[layer] = 0.80  # Will be capped to 0.6
+                else:
+                    mock_scores[layer] = 0.65
+
+            # Fuse scores
+            fusion = self.fuse_scores(mock_scores)
+
+            # Simulate basic performance metrics
+            entry_signals = 1 if self.should_enter(fusion) else 0
+            estimated_sharpe = fusion['weighted_score'] * 2.0 - 0.5  # Rough estimate
+
+            results['+'.join(layer_set)] = {
+                'weighted_score': fusion['weighted_score'],
+                'aggregate': fusion['aggregate'],
+                'global_veto': fusion['global_veto'],
+                'entry_signals': entry_signals,
+                'estimated_sharpe': estimated_sharpe,
+                'layer_count': len(layer_set)
+            }
+
+        return results
