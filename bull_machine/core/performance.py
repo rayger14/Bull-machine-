@@ -3,15 +3,16 @@
 Implements tiered logging and performance modes based on user requirements.
 """
 
-from typing import Dict, Any, Optional, Union
-from enum import Enum
 from dataclasses import dataclass, field
-import logging
+from enum import Enum
+from typing import Any, Dict
+
 
 class PerformanceMode(Enum):
     DEBUG = "debug"
     FAST = "fast"
     PROD = "prod"
+
 
 class LogMode(Enum):
     NONE = "none"
@@ -20,11 +21,12 @@ class LogMode(Enum):
     SAMPLED = "sampled"
     FULL = "full"
 
+
 @dataclass
 class PerformanceConfig:
     mode: PerformanceMode = PerformanceMode.FAST
     htf_stride: int = 24  # recompute D1 every 24 × 1H bars
-    mtf_stride: int = 4   # recompute 4H every 4 × 1H bars
+    mtf_stride: int = 4  # recompute 4H every 4 × 1H bars
     log_mode: LogMode = LogMode.TRADES
     sample_rate: int = 50
     threshold_band: float = 0.03
@@ -32,6 +34,7 @@ class PerformanceConfig:
     include_subscores: bool = True
     eod_snapshots: bool = True
     retain_days: int = 30
+
 
 @dataclass
 class LogEntry:
@@ -44,6 +47,7 @@ class LogEntry:
     reasons: list = field(default_factory=list)
     subscores: Dict[str, float] = field(default_factory=dict)
     mtf_flags: Dict[str, Any] = field(default_factory=dict)
+
 
 class PerformanceLogger:
     def __init__(self, config: PerformanceConfig):
@@ -58,11 +62,12 @@ class PerformanceLogger:
         elif self.config.log_mode == LogMode.TRADES:
             return event_type in ["trade", "eod"]
         elif self.config.log_mode == LogMode.BOUNDARY:
-            return (event_type in ["trade", "eod", "veto", "raise"] or
-                   abs(score - threshold) < self.config.threshold_band)
+            return (
+                event_type in ["trade", "eod", "veto", "raise"]
+                or abs(score - threshold) < self.config.threshold_band
+            )
         elif self.config.log_mode == LogMode.SAMPLED:
-            return (event_type in ["trade", "eod", "veto", "raise"] or
-                   self._should_sample())
+            return event_type in ["trade", "eod", "veto", "raise"] or self._should_sample()
         elif self.config.log_mode == LogMode.FULL:
             return True
         return False
@@ -70,6 +75,7 @@ class PerformanceLogger:
     def _should_sample(self) -> bool:
         """Sample 1 out of N evaluations"""
         import random
+
         return random.randint(1, self.config.sample_rate) == 1
 
     def log_evaluation(self, entry: LogEntry, event_type: str = "evaluation"):
@@ -84,6 +90,7 @@ class PerformanceLogger:
         # Implementation would write to CSV/database
         # For now, clear buffer
         self.buffer.clear()
+
 
 class MTFCache:
     """Caches higher timeframe analysis with stride-based updates"""
@@ -125,6 +132,7 @@ class MTFCache:
         """Get cached MTF context"""
         return self.mtf_cache.get(symbol, {"bias": "neutral", "confirmed": False})
 
+
 def create_performance_config(mode: str = "fast") -> PerformanceConfig:
     """Create performance config based on mode"""
     if mode == "debug":
@@ -133,7 +141,7 @@ def create_performance_config(mode: str = "fast") -> PerformanceConfig:
             htf_stride=4,
             mtf_stride=2,
             log_mode=LogMode.BOUNDARY,
-            sample_rate=10
+            sample_rate=10,
         )
     elif mode == "fast":
         return PerformanceConfig(
@@ -141,7 +149,7 @@ def create_performance_config(mode: str = "fast") -> PerformanceConfig:
             htf_stride=24,
             mtf_stride=4,
             log_mode=LogMode.TRADES,
-            sample_rate=50
+            sample_rate=50,
         )
     elif mode == "prod":
         return PerformanceConfig(
@@ -149,7 +157,7 @@ def create_performance_config(mode: str = "fast") -> PerformanceConfig:
             htf_stride=24,
             mtf_stride=4,
             log_mode=LogMode.BOUNDARY,
-            sample_rate=100
+            sample_rate=100,
         )
     else:
         return PerformanceConfig()

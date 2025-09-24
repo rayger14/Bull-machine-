@@ -4,22 +4,24 @@ Bull Machine v1.4 Strategy Adapter
 Integrates v1.3 MTF engine with v1.4 backtest framework
 """
 
-from dataclasses import dataclass
-from typing import Dict, Any, Optional
-import pandas as pd
-import numpy as np
-import sys
 import os
+import sys
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
+
+import pandas as pd
 
 # Add parent to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from bull_machine.core.types import Bar, Series, Signal, RiskPlan
 from bull_machine.app.main_v13 import run_bull_machine_v1_3
+from bull_machine.core.types import Bar, Series
+
 
 @dataclass
 class BacktestSignal:
     """Backtest-compatible signal format"""
+
     action: str  # 'long'|'short'|'exit'|'flat'
     size: float
     confidence: float
@@ -27,6 +29,7 @@ class BacktestSignal:
     tp: Optional[list[float]] = None
     risk_pct: float = 0.01
     reasons: list[str] = None
+
 
 def df_to_series(symbol: str, tf: str, df: pd.DataFrame) -> Series:
     """Convert DataFrame to v1.3 Series format"""
@@ -41,15 +44,16 @@ def df_to_series(symbol: str, tf: str, df: pd.DataFrame) -> Series:
 
         bar = Bar(
             ts=ts,
-            open=float(row['open']),
-            high=float(row['high']),
-            low=float(row['low']),
-            close=float(row['close']),
-            volume=float(row.get('volume', 0))
+            open=float(row["open"]),
+            high=float(row["high"]),
+            low=float(row["low"]),
+            close=float(row["close"]),
+            volume=float(row.get("volume", 0)),
         )
         bars.append(bar)
 
     return Series(bars=bars, symbol=symbol, timeframe=tf)
+
 
 def save_temp_csv(df: pd.DataFrame, symbol: str) -> str:
     """Save DataFrame to temporary CSV for v1.3 pipeline"""
@@ -57,10 +61,7 @@ def save_temp_csv(df: pd.DataFrame, symbol: str) -> str:
 
     # Create temp file
     temp_file = tempfile.NamedTemporaryFile(
-        mode='w',
-        suffix='.csv',
-        delete=False,
-        prefix=f'{symbol}_backtest_'
+        mode="w", suffix=".csv", delete=False, prefix=f"{symbol}_backtest_"
     )
 
     # Write data
@@ -69,8 +70,10 @@ def save_temp_csv(df: pd.DataFrame, symbol: str) -> str:
 
     return temp_file.name
 
-def strategy_from_df(symbol: str, tf: str, df_window: pd.DataFrame,
-                    balance: float = 10000, config_path: str = None) -> Dict[str, Any]:
+
+def strategy_from_df(
+    symbol: str, tf: str, df_window: pd.DataFrame, balance: float = 10000, config_path: str = None
+) -> Dict[str, Any]:
     """
     Main adapter: Call v1.3 pipeline from DataFrame and map to backtest format
 
@@ -87,7 +90,7 @@ def strategy_from_df(symbol: str, tf: str, df_window: pd.DataFrame,
 
     # Basic validation
     if df_window is None or df_window.empty or len(df_window) < 100:
-        return {'action': 'flat', 'reason': 'insufficient_data'}
+        return {"action": "flat", "reason": "insufficient_data"}
 
     try:
         # Save to temp CSV (v1.3 expects CSV input)
@@ -98,7 +101,7 @@ def strategy_from_df(symbol: str, tf: str, df_window: pd.DataFrame,
             csv_file=csv_path,
             account_balance=balance,
             config_path=config_path,
-            mtf_enabled=True  # Always use MTF in v1.4
+            mtf_enabled=True,  # Always use MTF in v1.4
         )
 
         # Clean up temp file
@@ -106,73 +109,76 @@ def strategy_from_df(symbol: str, tf: str, df_window: pd.DataFrame,
             os.remove(csv_path)
 
         # Map v1.3 result to backtest format
-        if result.get('action') == 'enter_trade':
-            signal = result.get('signal', {})
-            risk_plan = result.get('risk_plan', {})
+        if result.get("action") == "enter_trade":
+            signal = result.get("signal", {})
+            risk_plan = result.get("risk_plan", {})
 
             # Calculate position size based on risk
-            risk_amount = risk_plan.get('risk_amount', balance * 0.01)
-            position_size = risk_plan.get('size', 1.0)
+            risk_amount = risk_plan.get("risk_amount", balance * 0.01)
+            position_size = risk_plan.get("size", 1.0)
 
             # Build TP ladder (1R, 2R, 3R)
-            entry = risk_plan.get('entry', df_window['close'].iloc[-1])
-            stop = risk_plan.get('stop', entry * 0.98)
+            entry = risk_plan.get("entry", df_window["close"].iloc[-1])
+            stop = risk_plan.get("stop", entry * 0.98)
             risk_per_unit = abs(entry - stop)
 
-            tp_ladder = [
-                entry + risk_per_unit * 1.0,  # TP1: 1R
-                entry + risk_per_unit * 2.0,  # TP2: 2R
-                entry + risk_per_unit * 3.0   # TP3: 3R
-            ] if signal.get('side') == 'long' else [
-                entry - risk_per_unit * 1.0,  # TP1: 1R
-                entry - risk_per_unit * 2.0,  # TP2: 2R
-                entry - risk_per_unit * 3.0   # TP3: 3R
-            ]
+            tp_ladder = (
+                [
+                    entry + risk_per_unit * 1.0,  # TP1: 1R
+                    entry + risk_per_unit * 2.0,  # TP2: 2R
+                    entry + risk_per_unit * 3.0,  # TP3: 3R
+                ]
+                if signal.get("side") == "long"
+                else [
+                    entry - risk_per_unit * 1.0,  # TP1: 1R
+                    entry - risk_per_unit * 2.0,  # TP2: 2R
+                    entry - risk_per_unit * 3.0,  # TP3: 3R
+                ]
+            )
 
             # Build TP levels in broker-compatible format
             tp_levels = [
-                {'price': tp_ladder[0], 'r': 1.0, 'pct': 33, 'name': 'tp1'},
-                {'price': tp_ladder[1], 'r': 2.0, 'pct': 33, 'name': 'tp2'},
-                {'price': tp_ladder[2], 'r': 3.0, 'pct': 34, 'name': 'tp3'}
+                {"price": tp_ladder[0], "r": 1.0, "pct": 33, "name": "tp1"},
+                {"price": tp_ladder[1], "r": 2.0, "pct": 33, "name": "tp2"},
+                {"price": tp_ladder[2], "r": 3.0, "pct": 34, "name": "tp3"},
             ]
 
             risk_plan = {
-                'entry': entry,
-                'stop': stop,
-                'size': position_size,
-                'tp_levels': tp_levels,
-                'rules': {'be_at': 'tp1', 'trail_at': 'tp2', 'trail_mode': 'swing'}
+                "entry": entry,
+                "stop": stop,
+                "size": position_size,
+                "tp_levels": tp_levels,
+                "rules": {"be_at": "tp1", "trail_at": "tp2", "trail_mode": "swing"},
             }
 
             return {
-                'action': signal.get('side', 'flat'),
-                'size': position_size,
-                'confidence': signal.get('confidence', 0.5),
-                'stop': stop,
-                'tp': tp_ladder,  # Legacy format
-                'risk_plan': risk_plan,  # New broker format
-                'risk_pct': risk_amount / balance,
-                'reasons': signal.get('reasons', []),
-                'mtf_sync': result.get('mtf_sync')
+                "action": signal.get("side", "flat"),
+                "size": position_size,
+                "confidence": signal.get("confidence", 0.5),
+                "stop": stop,
+                "tp": tp_ladder,  # Legacy format
+                "risk_plan": risk_plan,  # New broker format
+                "risk_pct": risk_amount / balance,
+                "reasons": signal.get("reasons", []),
+                "mtf_sync": result.get("mtf_sync"),
             }
 
-        elif result.get('action') == 'no_trade':
+        elif result.get("action") == "no_trade":
             # Check if we should exit existing position
             # (In a real implementation, we'd track position state)
-            return {
-                'action': 'flat',
-                'reason': result.get('reason', 'no_signal')
-            }
+            return {"action": "flat", "reason": result.get("reason", "no_signal")}
 
         else:
-            return {'action': 'flat'}
+            return {"action": "flat"}
 
     except Exception as e:
         print(f"Error in v1.3 adapter: {e}")
-        return {'action': 'flat', 'error': str(e)}
+        return {"action": "flat", "error": str(e)}
 
-def strategy_from_series(series: Series, balance: float = 10000,
-                        config_path: str = None) -> Dict[str, Any]:
+
+def strategy_from_series(
+    series: Series, balance: float = 10000, config_path: str = None
+) -> Dict[str, Any]:
     """
     Alternative: Call v1.3 directly with Series object (no CSV)
 
@@ -182,20 +188,22 @@ def strategy_from_series(series: Series, balance: float = 10000,
     # For now, convert to DataFrame and use the CSV approach
     data = []
     for bar in series.bars:
-        data.append({
-            'time': bar.ts,
-            'open': bar.open,
-            'high': bar.high,
-            'low': bar.low,
-            'close': bar.close,
-            'volume': bar.volume
-        })
+        data.append(
+            {
+                "time": bar.ts,
+                "open": bar.open,
+                "high": bar.high,
+                "low": bar.low,
+                "close": bar.close,
+                "volume": bar.volume,
+            }
+        )
 
     df = pd.DataFrame(data)
     return strategy_from_df(series.symbol, series.timeframe, df, balance, config_path)
 
-def calculate_position_size(balance: float, risk_pct: float,
-                           entry: float, stop: float) -> float:
+
+def calculate_position_size(balance: float, risk_pct: float, entry: float, stop: float) -> float:
     """
     Calculate position size based on risk management rules
 
@@ -223,9 +231,10 @@ def calculate_position_size(balance: float, risk_pct: float,
 
     return min(position_size, max_position_size)
 
-def check_exposure_limits(current_positions: Dict[str, Any],
-                         new_signal: Dict[str, Any],
-                         max_exposure: float = 0.5) -> bool:
+
+def check_exposure_limits(
+    current_positions: Dict[str, Any], new_signal: Dict[str, Any], max_exposure: float = 0.5
+) -> bool:
     """
     Check if new position would violate exposure limits
 
@@ -239,41 +248,44 @@ def check_exposure_limits(current_positions: Dict[str, Any],
     """
 
     # Calculate current net exposure
-    long_exposure = sum(p['size'] * p['price']
-                       for p in current_positions.values()
-                       if p.get('side') == 'long')
-    short_exposure = sum(p['size'] * p['price']
-                        for p in current_positions.values()
-                        if p.get('side') == 'short')
+    long_exposure = sum(
+        p["size"] * p["price"] for p in current_positions.values() if p.get("side") == "long"
+    )
+    short_exposure = sum(
+        p["size"] * p["price"] for p in current_positions.values() if p.get("side") == "short"
+    )
 
     net_exposure = abs(long_exposure - short_exposure)
 
     # Check if new position would exceed limits
-    if new_signal['action'] == 'long':
-        new_net = net_exposure + (new_signal['size'] * new_signal.get('entry', 0))
-    elif new_signal['action'] == 'short':
-        new_net = net_exposure + (new_signal['size'] * new_signal.get('entry', 0))
+    if new_signal["action"] == "long":
+        new_net = net_exposure + (new_signal["size"] * new_signal.get("entry", 0))
+    elif new_signal["action"] == "short":
+        new_net = net_exposure + (new_signal["size"] * new_signal.get("entry", 0))
     else:
         return True  # Exit/flat always allowed
 
-    total_capital = sum(p.get('balance', 0) for p in current_positions.values())
+    total_capital = sum(p.get("balance", 0) for p in current_positions.values())
 
     if total_capital == 0:
         return True  # First position always allowed
 
     return (new_net / total_capital) <= max_exposure
 
+
 # Example usage for testing
 if __name__ == "__main__":
     # Create sample data
-    sample_data = pd.DataFrame({
-        'open': [100, 101, 102],
-        'high': [102, 103, 104],
-        'low': [99, 100, 101],
-        'close': [101, 102, 103],
-        'volume': [1000, 1100, 1200]
-    })
+    sample_data = pd.DataFrame(
+        {
+            "open": [100, 101, 102],
+            "high": [102, 103, 104],
+            "low": [99, 100, 101],
+            "close": [101, 102, 103],
+            "volume": [1000, 1100, 1200],
+        }
+    )
 
     # Test the adapter
-    signal = strategy_from_df('BTCUSD', '1H', sample_data, balance=10000)
+    signal = strategy_from_df("BTCUSD", "1H", sample_data, balance=10000)
     print(f"Signal: {signal}")

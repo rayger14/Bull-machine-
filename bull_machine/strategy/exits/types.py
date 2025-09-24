@@ -4,13 +4,15 @@ Defines the core types used throughout the exit signal system.
 """
 
 from dataclasses import dataclass
-from typing import Dict, Any, Optional, List
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
 import pandas as pd
 
 
 class ExitType(Enum):
     """Types of exit signals."""
+
     CHOCH_AGAINST = "choch_against"
     MOMENTUM_FADE = "momentum_fade"
     TIME_STOP = "time_stop"
@@ -20,10 +22,11 @@ class ExitType(Enum):
 
 class ExitAction(Enum):
     """Exit actions that can be taken."""
-    FULL_EXIT = "full_exit"           # Close entire position
-    PARTIAL_EXIT = "partial_exit"     # Close portion of position
-    TIGHTEN_STOP = "tighten_stop"     # Move stop closer
-    FLIP_POSITION = "flip_position"   # Close and reverse
+
+    FULL_EXIT = "full_exit"  # Close entire position
+    PARTIAL_EXIT = "partial_exit"  # Close portion of position
+    TIGHTEN_STOP = "tighten_stop"  # Move stop closer
+    FLIP_POSITION = "flip_position"  # Close and reverse
 
 
 @dataclass
@@ -31,17 +34,18 @@ class ExitSignal:
     """
     Standardized exit signal format.
     """
+
     timestamp: pd.Timestamp
     symbol: str
     exit_type: ExitType
     action: ExitAction
     confidence: float  # 0.0 to 1.0
-    urgency: float     # 0.0 to 1.0 (how quickly to act)
+    urgency: float  # 0.0 to 1.0 (how quickly to act)
 
     # Action-specific parameters
     exit_percentage: Optional[float] = None  # For partial exits (0.0-1.0)
-    new_stop_price: Optional[float] = None   # For stop tightening
-    flip_bias: Optional[str] = None          # For position flips ("long"/"short")
+    new_stop_price: Optional[float] = None  # For stop tightening
+    flip_bias: Optional[str] = None  # For position flips ("long"/"short")
 
     # Supporting data
     reasons: List[str] = None
@@ -57,6 +61,7 @@ class ExitSignal:
 @dataclass
 class CHoCHContext:
     """Context data for CHoCH-Against detection."""
+
     timeframe: str
     direction: str  # "bearish" or "bullish"
     break_price: float
@@ -68,6 +73,7 @@ class CHoCHContext:
 @dataclass
 class MomentumContext:
     """Context data for momentum fade detection."""
+
     current_rsi: float
     rsi_divergence: bool
     volume_decline: float  # Percentage decline
@@ -78,6 +84,7 @@ class MomentumContext:
 @dataclass
 class TimeStopContext:
     """Context data for time-based stops."""
+
     bars_in_trade: int
     max_bars_allowed: int
     time_decay_factor: float  # How much confidence decays over time

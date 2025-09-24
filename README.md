@@ -1,4 +1,4 @@
-# Bull Machine v1.3.0
+# Bull Machine v1.4.2
 
 [![CI](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml/badge.svg)](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-9%2F9%20passing-success)](https://github.com/rayger14/Bull-machine-/actions)
@@ -13,15 +13,15 @@ Advanced algorithmic trading system with **Multi-Timeframe Sync**, **7-Layer Con
 
 ---
 
-## 🚀 What's New in v1.3.0
-- **🎯 Multi-Timeframe Sync (7th Layer)** - HTF dominance with dynamic threshold adjustments
-- **⚡ EQ Magnet Suppression** - Avoids choppy equilibrium zones automatically
-- **🔄 2-Bar Confirmation** - Prevents false breakouts with bias validation
-- **📊 ALLOW/RAISE/VETO Logic** - Intelligent signal gating based on timeframe alignment
-- **📈 +61% PnL Improvement** - Validated across crypto (BTC/ETH) and traditional markets (SPY)
-- **🎪 75% Win Rate** - Up from 58% baseline through better signal filtering
+## 🚀 What's New in v1.4.2 (CRITICAL HOTFIX)
+- **🎯 1185% PnL Improvement** - Phase-aware exit system with dynamic ATR-based stops
+- **⚡ Advanced Exit Parameter System** - Markup SOW/UT warnings, UTAD rejection detection
+- **🔄 Quality Floor Enforcement** - Prevents weak signal execution with real-time gating
+- **📊 Enhanced Fusion Engine** - Quality gates, alignment boosts, penalty matrix
+- **📈 Wyckoff Phase Optimization** - Confidence scoring with trend/phase awareness
+- **🎪 Repository Cleanup** - Removed 213 artifact files (190k+ lines of bloat)
 
-## 🏗️ Core Features (v1.3.0)
+## 🏗️ Core Features (v1.4.2)
 - **7-Layer Confluence System**
   Wyckoff + Liquidity + Structure + Momentum + Volume + Context + **MTF Sync** with intelligent fusion.
 - **Multi-Timeframe Analysis**

@@ -22,11 +22,32 @@ with open("bull_machine/configs/exits_tuned.json") as f:
 
 # A/B test matrix - 4 configurations
 MATRIX = [
-    {"name": "A", "choch_against.bars_confirm": 1, "momentum_fade.drop_pct": 0.20, "time_stop.bars_max": 36},
-    {"name": "B", "choch_against.bars_confirm": 1, "momentum_fade.drop_pct": 0.15, "time_stop.bars_max": 36},
-    {"name": "C", "choch_against.bars_confirm": 1, "momentum_fade.drop_pct": 0.20, "time_stop.bars_max": 24},
-    {"name": "D", "choch_against.bars_confirm": 2, "momentum_fade.drop_pct": 0.20, "time_stop.bars_max": 36},
+    {
+        "name": "A",
+        "choch_against.bars_confirm": 1,
+        "momentum_fade.drop_pct": 0.20,
+        "time_stop.bars_max": 36,
+    },
+    {
+        "name": "B",
+        "choch_against.bars_confirm": 1,
+        "momentum_fade.drop_pct": 0.15,
+        "time_stop.bars_max": 36,
+    },
+    {
+        "name": "C",
+        "choch_against.bars_confirm": 1,
+        "momentum_fade.drop_pct": 0.20,
+        "time_stop.bars_max": 24,
+    },
+    {
+        "name": "D",
+        "choch_against.bars_confirm": 2,
+        "momentum_fade.drop_pct": 0.20,
+        "time_stop.bars_max": 36,
+    },
 ]
+
 
 def set_in(dct, dotted, val):
     """Set value in nested dict using dotted path."""
@@ -35,6 +56,7 @@ def set_in(dct, dotted, val):
     for p in path:
         node = node[p]
     node[leaf] = val
+
 
 def main():
     print("🔬 Exit A/B Test Matrix - Aggressive Tuning")
@@ -69,14 +91,22 @@ def main():
         # Set up output directory
         outdir = OUTDIR / f"run_{params['name']}"
 
-        print(f"{params['name']:^3} | {params['choch_against.bars_confirm']:^5} | "
-              f"{params['momentum_fade.drop_pct']:^4.2f} | {params['time_stop.bars_max']:^4} | ", end="", flush=True)
+        print(
+            f"{params['name']:^3} | {params['choch_against.bars_confirm']:^5} | "
+            f"{params['momentum_fade.drop_pct']:^4.2f} | {params['time_stop.bars_max']:^4} | ",
+            end="",
+            flush=True,
+        )
 
         # Run backtest
         cmd = [
-            "python3", "-m", "bull_machine.app.main_backtest",
-            "--config", str(cfg_path),
-            "--out", str(outdir)
+            "python3",
+            "-m",
+            "bull_machine.app.main_backtest",
+            "--config",
+            str(cfg_path),
+            "--out",
+            str(outdir),
         ]
 
         start = time.time()
@@ -88,7 +118,7 @@ def main():
                 # Parse main results - extract JSON from mixed output
                 try:
                     json_line = None
-                    for line in result.stdout.split('\n'):
+                    for line in result.stdout.split("\n"):
                         if line.strip().startswith('{"ok":'):
                             json_line = line.strip()
                             break
@@ -116,12 +146,20 @@ def main():
                     pass
 
                 if success:
-                    exits_total = sum([exit_counts.get(k, 0) for k in ['choch_against', 'momentum_fade', 'time_stop']])
-                    trades = metrics.get('trades', 0)
+                    exits_total = sum(
+                        [
+                            exit_counts.get(k, 0)
+                            for k in ["choch_against", "momentum_fade", "time_stop"]
+                        ]
+                    )
+                    trades = metrics.get("trades", 0)
                     exit_coverage = (exits_total / max(trades, 1)) * 100 if trades > 0 else 0
 
-                    print(f"✅ {trades} trades, {metrics.get('win_rate', 0.0):.1%} WR, "
-                          f"{exits_total} exits ({exit_coverage:.0f}%)", flush=True)
+                    print(
+                        f"✅ {trades} trades, {metrics.get('win_rate', 0.0):.1%} WR, "
+                        f"{exits_total} exits ({exit_coverage:.0f}%)",
+                        flush=True,
+                    )
                 else:
                     print(f"❌ Failed", flush=True)
 
@@ -140,8 +178,10 @@ def main():
             success = False
 
         # Record results
-        exits_total = sum([exit_counts.get(k, 0) for k in ['choch_against', 'momentum_fade', 'time_stop']])
-        trades = metrics.get('trades', 0)
+        exits_total = sum(
+            [exit_counts.get(k, 0) for k in ["choch_against", "momentum_fade", "time_stop"]]
+        )
+        trades = metrics.get("trades", 0)
         exit_coverage = (exits_total / max(trades, 1)) * 100 if trades > 0 else 0
 
         row = {
@@ -161,7 +201,7 @@ def main():
             "exits_choch": exit_counts.get("choch_against", 0),
             "exits_mom": exit_counts.get("momentum_fade", 0),
             "exits_time": exit_counts.get("time_stop", 0),
-            "exits_none": exit_counts.get("none", 0)
+            "exits_none": exit_counts.get("none", 0),
         }
         rows.append(row)
 
@@ -198,19 +238,25 @@ def main():
 
     print("📈 PERFORMANCE vs BASELINE")
     print("-" * 80)
-    print(f"{'Run':<4} {'Trades':<7} {'WinRate':<8} {'Δ WR':<7} {'Expect':<10} {'Δ Exp':<8} "
-          f"{'MaxDD':<10} {'Δ DD%':<7} {'Exits':<6} {'Coverage':<8}")
+    print(
+        f"{'Run':<4} {'Trades':<7} {'WinRate':<8} {'Δ WR':<7} {'Expect':<10} {'Δ Exp':<8} "
+        f"{'MaxDD':<10} {'Δ DD%':<7} {'Exits':<6} {'Coverage':<8}"
+    )
     print("-" * 80)
 
     for result in successful_tests:
-        wr_delta = (result['win_rate'] - baseline_metrics['win_rate']) * 100
-        exp_delta = result['expectancy'] - baseline_metrics['expectancy']
-        dd_delta = ((result['max_dd'] - baseline_metrics['max_dd']) / baseline_metrics['max_dd']) * 100
+        wr_delta = (result["win_rate"] - baseline_metrics["win_rate"]) * 100
+        exp_delta = result["expectancy"] - baseline_metrics["expectancy"]
+        dd_delta = (
+            (result["max_dd"] - baseline_metrics["max_dd"]) / baseline_metrics["max_dd"]
+        ) * 100
 
-        print(f"{result['run']:<4} {result['trades']:<7} {result['win_rate']:<8.1%} "
-              f"{wr_delta:+6.1f}pp {result['expectancy']:<10.0f} {exp_delta:+7.0f} "
-              f"{result['max_dd']:<10.0f} {dd_delta:+6.1f}% {result['exits_total']:<6} "
-              f"{result['exit_coverage_pct']:<7.1f}%")
+        print(
+            f"{result['run']:<4} {result['trades']:<7} {result['win_rate']:<8.1%} "
+            f"{wr_delta:+6.1f}pp {result['expectancy']:<10.0f} {exp_delta:+7.0f} "
+            f"{result['max_dd']:<10.0f} {dd_delta:+6.1f}% {result['exits_total']:<6} "
+            f"{result['exit_coverage_pct']:<7.1f}%"
+        )
 
     # Find configurations with meaningful exit activity
     active_exits = [r for r in successful_tests if r["exits_total"] > 0]
@@ -222,19 +268,25 @@ def main():
         print("-" * 60)
 
         for result in active_exits:
-            print(f"{result['run']:<4} {result['exits_total']:<7} {result['exits_choch']:<7} "
-                  f"{result['exits_mom']:<10} {result['exits_time']:<9} {result['exits_none']:<6}")
+            print(
+                f"{result['run']:<4} {result['exits_total']:<7} {result['exits_choch']:<7} "
+                f"{result['exits_mom']:<10} {result['exits_time']:<9} {result['exits_none']:<6}"
+            )
 
         # Find best by exit coverage in target range
-        in_range = [r for r in active_exits if 10 <= r['exit_coverage_pct'] <= 40]
+        in_range = [r for r in active_exits if 10 <= r["exit_coverage_pct"] <= 40]
         if in_range:
-            best = max(in_range, key=lambda x: x['expectancy'])
+            best = max(in_range, key=lambda x: x["expectancy"])
             print(f"\n🏆 RECOMMENDED: Run {best['run']}")
             print(f"   Exit Coverage: {best['exit_coverage_pct']:.1f}% (TARGET: 10-40%)")
             print(f"   Performance: {best['trades']} trades, {best['win_rate']:.1%} win rate")
-            print(f"   Lift vs baseline: {(best['win_rate']-baseline_metrics['win_rate'])*100:+.1f}pp WR, "
-                  f"{best['expectancy']-baseline_metrics['expectancy']:+.0f} expectancy")
-            print(f"   Exit breakdown: CHoCH={best['exits_choch']}, Mom={best['exits_mom']}, Time={best['exits_time']}")
+            print(
+                f"   Lift vs baseline: {(best['win_rate'] - baseline_metrics['win_rate']) * 100:+.1f}pp WR, "
+                f"{best['expectancy'] - baseline_metrics['expectancy']:+.0f} expectancy"
+            )
+            print(
+                f"   Exit breakdown: CHoCH={best['exits_choch']}, Mom={best['exits_mom']}, Time={best['exits_time']}"
+            )
     else:
         print("\n⚠️  No configurations triggered exits - need more aggressive parameters")
         print("\n📋 NEXT STEPS:")
@@ -243,6 +295,7 @@ def main():
         print("   3. Lower time_stop.bars_max to 24")
 
     print(f"\n💾 Full results: {csv_path}")
+
 
 if __name__ == "__main__":
     main()

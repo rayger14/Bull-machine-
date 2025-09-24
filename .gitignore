@@ -49,3 +49,20 @@ Thumbs.db
 # Bull Machine specific
 .bm_state.json
 *.log
+
+# Results & reports (don't commit large backtest artifacts)
+reports/
+data/
+**/*_results_*/
+**/final_*_results*/
+**/acceptance_matrix*/
+**/exits_*.json
+**/telemetry/*.json
+**/summary.json
+**/*backtest*.csv
+**/*equity*.csv
+**/*trades*.csv
+
+# Notebooks & scratch
+notebooks/.ipynb_checkpoints/
+scratch/

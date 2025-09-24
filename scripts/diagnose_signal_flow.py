@@ -14,8 +14,12 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from bull_machine.app.main_v13 import (
-    load_csv_to_series, resample_to_timeframes, build_composite_range,
-    resolve_bias, compute_eq_magnet, check_nested_confluence
+    load_csv_to_series,
+    resample_to_timeframes,
+    build_composite_range,
+    resolve_bias,
+    compute_eq_magnet,
+    check_nested_confluence,
 )
 from bull_machine.core.sync import decide_mtf_entry
 from bull_machine.core.utils import extract_key_levels
@@ -29,11 +33,12 @@ from bull_machine.modules.fusion.diagnostic import DiagnosticFusionEngine
 from bull_machine.config.loader import load_config
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+
 
 def validate_dataframe(df: pd.DataFrame, name: str):
     """Validate DataFrame sanity."""
-    required_cols = {'open', 'high', 'low', 'close'}
+    required_cols = {"open", "high", "low", "close"}
 
     print(f"\n[VALIDATION] {name}:")
     print(f"  Shape: {df.shape}")
@@ -47,7 +52,7 @@ def validate_dataframe(df: pd.DataFrame, name: str):
         return False
 
     # Check for NaN values
-    nan_counts = df[['open', 'high', 'low', 'close']].isna().sum()
+    nan_counts = df[["open", "high", "low", "close"]].isna().sum()
     print(f"  NaN counts: {dict(nan_counts)}")
 
     # Check data range
@@ -55,6 +60,7 @@ def validate_dataframe(df: pd.DataFrame, name: str):
     print(f"  Price range: {df['close'].min():.2f} to {df['close'].max():.2f}")
 
     return True
+
 
 def validate_series(series, name: str):
     """Validate Series object."""
@@ -66,9 +72,12 @@ def validate_series(series, name: str):
     if len(series.bars) >= 5:
         print(f"  Last 5 bars:")
         for i, bar in enumerate(series.bars[-5:]):
-            print(f"    [{i}] O:{bar.open:.2f} H:{bar.high:.2f} L:{bar.low:.2f} C:{bar.close:.2f} V:{bar.volume:.0f}")
+            print(
+                f"    [{i}] O:{bar.open:.2f} H:{bar.high:.2f} L:{bar.low:.2f} C:{bar.close:.2f} V:{bar.volume:.0f}"
+            )
 
     return len(series.bars) >= 200
+
 
 def validate_analyzer_output(name: str, obj):
     """Validate analyzer output."""
@@ -79,7 +88,7 @@ def validate_analyzer_output(name: str, obj):
     issues = []
 
     # Check common fields
-    for field in ['score', 'confidence', 'quality', 'bias']:
+    for field in ["score", "confidence", "quality", "bias"]:
         if hasattr(obj, field):
             val = getattr(obj, field)
             if val is None:
@@ -89,7 +98,7 @@ def validate_analyzer_output(name: str, obj):
 
     # Check dict fields for structure/momentum/volume/context
     if isinstance(obj, dict):
-        for field in ['score', 'quality', 'bias']:
+        for field in ["score", "quality", "bias"]:
             if field in obj:
                 val = obj[field]
                 if val is None:
@@ -104,32 +113,34 @@ def validate_analyzer_output(name: str, obj):
         print(f"  ✅ {name}: valid")
         return True
 
+
 def format_analyzer_status(name: str, obj) -> str:
     """Format analyzer status for one-line output."""
     if obj is None:
         return f"{name}(NONE)"
 
     if isinstance(obj, dict):
-        score = obj.get('score', 0)
-        quality = obj.get('quality', 0)
-        bias = obj.get('bias', 'neutral')
+        score = obj.get("score", 0)
+        quality = obj.get("quality", 0)
+        bias = obj.get("bias", "neutral")
         return f"{name}(q={quality:.2f} s={score:.2f} b={bias[:1]})"
     else:
         # Object with attributes
-        score = getattr(obj, 'score', getattr(obj, 'confidence', 0))
-        quality = getattr(obj, 'quality', 0.5)
-        bias = getattr(obj, 'bias', getattr(obj, 'pressure', 'neutral'))
-        if bias == 'bullish':
-            bias = 'long'
-        elif bias == 'bearish':
-            bias = 'short'
+        score = getattr(obj, "score", getattr(obj, "confidence", 0))
+        quality = getattr(obj, "quality", 0.5)
+        bias = getattr(obj, "bias", getattr(obj, "pressure", "neutral"))
+        if bias == "bullish":
+            bias = "long"
+        elif bias == "bearish":
+            bias = "short"
         return f"{name}(q={quality:.2f} s={score:.2f} b={bias[:1]})"
+
 
 def diagnose_chart_file(csv_path: str, max_bars: int = 100):
     """Diagnose signal flow for a chart file."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"DIAGNOSING: {csv_path}")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     # 1. Load and validate raw data
     try:
@@ -144,18 +155,20 @@ def diagnose_chart_file(csv_path: str, max_bars: int = 100):
     # 2. Create DataFrame for resampling
     df_data = []
     for bar in series_ltf.bars:
-        df_data.append({
-            "timestamp": bar.ts,
-            "open": bar.open,
-            "high": bar.high,
-            "low": bar.low,
-            "close": bar.close,
-            "volume": bar.volume
-        })
+        df_data.append(
+            {
+                "timestamp": bar.ts,
+                "open": bar.open,
+                "high": bar.high,
+                "low": bar.low,
+                "close": bar.close,
+                "volume": bar.volume,
+            }
+        )
 
     df = pd.DataFrame(df_data)
-    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
-    df = df.set_index('timestamp')
+    df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
+    df = df.set_index("timestamp")
 
     # Normalize column names
     df.columns = df.columns.str.lower().str.strip()
@@ -197,21 +210,23 @@ def diagnose_chart_file(csv_path: str, max_bars: int = 100):
 
     # 6. Analyze last N bars
     print(f"\n[SIGNAL FLOW] Last {max_bars} bars:")
-    print("TS               | Analyzers                                                    | Fusion   | Decision")
+    print(
+        "TS               | Analyzers                                                    | Fusion   | Decision"
+    )
     print("-" * 120)
 
     start_idx = max(0, len(series_ltf.bars) - max_bars)
 
     for i in range(start_idx, len(series_ltf.bars)):
         bar = series_ltf.bars[i]
-        bar_time = pd.to_datetime(bar.ts, unit='s').strftime('%Y-%m-%d %H:%M')
+        bar_time = pd.to_datetime(bar.ts, unit="s").strftime("%Y-%m-%d %H:%M")
 
         # Create mini-series for this bar (last 200 bars for context)
         context_start = max(0, i - 199)
         mini_series = type(series_ltf)(
-            bars=series_ltf.bars[context_start:i+1],
+            bars=series_ltf.bars[context_start : i + 1],
             timeframe=series_ltf.timeframe,
-            symbol=series_ltf.symbol
+            symbol=series_ltf.symbol,
         )
 
         if len(mini_series.bars) < 50:
@@ -229,9 +244,14 @@ def diagnose_chart_file(csv_path: str, max_bars: int = 100):
 
             # Validate outputs
             all_valid = True
-            for name, obj in [('wyckoff', wyckoff_result), ('liquidity', liquidity_result),
-                             ('structure', structure_result), ('momentum', momentum_result),
-                             ('volume', volume_result), ('context', context_result)]:
+            for name, obj in [
+                ("wyckoff", wyckoff_result),
+                ("liquidity", liquidity_result),
+                ("structure", structure_result),
+                ("momentum", momentum_result),
+                ("volume", volume_result),
+                ("context", context_result),
+            ]:
                 if not validate_analyzer_output(name, obj):
                     all_valid = False
 
@@ -243,33 +263,36 @@ def diagnose_chart_file(csv_path: str, max_bars: int = 100):
             ltf_bias = wyckoff_result.bias
             ltf_levels = extract_key_levels(liquidity_result)
             nested_ok = check_nested_confluence(htf_range, ltf_levels)
-            eq_magnet = compute_eq_magnet(htf_range, bar.close, config.get('mtf', {}))
+            eq_magnet = compute_eq_magnet(htf_range, bar.close, config.get("mtf", {}))
 
             sync_report = decide_mtf_entry(
-                htf_bias, mtf_bias, ltf_bias,
-                nested_ok, eq_magnet,
-                config.get('mtf', {})
+                htf_bias, mtf_bias, ltf_bias, nested_ok, eq_magnet, config.get("mtf", {})
             )
 
             # Fusion
-            signal = fusion_engine.fuse_with_mtf({
-                "wyckoff": wyckoff_result,
-                "liquidity": liquidity_result,
-                "structure": structure_result,
-                "momentum": momentum_result,
-                "volume": volume_result,
-                "context": context_result
-            }, sync_report)
+            signal = fusion_engine.fuse_with_mtf(
+                {
+                    "wyckoff": wyckoff_result,
+                    "liquidity": liquidity_result,
+                    "structure": structure_result,
+                    "momentum": momentum_result,
+                    "volume": volume_result,
+                    "context": context_result,
+                },
+                sync_report,
+            )
 
             # Format output
-            analyzers_str = " ".join([
-                format_analyzer_status("wy", wyckoff_result),
-                format_analyzer_status("liq", liquidity_result),
-                format_analyzer_status("str", structure_result),
-                format_analyzer_status("mom", momentum_result),
-                format_analyzer_status("vol", volume_result),
-                format_analyzer_status("ctx", context_result)
-            ])
+            analyzers_str = " ".join(
+                [
+                    format_analyzer_status("wy", wyckoff_result),
+                    format_analyzer_status("liq", liquidity_result),
+                    format_analyzer_status("str", structure_result),
+                    format_analyzer_status("mom", momentum_result),
+                    format_analyzer_status("vol", volume_result),
+                    format_analyzer_status("ctx", context_result),
+                ]
+            )
 
             if signal:
                 fusion_str = f"✅ {signal.side} {signal.confidence:.3f}"
@@ -279,7 +302,7 @@ def diagnose_chart_file(csv_path: str, max_bars: int = 100):
                 vetoes = []
                 if eq_magnet:
                     vetoes.append("eq_magnet")
-                if sync_report and sync_report.decision == 'veto':
+                if sync_report and sync_report.decision == "veto":
                     vetoes.append("mtf_veto")
                 decision_str = f"BLOCKED({','.join(vetoes) if vetoes else 'threshold'})"
 
@@ -288,12 +311,13 @@ def diagnose_chart_file(csv_path: str, max_bars: int = 100):
         except Exception as e:
             print(f"{bar_time} | ERROR: {e}")
 
+
 def main():
     """Main diagnostic function."""
     # Test files from Chart Logs 2
     test_files = [
         "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 240_c2b76.csv",
-        "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 240_1d04a.csv"
+        "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 240_1d04a.csv",
     ]
 
     for csv_path in test_files:
@@ -302,6 +326,7 @@ def main():
             break
     else:
         print("❌ No test files found")
+
 
 if __name__ == "__main__":
     main()

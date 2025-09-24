@@ -1,4 +1,3 @@
-
 """Advanced module scaffolds for Bull Machine v1.2.1 / v1.3.
 
 These implement the **interfaces** expected by main_v13.py and friends.
@@ -6,10 +5,20 @@ Claude Code should fill in TODOs to make them production-ready.
 """
 
 from typing import Any, Dict, List, Optional
+
 try:
-    from bull_machine.core.types import WyckoffResult, LiquidityResult, Signal, BiasCtx, RangeCtx, SyncReport, Series
+    from bull_machine.core.types import (
+        BiasCtx,
+        LiquidityResult,
+        RangeCtx,
+        Series,
+        Signal,
+        SyncReport,
+        WyckoffResult,
+    )
 except Exception:
     from dataclasses import dataclass, field
+
     @dataclass
     class WyckoffResult:
         regime: str = "neutral"
@@ -19,9 +28,11 @@ except Exception:
         trend_confidence: float = 0.0
         range: Optional[Dict] = None
         notes: List[str] = field(default_factory=list)
+
         @property
         def confidence(self) -> float:
             return (self.phase_confidence + self.trend_confidence) / 2.0
+
     @dataclass
     class LiquidityResult:
         score: float = 0.0
@@ -31,6 +42,7 @@ except Exception:
         sweeps: List[Dict] = field(default_factory=list)
         phobs: List[Dict] = field(default_factory=list)
         metadata: Dict = field(default_factory=dict)
+
     @dataclass
     class Signal:
         ts: int = 0
@@ -40,6 +52,7 @@ except Exception:
         ttl_bars: int = 0
         metadata: Dict = field(default_factory=dict)
         mtf_sync: Optional[Any] = None
+
     @dataclass
     class BiasCtx:
         tf: str = "1H"
@@ -49,12 +62,14 @@ except Exception:
         bars_confirmed: int = 0
         ma_distance: float = 0.0
         trend_quality: float = 0.0
+
     @dataclass
     class RangeCtx:
         tf: str = "1H"
         low: float = 0.0
         high: float = 0.0
         mid: float = 0.0
+
     @dataclass
     class SyncReport:
         htf: BiasCtx = BiasCtx()
@@ -67,11 +82,13 @@ except Exception:
         threshold_bump: float = 0.0
         alignment_score: float = 0.0
         notes: List[str] = field(default_factory=list)
+
     @dataclass
     class Series:
         bars: List[Any] = field(default_factory=list)
         timeframe: str = "1H"
         symbol: str = "UNKNOWN"
+
 
 class AdvancedContextAnalyzer:
     """
@@ -79,6 +96,7 @@ class AdvancedContextAnalyzer:
       - analyze(series, config) -> Dict[str, Any]
     TODO: macro pulse/SMT hooks; keep light until external feeds exist.
     """
+
     def __init__(self, config: Optional[Dict] = None):
         self.config = config or {}
 
@@ -90,13 +108,13 @@ class AdvancedContextAnalyzer:
         """
         try:
             # Handle different input types
-            if hasattr(df_or_series, 'bars'):
+            if hasattr(df_or_series, "bars"):
                 bars = df_or_series.bars
                 if len(bars) < 5:
                     return self._neutral_result("insufficient bars")
 
                 closes = [bar.close for bar in bars[-5:]]
-                volumes = [getattr(bar, 'volume', 0) for bar in bars[-5:]]
+                volumes = [getattr(bar, "volume", 0) for bar in bars[-5:]]
             else:
                 return self._neutral_result("unsupported format")
 
@@ -129,7 +147,7 @@ class AdvancedContextAnalyzer:
                 "quality": min(1.0, max(0.0, quality)),
                 "bias": bias,
                 "risk_off": risk_off,
-                "notes": [f"price_change: {price_change:.3f}", f"quality: {quality:.2f}"]
+                "notes": [f"price_change: {price_change:.3f}", f"quality: {quality:.2f}"],
             }
 
         except Exception as e:
@@ -137,13 +155,8 @@ class AdvancedContextAnalyzer:
 
     def _neutral_result(self, note: str) -> Dict[str, Any]:
         """Return neutral context result."""
-        return {
-            "score": 0.0,
-            "quality": 0.0,
-            "bias": "neutral",
-            "risk_off": False,
-            "notes": [note]
-        }
+        return {"score": 0.0, "quality": 0.0, "bias": "neutral", "risk_off": False, "notes": [note]}
+
 
 # Backward compatibility function
 def analyze(df_or_series: Any, config: Optional[Dict] = None) -> Dict[str, Any]:

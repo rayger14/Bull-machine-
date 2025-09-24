@@ -6,17 +6,24 @@ import subprocess
 # Add bull_machine to path
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent))
 
-RANGE = [round(x, 2) for x in [0.15 + 0.02*i for i in range(16)]]  # 0.15..0.45
+RANGE = [round(x, 2) for x in [0.15 + 0.02 * i for i in range(16)]]  # 0.15..0.45
+
 
 def run_backtest_subprocess(cfg_path: str, out_dir: str) -> Dict[str, Any]:
     """Run backtest as subprocess and parse results"""
     cmd = [
-        "python3", "-m", "bull_machine.app.main_backtest",
-        "--config", cfg_path,
-        "--out", out_dir
+        "python3",
+        "-m",
+        "bull_machine.app.main_backtest",
+        "--config",
+        cfg_path,
+        "--out",
+        out_dir,
     ]
 
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=pathlib.Path(__file__).parent.parent.parent)
+    result = subprocess.run(
+        cmd, capture_output=True, text=True, cwd=pathlib.Path(__file__).parent.parent.parent
+    )
 
     if result.returncode != 0:
         print(f"Backtest failed: {result.stderr}")
@@ -25,7 +32,7 @@ def run_backtest_subprocess(cfg_path: str, out_dir: str) -> Dict[str, Any]:
     # Try to parse JSON output from stdout
     try:
         # Look for the JSON output line
-        lines = result.stdout.strip().split('\n')
+        lines = result.stdout.strip().split("\n")
         json_line = None
         for line in lines:
             if line.startswith('{"ok":'):
@@ -43,16 +50,17 @@ def run_backtest_subprocess(cfg_path: str, out_dir: str) -> Dict[str, Any]:
             trades = []
             if trades_path and pathlib.Path(trades_path).exists():
                 import pandas as pd
+
                 try:
                     trades_df = pd.read_csv(trades_path)
-                    trades = trades_df.to_dict('records')
+                    trades = trades_df.to_dict("records")
                 except:
                     pass
 
             metrics = backtest_result.get("metrics", {})
             if summary_path and pathlib.Path(summary_path).exists():
                 try:
-                    with open(summary_path, 'r') as f:
+                    with open(summary_path, "r") as f:
                         summary = json.load(f)
                         metrics = summary.get("metrics", metrics)
                 except:
@@ -69,15 +77,20 @@ def run_backtest_subprocess(cfg_path: str, out_dir: str) -> Dict[str, Any]:
         print(f"Stderr: {result.stderr}")
         return {"metrics": {}, "trades": []}
 
+
 def run_once(base_cfg: Dict[str, Any], thr: float, tag: str) -> Dict[str, Any]:
     cfg = copy.deepcopy(base_cfg)
 
     # Read the strategy config and modify threshold
-    strategy_config_path = cfg.get("strategy", {}).get("config", "config/threshold_calibration.json")
+    strategy_config_path = cfg.get("strategy", {}).get(
+        "config", "config/threshold_calibration.json"
+    )
     strategy_config_full_path = pathlib.Path(strategy_config_path)
     if not strategy_config_full_path.exists():
         # Try relative to repo root
-        strategy_config_full_path = pathlib.Path(__file__).parent.parent.parent / strategy_config_path
+        strategy_config_full_path = (
+            pathlib.Path(__file__).parent.parent.parent / strategy_config_path
+        )
 
     if strategy_config_full_path.exists():
         strategy_cfg = json.loads(strategy_config_full_path.read_text())
@@ -91,7 +104,7 @@ def run_once(base_cfg: Dict[str, Any], thr: float, tag: str) -> Dict[str, Any]:
                 "structure": 0.0,
                 "momentum": 0.0,
                 "volume": 0.0,
-                "context": 0.0
+                "context": 0.0,
             }
         elif "mode" in strategy_cfg:
             # Handle diagnostic config format
@@ -105,12 +118,12 @@ def run_once(base_cfg: Dict[str, Any], thr: float, tag: str) -> Dict[str, Any]:
                 "structure": 0.0,
                 "momentum": 0.0,
                 "volume": 0.0,
-                "context": 0.0
+                "context": 0.0,
             }
 
         # Write temporary strategy config
         temp_strategy_path = f"/tmp/calib_strategy_{thr:.2f}.json"
-        with open(temp_strategy_path, 'w') as f:
+        with open(temp_strategy_path, "w") as f:
             json.dump(strategy_cfg, f, indent=2)
 
         # Update main config to point to temp strategy config
@@ -120,7 +133,7 @@ def run_once(base_cfg: Dict[str, Any], thr: float, tag: str) -> Dict[str, Any]:
 
     # Write temporary main config
     temp_cfg_path = f"/tmp/calib_thr_{thr:.2f}.json"
-    with open(temp_cfg_path, 'w') as f:
+    with open(temp_cfg_path, "w") as f:
         json.dump(cfg, f, indent=2)
 
     out_dir = f"/tmp/calib_thr_{thr:.2f}_results"
@@ -212,12 +225,14 @@ def run_once(base_cfg: Dict[str, Any], thr: float, tag: str) -> Dict[str, Any]:
         if os.path.exists(temp_strategy_path):
             os.unlink(temp_strategy_path)
         import shutil
+
         if os.path.exists(out_dir):
             shutil.rmtree(out_dir)
     except:
         pass
 
     return row
+
 
 def main():
     base_cfg_path = pathlib.Path("bull_machine/configs/calib_baseline_entries.json")
@@ -230,9 +245,24 @@ def main():
     out_path = pathlib.Path("reports") / f"threshold_sweep_{int(time.time())}.csv"
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    header = ["tag","threshold","elapsed_sec","trades","win_rate","profit_factor",
-              "avg_R","max_dd","expectancy","avg_entry_score","avg_hold_bars","avg_mfe_R","avg_mae_R",
-              "avg_win","avg_loss","entries"]
+    header = [
+        "tag",
+        "threshold",
+        "elapsed_sec",
+        "trades",
+        "win_rate",
+        "profit_factor",
+        "avg_R",
+        "max_dd",
+        "expectancy",
+        "avg_entry_score",
+        "avg_hold_bars",
+        "avg_mfe_R",
+        "avg_mae_R",
+        "avg_win",
+        "avg_loss",
+        "entries",
+    ]
 
     lines = [",".join(header)]
 
@@ -242,7 +272,7 @@ def main():
     print()
 
     for i, thr in enumerate(RANGE):
-        print(f"[{i+1:2d}/{len(RANGE)}] Testing threshold {thr:.2f}...", end=" ", flush=True)
+        print(f"[{i + 1:2d}/{len(RANGE)}] Testing threshold {thr:.2f}...", end=" ", flush=True)
 
         try:
             row = run_once(base_cfg, thr, tag="baseline_no_exits")
@@ -277,6 +307,7 @@ def main():
         win_rate = parts[4] if parts[4] else "0"
         expectancy = parts[8] if parts[8] else "0"
         print(f"{thr},{trades},{win_rate},{expectancy}")
+
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,3 @@
-
 """Advanced module scaffolds for Bull Machine v1.2.1 / v1.3.
 
 These implement the **interfaces** expected by main_v13.py and friends.
@@ -6,10 +5,20 @@ Claude Code should fill in TODOs to make them production-ready.
 """
 
 from typing import Any, Dict, List, Optional
+
 try:
-    from bull_machine.core.types import WyckoffResult, LiquidityResult, Signal, BiasCtx, RangeCtx, SyncReport, Series
+    from bull_machine.core.types import (
+        BiasCtx,
+        LiquidityResult,
+        RangeCtx,
+        Series,
+        Signal,
+        SyncReport,
+        WyckoffResult,
+    )
 except Exception:
     from dataclasses import dataclass, field
+
     @dataclass
     class WyckoffResult:
         regime: str = "neutral"
@@ -19,9 +28,11 @@ except Exception:
         trend_confidence: float = 0.0
         range: Optional[Dict] = None
         notes: List[str] = field(default_factory=list)
+
         @property
         def confidence(self) -> float:
             return (self.phase_confidence + self.trend_confidence) / 2.0
+
     @dataclass
     class LiquidityResult:
         score: float = 0.0
@@ -31,6 +42,7 @@ except Exception:
         sweeps: List[Dict] = field(default_factory=list)
         phobs: List[Dict] = field(default_factory=list)
         metadata: Dict = field(default_factory=dict)
+
     @dataclass
     class Signal:
         ts: int = 0
@@ -40,6 +52,7 @@ except Exception:
         ttl_bars: int = 0
         metadata: Dict = field(default_factory=dict)
         mtf_sync: Optional[Any] = None
+
     @dataclass
     class BiasCtx:
         tf: str = "1H"
@@ -49,12 +62,14 @@ except Exception:
         bars_confirmed: int = 0
         ma_distance: float = 0.0
         trend_quality: float = 0.0
+
     @dataclass
     class RangeCtx:
         tf: str = "1H"
         low: float = 0.0
         high: float = 0.0
         mid: float = 0.0
+
     @dataclass
     class SyncReport:
         htf: BiasCtx = BiasCtx()
@@ -67,11 +82,13 @@ except Exception:
         threshold_bump: float = 0.0
         alignment_score: float = 0.0
         notes: List[str] = field(default_factory=list)
+
     @dataclass
     class Series:
         bars: List[Any] = field(default_factory=list)
         timeframe: str = "1H"
         symbol: str = "UNKNOWN"
+
 
 class AdvancedVolumeAnalyzer:
     """
@@ -79,6 +96,7 @@ class AdvancedVolumeAnalyzer:
       - analyze(series, config) -> Dict[str, Any]
     TODO: FRVP/POC/HVN/LVN, absorption/climax.
     """
+
     def __init__(self, config: Optional[Dict] = None):
         self.config = config or {}
 
@@ -90,12 +108,12 @@ class AdvancedVolumeAnalyzer:
         """
         try:
             # Handle different input types
-            if hasattr(df_or_series, 'bars'):
+            if hasattr(df_or_series, "bars"):
                 bars = df_or_series.bars
                 if len(bars) < 8:
                     return self._neutral_result("insufficient bars")
 
-                volumes = [getattr(bar, 'volume', 0) for bar in bars[-8:]]
+                volumes = [getattr(bar, "volume", 0) for bar in bars[-8:]]
                 closes = [bar.close for bar in bars[-8:]]
                 highs = [bar.high for bar in bars[-8:]]
                 lows = [bar.low for bar in bars[-8:]]
@@ -136,7 +154,7 @@ class AdvancedVolumeAnalyzer:
             volume_consistency = max(0.0, min(1.0, volume_consistency))
 
             data_quality = min(1.0, len(volumes) / 8.0)
-            quality = (volume_consistency * 0.6 + data_quality * 0.4)
+            quality = volume_consistency * 0.6 + data_quality * 0.4
 
             # Simple POC (price with highest volume)
             if volumes:
@@ -157,7 +175,7 @@ class AdvancedVolumeAnalyzer:
                 "hvn": [],  # Could implement HVN detection
                 "lvn": [],  # Could implement LVN detection
                 "frvp_chop": volume_ratio < 0.5,  # Low volume = potential chop
-                "notes": [f"vol_ratio: {volume_ratio:.2f}", f"confirms: {confirms}"]
+                "notes": [f"vol_ratio: {volume_ratio:.2f}", f"confirms: {confirms}"],
             }
 
         except Exception as e:
@@ -174,8 +192,9 @@ class AdvancedVolumeAnalyzer:
             "hvn": [],
             "lvn": [],
             "frvp_chop": False,
-            "notes": [note]
+            "notes": [note],
         }
+
 
 # Backward compatibility function
 def analyze(df_or_series: Any, config: Optional[Dict] = None) -> Dict[str, Any]:

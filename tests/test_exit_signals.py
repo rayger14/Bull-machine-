@@ -15,18 +15,22 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from bull_machine.strategy.exits import (
-    ExitSignalEvaluator, CHoCHAgainstDetector, MomentumFadeDetector,
-    TimeStopEvaluator, create_default_exit_config
+    ExitSignalEvaluator,
+    CHoCHAgainstDetector,
+    MomentumFadeDetector,
+    TimeStopEvaluator,
+    create_default_exit_config,
 )
 from bull_machine.strategy.exits.types import ExitType, ExitAction
 from bull_machine.backtest.broker import PaperBroker
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
 
 def create_test_data_with_choch():
     """Create test data with clear CHoCH pattern."""
-    dates = pd.date_range('2023-01-01', periods=100, freq='H')
+    dates = pd.date_range("2023-01-01", periods=100, freq="H")
 
     # Create uptrend followed by breakdown (CHoCH)
     prices = []
@@ -55,45 +59,48 @@ def create_test_data_with_choch():
         if i == 0:
             open_price = close_price
         else:
-            open_price = prices[i-1] + (close_price - prices[i-1]) * 0.2
+            open_price = prices[i - 1] + (close_price - prices[i - 1]) * 0.2
 
         volatility = abs(close_price - open_price) + 30
         high_price = max(open_price, close_price) + volatility * 0.5
         low_price = min(open_price, close_price) - volatility * 0.3
 
-        data.append({
-            'timestamp': dates[i],
-            'open': open_price,
-            'high': high_price,
-            'low': low_price,
-            'close': close_price,
-            'volume': 1000 + (i % 20) * 50
-        })
+        data.append(
+            {
+                "timestamp": dates[i],
+                "open": open_price,
+                "high": high_price,
+                "low": low_price,
+                "close": close_price,
+                "volume": 1000 + (i % 20) * 50,
+            }
+        )
 
     df = pd.DataFrame(data)
-    df = df.set_index('timestamp')
+    df = df.set_index("timestamp")
     return df
+
 
 def test_choch_detector():
     """Test CHoCH-Against detection."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: CHoCH-Against Detection")
-    print("="*60)
+    print("=" * 60)
 
     config = create_default_exit_config()
-    detector = CHoCHAgainstDetector(config['choch_against'])
+    detector = CHoCHAgainstDetector(config["choch_against"])
 
     # Create test data with CHoCH pattern
     df = create_test_data_with_choch()
 
     # Test on the breakdown portion (should detect CHoCH against long position)
-    mtf_data = {'4H': df}
+    mtf_data = {"4H": df}
 
     signal = detector.evaluate(
         symbol="TESTBTC",
         position_bias="long",  # We have a long position
         mtf_data=mtf_data,
-        current_bar=df.index[-5]  # During breakdown
+        current_bar=df.index[-5],  # During breakdown
     )
 
     if signal:
@@ -106,25 +113,23 @@ def test_choch_detector():
         print("❌ No CHoCH signal detected")
         return False
 
+
 def test_momentum_fade_detector():
     """Test momentum fade detection."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Momentum Fade Detection")
-    print("="*60)
+    print("=" * 60)
 
     config = create_default_exit_config()
-    detector = MomentumFadeDetector(config['momentum_fade'])
+    detector = MomentumFadeDetector(config["momentum_fade"])
 
     # Create data with momentum fade (RSI divergence)
     df = create_test_data_with_choch()
 
-    mtf_data = {'1H': df}
+    mtf_data = {"1H": df}
 
     signal = detector.evaluate(
-        symbol="TESTBTC",
-        position_bias="long",
-        mtf_data=mtf_data,
-        current_bar=df.index[-10]
+        symbol="TESTBTC", position_bias="long", mtf_data=mtf_data, current_bar=df.index[-10]
     )
 
     if signal:
@@ -136,26 +141,25 @@ def test_momentum_fade_detector():
         print("❌ No momentum fade signal detected")
         return False
 
+
 def test_time_stop_evaluator():
     """Test time-based stop."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Time Stop Evaluation")
-    print("="*60)
+    print("=" * 60)
 
     config = create_default_exit_config()
-    evaluator = TimeStopEvaluator(config['time_stop'])
+    evaluator = TimeStopEvaluator(config["time_stop"])
 
     # Create position data that's been open too long
     old_time = pd.Timestamp.now() - pd.Timedelta(hours=200)  # Longer than max_bars_1h
     position_data = {
-        'entry_time': old_time,
-        'pnl_pct': 0.05  # Small gain, not enough to justify time
+        "entry_time": old_time,
+        "pnl_pct": 0.05,  # Small gain, not enough to justify time
     }
 
     signal = evaluator.evaluate(
-        symbol="TESTBTC",
-        position_data=position_data,
-        current_bar=pd.Timestamp.now()
+        symbol="TESTBTC", position_data=position_data, current_bar=pd.Timestamp.now()
     )
 
     if signal:
@@ -167,33 +171,31 @@ def test_time_stop_evaluator():
         print("❌ No time stop signal detected")
         return False
 
+
 def test_exit_evaluator_integration():
     """Test full exit evaluator integration."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Exit Evaluator Integration")
-    print("="*60)
+    print("=" * 60)
 
     config = create_default_exit_config()
     evaluator = ExitSignalEvaluator(config)
 
     # Create test scenario
     df = create_test_data_with_choch()
-    mtf_data = {'1H': df, '4H': df}
+    mtf_data = {"1H": df, "4H": df}
 
     position_data = {
-        'bias': 'long',
-        'entry_time': df.index[0],
-        'pnl_pct': 0.02,
-        'entry_price': 50000,
-        'stop_price': 49000
+        "bias": "long",
+        "entry_time": df.index[0],
+        "pnl_pct": 0.02,
+        "entry_price": 50000,
+        "stop_price": 49000,
     }
 
     # Evaluate at breakdown point
     result = evaluator.evaluate_exits(
-        symbol="TESTBTC",
-        position_data=position_data,
-        mtf_data=mtf_data,
-        current_bar=df.index[-5]
+        symbol="TESTBTC", position_data=position_data, mtf_data=mtf_data, current_bar=df.index[-5]
     )
 
     if result.has_signals():
@@ -210,11 +212,12 @@ def test_exit_evaluator_integration():
         print("❌ Exit evaluation generated no signals")
         return False
 
+
 def test_broker_exit_integration():
     """Test broker integration with exit signals."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST: Broker Exit Integration")
-    print("="*60)
+    print("=" * 60)
 
     from bull_machine.strategy.exits.types import ExitSignal, ExitType, ExitAction
 
@@ -222,11 +225,7 @@ def test_broker_exit_integration():
 
     # Open a position
     broker.submit(
-        ts=pd.Timestamp.now(),
-        symbol="TESTBTC",
-        side="long",
-        size=1.0,
-        price_hint=50000.0
+        ts=pd.Timestamp.now(), symbol="TESTBTC", side="long", size=1.0, price_hint=50000.0
     )
 
     # Create mock exit signal
@@ -238,7 +237,7 @@ def test_broker_exit_integration():
         confidence=0.8,
         urgency=0.7,
         exit_percentage=0.5,
-        reasons=["Test exit signal"]
+        reasons=["Test exit signal"],
     )
 
     # Process exit signal
@@ -259,6 +258,7 @@ def test_broker_exit_integration():
         print("❌ Exit signal processing failed")
         return False
 
+
 def main():
     """Run all exit signal tests."""
     print("🧪 EXIT SIGNAL FRAMEWORK TESTS")
@@ -269,7 +269,7 @@ def main():
         ("Momentum Fade Detection", test_momentum_fade_detector),
         ("Time Stop Evaluation", test_time_stop_evaluator),
         ("Exit Evaluator Integration", test_exit_evaluator_integration),
-        ("Broker Exit Integration", test_broker_exit_integration)
+        ("Broker Exit Integration", test_broker_exit_integration),
     ]
 
     results = []
@@ -283,9 +283,9 @@ def main():
             print(f"\n{test_name}: ❌ ERROR - {e}")
             logging.error(f"Test {test_name} failed with error: {e}", exc_info=True)
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("EXIT SIGNAL TEST RESULTS")
-    print("="*80)
+    print("=" * 80)
 
     for test_name, result in results:
         status = "✅ PASSED" if result else "❌ FAILED"
@@ -301,6 +301,7 @@ def main():
     else:
         print("⚠️ Some exit signal tests failed. Check implementation.")
         return False
+
 
 if __name__ == "__main__":
     success = main()

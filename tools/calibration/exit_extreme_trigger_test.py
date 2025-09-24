@@ -19,6 +19,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+
 def create_base_config():
     """Base config optimized for exit signal generation."""
     return {
@@ -34,60 +35,29 @@ def create_base_config():
                 "high": "high",
                 "low": "low",
                 "close": "close",
-                "volume": "volume"
-            }
+                "volume": "volume",
+            },
         },
-        "broker": {
-            "fee_bps": 10,
-            "slippage_bps": 5,
-            "spread_bps": 2,
-            "partial_fill": True
-        },
-        "portfolio": {
-            "starting_cash": 100000,
-            "exposure_cap_pct": 0.60,
-            "max_positions": 4
-        },
-        "engine": {
-            "lookback_bars": 50,
-            "seed": 42
-        },
+        "broker": {"fee_bps": 10, "slippage_bps": 5, "spread_bps": 2, "partial_fill": True},
+        "portfolio": {"starting_cash": 100000, "exposure_cap_pct": 0.60, "max_positions": 4},
+        "engine": {"lookback_bars": 50, "seed": 42},
         "strategy": {
             "version": "v1.4",
-            "config": "bull_machine/configs/diagnostic_v14_step4_config.json"
+            "config": "bull_machine/configs/diagnostic_v14_step4_config.json",
         },
-        "risk": {
-            "base_risk_pct": 0.008,
-            "max_risk_per_trade": 0.02,
-            "min_stop_pct": 0.001
-        },
+        "risk": {"base_risk_pct": 0.008, "max_risk_per_trade": 0.02, "min_stop_pct": 0.001},
         "exit_signals": {
             "enabled": True,
             "enabled_exits": ["choch_against", "momentum_fade", "time_stop"],
             "emit_exit_edge_logs": True,
-            "choch_against": {
-                "swing_lookback": 3,
-                "bars_confirm": 2,
-                "min_break_strength": 0.05
-            },
-            "momentum_fade": {
-                "lookback": 6,
-                "drop_pct": 0.20,
-                "min_bars_in_pos": 4
-            },
-            "time_stop": {
-                "max_bars_1h": 24,
-                "max_bars_4h": 8,
-                "max_bars_1d": 4
-            },
-            "emit_exit_debug": True
+            "choch_against": {"swing_lookback": 3, "bars_confirm": 2, "min_break_strength": 0.05},
+            "momentum_fade": {"lookback": 6, "drop_pct": 0.20, "min_bars_in_pos": 4},
+            "time_stop": {"max_bars_1h": 24, "max_bars_4h": 8, "max_bars_1d": 4},
+            "emit_exit_debug": True,
         },
-        "logging": {
-            "level": "INFO",
-            "emit_fusion_debug": False,
-            "emit_exit_debug": True
-        }
+        "logging": {"level": "INFO", "emit_fusion_debug": False, "emit_exit_debug": True},
     }
+
 
 def run_extreme_test(test_name, config_overrides):
     """Run single extreme parameter test."""
@@ -96,7 +66,7 @@ def run_extreme_test(test_name, config_overrides):
 
     # Apply config overrides
     for path, value in config_overrides.items():
-        keys = path.split('.')
+        keys = path.split(".")
         current = config
         for key in keys[:-1]:
             current = current[key]
@@ -106,24 +76,33 @@ def run_extreme_test(test_name, config_overrides):
     temp_dir = tempfile.mkdtemp(prefix=f"extreme_{test_name}_")
     config_path = Path(temp_dir) / f"{test_name}.json"
 
-    with open(config_path, 'w') as f:
+    with open(config_path, "w") as f:
         json.dump(config, f, indent=2)
 
     result_dir = Path(temp_dir) / "results"
 
     print(f"🚀 Running EXTREME {test_name} test...")
     try:
-        result = subprocess.run([
-            "python3", "-m", "bull_machine.app.main_backtest",
-            "--config", str(config_path),
-            "--out", str(result_dir)
-        ], capture_output=True, text=True, timeout=120)
+        result = subprocess.run(
+            [
+                "python3",
+                "-m",
+                "bull_machine.app.main_backtest",
+                "--config",
+                str(config_path),
+                "--out",
+                str(result_dir),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
 
         if result.returncode == 0:
             # Read exit counts
             exit_counts_path = result_dir / "exit_counts.json"
             if exit_counts_path.exists():
-                with open(exit_counts_path, 'r') as f:
+                with open(exit_counts_path, "r") as f:
                     exit_counts = json.load(f)
 
                 print(f"✅ {test_name}: {exit_counts}")
@@ -143,9 +122,11 @@ def run_extreme_test(test_name, config_overrides):
         # Cleanup
         try:
             import shutil
+
             shutil.rmtree(temp_dir)
         except:
             pass
+
 
 def main():
     print("🚀 EXTREME EXIT PARAMETER TEST")
@@ -158,54 +139,69 @@ def main():
     extreme_tests = [
         # Test 1: Baseline (for comparison)
         ("baseline", {}),
-
         # Test 2: Ultra-aggressive CHoCH
-        ("choch_ultra_aggressive", {
-            "exit_signals.choch_against.bars_confirm": 1,      # Instant confirmation
-            "exit_signals.choch_against.min_break_strength": 0.005,  # 0.5% break (was 5%)
-            "exit_signals.choch_against.swing_lookback": 2     # Very short lookback
-        }),
-
+        (
+            "choch_ultra_aggressive",
+            {
+                "exit_signals.choch_against.bars_confirm": 1,  # Instant confirmation
+                "exit_signals.choch_against.min_break_strength": 0.005,  # 0.5% break (was 5%)
+                "exit_signals.choch_against.swing_lookback": 2,  # Very short lookback
+            },
+        ),
         # Test 3: Hyper-sensitive Momentum
-        ("momentum_hyper_sensitive", {
-            "exit_signals.momentum_fade.drop_pct": 0.05,      # 5% drop (was 20%)
-            "exit_signals.momentum_fade.lookback": 3,         # Shorter lookback
-            "exit_signals.momentum_fade.min_bars_in_pos": 1   # Exit immediately
-        }),
-
+        (
+            "momentum_hyper_sensitive",
+            {
+                "exit_signals.momentum_fade.drop_pct": 0.05,  # 5% drop (was 20%)
+                "exit_signals.momentum_fade.lookback": 3,  # Shorter lookback
+                "exit_signals.momentum_fade.min_bars_in_pos": 1,  # Exit immediately
+            },
+        ),
         # Test 4: Nuclear CHoCH (extreme of extreme)
-        ("choch_nuclear", {
-            "exit_signals.choch_against.bars_confirm": 1,
-            "exit_signals.choch_against.min_break_strength": 0.001,  # 0.1% break
-            "exit_signals.choch_against.swing_lookback": 1     # Single bar lookback
-        }),
-
+        (
+            "choch_nuclear",
+            {
+                "exit_signals.choch_against.bars_confirm": 1,
+                "exit_signals.choch_against.min_break_strength": 0.001,  # 0.1% break
+                "exit_signals.choch_against.swing_lookback": 1,  # Single bar lookback
+            },
+        ),
         # Test 5: Trigger-happy Momentum
-        ("momentum_trigger_happy", {
-            "exit_signals.momentum_fade.drop_pct": 0.02,      # 2% drop
-            "exit_signals.momentum_fade.lookback": 2,         # Minimal lookback
-            "exit_signals.momentum_fade.min_bars_in_pos": 1
-        }),
-
+        (
+            "momentum_trigger_happy",
+            {
+                "exit_signals.momentum_fade.drop_pct": 0.02,  # 2% drop
+                "exit_signals.momentum_fade.lookback": 2,  # Minimal lookback
+                "exit_signals.momentum_fade.min_bars_in_pos": 1,
+            },
+        ),
         # Test 6: Everything extreme
-        ("everything_extreme", {
-            "exit_signals.choch_against.bars_confirm": 1,
-            "exit_signals.choch_against.min_break_strength": 0.001,
-            "exit_signals.choch_against.swing_lookback": 1,
-            "exit_signals.momentum_fade.drop_pct": 0.02,
-            "exit_signals.momentum_fade.lookback": 2,
-            "exit_signals.momentum_fade.min_bars_in_pos": 1,
-            "exit_signals.time_stop.max_bars_1h": 6            # Also make TimeStop aggressive
-        }),
-
+        (
+            "everything_extreme",
+            {
+                "exit_signals.choch_against.bars_confirm": 1,
+                "exit_signals.choch_against.min_break_strength": 0.001,
+                "exit_signals.choch_against.swing_lookback": 1,
+                "exit_signals.momentum_fade.drop_pct": 0.02,
+                "exit_signals.momentum_fade.lookback": 2,
+                "exit_signals.momentum_fade.min_bars_in_pos": 1,
+                "exit_signals.time_stop.max_bars_1h": 6,  # Also make TimeStop aggressive
+            },
+        ),
         # Test 7: Disable TimeStop to force other exits
-        ("no_timestop_force_others", {
-            "exit_signals.enabled_exits": ["choch_against", "momentum_fade"],  # Remove time_stop
-            "exit_signals.choch_against.bars_confirm": 1,
-            "exit_signals.choch_against.min_break_strength": 0.01,
-            "exit_signals.momentum_fade.drop_pct": 0.08,
-            "exit_signals.momentum_fade.min_bars_in_pos": 2
-        })
+        (
+            "no_timestop_force_others",
+            {
+                "exit_signals.enabled_exits": [
+                    "choch_against",
+                    "momentum_fade",
+                ],  # Remove time_stop
+                "exit_signals.choch_against.bars_confirm": 1,
+                "exit_signals.choch_against.min_break_strength": 0.01,
+                "exit_signals.momentum_fade.drop_pct": 0.08,
+                "exit_signals.momentum_fade.min_bars_in_pos": 2,
+            },
+        ),
     ]
 
     results = {}
@@ -228,15 +224,17 @@ def main():
     print("-" * 70)
 
     for test_name, counts in results.items():
-        print(f"{test_name:<25} {counts.get('choch_against', 0):<8} "
-              f"{counts.get('momentum_fade', 0):<10} {counts.get('time_stop', 0):<10} "
-              f"{counts.get('none', 0):<8}")
+        print(
+            f"{test_name:<25} {counts.get('choch_against', 0):<8} "
+            f"{counts.get('momentum_fade', 0):<10} {counts.get('time_stop', 0):<10} "
+            f"{counts.get('none', 0):<8}"
+        )
 
     # Final analysis
     print(f"\\n🏆 EXTREME TRIGGER ANALYSIS:")
 
-    choch_triggered = any(counts.get('choch_against', 0) > 0 for counts in results.values())
-    momentum_triggered = any(counts.get('momentum_fade', 0) > 0 for counts in results.values())
+    choch_triggered = any(counts.get("choch_against", 0) > 0 for counts in results.values())
+    momentum_triggered = any(counts.get("momentum_fade", 0) > 0 for counts in results.values())
 
     print(f"CHoCH finally triggered: {'✅ YES' if choch_triggered else '❌ NO'}")
     print(f"Momentum finally triggered: {'✅ YES' if momentum_triggered else '❌ NO'}")
@@ -247,13 +245,15 @@ def main():
         # Identify which configs worked
         working_configs = []
         for test_name, counts in results.items():
-            if counts.get('choch_against', 0) > 0 or counts.get('momentum_fade', 0) > 0:
+            if counts.get("choch_against", 0) > 0 or counts.get("momentum_fade", 0) > 0:
                 working_configs.append(test_name)
 
         print(f"Working configs: {', '.join(working_configs)}")
 
     else:
-        print(f"\\n❌ EXTREME FAILURE: Even ultra-aggressive params couldn't trigger CHoCH/Momentum")
+        print(
+            f"\\n❌ EXTREME FAILURE: Even ultra-aggressive params couldn't trigger CHoCH/Momentum"
+        )
         print(f"This suggests:")
         print(f"  1. Exit logic bugs beyond parameter tuning")
         print(f"  2. Market data lacks the required patterns")
@@ -264,6 +264,7 @@ def main():
         json.dump(results, f, indent=2)
 
     print(f"\\n📄 Results saved to: extreme_exit_test_results.json")
+
 
 if __name__ == "__main__":
     main()

@@ -11,28 +11,20 @@ from unittest.mock import Mock, patch
 from bull_machine.strategy.exits.rules import (
     CHoCHAgainstDetector,
     MomentumFadeDetector,
-    TimeStopEvaluator
+    TimeStopEvaluator,
 )
 
-class TestExitParameterEnforcement(unittest.TestCase):
 
+class TestExitParameterEnforcement(unittest.TestCase):
     def test_choch_uses_bars_confirm_parameter(self):
         """Test that CHoCH detector uses bars_confirm parameter (not confirmation_bars)."""
         # Test bars_confirm=1
-        config_1 = {
-            "bars_confirm": 1,
-            "swing_lookback": 3,
-            "min_break_strength": 0.05
-        }
+        config_1 = {"bars_confirm": 1, "swing_lookback": 3, "min_break_strength": 0.05}
         detector_1 = CHoCHAgainstDetector(config_1)
         self.assertEqual(detector_1.bars_confirm, 1)
 
         # Test bars_confirm=3
-        config_3 = {
-            "bars_confirm": 3,
-            "swing_lookback": 3,
-            "min_break_strength": 0.05
-        }
+        config_3 = {"bars_confirm": 3, "swing_lookback": 3, "min_break_strength": 0.05}
         detector_3 = CHoCHAgainstDetector(config_3)
         self.assertEqual(detector_3.bars_confirm, 3)
 
@@ -44,20 +36,12 @@ class TestExitParameterEnforcement(unittest.TestCase):
     def test_momentum_uses_drop_pct_parameter(self):
         """Test that Momentum detector uses drop_pct parameter."""
         # Test drop_pct=0.15
-        config_15 = {
-            "drop_pct": 0.15,
-            "lookback": 6,
-            "min_bars_in_pos": 4
-        }
+        config_15 = {"drop_pct": 0.15, "lookback": 6, "min_bars_in_pos": 4}
         detector_15 = MomentumFadeDetector(config_15)
         self.assertEqual(detector_15.drop_pct, 0.15)
 
         # Test drop_pct=0.25
-        config_25 = {
-            "drop_pct": 0.25,
-            "lookback": 6,
-            "min_bars_in_pos": 4
-        }
+        config_25 = {"drop_pct": 0.25, "lookback": 6, "min_bars_in_pos": 4}
         detector_25 = MomentumFadeDetector(config_25)
         self.assertEqual(detector_25.drop_pct, 0.25)
 
@@ -69,22 +53,14 @@ class TestExitParameterEnforcement(unittest.TestCase):
     def test_timestop_uses_max_bars_per_timeframe(self):
         """Test that TimeStop evaluator uses max_bars_1h/4h/1d parameters."""
         # Test max_bars_1h=18
-        config_18 = {
-            "max_bars_1h": 18,
-            "max_bars_4h": 8,
-            "max_bars_1d": 4
-        }
+        config_18 = {"max_bars_1h": 18, "max_bars_4h": 8, "max_bars_1d": 4}
         evaluator_18 = TimeStopEvaluator(config_18)
         self.assertEqual(evaluator_18.max_bars_1h, 18)
         self.assertEqual(evaluator_18.max_bars_4h, 8)
         self.assertEqual(evaluator_18.max_bars_1d, 4)
 
         # Test max_bars_1h=30
-        config_30 = {
-            "max_bars_1h": 30,
-            "max_bars_4h": 8,
-            "max_bars_1d": 4
-        }
+        config_30 = {"max_bars_1h": 30, "max_bars_4h": 8, "max_bars_1d": 4}
         evaluator_30 = TimeStopEvaluator(config_30)
         self.assertEqual(evaluator_30.max_bars_1h, 30)
 
@@ -95,11 +71,7 @@ class TestExitParameterEnforcement(unittest.TestCase):
 
     def test_choch_parameter_usage_in_logic(self):
         """Test that CHoCH detector actually uses bars_confirm in its decision logic."""
-        config = {
-            "bars_confirm": 2,
-            "swing_lookback": 3,
-            "min_break_strength": 0.05
-        }
+        config = {"bars_confirm": 2, "swing_lookback": 3, "min_break_strength": 0.05}
         detector = CHoCHAgainstDetector(config)
 
         # Mock data - this test verifies the parameter is used, not market logic
@@ -114,7 +86,7 @@ class TestExitParameterEnforcement(unittest.TestCase):
 
         # The key test: verify bars_confirm (2) is used in the calculation
         # We don't need to test market logic, just that the parameter flows through
-        with patch.object(detector, '_find_swing_highs_lows') as mock_swings:
+        with patch.object(detector, "_find_swing_highs_lows") as mock_swings:
             mock_swings.return_value = ([], [])  # No swings found
 
             result = detector.should_exit(mock_position, mock_market_state)
@@ -124,11 +96,7 @@ class TestExitParameterEnforcement(unittest.TestCase):
 
     def test_momentum_parameter_usage_in_logic(self):
         """Test that Momentum detector actually uses drop_pct in its decision logic."""
-        config = {
-            "drop_pct": 0.20,
-            "lookback": 6,
-            "min_bars_in_pos": 4
-        }
+        config = {"drop_pct": 0.20, "lookback": 6, "min_bars_in_pos": 4}
         detector = MomentumFadeDetector(config)
 
         # Mock data
@@ -149,11 +117,7 @@ class TestExitParameterEnforcement(unittest.TestCase):
 
     def test_timestop_parameter_usage_in_logic(self):
         """Test that TimeStop evaluator uses max_bars parameters in decision logic."""
-        config = {
-            "max_bars_1h": 20,
-            "max_bars_4h": 8,
-            "max_bars_1d": 4
-        }
+        config = {"max_bars_1h": 20, "max_bars_4h": 8, "max_bars_1d": 4}
         evaluator = TimeStopEvaluator(config)
 
         # Mock position held for 25 bars on 1H timeframe
@@ -170,6 +134,7 @@ class TestExitParameterEnforcement(unittest.TestCase):
         self.assertEqual(evaluator.max_bars_1h, 20)
         self.assertEqual(evaluator.max_bars_4h, 8)
         self.assertEqual(evaluator.max_bars_1d, 4)
+
 
 if __name__ == "__main__":
     # Run the tests

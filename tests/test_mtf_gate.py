@@ -5,6 +5,7 @@ from bull_machine.core.types import BiasCtx, WyckoffResult, LiquidityResult
 from bull_machine.core.sync import decide_mtf_entry
 from bull_machine.fusion.fuse import FusionEngineV1_3
 
+
 def test_mtf_sync_contract():
     """Test MTF sync decision logic with desync scenario"""
     # HTF and MTF short, LTF long = desync
@@ -16,7 +17,7 @@ def test_mtf_sync_contract():
         bars_confirmed=3,
         ma_distance=0.05,
         trend_quality=0.7,
-        ma_slope=-0.02
+        ma_slope=-0.02,
     )
 
     mtf = BiasCtx(
@@ -27,7 +28,7 @@ def test_mtf_sync_contract():
         bars_confirmed=2,
         ma_distance=0.03,
         trend_quality=0.6,
-        ma_slope=-0.01
+        ma_slope=-0.01,
     )
 
     # Test with desync (LTF opposite of HTF)
@@ -43,8 +44,8 @@ def test_mtf_sync_contract():
             "eq_magnet_gate": True,
             "eq_bump": 0.05,
             "nested_bump": 0.03,
-            "alignment_discount": 0.05
-        }
+            "alignment_discount": 0.05,
+        },
     )
 
     # Should raise threshold due to desync
@@ -53,17 +54,15 @@ def test_mtf_sync_contract():
     if rep.decision == "raise":
         assert rep.threshold_bump > 0
 
+
 def test_fusion_no_neutral():
     """Test that fusion never emits 'neutral' side"""
     config = {
         "mtf": {"enabled": False},
         "fusion": {
             "enter_threshold": 0.0,  # Very low to ensure signal
-            "weights": {
-                "wyckoff": 0.6,
-                "liquidity": 0.4
-            }
-        }
+            "weights": {"wyckoff": 0.6, "liquidity": 0.4},
+        },
     }
 
     eng = FusionEngineV1_3(config)
@@ -75,25 +74,18 @@ def test_fusion_no_neutral():
         bias="neutral",
         phase_confidence=0.3,
         trend_confidence=0.3,
-        range=None
+        range=None,
     )
 
-    liq = LiquidityResult(
-        score=0.9,
-        pressure="bearish",
-        fvgs=[],
-        order_blocks=[]
-    )
+    liq = LiquidityResult(score=0.9, pressure="bearish", fvgs=[], order_blocks=[])
 
-    sig = eng.fuse_with_mtf(
-        {"wyckoff": wy, "liquidity": liq},
-        None
-    )
+    sig = eng.fuse_with_mtf({"wyckoff": wy, "liquidity": liq}, None)
 
     # Should determine side from liquidity pressure
     assert sig is None or sig.side in ("long", "short")
     if sig:
         assert sig.side == "short"  # Should follow liquidity bearish
+
 
 def test_eq_magnet_veto():
     """Test EQ magnet veto behavior"""
@@ -105,7 +97,7 @@ def test_eq_magnet_veto():
         bars_confirmed=2,
         ma_distance=0.02,
         trend_quality=0.6,
-        ma_slope=0.01
+        ma_slope=0.01,
     )
 
     mtf = BiasCtx(
@@ -116,7 +108,7 @@ def test_eq_magnet_veto():
         bars_confirmed=2,
         ma_distance=0.02,
         trend_quality=0.5,
-        ma_slope=0.01
+        ma_slope=0.01,
     )
 
     # Test with EQ magnet active and gate enabled
@@ -129,13 +121,14 @@ def test_eq_magnet_veto():
         policy={
             "desync_behavior": "raise",
             "eq_magnet_gate": True,  # Should veto
-            "eq_bump": 0.05
-        }
+            "eq_bump": 0.05,
+        },
     )
 
     # Should veto due to EQ magnet
     assert rep.decision == "veto"
     assert rep.eq_magnet is True
+
 
 def test_perfect_alignment_bonus():
     """Test perfect MTF alignment gives threshold discount"""
@@ -147,7 +140,7 @@ def test_perfect_alignment_bonus():
         bars_confirmed=3,
         ma_distance=0.05,
         trend_quality=0.8,
-        ma_slope=0.03
+        ma_slope=0.03,
     )
 
     mtf = BiasCtx(
@@ -158,7 +151,7 @@ def test_perfect_alignment_bonus():
         bars_confirmed=3,
         ma_distance=0.04,
         trend_quality=0.75,
-        ma_slope=0.025
+        ma_slope=0.025,
     )
 
     # Perfect alignment
@@ -168,10 +161,7 @@ def test_perfect_alignment_bonus():
         ltf_bias="long",  # All aligned
         nested_ok=True,
         eq_magnet=False,
-        policy={
-            "desync_behavior": "raise",
-            "alignment_discount": 0.05
-        }
+        policy={"desync_behavior": "raise", "alignment_discount": 0.05},
     )
 
     # Should allow with discount

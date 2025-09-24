@@ -1,0 +1,49 @@
+{
+  "version": "1.4.2",
+  "profile": "demo",
+  "signals": {
+    "enter_threshold": 0.45,
+    "weights": {
+      "wyckoff": 0.30,
+      "liquidity": 0.25,
+      "structure": 0.20,
+      "momentum": 0.10,
+      "volume": 0.10,
+      "context": 0.05
+    }
+  },
+  "features": {
+    "wyckoff": true,
+    "liquidity": true,
+    "structure": true,
+    "momentum": true,
+    "volume": true,
+    "context": true,
+    "mtf": true,
+    "bojan": false
+  },
+  "quality_floors": {
+    "wyckoff": 0.55,
+    "liquidity": 0.50,
+    "structure": 0.50,
+    "momentum": 0.45,
+    "volume": 0.45,
+    "context": 0.40
+  },
+  "mode": {
+    "enter_threshold": 0.45,
+    "exit_threshold": 0.40,
+    "min_score_delta": 0.01,
+    "strict_mtf_relaxed": true
+  },
+  "stop_loss": {
+    "base_atr_multipliers": {
+      "default": 1.5,
+      "markup_phases": 2.0
+    }
+  },
+  "risk_management": {
+    "position_size_pct": 0.02,
+    "max_drawdown_pct": 0.05
+  }
+}

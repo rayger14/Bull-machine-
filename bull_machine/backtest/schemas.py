@@ -1,11 +1,13 @@
+import hashlib
+import json
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List
 
-from dataclasses import dataclass, asdict, field
-from typing import List, Dict, Any
-import json, hashlib
 
 def config_hash(cfg: dict) -> str:
     blob = json.dumps(cfg, sort_keys=True).encode()
     return hashlib.sha256(blob).hexdigest()[:16]
+
 
 @dataclass
 class TradeLogRow:
@@ -29,8 +31,9 @@ class TradeLogRow:
 
     def to_dict(self) -> Dict[str, Any]:
         d = asdict(self)
-        d['reasons'] = json.dumps(self.reasons, sort_keys=True)
+        d["reasons"] = json.dumps(self.reasons, sort_keys=True)
         return d
+
 
 @dataclass
 class Summary:
@@ -42,11 +45,15 @@ class Summary:
     notes: List[str] = field(default_factory=list)
 
     def to_json(self) -> str:
-        return json.dumps({
-            "run_id": self.run_id,
-            "cfg_hash": self.cfg_hash,
-            "seed": self.seed,
-            "commit": self.commit,
-            "metrics": self.metrics,
-            "notes": self.notes
-        }, indent=2, sort_keys=True)
+        return json.dumps(
+            {
+                "run_id": self.run_id,
+                "cfg_hash": self.cfg_hash,
+                "seed": self.seed,
+                "commit": self.commit,
+                "metrics": self.metrics,
+                "notes": self.notes,
+            },
+            indent=2,
+            sort_keys=True,
+        )

@@ -1,9 +1,10 @@
 """Bull Machine v1.3 - State Persistence"""
 
 import json
-import os
 import logging
-from typing import Dict, Any
+import os
+from typing import Any, Dict
+
 
 def load_state(path: str = ".bm_state.json") -> Dict[str, Any]:
     """
@@ -17,7 +18,7 @@ def load_state(path: str = ".bm_state.json") -> Dict[str, Any]:
     """
     if os.path.exists(path):
         try:
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 state = json.load(f)
                 logging.debug(f"Loaded state from {path}")
                 return state
@@ -28,6 +29,7 @@ def load_state(path: str = ".bm_state.json") -> Dict[str, Any]:
         logging.debug(f"No state file found at {path}, starting fresh")
         return {}
 
+
 def save_state(state: Dict[str, Any], path: str = ".bm_state.json") -> None:
     """
     Save state to JSON file.
@@ -37,11 +39,12 @@ def save_state(state: Dict[str, Any], path: str = ".bm_state.json") -> None:
         path: Path to state file
     """
     try:
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(state, f, indent=2, default=str)
             logging.debug(f"Saved state to {path}")
     except Exception as e:
         logging.error(f"Could not save state to {path}: {e}")
+
 
 def update_state(state: Dict[str, Any], **kwargs) -> Dict[str, Any]:
     """
@@ -65,6 +68,7 @@ def update_state(state: Dict[str, Any], **kwargs) -> Dict[str, Any]:
     state.update(kwargs)
     return state
 
+
 def check_cooldown(state: Dict[str, Any], current_ts: int) -> bool:
     """
     Check if we're in cooldown period.
@@ -76,8 +80,9 @@ def check_cooldown(state: Dict[str, Any], current_ts: int) -> bool:
     Returns:
         True if in cooldown, False otherwise
     """
-    cooldown_until = state.get('cooldown_until', 0)
+    cooldown_until = state.get("cooldown_until", 0)
     return current_ts < cooldown_until
+
 
 def set_cooldown(state: Dict[str, Any], current_ts: int, bars: int = 5) -> Dict[str, Any]:
     """
@@ -93,5 +98,5 @@ def set_cooldown(state: Dict[str, Any], current_ts: int, bars: int = 5) -> Dict[
     """
     # Assuming hourly bars, adjust as needed
     cooldown_duration = bars * 3600  # seconds
-    state['cooldown_until'] = current_ts + cooldown_duration
+    state["cooldown_until"] = current_ts + cooldown_duration
     return state

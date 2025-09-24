@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+
 def create_base_config():
     """Base config template for all tests."""
     return {
@@ -27,33 +28,17 @@ def create_base_config():
                 "high": "high",
                 "low": "low",
                 "close": "close",
-                "volume": "volume"
-            }
+                "volume": "volume",
+            },
         },
-        "broker": {
-            "fee_bps": 10,
-            "slippage_bps": 5,
-            "spread_bps": 2,
-            "partial_fill": True
-        },
-        "portfolio": {
-            "starting_cash": 100000,
-            "exposure_cap_pct": 0.60,
-            "max_positions": 4
-        },
-        "engine": {
-            "lookback_bars": 50,
-            "seed": 42
-        },
+        "broker": {"fee_bps": 10, "slippage_bps": 5, "spread_bps": 2, "partial_fill": True},
+        "portfolio": {"starting_cash": 100000, "exposure_cap_pct": 0.60, "max_positions": 4},
+        "engine": {"lookback_bars": 50, "seed": 42},
         "strategy": {
             "version": "v1.4",
-            "config": "bull_machine/configs/diagnostic_v14_step4_config.json"
+            "config": "bull_machine/configs/diagnostic_v14_step4_config.json",
         },
-        "risk": {
-            "base_risk_pct": 0.008,
-            "max_risk_per_trade": 0.02,
-            "min_stop_pct": 0.001
-        },
+        "risk": {"base_risk_pct": 0.008, "max_risk_per_trade": 0.02, "min_stop_pct": 0.001},
         "exit_signals": {
             "enabled": True,
             "enabled_exits": ["choch_against", "momentum_fade", "time_stop"],
@@ -61,25 +46,22 @@ def create_base_config():
             "choch_against": {
                 "swing_lookback": 3,
                 "bars_confirm": 2,  # Will vary this
-                "min_break_strength": 0.05
+                "min_break_strength": 0.05,
             },
             "momentum_fade": {
                 "lookback": 6,
                 "drop_pct": 0.20,  # Will vary this
-                "min_bars_in_pos": 4
+                "min_bars_in_pos": 4,
             },
             "time_stop": {
                 "max_bars_1h": 20,  # Will vary this
                 "max_bars_4h": 8,
-                "max_bars_1d": 4
-            }
+                "max_bars_1d": 4,
+            },
         },
-        "logging": {
-            "level": "INFO",
-            "emit_fusion_debug": False,
-            "emit_exit_debug": True
-        }
+        "logging": {"level": "INFO", "emit_fusion_debug": False, "emit_exit_debug": True},
     }
+
 
 def run_test_config(test_name, config_overrides):
     """Run a single test configuration."""
@@ -88,7 +70,7 @@ def run_test_config(test_name, config_overrides):
 
     # Apply config overrides
     for path, value in config_overrides.items():
-        keys = path.split('.')
+        keys = path.split(".")
         current = config
         for key in keys[:-1]:
             current = current[key]
@@ -98,24 +80,33 @@ def run_test_config(test_name, config_overrides):
     temp_dir = tempfile.mkdtemp(prefix=f"accept_{test_name}_")
     config_path = Path(temp_dir) / f"{test_name}.json"
 
-    with open(config_path, 'w') as f:
+    with open(config_path, "w") as f:
         json.dump(config, f, indent=2)
 
     result_dir = Path(temp_dir) / "results"
 
     print(f"🧪 Running {test_name} test...")
     try:
-        result = subprocess.run([
-            "python3", "-m", "bull_machine.app.main_backtest",
-            "--config", str(config_path),
-            "--out", str(result_dir)
-        ], capture_output=True, text=True, timeout=120)
+        result = subprocess.run(
+            [
+                "python3",
+                "-m",
+                "bull_machine.app.main_backtest",
+                "--config",
+                str(config_path),
+                "--out",
+                str(result_dir),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
 
         if result.returncode == 0:
             # Read exit counts
             exit_counts_path = result_dir / "exit_counts.json"
             if exit_counts_path.exists():
-                with open(exit_counts_path, 'r') as f:
+                with open(exit_counts_path, "r") as f:
                     exit_counts = json.load(f)
 
                 print(f"✅ {test_name}: {exit_counts}")
@@ -135,9 +126,11 @@ def run_test_config(test_name, config_overrides):
         # Cleanup
         try:
             import shutil
+
             shutil.rmtree(temp_dir)
         except:
             pass
+
 
 def main():
     print("🔬 EXIT PARAMETER ACCEPTANCE TEST")
@@ -149,8 +142,11 @@ def main():
     tests = [
         ("baseline", {}),  # No changes - baseline
         ("choch_strict", {"exit_signals.choch_against.bars_confirm": 1}),  # More strict CHoCH
-        ("momentum_loose", {"exit_signals.momentum_fade.drop_pct": 0.30}),  # Less sensitive momentum
-        ("time_tight", {"exit_signals.time_stop.max_bars_1h": 10})  # Tighter time stops
+        (
+            "momentum_loose",
+            {"exit_signals.momentum_fade.drop_pct": 0.30},
+        ),  # Less sensitive momentum
+        ("time_tight", {"exit_signals.time_stop.max_bars_1h": 10}),  # Tighter time stops
     ]
 
     results = {}
@@ -173,9 +169,11 @@ def main():
     print("-" * 60)
 
     for test_name, counts in results.items():
-        print(f"{test_name:<15} {counts.get('choch_against', 0):<8} "
-              f"{counts.get('momentum_fade', 0):<10} {counts.get('time_stop', 0):<10} "
-              f"{counts.get('none', 0):<8}")
+        print(
+            f"{test_name:<15} {counts.get('choch_against', 0):<8} "
+            f"{counts.get('momentum_fade', 0):<10} {counts.get('time_stop', 0):<10} "
+            f"{counts.get('none', 0):<8}"
+        )
 
     # Analyze divergence
     print(f"\n🎯 DIVERGENCE ANALYSIS:")
@@ -220,6 +218,7 @@ def main():
     else:
         print(f"❌ FAILURE: All configs produced identical results")
         print(f"❌ Exit parameters are not being applied")
+
 
 if __name__ == "__main__":
     main()
