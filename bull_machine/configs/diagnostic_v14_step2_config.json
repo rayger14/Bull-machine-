@@ -1,0 +1,43 @@
+{
+  "run_id": "calib_step2_quality_floors",
+  "fusion": {
+    "enter_threshold": 0.38,
+    "weights": {
+      "wyckoff": 0.35,
+      "liquidity": 0.30,
+      "structure": 0.20,
+      "momentum": 0.07,
+      "volume": 0.05,
+      "context": 0.03
+    },
+    "quality_floors": {
+      "wyckoff": 0.45,
+      "liquidity": 0.45,
+      "structure": 0.55,
+      "momentum": 0.18,
+      "volume": 0.22,
+      "context": 0.22
+    },
+    "triad": {
+      "require": true,
+      "members": ["wyckoff", "structure", "liquidity"],
+      "min_pass": 2
+    },
+    "mtf": {
+      "gate": false
+    },
+    "eq_magnet_gate": false
+  },
+  "mode": {
+    "enter_threshold": 0.38
+  },
+  "meta": {
+    "description": "Step 2: Quality floors with triad rule",
+    "notes": [
+      "Floors above clustered flat values (0.10-0.40)",
+      "Triad rule: 2 of 3 core layers must pass",
+      "Should reduce trade count below 33",
+      "Expect improved win rate and expectancy"
+    ]
+  }
+}

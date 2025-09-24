@@ -1,0 +1,22 @@
+{
+  "cfg_hash": "d0e05517d7f23d8f",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": 0.0,
+    "avg_win": 0.0,
+    "cagr": 0.0,
+    "entries": 0,
+    "expectancy": 0.0,
+    "max_dd": 0.0,
+    "sharpe": 0.0,
+    "trades": 0,
+    "win_rate": 0.0
+  },
+  "notes": [
+    "Increased max_positions to 16 for fair comparison",
+    "Same broker auto-exit system",
+    "No intelligent exit signals"
+  ],
+  "run_id": "baseline_no_exit_signals",
+  "seed": 42
+}

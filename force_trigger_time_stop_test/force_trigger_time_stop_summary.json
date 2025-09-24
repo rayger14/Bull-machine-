@@ -1,0 +1,18 @@
+{
+  "cfg_hash": "a62e8e6c6c32a3f8",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": -1316.653413165301,
+    "avg_win": 461.45187205135915,
+    "cagr": -0.9813334809501661,
+    "entries": 1266,
+    "expectancy": -605.4112990786368,
+    "max_dd": 63259.21485919319,
+    "sharpe": -53.92625886683258,
+    "trades": 5,
+    "win_rate": 0.4
+  },
+  "notes": [],
+  "run_id": "force_trigger_time_stop",
+  "seed": 42
+}

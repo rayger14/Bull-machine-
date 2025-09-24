@@ -1,0 +1,78 @@
+{
+  "version": "1.4.1",
+  "description": "Bull Machine v1.4.1 - Advanced Exits + MTF Sync + Liquidity TTL",
+
+  "features": {
+    "wyckoff": true,
+    "liquidity": true,
+    "structure": true,
+    "momentum": true,
+    "volume": true,
+    "context": true,
+    "mtf": true,
+    "bojan": true,
+    "bojan_exits": false,
+    "smt": true,
+    "macro": true,
+    "advanced_exits": true
+  },
+
+  "weights": {
+    "wyckoff": 0.30,
+    "liquidity": 0.25,
+    "structure": 0.15,
+    "momentum": 0.15,
+    "volume": 0.15,
+    "context": 0.05,
+    "mtf": 0.10
+  },
+
+  "signals": {
+    "enter_threshold": 0.72,
+    "aggregate_floor": 0.35,
+    "context_floor": 0.30,
+    "mtf_threshold": 0.60,
+    "cooldown_bars": 5,
+    "mtf_gate_enabled": true
+  },
+
+  "quality_floors": {
+    "wyckoff": 0.40,
+    "liquidity": 0.35,
+    "structure": 0.30,
+    "momentum": 0.30,
+    "volume": 0.30,
+    "context": 0.25,
+    "mtf": 0.45
+  },
+
+  "risk_management": {
+    "position_size_pct": 0.8,
+    "max_risk_per_trade": 0.008,
+    "max_positions": 8,
+    "drawdown_limit": 0.15
+  },
+
+  "timeframes": {
+    "primary": "1H",
+    "mtf": "4H",
+    "htf": "1D",
+    "sync_required": true
+  },
+
+  "exits_config_path": "configs/v141/exits_config.json",
+
+  "telemetry": {
+    "enabled": true,
+    "output_dir": "reports/v141_telemetry",
+    "save_interval": 100
+  },
+
+  "backtest": {
+    "start_date": "2024-01-01",
+    "end_date": "2025-01-01",
+    "commission": 0.0002,
+    "slippage": 0.0003,
+    "initial_balance": 10000
+  }
+}

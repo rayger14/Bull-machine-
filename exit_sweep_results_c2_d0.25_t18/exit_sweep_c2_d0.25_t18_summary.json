@@ -1,0 +1,18 @@
+{
+  "cfg_hash": "9312c7002f872215",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": -3541.728916209772,
+    "avg_win": 765.8623526138426,
+    "cagr": -0.9813334809501661,
+    "entries": 1266,
+    "expectancy": -2464.831099003868,
+    "max_dd": 63259.21485919319,
+    "sharpe": -53.92625886683258,
+    "trades": 4,
+    "win_rate": 0.25
+  },
+  "notes": [],
+  "run_id": "exit_sweep_c2_d0.25_t18",
+  "seed": 42
+}

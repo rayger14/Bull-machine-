@@ -1,0 +1,17 @@
+{
+  "cfg_hash": "9720fb937a358197",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": -1095.3941534146954,
+    "avg_win": 0.0,
+    "cagr": -0.41743290288332324,
+    "expectancy": -1095.3941534146954,
+    "max_dd": 46724.43574059931,
+    "sharpe": -0.00681136029408871,
+    "trades": 31,
+    "win_rate": 0.0
+  },
+  "notes": [],
+  "run_id": "optimized_btc_eth_backtest",
+  "seed": 42
+}

@@ -1,0 +1,61 @@
+{
+  "run_id": "comprehensive_chart_logs2_backtest",
+  "data": {
+    "sources": {
+      "BTCUSD_4H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 240_c2b76.csv",
+      "ETHUSD_4H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 240_1d04a.csv",
+      "SPY_4H": "/Users/raymondghandchi/Downloads/Chart logs 2/BATS_SPY, 240_48e36.csv"
+    },
+    "timeframes": ["1D", "4H", "1H"]
+  },
+  "broker": {
+    "fee_bps": 2,
+    "slippage_bps": 3,
+    "spread_bps": 1,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 10000
+  },
+  "engine": {
+    "lookback_bars": 150,
+    "seed": 42
+  },
+  "performance": {
+    "mode": "fast",
+    "htf_stride": 6,
+    "mtf_stride": 2,
+    "log_mode": "trades",
+    "sample_rate": 50
+  },
+  "strategy": {
+    "version": "v1.4_enhanced",
+    "config": "config/production.json"
+  },
+  "signals": {
+    "enter_threshold": 0.28,
+    "weights": {
+      "wyckoff": 0.40,
+      "liquidity": 0.30,
+      "structure": 0.15,
+      "momentum": 0.10,
+      "volume": 0.05,
+      "context": 0.00
+    }
+  },
+  "risk": {
+    "base_risk_pct": 2.0,
+    "max_exposure_pct": 60.0,
+    "tp_ladder": [1.0, 2.0, 3.0],
+    "tp_sizes": [0.4, 0.3, 0.3]
+  },
+  "meta": {
+    "notes": [
+      "Comprehensive backtest on Chart Logs 2 data",
+      "BTC: 2,188 bars, ETH: 1,936 bars, SPY: 1,953 bars",
+      "$10,000 starting capital",
+      "Lower threshold (0.28) for more trade opportunities",
+      "Multi-asset portfolio testing"
+    ]
+  }
+}

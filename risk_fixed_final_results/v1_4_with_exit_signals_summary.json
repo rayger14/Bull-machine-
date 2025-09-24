@@ -1,0 +1,23 @@
+{
+  "cfg_hash": "102af45e09ec2b6a",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": -1236.8129159544994,
+    "avg_win": 534.2827514622768,
+    "cagr": NaN,
+    "entries": 2003,
+    "expectancy": -592.7781278029444,
+    "max_dd": 106984.48805466361,
+    "sharpe": -0.27101257409803436,
+    "trades": 33,
+    "win_rate": 0.36363636363636365
+  },
+  "notes": [
+    "Includes CHoCH-Against, Momentum Fade, and Time Stop exits",
+    "Professional risk management with TP ladder",
+    "Lowered exit thresholds for more active management",
+    "3-day max hold time for faster position cycling"
+  ],
+  "run_id": "v1_4_with_exit_signals",
+  "seed": 42
+}

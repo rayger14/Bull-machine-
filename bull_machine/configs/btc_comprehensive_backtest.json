@@ -1,0 +1,62 @@
+{
+  "run_id": "btc_comprehensive_backtest",
+  "data": {
+    "sources": {
+      "BTCUSD_4H": "/Users/raymondghandchi/Desktop/Chart Logs/COINBASE_BTCUSD, 240_1c8b8.csv"
+    },
+    "timeframes": ["1D", "4H", "1H"]
+  },
+  "broker": {
+    "fee_bps": 2,
+    "slippage_bps": 3,
+    "spread_bps": 1,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 100000
+  },
+  "engine": {
+    "lookback_bars": 200,
+    "seed": 42
+  },
+  "performance": {
+    "mode": "fast",
+    "htf_stride": 6,
+    "mtf_stride": 2,
+    "log_mode": "boundary",
+    "sample_rate": 20,
+    "threshold_band": 0.05,
+    "include_reasons": true,
+    "include_subscores": true,
+    "eod_snapshots": true
+  },
+  "strategy": {
+    "version": "v1.4_enhanced",
+    "config": "config/production.json"
+  },
+  "signals": {
+    "enter_threshold": 0.30,
+    "weights": {
+      "wyckoff": 0.40,
+      "liquidity": 0.35,
+      "structure": 0.15,
+      "momentum": 0.05,
+      "volume": 0.05,
+      "context": 0.00
+    }
+  },
+  "risk": {
+    "base_risk_pct": 2.0,
+    "max_exposure_pct": 75.0,
+    "tp_ladder": [1.0, 2.0, 3.0],
+    "tp_sizes": [0.4, 0.3, 0.3]
+  },
+  "meta": {
+    "notes": [
+      "Comprehensive BTC analysis with 539 bars of 4H data",
+      "Enhanced signal generation and risk management",
+      "Lower threshold for more trade opportunities",
+      "Higher position sizing for realistic results"
+    ]
+  }
+}

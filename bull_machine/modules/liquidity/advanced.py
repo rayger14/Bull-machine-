@@ -1,174 +1,190 @@
 
-from typing import List, Dict, Optional
-from ...core.types import Series, WyckoffResult
+"""Advanced module scaffolds for Bull Machine v1.2.1 / v1.3.
+
+These implement the **interfaces** expected by main_v13.py and friends.
+Claude Code should fill in TODOs to make them production-ready.
+"""
+
+from typing import Any, Dict, List, Optional
+try:
+    from bull_machine.core.types import WyckoffResult, LiquidityResult, Signal, BiasCtx, RangeCtx, SyncReport, Series
+except Exception:
+    from dataclasses import dataclass, field
+    @dataclass
+    class WyckoffResult:
+        regime: str = "neutral"
+        phase: str = "neutral"
+        bias: str = "neutral"
+        phase_confidence: float = 0.0
+        trend_confidence: float = 0.0
+        range: Optional[Dict] = None
+        notes: List[str] = field(default_factory=list)
+        @property
+        def confidence(self) -> float:
+            return (self.phase_confidence + self.trend_confidence) / 2.0
+    @dataclass
+    class LiquidityResult:
+        score: float = 0.0
+        pressure: str = "neutral"
+        fvgs: List[Dict] = field(default_factory=list)
+        order_blocks: List[Dict] = field(default_factory=list)
+        sweeps: List[Dict] = field(default_factory=list)
+        phobs: List[Dict] = field(default_factory=list)
+        metadata: Dict = field(default_factory=dict)
+    @dataclass
+    class Signal:
+        ts: int = 0
+        side: str = "neutral"
+        confidence: float = 0.0
+        reasons: List[str] = field(default_factory=list)
+        ttl_bars: int = 0
+        metadata: Dict = field(default_factory=dict)
+        mtf_sync: Optional[Any] = None
+    @dataclass
+    class BiasCtx:
+        tf: str = "1H"
+        bias: str = "neutral"
+        confirmed: bool = False
+        strength: float = 0.0
+        bars_confirmed: int = 0
+        ma_distance: float = 0.0
+        trend_quality: float = 0.0
+    @dataclass
+    class RangeCtx:
+        tf: str = "1H"
+        low: float = 0.0
+        high: float = 0.0
+        mid: float = 0.0
+    @dataclass
+    class SyncReport:
+        htf: BiasCtx = BiasCtx()
+        mtf: BiasCtx = BiasCtx()
+        ltf_bias: str = "neutral"
+        nested_ok: bool = False
+        eq_magnet: bool = False
+        desync: bool = False
+        decision: str = "raise"
+        threshold_bump: float = 0.0
+        alignment_score: float = 0.0
+        notes: List[str] = field(default_factory=list)
+    @dataclass
+    class Series:
+        bars: List[Any] = field(default_factory=list)
+        timeframe: str = "1H"
+        symbol: str = "UNKNOWN"
 
 class AdvancedLiquidityAnalyzer:
-    """v1.2.1 Liquidity Analyzer with core patches applied"""
-    def __init__(self, config: dict):
-        self.config = config
-        self.liquidity_cfg = config.get('liquidity', {})
-        self.sweep_penetration = self.liquidity_cfg.get('sweep_penetration', 0.002)
-        self.sweep_reclaim_bars = self.liquidity_cfg.get('sweep_reclaim_bars', 3)
+    """
+    Expected by v1.3 pipeline:
+      - analyze(series, bias) -> LiquidityResult
+    TODO: OB/HOB/pHOB, FVG quality/age, sweeps+reclaims, scoring.
+    """
+    def __init__(self, config: Optional[Dict] = None):
+        self.config = config or {}
 
-    # ----- The following helpers are assumed to exist in your repo; present as stubs here -----
-    def _detect_fvgs_with_gates(self, series: Series) -> List[Dict]:
-        return getattr(self, "_impl_detect_fvgs_with_gates", lambda s: [])(series)
+    def analyze(self, series: Series, bias: str) -> LiquidityResult:
+        if not series or not series.bars or len(series.bars) < 10:
+            return LiquidityResult(
+                score=0.0,
+                pressure="neutral",
+                fvgs=[],
+                order_blocks=[],
+                sweeps=[],
+                phobs=[],
+                metadata={"notes": ["insufficient data"]}
+            )
 
-    def _detect_order_blocks(self, series: Series) -> List[Dict]:
-        return getattr(self, "_impl_detect_order_blocks", lambda s: [])(series)
+        try:
+            bars = series.bars
+            recent_bars = bars[-10:] if len(bars) >= 10 else bars
 
-    def _calculate_premium_discount_context(self, series: Series) -> Dict:
-        return getattr(self, "_impl_calculate_pd_context", lambda s: {"zone": "neutral", "value": 0.0})(series)
+            # Simple volume analysis
+            volumes = [bar.volume for bar in recent_bars]
+            avg_volume = sum(volumes) / len(volumes) if volumes else 1
 
-    def _determine_pressure(self, fvgs: List[Dict], obs: List[Dict], bias: str) -> str:
-        return getattr(self, "_impl_determine_pressure", lambda a,b,c: "neutral")(fvgs, obs, bias)
-    # -----------------------------------------------------------------------------------------
+            # Get price data
+            highs = [bar.high for bar in recent_bars]
+            lows = [bar.low for bar in recent_bars]
+            closes = [bar.close for bar in recent_bars]
 
-    def _detect_liquidity_sweeps(self, series: Series) -> List[Dict]:
-        """Detect liquidity sweeps with tick size guard & recency window"""
-        sweeps: List[Dict] = []
-        if len(series.bars) < 20:
-            return sweeps
+            if not highs or not lows or not closes:
+                return self._neutral_result("invalid bar data")
 
-        tick_size = max(self.liquidity_cfg.get('tick_size', 0.01), 1e-12)
-        sweep_recent = self.liquidity_cfg.get('sweep_recent_bars', 5)
+            current_close = closes[-1]
+            recent_high = max(highs)
+            recent_low = min(lows)
 
-        lookback = min(50, len(series.bars))
-        bars = series.bars[-lookback:]
+            # Simple liquidity scoring based on bias alignment
+            base_score = 0.1
 
-        highs, lows = {}, {}
-        for i, bar in enumerate(bars):
-            high_key = round(bar.high / tick_size) * tick_size
-            low_key = round(bar.low / tick_size) * tick_size
-            highs.setdefault(high_key, []).append(i)
-            lows.setdefault(low_key, []).append(i)
+            if bias == "long":
+                # Higher score if price is near recent highs with good volume
+                if current_close > recent_low + (recent_high - recent_low) * 0.7:
+                    base_score = 0.4
+                    if volumes[-1] > avg_volume * 1.2:  # Above average volume
+                        base_score = 0.6
+                pressure = "bullish"
+            elif bias == "short":
+                # Higher score if price is near recent lows with good volume
+                if current_close < recent_low + (recent_high - recent_low) * 0.3:
+                    base_score = 0.4
+                    if volumes[-1] > avg_volume * 1.2:  # Above average volume
+                        base_score = 0.6
+                pressure = "bearish"
+            else:
+                pressure = "neutral"
 
-        start = max(0, len(bars) - sweep_recent)
-        for i in range(start, len(bars)):
-            bar = bars[i]
-            # highs
-            for level, idxs in highs.items():
-                if len(idxs) >= 2 and bar.high > level * (1 + self.sweep_penetration):
-                    reclaimed = any(
-                        bars[j].close < level
-                        for j in range(i+1, min(i+1+self.sweep_reclaim_bars, len(bars)))
-                    )
-                    if reclaimed:
-                        sweeps.append({
-                            'type': 'sweep', 'direction': 'bearish',
-                            'index': i, 'level': level,
-                            'penetration': bar.high - level, 'reclaimed': True
+            # Simple order block detection (previous swing high/low)
+            order_blocks = []
+            if len(highs) >= 3:
+                for i in range(1, len(highs) - 1):
+                    if highs[i] > highs[i-1] and highs[i] > highs[i+1]:
+                        # Resistance OB: use some thickness around the high
+                        thickness = (highs[i] - lows[i]) * 0.1
+                        order_blocks.append({
+                            "type": "resistance",
+                            "high": highs[i],
+                            "low": highs[i] - thickness,
+                            "strength": 0.5
                         })
-            # lows
-            for level, idxs in lows.items():
-                if len(idxs) >= 2 and bar.low < level * (1 - self.sweep_penetration):
-                    reclaimed = any(
-                        bars[j].close > level
-                        for j in range(i+1, min(i+1+self.sweep_reclaim_bars, len(bars)))
-                    )
-                    if reclaimed:
-                        sweeps.append({
-                            'type': 'sweep', 'direction': 'bullish',
-                            'index': i, 'level': level,
-                            'penetration': level - bar.low, 'reclaimed': True
+                    if lows[i] < lows[i-1] and lows[i] < lows[i+1]:
+                        # Support OB: use some thickness around the low
+                        thickness = (highs[i] - lows[i]) * 0.1
+                        order_blocks.append({
+                            "type": "support",
+                            "high": lows[i] + thickness,
+                            "low": lows[i],
+                            "strength": 0.5
                         })
-        return sweeps[-5:]
 
-    def _detect_phobs(self, order_blocks: List[Dict], series: Series) -> List[Dict]:
-        """Detect unmitigated HOBs with correct percentage handling"""
-        phobs: List[Dict] = []
-        mitigation_pct = self.liquidity_cfg.get('phob_mitigation_pct', 75)
-        if mitigation_pct > 1:
-            mitigation_pct /= 100.0
+            # Calculate quality based on data freshness and volume reliability
+            vol_quality = min(1.0, volumes[-1] / max(avg_volume, 1e-6)) if volumes else 0.3
+            data_quality = min(1.0, len(recent_bars) / 10.0)  # Full quality at 10+ bars
+            level_quality = min(1.0, len(order_blocks) / 3.0) if order_blocks else 0.2
 
-        for ob in order_blocks:
-            mitigated = False
-            for i in range(ob['index'] + 1, len(series.bars)):
-                bar = series.bars[i]
-                if ob['direction'] == 'bullish':
-                    if bar.close < ob['bottom'] * (1 - mitigation_pct):
-                        mitigated = True
-                        break
-                else:
-                    if bar.close > ob['top'] * (1 + mitigation_pct):
-                        mitigated = True
-                        break
-            if not mitigated:
-                last = series.bars[-1].close
-                phobs.append({
-                    **ob,
-                    'type': 'phob',
-                    'distance_from_price': abs(last - ob['mid']) / max(last, 1e-12)
-                })
-        return phobs
+            quality = (vol_quality + data_quality + level_quality) / 3.0
 
-    def _calculate_folp_score(self, fvgs: List[Dict], order_blocks: List[Dict],
-                              pd_context: Dict, bias: str,
-                              phobs: List[Dict] = None, sweeps: List[Dict] = None) -> float:
-        """Dynamic liquidity scoring including PHOB proximity & sweep reclaims"""
-        fvg_score = max((f['strength'] for f in fvgs
-                         if (bias == 'long' and f['direction'] == 'bullish') or
-                            (bias == 'short' and f['direction'] == 'bearish')), default=0)
-        ob_score = max((o['strength'] for o in order_blocks
-                        if (bias == 'long' and o['direction'] == 'bullish') or
-                           (bias == 'short' and o['direction'] == 'bearish')), default=0)
+            result = LiquidityResult(
+                score=base_score,
+                pressure=pressure,
+                fvgs=[],  # Could implement FVG detection
+                order_blocks=order_blocks
+            )
 
-        liquidity_score = 0.1
-        if phobs and any(p.get('distance_from_price', 1) < 0.01 for p in phobs):
-            liquidity_score += 0.2
-        if sweeps:
-            recent = sweeps[-2:] if len(sweeps) >= 2 else sweeps
-            if any(s.get('reclaimed') for s in recent):
-                liquidity_score += 0.3
-        liquidity_score = min(liquidity_score, 1.0)
+            # Add quality attribute for enhanced fusion
+            result.quality = quality
+            return result
 
-        pd_score = 0
-        if (bias == 'long' and pd_context['zone'] == 'discount') or \
-           (bias == 'short' and pd_context['zone'] == 'premium'):
-            pd_score = pd_context['value']
+        except Exception as e:
+            return self._neutral_result(f"analysis error: {str(e)}")
 
-        w = {'fvg': 0.4, 'orderblock': 0.3, 'liquidity': 0.2, 'premium_discount': 0.1}
-        total = fvg_score*w['fvg'] + ob_score*w['orderblock'] + liquidity_score*w['liquidity'] + pd_score*w['premium_discount']
-        return min(total, 1.0)
-
-    def _find_best_candidate(self, fvgs: List[Dict], order_blocks: List[Dict],
-                             phobs: List[Dict], wyckoff_result: WyckoffResult,
-                             pd_context: Dict) -> Optional[Dict]:
-        """Strict P/D gating; choose highest-score aligned candidate"""
-        cands: List[Dict] = []
-        for f in fvgs:
-            if (wyckoff_result.bias == 'long' and f['direction'] == 'bullish') or \
-               (wyckoff_result.bias == 'short' and f['direction'] == 'bearish'):
-                cands.append({**f, 'candidate_type': 'fvg', 'score': f['strength']})
-        for p in phobs:
-            if (wyckoff_result.bias == 'long' and p['direction'] == 'bullish') or \
-               (wyckoff_result.bias == 'short' and p['direction'] == 'bearish'):
-                cands.append({**p, 'candidate_type': 'phob', 'score': p['strength'] * 1.2})
-
-        filtered: List[Dict] = []
-        for c in cands:
-            if wyckoff_result.bias == 'long' and pd_context['zone'] == 'discount':
-                filtered.append(c)
-            elif wyckoff_result.bias == 'short' and pd_context['zone'] == 'premium':
-                filtered.append(c)
-            elif pd_context['zone'] == 'neutral' and c['score'] > 0.8:
-                c = {**c, 'score': c['score'] * 0.8}
-                filtered.append(c)
-
-        return max(filtered, key=lambda x: x['score']) if filtered else None
-
-    def analyze(self, series: Series, wyckoff_result: WyckoffResult) -> Dict:
-        """Main liquidity analysis; returns dict consumed by fusion/risk"""
-        fvgs = self._detect_fvgs_with_gates(series)
-        obs = self._detect_order_blocks(series)
-        phobs = self._detect_phobs(obs, series)
-        sweeps = self._detect_liquidity_sweeps(series)
-        pd_context = self._calculate_premium_discount_context(series)
-        pressure = self._determine_pressure(fvgs, obs, wyckoff_result.bias)
-        overall = self._calculate_folp_score(fvgs, obs, pd_context, wyckoff_result.bias, phobs, sweeps)
-        best = self._find_best_candidate(fvgs, obs, phobs, wyckoff_result, pd_context)
-        return {
-            'fvgs': fvgs, 'order_blocks': obs, 'phobs': phobs, 'sweeps': sweeps,
-            'premium_discount': pd_context, 'pressure': pressure,
-            'overall_score': overall, 'best_candidate': best
-        }
+    def _neutral_result(self, note: str) -> LiquidityResult:
+        result = LiquidityResult(
+            score=0.0,
+            pressure="neutral",
+            fvgs=[],
+            order_blocks=[]
+        )
+        # Add quality attribute for enhanced fusion
+        result.quality = 0.0
+        return result

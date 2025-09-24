@@ -1,0 +1,59 @@
+{
+  "run_id": "calib_step3b_tighter_floors",
+  "fusion": {
+    "enter_threshold": 0.30,
+    "weights": {
+      "wyckoff": 0.30,
+      "liquidity": 0.25,
+      "structure": 0.20,
+      "momentum": 0.10,
+      "volume": 0.10,
+      "context": 0.05
+    },
+    "quality_floors": {
+      "wyckoff": 0.44,
+      "liquidity": 0.40,
+      "structure": 0.47,
+      "momentum": 0.15,
+      "volume": 0.20,
+      "context": 0.25
+    },
+    "triad": {
+      "require": true,
+      "members": ["wyckoff", "structure", "liquidity"],
+      "min_pass": 2,
+      "override": {
+        "enabled": true,
+        "if_sum_of_two_cores_ge": 1.15
+      }
+    },
+    "layer_caps": {
+      "volume": 0.25,
+      "context": 0.30
+    },
+    "min_variance_guard": {
+      "momentum": 0.08,
+      "volume": 0.12,
+      "context": 0.15
+    },
+    "hysteresis": {
+      "enter": 0.30,
+      "hold": 0.27
+    },
+    "mtf": {
+      "gate": false
+    },
+    "eq_magnet_gate": false
+  },
+  "mode": {
+    "enter_threshold": 0.30
+  },
+  "meta": {
+    "description": "Step 3b: Tighter floors for higher selectivity",
+    "notes": [
+      "Tighter floors: wyckoff 0.44, liquidity 0.40, structure 0.47",
+      "Higher triad override threshold (1.15)",
+      "Should reduce trade count and improve quality"
+    ]
+  }
+}

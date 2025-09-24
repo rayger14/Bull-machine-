@@ -1,0 +1,23 @@
+{
+  "cfg_hash": "e760df29b601138d",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": -1278.2726426761117,
+    "avg_win": 534.2827514622768,
+    "cagr": NaN,
+    "entries": 2003,
+    "expectancy": -690.4168391717694,
+    "max_dd": 110199.353587268,
+    "sharpe": -0.5802163523286502,
+    "trades": 37,
+    "win_rate": 0.32432432432432434
+  },
+  "notes": [
+    "Very aggressive CHoCH: 1-bar swings",
+    "Aggressive momentum fade: 3-bar lookback, 15% drop",
+    "Short time stop: 10 bars maximum hold",
+    "Test to confirm exits can trigger"
+  ],
+  "run_id": "calib_step4_exits_aggressive",
+  "seed": 42
+}

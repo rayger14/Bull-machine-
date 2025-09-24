@@ -1,0 +1,178 @@
+{
+  "BTC": {
+    "symbol": "BTC",
+    "performance": {
+      "total_trades": 1,
+      "win_rate": 0.0,
+      "total_pnl_pct": -0.1142616384692883,
+      "total_pnl_dollars": -11.42616384692921,
+      "avg_pnl_pct": -8.279828874586384,
+      "max_drawdown": 0.17020339868040546,
+      "sharpe_ratio": 0,
+      "profit_factor": 0.0,
+      "final_balance": 9988.573836153071
+    },
+    "trades": [
+      {
+        "symbol": "BTC",
+        "side": "long",
+        "entry_price": 54123.37492704445,
+        "exit_price": 49642.05210193438,
+        "entry_time": "2024-01-11 14:00:00",
+        "exit_time": "2024-01-11 22:00:00",
+        "bars_held": 8,
+        "pnl_pct": -0.08279828874586384,
+        "pnl_dollars": -11.42616384692921,
+        "exit_reason": "stop_loss",
+        "fusion_score": 0.7332912741602791,
+        "entry_scores": {
+          "wyckoff": 0.7999999999999999,
+          "liquidity": 0.8,
+          "structure": 0.65,
+          "momentum": 0.6152196809304887,
+          "volume": 0.7566800876316506,
+          "context": 0.5,
+          "mtf": 0.75,
+          "bojan": 0.0
+        },
+        "risk_multiplier": 1.38
+      }
+    ],
+    "config_used": {
+      "features": {
+        "wyckoff": true,
+        "liquidity": true,
+        "structure": true,
+        "momentum": true,
+        "volume": true,
+        "context": true,
+        "mtf": true,
+        "bojan": true,
+        "dynamic_risk": true
+      },
+      "weights": {
+        "wyckoff": 0.3,
+        "liquidity": 0.25,
+        "structure": 0.15,
+        "momentum": 0.15,
+        "volume": 0.15,
+        "context": 0.05,
+        "mtf": 0.1
+      },
+      "signals": {
+        "enter_threshold": 0.72,
+        "aggregate_floor": 0.35,
+        "context_floor": 0.3,
+        "mtf_threshold": 0.6
+      },
+      "quality_floors": {
+        "wyckoff": 0.4,
+        "liquidity": 0.35,
+        "structure": 0.3,
+        "momentum": 0.3,
+        "volume": 0.3,
+        "context": 0.25,
+        "mtf": 0.45
+      },
+      "risk_management": {
+        "max_risk_per_trade": 0.01,
+        "max_positions": 1,
+        "drawdown_limit": 0.2
+      },
+      "backtest": {
+        "initial_balance": 10000,
+        "commission": 0.0002,
+        "slippage": 0.0003
+      },
+      "exits_config_path": "configs/v141/exits_config.json"
+    }
+  },
+  "ETH": {
+    "symbol": "ETH",
+    "performance": {
+      "total_trades": 1,
+      "win_rate": 0.0,
+      "total_pnl_pct": -0.09943942665924622,
+      "total_pnl_dollars": -9.943942665924858,
+      "avg_pnl_pct": -7.205755555018014,
+      "max_drawdown": 0.09943942665924622,
+      "sharpe_ratio": 0,
+      "profit_factor": 0.0,
+      "final_balance": 9990.056057334075
+    },
+    "trades": [
+      {
+        "symbol": "ETH",
+        "side": "long",
+        "entry_price": 1834.2507314600814,
+        "exit_price": 1702.079107484938,
+        "entry_time": "2024-01-23 23:00:00",
+        "exit_time": "2024-01-24 01:00:00",
+        "bars_held": 2,
+        "pnl_pct": -0.07205755555018013,
+        "pnl_dollars": -9.943942665924858,
+        "exit_reason": "stop_loss",
+        "fusion_score": 0.7328990270368051,
+        "entry_scores": {
+          "wyckoff": 0.7999999999999999,
+          "liquidity": 0.92,
+          "structure": 0.65,
+          "momentum": 0.35754281109284564,
+          "volume": 0.8113497295226588,
+          "context": 0.5,
+          "mtf": 0.75,
+          "bojan": 0.0
+        },
+        "risk_multiplier": 1.38
+      }
+    ],
+    "config_used": {
+      "features": {
+        "wyckoff": true,
+        "liquidity": true,
+        "structure": true,
+        "momentum": true,
+        "volume": true,
+        "context": true,
+        "mtf": true,
+        "bojan": true,
+        "dynamic_risk": true
+      },
+      "weights": {
+        "wyckoff": 0.3,
+        "liquidity": 0.25,
+        "structure": 0.15,
+        "momentum": 0.15,
+        "volume": 0.15,
+        "context": 0.05,
+        "mtf": 0.1
+      },
+      "signals": {
+        "enter_threshold": 0.72,
+        "aggregate_floor": 0.35,
+        "context_floor": 0.3,
+        "mtf_threshold": 0.6
+      },
+      "quality_floors": {
+        "wyckoff": 0.4,
+        "liquidity": 0.35,
+        "structure": 0.3,
+        "momentum": 0.3,
+        "volume": 0.3,
+        "context": 0.25,
+        "mtf": 0.45
+      },
+      "risk_management": {
+        "max_risk_per_trade": 0.01,
+        "max_positions": 1,
+        "drawdown_limit": 0.2
+      },
+      "backtest": {
+        "initial_balance": 10000,
+        "commission": 0.0002,
+        "slippage": 0.0003
+      },
+      "exits_config_path": "configs/v141/exits_config.json"
+    }
+  }
+}

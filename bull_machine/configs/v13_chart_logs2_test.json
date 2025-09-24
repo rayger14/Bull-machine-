@@ -1,0 +1,35 @@
+{
+  "run_id": "v13_chart_logs2_test",
+  "data": {
+    "sources": {
+      "BTC": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 240_c2b76.csv",
+      "ETH": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 240_1d04a.csv",
+      "SPY": "/Users/raymondghandchi/Downloads/Chart logs 2/BATS_SPY, 240_48e36.csv"
+    },
+    "timeframes": ["1D", "4H", "1H"]
+  },
+  "broker": {
+    "fee_bps": 5,
+    "slippage_bps": 3,
+    "spread_bps": 1,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 10000
+  },
+  "engine": {
+    "lookback_bars": 100,
+    "seed": 42
+  },
+  "strategy": {
+    "version": "v1.3",
+    "config": "bull_machine/config/production.json",
+    "adapter": "v13_integrated"
+  },
+  "logging": {
+    "level": "trades"
+  },
+  "meta": {
+    "notes": ["Test actual v1.3 performance on Chart Logs 2 data"]
+  }
+}

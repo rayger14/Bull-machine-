@@ -1,0 +1,22 @@
+{
+  "cfg_hash": "fadb77011bace114",
+  "commit": "unknown",
+  "metrics": {
+    "avg_loss": 0.0,
+    "avg_win": 0.0,
+    "cagr": 0.0,
+    "expectancy": 0.0,
+    "max_dd": 0.0,
+    "sharpe": 0.0,
+    "trades": 0,
+    "win_rate": 0.0
+  },
+  "notes": [
+    "Production backtest with real BTC/ETH data",
+    "MTF sync enabled with v1.3 engine",
+    "Full risk management with TP ladder",
+    "Walk-forward validation enabled"
+  ],
+  "run_id": "v1_4_production_btc_eth",
+  "seed": 42
+}

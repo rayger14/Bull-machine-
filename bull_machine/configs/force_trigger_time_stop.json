@@ -1,0 +1,83 @@
+{
+  "run_id": "force_trigger_time_stop",
+  "data": {
+    "sources": {
+      "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"
+    },
+    "timeframes": [
+      "1H"
+    ],
+    "schema": {
+      "timestamp": {
+        "name": "time",
+        "unit": "s"
+      },
+      "open": "open",
+      "high": "high",
+      "low": "low",
+      "close": "close",
+      "volume": "volume"
+    }
+  },
+  "broker": {
+    "fee_bps": 10,
+    "slippage_bps": 5,
+    "spread_bps": 2,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 100000,
+    "exposure_cap_pct": 0.6,
+    "max_positions": 8
+  },
+  "engine": {
+    "lookback_bars": 100,
+    "seed": 42
+  },
+  "strategy": {
+    "version": "v1.4",
+    "config": "bull_machine/configs/diagnostic_v14_step4_config.json"
+  },
+  "risk": {
+    "base_risk_pct": 0.008,
+    "max_risk_per_trade": 0.02,
+    "min_stop_pct": 0.0008,
+    "tp_ladder": {
+      "tp1": {
+        "r_multiple": 1.0,
+        "size_pct": 0,
+        "action": "none"
+      },
+      "tp2": {
+        "r_multiple": 2.0,
+        "size_pct": 0,
+        "action": "none"
+      },
+      "tp3": {
+        "r_multiple": 3.0,
+        "size_pct": 0,
+        "action": "none"
+      }
+    }
+  },
+  "exit_signals": {
+    "enabled": true,
+    "enabled_exits": [
+      "time_stop"
+    ],
+    "emit_exit_edge_logs": true,
+    "time_stop": {
+      "max_bars_1h": 6,
+      "grace_bars_after_tp1": 0,
+      "tighten_stop_to": 1.0,
+      "priority": 10,
+      "max_bars_4h": 1,
+      "max_bars_1d": 1
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "emit_fusion_debug": false,
+    "emit_exit_debug": true
+  }
+}

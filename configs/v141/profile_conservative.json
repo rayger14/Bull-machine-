@@ -1,0 +1,46 @@
+{
+  "extends": "configs/v141/system_config.json",
+  "profile": "conservative",
+  "description": "Conservative v1.4.1 profile - Lower risk, higher quality floor",
+
+  "risk_management": {
+    "position_size_pct": 0.5,
+    "max_risk_per_trade": 0.005,
+    "max_positions": 4,
+    "drawdown_limit": 0.10
+  },
+
+  "signals": {
+    "enter_threshold": 0.75,
+    "aggregate_floor": 0.40,
+    "context_floor": 0.35,
+    "mtf_threshold": 0.65,
+    "cooldown_bars": 8
+  },
+
+  "quality_floors": {
+    "wyckoff": 0.45,
+    "liquidity": 0.40,
+    "structure": 0.35,
+    "momentum": 0.35,
+    "volume": 0.35,
+    "context": 0.30,
+    "mtf": 0.50
+  },
+
+  "exits_overrides": {
+    "time_stop": {
+      "max_bars_1h": 48,
+      "max_bars_4h": 30,
+      "max_bars_1d": 24
+    },
+    "markup_sow_ut_warning": {
+      "veto_needed": 2,
+      "trail_atr_buffer_R": 0.75
+    },
+    "global_veto": {
+      "aggregate_floor": 0.45,
+      "context_floor": 0.35
+    }
+  }
+}

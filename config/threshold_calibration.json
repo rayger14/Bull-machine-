@@ -1,0 +1,86 @@
+{
+  "version": "1.4.0",
+  "features": {
+    "wyckoff": true,
+    "advanced_liquidity": true,
+    "advanced_fusion": true,
+    "veto_system": false,
+    "trend_filter": true,
+    "volatility_scaling": true,
+    "multi_tf_sync": true
+  },
+  "mtf": {
+    "enabled": true,
+    "htf": "1D",
+    "mtf": "4H",
+    "ltf": "1H",
+    "two_bar_confirm": true,
+    "eq_magnet_gate": false,
+    "eq_threshold": 0.02,
+    "desync_behavior": "raise",
+    "desync_bump": 0.05,
+    "eq_bump": 0.05,
+    "nested_bump": 0.03,
+    "alignment_discount": 0.05,
+    "require_nested_zones": false
+  },
+  "fusion": {
+    "weights": {
+      "wyckoff": 0.30,
+      "liquidity": 0.25,
+      "structure": 0.20,
+      "momentum": 0.10,
+      "volume": 0.10,
+      "context": 0.05
+    },
+    "enter_threshold": 0.40,
+    "quality_floors": {
+      "wyckoff": 0.0,
+      "liquidity": 0.0,
+      "structure": 0.0,
+      "momentum": 0.0,
+      "volume": 0.0,
+      "context": 0.0
+    },
+    "triad_alignment_required": true,
+    "volatility_shock_sigma": 4.0,
+    "trend_alignment_threshold": 0.60
+  },
+  "liquidity": {
+    "tick_size": 0.01,
+    "sweep_recent_bars": 5,
+    "fvg_threshold": 0.002,
+    "ob_threshold": 0.002,
+    "premium_discount_levels": [0.382, 0.5, 0.618]
+  },
+  "risk": {
+    "account_risk_percent": 0.75,
+    "max_risk_percent": 5.0,
+    "max_risk_per_trade": 150.0,
+    "stop": {
+      "method": "swing_with_atr_guardrail",
+      "atr_mult": 3.0,
+      "swing_buffer": 0.001,
+      "volatility_scaling": true,
+      "target_volatility": 0.012
+    },
+    "tp": {
+      "tp1_r": 1.0,
+      "tp2_r": 2.0,
+      "tp3_r": 3.0,
+      "tp1_size": 0.33,
+      "tp2_size": 0.33,
+      "tp3_size": 0.34,
+      "move_to_be": true,
+      "trail_remainder": true
+    }
+  },
+  "ttl": {
+    "base_ttl": 72,
+    "max_ttl": 96,
+    "min_ttl": 48,
+    "confidence_factor": 0.5,
+    "volatility_factor": 0.3,
+    "phase_factor": 0.2
+  }
+}

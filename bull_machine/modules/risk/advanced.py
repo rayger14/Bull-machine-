@@ -1,115 +1,146 @@
 
-from typing import Dict, List, Optional, Tuple
-from ...core.types import Series, Signal, RiskPlan, WyckoffResult
-from ...core.utils import calculate_atr, find_swing_high_low
+"""Advanced module scaffolds for Bull Machine v1.2.1 / v1.3.
+
+These implement the **interfaces** expected by main_v13.py and friends.
+Claude Code should fill in TODOs to make them production-ready.
+"""
+
+from typing import Any, Dict, List, Optional
+try:
+    from bull_machine.core.types import WyckoffResult, LiquidityResult, Signal, BiasCtx, RangeCtx, SyncReport, Series, RiskPlan
+except Exception:
+    from dataclasses import dataclass, field
+    @dataclass
+    class WyckoffResult:
+        regime: str = "neutral"
+        phase: str = "neutral"
+        bias: str = "neutral"
+        phase_confidence: float = 0.0
+        trend_confidence: float = 0.0
+        range: Optional[Dict] = None
+        notes: List[str] = field(default_factory=list)
+        @property
+        def confidence(self) -> float:
+            return (self.phase_confidence + self.trend_confidence) / 2.0
+    @dataclass
+    class LiquidityResult:
+        score: float = 0.0
+        pressure: str = "neutral"
+        fvgs: List[Dict] = field(default_factory=list)
+        order_blocks: List[Dict] = field(default_factory=list)
+        sweeps: List[Dict] = field(default_factory=list)
+        phobs: List[Dict] = field(default_factory=list)
+        metadata: Dict = field(default_factory=dict)
+    @dataclass
+    class Signal:
+        ts: int = 0
+        side: str = "neutral"
+        confidence: float = 0.0
+        reasons: List[str] = field(default_factory=list)
+        ttl_bars: int = 0
+        metadata: Dict = field(default_factory=dict)
+        mtf_sync: Optional[Any] = None
+    @dataclass
+    class BiasCtx:
+        tf: str = "1H"
+        bias: str = "neutral"
+        confirmed: bool = False
+        strength: float = 0.0
+        bars_confirmed: int = 0
+        ma_distance: float = 0.0
+        trend_quality: float = 0.0
+    @dataclass
+    class RangeCtx:
+        tf: str = "1H"
+        low: float = 0.0
+        high: float = 0.0
+        mid: float = 0.0
+    @dataclass
+    class SyncReport:
+        htf: BiasCtx = BiasCtx()
+        mtf: BiasCtx = BiasCtx()
+        ltf_bias: str = "neutral"
+        nested_ok: bool = False
+        eq_magnet: bool = False
+        desync: bool = False
+        decision: str = "raise"
+        threshold_bump: float = 0.0
+        alignment_score: float = 0.0
+        notes: List[str] = field(default_factory=list)
+    @dataclass
+    class Series:
+        bars: List[Any] = field(default_factory=list)
+        timeframe: str = "1H"
+        symbol: str = "UNKNOWN"
+    @dataclass
+    class RiskPlan:
+        entry: float = 0.0
+        stop: float = 0.0
+        size: float = 0.0
+        tp_levels: List[Dict] = field(default_factory=list)
+        rules: Dict = field(default_factory=dict)
+        risk_amount: float = 0.0
+        risk_percent: float = 0.0
+        profile: str = "standard"
+        expected_r: float = 0.0
 
 class AdvancedRiskManager:
-    """v1.2.1 Risk Manager with core patches applied"""
-    def __init__(self, config: dict):
-        self.config = config
-        self.risk_cfg = config.get('risk', {})
-        self.stop_cfg = self.risk_cfg.get('stop', {})
-        self.stop_method = self.stop_cfg.get('method', 'swing_with_atr_guardrail')
-        self.atr_mult = self.stop_cfg.get('atr_mult', 3.0)
-        self.swing_buffer = self.stop_cfg.get('swing_buffer', 0.001)
-        self.account_risk_percent = self.risk_cfg.get('account_risk_percent', 1.0)
-        self.max_risk_percent = self.risk_cfg.get('max_risk_percent', 1.25)
-        self.max_risk_per_trade = self.risk_cfg.get('max_risk_per_trade', 150.0)
+    """
+    Expected by v1.3 pipeline:
+      - plan_risk(series, signal, config, balance) -> Dict[str, Any]
+    TODO: ATR/OB/pHOB stops, TP ladder, partials.
+    """
+    def __init__(self, config: Optional[Dict] = None):
+        self.config = config or {}
 
-    # ---- Stops ----
-    def _atr_based_stop(self, series: Series, side: str, entry_price: float, profile: str) -> Tuple[float, str]:
-        atr = calculate_atr(series)
-        atr_pct = atr / max(entry_price, 1e-12)
-        base_mult = {'scalp': 1.25, 'swing': 3.0, 'trend': 3.5, 'range': 2.0}.get(profile, self.atr_mult)
-        if self.stop_cfg.get('volatility_scaling', False):
-            if atr_pct > 0.02:
-                mult = base_mult * 1.2
-            elif atr_pct < 0.008:
-                mult = max(base_mult * 0.9, 1.0)
-            else:
-                mult = base_mult
-        else:
-            mult = base_mult
-        stop = entry_price - atr*mult if side == 'long' else entry_price + atr*mult
-        return stop, 'atr_scaled'
+    def plan_risk(self, series: Series, signal: Signal, config: Optional[Dict] = None, balance: float = 10000.0) -> Dict[str, Any]:
+        """
+        Expected by v1.3 pipeline. TODO: ATR/OB/pHOB stops, TP ladder, partials.
+        Returns a dict: {"entry","stop","size","tp_levels","rules"}
+        """
+        cfg = config or {}
+        price = series.bars[-1].close if getattr(series, "bars", None) else 0.0
+        atr = max(0.01 * price, 1e-6)
+        stop = price - 2*atr if signal.side == "long" else price + 2*atr
+        risk_amount = balance * 0.01
+        size = (risk_amount / max(abs(price - stop), 1e-9)) if price and stop else 0.0
+        return {
+            "entry": price,
+            "stop": stop,
+            "size": round(size, 4),
+            "tp_levels": [
+                {"name": "tp1", "price": price + (price - stop), "r": 1.0, "pct": 33},
+                {"name": "tp2", "price": price + 2*(price - stop), "r": 2.0, "pct": 33},
+                {"name": "tp3", "price": price + 3*(price - stop), "r": 3.0, "pct": 34},
+            ] if signal.side == "long" else [
+                {"name": "tp1", "price": price - (stop - price), "r": 1.0, "pct": 33},
+                {"name": "tp2", "price": price - 2*(stop - price), "r": 2.0, "pct": 33},
+                {"name": "tp3", "price": price - 3*(stop - price), "r": 3.0, "pct": 34},
+            ],
+            "rules": {"be_at": "tp1", "trail_at": "tp2", "trail_mode": "swing"}
+        }
 
-    def _swing_stop_with_atr(self, series: Series, side: str, entry_price: float, profile: str) -> Tuple[float, str]:
-        swing_high, swing_low = find_swing_high_low(series, lookback=20)
-        atr_stop, _ = self._atr_based_stop(series, side, entry_price, profile)
-        if side == 'long':
-            swing_stop = swing_low * (1 - self.swing_buffer)
-            return (swing_stop, 'swing') if (swing_stop > entry_price*0.95 and swing_stop > atr_stop) else (atr_stop, 'atr')
-        else:
-            swing_stop = swing_high * (1 + self.swing_buffer)
-            return (swing_stop, 'swing') if (swing_stop < entry_price*1.05 and swing_stop < atr_stop) else (atr_stop, 'atr')
+    def plan_trade(self, series: Series, signal: Signal, balance: float = 10000.0) -> RiskPlan:
+        """
+        Plan trade for v1.3 pipeline. Returns RiskPlan object.
+        """
+        plan_dict = self.plan_risk(series, signal, self.config, balance)
 
-    def _calculate_stop_loss(self, series: Series, side: str, entry_price: float, 
-                             liquidity_result: Dict, profile: str) -> Tuple[float, str]:
-        if self.stop_method == 'swing_with_atr_guardrail':
-            return self._swing_stop_with_atr(series, side, entry_price, profile)
-        elif self.stop_method == 'liquidity_based':
-            stop = self._liquidity_based_stop(series, side, liquidity_result, entry_price)
-            return stop if stop[0] != 0 else self._atr_based_stop(series, side, entry_price, profile)
-        return self._atr_based_stop(series, side, entry_price, profile)
+        # Convert to RiskPlan object
+        return RiskPlan(
+            entry=plan_dict["entry"],
+            stop=plan_dict["stop"],
+            size=plan_dict["size"],
+            tp_levels=plan_dict["tp_levels"],
+            rules=plan_dict["rules"],
+            risk_amount=balance * 0.01,
+            risk_percent=1.0,
+            profile="standard",
+            expected_r=2.0
+        )
 
-    # ---- Position sizing ----
-    def _calculate_position_size(self, series: Series, entry: float, stop: float, 
-                                 balance: float, profile: str) -> Tuple[float, float, float]:
-        risk_mult = {'scalp': 0.5, 'swing': 1.0, 'trend': 1.2, 'range': 0.8}.get(profile, 1.0)
-        if self.stop_cfg.get('volatility_scaling', False):
-            atr = calculate_atr(series)
-            atr_pct = atr / max(entry, 1e-12)
-            target = self.stop_cfg.get('target_volatility', 0.012)
-            vol_scale = max(min(target / max(atr_pct, 1e-6), 1.25), 0.6)
-            risk_pct = self.account_risk_percent * risk_mult * vol_scale
-        else:
-            risk_pct = self.account_risk_percent * risk_mult
-        risk_pct = min(risk_pct, self.max_risk_percent)
-        risk_amt = min(balance * (risk_pct/100), self.max_risk_per_trade)
-        risk_per_unit = max(abs(entry - stop), 1e-12)
-        size = risk_amt / risk_per_unit
-        return size, risk_amt, risk_pct
-
-    def _determine_profile(self, wyckoff_result, liquidity_result) -> str:
-        """Determine trading profile based on market conditions"""
-        return 'swing'  # Simplified for now
-
-    def _calculate_entry(self, series: Series, signal: Signal, liquidity_result: Dict) -> float:
-        """Calculate entry price"""
-        return series.bars[-1].close  # Use last close as entry
-
-    def _liquidity_based_stop(self, series: Series, side: str, liquidity_result: Dict, entry_price: float) -> Tuple[float, str]:
-        """Calculate stop based on liquidity levels"""
-        # Simplified - fallback to ATR
-        return 0.0, 'fallback'
-
-    def _calculate_tp_ladder(self, entry: float, stop: float, side: str, profile: str) -> List[Dict]:
-        """Calculate take profit levels"""
-        risk = abs(entry - stop)
-        if side == 'long':
-            return [
-                {'name': 'tp1', 'price': entry + risk * 1.0, 'pct': 25, 'action': 'move_stop_to_breakeven'},
-                {'name': 'tp2', 'price': entry + risk * 2.5, 'pct': 35, 'action': 'trail_remainder'},
-                {'name': 'tp3', 'price': entry + risk * 4.5, 'pct': 40, 'action': 'liquidate_or_hard_trail'}
-            ]
-        else:
-            return [
-                {'name': 'tp1', 'price': entry - risk * 1.0, 'pct': 25, 'action': 'move_stop_to_breakeven'},
-                {'name': 'tp2', 'price': entry - risk * 2.5, 'pct': 35, 'action': 'trail_remainder'},
-                {'name': 'tp3', 'price': entry - risk * 4.5, 'pct': 40, 'action': 'liquidate_or_hard_trail'}
-            ]
-
-    def _calculate_expected_r(self, tps: List[Dict], profile: str) -> float:
-        """Calculate expected R value"""
-        return 2.5  # Simplified
-
-    # ---- Public ----
-    def plan_trade(self, series: Series, signal: Signal, account_balance: float, liquidity_result: Dict = None, wyckoff_result = None) -> RiskPlan:
-        profile = self._determine_profile(wyckoff_result, liquidity_result)
-        entry = self._calculate_entry(series, signal, liquidity_result)
-        stop, stop_type = self._calculate_stop_loss(series, signal.side, entry, liquidity_result, profile)
-        size, risk_amt, risk_pct = self._calculate_position_size(series, entry, stop, account_balance, profile)
-        tps = self._calculate_tp_ladder(entry, stop, signal.side, profile)
-        expected_r = self._calculate_expected_r(tps, profile)
-        return RiskPlan(entry=entry, stop=stop, size=size, tp_levels=tps, stop_type=stop_type,
-                        risk_amount=risk_amt, risk_percent=risk_pct, profile=profile, expected_r=expected_r)
+# Backward compatibility function
+def plan_risk(series: Series, signal: Signal, config: Optional[Dict] = None, balance: float = 10000.0) -> Dict[str, Any]:
+    """Backward compatibility function"""
+    manager = AdvancedRiskManager(config)
+    return manager.plan_risk(series, signal, config, balance)
