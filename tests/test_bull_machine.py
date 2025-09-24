@@ -7,10 +7,7 @@ from bull_machine.signals.gating import _compute_dynamic_ttl_bars
 
 def test_ttl_bounds_enforcement():
     series = Series(
-        bars=[
-            Bar(ts=i, open=100 + i, high=101 + i, low=99 + i, close=100 + i, volume=0)
-            for i in range(50)
-        ],
+        bars=[Bar(ts=i, open=100 + i, high=101 + i, low=99 + i, close=100 + i, volume=0) for i in range(50)],
         timeframe="1h",
         symbol="TEST",
     )

@@ -112,9 +112,7 @@ def test_strategy_adapter_signals():
             # Validate signal format
             if isinstance(signal, dict) and "action" in signal:
                 valid_signals.append(signal)
-                logging.info(
-                    f"Valid signal: {signal['action']} with confidence {signal.get('confidence', 'N/A')}"
-                )
+                logging.info(f"Valid signal: {signal['action']} with confidence {signal.get('confidence', 'N/A')}")
             else:
                 logging.warning(f"Invalid signal format: {signal}")
 

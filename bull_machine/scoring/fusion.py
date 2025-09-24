@@ -178,10 +178,7 @@ class FusionEngineV141:
             reclaim_bonus = reclaim_speed * 0.15  # Max 0.15 boost
             enhanced_scores["wyckoff"] = min(0.9, enhanced_scores["wyckoff"] + reclaim_bonus)
 
-            logging.debug(
-                f"Wyckoff enhancements: trap_penalty={trap_penalty:.3f}, "
-                f"reclaim_bonus={reclaim_bonus:.3f}"
-            )
+            logging.debug(f"Wyckoff enhancements: trap_penalty={trap_penalty:.3f}, reclaim_bonus={reclaim_bonus:.3f}")
 
         # Calculate weighted contributions
         contributions = {}

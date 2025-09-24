@@ -23,9 +23,7 @@ def test_telemetry():
     config = {
         "run_id": "telemetry_test",
         "data": {
-            "sources": {
-                "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"
-            },
+            "sources": {"BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"},
             "timeframes": ["1H"],
             "schema": {
                 "timestamp": {"name": "time", "unit": "s"},
@@ -150,9 +148,7 @@ def test_telemetry():
                 for layer, info in layer_data["fusion_layers"].items():
                     print(f"  {layer}: Active={info['active']}, Triggered={info['trigger_count']}")
 
-                print(
-                    f"  Fusion Effectiveness: {layer_data['layer_interaction']['fusion_effectiveness']:.1%}"
-                )
+                print(f"  Fusion Effectiveness: {layer_data['layer_interaction']['fusion_effectiveness']:.1%}")
 
             print(f"\n🎉 TELEMETRY TEST COMPLETE")
             print(f"All enhanced telemetry files generated successfully!")

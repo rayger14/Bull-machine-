@@ -14,9 +14,7 @@ def plan(series: Series, signal: Signal, cfg: dict, account_balance: float) -> R
         position_size = _calculate_position_size(entry_price, stop_price, account_balance, risk_cfg)
         tp_levels = _calculate_tp_ladder(entry_price, stop_price, signal.side, risk_cfg)
         rules = _build_execution_rules(risk_cfg)
-        return RiskPlan(
-            entry=entry_price, stop=stop_price, size=position_size, tp_levels=tp_levels, rules=rules
-        )
+        return RiskPlan(entry=entry_price, stop=stop_price, size=position_size, tp_levels=tp_levels, rules=rules)
     except Exception as e:
         logging.error(f"Risk planning error: {e}")
         return _get_default_risk_plan(series, signal)
@@ -36,27 +34,19 @@ def _calculate_stop_loss(series: Series, side: str, risk_cfg: Dict) -> float:
         atr = calculate_atr(series)
         if side == "long":
             atr_stop = current_price - (atr * atr_mult)
-            if (
-                swing_stop < current_price
-                and (current_price - swing_stop) / max(1e-9, current_price) < 0.05
-            ):
+            if swing_stop < current_price and (current_price - swing_stop) / max(1e-9, current_price) < 0.05:
                 return swing_stop
             else:
                 return atr_stop
         else:
             atr_stop = current_price + (atr * atr_mult)
-            if (
-                swing_stop > current_price
-                and (swing_stop - current_price) / max(1e-9, current_price) < 0.05
-            ):
+            if swing_stop > current_price and (swing_stop - current_price) / max(1e-9, current_price) < 0.05:
                 return swing_stop
             else:
                 return atr_stop
     else:
         atr = calculate_atr(series)
-        return (
-            current_price - (atr * atr_mult) if side == "long" else current_price + (atr * atr_mult)
-        )
+        return current_price - (atr * atr_mult) if side == "long" else current_price + (atr * atr_mult)
 
 
 def _calculate_position_size(entry: float, stop: float, balance: float, risk_cfg: Dict) -> float:
@@ -82,9 +72,7 @@ def _calculate_tp_ladder(entry: float, stop: float, side: str, risk_cfg: Dict) -
     for name, cfg_tp in tp_defs:
         r = cfg_tp["r"]
         price = entry + risk_distance * r if side == "long" else entry - risk_distance * r
-        tps.append(
-            {"name": name, "r": r, "price": price, "pct": cfg_tp["pct"], "action": cfg_tp["action"]}
-        )
+        tps.append({"name": name, "r": r, "price": price, "pct": cfg_tp["pct"], "action": cfg_tp["action"]})
     return tps
 
 

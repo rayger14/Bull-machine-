@@ -161,11 +161,7 @@ class AdvancedWyckoffAnalyzer:
             quality = (confidence + trend_conf) / 2.0
 
             result = WyckoffResult(
-                regime="accumulation"
-                if bias == "long"
-                else "distribution"
-                if bias == "short"
-                else "neutral",
+                regime="accumulation" if bias == "long" else "distribution" if bias == "short" else "neutral",
                 phase="A" if confidence > 0.5 else "neutral",
                 bias=bias,
                 phase_confidence=confidence,

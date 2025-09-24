@@ -36,14 +36,10 @@ def analyze_real_market_conditions():
 
     # Current trend analysis
     d1_trend = (
-        "BULLISH"
-        if btc_1d["close"].iloc[-1] > btc_1d["sma20"].iloc[-1] > btc_1d["sma50"].iloc[-1]
-        else "BEARISH"
+        "BULLISH" if btc_1d["close"].iloc[-1] > btc_1d["sma20"].iloc[-1] > btc_1d["sma50"].iloc[-1] else "BEARISH"
     )
     h4_trend = (
-        "BULLISH"
-        if btc_4h["close"].iloc[-1] > btc_4h["sma20"].iloc[-1] > btc_4h["sma50"].iloc[-1]
-        else "BEARISH"
+        "BULLISH" if btc_4h["close"].iloc[-1] > btc_4h["sma20"].iloc[-1] > btc_4h["sma50"].iloc[-1] else "BEARISH"
     )
 
     print(f"\n🎯 Current Market Bias:")
@@ -169,9 +165,7 @@ def demonstrate_mtf_decision_process(market_data):
             f"   📊 LTF Bias: {scenario['ltf_bias']} | Nested: {'✅' if scenario['nested_ok'] else '❌'} | EQ Magnet: {'🚫' if scenario['eq_magnet'] else '✅'}"
         )
 
-        result = decide_mtf_entry(
-            htf, mtf, scenario["ltf_bias"], scenario["nested_ok"], scenario["eq_magnet"], policy
-        )
+        result = decide_mtf_entry(htf, mtf, scenario["ltf_bias"], scenario["nested_ok"], scenario["eq_magnet"], policy)
 
         # Decision analysis
         decision_icons = {"allow": "✅", "raise": "⚠️", "veto": "❌"}
@@ -296,30 +290,18 @@ def simulate_weekly_trading_sequence():
             trend_quality=0.68,
         )
 
-        result = decide_mtf_entry(
-            htf, mtf, day_data["ltf"], day_data["nested"], day_data["eq"], policy
-        )
+        result = decide_mtf_entry(htf, mtf, day_data["ltf"], day_data["nested"], day_data["eq"], policy)
 
         decision_icons = {"allow": "✅", "raise": "⚠️", "veto": "❌"}
         icon = decision_icons[result.decision]
 
-        print(
-            f"   {icon} MTF Decision: {result.decision.upper()} (Alignment: {result.alignment_score:.1%})"
-        )
+        print(f"   {icon} MTF Decision: {result.decision.upper()} (Alignment: {result.alignment_score:.1%})")
 
         if result.decision != "veto":
             total_signals += 1
-            if result.decision == "allow" or (
-                result.decision == "raise" and result.alignment_score > 0.6
-            ):
+            if result.decision == "allow" or (result.decision == "raise" and result.alignment_score > 0.6):
                 total_trades += 1
-                quality = (
-                    "HIGH"
-                    if result.threshold_bump < 0
-                    else "MEDIUM"
-                    if result.decision == "allow"
-                    else "LOW"
-                )
+                quality = "HIGH" if result.threshold_bump < 0 else "MEDIUM" if result.decision == "allow" else "LOW"
                 print(f"   📈 TRADE TAKEN - Quality: {quality}")
             else:
                 print(f"   📊 Signal filtered out - Threshold too high")

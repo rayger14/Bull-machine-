@@ -128,9 +128,7 @@ def test_momentum_fade_detector():
 
     mtf_data = {"1H": df}
 
-    signal = detector.evaluate(
-        symbol="TESTBTC", position_bias="long", mtf_data=mtf_data, current_bar=df.index[-10]
-    )
+    signal = detector.evaluate(symbol="TESTBTC", position_bias="long", mtf_data=mtf_data, current_bar=df.index[-10])
 
     if signal:
         print(f"✅ Momentum fade signal detected: {signal.exit_type.value}")
@@ -158,9 +156,7 @@ def test_time_stop_evaluator():
         "pnl_pct": 0.05,  # Small gain, not enough to justify time
     }
 
-    signal = evaluator.evaluate(
-        symbol="TESTBTC", position_data=position_data, current_bar=pd.Timestamp.now()
-    )
+    signal = evaluator.evaluate(symbol="TESTBTC", position_data=position_data, current_bar=pd.Timestamp.now())
 
     if signal:
         print(f"✅ Time stop signal detected: {signal.exit_type.value}")
@@ -224,9 +220,7 @@ def test_broker_exit_integration():
     broker = PaperBroker()
 
     # Open a position
-    broker.submit(
-        ts=pd.Timestamp.now(), symbol="TESTBTC", side="long", size=1.0, price_hint=50000.0
-    )
+    broker.submit(ts=pd.Timestamp.now(), symbol="TESTBTC", side="long", size=1.0, price_hint=50000.0)
 
     # Create mock exit signal
     exit_signal = ExitSignal(

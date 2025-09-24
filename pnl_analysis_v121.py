@@ -168,9 +168,7 @@ def run_pnl_analysis(csv_path, symbol, threshold=0.35, test_interval=10, max_tes
                         pct_pnl = ((plan.entry - exit_price) / plan.entry) * 100
 
                     trade = {
-                        "date": datetime.utcfromtimestamp(int(df.iloc[i]["timestamp"])).strftime(
-                            "%Y-%m-%d %H:%M"
-                        ),
+                        "date": datetime.utcfromtimestamp(int(df.iloc[i]["timestamp"])).strftime("%Y-%m-%d %H:%M"),
                         "side": signal.side,
                         "entry": plan.entry,
                         "stop": plan.stop,
@@ -245,9 +243,7 @@ def calculate_statistics(trades, initial_balance=10000):
     # Profit factor
     gross_profit = sum(t["dollar_pnl"] for t in winners) if winners else 0
     gross_loss = abs(sum(t["dollar_pnl"] for t in losers)) if losers else 0
-    profit_factor = (
-        gross_profit / gross_loss if gross_loss > 0 else float("inf") if gross_profit > 0 else 0
-    )
+    profit_factor = gross_profit / gross_loss if gross_loss > 0 else float("inf") if gross_profit > 0 else 0
 
     # Sharpe ratio (simplified)
     if returns and len(returns) > 1:
@@ -288,9 +284,7 @@ def print_detailed_report(btc_trades, eth_trades, btc_stats, eth_stats):
     # Individual trade details
     print("\n📊 BTC TRADES (First 10)")
     print("-" * 80)
-    print(
-        f"{'Date':<20} {'Side':<6} {'Entry':<10} {'Exit':<10} {'R':<8} {'PnL%':<8} {'Outcome':<15}"
-    )
+    print(f"{'Date':<20} {'Side':<6} {'Entry':<10} {'Exit':<10} {'R':<8} {'PnL%':<8} {'Outcome':<15}")
     print("-" * 80)
 
     for trade in btc_trades[:10]:
@@ -303,9 +297,7 @@ def print_detailed_report(btc_trades, eth_trades, btc_stats, eth_stats):
 
     print("\n📊 ETH TRADES (First 10)")
     print("-" * 80)
-    print(
-        f"{'Date':<20} {'Side':<6} {'Entry':<10} {'Exit':<10} {'R':<8} {'PnL%':<8} {'Outcome':<15}"
-    )
+    print(f"{'Date':<20} {'Side':<6} {'Entry':<10} {'Exit':<10} {'R':<8} {'PnL%':<8} {'Outcome':<15}")
     print("-" * 80)
 
     for trade in eth_trades[:10]:

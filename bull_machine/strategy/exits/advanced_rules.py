@@ -175,9 +175,7 @@ class MarkupSOWUTWarning(BaseExitRule):
         low = df["low"].tail(period + 1)
         close = df["close"].tail(period + 1)
 
-        tr = pd.concat(
-            [high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1
-        ).max(axis=1)
+        tr = pd.concat([high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1).max(axis=1)
 
         return tr.tail(period).mean()
 
@@ -220,9 +218,7 @@ class MarkupUTADRejection(BaseExitRule):
 
         # Check for structure break (Fib retracement)
         entry = trade_plan["entry_price"]
-        leg_high = (
-            df.tail(bars_since_entry)["high"].max() if bars_since_entry > 0 else current["high"]
-        )
+        leg_high = df.tail(bars_since_entry)["high"].max() if bars_since_entry > 0 else current["high"]
         fib_level = entry + (leg_high - entry) * self.cfg["fib_retrace"]
         structure_break = current["close"] < fib_level
 
@@ -253,9 +249,7 @@ class MarkupUTADRejection(BaseExitRule):
         low = df["low"].tail(period + 1)
         close = df["close"].tail(period + 1)
 
-        tr = pd.concat(
-            [high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1
-        ).max(axis=1)
+        tr = pd.concat([high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1).max(axis=1)
 
         return tr.tail(period).mean()
 
@@ -377,10 +371,7 @@ class AbsorptionVsDistributionExit(BaseExitRule):
                 close_through = False
 
         # Decision logic
-        if (
-            vol_ratio < self.cfg["low_vol_threshold"]
-            and wick_rejection_ratio > self.cfg["wick_rejection_ratio"]
-        ):
+        if vol_ratio < self.cfg["low_vol_threshold"] and wick_rejection_ratio > self.cfg["wick_rejection_ratio"]:
             # Low-vol wick rejection → HOLD (absorption)
             return None  # No exit signal
 
@@ -494,9 +485,7 @@ class MarkdownSOSSpringFlip(BaseExitRule):
         low = df["low"].tail(period + 1)
         close = df["close"].tail(period + 1)
 
-        tr = pd.concat(
-            [high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1
-        ).max(axis=1)
+        tr = pd.concat([high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1).max(axis=1)
 
         return tr.tail(period).mean()
 
@@ -588,9 +577,7 @@ class MoneytaurTrailing(BaseExitRule):
         low = df["low"].tail(period + 1)
         close = df["close"].tail(period + 1)
 
-        tr = pd.concat(
-            [high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1
-        ).max(axis=1)
+        tr = pd.concat([high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1).max(axis=1)
 
         return tr.tail(period).mean()
 
@@ -724,9 +711,7 @@ class BojanExtremeProtection(BaseExitRule):
         low = df["low"].tail(period + 1)
         close = df["close"].tail(period + 1)
 
-        tr = pd.concat(
-            [high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1
-        ).max(axis=1)
+        tr = pd.concat([high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1).max(axis=1)
 
         return tr.tail(period).mean()
 
@@ -788,9 +773,7 @@ class AbsorptionVsDistributionExit(BaseExitRule):
         wick_rejection = displacement >= self.cfg["wick_rejection_ratio"]
         if volume_ratio <= self.cfg["low_vol_threshold"] and wick_rejection:
             # Log absorption but hold position
-            logging.info(
-                f"Absorption detected: vol_ratio={volume_ratio:.2f}, displacement={displacement:.3f}"
-            )
+            logging.info(f"Absorption detected: vol_ratio={volume_ratio:.2f}, displacement={displacement:.3f}")
 
         return None  # Hold position
 
@@ -813,9 +796,7 @@ def distribution_exit(df: pd.DataFrame, volume: float, displacement: float) -> D
     is_distribution = (volume >= 1.4 * sma_vol) and (displacement < 0.4)  # was 1.5, 0.5
 
     if is_distribution:
-        logging.info(
-            f"Distribution detected: vol_ratio={volume / sma_vol:.2f}, displacement={displacement:.3f}"
-        )
+        logging.info(f"Distribution detected: vol_ratio={volume / sma_vol:.2f}, displacement={displacement:.3f}")
         return {
             "action": "partial_exit",
             "size": 0.25,

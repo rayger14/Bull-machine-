@@ -51,9 +51,7 @@ def run_single_test(wyckoff_floor, structure_floor, liquidity_floor, test_num):
         backtest_config = {
             "run_id": f"floor_sweep_{run_id}",
             "data": {
-                "sources": {
-                    "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"
-                },
+                "sources": {"BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"},
                 "timeframes": ["1H"],
                 "schema": {
                     "timestamp": {"name": "time", "unit": "s"},
@@ -236,9 +234,7 @@ def main():
         for structure_floor in structure_floors:
             for liquidity_floor in liquidity_floors:
                 test_count += 1
-                result = run_single_test(
-                    wyckoff_floor, structure_floor, liquidity_floor, test_count
-                )
+                result = run_single_test(wyckoff_floor, structure_floor, liquidity_floor, test_count)
                 results.append(result)
 
     # Analysis and output

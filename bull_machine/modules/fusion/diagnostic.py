@@ -26,9 +26,7 @@ class DiagnosticFusionEngine:
         )
         self.enter_threshold = config.get("mode", {}).get("enter_threshold", 0.20)
 
-    def fuse_with_mtf(
-        self, modules: Dict[str, Any], sync_report: Optional[Any] = None
-    ) -> Optional[Signal]:
+    def fuse_with_mtf(self, modules: Dict[str, Any], sync_report: Optional[Any] = None) -> Optional[Signal]:
         """
         Minimal fusion - almost no gates for diagnostic purposes.
         """
@@ -47,9 +45,7 @@ class DiagnosticFusionEngine:
         # Wyckoff
         if wyckoff:
             score = self._get_wyckoff_score(wyckoff)
-            layers.append(
-                {"name": "wyckoff", "score": score, "side": getattr(wyckoff, "bias", "neutral")}
-            )
+            layers.append({"name": "wyckoff", "score": score, "side": getattr(wyckoff, "bias", "neutral")})
 
         # Liquidity
         if liquidity:
@@ -68,9 +64,7 @@ class DiagnosticFusionEngine:
                 {
                     "name": "structure",
                     "score": structure.get("score", 0.0) if isinstance(structure, dict) else 0.0,
-                    "side": structure.get("bias", "neutral")
-                    if isinstance(structure, dict)
-                    else "neutral",
+                    "side": structure.get("bias", "neutral") if isinstance(structure, dict) else "neutral",
                 }
             )
 
@@ -82,9 +76,7 @@ class DiagnosticFusionEngine:
                     {
                         "name": name,
                         "score": module.get("score", 0.0) if isinstance(module, dict) else 0.0,
-                        "side": module.get("bias", "neutral")
-                        if isinstance(module, dict)
-                        else "neutral",
+                        "side": module.get("bias", "neutral") if isinstance(module, dict) else "neutral",
                     }
                 )
 
@@ -97,9 +89,7 @@ class DiagnosticFusionEngine:
         for layer in layers:
             cap = layer_caps.get(layer["name"])
             if cap and layer["score"] > cap:
-                logging.info(
-                    f"LAYER_CAP: {layer['name']} capped from {layer['score']:.3f} to {cap:.3f}"
-                )
+                logging.info(f"LAYER_CAP: {layer['name']} capped from {layer['score']:.3f} to {cap:.3f}")
                 layer["score"] = cap
 
         # Apply variance guards (would need historical data - simplified for now)
@@ -112,9 +102,7 @@ class DiagnosticFusionEngine:
                 if any(abs(layer["score"] - cv) < 0.05 for cv in common_values):
                     original_weight = self.weights.get(layer["name"], 0.0)
                     self.weights[layer["name"]] = original_weight * 0.5
-                    logging.info(
-                        f"VARIANCE_GUARD: {layer['name']} down-weighted due to low variance"
-                    )
+                    logging.info(f"VARIANCE_GUARD: {layer['name']} down-weighted due to low variance")
 
         # Weighted fusion with enhanced diagnostics
         total_score = 0.0
@@ -141,9 +129,7 @@ class DiagnosticFusionEngine:
         fused_score = total_score / total_weight
 
         # Detailed fusion diagnostics
-        logging.info(
-            f"FUSION_DIAG: layers={len(layers)} fused={fused_score:.3f} threshold={self.enter_threshold:.3f}"
-        )
+        logging.info(f"FUSION_DIAG: layers={len(layers)} fused={fused_score:.3f} threshold={self.enter_threshold:.3f}")
         for name, details in layer_details.items():
             logging.info(
                 f"  {name}: raw={details['raw_score']:.3f} weight={details['weight']:.2f} weighted={details['weighted']:.3f} side={details['side']}"
@@ -161,9 +147,7 @@ class DiagnosticFusionEngine:
                 else:
                     floors_failed.append(f"{name}({details['raw_score']:.3f}<{floor:.3f})")
 
-            logging.info(
-                f"QUALITY_FLOORS: {floors_passed}/{len(layer_details)} passed, failed: {floors_failed}"
-            )
+            logging.info(f"QUALITY_FLOORS: {floors_passed}/{len(layer_details)} passed, failed: {floors_failed}")
 
             # Enhanced triad rule with override for exceptional confluence
             triad_config = self.config.get("fusion", {}).get("triad", {})
@@ -181,9 +165,7 @@ class DiagnosticFusionEngine:
                         if score >= floor:
                             triad_passed += 1
 
-                logging.info(
-                    f"TRIAD_RULE: {triad_passed}/{len(triad_members)} core layers passed (need {min_pass})"
-                )
+                logging.info(f"TRIAD_RULE: {triad_passed}/{len(triad_members)} core layers passed (need {min_pass})")
 
                 # Check for triad override (exceptional confluence)
                 override_config = triad_config.get("override", {})
@@ -212,9 +194,7 @@ class DiagnosticFusionEngine:
 
             # For now, use enter threshold (would need state tracking for hold)
             threshold_to_use = enter_threshold
-            logging.info(
-                f"HYSTERESIS: Using enter threshold {threshold_to_use:.3f} (hold: {hold_threshold:.3f})"
-            )
+            logging.info(f"HYSTERESIS: Using enter threshold {threshold_to_use:.3f} (hold: {hold_threshold:.3f})")
         else:
             threshold_to_use = self.enter_threshold
 
@@ -244,9 +224,7 @@ class DiagnosticFusionEngine:
         confidence = fused_score
         reasons = [f"{len(layers)} layers", f"score: {fused_score:.3f}"]
 
-        signal = Signal(
-            ts=0, side=consensus_side, confidence=confidence, reasons=reasons, ttl_bars=20
-        )
+        signal = Signal(ts=0, side=consensus_side, confidence=confidence, reasons=reasons, ttl_bars=20)
 
         logging.info(f"Diagnostic signal: {consensus_side.upper()} @ {confidence:.3f}")
         return signal

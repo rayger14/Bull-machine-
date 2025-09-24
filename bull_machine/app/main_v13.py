@@ -77,9 +77,7 @@ def resample_to_timeframes(
         try:
             resampled = (
                 df.resample(freq)
-                .agg(
-                    {"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}
-                )
+                .agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"})
                 .dropna()
             )
 
@@ -201,10 +199,7 @@ def check_nested_confluence(htf_range: RangeCtx, ltf_levels: list) -> bool:
 
     for level in ltf_levels:
         price = level["price"]
-        if (
-            discount_zone[0] <= price <= discount_zone[1]
-            or premium_zone[0] <= price <= premium_zone[1]
-        ):
+        if discount_zone[0] <= price <= discount_zone[1] or premium_zone[0] <= price <= premium_zone[1]:
             return True
 
     return False
@@ -219,11 +214,7 @@ def run_bull_machine_v1_3(
     """Bull Machine v1.3 Pipeline with MTF Sync"""
 
     logging.info("=" * 60)
-    logging.info(
-        "Bull Machine v1.3 - MTF Sync Enabled"
-        if mtf_enabled
-        else "Bull Machine v1.3 - MTF Sync Disabled"
-    )
+    logging.info("Bull Machine v1.3 - MTF Sync Enabled" if mtf_enabled else "Bull Machine v1.3 - MTF Sync Disabled")
     logging.info("=" * 60)
 
     try:
@@ -305,9 +296,7 @@ def run_bull_machine_v1_3(
             htf_range = build_composite_range(data_dict["htf"], mtf_config.get("htf", "1D"))
 
             if htf_range.height > 0:
-                logging.info(
-                    f"HTF Range: {htf_range.low:.2f} - {htf_range.high:.2f} (mid: {htf_range.mid:.2f})"
-                )
+                logging.info(f"HTF Range: {htf_range.low:.2f} - {htf_range.high:.2f} (mid: {htf_range.mid:.2f})")
 
             # Resolve biases
             htf_bias = resolve_bias(
@@ -347,12 +336,8 @@ def run_bull_machine_v1_3(
         volume_result = volume_analyzer.analyze(series_ltf, wyckoff_result)
         context_result = context_analyzer.analyze(series_ltf, wyckoff_result)
 
-        logging.info(
-            f"Wyckoff: {wyckoff_result.regime}/{wyckoff_result.phase}, Bias: {wyckoff_result.bias}"
-        )
-        logging.info(
-            f"Liquidity Score: {liquidity_result.score:.2f}, Pressure: {liquidity_result.pressure}"
-        )
+        logging.info(f"Wyckoff: {wyckoff_result.regime}/{wyckoff_result.phase}, Bias: {wyckoff_result.bias}")
+        logging.info(f"Liquidity Score: {liquidity_result.score:.2f}, Pressure: {liquidity_result.pressure}")
 
         # MTF SYNC DECISION
         if mtf_config.get("enabled", False) and htf_range:
@@ -366,15 +351,11 @@ def run_bull_machine_v1_3(
             current_price = series_ltf.bars[-1].close
             eq_magnet = compute_eq_magnet(htf_range, current_price, mtf_config)
 
-            logging.info(
-                f"Nested Confluence: {'✓' if nested_ok else '✗'} ({len(ltf_levels)} LTF levels)"
-            )
+            logging.info(f"Nested Confluence: {'✓' if nested_ok else '✗'} ({len(ltf_levels)} LTF levels)")
             logging.info(f"EQ Magnet: {'ACTIVE ⚠️' if eq_magnet else 'Inactive'}")
 
             # Run sync decision
-            sync_report = decide_mtf_entry(
-                htf_bias, mtf_bias, ltf_bias, nested_ok, eq_magnet, mtf_config
-            )
+            sync_report = decide_mtf_entry(htf_bias, mtf_bias, ltf_bias, nested_ok, eq_magnet, mtf_config)
 
             logging.info(f"\nMTF Decision: {sync_report.decision.upper()}")
             logging.info(f"Alignment Score: {sync_report.alignment_score:.1%}")
@@ -400,11 +381,7 @@ def run_bull_machine_v1_3(
         )
 
         if signal is None:
-            reason = (
-                "mtf_sync_veto"
-                if sync_report and sync_report.decision == "veto"
-                else "below_threshold"
-            )
+            reason = "mtf_sync_veto" if sync_report and sync_report.decision == "veto" else "below_threshold"
             logging.info(f"No signal generated: {reason}")
             result["reason"] = reason
             return result

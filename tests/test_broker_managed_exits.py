@@ -27,9 +27,7 @@ def test_auto_tp_sl_generation():
     broker = PaperBroker()
 
     # Submit entry without risk plan
-    fill = broker.submit(
-        ts=pd.Timestamp.now(), symbol="TESTBTC", side="long", size=1.0, price_hint=50000.0
-    )
+    fill = broker.submit(ts=pd.Timestamp.now(), symbol="TESTBTC", side="long", size=1.0, price_hint=50000.0)
 
     print(f"Entry fill: {fill}")
 
@@ -41,9 +39,7 @@ def test_auto_tp_sl_generation():
     assert len(pos.tp_levels) == 3, "Should have 3 TP levels"
 
     print(f"✅ Auto-generated stop: {pos.stop}")
-    print(
-        f"✅ Auto-generated TPs: {[(tp.price, tp.size_pct, tp.r_multiple) for tp in pos.tp_levels]}"
-    )
+    print(f"✅ Auto-generated TPs: {[(tp.price, tp.size_pct, tp.r_multiple) for tp in pos.tp_levels]}")
 
     return True
 
@@ -57,9 +53,7 @@ def test_stop_loss_execution():
     broker = PaperBroker()
 
     # Open long position
-    broker.submit(
-        ts=pd.Timestamp.now(), symbol="TESTBTC", side="long", size=1.0, price_hint=50000.0
-    )
+    broker.submit(ts=pd.Timestamp.now(), symbol="TESTBTC", side="long", size=1.0, price_hint=50000.0)
 
     pos = broker.positions.get("TESTBTC")
     print(f"Position opened: entry={pos.entry}, stop={pos.stop}")
@@ -92,9 +86,7 @@ def test_tp_ladder_execution():
     broker = PaperBroker()
 
     # Open long position
-    broker.submit(
-        ts=pd.Timestamp.now(), symbol="TESTBTC", side="long", size=1.0, price_hint=50000.0
-    )
+    broker.submit(ts=pd.Timestamp.now(), symbol="TESTBTC", side="long", size=1.0, price_hint=50000.0)
 
     pos = broker.positions.get("TESTBTC")
     original_stop = pos.stop
@@ -147,9 +139,7 @@ def test_position_size_tracking():
     broker = PaperBroker()
 
     # Open position
-    broker.submit(
-        ts=pd.Timestamp.now(), symbol="TESTBTC", side="long", size=1.0, price_hint=50000.0
-    )
+    broker.submit(ts=pd.Timestamp.now(), symbol="TESTBTC", side="long", size=1.0, price_hint=50000.0)
 
     pos = broker.positions.get("TESTBTC")
     original_size = pos.size
@@ -168,9 +158,7 @@ def test_position_size_tracking():
     print(f"Size after TP1: {pos.size}")
     print(f"Expected remaining: {expected_remaining}")
 
-    assert abs(pos.size - expected_remaining) < 0.001, (
-        f"Size should be {expected_remaining}, got {pos.size}"
-    )
+    assert abs(pos.size - expected_remaining) < 0.001, f"Size should be {expected_remaining}, got {pos.size}"
 
     print(f"✅ Position size correctly reduced")
 
@@ -189,9 +177,7 @@ def test_complete_round_trip():
     all_fills = []
 
     # Open position
-    entry_fill = broker.submit(
-        ts=pd.Timestamp.now(), symbol="TESTBTC", side="long", size=1.0, price_hint=50000.0
-    )
+    entry_fill = broker.submit(ts=pd.Timestamp.now(), symbol="TESTBTC", side="long", size=1.0, price_hint=50000.0)
     all_fills.append(entry_fill)
 
     pos = broker.positions.get("TESTBTC")
@@ -210,11 +196,7 @@ def test_complete_round_trip():
     # Calculate total PnL
     total_pnl = sum(fill.get("pnl", 0) for fill in all_fills if "pnl" in fill)
     entry_count = sum(1 for fill in all_fills if fill.get("side") in ["long", "short"])
-    exit_count = sum(
-        1
-        for fill in all_fills
-        if fill.get("side") in ["tp1", "tp2", "tp3", "stop", "close_remaining"]
-    )
+    exit_count = sum(1 for fill in all_fills if fill.get("side") in ["tp1", "tp2", "tp3", "stop", "close_remaining"])
 
     print(f"\nROUND-TRIP SUMMARY:")
     print(f"Total fills: {len(all_fills)}")

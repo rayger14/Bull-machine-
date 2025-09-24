@@ -96,9 +96,7 @@ def run_production_test(
 
                     if signal and plan:
                         current_bar = df.iloc[i]
-                        entry_date = datetime.utcfromtimestamp(
-                            int(current_bar["timestamp"])
-                        ).strftime("%Y-%m-%d %H:%M")
+                        entry_date = datetime.utcfromtimestamp(int(current_bar["timestamp"])).strftime("%Y-%m-%d %H:%M")
 
                         trade = {
                             "date": entry_date,
@@ -146,9 +144,7 @@ def run_production_test(
         print(f"    Trades generated: {len(trades)}")
         print(f"    No-trade signals: {no_trade_count}")
         if trades:
-            print(
-                f"    Average confidence: {results_by_threshold[threshold]['avg_confidence']:.3f}"
-            )
+            print(f"    Average confidence: {results_by_threshold[threshold]['avg_confidence']:.3f}")
 
         if veto_reasons:
             print(f"    Top veto reasons:")
@@ -166,9 +162,7 @@ def print_comparison_report(btc_results, eth_results):
 
     print("\n📊 TRADE GENERATION BY THRESHOLD")
     print("-" * 50)
-    print(
-        f"{'Threshold':<12} {'BTC Trades':<15} {'BTC Avg Conf':<15} {'ETH Trades':<15} {'ETH Avg Conf':<15}"
-    )
+    print(f"{'Threshold':<12} {'BTC Trades':<15} {'BTC Avg Conf':<15} {'ETH Trades':<15} {'ETH Avg Conf':<15}")
     print("-" * 50)
 
     thresholds = sorted(set(btc_results.keys()) | set(eth_results.keys()))
@@ -182,9 +176,7 @@ def print_comparison_report(btc_results, eth_results):
         eth_trades = eth.get("trade_count", 0)
         eth_conf = eth.get("avg_confidence", 0)
 
-        print(
-            f"{threshold:<12.2f} {btc_trades:<15} {btc_conf:<15.3f} {eth_trades:<15} {eth_conf:<15.3f}"
-        )
+        print(f"{threshold:<12.2f} {btc_trades:<15} {btc_conf:<15.3f} {eth_trades:<15} {eth_conf:<15.3f}")
 
     # Find optimal threshold
     print("\n🎯 OPTIMAL THRESHOLD ANALYSIS")
@@ -201,21 +193,15 @@ def print_comparison_report(btc_results, eth_results):
         avg_rate = (btc_rate + eth_rate) / 2
 
         if 5 <= avg_rate <= 15:
-            print(
-                f"✅ Threshold {threshold:.2f}: Good trade frequency ({avg_rate:.1f}% signal-to-trade)"
-            )
+            print(f"✅ Threshold {threshold:.2f}: Good trade frequency ({avg_rate:.1f}% signal-to-trade)")
 
             # Show veto analysis
             print("\n  BTC Veto Reasons:")
-            for reason, count in sorted(
-                btc.get("veto_reasons", {}).items(), key=lambda x: x[1], reverse=True
-            )[:3]:
+            for reason, count in sorted(btc.get("veto_reasons", {}).items(), key=lambda x: x[1], reverse=True)[:3]:
                 print(f"    - {reason}: {count}")
 
             print("\n  ETH Veto Reasons:")
-            for reason, count in sorted(
-                eth.get("veto_reasons", {}).items(), key=lambda x: x[1], reverse=True
-            )[:3]:
+            for reason, count in sorted(eth.get("veto_reasons", {}).items(), key=lambda x: x[1], reverse=True)[:3]:
                 print(f"    - {reason}: {count}")
 
 

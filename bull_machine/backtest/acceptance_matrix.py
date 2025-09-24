@@ -80,9 +80,7 @@ class AcceptanceMatrixBacktester:
 
         # Load system config if extending
         if "extends" in self.base_config:
-            system_config_path = (
-                Path(config_path).parent / self.base_config["extends"].split("/")[-1]
-            )
+            system_config_path = Path(config_path).parent / self.base_config["extends"].split("/")[-1]
             with open(system_config_path) as f:
                 system_config = json.load(f)
 
@@ -241,11 +239,7 @@ class AcceptanceMatrixBacktester:
             recent_high = current_df.tail(20)["high"].max()
             recent_low = current_df.tail(20)["low"].min()
             current_price = current_df.iloc[-1]["close"]
-            position = (
-                (current_price - recent_low) / (recent_high - recent_low)
-                if recent_high > recent_low
-                else 0.5
-            )
+            position = (current_price - recent_low) / (recent_high - recent_low) if recent_high > recent_low else 0.5
             scores["structure"] = 0.3 + position * 0.4  # 0.3-0.7 range
         else:
             scores["structure"] = 0.5
@@ -338,9 +332,7 @@ class AcceptanceMatrixBacktester:
                     # Calculate stop loss
                     atr = df.iloc[i]["atr"]
                     pool_depth = layer_scores.get("liquidity", 0)
-                    stop_loss = calculate_stop_loss(
-                        df.iloc[: i + 1], "long", current_bar["close"], pool_depth, atr
-                    )
+                    stop_loss = calculate_stop_loss(df.iloc[: i + 1], "long", current_bar["close"], pool_depth, atr)
 
                     position_size_usd = balance * risk_result["adjusted_risk_pct"]
                     position_size_units = position_size_usd / current_bar["close"]
@@ -396,9 +388,7 @@ class AcceptanceMatrixBacktester:
 
                 # Execute exit
                 if exit_reason:
-                    pnl_dollars = (exit_price - current_position["entry_price"]) * current_position[
-                        "size_units"
-                    ]
+                    pnl_dollars = (exit_price - current_position["entry_price"]) * current_position["size_units"]
                     pnl_pct = pnl_dollars / current_position["size_usd"]
 
                     balance += pnl_dollars
@@ -452,9 +442,7 @@ class AcceptanceMatrixBacktester:
         profit_factor = gross_profit / gross_loss if gross_loss > 0 else 0
 
         # Non-timestop exit percentage
-        non_timestop_exits = (
-            exit_counts["stop_loss"] + exit_counts["advanced_exit"] + exit_counts["take_profit"]
-        )
+        non_timestop_exits = exit_counts["stop_loss"] + exit_counts["advanced_exit"] + exit_counts["take_profit"]
         non_timestop_pct = (non_timestop_exits / total_trades * 100) if total_trades > 0 else 0
 
         # Average trade duration

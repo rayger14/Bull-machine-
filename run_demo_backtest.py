@@ -42,9 +42,7 @@ def run_demo_backtest():
     try:
         feed = DataFeed(config["data"]["sources"])
         broker = PaperBroker(**config["broker"])
-        portfolio = Portfolio(
-            config["portfolio"]["starting_cash"], config["portfolio"]["exposure_cap_pct"]
-        )
+        portfolio = Portfolio(config["portfolio"]["starting_cash"], config["portfolio"]["exposure_cap_pct"])
         engine = BacktestEngine(config, feed, broker, portfolio)
 
         print("✅ Data loaded successfully:")
@@ -83,9 +81,7 @@ def run_demo_backtest():
         # Portfolio performance
         final_equity = portfolio.equity()
         total_return = (
-            (final_equity - config["portfolio"]["starting_cash"])
-            / config["portfolio"]["starting_cash"]
-            * 100
+            (final_equity - config["portfolio"]["starting_cash"]) / config["portfolio"]["starting_cash"] * 100
         )
 
         print(f"\n💼 PORTFOLIO PERFORMANCE")

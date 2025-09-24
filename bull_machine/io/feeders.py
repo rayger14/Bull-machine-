@@ -34,9 +34,7 @@ def load_csv_to_series(file_path: str, symbol: str = "UNKNOWN", timeframe: str =
             logging.warning(f"Dropping {len(invalid)} invalid OHLC rows")
             df = df.drop(invalid.index)
         # timestamp handling with unit autodetection for numeric epoch values
-        ts_col = next(
-            (c for c in ["timestamp", "datetime", "date", "time"] if c in df.columns), None
-        )
+        ts_col = next((c for c in ["timestamp", "datetime", "date", "time"] if c in df.columns), None)
         if ts_col:
             # Try numeric epoch detection first
             if pd.api.types.is_numeric_dtype(df[ts_col]):
@@ -64,15 +62,11 @@ def load_csv_to_series(file_path: str, symbol: str = "UNKNOWN", timeframe: str =
                             # not an epoch — fallback to sequential index timestamps
                             df["ts"] = range(len(df))
                     if "ts" not in df.columns:
-                        df["ts"] = (
-                            df[ts_col] - pd.Timestamp("1970-01-01", tz="UTC")
-                        ) // pd.Timedelta("1s")
+                        df["ts"] = (df[ts_col] - pd.Timestamp("1970-01-01", tz="UTC")) // pd.Timedelta("1s")
                 except Exception:
                     # fallback to string parse
                     df[ts_col] = pd.to_datetime(df[ts_col], utc=True, errors="coerce")
-                    df["ts"] = (df[ts_col] - pd.Timestamp("1970-01-01", tz="UTC")) // pd.Timedelta(
-                        "1s"
-                    )
+                    df["ts"] = (df[ts_col] - pd.Timestamp("1970-01-01", tz="UTC")) // pd.Timedelta("1s")
             else:
                 # string-like timestamps
                 df[ts_col] = pd.to_datetime(df[ts_col], utc=True, errors="coerce")

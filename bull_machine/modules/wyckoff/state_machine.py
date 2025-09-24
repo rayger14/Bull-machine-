@@ -52,9 +52,7 @@ class WyckoffStateMachine:
         reclaim_analysis = self.analyze_reclaim_speed(df, range_info)
 
         # Determine final bias and confidence
-        bias, confidence = self.determine_bias_confidence(
-            phase_analysis, trap_score, reclaim_analysis, range_info
-        )
+        bias, confidence = self.determine_bias_confidence(phase_analysis, trap_score, reclaim_analysis, range_info)
 
         return {
             "bias": bias,
@@ -198,9 +196,7 @@ class WyckoffStateMachine:
             "swing_lows": swing_lows,
         }
 
-    def calculate_trap_score(
-        self, df: pd.DataFrame, phase_analysis: Dict, range_info: Dict
-    ) -> float:
+    def calculate_trap_score(self, df: pd.DataFrame, phase_analysis: Dict, range_info: Dict) -> float:
         """
         Calculate Phase C trap scoring: shallow pullback + low volume = high trap risk.
         """

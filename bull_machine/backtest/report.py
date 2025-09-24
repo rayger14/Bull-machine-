@@ -19,9 +19,7 @@ def json_sanitize(obj):
         return obj
 
 
-def write_report(
-    run_id: str, cfg: dict, metrics: dict, trades: pd.DataFrame, equity: pd.DataFrame, out_dir: str
-):
+def write_report(run_id: str, cfg: dict, metrics: dict, trades: pd.DataFrame, equity: pd.DataFrame, out_dir: str):
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     trades_path = out / f"{run_id}_trades.csv"

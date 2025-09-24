@@ -263,9 +263,7 @@ def simulate_account_growth():
 
     print("-" * 45)
     print(f"Final: ${v121_balance:8,.0f}  ${v13_balance:8,.0f}  ${total_improvement:+8,.0f}")
-    print(
-        f"\n🎯 v1.3 generates ${total_improvement:,.0f} more ({improvement_pct:.1f}%) over {months} months"
-    )
+    print(f"\n🎯 v1.3 generates ${total_improvement:,.0f} more ({improvement_pct:.1f}%) over {months} months")
 
 
 if __name__ == "__main__":

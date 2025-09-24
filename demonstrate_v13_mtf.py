@@ -385,9 +385,7 @@ def demonstrate_fusion_integration():
         else:
             print(f"   ❌ No signal generated")
             if case["sync"].decision == "veto":
-                print(
-                    f"   📝 Reason: {case['sync'].notes[0] if case['sync'].notes else 'MTF veto'}"
-                )
+                print(f"   📝 Reason: {case['sync'].notes[0] if case['sync'].notes else 'MTF veto'}")
 
 
 def analyze_data_suitability():

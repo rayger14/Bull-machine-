@@ -39,12 +39,8 @@ def test_basic_integration():
 
         # Ensure realistic OHLC relationships
         for i in range(len(sample_data)):
-            high = max(
-                sample_data.iloc[i]["open"], sample_data.iloc[i]["close"]
-            ) + np.random.uniform(0, 500)
-            low = min(
-                sample_data.iloc[i]["open"], sample_data.iloc[i]["close"]
-            ) - np.random.uniform(0, 500)
+            high = max(sample_data.iloc[i]["open"], sample_data.iloc[i]["close"]) + np.random.uniform(0, 500)
+            low = min(sample_data.iloc[i]["open"], sample_data.iloc[i]["close"]) - np.random.uniform(0, 500)
             sample_data.iloc[i, sample_data.columns.get_loc("high")] = high
             sample_data.iloc[i, sample_data.columns.get_loc("low")] = low
 
@@ -56,9 +52,7 @@ def test_basic_integration():
 
         # Test broker
         broker = PaperBroker(fee_bps=10, slippage_bps=5)
-        fill = broker.submit(
-            ts=1234567890, symbol="BTCUSD", side="long", size=1.0, price_hint=50000
-        )
+        fill = broker.submit(ts=1234567890, symbol="BTCUSD", side="long", size=1.0, price_hint=50000)
         print(f"✅ Broker fill: ${fill['price']:.2f} size {fill['size_filled']}")
 
         # Test portfolio

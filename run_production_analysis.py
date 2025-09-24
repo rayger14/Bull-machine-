@@ -241,9 +241,7 @@ def run_baseline_comparison():
                 mtf_signals += 1
         elif mtf_decision == "raise":
             mtf_raises += 1
-            effective_threshold = (
-                baseline_config["enter_threshold"] + mtf_config["avg_threshold_bump"]
-            )
+            effective_threshold = baseline_config["enter_threshold"] + mtf_config["avg_threshold_bump"]
             if baseline_score >= effective_threshold:
                 mtf_signals += 1
         else:  # veto
@@ -322,9 +320,7 @@ def main():
     print(f"\n🚀 RECOMMENDATION:")
     print(f"  Bull Machine v1.3 is ready for production testing")
     print(f"  MTF sync adds intelligent filtering and threshold management")
-    print(
-        f"  Best suited for: {', '.join([r['symbol'] + ' ' + r['timeframe'] for r in suitable_datasets[:3]])}"
-    )
+    print(f"  Best suited for: {', '.join([r['symbol'] + ' ' + r['timeframe'] for r in suitable_datasets[:3]])}")
 
     # Cleanup
     for filename in ["test_v13_quick.py", "test_v13_simple.py"]:

@@ -39,9 +39,7 @@ class FusionEngineV1_3:
 
         # Calculate base scores
         wyckoff_score = self._calculate_wyckoff_score(wyckoff)
-        liquidity_score = (
-            liquidity.overall_score if hasattr(liquidity, "overall_score") else liquidity.score
-        )
+        liquidity_score = liquidity.overall_score if hasattr(liquidity, "overall_score") else liquidity.score
 
         # Add optional v1.2.1 modules if present
         scores = {"wyckoff": wyckoff_score, "liquidity": liquidity_score}
@@ -69,9 +67,7 @@ class FusionEngineV1_3:
                 return None
             elif sync_report.decision == "raise":
                 effective_threshold += sync_report.threshold_bump
-                logging.info(
-                    f"MTF RAISE: Threshold {self.enter_threshold:.2f} -> {effective_threshold:.2f}"
-                )
+                logging.info(f"MTF RAISE: Threshold {self.enter_threshold:.2f} -> {effective_threshold:.2f}")
 
             # Log alignment
             logging.info(f"MTF Alignment: {sync_report.alignment_score:.1%}")

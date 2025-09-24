@@ -309,9 +309,7 @@ class SmokeTestSuite:
                 print(f"{test_name:<25} {status}")
 
                 if not success and test_name.lower() in self.results:
-                    print(
-                        f"   Error: {self.results[test_name.lower().replace(' ', '_') + '_error']}"
-                    )
+                    print(f"   Error: {self.results[test_name.lower().replace(' ', '_') + '_error']}")
 
             except Exception as e:
                 results[test_name] = False

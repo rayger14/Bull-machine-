@@ -195,15 +195,11 @@ class AdvancedExitEvaluator:
         # Evaluate each rule in order
         for rule in self.rules:
             try:
-                decision = rule.evaluate(
-                    df, trade_plan, confluence_scores, bars_since_entry, mtf_context
-                )
+                decision = rule.evaluate(df, trade_plan, confluence_scores, bars_since_entry, mtf_context)
 
                 if decision:
                     # Log telemetry
-                    self._log_telemetry(
-                        rule.name, decision, trade_plan, confluence_scores, bars_since_entry
-                    )
+                    self._log_telemetry(rule.name, decision, trade_plan, confluence_scores, bars_since_entry)
 
                     # Apply the decision
                     trade_plan = self._apply_decision(trade_plan, decision, bars_since_entry)
@@ -217,9 +213,7 @@ class AdvancedExitEvaluator:
 
         return trade_plan
 
-    def _apply_decision(
-        self, trade_plan: Dict, decision: ExitDecision, bars_since_entry: int
-    ) -> Dict:
+    def _apply_decision(self, trade_plan: Dict, decision: ExitDecision, bars_since_entry: int) -> Dict:
         """Apply exit decision to trade plan."""
 
         # Record in history
@@ -255,9 +249,7 @@ class AdvancedExitEvaluator:
 
         return trade_plan
 
-    def _log_telemetry(
-        self, rule_name: str, decision: ExitDecision, trade_plan: Dict, scores: Dict, bars: int
-    ):
+    def _log_telemetry(self, rule_name: str, decision: ExitDecision, trade_plan: Dict, scores: Dict, bars: int):
         """Log telemetry for exit evaluation."""
 
         telemetry_entry = {

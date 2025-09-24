@@ -126,9 +126,7 @@ def resample_to_mtf(df: pd.DataFrame, target_tf: str) -> pd.DataFrame:
         return df
 
 
-def generate_simple_signal(
-    symbol: str, tf: str, df_window: pd.DataFrame, balance: float = 10000
-) -> Dict[str, Any]:
+def generate_simple_signal(symbol: str, tf: str, df_window: pd.DataFrame, balance: float = 10000) -> Dict[str, Any]:
     """
     Generate trading signal using simplified MTF analysis
 
@@ -164,9 +162,7 @@ def generate_simple_signal(
         nested_ok = True  # Assume good confluence for now
         eq_magnet = False  # Assume not in equilibrium
 
-        sync_result = decide_mtf_entry(
-            htf_bias, mtf_bias, ltf_bias.bias, nested_ok, eq_magnet, policy
-        )
+        sync_result = decide_mtf_entry(htf_bias, mtf_bias, ltf_bias.bias, nested_ok, eq_magnet, policy)
 
         # Generate signal based on MTF decision
         if sync_result.decision == "veto":

@@ -72,9 +72,7 @@ def validate_series(series, name: str):
     if len(series.bars) >= 5:
         print(f"  Last 5 bars:")
         for i, bar in enumerate(series.bars[-5:]):
-            print(
-                f"    [{i}] O:{bar.open:.2f} H:{bar.high:.2f} L:{bar.low:.2f} C:{bar.close:.2f} V:{bar.volume:.0f}"
-            )
+            print(f"    [{i}] O:{bar.open:.2f} H:{bar.high:.2f} L:{bar.low:.2f} C:{bar.close:.2f} V:{bar.volume:.0f}")
 
     return len(series.bars) >= 200
 
@@ -210,9 +208,7 @@ def diagnose_chart_file(csv_path: str, max_bars: int = 100):
 
     # 6. Analyze last N bars
     print(f"\n[SIGNAL FLOW] Last {max_bars} bars:")
-    print(
-        "TS               | Analyzers                                                    | Fusion   | Decision"
-    )
+    print("TS               | Analyzers                                                    | Fusion   | Decision")
     print("-" * 120)
 
     start_idx = max(0, len(series_ltf.bars) - max_bars)
@@ -265,9 +261,7 @@ def diagnose_chart_file(csv_path: str, max_bars: int = 100):
             nested_ok = check_nested_confluence(htf_range, ltf_levels)
             eq_magnet = compute_eq_magnet(htf_range, bar.close, config.get("mtf", {}))
 
-            sync_report = decide_mtf_entry(
-                htf_bias, mtf_bias, ltf_bias, nested_ok, eq_magnet, config.get("mtf", {})
-            )
+            sync_report = decide_mtf_entry(htf_bias, mtf_bias, ltf_bias, nested_ok, eq_magnet, config.get("mtf", {}))
 
             # Fusion
             signal = fusion_engine.fuse_with_mtf(

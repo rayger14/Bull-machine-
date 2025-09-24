@@ -33,9 +33,7 @@ def wyckoff_state(df: pd.DataFrame) -> Dict:
     return {"phase": "unknown"}
 
 
-def calculate_stop_loss(
-    df: pd.DataFrame, bias: str, entry_price: float, pool_depth_score: float, atr: float
-) -> float:
+def calculate_stop_loss(df: pd.DataFrame, bias: str, entry_price: float, pool_depth_score: float, atr: float) -> float:
     """
     Calculate phase-aware volatility-adjusted stop loss distance.
     Wider stops in markup/markdown phases to let winners run.
@@ -200,11 +198,7 @@ def calculate_dynamic_position_size(
 
     # Calculate final multiplier
     risk_multiplier = (
-        volume_multiplier
-        * pool_multiplier
-        * sweep_multiplier
-        * cluster_multiplier
-        * volatility_multiplier
+        volume_multiplier * pool_multiplier * sweep_multiplier * cluster_multiplier * volatility_multiplier
     )
 
     # Cap the multiplier to prevent extreme positions
@@ -218,8 +212,7 @@ def calculate_dynamic_position_size(
     position_size_multiplier = risk_multiplier
 
     logging.info(
-        f"Dynamic risk: base={base_risk_pct:.3f}, multiplier={risk_multiplier:.2f}, "
-        f"adjusted={adjusted_risk:.3f}"
+        f"Dynamic risk: base={base_risk_pct:.3f}, multiplier={risk_multiplier:.2f}, adjusted={adjusted_risk:.3f}"
     )
 
     return {
@@ -229,11 +222,7 @@ def calculate_dynamic_position_size(
         "risk_factors": risk_factors,
         "volume_context": {
             "current_vs_median": volume_ratio,
-            "conviction_level": "high"
-            if volume_ratio > 1.5
-            else "normal"
-            if volume_ratio > 0.8
-            else "low",
+            "conviction_level": "high" if volume_ratio > 1.5 else "normal" if volume_ratio > 0.8 else "low",
         },
         "liquidity_context": {
             "pool_count": len(pools),

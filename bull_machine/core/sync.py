@@ -81,9 +81,7 @@ def decide_mtf_entry(
     elif alignment_score >= 0.8:  # 80%+ alignment gets bonus
         decision = "allow"
         threshold_bump = -policy.get("alignment_discount", 0.05)  # Lower threshold
-        notes.append(
-            f"BONUS: Strong alignment ({alignment_score:.1%}), threshold -{abs(threshold_bump):.2f}"
-        )
+        notes.append(f"BONUS: Strong alignment ({alignment_score:.1%}), threshold -{abs(threshold_bump):.2f}")
 
     # 5. HTF strength bonus
     elif htf.confirmed and htf.strength > 0.7:

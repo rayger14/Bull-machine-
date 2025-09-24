@@ -16,9 +16,7 @@ from bull_machine.app.main import run_bull_machine_v1_2_1
 from pnl_analysis_v121 import simulate_trade_outcome, calculate_statistics
 
 
-def run_timeframe_analysis(
-    csv_path, symbol, timeframe, threshold=0.35, test_interval=10, max_tests=50
-):
+def run_timeframe_analysis(csv_path, symbol, timeframe, threshold=0.35, test_interval=10, max_tests=50):
     """Run PnL analysis for specific timeframe"""
 
     print(f"\n{'=' * 80}")
@@ -87,9 +85,7 @@ def run_timeframe_analysis(
 
                     # Store trade
                     trade = {
-                        "date": datetime.utcfromtimestamp(int(df.iloc[i]["timestamp"])).strftime(
-                            "%Y-%m-%d %H:%M"
-                        ),
+                        "date": datetime.utcfromtimestamp(int(df.iloc[i]["timestamp"])).strftime("%Y-%m-%d %H:%M"),
                         "side": signal.side,
                         "entry": plan.entry,
                         "stop": plan.stop,

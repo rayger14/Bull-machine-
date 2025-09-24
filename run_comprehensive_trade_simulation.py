@@ -36,9 +36,7 @@ def load_and_process_data(csv_path, symbol, timeframe):
         df["sma_50"] = df["close"].rolling(50).mean()
 
         # Trend analysis
-        df["trend"] = np.where(
-            df["sma_20"] > df["sma_50"], 1, np.where(df["sma_20"] < df["sma_50"], -1, 0)
-        )
+        df["trend"] = np.where(df["sma_20"] > df["sma_50"], 1, np.where(df["sma_20"] < df["sma_50"], -1, 0))
 
         return {
             "data": df,
@@ -150,9 +148,7 @@ def simulate_mtf_signals(data_dict, symbol):
         # Simulate different conditions
         for nested_ok in [True, False]:
             for eq_magnet in [True, False]:
-                sync_result = decide_mtf_entry(
-                    htf, mtf, scenario["ltf_bias"], nested_ok, eq_magnet, policy
-                )
+                sync_result = decide_mtf_entry(htf, mtf, scenario["ltf_bias"], nested_ok, eq_magnet, policy)
 
                 mtf_decisions[sync_result.decision] += 1
 
@@ -174,9 +170,7 @@ def simulate_mtf_signals(data_dict, symbol):
                     signal = {
                         "symbol": symbol,
                         "scenario": scenario["name"],
-                        "side": scenario["htf_bias"]
-                        if scenario["htf_bias"] != "neutral"
-                        else scenario["ltf_bias"],
+                        "side": scenario["htf_bias"] if scenario["htf_bias"] != "neutral" else scenario["ltf_bias"],
                         "confidence": confidence,
                         "mtf_decision": sync_result.decision,
                         "alignment_score": sync_result.alignment_score,
@@ -355,9 +349,7 @@ def run_comprehensive_simulation():
     print(f"   Overall win rate: {overall_win_rate:.1%}")
     print(f"   Combined PnL: {total_pnl:+.1f}%")
     print(
-        f"   Average per trade: {total_pnl / total_trades:+.2f}%"
-        if total_trades > 0
-        else "   Average per trade: N/A"
+        f"   Average per trade: {total_pnl / total_trades:+.2f}%" if total_trades > 0 else "   Average per trade: N/A"
     )
 
     # MTF decision analysis
@@ -381,9 +373,7 @@ def run_comprehensive_simulation():
     # Sort by confidence
     top_signals = sorted(all_signals, key=lambda x: x["confidence"], reverse=True)[:5]
     for i, signal in enumerate(top_signals, 1):
-        print(
-            f"   {i}. {signal['symbol']} {signal['side'].upper()} - {signal['confidence']:.1%} confidence"
-        )
+        print(f"   {i}. {signal['symbol']} {signal['side'].upper()} - {signal['confidence']:.1%} confidence")
         print(
             f"      Scenario: {signal['scenario']} | MTF: {signal['mtf_decision']} | Alignment: {signal['alignment_score']:.1%}"
         )

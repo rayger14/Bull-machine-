@@ -51,13 +51,9 @@ class ExitSignalEvaluator:
         self.time_evaluator = TimeStopEvaluator(time_config)
 
         # Global exit settings
-        self.enabled_exits = config.get(
-            "enabled_exits", ["choch_against", "momentum_fade", "time_stop"]
-        )
+        self.enabled_exits = config.get("enabled_exits", ["choch_against", "momentum_fade", "time_stop"])
         self.min_confidence = config.get("min_confidence", 0.6)
-        self.priority_order = config.get(
-            "priority_order", ["choch_against", "momentum_fade", "time_stop"]
-        )
+        self.priority_order = config.get("priority_order", ["choch_against", "momentum_fade", "time_stop"])
 
         # Exit tracking for telemetry
         self.exit_counts = {"choch_against": 0, "momentum_fade": 0, "time_stop": 0, "none": 0}
@@ -104,9 +100,7 @@ class ExitSignalEvaluator:
             # 1. CHoCH-Against Detection
             if "choch_against" in self.enabled_exits:
                 self.parameter_usage["choch_against"]["evaluated"] += 1
-                choch_sig = self.choch_detector.evaluate(
-                    symbol, position_bias, mtf_data, current_bar
-                )
+                choch_sig = self.choch_detector.evaluate(symbol, position_bias, mtf_data, current_bar)
                 if choch_sig and choch_sig.confidence >= self.min_confidence:
                     result.add_signal(choch_sig)
                     self.parameter_usage["choch_against"]["triggered"] += 1
@@ -115,9 +109,7 @@ class ExitSignalEvaluator:
             # 2. Momentum Fade Detection
             if "momentum_fade" in self.enabled_exits:
                 self.parameter_usage["momentum_fade"]["evaluated"] += 1
-                mom_sig = self.momentum_detector.evaluate(
-                    symbol, position_bias, mtf_data, current_bar
-                )
+                mom_sig = self.momentum_detector.evaluate(symbol, position_bias, mtf_data, current_bar)
                 if mom_sig and mom_sig.confidence >= self.min_confidence:
                     result.add_signal(mom_sig)
                     self.parameter_usage["momentum_fade"]["triggered"] += 1
@@ -148,8 +140,7 @@ class ExitSignalEvaluator:
         # Log results
         if result.has_signals():
             logging.info(
-                f"Exit signals for {symbol}: {len(result.signals)} signals, "
-                f"max confidence: {result.max_confidence:.2f}"
+                f"Exit signals for {symbol}: {len(result.signals)} signals, max confidence: {result.max_confidence:.2f}"
             )
         else:
             logging.debug(f"No exit signals for {symbol}")
@@ -249,9 +240,7 @@ class ExitSignalEvaluator:
         exits_applied_data = {
             "total_applications": len(self.exit_applications),
             "applications_by_type": {
-                exit_type: len(
-                    [app for app in self.exit_applications if app["exit_type"] == exit_type]
-                )
+                exit_type: len([app for app in self.exit_applications if app["exit_type"] == exit_type])
                 for exit_type in ["choch_against", "momentum_fade", "time_stop"]
             },
             "detailed_applications": self.exit_applications,
@@ -269,17 +258,13 @@ class ExitSignalEvaluator:
                 exit_type: {
                     "evaluated_count": data["evaluated"],
                     "triggered_count": data["triggered"],
-                    "trigger_rate": data["triggered"] / data["evaluated"]
-                    if data["evaluated"] > 0
-                    else 0.0,
+                    "trigger_rate": data["triggered"] / data["evaluated"] if data["evaluated"] > 0 else 0.0,
                     "parameters_applied": data["params_used"],
                 }
                 for exit_type, data in self.parameter_usage.items()
             },
             "global_stats": {
-                "total_evaluations": sum(
-                    data["evaluated"] for data in self.parameter_usage.values()
-                ),
+                "total_evaluations": sum(data["evaluated"] for data in self.parameter_usage.values()),
                 "total_triggers": sum(data["triggered"] for data in self.parameter_usage.values()),
                 "overall_trigger_rate": (
                     sum(data["triggered"] for data in self.parameter_usage.values())
@@ -323,18 +308,10 @@ class ExitSignalEvaluator:
             "layer_interaction": {
                 "total_layers": len(self.enabled_exits),
                 "active_layers": len(
-                    [
-                        exit
-                        for exit in self.enabled_exits
-                        if self.parameter_usage.get(exit, {}).get("triggered", 0) > 0
-                    ]
+                    [exit for exit in self.enabled_exits if self.parameter_usage.get(exit, {}).get("triggered", 0) > 0]
                 ),
                 "fusion_effectiveness": len(
-                    [
-                        exit
-                        for exit in self.enabled_exits
-                        if self.parameter_usage.get(exit, {}).get("triggered", 0) > 0
-                    ]
+                    [exit for exit in self.enabled_exits if self.parameter_usage.get(exit, {}).get("triggered", 0) > 0]
                 )
                 / len(self.enabled_exits)
                 if self.enabled_exits

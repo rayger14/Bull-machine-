@@ -18,9 +18,7 @@ def create_base_config():
     return {
         "run_id": "smoke_test",
         "data": {
-            "sources": {
-                "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"
-            },
+            "sources": {"BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"},
             "timeframes": ["1H"],
             "schema": {
                 "timestamp": {"name": "time", "unit": "s"},
@@ -241,15 +239,9 @@ def main():
     momentum_variance = len(set(momentum_values)) > 1
     timestop_variance = len(set(timestop_values)) > 1
 
-    print(
-        f"CHoCH variance: {'✅ YES' if choch_variance else '❌ NO'} (values: {set(choch_values)})"
-    )
-    print(
-        f"Momentum variance: {'✅ YES' if momentum_variance else '❌ NO'} (values: {set(momentum_values)})"
-    )
-    print(
-        f"TimeStop variance: {'✅ YES' if timestop_variance else '❌ NO'} (values: {set(timestop_values)})"
-    )
+    print(f"CHoCH variance: {'✅ YES' if choch_variance else '❌ NO'} (values: {set(choch_values)})")
+    print(f"Momentum variance: {'✅ YES' if momentum_variance else '❌ NO'} (values: {set(momentum_values)})")
+    print(f"TimeStop variance: {'✅ YES' if timestop_variance else '❌ NO'} (values: {set(timestop_values)})")
 
     # Check for any CHoCH/Momentum activity at all
     any_choch = any(counts.get("choch_against", 0) > 0 for counts in results.values())

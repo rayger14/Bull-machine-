@@ -20,9 +20,7 @@ def create_backtest_config(base_risk_pct, max_risk_per_trade, exposure_cap_pct, 
     config = {
         "run_id": f"risk_sweep_{run_id}",
         "data": {
-            "sources": {
-                "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"
-            },
+            "sources": {"BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"},
             "timeframes": ["1H"],
             "schema": {
                 "timestamp": {"name": "time", "unit": "s"},
@@ -75,9 +73,7 @@ def run_single_test(base_risk_pct, max_risk_per_trade, exposure_cap_pct, test_nu
     run_id = f"br{base_risk_pct:.3f}_mr{max_risk_per_trade:.3f}_ec{exposure_cap_pct:.2f}"
 
     # Create backtest config
-    backtest_config = create_backtest_config(
-        base_risk_pct, max_risk_per_trade, exposure_cap_pct, run_id
-    )
+    backtest_config = create_backtest_config(base_risk_pct, max_risk_per_trade, exposure_cap_pct, run_id)
 
     # Write backtest config
     backtest_config_path = f"temp_risk_backtest_{run_id}.json"
@@ -198,9 +194,7 @@ def main():
         for max_risk_per_trade in max_risk_values:
             for exposure_cap_pct in exposure_cap_values:
                 test_count += 1
-                result = run_single_test(
-                    base_risk_pct, max_risk_per_trade, exposure_cap_pct, test_count
-                )
+                result = run_single_test(base_risk_pct, max_risk_per_trade, exposure_cap_pct, test_count)
                 results.append(result)
 
                 # Quick status print
@@ -278,9 +272,7 @@ def main():
         print(
             f"   Performance: {best_quality['trades']} trades, {best_quality['win_rate']:.1%} win rate, {best_quality['expectancy']:.0f} expectancy"
         )
-        print(
-            f"   Risk metrics: {best_quality['sharpe']:.2f} Sharpe, {best_quality['max_dd']:.0f} max drawdown"
-        )
+        print(f"   Risk metrics: {best_quality['sharpe']:.2f} Sharpe, {best_quality['max_dd']:.0f} max drawdown")
     else:
         print("⚠️  No configurations meet quality criteria")
 

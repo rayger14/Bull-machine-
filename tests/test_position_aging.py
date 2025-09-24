@@ -51,9 +51,7 @@ class TestPositionAging(unittest.TestCase):
         for i in range(1, 7):
             self.broker.update_position_aging(current_bar_idx=pos.opened_at_idx + i, timeframe="1H")
             updated_pos = self.broker.positions["BTCUSD_1H"]
-            assert updated_pos.bars_held == i, (
-                f"Expected bars_held={i}, got {updated_pos.bars_held}"
-            )
+            assert updated_pos.bars_held == i, f"Expected bars_held={i}, got {updated_pos.bars_held}"
 
     def test_scale_ins_preserve_opened_at(self):
         """Test that scale-ins preserve original opened_at fields."""
@@ -135,9 +133,7 @@ class TestTimeStopTriggers(unittest.TestCase):
         # Position data at exactly the threshold
         position_data = {"symbol": "BTCUSD_1H", "bars_held": 6, "timeframe": "1H", "pnl_pct": -0.01}
 
-        result = self.evaluator.evaluate(
-            "BTCUSD_1H", position_data, pd.Timestamp("2025-01-01 10:00")
-        )
+        result = self.evaluator.evaluate("BTCUSD_1H", position_data, pd.Timestamp("2025-01-01 10:00"))
 
         assert result is not None
         assert isinstance(result, ExitSignal)
@@ -149,9 +145,7 @@ class TestTimeStopTriggers(unittest.TestCase):
         # Position data below threshold
         position_data = {"symbol": "BTCUSD_1H", "bars_held": 4, "timeframe": "1H", "pnl_pct": -0.01}
 
-        result = self.evaluator.evaluate(
-            "BTCUSD_1H", position_data, pd.Timestamp("2025-01-01 10:00")
-        )
+        result = self.evaluator.evaluate("BTCUSD_1H", position_data, pd.Timestamp("2025-01-01 10:00"))
 
         assert result is None
 
@@ -212,9 +206,7 @@ class TestRegressionEntryExitFlow(unittest.TestCase):
         broker._current_timeframe = "1H"
 
         # Simulate entry
-        fill = broker.submit(
-            ts=dates[5], symbol="BTCUSD_1H", side="long", size=1.0, price_hint=50000.0
-        )
+        fill = broker.submit(ts=dates[5], symbol="BTCUSD_1H", side="long", size=1.0, price_hint=50000.0)
 
         assert fill is not None
         assert "BTCUSD_1H" in broker.positions

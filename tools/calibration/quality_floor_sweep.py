@@ -216,9 +216,7 @@ def main():
         for structure_floor in structure_floors:
             for liquidity_floor in liquidity_floors:
                 test_count += 1
-                result = run_single_test(
-                    wyckoff_floor, structure_floor, liquidity_floor, test_count
-                )
+                result = run_single_test(wyckoff_floor, structure_floor, liquidity_floor, test_count)
                 results.append(result)
 
                 # Quick status print

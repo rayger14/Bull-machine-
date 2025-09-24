@@ -105,9 +105,7 @@ def backtest_version(
                 )
             else:  # v1.1
                 override_signals = {"confidence_threshold": threshold} if threshold else {}
-                result = run_bull_machine_v1_1(
-                    temp_filename, account_balance=10000, override_signals=override_signals
-                )
+                result = run_bull_machine_v1_1(temp_filename, account_balance=10000, override_signals=override_signals)
 
             signals_tested += 1
 
@@ -144,9 +142,7 @@ def backtest_version(
                             entry_price, stop_price, target_prices, future_prices, side
                         )
 
-                        entry_date = datetime.utcfromtimestamp(
-                            int(current_bar["timestamp"])
-                        ).strftime("%Y-%m-%d")
+                        entry_date = datetime.utcfromtimestamp(int(current_bar["timestamp"])).strftime("%Y-%m-%d")
 
                         trade = {
                             "date": entry_date,
@@ -201,26 +197,20 @@ def analyze_results(trades, version):
     winning_trades = [t for t in trades if t["pnl_pct"] > 0]
     losing_trades = [t for t in trades if t["pnl_pct"] < 0]
 
-    avg_win = (
-        sum(t["pnl_pct"] for t in winning_trades) / len(winning_trades) if winning_trades else 0
-    )
+    avg_win = sum(t["pnl_pct"] for t in winning_trades) / len(winning_trades) if winning_trades else 0
     avg_loss = sum(t["pnl_pct"] for t in losing_trades) / len(losing_trades) if losing_trades else 0
 
     # Calculate profit factor
     total_wins = sum(t["pnl_pct"] for t in winning_trades) if winning_trades else 0
     total_losses = abs(sum(t["pnl_pct"] for t in losing_trades)) if losing_trades else 0
-    profit_factor = (
-        total_wins / total_losses if total_losses > 0 else float("inf") if total_wins > 0 else 0
-    )
+    profit_factor = total_wins / total_losses if total_losses > 0 else float("inf") if total_wins > 0 else 0
 
     # Calculate Sharpe ratio (simplified)
     returns = [t["pnl_pct"] for t in trades]
     if len(returns) > 1:
         import numpy as np
 
-        sharpe = (
-            np.mean(returns) / np.std(returns) * np.sqrt(252 / 30) if np.std(returns) > 0 else 0
-        )
+        sharpe = np.mean(returns) / np.std(returns) * np.sqrt(252 / 30) if np.std(returns) > 0 else 0
     else:
         sharpe = 0
 
@@ -356,9 +346,7 @@ if __name__ == "__main__":
         print(f"✅ v1.2.1 shows {improvement:.1f}% WIN RATE IMPROVEMENT")
         print(f"   Better trade quality with advanced confluence filtering")
     else:
-        print(
-            f"📊 v1.2.1 is more selective: {results_v121['total_trades']} trades vs {results_v11['total_trades']}"
-        )
+        print(f"📊 v1.2.1 is more selective: {results_v121['total_trades']} trades vs {results_v11['total_trades']}")
         print(f"   Focus on quality over quantity")
 
     print("\n" + "=" * 80)

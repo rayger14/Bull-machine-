@@ -18,9 +18,7 @@ def create_base_config():
     return {
         "run_id": "acceptance_test",
         "data": {
-            "sources": {
-                "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"
-            },
+            "sources": {"BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"},
             "timeframes": ["1H"],
             "schema": {
                 "timestamp": {"name": "time", "unit": "s"},

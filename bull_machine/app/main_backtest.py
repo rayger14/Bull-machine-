@@ -29,9 +29,7 @@ def main():
 
     # Configure logging
     log_level = logging.DEBUG if args.debug else logging.INFO
-    logging.basicConfig(
-        level=log_level, format="%(asctime)s - %(levelname)s - %(message)s", datefmt="%H:%M:%S"
-    )
+    logging.basicConfig(level=log_level, format="%(asctime)s - %(levelname)s - %(message)s", datefmt="%H:%M:%S")
 
     cfg = (
         json.loads(Path(args.config).read_text())
@@ -88,9 +86,7 @@ def main():
     # Import json_sanitize for NaN-safe output
     from bull_machine.backtest.report import json_sanitize
 
-    clean_output = json_sanitize(
-        {"ok": True, "metrics": res["metrics"], "artifacts": res["artifacts"]}
-    )
+    clean_output = json_sanitize({"ok": True, "metrics": res["metrics"], "artifacts": res["artifacts"]})
     print(json.dumps(clean_output, default=str))
 
 

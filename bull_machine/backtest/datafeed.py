@@ -83,9 +83,7 @@ class DataFeed:
             )
 
         if loaded == 0:
-            raise RuntimeError(
-                "[DATA] Loaded 0 symbols. Check config.data.sources paths and schema."
-            )
+            raise RuntimeError("[DATA] Loaded 0 symbols. Check config.data.sources paths and schema.")
 
         print(f"[DATA] Successfully loaded {loaded} symbol(s): {list(self.frames.keys())}")
 

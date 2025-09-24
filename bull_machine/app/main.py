@@ -28,9 +28,7 @@ def setup_logging():
     )
 
 
-def run_bull_machine_v1_2_1(
-    csv_file: str, account_balance: float = 10000, override_signals: dict = None
-) -> dict:
+def run_bull_machine_v1_2_1(csv_file: str, account_balance: float = 10000, override_signals: dict = None) -> dict:
     """Bull Machine v1.2.1 with advanced confluence layers"""
     logging.info("Bull Machine v1.2.1 Starting...")
     logging.info(f"Processing: {csv_file}")
@@ -39,9 +37,7 @@ def run_bull_machine_v1_2_1(
         import json
         import os
 
-        config_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), "config", "config_v1_2_1.json"
-        )
+        config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "config_v1_2_1.json")
         with open(config_path, "r") as f:
             config = json.load(f)
 
@@ -64,9 +60,7 @@ def run_bull_machine_v1_2_1(
             logging.info("Running Wyckoff analysis...")
             wres = analyze_wyckoff(series, config, state)
             logging.info(f"   {wres.regime} regime, phase {wres.phase}, bias {wres.bias}")
-            logging.info(
-                f"   Confidence: phase={wres.phase_confidence:.2f}, trend={wres.trend_confidence:.2f}"
-            )
+            logging.info(f"   Confidence: phase={wres.phase_confidence:.2f}, trend={wres.trend_confidence:.2f}")
             result["wyckoff"] = wres
         else:
             logging.warning("Wyckoff analysis disabled")
@@ -166,9 +160,7 @@ def run_bull_machine_v1_2_1(
         return {"action": "error", "message": str(e)}
 
 
-def run_bull_machine_v1_1(
-    csv_file: str, account_balance: float = 10000, override_signals: dict = None
-) -> dict:
+def run_bull_machine_v1_1(csv_file: str, account_balance: float = 10000, override_signals: dict = None) -> dict:
     logging.info("Bull Machine v1.1 Starting...")
     logging.info(f"Processing: {csv_file}")
     try:
@@ -217,9 +209,7 @@ def run_bull_machine_v1_1(
             logging.info("Running Wyckoff analysis...")
             wres = analyze_wyckoff(series, config, state)
             logging.info(f"   {wres.regime} regime, phase {wres.phase}, bias {wres.bias}")
-            logging.info(
-                f"   Confidence: phase={wres.phase_confidence:.2f}, trend={wres.trend_confidence:.2f}"
-            )
+            logging.info(f"   Confidence: phase={wres.phase_confidence:.2f}, trend={wres.trend_confidence:.2f}")
             result["wyckoff"] = wres
         else:
             logging.warning("Wyckoff analysis disabled")
@@ -243,12 +233,8 @@ def run_bull_machine_v1_1(
         logging.info(
             f"   Fusion debug: wyckoff_conf={wyckoff_conf:.3f}, phase_conf={wres.phase_confidence:.3f}, trend_conf={wres.trend_confidence:.3f}"
         )
-        logging.info(
-            f"   Fusion debug: liquidity_score={liq_conf:.3f}, liquidity_pressure={lres.pressure}"
-        )
-        logging.info(
-            f"   Fusion debug: fvgs={len(lres.fvgs)}, order_blocks={len(lres.order_blocks)}"
-        )
+        logging.info(f"   Fusion debug: liquidity_score={liq_conf:.3f}, liquidity_pressure={lres.pressure}")
+        logging.info(f"   Fusion debug: fvgs={len(lres.fvgs)}, order_blocks={len(lres.order_blocks)}")
         logging.info(f"   Fusion debug: threshold={thr}, weights={weights}")
         if getattr(wres, "range", None):
             rng = wres.range
@@ -356,21 +342,15 @@ def main():
         default=None,
         help="Temporary override for signal entry confidence threshold",
     )
-    p.add_argument(
-        "--threshold", type=float, help="Override fusion confidence threshold, e.g. 0.72"
-    )
+    p.add_argument("--threshold", type=float, help="Override fusion confidence threshold, e.g. 0.72")
     p.add_argument(
         "--weights",
         type=str,
         default=None,
         help='JSON string or path to JSON file to override fusion weights e.g. "{"wyckoff":0.6,"liquidity":0.4}"',
     )
-    p.add_argument(
-        "--liquidity-floor", type=float, help="Override liquidity context floor, e.g. 0.20"
-    )
-    p.add_argument(
-        "--fusion-breakdown", action="store_true", help="Always print fusion math breakdown"
-    )
+    p.add_argument("--liquidity-floor", type=float, help="Override liquidity context floor, e.g. 0.20")
+    p.add_argument("--fusion-breakdown", action="store_true", help="Always print fusion math breakdown")
     args = p.parse_args()
     # allow runtime override of entry threshold
     override = {}

@@ -4,10 +4,7 @@ from bull_machine.core.types import Series, Bar, WyckoffResult
 
 
 def _series(prices):
-    bars = [
-        Bar(ts=i, open=p, high=p * 1.01, low=p * 0.99, close=p, volume=1000)
-        for i, p in enumerate(prices)
-    ]
+    bars = [Bar(ts=i, open=p, high=p * 1.01, low=p * 0.99, close=p, volume=1000) for i, p in enumerate(prices)]
     return Series(bars=bars, symbol="TEST", timeframe="1h")
 
 
@@ -35,8 +32,6 @@ def test_phob_pct_handling():
     a = AdvancedLiquidityAnalyzer(cfg)
     s = _series([100, 99, 98, 102, 103, 104, 103.5, 103.7, 103.8])
     # provide a minimal order block stub format
-    obs = [
-        {"index": 1, "direction": "bullish", "bottom": 98, "top": 101, "mid": 99.5, "strength": 0.6}
-    ]
+    obs = [{"index": 1, "direction": "bullish", "bottom": 98, "top": 101, "mid": 99.5, "strength": 0.6}]
     phobs = a._detect_phobs(obs, s)
     assert isinstance(phobs, list)

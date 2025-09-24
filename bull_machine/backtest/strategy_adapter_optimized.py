@@ -198,9 +198,7 @@ def strategy_from_df(
         current_price = series_ltf.bars[-1].close
         eq_magnet = compute_eq_magnet(htf_range, current_price, config.get("mtf", {}))
 
-        sync_report = decide_mtf_entry(
-            htf_bias, mtf_bias, ltf_bias, nested_ok, eq_magnet, config.get("mtf", {})
-        )
+        sync_report = decide_mtf_entry(htf_bias, mtf_bias, ltf_bias, nested_ok, eq_magnet, config.get("mtf", {}))
 
         # Enhanced Fusion with Quality Floors for calibration
         fusion_config = config.get("fusion", {})
@@ -263,12 +261,8 @@ def strategy_from_df(
             "metadata": {
                 "entry_fusion_score": standardized_signal["score"],
                 "subscores": {
-                    "wyckoff": getattr(wyckoff_result, "confidence", 0.0)
-                    if wyckoff_result
-                    else 0.0,
-                    "liquidity": getattr(liquidity_result, "score", 0.0)
-                    if liquidity_result
-                    else 0.0,
+                    "wyckoff": getattr(wyckoff_result, "confidence", 0.0) if wyckoff_result else 0.0,
+                    "liquidity": getattr(liquidity_result, "score", 0.0) if liquidity_result else 0.0,
                     "structure": structure_result.get("score", 0.0)
                     if isinstance(structure_result, dict)
                     else getattr(structure_result, "score", 0.0)
@@ -297,9 +291,7 @@ def strategy_from_df(
 
         # Validate final signal
         if validate_signal(standardized_signal):
-            logging.info(
-                f"[ADAPTER] Generated signal: {engine_signal['action']} @ {engine_signal['confidence']:.3f}"
-            )
+            logging.info(f"[ADAPTER] Generated signal: {engine_signal['action']} @ {engine_signal['confidence']:.3f}")
             logging.info(
                 f"ADAPTER_EMIT side={engine_signal['action']} conf={engine_signal['confidence']:.3f} sym={symbol}"
             )
@@ -316,9 +308,7 @@ def strategy_from_df(
                 "tf": tf,
                 "current_index": current_index,
                 "balance": balance,
-                "bar_close": getattr(
-                    df_tf.iloc[-1] if len(df_tf) > 0 else None, "close", "unknown"
-                ),
+                "bar_close": getattr(df_tf.iloc[-1] if len(df_tf) > 0 else None, "close", "unknown"),
                 "function": "strategy_from_df",
             },
             e,

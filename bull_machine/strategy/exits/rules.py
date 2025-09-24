@@ -454,9 +454,7 @@ class MomentumFadeDetector:
 
             if price_trend and rsi_trend:
                 # Bearish divergence detected
-                divergence_strength = (
-                    abs(recent_df["rsi"].iloc[-5] - recent_df["rsi"].iloc[-1]) / 20
-                )
+                divergence_strength = abs(recent_df["rsi"].iloc[-5] - recent_df["rsi"].iloc[-1]) / 20
                 return min(1.0, divergence_strength)
 
         else:  # short position
@@ -467,9 +465,7 @@ class MomentumFadeDetector:
 
             if price_trend and rsi_trend:
                 # Bullish divergence detected
-                divergence_strength = (
-                    abs(recent_df["rsi"].iloc[-1] - recent_df["rsi"].iloc[-5]) / 20
-                )
+                divergence_strength = abs(recent_df["rsi"].iloc[-1] - recent_df["rsi"].iloc[-5]) / 20
                 return min(1.0, divergence_strength)
 
         return 0.0
@@ -532,12 +528,8 @@ class TimeStopEvaluator:
         self.max_bars_1h = int(config["max_bars_1h"])
         self.max_bars_4h = int(config.get("max_bars_4h", 42))
         self.max_bars_1d = int(config.get("max_bars_1d", 10))
-        self.performance_threshold = config.get(
-            "performance_threshold", 0.1
-        )  # 10% gain to justify time
-        self.time_decay_start = config.get(
-            "time_decay_start", 0.7
-        )  # Start decay at 70% of max time
+        self.performance_threshold = config.get("performance_threshold", 0.1)  # 10% gain to justify time
+        self.time_decay_start = config.get("time_decay_start", 0.7)  # Start decay at 70% of max time
 
         # STEP 2: Echo effective config at init
         effective_config = {
@@ -549,9 +541,7 @@ class TimeStopEvaluator:
         }
         logging.info("EXIT_EVAL_APPLIED time_stop=%s", effective_config)
 
-    def evaluate(
-        self, symbol: str, position_data: Dict[str, Any], current_bar: pd.Timestamp
-    ) -> Optional[ExitSignal]:
+    def evaluate(self, symbol: str, position_data: Dict[str, Any], current_bar: pd.Timestamp) -> Optional[ExitSignal]:
         """
         Evaluate time-based exit conditions.
 
@@ -593,8 +583,7 @@ class TimeStopEvaluator:
         time_ratio = bars_held / max_bars if max_bars > 0 else 0
 
         logging.info(
-            f"[TIME_STOP_DEBUG] {symbol}: bars_held={bars_held} "
-            f"max_bars={max_bars} time_ratio={time_ratio:.3f}"
+            f"[TIME_STOP_DEBUG] {symbol}: bars_held={bars_held} max_bars={max_bars} time_ratio={time_ratio:.3f}"
         )
 
         try:

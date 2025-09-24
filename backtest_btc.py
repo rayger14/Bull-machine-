@@ -108,9 +108,7 @@ def backtest_btc(csv_path, min_bars=100, lookforward_days=30, threshold=0.60):
                         entry_price, stop_price, [target_price], future_prices, side
                     )
 
-                    entry_date = datetime.utcfromtimestamp(int(current_bar["timestamp"])).strftime(
-                        "%Y-%m-%d"
-                    )
+                    entry_date = datetime.utcfromtimestamp(int(current_bar["timestamp"])).strftime("%Y-%m-%d")
 
                     trade = {
                         "date": entry_date,
@@ -159,9 +157,7 @@ def analyze_results(trades):
     winning_trades = [t for t in trades if t["pnl_pct"] > 0]
     losing_trades = [t for t in trades if t["pnl_pct"] < 0]
 
-    avg_win = (
-        sum(t["pnl_pct"] for t in winning_trades) / len(winning_trades) if winning_trades else 0
-    )
+    avg_win = sum(t["pnl_pct"] for t in winning_trades) / len(winning_trades) if winning_trades else 0
     avg_loss = sum(t["pnl_pct"] for t in losing_trades) / len(losing_trades) if losing_trades else 0
 
     return {

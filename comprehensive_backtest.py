@@ -193,9 +193,7 @@ class ComprehensiveBacktester:
             scores, wyckoff_context, liquidity_data = self.compute_layer_scores(df, i)
 
             # Fuse scores with enhanced logic
-            fusion_result = self.fusion_engine.fuse_scores(
-                scores, self.config.get("quality_floors"), wyckoff_context
-            )
+            fusion_result = self.fusion_engine.fuse_scores(scores, self.config.get("quality_floors"), wyckoff_context)
 
             # Position management
             if self.current_position is None:
@@ -279,13 +277,10 @@ class ComprehensiveBacktester:
         }
 
         logging.info(
-            f"ENTER {bias.upper()}: {symbol} @ {entry_price:.2f}, "
-            f"size={position_size:.4f}, SL={stop_loss:.2f}"
+            f"ENTER {bias.upper()}: {symbol} @ {entry_price:.2f}, size={position_size:.4f}, SL={stop_loss:.2f}"
         )
 
-    def manage_position(
-        self, df: pd.DataFrame, idx: int, scores: Dict, wyckoff_context: Dict, liquidity_data: Dict
-    ):
+    def manage_position(self, df: pd.DataFrame, idx: int, scores: Dict, wyckoff_context: Dict, liquidity_data: Dict):
         """Manage existing position with advanced exits."""
 
         current_bar = df.iloc[idx]
@@ -296,8 +291,7 @@ class ComprehensiveBacktester:
             "bias": self.current_position["side"],
             "entry_price": self.current_position["entry_price"],
             "sl": self.current_position["stop_loss"],
-            "tp": self.current_position["entry_price"]
-            * (1.06 if self.current_position["side"] == "long" else 0.94),
+            "tp": self.current_position["entry_price"] * (1.06 if self.current_position["side"] == "long" else 0.94),
         }
 
         # Check exits
@@ -336,17 +330,11 @@ class ComprehensiveBacktester:
 
         # Calculate PnL
         if self.current_position["side"] == "long":
-            pnl_pct = (exit_price - self.current_position["entry_price"]) / self.current_position[
-                "entry_price"
-            ]
+            pnl_pct = (exit_price - self.current_position["entry_price"]) / self.current_position["entry_price"]
         else:
-            pnl_pct = (self.current_position["entry_price"] - exit_price) / self.current_position[
-                "entry_price"
-            ]
+            pnl_pct = (self.current_position["entry_price"] - exit_price) / self.current_position["entry_price"]
 
-        pnl_dollars = (
-            pnl_pct * self.balance * self.current_position["risk_data"]["adjusted_risk_pct"]
-        )
+        pnl_dollars = pnl_pct * self.balance * self.current_position["risk_data"]["adjusted_risk_pct"]
 
         # Record trade
         trade = {
@@ -370,8 +358,7 @@ class ComprehensiveBacktester:
         self.current_position = None
 
         logging.info(
-            f"CLOSE: {trade['side'].upper()} @ {exit_price:.2f}, "
-            f"PnL: {pnl_pct:.2%} ({pnl_dollars:.2f}), {reason}"
+            f"CLOSE: {trade['side'].upper()} @ {exit_price:.2f}, PnL: {pnl_pct:.2%} ({pnl_dollars:.2f}), {reason}"
         )
 
     def partial_close_position(self, df: pd.DataFrame, idx: int, close_pct: float, reason: str):
@@ -444,16 +431,14 @@ class ComprehensiveBacktester:
         win_rate = len(wins) / total_trades
 
         total_pnl_dollars = sum(t["pnl_dollars"] for t in self.trades)
-        total_pnl_pct = (self.balance - self.config["backtest"]["initial_balance"]) / self.config[
-            "backtest"
-        ]["initial_balance"]
+        total_pnl_pct = (self.balance - self.config["backtest"]["initial_balance"]) / self.config["backtest"][
+            "initial_balance"
+        ]
 
         avg_pnl_pct = np.mean([t["pnl_pct"] for t in self.trades])
 
         # Max drawdown
-        max_drawdown = (
-            (self.peak_balance - self.balance) / self.peak_balance if self.peak_balance > 0 else 0
-        )
+        max_drawdown = (self.peak_balance - self.balance) / self.peak_balance if self.peak_balance > 0 else 0
 
         # Sharpe ratio (simplified)
         returns = [t["pnl_pct"] for t in self.trades]

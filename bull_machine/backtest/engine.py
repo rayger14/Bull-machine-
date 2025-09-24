@@ -18,13 +18,9 @@ class BacktestEngine:
         # Store config for later evaluator initialization
         self._init_cfg = cfg
 
-    def run(
-        self, strategy_fn: Callable, symbols: List[str], tfs: List[str], out_dir: str = "out"
-    ) -> dict:
+    def run(self, strategy_fn: Callable, symbols: List[str], tfs: List[str], out_dir: str = "out") -> dict:
         # DEBUG: Check initialization conditions
-        print(
-            f"🔧 DEBUG: exit_evaluator={self.exit_evaluator}, exit_signals_in_cfg={'exit_signals' in self._init_cfg}"
-        )
+        print(f"🔧 DEBUG: exit_evaluator={self.exit_evaluator}, exit_signals_in_cfg={'exit_signals' in self._init_cfg}")
         if "exit_signals" in self._init_cfg:
             print(f"🔧 DEBUG: exit_signals.enabled={self._init_cfg['exit_signals'].get('enabled')}")
 
@@ -47,9 +43,7 @@ class BacktestEngine:
         lookback = self.cfg.get("engine", {}).get("lookback_bars", 250)
 
         # 🚀 PERFORMANCE FIX 1: Cache resamples once per (symbol, TF)
-        print(
-            f"📊 Precomputing resampled data for {len(symbols)} symbols × {len(tfs)} timeframes..."
-        )
+        print(f"📊 Precomputing resampled data for {len(symbols)} symbols × {len(tfs)} timeframes...")
         cached_frames = {}
         for sym in symbols:
             base = self.datafeed.frames.get(sym)
@@ -113,9 +107,7 @@ class BacktestEngine:
                     stop_tp_fills = self.broker.mark(bar.name, sym, bar["close"], exit_signal)
                     if stop_tp_fills:
                         for fill in stop_tp_fills:
-                            self.portfolio.on_fill(
-                                sym, fill["side"], fill["price"], fill["size_filled"], fill["fee"]
-                            )
+                            self.portfolio.on_fill(sym, fill["side"], fill["price"], fill["size_filled"], fill["fee"])
                             trades.append(
                                 {
                                     "ts": bar.name,
@@ -166,9 +158,7 @@ class BacktestEngine:
                                 price_hint=bar["close"],
                                 risk_plan=risk_plan,
                             )
-                            self.portfolio.on_fill(
-                                sym, action, fill["price"], fill["size_filled"], fill["fee"]
-                            )
+                            self.portfolio.on_fill(sym, action, fill["price"], fill["size_filled"], fill["fee"])
                             # 🚀 PERFORMANCE FIX 4: Minimal trade logging in loop
                             trades.append(
                                 {
@@ -180,24 +170,18 @@ class BacktestEngine:
                                     "size": float(fill["size_filled"]),
                                     "fee": float(fill["fee"]),
                                     "pnl": 0.0,
-                                    "reasons": len(
-                                        signal.get("reasons", [])
-                                    ),  # Just count, not full list
+                                    "reasons": len(signal.get("reasons", [])),  # Just count, not full list
                                 }
                             )
                             logging.info(f"[ENGINE] Trade executed: {fill}")
                         else:
                             logging.info(f"PRE_TRADE_REJECT reason={reason}")
-                            logging.warning(
-                                f"[ENGINE] Trade rejected: {action} {sym} @ {bar['close']:.4f} - {reason}"
-                            )
+                            logging.warning(f"[ENGINE] Trade rejected: {action} {sym} @ {bar['close']:.4f} - {reason}")
 
                     elif action == "exit":
                         fill = self.broker.close(ts=bar.name, symbol=sym, price=bar["close"])
                         if fill.get("ts"):
-                            self.portfolio.on_fill(
-                                sym, "exit", fill["price"], fill["size_filled"], fill["fee"]
-                            )
+                            self.portfolio.on_fill(sym, "exit", fill["price"], fill["size_filled"], fill["fee"])
                             trades.append(
                                 {
                                     "ts": bar.name,
@@ -212,32 +196,18 @@ class BacktestEngine:
                             )
 
                     self.portfolio.mark(sym, float(bar["close"]))
-                    equity_rows.append(
-                        {"ts": bar.name, "symbol": sym, "equity": self.portfolio.equity()}
-                    )
+                    equity_rows.append({"ts": bar.name, "symbol": sym, "equity": self.portfolio.equity()})
 
                 # Log signal statistics for this symbol/timeframe
                 logging.info(
                     f"[ENGINE] {sym} {tf}: Processed {signal_count} signals out of {len(df_tf) - lookback} bars"
                 )
         trades_df = pd.DataFrame(trades)
-        eq_df = (
-            pd.DataFrame(equity_rows).set_index("ts")
-            if equity_rows
-            else pd.DataFrame(columns=["equity"])
-        )
+        eq_df = pd.DataFrame(equity_rows).set_index("ts") if equity_rows else pd.DataFrame(columns=["equity"])
         metrics = {}
-        metrics.update(
-            trade_metrics(
-                trades_df if not trades_df.empty else pd.DataFrame(columns=["action", "pnl"])
-            )
-        )
-        metrics.update(
-            equity_metrics(eq_df if not eq_df.empty else pd.DataFrame(columns=["equity"]))
-        )
-        artifacts = write_report(
-            self.cfg.get("run_id", "v1_4_demo"), self.cfg, metrics, trades_df, eq_df, out_dir
-        )
+        metrics.update(trade_metrics(trades_df if not trades_df.empty else pd.DataFrame(columns=["action", "pnl"])))
+        metrics.update(equity_metrics(eq_df if not eq_df.empty else pd.DataFrame(columns=["equity"])))
+        artifacts = write_report(self.cfg.get("run_id", "v1_4_demo"), self.cfg, metrics, trades_df, eq_df, out_dir)
 
         # Save comprehensive exit telemetry if exit evaluator exists
         if self.exit_evaluator:
@@ -245,9 +215,7 @@ class BacktestEngine:
 
         return {"metrics": metrics, "artifacts": artifacts}
 
-    def _evaluate_exit_signals(
-        self, symbol: str, cached_frames: Dict, current_bar
-    ) -> Optional[object]:
+    def _evaluate_exit_signals(self, symbol: str, cached_frames: Dict, current_bar) -> Optional[object]:
         """
         Evaluate exit signals for a symbol at current bar.
 
@@ -276,14 +244,10 @@ class BacktestEngine:
                 return None
 
             # Update position data with current market info
-            position_data["pnl_pct"] = self._calculate_current_pnl_pct(
-                position_data, current_bar["close"]
-            )
+            position_data["pnl_pct"] = self._calculate_current_pnl_pct(position_data, current_bar["close"])
 
             # Evaluate exit conditions
-            result = self.exit_evaluator.evaluate_exits(
-                symbol, position_data, mtf_data, current_bar.name
-            )
+            result = self.exit_evaluator.evaluate_exits(symbol, position_data, mtf_data, current_bar.name)
 
             # Get recommended action
             exit_signal = self.exit_evaluator.get_action_recommendation(result)

@@ -118,8 +118,6 @@ def calculate_atr(df: pd.DataFrame, period: int = 14) -> float:
     low = df["low"].tail(period + 1)
     close = df["close"].tail(period + 1)
 
-    tr = pd.concat(
-        [high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1
-    ).max(axis=1)
+    tr = pd.concat([high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1).max(axis=1)
 
     return tr.tail(period).mean()

@@ -42,22 +42,14 @@ class PaperBroker:
         adj = (self.slippage_bps + self.spread_bps) * 1e-4 * price
         return price + adj if side == "long" else price - adj
 
-    def submit(
-        self, ts, symbol, side, size, price_hint=None, order_type="market", risk_plan=None
-    ) -> Dict[str, Any]:
+    def submit(self, ts, symbol, side, size, price_hint=None, order_type="market", risk_plan=None) -> Dict[str, Any]:
         px = self._apply_costs(price_hint or 0.0, side)
         fee = (self.fee_bps * 1e-4) * px * abs(size)
 
         # Close existing position if reversing
         prev = self.positions.get(symbol)
-        if prev and (
-            (prev.side == "long" and side == "short") or (prev.side == "short" and side == "long")
-        ):
-            pnl = (
-                (px - prev.entry) * prev.size
-                if prev.side == "long"
-                else (prev.entry - px) * prev.size
-            )
+        if prev and ((prev.side == "long" and side == "short") or (prev.side == "short" and side == "long")):
+            pnl = (px - prev.entry) * prev.size if prev.side == "long" else (prev.entry - px) * prev.size
             self.realized_pnl += pnl - fee
             self.positions.pop(symbol, None)
 
@@ -69,9 +61,7 @@ class PaperBroker:
             stop_price = risk_plan.get("stop")
             if risk_plan.get("tp_levels"):
                 tp_levels = [
-                    TPLevel(
-                        price=tp["price"], size_pct=tp.get("pct", 33), r_multiple=tp.get("r", 1.0)
-                    )
+                    TPLevel(price=tp["price"], size_pct=tp.get("pct", 33), r_multiple=tp.get("r", 1.0))
                     for tp in risk_plan["tp_levels"]
                 ]
 
@@ -124,9 +114,7 @@ class PaperBroker:
                 # Same side scale-in: weighted average price, sum size
                 new_size = existing_pos.size + size
                 if new_size > 0:
-                    existing_pos.entry = (
-                        existing_pos.entry * existing_pos.size + px * size
-                    ) / new_size
+                    existing_pos.entry = (existing_pos.entry * existing_pos.size + px * size) / new_size
                 existing_pos.size = new_size
                 existing_pos.stop = stop_price  # Update stop to new level
                 existing_pos.tp_levels = tp_levels  # Update TP levels
@@ -134,9 +122,7 @@ class PaperBroker:
                 # KEEP opened_at_ts, opened_at_idx unchanged!
             else:
                 # Different side - this should have been handled by reversal logic above
-                logging.warning(
-                    f"Unexpected different side entry for {symbol}: {existing_pos.side} -> {side}"
-                )
+                logging.warning(f"Unexpected different side entry for {symbol}: {existing_pos.side} -> {side}")
                 # Create new position anyway
                 self.positions[symbol] = Position(
                     side=side,
@@ -217,11 +203,7 @@ class PaperBroker:
         fill_price = self._apply_costs(close_price, "short" if pos.side == "long" else "long")
         fee = (self.fee_bps * 1e-4) * fill_price * abs(pos.size)
 
-        pnl = (
-            (fill_price - pos.entry) * pos.size
-            if pos.side == "long"
-            else (pos.entry - fill_price) * pos.size
-        )
+        pnl = (fill_price - pos.entry) * pos.size if pos.side == "long" else (pos.entry - fill_price) * pos.size
         self.realized_pnl += pnl - fee
 
         self.positions.pop(symbol, None)
@@ -301,11 +283,7 @@ class PaperBroker:
         fill_price = self._apply_costs(price, "short" if pos.side == "long" else "long")
         fee = (self.fee_bps * 1e-4) * fill_price * pos.size
 
-        pnl = (
-            (fill_price - pos.entry) * pos.size
-            if pos.side == "long"
-            else (pos.entry - fill_price) * pos.size
-        )
+        pnl = (fill_price - pos.entry) * pos.size if pos.side == "long" else (pos.entry - fill_price) * pos.size
         self.realized_pnl += pnl - fee
 
         return {
@@ -325,11 +303,7 @@ class PaperBroker:
         fill_price = self._apply_costs(price, "short" if pos.side == "long" else "long")
         fee = (self.fee_bps * 1e-4) * fill_price * fill_size
 
-        pnl = (
-            (fill_price - pos.entry) * fill_size
-            if pos.side == "long"
-            else (pos.entry - fill_price) * fill_size
-        )
+        pnl = (fill_price - pos.entry) * fill_size if pos.side == "long" else (pos.entry - fill_price) * fill_size
         self.realized_pnl += pnl - fee
 
         # Mark TP as filled and reduce position size
@@ -352,11 +326,7 @@ class PaperBroker:
         fill_price = self._apply_costs(price, "short" if pos.side == "long" else "long")
         fee = (self.fee_bps * 1e-4) * fill_price * pos.size
 
-        pnl = (
-            (fill_price - pos.entry) * pos.size
-            if pos.side == "long"
-            else (pos.entry - fill_price) * pos.size
-        )
+        pnl = (fill_price - pos.entry) * pos.size if pos.side == "long" else (pos.entry - fill_price) * pos.size
         self.realized_pnl += pnl - fee
 
         return {
@@ -401,9 +371,7 @@ class PaperBroker:
             elif action == ExitAction.PARTIAL_EXIT:
                 # Close partial position
                 exit_pct = getattr(exit_signal, "exit_percentage", 0.5)
-                fill = self._execute_exit_signal_close(
-                    ts, symbol, pos, price, exit_signal, exit_pct
-                )
+                fill = self._execute_exit_signal_close(ts, symbol, pos, price, exit_signal, exit_pct)
                 fills.append(fill)
 
                 # Reduce position size
@@ -437,15 +405,11 @@ class PaperBroker:
 
             elif action == ExitAction.FLIP_POSITION:
                 # Close current position and open reverse position
-                close_fill = self._execute_exit_signal_close(
-                    ts, symbol, pos, price, exit_signal, 1.0
-                )
+                close_fill = self._execute_exit_signal_close(ts, symbol, pos, price, exit_signal, 1.0)
                 fills.append(close_fill)
 
                 # Open reverse position
-                flip_side = getattr(
-                    exit_signal, "flip_bias", "short" if pos.side == "long" else "long"
-                )
+                flip_side = getattr(exit_signal, "flip_bias", "short" if pos.side == "long" else "long")
                 flip_fill = self.submit(ts, symbol, flip_side, pos.size, price)
                 fills.append(flip_fill)
 
@@ -463,11 +427,7 @@ class PaperBroker:
         fill_price = self._apply_costs(price, "short" if pos.side == "long" else "long")
         fee = (self.fee_bps * 1e-4) * fill_price * close_size
 
-        pnl = (
-            (fill_price - pos.entry) * close_size
-            if pos.side == "long"
-            else (pos.entry - fill_price) * close_size
-        )
+        pnl = (fill_price - pos.entry) * close_size if pos.side == "long" else (pos.entry - fill_price) * close_size
         self.realized_pnl += pnl - fee
 
         # Calculate R multiple and other metrics

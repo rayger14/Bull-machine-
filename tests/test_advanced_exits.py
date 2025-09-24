@@ -137,9 +137,7 @@ class TestAdvancedExitRules(unittest.TestCase):
         # Set current price for 1.5R profit
         self.df.iloc[-1, self.df.columns.get_loc("close")] = 63000  # 1.5R from entry
 
-        decision = rule.evaluate(
-            self.df, self.trade_plan_long, self.scores, 9, None
-        )  # 9 bars = multiple of 3
+        decision = rule.evaluate(self.df, self.trade_plan_long, self.scores, 9, None)  # 9 bars = multiple of 3
 
         self.assertIsNotNone(decision)
         self.assertEqual(decision.action, "trail")
@@ -231,9 +229,7 @@ class TestAdvancedExitEvaluator(unittest.TestCase):
 
     def test_evaluate_exits(self):
         """Test main evaluation method."""
-        updated_plan = self.evaluator.evaluate_exits(
-            self.df, self.trade_plan, self.scores, 10, None
-        )
+        updated_plan = self.evaluator.evaluate_exits(self.df, self.trade_plan, self.scores, 10, None)
 
         # Should have exits section
         self.assertIn("exits", updated_plan)

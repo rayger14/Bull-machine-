@@ -241,9 +241,7 @@ class ExitCoverageReport:
             coverage_matrix[dataset][config] = exit_counts
 
         # Print coverage matrix
-        print(
-            f"\n{'Dataset':<12} {'Config':<18} {'CHoCH':<8} {'Momentum':<10} {'TimeStop':<10} {'None':<8}"
-        )
+        print(f"\n{'Dataset':<12} {'Config':<18} {'CHoCH':<8} {'Momentum':<10} {'TimeStop':<10} {'None':<8}")
         print("-" * 75)
 
         for dataset, configs in coverage_matrix.items():
@@ -253,37 +251,25 @@ class ExitCoverageReport:
                 timestop = counts.get("time_stop", 0)
                 none_exits = counts.get("none", 0)
 
-                print(
-                    f"{dataset:<12} {config:<18} {choch:<8} {momentum:<10} {timestop:<10} {none_exits:<8}"
-                )
+                print(f"{dataset:<12} {config:<18} {choch:<8} {momentum:<10} {timestop:<10} {none_exits:<8}")
 
         # Analyze exit type coverage
         print(f"\n🎯 EXIT TYPE COVERAGE ANALYSIS:")
 
         all_choch = [
-            counts.get("choch_against", 0)
-            for r in successful_results
-            for counts in [r.get("exit_counts", {})]
+            counts.get("choch_against", 0) for r in successful_results for counts in [r.get("exit_counts", {})]
         ]
         all_momentum = [
-            counts.get("momentum_fade", 0)
-            for r in successful_results
-            for counts in [r.get("exit_counts", {})]
+            counts.get("momentum_fade", 0) for r in successful_results for counts in [r.get("exit_counts", {})]
         ]
-        all_timestop = [
-            counts.get("time_stop", 0)
-            for r in successful_results
-            for counts in [r.get("exit_counts", {})]
-        ]
+        all_timestop = [counts.get("time_stop", 0) for r in successful_results for counts in [r.get("exit_counts", {})]]
 
         choch_coverage = sum(1 for x in all_choch if x > 0)
         momentum_coverage = sum(1 for x in all_momentum if x > 0)
         timestop_coverage = sum(1 for x in all_timestop if x > 0)
         total_tests = len(successful_results)
 
-        print(
-            f"CHoCH coverage: {choch_coverage}/{total_tests} tests ({choch_coverage / total_tests * 100:.1f}%)"
-        )
+        print(f"CHoCH coverage: {choch_coverage}/{total_tests} tests ({choch_coverage / total_tests * 100:.1f}%)")
         print(
             f"Momentum coverage: {momentum_coverage}/{total_tests} tests ({momentum_coverage / total_tests * 100:.1f}%)"
         )
@@ -299,21 +285,13 @@ class ExitCoverageReport:
         momentum_results = [r for r in successful_results if r["config"] == "momentum_sensitive"]
 
         if baseline_results and choch_results:
-            baseline_choch = sum(
-                r.get("exit_counts", {}).get("choch_against", 0) for r in baseline_results
-            )
-            sensitive_choch = sum(
-                r.get("exit_counts", {}).get("choch_against", 0) for r in choch_results
-            )
+            baseline_choch = sum(r.get("exit_counts", {}).get("choch_against", 0) for r in baseline_results)
+            sensitive_choch = sum(r.get("exit_counts", {}).get("choch_against", 0) for r in choch_results)
             print(f"CHoCH sensitivity effect: {baseline_choch} → {sensitive_choch} exits")
 
         if baseline_results and momentum_results:
-            baseline_momentum = sum(
-                r.get("exit_counts", {}).get("momentum_fade", 0) for r in baseline_results
-            )
-            sensitive_momentum = sum(
-                r.get("exit_counts", {}).get("momentum_fade", 0) for r in momentum_results
-            )
+            baseline_momentum = sum(r.get("exit_counts", {}).get("momentum_fade", 0) for r in baseline_results)
+            sensitive_momentum = sum(r.get("exit_counts", {}).get("momentum_fade", 0) for r in momentum_results)
             print(f"Momentum sensitivity effect: {baseline_momentum} → {sensitive_momentum} exits")
 
         # Success criteria
@@ -328,12 +306,8 @@ class ExitCoverageReport:
 
         print(f"\n🏆 COVERAGE REPORT SUMMARY:")
         print(f"✅ CHoCH triggers: {'PASS' if success_criteria['choch_triggers'] else 'FAIL'}")
-        print(
-            f"✅ Momentum triggers: {'PASS' if success_criteria['momentum_triggers'] else 'FAIL'}"
-        )
-        print(
-            f"✅ TimeStop variance: {'PASS' if success_criteria['timestop_variance'] else 'FAIL'}"
-        )
+        print(f"✅ Momentum triggers: {'PASS' if success_criteria['momentum_triggers'] else 'FAIL'}")
+        print(f"✅ TimeStop variance: {'PASS' if success_criteria['timestop_variance'] else 'FAIL'}")
         print(f"Overall: {'SUCCESS' if overall_success else 'PARTIAL SUCCESS'}")
 
         return {
@@ -344,9 +318,7 @@ class ExitCoverageReport:
             "recommendations": self.generate_recommendations(successful_results, success_criteria),
         }
 
-    def generate_recommendations(
-        self, results: List[Dict[str, Any]], criteria: Dict[str, bool]
-    ) -> List[str]:
+    def generate_recommendations(self, results: List[Dict[str, Any]], criteria: Dict[str, bool]) -> List[str]:
         """Generate recommendations based on coverage analysis."""
         recommendations = []
 
@@ -356,14 +328,10 @@ class ExitCoverageReport:
             )
 
         if not criteria["momentum_triggers"]:
-            recommendations.append(
-                "Momentum not triggering - try lower drop_pct thresholds or shorter lookbacks"
-            )
+            recommendations.append("Momentum not triggering - try lower drop_pct thresholds or shorter lookbacks")
 
         if criteria["timestop_variance"]:
-            recommendations.append(
-                "TimeStop working correctly - use as baseline for parameter validation"
-            )
+            recommendations.append("TimeStop working correctly - use as baseline for parameter validation")
 
         # Check for dataset differences
         dataset_performance = {}
@@ -380,9 +348,7 @@ class ExitCoverageReport:
                     for r in dataset_results
                 )
                 if total_exits > 0:
-                    recommendations.append(
-                        f"Dataset {dataset} shows exit activity - good for parameter tuning"
-                    )
+                    recommendations.append(f"Dataset {dataset} shows exit activity - good for parameter tuning")
 
         return recommendations
 

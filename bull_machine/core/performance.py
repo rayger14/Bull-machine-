@@ -63,8 +63,7 @@ class PerformanceLogger:
             return event_type in ["trade", "eod"]
         elif self.config.log_mode == LogMode.BOUNDARY:
             return (
-                event_type in ["trade", "eod", "veto", "raise"]
-                or abs(score - threshold) < self.config.threshold_band
+                event_type in ["trade", "eod", "veto", "raise"] or abs(score - threshold) < self.config.threshold_band
             )
         elif self.config.log_mode == LogMode.SAMPLED:
             return event_type in ["trade", "eod", "veto", "raise"] or self._should_sample()

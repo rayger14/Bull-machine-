@@ -153,11 +153,7 @@ class Portfolio:
         elif side == "exit":
             pos = self.positions.pop(symbol, None)
             if pos:
-                pnl = (
-                    (price - pos.entry) * pos.size
-                    if pos.side == "long"
-                    else (pos.entry - price) * pos.size
-                )
+                pnl = (price - pos.entry) * pos.size if pos.side == "long" else (pos.entry - price) * pos.size
                 self.realized += pnl - fee
                 self.cash += pnl - fee
 
@@ -166,9 +162,7 @@ class Portfolio:
         if not pos:
             self.unrealized = 0.0
             return
-        self.unrealized = (
-            (price - pos.entry) * pos.size if pos.side == "long" else (pos.entry - price) * pos.size
-        )
+        self.unrealized = (price - pos.entry) * pos.size if pos.side == "long" else (pos.entry - price) * pos.size
 
     def equity(self) -> float:
         eq = self.cash + self.realized + self.unrealized

@@ -108,9 +108,7 @@ def main():
             mtf_vetoes = mtf_on.get("veto_reasons", {})
             if mtf_vetoes:
                 print(f"\nMTF VETO REASONS:")
-                for reason, count in sorted(mtf_vetoes.items(), key=lambda x: x[1], reverse=True)[
-                    :3
-                ]:
+                for reason, count in sorted(mtf_vetoes.items(), key=lambda x: x[1], reverse=True)[:3]:
                     print(f"  - {reason}: {count} times")
 
     print("\n" + "=" * 100)
@@ -154,21 +152,15 @@ def main():
     print(f"  Confidence improvement: {avg_conf_on - avg_conf_off:+.3f}")
 
     if total_trades_on > total_trades_off:
-        print(
-            f"\n✅ MTF Sync INCREASES trade generation by {((total_trades_on / total_trades_off - 1) * 100):.1f}%"
-        )
+        print(f"\n✅ MTF Sync INCREASES trade generation by {((total_trades_on / total_trades_off - 1) * 100):.1f}%")
     elif total_trades_on < total_trades_off:
-        print(
-            f"\n⚠️  MTF Sync REDUCES trade generation by {((1 - total_trades_on / total_trades_off) * 100):.1f}%"
-        )
+        print(f"\n⚠️  MTF Sync REDUCES trade generation by {((1 - total_trades_on / total_trades_off) * 100):.1f}%")
         print("   This could indicate better filtering (quality over quantity)")
     else:
         print(f"\n➡️  MTF Sync maintains similar trade generation")
 
     if avg_conf_on > avg_conf_off:
-        print(
-            f"✅ MTF Sync IMPROVES average confidence by {((avg_conf_on / avg_conf_off - 1) * 100):.1f}%"
-        )
+        print(f"✅ MTF Sync IMPROVES average confidence by {((avg_conf_on / avg_conf_off - 1) * 100):.1f}%")
 
     print(f"\n🎯 CONCLUSION:")
     print(f"Bull Machine v1.3 with MTF Sync shows:")

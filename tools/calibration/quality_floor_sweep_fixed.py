@@ -20,9 +20,7 @@ def create_backtest_config(wyckoff_floor, structure_floor, liquidity_floor, run_
     config = {
         "run_id": f"floor_sweep_{run_id}",
         "data": {
-            "sources": {
-                "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"
-            },
+            "sources": {"BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"},
             "timeframes": ["1H"],
             "schema": {
                 "timestamp": {"name": "time", "unit": "s"},
@@ -89,9 +87,7 @@ def run_single_test(wyckoff_floor, structure_floor, liquidity_floor, test_num):
         json.dump(strategy_config, f, indent=2)
 
     # Create backtest config
-    backtest_config = create_backtest_config(
-        wyckoff_floor, structure_floor, liquidity_floor, run_id
-    )
+    backtest_config = create_backtest_config(wyckoff_floor, structure_floor, liquidity_floor, run_id)
     backtest_config["strategy"]["config"] = temp_strategy_path
 
     # Write backtest config
@@ -213,9 +209,7 @@ def main():
         for structure_floor in structure_floors:
             for liquidity_floor in liquidity_floors:
                 test_count += 1
-                result = run_single_test(
-                    wyckoff_floor, structure_floor, liquidity_floor, test_count
-                )
+                result = run_single_test(wyckoff_floor, structure_floor, liquidity_floor, test_count)
                 results.append(result)
 
                 # Quick status print

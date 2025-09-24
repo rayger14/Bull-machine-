@@ -142,9 +142,7 @@ class TestRegressionGuards(unittest.TestCase):
 
         # Results should be different (not identical due to parameter shadowing)
         unique_results = len(set(results))
-        self.assertGreater(
-            unique_results, 1, "Parameter sweep produced identical results - possible shadowing"
-        )
+        self.assertGreater(unique_results, 1, "Parameter sweep produced identical results - possible shadowing")
 
     def test_fusion_weight_application(self):
         """Test that fusion weights are actually applied."""
@@ -190,9 +188,7 @@ class TestRegressionGuards(unittest.TestCase):
         bojan_contribution = result["layer_contributions"].get("bojan", 0)
         max_possible_bojan = 0.6 * 0.5  # Cap * weight
 
-        self.assertLessEqual(
-            bojan_contribution, max_possible_bojan, "Bojan score not properly capped"
-        )
+        self.assertLessEqual(bojan_contribution, max_possible_bojan, "Bojan score not properly capped")
 
 
 class TestSystemIntegration(unittest.TestCase):
@@ -239,9 +235,7 @@ class TestSystemIntegration(unittest.TestCase):
                 "exit_counts.json",
             ]
             for filename in expected_files:
-                self.assertTrue(
-                    (temp_path / filename).exists(), f"Missing telemetry file: {filename}"
-                )
+                self.assertTrue((temp_path / filename).exists(), f"Missing telemetry file: {filename}")
 
 
 if __name__ == "__main__":

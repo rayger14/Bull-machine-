@@ -25,9 +25,7 @@ def create_base_config():
     return {
         "run_id": "extreme_exit_test",
         "data": {
-            "sources": {
-                "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"
-            },
+            "sources": {"BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"},
             "timeframes": ["1H"],
             "schema": {
                 "timestamp": {"name": "time", "unit": "s"},
@@ -251,9 +249,7 @@ def main():
         print(f"Working configs: {', '.join(working_configs)}")
 
     else:
-        print(
-            f"\\n❌ EXTREME FAILURE: Even ultra-aggressive params couldn't trigger CHoCH/Momentum"
-        )
+        print(f"\\n❌ EXTREME FAILURE: Even ultra-aggressive params couldn't trigger CHoCH/Momentum")
         print(f"This suggests:")
         print(f"  1. Exit logic bugs beyond parameter tuning")
         print(f"  2. Market data lacks the required patterns")

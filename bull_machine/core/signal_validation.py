@@ -42,9 +42,7 @@ def validate_signal(signal: Dict[str, Any]) -> bool:
             return False
 
         if not isinstance(signal[field], expected_type):
-            logging.error(
-                f"Signal validation failed: {field} type {type(signal[field])} != {expected_type}"
-            )
+            logging.error(f"Signal validation failed: {field} type {type(signal[field])} != {expected_type}")
             return False
 
     # Validate bias values
@@ -167,12 +165,8 @@ def log_signal_stats(signals: List[Dict[str, Any]], stage: str = ""):
     short_count = sum(1 for s in signals if s.get("bias") == "short")
     avg_score = sum(s.get("score", 0) for s in signals) / len(signals)
 
-    logging.info(
-        f"[{stage}] Generated {len(signals)} signals: {long_count}L/{short_count}S, avg_score={avg_score:.3f}"
-    )
+    logging.info(f"[{stage}] Generated {len(signals)} signals: {long_count}L/{short_count}S, avg_score={avg_score:.3f}")
 
     # Log individual signals for detailed debugging
     for i, signal in enumerate(signals):
-        logging.debug(
-            f"[{stage}] Signal {i}: {signal['bias']} @ {signal['score']:.3f} - {signal['reasons'][:2]}"
-        )
+        logging.debug(f"[{stage}] Signal {i}: {signal['bias']} @ {signal['score']:.3f} - {signal['reasons'][:2]}")

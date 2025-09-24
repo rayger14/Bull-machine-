@@ -60,9 +60,7 @@ def save_temp_csv(df: pd.DataFrame, symbol: str) -> str:
     import tempfile
 
     # Create temp file
-    temp_file = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".csv", delete=False, prefix=f"{symbol}_backtest_"
-    )
+    temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False, prefix=f"{symbol}_backtest_")
 
     # Write data
     df.to_csv(temp_file.name, index=False)
@@ -176,9 +174,7 @@ def strategy_from_df(
         return {"action": "flat", "error": str(e)}
 
 
-def strategy_from_series(
-    series: Series, balance: float = 10000, config_path: str = None
-) -> Dict[str, Any]:
+def strategy_from_series(series: Series, balance: float = 10000, config_path: str = None) -> Dict[str, Any]:
     """
     Alternative: Call v1.3 directly with Series object (no CSV)
 
@@ -248,12 +244,8 @@ def check_exposure_limits(
     """
 
     # Calculate current net exposure
-    long_exposure = sum(
-        p["size"] * p["price"] for p in current_positions.values() if p.get("side") == "long"
-    )
-    short_exposure = sum(
-        p["size"] * p["price"] for p in current_positions.values() if p.get("side") == "short"
-    )
+    long_exposure = sum(p["size"] * p["price"] for p in current_positions.values() if p.get("side") == "long")
+    short_exposure = sum(p["size"] * p["price"] for p in current_positions.values() if p.get("side") == "short")
 
     net_exposure = abs(long_exposure - short_exposure)
 

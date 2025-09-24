@@ -4,9 +4,7 @@ from typing import List, Optional, Tuple
 from ..core.types import LiquidityResult, Signal, WyckoffResult
 
 
-def combine(
-    w: WyckoffResult, l: LiquidityResult, cfg: dict, state: dict
-) -> Tuple[Optional[Signal], Optional[str]]:
+def combine(w: WyckoffResult, l: LiquidityResult, cfg: dict, state: dict) -> Tuple[Optional[Signal], Optional[str]]:
     """Combine Wyckoff + Liquidity with range suppression and confidence floor.
 
     Returns a tuple (Signal|None, reason|None). Reason is a short machine-friendly string
@@ -44,9 +42,7 @@ def combine(
             return None, "side_neutral"
         reasons = _build_signal_reasons(w, l, combined)
         ttl_bars = cfg.get("risk", {}).get("ttl_bars", 18)
-        return Signal(
-            ts=0, side=side, confidence=combined, reasons=reasons, ttl_bars=ttl_bars
-        ), None
+        return Signal(ts=0, side=side, confidence=combined, reasons=reasons, ttl_bars=ttl_bars), None
     except Exception as e:
         logging.error(f"Fusion error: {e}")
         return None, "fusion_error"

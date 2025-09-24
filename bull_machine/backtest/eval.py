@@ -86,9 +86,7 @@ def calculate_win_rate(trades: List[Dict]) -> float:
     return wins / len(trades)
 
 
-def compute_mock_layer_scores(
-    df: pd.DataFrame, enabled_modules: List[str], config: Dict
-) -> pd.DataFrame:
+def compute_mock_layer_scores(df: pd.DataFrame, enabled_modules: List[str], config: Dict) -> pd.DataFrame:
     """
     Compute mock layer scores for ablation study.
     Replace with actual layer computation in full implementation.
@@ -129,9 +127,7 @@ def compute_mock_layer_scores(
     return scores_df
 
 
-def simulate_trades(
-    df: pd.DataFrame, fusion_scores: pd.DataFrame, enter_threshold: float, config: Dict
-) -> List[Dict]:
+def simulate_trades(df: pd.DataFrame, fusion_scores: pd.DataFrame, enter_threshold: float, config: Dict) -> List[Dict]:
     """
     Simulate trades based on fusion scores.
     Replace with actual trade simulation in full implementation.
@@ -202,9 +198,7 @@ def run_ablation(df: pd.DataFrame, config: Dict) -> Dict:
 
     # Add Bojan if enabled
     if config.get("features", {}).get("bojan", False):
-        layer_sets.append(
-            ["wyckoff", "liquidity", "structure", "momentum", "volume", "context", "mtf", "bojan"]
-        )
+        layer_sets.append(["wyckoff", "liquidity", "structure", "momentum", "volume", "context", "mtf", "bojan"])
 
     results = {}
 
@@ -258,9 +252,7 @@ def run_backtest(df: pd.DataFrame, config: Dict, output_dir: str) -> Dict:
     fusion_engine = FusionEngineV141(config)
 
     # Compute all layer scores
-    enabled_layers = [
-        k for k, v in config.get("features", {}).items() if v and k in fusion_engine.weights
-    ]
+    enabled_layers = [k for k, v in config.get("features", {}).items() if v and k in fusion_engine.weights]
     layer_scores_df = compute_mock_layer_scores(df, enabled_layers, config)
 
     # Fuse scores
@@ -319,9 +311,7 @@ def run_backtest(df: pd.DataFrame, config: Dict, output_dir: str) -> Dict:
         with open(output_path / filename, "w") as f:
             json.dump(mock_data, f, indent=2)
 
-    logging.info(
-        f"Backtest complete: {len(trades)} trades, Sharpe={performance['sharpe_ratio']:.2f}"
-    )
+    logging.info(f"Backtest complete: {len(trades)} trades, Sharpe={performance['sharpe_ratio']:.2f}")
 
     return summary
 

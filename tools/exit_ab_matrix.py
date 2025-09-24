@@ -146,12 +146,7 @@ def main():
                     pass
 
                 if success:
-                    exits_total = sum(
-                        [
-                            exit_counts.get(k, 0)
-                            for k in ["choch_against", "momentum_fade", "time_stop"]
-                        ]
-                    )
+                    exits_total = sum([exit_counts.get(k, 0) for k in ["choch_against", "momentum_fade", "time_stop"]])
                     trades = metrics.get("trades", 0)
                     exit_coverage = (exits_total / max(trades, 1)) * 100 if trades > 0 else 0
 
@@ -178,9 +173,7 @@ def main():
             success = False
 
         # Record results
-        exits_total = sum(
-            [exit_counts.get(k, 0) for k in ["choch_against", "momentum_fade", "time_stop"]]
-        )
+        exits_total = sum([exit_counts.get(k, 0) for k in ["choch_against", "momentum_fade", "time_stop"]])
         trades = metrics.get("trades", 0)
         exit_coverage = (exits_total / max(trades, 1)) * 100 if trades > 0 else 0
 
@@ -247,9 +240,7 @@ def main():
     for result in successful_tests:
         wr_delta = (result["win_rate"] - baseline_metrics["win_rate"]) * 100
         exp_delta = result["expectancy"] - baseline_metrics["expectancy"]
-        dd_delta = (
-            (result["max_dd"] - baseline_metrics["max_dd"]) / baseline_metrics["max_dd"]
-        ) * 100
+        dd_delta = ((result["max_dd"] - baseline_metrics["max_dd"]) / baseline_metrics["max_dd"]) * 100
 
         print(
             f"{result['run']:<4} {result['trades']:<7} {result['win_rate']:<8.1%} "
@@ -284,9 +275,7 @@ def main():
                 f"   Lift vs baseline: {(best['win_rate'] - baseline_metrics['win_rate']) * 100:+.1f}pp WR, "
                 f"{best['expectancy'] - baseline_metrics['expectancy']:+.0f} expectancy"
             )
-            print(
-                f"   Exit breakdown: CHoCH={best['exits_choch']}, Mom={best['exits_mom']}, Time={best['exits_time']}"
-            )
+            print(f"   Exit breakdown: CHoCH={best['exits_choch']}, Mom={best['exits_mom']}, Time={best['exits_time']}")
     else:
         print("\n⚠️  No configurations triggered exits - need more aggressive parameters")
         print("\n📋 NEXT STEPS:")

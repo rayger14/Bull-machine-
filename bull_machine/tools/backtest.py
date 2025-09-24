@@ -47,9 +47,7 @@ def simulate_trade(signal, risk_plan, entry_bar, future_bars, bar_idx) -> Dict[s
             exit_pnl = (current_stop - entry_price) * remaining_size
             total_pnl += exit_pnl
             stop_r = calculate_single_r(entry_price, stop_price, current_stop, side)
-            total_r = calculate_weighted_r(
-                exits + [{"r": stop_r, "size": remaining_size}], initial_size
-            )
+            total_r = calculate_weighted_r(exits + [{"r": stop_r, "size": remaining_size}], initial_size)
             return {
                 "entry_bar_idx": bar_idx,
                 "exit_bar_idx": bar_idx + i + 1,
@@ -68,9 +66,7 @@ def simulate_trade(signal, risk_plan, entry_bar, future_bars, bar_idx) -> Dict[s
             exit_pnl = (entry_price - current_stop) * remaining_size
             total_pnl += exit_pnl
             stop_r = calculate_single_r(entry_price, stop_price, current_stop, side)
-            total_r = calculate_weighted_r(
-                exits + [{"r": stop_r, "size": remaining_size}], initial_size
-            )
+            total_r = calculate_weighted_r(exits + [{"r": stop_r, "size": remaining_size}], initial_size)
             return {
                 "entry_bar_idx": bar_idx,
                 "exit_bar_idx": bar_idx + i + 1,
@@ -98,9 +94,7 @@ def simulate_trade(signal, risk_plan, entry_bar, future_bars, bar_idx) -> Dict[s
         )
         total_pnl += exit_pnl
         timeout_r = calculate_single_r(entry_price, stop_price, final_price, side)
-        total_r = calculate_weighted_r(
-            exits + [{"r": timeout_r, "size": remaining_size}], initial_size
-        )
+        total_r = calculate_weighted_r(exits + [{"r": timeout_r, "size": remaining_size}], initial_size)
         return {
             "entry_bar_idx": bar_idx,
             "exit_bar_idx": bar_idx + len(future_bars),

@@ -83,9 +83,7 @@ def generate_realistic_layer_scores(df: pd.DataFrame, enabled_modules: list) -> 
     return scores_df
 
 
-def simulate_trades_v142(
-    df: pd.DataFrame, fusion_df: pd.DataFrame, enter_threshold: float, config: dict
-) -> list:
+def simulate_trades_v142(df: pd.DataFrame, fusion_df: pd.DataFrame, enter_threshold: float, config: dict) -> list:
     """Simulate trades with v1.4.2 improvements."""
     trades = []
     in_position = False
@@ -106,10 +104,7 @@ def simulate_trades_v142(
     for i in range(50, len(df) - 10):  # Skip first 50 bars for indicators
         if not in_position:
             # Entry logic
-            if (
-                fusion_df.iloc[i]["weighted_score"] >= enter_threshold
-                and not fusion_df.iloc[i]["global_veto"]
-            ):
+            if fusion_df.iloc[i]["weighted_score"] >= enter_threshold and not fusion_df.iloc[i]["global_veto"]:
                 in_position = True
                 entry_idx = i
                 entry_price = df.iloc[i]["close"]
@@ -117,11 +112,7 @@ def simulate_trades_v142(
                 # Determine phase for stop calculation
                 recent_high = df.iloc[i - 20 : i]["high"].max()
                 recent_low = df.iloc[i - 20 : i]["low"].min()
-                range_pos = (
-                    (entry_price - recent_low) / (recent_high - recent_low)
-                    if recent_high > recent_low
-                    else 0.5
-                )
+                range_pos = (entry_price - recent_low) / (recent_high - recent_low) if recent_high > recent_low else 0.5
 
                 # v1.4.2 improvement: wider stops in trending phases
                 if range_pos > 0.7 or range_pos < 0.3:  # Trending phases
@@ -129,9 +120,7 @@ def simulate_trades_v142(
                 else:
                     atr_multiplier = base_atr_mult  # 1.5x
 
-                atr_value = (
-                    df.iloc[i]["atr"] if not np.isnan(df.iloc[i]["atr"]) else entry_price * 0.02
-                )
+                atr_value = df.iloc[i]["atr"] if not np.isnan(df.iloc[i]["atr"]) else entry_price * 0.02
                 stop_distance = atr_value * atr_multiplier
                 stop_price = entry_price - stop_distance  # Long position
 
@@ -278,9 +267,7 @@ def main():
     fusion_engine = FusionEngineV141(config)
 
     # Generate layer scores
-    enabled_layers = [
-        k for k, v in config.get("features", {}).items() if v and k in fusion_engine.weights
-    ]
+    enabled_layers = [k for k, v in config.get("features", {}).items() if v and k in fusion_engine.weights]
     print(f"Enabled layers: {enabled_layers}")
 
     layer_scores_df = generate_realistic_layer_scores(df, enabled_layers)
@@ -302,9 +289,7 @@ def main():
     print(f"  Avg weighted score: {fusion_df['weighted_score'].mean():.3f}")
     print(f"  Avg aggregate: {fusion_df['aggregate'].mean():.3f}")
     print(f"  Veto rate: {fusion_df['global_veto'].mean():.1%}")
-    print(
-        f"  Signals above threshold: {(fusion_df['weighted_score'] >= config['signals']['enter_threshold']).sum()}"
-    )
+    print(f"  Signals above threshold: {(fusion_df['weighted_score'] >= config['signals']['enter_threshold']).sum()}")
 
     # Simulate trades
     trades = simulate_trades_v142(df, fusion_df, config["signals"]["enter_threshold"], config)

@@ -97,10 +97,7 @@ def simulate_trades_v141_baseline(
     for i in range(50, len(df) - 10):
         if not in_position:
             # Entry logic - v1.4.1 baseline includes stricter regime filter
-            if (
-                fusion_df.iloc[i]["weighted_score"] >= enter_threshold
-                and not fusion_df.iloc[i]["global_veto"]
-            ):
+            if fusion_df.iloc[i]["weighted_score"] >= enter_threshold and not fusion_df.iloc[i]["global_veto"]:
                 # v1.4.1 regime filter: veto ALL A/C phases (no high-vol override)
                 # We'll simulate this by being more restrictive on some entries
                 wyckoff_score = 0.7  # Assume decent Wyckoff score
@@ -109,9 +106,7 @@ def simulate_trades_v141_baseline(
                 recent_high = df.iloc[i - 20 : i]["high"].max()
                 recent_low = df.iloc[i - 20 : i]["low"].min()
                 range_pos = (
-                    (df.iloc[i]["close"] - recent_low) / (recent_high - recent_low)
-                    if recent_high > recent_low
-                    else 0.5
+                    (df.iloc[i]["close"] - recent_low) / (recent_high - recent_low) if recent_high > recent_low else 0.5
                 )
 
                 # Simulate phase A/C detection (consolidation phases)
@@ -128,9 +123,7 @@ def simulate_trades_v141_baseline(
                 entry_price = df.iloc[i]["close"]
 
                 # v1.4.1: Fixed 1.5x stops for all phases
-                atr_value = (
-                    df.iloc[i]["atr"] if not np.isnan(df.iloc[i]["atr"]) else entry_price * 0.02
-                )
+                atr_value = df.iloc[i]["atr"] if not np.isnan(df.iloc[i]["atr"]) else entry_price * 0.02
                 stop_distance = atr_value * base_atr_mult
                 stop_price = entry_price - stop_distance
 
@@ -294,9 +287,7 @@ def main():
     fusion_engine = FusionEngineV141(config)
 
     # Generate layer scores (identical to v1.4.2 for fair comparison)
-    enabled_layers = [
-        k for k, v in config.get("features", {}).items() if v and k in fusion_engine.weights
-    ]
+    enabled_layers = [k for k, v in config.get("features", {}).items() if v and k in fusion_engine.weights]
 
     layer_scores_df = generate_realistic_layer_scores(df, enabled_layers)
 
@@ -312,14 +303,10 @@ def main():
     fusion_df = pd.DataFrame(fusion_results, index=layer_scores_df.index)
 
     print(f"\\nFusion Stats:")
-    print(
-        f"  Signals above threshold: {(fusion_df['weighted_score'] >= config['signals']['enter_threshold']).sum()}"
-    )
+    print(f"  Signals above threshold: {(fusion_df['weighted_score'] >= config['signals']['enter_threshold']).sum()}")
 
     # Simulate v1.4.1 baseline trades
-    trades = simulate_trades_v141_baseline(
-        df, fusion_df, config["signals"]["enter_threshold"], config
-    )
+    trades = simulate_trades_v141_baseline(df, fusion_df, config["signals"]["enter_threshold"], config)
 
     # Calculate performance
     performance = calculate_performance_metrics(trades)

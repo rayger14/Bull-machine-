@@ -34,14 +34,12 @@ def analyze(series: Series, bias: str, cfg: dict) -> LiquidityResult:
         aligned_fvgs = sum(
             1
             for f in fvgs
-            if (bias == "long" and f["direction"] == "bullish")
-            or (bias == "short" and f["direction"] == "bearish")
+            if (bias == "long" and f["direction"] == "bullish") or (bias == "short" and f["direction"] == "bearish")
         )
         aligned_obs = sum(
             1
             for o in order_blocks
-            if (bias == "long" and o["direction"] == "bullish")
-            or (bias == "short" and o["direction"] == "bearish")
+            if (bias == "long" and o["direction"] == "bullish") or (bias == "short" and o["direction"] == "bearish")
         )
         logging.info(
             f"[LIQ] raw={raw_score:.3f} floor={context_floor:.2f} gated={score:.3f} "
@@ -146,16 +144,12 @@ def _calculate_liquidity_score(fvgs: List[Dict], obs: List[Dict], bias: str) -> 
     total_score = 0.0
     total_weight = 0.0
     for f in fvgs:
-        if (bias == "long" and f["direction"] == "bullish") or (
-            bias == "short" and f["direction"] == "bearish"
-        ):
+        if (bias == "long" and f["direction"] == "bullish") or (bias == "short" and f["direction"] == "bearish"):
             w = 0.6
             total_score += f["strength"] * w
             total_weight += w
     for ob in obs:
-        if (bias == "long" and ob["direction"] == "bullish") or (
-            bias == "short" and ob["direction"] == "bearish"
-        ):
+        if (bias == "long" and ob["direction"] == "bullish") or (bias == "short" and ob["direction"] == "bearish"):
             w = 0.8
             total_score += ob["strength"] * w
             total_weight += w

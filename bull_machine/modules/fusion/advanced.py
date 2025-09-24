@@ -131,9 +131,7 @@ class FusionEngineV1_3:
         wyckoff_score = 0.0
         if wy and side in ("long", "short"):
             # Use phase and trend confidence for wyckoff contribution
-            avg_confidence = (
-                getattr(wy, "phase_confidence", 0.0) + getattr(wy, "trend_confidence", 0.0)
-            ) / 2
+            avg_confidence = (getattr(wy, "phase_confidence", 0.0) + getattr(wy, "trend_confidence", 0.0)) / 2
             wyckoff_score = avg_confidence * wyckoff_weight
 
         liquidity_score = liq_score * liquidity_weight if liq_score > 0 else 0.0

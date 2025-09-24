@@ -21,9 +21,7 @@ def run_backtest_subprocess(cfg_path: str, out_dir: str) -> Dict[str, Any]:
         out_dir,
     ]
 
-    result = subprocess.run(
-        cmd, capture_output=True, text=True, cwd=pathlib.Path(__file__).parent.parent.parent
-    )
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=pathlib.Path(__file__).parent.parent.parent)
 
     if result.returncode != 0:
         print(f"Backtest failed: {result.stderr}")
@@ -82,15 +80,11 @@ def run_once(base_cfg: Dict[str, Any], thr: float, tag: str) -> Dict[str, Any]:
     cfg = copy.deepcopy(base_cfg)
 
     # Read the strategy config and modify threshold
-    strategy_config_path = cfg.get("strategy", {}).get(
-        "config", "config/threshold_calibration.json"
-    )
+    strategy_config_path = cfg.get("strategy", {}).get("config", "config/threshold_calibration.json")
     strategy_config_full_path = pathlib.Path(strategy_config_path)
     if not strategy_config_full_path.exists():
         # Try relative to repo root
-        strategy_config_full_path = (
-            pathlib.Path(__file__).parent.parent.parent / strategy_config_path
-        )
+        strategy_config_full_path = pathlib.Path(__file__).parent.parent.parent / strategy_config_path
 
     if strategy_config_full_path.exists():
         strategy_cfg = json.loads(strategy_config_full_path.read_text())

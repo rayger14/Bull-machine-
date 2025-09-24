@@ -23,11 +23,7 @@ def wyckoff_state(df: pd.DataFrame) -> Dict[str, any]:
     # Check for accumulation patterns
     range_high = recent["high"].max()
     range_low = recent["low"].min()
-    current_position = (
-        (df.iloc[-1]["close"] - range_low) / (range_high - range_low)
-        if range_high > range_low
-        else 0.5
-    )
+    current_position = (df.iloc[-1]["close"] - range_low) / (range_high - range_low) if range_high > range_low else 0.5
 
     # Volume analysis
     vol_sma = recent["volume"].mean()
@@ -64,9 +60,7 @@ def wyckoff_state(df: pd.DataFrame) -> Dict[str, any]:
     }
 
 
-def mtf_alignment(
-    daily_df: pd.DataFrame, h4_df: pd.DataFrame, liquidity_score: float
-) -> Tuple[bool, Dict]:
+def mtf_alignment(daily_df: pd.DataFrame, h4_df: pd.DataFrame, liquidity_score: float) -> Tuple[bool, Dict]:
     """
     Check multi-timeframe alignment between daily and 4H.
     Liquidity score acts as a gate for desync tolerance.
@@ -164,11 +158,7 @@ def get_mtf_context(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFram
     # Determine HTF bias
     if context["1d"]["current_close"] and context["1d"]["recent_low"]:
         d_range = context["1d"]["recent_high"] - context["1d"]["recent_low"]
-        d_position = (
-            (context["1d"]["current_close"] - context["1d"]["recent_low"]) / d_range
-            if d_range > 0
-            else 0.5
-        )
+        d_position = (context["1d"]["current_close"] - context["1d"]["recent_low"]) / d_range if d_range > 0 else 0.5
 
         if d_position > 0.65:
             context["htf_bias"] = "bullish"

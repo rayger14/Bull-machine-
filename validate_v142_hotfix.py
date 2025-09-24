@@ -54,19 +54,13 @@ def test_wider_stops_markup_phases():
         stop_distance = entry_price - stop_price
         implied_mult = stop_distance / 500  # ATR = 500
 
-        print(
-            f"  {case_name}: Phase={phase_info['phase']}, Multiplier={implied_mult:.1f} (expected {expected_mult})"
-        )
+        print(f"  {case_name}: Phase={phase_info['phase']}, Multiplier={implied_mult:.1f} (expected {expected_mult})")
 
         # Allow some tolerance for depth/vol adjustments
         if phase_info["phase"] in ("D", "E"):
-            assert implied_mult > 1.8, (
-                f"Markup/Markdown should have >1.8x multiplier, got {implied_mult:.1f}"
-            )
+            assert implied_mult > 1.8, f"Markup/Markdown should have >1.8x multiplier, got {implied_mult:.1f}"
         else:
-            assert implied_mult < 1.8, (
-                f"Consolidation should have <1.8x multiplier, got {implied_mult:.1f}"
-            )
+            assert implied_mult < 1.8, f"Consolidation should have <1.8x multiplier, got {implied_mult:.1f}"
 
     print("✅ Phase-aware stops working correctly")
 
@@ -131,9 +125,7 @@ def test_relaxed_distribution_exits():
         result = distribution_exit(df, test_volume, 0.3)  # displacement < 0.4
         triggered = result.get("metadata", {}).get("distribution_detected", False)
         vol_ratio = test_volume / 1000.0  # Base volume is 1000
-        print(
-            f"  {case_name}: vol_ratio={vol_ratio:.1f}, triggered={triggered} (expected {should_trigger})"
-        )
+        print(f"  {case_name}: vol_ratio={vol_ratio:.1f}, triggered={triggered} (expected {should_trigger})")
         assert triggered == should_trigger, f"{case_name} failed"
 
     print("✅ Relaxed distribution exits working correctly")

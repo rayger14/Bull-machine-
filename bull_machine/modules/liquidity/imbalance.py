@@ -17,9 +17,7 @@ def calculate_fib_level(high: float, low: float, current: float) -> float:
     return (current - low) / (high - low)
 
 
-def score_sweep_mitigation(
-    sweep_bar: Dict, reclaim_bar: Dict, atr: float, fib_level: float
-) -> float:
+def score_sweep_mitigation(sweep_bar: Dict, reclaim_bar: Dict, atr: float, fib_level: float) -> float:
     """
     Score liquidity sweep mitigation quality.
 
@@ -123,10 +121,7 @@ def detect_liquidity_pools(df: pd.DataFrame, lookback: int = 50) -> List[Dict]:
             # Count subsequent touches
             touches = 0
             for j in range(i + 1, min(i + 10, len(recent))):
-                if (
-                    ob_low <= recent.iloc[j]["low"] <= ob_high
-                    or ob_low <= recent.iloc[j]["high"] <= ob_high
-                ):
+                if ob_low <= recent.iloc[j]["low"] <= ob_high or ob_low <= recent.iloc[j]["high"] <= ob_high:
                     touches += 1
 
             if touches >= 2:

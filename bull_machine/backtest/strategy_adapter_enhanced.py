@@ -169,9 +169,7 @@ def strategy_from_df(
         current_price = series_ltf.bars[-1].close
         eq_magnet = compute_eq_magnet(htf_range, current_price, config.get("mtf", {}))
 
-        sync_report = decide_mtf_entry(
-            htf_bias, mtf_bias, ltf_bias, nested_ok, eq_magnet, config.get("mtf", {})
-        )
+        sync_report = decide_mtf_entry(htf_bias, mtf_bias, ltf_bias, nested_ok, eq_magnet, config.get("mtf", {}))
 
         # Enhanced Fusion with Quality Gates
         fusion_engine = EnhancedFusionEngineV1_4(config)

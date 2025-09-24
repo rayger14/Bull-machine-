@@ -96,9 +96,7 @@ def test_v13_mtf_integration(
                 from bull_machine.app.main_v13 import run_bull_machine_v1_3
 
                 # Run v1.3 with MTF enabled/disabled
-                result = run_bull_machine_v1_3(
-                    temp_filename, account_balance=10000, mtf_enabled=mtf_enabled
-                )
+                result = run_bull_machine_v1_3(temp_filename, account_balance=10000, mtf_enabled=mtf_enabled)
 
                 signals_tested += 1
 
@@ -160,9 +158,7 @@ def test_v13_mtf_integration(
         print(f"    No-trade signals: {no_trade_count}")
         print(f"    Trade rate: {(len(trades) / signals_tested) * 100:.1f}%")
         if trades:
-            print(
-                f"    Average confidence: {results_by_threshold[threshold]['avg_confidence']:.3f}"
-            )
+            print(f"    Average confidence: {results_by_threshold[threshold]['avg_confidence']:.3f}")
 
         if veto_reasons:
             print(f"    Top veto reasons:")
@@ -384,15 +380,9 @@ def print_performance_comparison(all_results):
             off_rate = (off_trades / off_results.get("signals_tested", 1)) * 100
             on_rate = (on_trades / on_results.get("signals_tested", 1)) * 100
 
-            print(
-                f"{'Trade Count':<20} {off_trades:<15} {on_trades:<15} {on_trades - off_trades:+.0f}"
-            )
-            print(
-                f"{'Avg Confidence':<20} {off_conf:<15.3f} {on_conf:<15.3f} {on_conf - off_conf:+.3f}"
-            )
-            print(
-                f"{'Trade Rate %':<20} {off_rate:<15.1f} {on_rate:<15.1f} {on_rate - off_rate:+.1f}%"
-            )
+            print(f"{'Trade Count':<20} {off_trades:<15} {on_trades:<15} {on_trades - off_trades:+.0f}")
+            print(f"{'Avg Confidence':<20} {off_conf:<15.3f} {on_conf:<15.3f} {on_conf - off_conf:+.3f}")
+            print(f"{'Trade Rate %':<20} {off_rate:<15.1f} {on_rate:<15.1f} {on_rate - off_rate:+.1f}%")
 
 
 if __name__ == "__main__":

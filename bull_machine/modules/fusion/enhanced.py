@@ -40,12 +40,8 @@ class EnhancedFusionEngineV1_4:
                 "context": 0.40,
             },
         )
-        self.align_boosts = config.get(
-            "align_boosts", {"triad": 1.15, "momentum": 1.10, "volume": 1.05}
-        )
-        self.penalties = config.get(
-            "penalties", {"edge_no_reclaim": 0.03, "weak_break": 0.03, "frvp_chop": 0.02}
-        )
+        self.align_boosts = config.get("align_boosts", {"triad": 1.15, "momentum": 1.10, "volume": 1.05})
+        self.penalties = config.get("penalties", {"edge_no_reclaim": 0.03, "weak_break": 0.03, "frvp_chop": 0.02})
 
         self.enter_threshold = self.mode.get("enter_threshold", 0.42)
         self.exit_threshold = self.mode.get("exit_threshold", 0.40)
@@ -60,9 +56,7 @@ class EnhancedFusionEngineV1_4:
             "quality_floor_applications": 0,
         }
 
-    def fuse_with_mtf(
-        self, modules: Dict[str, Any], sync_report: Optional[Any] = None
-    ) -> Optional[Signal]:
+    def fuse_with_mtf(self, modules: Dict[str, Any], sync_report: Optional[Any] = None) -> Optional[Signal]:
         """
         Enhanced fusion with quality gates, alignment boosts, and penalties.
         """
@@ -87,9 +81,7 @@ class EnhancedFusionEngineV1_4:
 
         # LOG RAW LAYER DATA
         for layer in layers:
-            logging.info(
-                f"🎯 RAW_LAYER: {layer['name']} quality={layer['quality']:.3f} score={layer['score']:.3f}"
-            )
+            logging.info(f"🎯 RAW_LAYER: {layer['name']} quality={layer['quality']:.3f} score={layer['score']:.3f}")
 
         # Hard vetoes (immediate rejection)
         veto_reason = self._check_hard_vetoes(sync_report, wyckoff, liquidity)
@@ -107,9 +99,7 @@ class EnhancedFusionEngineV1_4:
             return None
 
         # Single-layer safeguard: if only one triad layer active, RAISE instead of ALLOW
-        triad_active = [
-            l for l in active_layers if l["name"] in ["wyckoff", "liquidity", "structure"]
-        ]
+        triad_active = [l for l in active_layers if l["name"] in ["wyckoff", "liquidity", "structure"]]
         if len(triad_active) == 1 and len(active_layers) < 4:
             logging.info(f"Single-opinion risk: only {triad_active[0]['name']} in triad active")
             # Could implement RAISE behavior here, for now we'll allow but note the risk
@@ -151,9 +141,7 @@ class EnhancedFusionEngineV1_4:
             ttl_bars=self._calculate_ttl(wyckoff, confidence),
         )
 
-        logging.info(
-            f"Enhanced signal: {consensus_side.upper()} @ {confidence:.3f} ({len(active_layers)}/6 layers)"
-        )
+        logging.info(f"Enhanced signal: {consensus_side.upper()} @ {confidence:.3f} ({len(active_layers)}/6 layers)")
         return signal
 
     def _build_layer_data(self, modules: Dict[str, Any]) -> List[Dict]:
@@ -192,9 +180,7 @@ class EnhancedFusionEngineV1_4:
                     "name": "structure",
                     "score": struct.get("score", 0.0) if isinstance(struct, dict) else 0.0,
                     "quality": struct.get("quality", 0.5) if isinstance(struct, dict) else 0.5,
-                    "side": struct.get("bias", "neutral")
-                    if isinstance(struct, dict)
-                    else "neutral",
+                    "side": struct.get("bias", "neutral") if isinstance(struct, dict) else "neutral",
                 }
             )
 
@@ -251,16 +237,8 @@ class EnhancedFusionEngineV1_4:
 
         # Relaxed MTF sync when strict_mtf_relaxed is enabled
         if self.strict_mtf_relaxed and sync_report:
-            htf_bias = (
-                getattr(sync_report.htf, "bias", "neutral")
-                if hasattr(sync_report, "htf")
-                else "neutral"
-            )
-            mtf_bias = (
-                getattr(sync_report.mtf, "bias", "neutral")
-                if hasattr(sync_report, "mtf")
-                else "neutral"
-            )
+            htf_bias = getattr(sync_report.htf, "bias", "neutral") if hasattr(sync_report, "htf") else "neutral"
+            mtf_bias = getattr(sync_report.mtf, "bias", "neutral") if hasattr(sync_report, "mtf") else "neutral"
             ltf_bias = getattr(wyckoff, "bias", "neutral")
 
             # Allow when HTF == LTF and MTF ∈ {same, neutral}
@@ -273,11 +251,7 @@ class EnhancedFusionEngineV1_4:
 
         # Original strict MTF logic
         if sync_report:
-            htf_bias = (
-                getattr(sync_report.htf, "bias", "neutral")
-                if hasattr(sync_report, "htf")
-                else "neutral"
-            )
+            htf_bias = getattr(sync_report.htf, "bias", "neutral") if hasattr(sync_report, "htf") else "neutral"
             ltf_bias = getattr(wyckoff, "bias", "neutral")
 
             if htf_bias != "neutral" and ltf_bias != "neutral" and htf_bias != ltf_bias:
@@ -291,9 +265,7 @@ class EnhancedFusionEngineV1_4:
 
         # Calculate triad quality for dynamic floors
         triad_layers = [l for l in layers if l["name"] in ["wyckoff", "liquidity", "structure"]]
-        triad_quality = (
-            sum(l["quality"] for l in triad_layers) / len(triad_layers) if triad_layers else 0.5
-        )
+        triad_quality = sum(l["quality"] for l in triad_layers) / len(triad_layers) if triad_layers else 0.5
 
         # Log quality floors being used (only first time)
         if not hasattr(self, "_floors_logged"):
@@ -336,9 +308,7 @@ class EnhancedFusionEngineV1_4:
 
         # Log summary of filtering
         if masked_count > 0:
-            logging.info(
-                f"Quality gates: kept {kept_count}/{len(layers)} layers, masked {masked_count}"
-            )
+            logging.info(f"Quality gates: kept {kept_count}/{len(layers)} layers, masked {masked_count}")
         else:
             logging.debug(f"Quality gates: kept {kept_count}/{len(layers)} layers")
 
@@ -376,9 +346,7 @@ class EnhancedFusionEngineV1_4:
 
         return False, "neutral"
 
-    def _apply_alignment_boosts(
-        self, active_layers: List[Dict], modules: Dict, triad_aligned: bool
-    ):
+    def _apply_alignment_boosts(self, active_layers: List[Dict], modules: Dict, triad_aligned: bool):
         """Apply alignment multipliers to boost confluence."""
 
         if not triad_aligned:
@@ -465,19 +433,13 @@ class EnhancedFusionEngineV1_4:
         liq_bias = self._liquidity_to_side(getattr(liquidity, "pressure", "neutral"))
 
         votes = [wy_bias, struct_bias, liq_bias]
-        return (
-            max(set(votes), key=votes.count)
-            if votes.count(max(set(votes), key=votes.count)) >= 2
-            else "neutral"
-        )
+        return max(set(votes), key=votes.count) if votes.count(max(set(votes), key=votes.count)) >= 2 else "neutral"
 
     def _is_edge_no_reclaim(self, modules: Dict) -> bool:
         # Simplified check - could be enhanced
         structure = modules.get("structure", {})
         return (
-            isinstance(structure, dict)
-            and structure.get("edge_entry", False)
-            and not structure.get("reclaimed", False)
+            isinstance(structure, dict) and structure.get("edge_entry", False) and not structure.get("reclaimed", False)
         )
 
     def _is_weak_break(self, modules: Dict) -> bool:
@@ -490,9 +452,7 @@ class EnhancedFusionEngineV1_4:
         volume = modules.get("volume", {})
         return isinstance(volume, dict) and volume.get("frvp_chop", False)
 
-    def _build_reasons(
-        self, active_layers: List[Dict], triad_aligned: bool, penalty: float
-    ) -> List[str]:
+    def _build_reasons(self, active_layers: List[Dict], triad_aligned: bool, penalty: float) -> List[str]:
         """Build signal reasons."""
         reasons = []
 

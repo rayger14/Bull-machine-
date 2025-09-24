@@ -25,18 +25,14 @@ def run_single_test(bars_confirm, drop_pct, bars_max, test_num):
     temp_dir_path = Path(temp_dir)
 
     try:
-        print(
-            f"\n🧪 Test {test_num}: bars_confirm={bars_confirm}, drop_pct={drop_pct:.1f}%, bars_max={bars_max}"
-        )
+        print(f"\n🧪 Test {test_num}: bars_confirm={bars_confirm}, drop_pct={drop_pct:.1f}%, bars_max={bars_max}")
         print(f"📁 Temp dir: {temp_dir}")
 
         # Create backtest config with exit parameters in backtest config (not strategy config)
         backtest_config = {
             "run_id": f"exit_sweep_{run_id}",
             "data": {
-                "sources": {
-                    "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"
-                },
+                "sources": {"BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv"},
                 "timeframes": ["1H"],
                 "schema": {
                     "timestamp": {"name": "time", "unit": "s"},

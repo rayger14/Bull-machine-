@@ -13,9 +13,7 @@ def analyze(series: Series, cfg: dict, state: dict) -> WyckoffResult:
         return _get_neutral_wyckoff()
     try:
         range_data = _build_range_model(series, lookback)
-        current_bias, trend_confidence = _calculate_bias_with_hysteresis(
-            series, state, hysteresis_bars
-        )
+        current_bias, trend_confidence = _calculate_bias_with_hysteresis(series, state, hysteresis_bars)
         phase, phase_confidence = _detect_wyckoff_phase(series, current_bias, range_data)
         regime = _determine_regime(phase, current_bias, range_data)
         return WyckoffResult(
@@ -54,9 +52,7 @@ def _build_range_model(series: Series, lookback: int) -> Optional[Dict]:
     }
 
 
-def _calculate_bias_with_hysteresis(
-    series: Series, state: dict, hysteresis_bars: int
-) -> Tuple[str, float]:
+def _calculate_bias_with_hysteresis(series: Series, state: dict, hysteresis_bars: int) -> Tuple[str, float]:
     if len(series.bars) < hysteresis_bars + 5:
         return "neutral", 0.5
     prev_bias = state.get("prev_bias", "neutral")
@@ -76,11 +72,7 @@ def _calculate_bias_with_hysteresis(
         consistent = 0
         for i in range(len(recent) - hysteresis_bars, len(recent)):
             if i > 0:
-                inc = (
-                    (recent[i].close - recent[i - 1].close) / recent[i - 1].close
-                    if recent[i - 1].close
-                    else 0.0
-                )
+                inc = (recent[i].close - recent[i - 1].close) / recent[i - 1].close if recent[i - 1].close else 0.0
                 if (new_bias == "long" and inc > 0) or (new_bias == "short" and inc < 0):
                     consistent += 1
         if consistent < hysteresis_bars // 2:
@@ -90,9 +82,7 @@ def _calculate_bias_with_hysteresis(
     return new_bias, confidence
 
 
-def _detect_wyckoff_phase(
-    series: Series, bias: str, range_data: Optional[Dict]
-) -> Tuple[str, float]:
+def _detect_wyckoff_phase(series: Series, bias: str, range_data: Optional[Dict]) -> Tuple[str, float]:
     if len(series.bars) < 20:
         return "neutral", 0.5
     recent = series.bars[-20:]

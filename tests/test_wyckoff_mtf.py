@@ -73,9 +73,7 @@ class TestWyckoffMTF(unittest.TestCase):
     def test_mtf_alignment_matching_bias(self):
         """Test MTF alignment when both timeframes agree."""
         # Both timeframes show accumulation
-        aligned, details = mtf_alignment(
-            self.accumulation_data, self.accumulation_data, liquidity_score=0.6
-        )
+        aligned, details = mtf_alignment(self.accumulation_data, self.accumulation_data, liquidity_score=0.6)
 
         self.assertTrue(aligned)
         self.assertTrue(details["biases_match"])
@@ -120,9 +118,7 @@ class TestWyckoffMTF(unittest.TestCase):
             }
         )
 
-        aligned, details = mtf_alignment(
-            low_confidence_data, low_confidence_data, liquidity_score=0.6
-        )
+        aligned, details = mtf_alignment(low_confidence_data, low_confidence_data, liquidity_score=0.6)
 
         # Should fail quality checks due to insufficient data/confidence
         self.assertFalse(aligned)

@@ -18,9 +18,7 @@ def calculate_atr(df: pd.DataFrame, period: int = 14) -> float:
     low = df["low"].tail(period + 1)
     close = df["close"].tail(period + 1)
 
-    tr = pd.concat(
-        [high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1
-    ).max(axis=1)
+    tr = pd.concat([high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1).max(axis=1)
 
     return tr.tail(period).mean()
 
@@ -172,9 +170,7 @@ def detect_bojan_patterns(df: pd.DataFrame, lookback: int = 20) -> Dict:
     return patterns
 
 
-def bojan_exit_signal(
-    df: pd.DataFrame, position_bias: str, htf_context: Dict = None
-) -> Optional[Dict]:
+def bojan_exit_signal(df: pd.DataFrame, position_bias: str, htf_context: Dict = None) -> Optional[Dict]:
     """
     Generate Bojan-based exit signals.
     PHASE-GATED: Returns None unless explicitly enabled in config.
