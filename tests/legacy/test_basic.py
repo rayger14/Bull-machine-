@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Basic tests without pytest dependency"""
 
+import pytest
+pytestmark = pytest.mark.legacy
+
 import json
 import os
 import sys
