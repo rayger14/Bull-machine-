@@ -94,12 +94,26 @@ class MarkupSOWUTWarning(BaseExitRule):
         vol_sma = df['volume'].tail(10).mean()
         vol_divergence = current['volume'] < (self.cfg['vol_divergence_ratio'] * vol_sma)
 
-        # 3. Bojan High check (wick analysis)
+        # 3. Bojan High check (wick analysis) - relaxed for earlier detection
         atr = self._calculate_atr(df, period=self.shared['atr_period'])
         wick_up = current['high'] - max(current['open'], current['close'])
         bojan_wick = (wick_up / atr) > self.cfg['wick_atr_mult'] if atr > 0 else False
         close_below_open = current['close'] < current['open']
         bojan_high = bojan_wick and close_below_open
+
+        # Early SOW/UT detection - relaxed Bojan threshold
+        bojan_score = scores.get('bojan', 0.0)
+        if bojan_score >= 0.50 and vol_divergence:  # was premium_floor (0.70)
+            return ExitDecision(
+                action='partial',
+                size_pct=0.25,
+                reason='SOW_UT_early_warning',
+                metadata={
+                    'bojan_score': bojan_score,
+                    'volume_ratio': current['volume'] / vol_sma if vol_sma > 0 else 0,
+                    'early_trigger': True
+                }
+            )
 
         # 4. MTF desync check (Layer 7)
         mtf_desync = False
@@ -646,3 +660,52 @@ class BojanExtremeProtection(BaseExitRule):
         ], axis=1).max(axis=1)
 
         return tr.tail(period).mean()
+
+class AbsorptionVsDistributionExit(BaseExitRule):
+    """
+    Absorption vs Distribution Exit
+    Low-vol wick rejection → hold, High-vol close-through → partial exit 25%
+    """
+    name = "absorption_vs_distribution"
+    required_keys = {"low_vol_threshold", "high_vol_threshold", "wick_rejection_ratio",
+                     "close_through_pct", "partial_exit_pct"}
+
+    def evaluate(self, df: pd.DataFrame, trade_plan: Dict, scores: Dict,
+                bars_since_entry: int, mtf_context: Dict = None) -> Optional[ExitDecision]:
+
+        current = df.iloc[-1]
+        vol_sma = df['volume'].rolling(20).mean().iloc[-1]
+        volume_ratio = current['volume'] / vol_sma if vol_sma > 0 else 1.0
+
+        # Calculate displacement from structure
+        prior_low = df['low'].shift(1).iloc[-1] if len(df) > 1 else current['low']
+
+        # Price displacement as percentage
+        if prior_low > 0:
+            displacement = max(0, (current['close'] - prior_low) / prior_low)
+        else:
+            displacement = 0
+
+        # Distribution: high volume breakdown with weak displacement
+        if (volume_ratio >= self.cfg['high_vol_threshold'] and
+            current['close'] < prior_low and
+            displacement < self.cfg['close_through_pct']):
+
+            return ExitDecision(
+                action='partial',
+                size_pct=self.cfg['partial_exit_pct'],
+                reason='distribution_vol_spike',
+                metadata={
+                    'volume_ratio': volume_ratio,
+                    'displacement': displacement,
+                    'distribution_detected': True
+                }
+            )
+
+        # Absorption: low volume wick rejection, keep position
+        wick_rejection = displacement >= self.cfg['wick_rejection_ratio']
+        if volume_ratio <= self.cfg['low_vol_threshold'] and wick_rejection:
+            # Log absorption but hold position
+            logging.info(f"Absorption detected: vol_ratio={volume_ratio:.2f}, displacement={displacement:.3f}")
+
+        return None  # Hold position

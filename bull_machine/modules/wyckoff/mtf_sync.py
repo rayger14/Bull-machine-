@@ -82,8 +82,8 @@ def mtf_alignment(daily_df: pd.DataFrame, h4_df: pd.DataFrame,
     # Check basic alignment
     biases_match = daily_state['bias'] == h4_state['bias']
 
-    # High liquidity can override minor desyncs
-    liquidity_override = liquidity_score > 0.75
+    # High liquidity can override minor desyncs - softened from 0.75 to 0.70
+    liquidity_override = liquidity_score >= 0.70
 
     # Calculate alignment score
     if biases_match:

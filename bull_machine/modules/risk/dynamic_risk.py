@@ -9,6 +9,50 @@ from typing import Dict, Optional
 import logging
 
 
+def calculate_stop_loss(df: pd.DataFrame, bias: str, entry_price: float,
+                        pool_depth_score: float, atr: float) -> float:
+    """
+    Calculate volatility-adjusted stop loss distance.
+
+    Args:
+        df: OHLCV data
+        bias: 'long' or 'short'
+        entry_price: Entry price level
+        pool_depth_score: Liquidity pool strength (0-1)
+        atr: Current ATR value
+
+    Returns:
+        Stop loss price level
+    """
+    # Base stop distance
+    base_distance = 1.5 * atr
+
+    # Pool depth adjustment - stronger pools allow tighter stops
+    depth_multiplier = max(1.0, pool_depth_score * 1.5)
+
+    # Volatility spike adjustment
+    if len(df) >= 20:
+        recent_atr = df['atr'].rolling(20).mean().iloc[-1] if 'atr' in df.columns else atr
+        vol_spike_ratio = atr / recent_atr if recent_atr > 0 else 1.0
+        vol_adjustment = min(1.5, vol_spike_ratio)  # Cap at 1.5x for extreme spikes
+    else:
+        vol_adjustment = 1.0
+
+    # Calculate final stop distance
+    stop_distance = base_distance * depth_multiplier * vol_adjustment
+
+    # Apply direction-specific stop
+    if bias == 'long':
+        stop_price = entry_price - stop_distance
+    else:
+        stop_price = entry_price + stop_distance
+
+    logging.debug(f"Stop calculation: base={base_distance:.2f}, depth_mult={depth_multiplier:.2f}, "
+                 f"vol_adj={vol_adjustment:.2f}, final_dist={stop_distance:.2f}")
+
+    return stop_price
+
+
 def calculate_dynamic_position_size(base_risk_pct: float, df: pd.DataFrame,
                                   liquidity_data: Dict, volatility_context: Dict = None) -> Dict:
     """

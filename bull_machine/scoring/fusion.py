@@ -41,9 +41,30 @@ class FusionEngineV141:
             'mtf': 0.10
         }
 
+    def regime_filter(self, df, wyckoff_score: float, wyckoff_context: Dict = None) -> bool:
+        """Check for regime filter - suppress low-vol A/C phases."""
+
+        if not wyckoff_context:
+            return True  # Pass if no context available
+
+        phase = wyckoff_context.get('phase', 'unknown')
+
+        if phase in ('A', 'C', 'accumulation_C', 'distribution_C'):
+            # Check volume context
+            if len(df) >= 20:
+                vol_ratio = df['volume'].iloc[-1] / df['volume'].rolling(20).mean().iloc[-1]
+
+                # Suppress low-volume A/C phases with weak Wyckoff scores
+                if vol_ratio < 1.0 and wyckoff_score < 0.80:
+                    logging.info(f"Regime veto: phase={phase}, vol_ratio={vol_ratio:.2f}, wyckoff={wyckoff_score:.2f}")
+                    return False
+
+        return True
+
     def fuse_scores(self, layer_scores: Dict[str, float],
                    quality_floors: Dict[str, float] = None,
-                   wyckoff_context: Dict = None) -> Dict:
+                   wyckoff_context: Dict = None,
+                   df = None) -> Dict:
         """
         Fuse individual layer scores into final confluence score with enhanced logic.
 
@@ -64,6 +85,17 @@ class FusionEngineV141:
                 'global_veto': True,
                 'reason': 'no_layer_scores'
             }
+
+        # Apply regime filter first
+        if df is not None and layer_scores.get('wyckoff'):
+            if not self.regime_filter(df, layer_scores['wyckoff'], wyckoff_context):
+                return {
+                    'aggregate': 0.0,
+                    'weighted_score': 0.0,
+                    'layer_contributions': {},
+                    'global_veto': True,
+                    'reason': 'regime_filter_veto'
+                }
 
         # Apply quality floors if provided
         filtered_scores = {}
