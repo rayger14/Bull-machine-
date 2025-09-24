@@ -8,41 +8,48 @@ This adapter uses the enhanced fusion engine with:
 - Higher threshold with margin requirement
 """
 
-import pandas as pd
-import tempfile
 import os
-from typing import Dict, Any, Optional
+import tempfile
+from typing import Any, Dict
+
+import pandas as pd
+
 from bull_machine.app.main_v13 import (
-    resample_to_timeframes, build_composite_range, resolve_bias,
-    compute_eq_magnet, check_nested_confluence, load_csv_to_series
+    build_composite_range,
+    check_nested_confluence,
+    compute_eq_magnet,
+    load_csv_to_series,
+    resample_to_timeframes,
+    resolve_bias,
 )
+from bull_machine.config.loader import load_config
 from bull_machine.core.sync import decide_mtf_entry
 from bull_machine.core.utils import extract_key_levels
-from bull_machine.modules.wyckoff.advanced import AdvancedWyckoffAnalyzer
-from bull_machine.modules.liquidity.advanced import AdvancedLiquidityAnalyzer
-from bull_machine.modules.structure.advanced import AdvancedStructureAnalyzer
-from bull_machine.modules.momentum.advanced import AdvancedMomentumAnalyzer
-from bull_machine.modules.volume.advanced import AdvancedVolumeAnalyzer
 from bull_machine.modules.context.advanced import AdvancedContextAnalyzer
 from bull_machine.modules.fusion.enhanced import EnhancedFusionEngineV1_4
+from bull_machine.modules.liquidity.advanced import AdvancedLiquidityAnalyzer
+from bull_machine.modules.momentum.advanced import AdvancedMomentumAnalyzer
 from bull_machine.modules.risk.advanced import AdvancedRiskManager
-from bull_machine.config.loader import load_config
-import logging
+from bull_machine.modules.structure.advanced import AdvancedStructureAnalyzer
+from bull_machine.modules.volume.advanced import AdvancedVolumeAnalyzer
+from bull_machine.modules.wyckoff.advanced import AdvancedWyckoffAnalyzer
 
 # Global cache for MTF analysis
 _mtf_cache = {}
 
+
 def save_temp_csv(df_window: pd.DataFrame, symbol: str) -> str:
     """Save DataFrame window as temporary CSV."""
-    fd, temp_path = tempfile.mkstemp(suffix=f'_{symbol}.csv', prefix='enhanced_v14_')
+    fd, temp_path = tempfile.mkstemp(suffix=f"_{symbol}.csv", prefix="enhanced_v14_")
     os.close(fd)
 
     df_save = df_window.copy()
-    if 'timestamp' not in df_save.columns and hasattr(df_save.index, 'to_series'):
-        df_save['timestamp'] = df_save.index.astype(int) // 10**9
+    if "timestamp" not in df_save.columns and hasattr(df_save.index, "to_series"):
+        df_save["timestamp"] = df_save.index.astype(int) // 10**9
 
     df_save.to_csv(temp_path, index=False)
     return temp_path
+
 
 def get_mtf_cache_key(symbol: str, tf: str, current_index: int) -> str:
     """Generate cache key for MTF analysis."""
@@ -51,8 +58,10 @@ def get_mtf_cache_key(symbol: str, tf: str, current_index: int) -> str:
     cache_index = (current_index // htf_stride) * htf_stride
     return f"{symbol}_{tf}_{cache_index}"
 
-def strategy_from_df(symbol: str, tf: str, df_tf: pd.DataFrame,
-                     current_index: int, balance: float = 10000) -> Dict[str, Any]:
+
+def strategy_from_df(
+    symbol: str, tf: str, df_tf: pd.DataFrame, current_index: int, balance: float = 10000
+) -> Dict[str, Any]:
     """
     Enhanced v1.4 strategy with quality gates and smart filtering.
 
@@ -66,11 +75,7 @@ def strategy_from_df(symbol: str, tf: str, df_tf: pd.DataFrame,
 
     # Minimum data requirements
     if current_index < 50 or len(df_tf) < 50:
-        return {
-            "action": "no_trade",
-            "reason": "insufficient_data",
-            "version": "enhanced_v1.4"
-        }
+        return {"action": "no_trade", "reason": "insufficient_data", "version": "enhanced_v1.4"}
 
     try:
         # Load enhanced configuration
@@ -97,14 +102,16 @@ def strategy_from_df(symbol: str, tf: str, df_tf: pd.DataFrame,
             # MTF Analysis
             df_data = []
             for b in series_ltf.bars:
-                df_data.append({
-                    "timestamp": b.ts,
-                    "open": b.open,
-                    "high": b.high,
-                    "low": b.low,
-                    "close": b.close,
-                    "volume": b.volume
-                })
+                df_data.append(
+                    {
+                        "timestamp": b.ts,
+                        "open": b.open,
+                        "high": b.high,
+                        "low": b.low,
+                        "close": b.close,
+                        "volume": b.volume,
+                    }
+                )
             df = pd.DataFrame(df_data)
 
             # Resample to multiple timeframes
@@ -117,27 +124,27 @@ def strategy_from_df(symbol: str, tf: str, df_tf: pd.DataFrame,
 
             # Cache the MTF data
             mtf_data = {
-                'series_ltf': series_ltf,
-                'htf_range': htf_range,
-                'htf_bias': htf_bias,
-                'mtf_bias': mtf_bias,
-                'data_dict': data_dict
+                "series_ltf": series_ltf,
+                "htf_range": htf_range,
+                "htf_bias": htf_bias,
+                "mtf_bias": mtf_bias,
+                "data_dict": data_dict,
             }
             _mtf_cache[cache_key] = mtf_data
 
         # Extract cached data
-        series_ltf = mtf_data['series_ltf']
-        htf_range = mtf_data['htf_range']
-        htf_bias = mtf_data['htf_bias']
-        mtf_bias = mtf_data['mtf_bias']
+        series_ltf = mtf_data["series_ltf"]
+        htf_range = mtf_data["htf_range"]
+        htf_bias = mtf_data["htf_bias"]
+        mtf_bias = mtf_data["mtf_bias"]
 
         # Update current bar in series
-        current_bar = df_tf.iloc[current_index-1]
-        if hasattr(series_ltf.bars[-1], 'close'):
-            series_ltf.bars[-1].close = current_bar['close']
-            series_ltf.bars[-1].high = max(series_ltf.bars[-1].high, current_bar['high'])
-            series_ltf.bars[-1].low = min(series_ltf.bars[-1].low, current_bar['low'])
-            series_ltf.bars[-1].volume = current_bar.get('volume', series_ltf.bars[-1].volume)
+        current_bar = df_tf.iloc[current_index - 1]
+        if hasattr(series_ltf.bars[-1], "close"):
+            series_ltf.bars[-1].close = current_bar["close"]
+            series_ltf.bars[-1].high = max(series_ltf.bars[-1].high, current_bar["high"])
+            series_ltf.bars[-1].low = min(series_ltf.bars[-1].low, current_bar["low"])
+            series_ltf.bars[-1].volume = current_bar.get("volume", series_ltf.bars[-1].volume)
 
         # Initialize enhanced analyzers
         wyckoff_analyzer = AdvancedWyckoffAnalyzer(config)
@@ -160,12 +167,10 @@ def strategy_from_df(symbol: str, tf: str, df_tf: pd.DataFrame,
         ltf_levels = extract_key_levels(liquidity_result)
         nested_ok = check_nested_confluence(htf_range, ltf_levels)
         current_price = series_ltf.bars[-1].close
-        eq_magnet = compute_eq_magnet(htf_range, current_price, config.get('mtf', {}))
+        eq_magnet = compute_eq_magnet(htf_range, current_price, config.get("mtf", {}))
 
         sync_report = decide_mtf_entry(
-            htf_bias, mtf_bias, ltf_bias,
-            nested_ok, eq_magnet,
-            config.get('mtf', {})
+            htf_bias, mtf_bias, ltf_bias, nested_ok, eq_magnet, config.get("mtf", {})
         )
 
         # Enhanced Fusion with Quality Gates
@@ -177,20 +182,20 @@ def strategy_from_df(symbol: str, tf: str, df_tf: pd.DataFrame,
                 "structure": structure_result,
                 "momentum": momentum_result,
                 "volume": volume_result,
-                "context": context_result
+                "context": context_result,
             },
-            sync_report
+            sync_report,
         )
 
         if signal is None:
-            reason = 'quality_gates_veto'
-            if sync_report and sync_report.decision == 'veto':
-                reason = 'mtf_sync_veto'
+            reason = "quality_gates_veto"
+            if sync_report and sync_report.decision == "veto":
+                reason = "mtf_sync_veto"
             return {
                 "action": "no_trade",
                 "reason": reason,
                 "version": "enhanced_v1.4",
-                "symbol": symbol
+                "symbol": symbol,
             }
 
         # Enhanced Risk Management
@@ -202,13 +207,13 @@ def strategy_from_df(symbol: str, tf: str, df_tf: pd.DataFrame,
             "signal": {
                 "side": signal.side,
                 "confidence": signal.confidence,
-                "reasons": signal.reasons[:3]
+                "reasons": signal.reasons[:3],
             },
             "risk_plan": {
                 "entry": plan.entry,
                 "stop": plan.stop,
                 "size": plan.size,
-                "risk_amount": plan.risk_amount
+                "risk_amount": plan.risk_amount,
             },
             "version": "enhanced_v1.4",
             "symbol": symbol,
@@ -217,17 +222,13 @@ def strategy_from_df(symbol: str, tf: str, df_tf: pd.DataFrame,
                 "mtf_bias": sync_report.mtf.bias,
                 "ltf_bias": ltf_bias,
                 "decision": sync_report.decision,
-                "alignment_score": sync_report.alignment_score
-            }
+                "alignment_score": sync_report.alignment_score,
+            },
         }
 
     except Exception as e:
-        return {
-            "action": "error",
-            "message": str(e),
-            "version": "enhanced_v1.4",
-            "symbol": symbol
-        }
+        return {"action": "error", "message": str(e), "version": "enhanced_v1.4", "symbol": symbol}
+
 
 # Backward compatibility
 def optimized_strategy_from_df(*args, **kwargs):

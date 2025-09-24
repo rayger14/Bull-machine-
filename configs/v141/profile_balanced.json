@@ -1,7 +1,7 @@
 {
   "extends": "configs/v141/system_config.json",
   "profile": "balanced",
-  "description": "Balanced v1.4.1 profile - Optimized for 2x trade frequency",
+  "description": "Balanced v1.4.2 profile - Hotfix for PnL optimization",
 
   "signals": {
     "enter_threshold": 0.69,
@@ -12,6 +12,29 @@
   "quality_floors": {
     "wyckoff": 0.37,
     "liquidity": 0.32
+  },
+
+  "stop_loss": {
+    "base_atr_multipliers": {
+      "default": 1.5,
+      "markup_phases": 2.0
+    },
+    "pool_depth_scaling": true,
+    "vol_spike_cap": 1.5
+  },
+
+  "regime_filter": {
+    "enable": true,
+    "min_vol_ratio": 1.2,
+    "phase_exclude": ["A", "C"],
+    "wyckoff_threshold": 0.85
+  },
+
+  "exit_thresholds": {
+    "distribution_exit": {
+      "volume_ratio": 1.4,
+      "displacement": 0.4
+    }
   },
 
   "risk_management": {

@@ -1,32 +1,33 @@
-
-from dataclasses import dataclass
-from typing import Dict, Any, Optional, List
-import pandas as pd
 import logging
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
 
 @dataclass
 class TPLevel:
     price: float
-    size_pct: int      # percentage of position
+    size_pct: int  # percentage of position
     r_multiple: float  # R multiple (1R, 2R, 3R)
     filled: bool = False
 
+
 @dataclass
 class Position:
-    side: str          # 'long'|'short'
+    side: str  # 'long'|'short'
     size: float
     entry: float
     stop: Optional[float] = None
     tp_levels: Optional[list[TPLevel]] = None
-    be_moved: bool = False      # breakeven moved flag
+    be_moved: bool = False  # breakeven moved flag
     trail_active: bool = False  # trailing stop active
 
     # Position aging fields (immutable after first entry)
-    opened_at_ts: Optional[int] = None      # FIRST fill timestamp (epoch seconds) - never changes
-    opened_at_idx: Optional[int] = None     # FIRST fill bar index - never changes
-    timeframe: str = "1H"                   # trading timeframe
-    bars_held: int = 0                      # current age in bars (updated per bar)
-    last_update_idx: int = 0                # bookkeeping for last update
+    opened_at_ts: Optional[int] = None  # FIRST fill timestamp (epoch seconds) - never changes
+    opened_at_idx: Optional[int] = None  # FIRST fill bar index - never changes
+    timeframe: str = "1H"  # trading timeframe
+    bars_held: int = 0  # current age in bars (updated per bar)
+    last_update_idx: int = 0  # bookkeeping for last update
+
 
 class PaperBroker:
     def __init__(self, fee_bps=2, slippage_bps=3, spread_bps=1, partial_fill=True):
@@ -39,16 +40,24 @@ class PaperBroker:
 
     def _apply_costs(self, price: float, side: str) -> float:
         adj = (self.slippage_bps + self.spread_bps) * 1e-4 * price
-        return price + adj if side == 'long' else price - adj
+        return price + adj if side == "long" else price - adj
 
-    def submit(self, ts, symbol, side, size, price_hint=None, order_type='market', risk_plan=None) -> Dict[str, Any]:
+    def submit(
+        self, ts, symbol, side, size, price_hint=None, order_type="market", risk_plan=None
+    ) -> Dict[str, Any]:
         px = self._apply_costs(price_hint or 0.0, side)
         fee = (self.fee_bps * 1e-4) * px * abs(size)
 
         # Close existing position if reversing
         prev = self.positions.get(symbol)
-        if prev and ((prev.side=='long' and side=='short') or (prev.side=='short' and side=='long')):
-            pnl = (px - prev.entry) * prev.size if prev.side=='long' else (prev.entry - px) * prev.size
+        if prev and (
+            (prev.side == "long" and side == "short") or (prev.side == "short" and side == "long")
+        ):
+            pnl = (
+                (px - prev.entry) * prev.size
+                if prev.side == "long"
+                else (prev.entry - px) * prev.size
+            )
             self.realized_pnl += pnl - fee
             self.positions.pop(symbol, None)
 
@@ -57,40 +66,39 @@ class PaperBroker:
         tp_levels = None
 
         if risk_plan:
-            stop_price = risk_plan.get('stop')
-            if risk_plan.get('tp_levels'):
+            stop_price = risk_plan.get("stop")
+            if risk_plan.get("tp_levels"):
                 tp_levels = [
                     TPLevel(
-                        price=tp['price'],
-                        size_pct=tp.get('pct', 33),
-                        r_multiple=tp.get('r', 1.0)
-                    ) for tp in risk_plan['tp_levels']
+                        price=tp["price"], size_pct=tp.get("pct", 33), r_multiple=tp.get("r", 1.0)
+                    )
+                    for tp in risk_plan["tp_levels"]
                 ]
 
         # Auto-compute if missing (Option A - guarantee every entry has exits)
         if stop_price is None:
             # Default: 2% stop loss
-            stop_price = px * 0.98 if side == 'long' else px * 1.02
+            stop_price = px * 0.98 if side == "long" else px * 1.02
 
         if tp_levels is None:
             # Default TP ladder: 1R/2R/3R with 40/30/30 split
             risk_per_unit = abs(px - stop_price)
             tp_levels = [
                 TPLevel(
-                    price=px + risk_per_unit if side == 'long' else px - risk_per_unit,
+                    price=px + risk_per_unit if side == "long" else px - risk_per_unit,
                     size_pct=40,
-                    r_multiple=1.0
+                    r_multiple=1.0,
                 ),
                 TPLevel(
-                    price=px + 2*risk_per_unit if side == 'long' else px - 2*risk_per_unit,
+                    price=px + 2 * risk_per_unit if side == "long" else px - 2 * risk_per_unit,
                     size_pct=30,
-                    r_multiple=2.0
+                    r_multiple=2.0,
                 ),
                 TPLevel(
-                    price=px + 3*risk_per_unit if side == 'long' else px - 3*risk_per_unit,
+                    price=px + 3 * risk_per_unit if side == "long" else px - 3 * risk_per_unit,
                     size_pct=30,
-                    r_multiple=3.0
-                )
+                    r_multiple=3.0,
+                ),
             ]
 
         # Handle position creation/scaling with aging support
@@ -105,10 +113,10 @@ class PaperBroker:
                 stop=stop_price,
                 tp_levels=tp_levels,
                 opened_at_ts=ts,
-                opened_at_idx=getattr(self, '_current_bar_idx', 0),  # Will be set by engine
-                timeframe=getattr(self, '_current_timeframe', '1H'),
+                opened_at_idx=getattr(self, "_current_bar_idx", 0),  # Will be set by engine
+                timeframe=getattr(self, "_current_timeframe", "1H"),
                 bars_held=0,
-                last_update_idx=getattr(self, '_current_bar_idx', 0)
+                last_update_idx=getattr(self, "_current_bar_idx", 0),
             )
         else:
             # SCALE-IN to existing position - preserve opened_at_* fields
@@ -116,15 +124,19 @@ class PaperBroker:
                 # Same side scale-in: weighted average price, sum size
                 new_size = existing_pos.size + size
                 if new_size > 0:
-                    existing_pos.entry = (existing_pos.entry * existing_pos.size + px * size) / new_size
+                    existing_pos.entry = (
+                        existing_pos.entry * existing_pos.size + px * size
+                    ) / new_size
                 existing_pos.size = new_size
                 existing_pos.stop = stop_price  # Update stop to new level
                 existing_pos.tp_levels = tp_levels  # Update TP levels
-                existing_pos.last_update_idx = getattr(self, '_current_bar_idx', 0)
+                existing_pos.last_update_idx = getattr(self, "_current_bar_idx", 0)
                 # KEEP opened_at_ts, opened_at_idx unchanged!
             else:
                 # Different side - this should have been handled by reversal logic above
-                logging.warning(f"Unexpected different side entry for {symbol}: {existing_pos.side} -> {side}")
+                logging.warning(
+                    f"Unexpected different side entry for {symbol}: {existing_pos.side} -> {side}"
+                )
                 # Create new position anyway
                 self.positions[symbol] = Position(
                     side=side,
@@ -133,14 +145,14 @@ class PaperBroker:
                     stop=stop_price,
                     tp_levels=tp_levels,
                     opened_at_ts=ts,
-                    opened_at_idx=getattr(self, '_current_bar_idx', 0),
-                    timeframe=getattr(self, '_current_timeframe', '1H'),
+                    opened_at_idx=getattr(self, "_current_bar_idx", 0),
+                    timeframe=getattr(self, "_current_timeframe", "1H"),
                     bars_held=0,
-                    last_update_idx=getattr(self, '_current_bar_idx', 0)
+                    last_update_idx=getattr(self, "_current_bar_idx", 0),
                 )
 
-        import logging
         import json
+        import logging
 
         # Basic entry log
         logging.info(f"BROKER_ENTER_OK symbol={symbol} side={side} size={size:.4f} price={px:.4f}")
@@ -150,7 +162,7 @@ class PaperBroker:
         position_type = "NEW" if existing_pos is None else "SCALE_IN"
         entry_log = {
             "event": "ENTRY",
-            "timestamp": ts.isoformat() if hasattr(ts, 'isoformat') else str(ts),
+            "timestamp": ts.isoformat() if hasattr(ts, "isoformat") else str(ts),
             "symbol": symbol,
             "side": side,
             "size": size,
@@ -159,14 +171,26 @@ class PaperBroker:
             "position_type": position_type,
             "position_size": pos.size,
             "position_entry": pos.entry,
-            "opened_at_ts": pos.opened_at_ts.isoformat() if hasattr(pos.opened_at_ts, 'isoformat') else str(pos.opened_at_ts) if pos.opened_at_ts is not None else None,
+            "opened_at_ts": pos.opened_at_ts.isoformat()
+            if hasattr(pos.opened_at_ts, "isoformat")
+            else str(pos.opened_at_ts)
+            if pos.opened_at_ts is not None
+            else None,
             "opened_at_idx": pos.opened_at_idx,
             "bars_held": pos.bars_held,
-            "timeframe": pos.timeframe
+            "timeframe": pos.timeframe,
         }
         logging.info(f"ENTRY_DETAILED: {json.dumps(entry_log)}")
 
-        return {"ts": ts, "symbol": symbol, "side": side, "price": px, "size_filled": size, "fee": fee, "slippage": 0.0}
+        return {
+            "ts": ts,
+            "symbol": symbol,
+            "side": side,
+            "price": px,
+            "size_filled": size,
+            "fee": fee,
+            "slippage": 0.0,
+        }
 
     def update_position_aging(self, current_bar_idx: int, timeframe: str = "1H"):
         """Update bars_held for all positions based on current bar index."""
@@ -177,8 +201,10 @@ class PaperBroker:
             if pos.opened_at_idx is not None:
                 pos.bars_held = max(0, current_bar_idx - pos.opened_at_idx)
                 pos.last_update_idx = current_bar_idx
-                logging.debug(f"[AGING] {symbol}: bars_held={pos.bars_held} "
-                             f"(current_idx={current_bar_idx} - opened_at={pos.opened_at_idx})")
+                logging.debug(
+                    f"[AGING] {symbol}: bars_held={pos.bars_held} "
+                    f"(current_idx={current_bar_idx} - opened_at={pos.opened_at_idx})"
+                )
 
     def close(self, ts, symbol, price=None) -> Dict[str, Any]:
         """Manually close position"""
@@ -188,18 +214,26 @@ class PaperBroker:
 
         # Use provided price or position entry as fallback
         close_price = price or pos.entry
-        fill_price = self._apply_costs(close_price, 'short' if pos.side == 'long' else 'long')
+        fill_price = self._apply_costs(close_price, "short" if pos.side == "long" else "long")
         fee = (self.fee_bps * 1e-4) * fill_price * abs(pos.size)
 
-        pnl = ((fill_price - pos.entry) * pos.size if pos.side == 'long'
-               else (pos.entry - fill_price) * pos.size)
+        pnl = (
+            (fill_price - pos.entry) * pos.size
+            if pos.side == "long"
+            else (pos.entry - fill_price) * pos.size
+        )
         self.realized_pnl += pnl - fee
 
         self.positions.pop(symbol, None)
         return {
-            "ts": ts, "symbol": symbol, "side": "manual_exit",
-            "price": fill_price, "size_filled": pos.size,
-            "fee": fee, "pnl": pnl, "reason": "manual_close"
+            "ts": ts,
+            "symbol": symbol,
+            "side": "manual_exit",
+            "price": fill_price,
+            "size_filled": pos.size,
+            "fee": fee,
+            "pnl": pnl,
+            "reason": "manual_close",
         }
 
     def mark(self, ts, symbol, price, exit_signal=None):
@@ -250,41 +284,52 @@ class PaperBroker:
 
     def _should_stop_fill(self, pos: Position, price: float) -> bool:
         """Check if stop should be triggered"""
-        if pos.side == 'long':
+        if pos.side == "long":
             return price <= pos.stop
         else:
             return price >= pos.stop
 
     def _should_tp_fill(self, pos: Position, tp: TPLevel, price: float) -> bool:
         """Check if TP level should be triggered"""
-        if pos.side == 'long':
+        if pos.side == "long":
             return price >= tp.price
         else:
             return price <= tp.price
 
     def _execute_stop(self, ts, symbol, pos: Position, price: float) -> Dict[str, Any]:
         """Execute stop loss fill"""
-        fill_price = self._apply_costs(price, 'short' if pos.side == 'long' else 'long')
+        fill_price = self._apply_costs(price, "short" if pos.side == "long" else "long")
         fee = (self.fee_bps * 1e-4) * fill_price * pos.size
 
-        pnl = ((fill_price - pos.entry) * pos.size if pos.side == 'long'
-               else (pos.entry - fill_price) * pos.size)
+        pnl = (
+            (fill_price - pos.entry) * pos.size
+            if pos.side == "long"
+            else (pos.entry - fill_price) * pos.size
+        )
         self.realized_pnl += pnl - fee
 
         return {
-            "ts": ts, "symbol": symbol, "side": "stop",
-            "price": fill_price, "size_filled": pos.size,
-            "fee": fee, "pnl": pnl, "reason": "stop_loss"
+            "ts": ts,
+            "symbol": symbol,
+            "side": "stop",
+            "price": fill_price,
+            "size_filled": pos.size,
+            "fee": fee,
+            "pnl": pnl,
+            "reason": "stop_loss",
         }
 
     def _execute_tp(self, ts, symbol, pos: Position, tp: TPLevel, price: float) -> Dict[str, Any]:
         """Execute take profit partial fill"""
         fill_size = pos.size * (tp.size_pct / 100.0)
-        fill_price = self._apply_costs(price, 'short' if pos.side == 'long' else 'long')
+        fill_price = self._apply_costs(price, "short" if pos.side == "long" else "long")
         fee = (self.fee_bps * 1e-4) * fill_price * fill_size
 
-        pnl = ((fill_price - pos.entry) * fill_size if pos.side == 'long'
-               else (pos.entry - fill_price) * fill_size)
+        pnl = (
+            (fill_price - pos.entry) * fill_size
+            if pos.side == "long"
+            else (pos.entry - fill_price) * fill_size
+        )
         self.realized_pnl += pnl - fee
 
         # Mark TP as filled and reduce position size
@@ -292,27 +337,42 @@ class PaperBroker:
         pos.size -= fill_size
 
         return {
-            "ts": ts, "symbol": symbol, "side": f"tp{tp.r_multiple:.0f}",
-            "price": fill_price, "size_filled": fill_size,
-            "fee": fee, "pnl": pnl, "reason": f"take_profit_{tp.r_multiple:.0f}R"
+            "ts": ts,
+            "symbol": symbol,
+            "side": f"tp{tp.r_multiple:.0f}",
+            "price": fill_price,
+            "size_filled": fill_size,
+            "fee": fee,
+            "pnl": pnl,
+            "reason": f"take_profit_{tp.r_multiple:.0f}R",
         }
 
     def _close_remaining_position(self, ts, symbol, pos: Position, price: float) -> Dict[str, Any]:
         """Close any remaining position size at market"""
-        fill_price = self._apply_costs(price, 'short' if pos.side == 'long' else 'long')
+        fill_price = self._apply_costs(price, "short" if pos.side == "long" else "long")
         fee = (self.fee_bps * 1e-4) * fill_price * pos.size
 
-        pnl = ((fill_price - pos.entry) * pos.size if pos.side == 'long'
-               else (pos.entry - fill_price) * pos.size)
+        pnl = (
+            (fill_price - pos.entry) * pos.size
+            if pos.side == "long"
+            else (pos.entry - fill_price) * pos.size
+        )
         self.realized_pnl += pnl - fee
 
         return {
-            "ts": ts, "symbol": symbol, "side": "close_remaining",
-            "price": fill_price, "size_filled": pos.size,
-            "fee": fee, "pnl": pnl, "reason": "auto_close_remaining"
+            "ts": ts,
+            "symbol": symbol,
+            "side": "close_remaining",
+            "price": fill_price,
+            "size_filled": pos.size,
+            "fee": fee,
+            "pnl": pnl,
+            "reason": "auto_close_remaining",
         }
 
-    def _process_exit_signal(self, ts, symbol, pos: Position, price: float, exit_signal) -> Optional[List[Dict[str, Any]]]:
+    def _process_exit_signal(
+        self, ts, symbol, pos: Position, price: float, exit_signal
+    ) -> Optional[List[Dict[str, Any]]]:
         """
         Process an exit signal and execute the appropriate action.
 
@@ -340,12 +400,14 @@ class PaperBroker:
 
             elif action == ExitAction.PARTIAL_EXIT:
                 # Close partial position
-                exit_pct = getattr(exit_signal, 'exit_percentage', 0.5)
-                fill = self._execute_exit_signal_close(ts, symbol, pos, price, exit_signal, exit_pct)
+                exit_pct = getattr(exit_signal, "exit_percentage", 0.5)
+                fill = self._execute_exit_signal_close(
+                    ts, symbol, pos, price, exit_signal, exit_pct
+                )
                 fills.append(fill)
 
                 # Reduce position size
-                pos.size *= (1.0 - exit_pct)
+                pos.size *= 1.0 - exit_pct
 
                 # If remaining size is tiny, close completely
                 if pos.size <= 0.001:
@@ -355,26 +417,35 @@ class PaperBroker:
 
             elif action == ExitAction.TIGHTEN_STOP:
                 # Update stop loss to new tighter level
-                new_stop = getattr(exit_signal, 'new_stop_price', None)
+                new_stop = getattr(exit_signal, "new_stop_price", None)
                 if new_stop and self._is_valid_stop_update(pos, new_stop):
                     old_stop = pos.stop
                     pos.stop = new_stop
                     logging.info(f"Tightened stop for {symbol}: {old_stop:.2f} -> {new_stop:.2f}")
 
                     # Return info about stop update (not a trade fill)
-                    fills.append({
-                        "ts": ts, "symbol": symbol, "side": "stop_update",
-                        "old_stop": old_stop, "new_stop": new_stop,
-                        "reason": f"exit_signal_{exit_signal.exit_type.value}"
-                    })
+                    fills.append(
+                        {
+                            "ts": ts,
+                            "symbol": symbol,
+                            "side": "stop_update",
+                            "old_stop": old_stop,
+                            "new_stop": new_stop,
+                            "reason": f"exit_signal_{exit_signal.exit_type.value}",
+                        }
+                    )
 
             elif action == ExitAction.FLIP_POSITION:
                 # Close current position and open reverse position
-                close_fill = self._execute_exit_signal_close(ts, symbol, pos, price, exit_signal, 1.0)
+                close_fill = self._execute_exit_signal_close(
+                    ts, symbol, pos, price, exit_signal, 1.0
+                )
                 fills.append(close_fill)
 
                 # Open reverse position
-                flip_side = getattr(exit_signal, 'flip_bias', 'short' if pos.side == 'long' else 'long')
+                flip_side = getattr(
+                    exit_signal, "flip_bias", "short" if pos.side == "long" else "long"
+                )
                 flip_fill = self.submit(ts, symbol, flip_side, pos.size, price)
                 fills.append(flip_fill)
 
@@ -384,15 +455,19 @@ class PaperBroker:
             logging.error(f"Error processing exit signal for {symbol}: {e}")
             return None
 
-    def _execute_exit_signal_close(self, ts, symbol, pos: Position, price: float,
-                                  exit_signal, exit_percentage: float) -> Dict[str, Any]:
+    def _execute_exit_signal_close(
+        self, ts, symbol, pos: Position, price: float, exit_signal, exit_percentage: float
+    ) -> Dict[str, Any]:
         """Execute position close due to exit signal."""
         close_size = pos.size * exit_percentage
-        fill_price = self._apply_costs(price, 'short' if pos.side == 'long' else 'long')
+        fill_price = self._apply_costs(price, "short" if pos.side == "long" else "long")
         fee = (self.fee_bps * 1e-4) * fill_price * close_size
 
-        pnl = ((fill_price - pos.entry) * close_size if pos.side == 'long'
-               else (pos.entry - fill_price) * close_size)
+        pnl = (
+            (fill_price - pos.entry) * close_size
+            if pos.side == "long"
+            else (pos.entry - fill_price) * close_size
+        )
         self.realized_pnl += pnl - fee
 
         # Calculate R multiple and other metrics
@@ -403,8 +478,8 @@ class PaperBroker:
                 r_multiple = pnl / (risk_per_unit * close_size)
 
         # Comprehensive exit log with structured data
-        import logging
         import json
+        import logging
 
         exit_log = {
             "event": "EXIT",
@@ -423,26 +498,33 @@ class PaperBroker:
             "urgency": exit_signal.urgency,
             "position_duration_bars": pos.bars_held,
             "timeframe": pos.timeframe,
-            "opened_at_ts": pos.opened_at_ts.isoformat() if hasattr(pos.opened_at_ts, 'isoformat') else str(pos.opened_at_ts) if pos.opened_at_ts is not None else None,
+            "opened_at_ts": pos.opened_at_ts.isoformat()
+            if hasattr(pos.opened_at_ts, "isoformat")
+            else str(pos.opened_at_ts)
+            if pos.opened_at_ts is not None
+            else None,
             "opened_at_idx": pos.opened_at_idx,
-            "realized_pnl_total": self.realized_pnl
+            "realized_pnl_total": self.realized_pnl,
         }
         logging.info(f"EXIT_DETAILED: {json.dumps(exit_log)}")
 
         return {
-            "ts": ts, "symbol": symbol,
+            "ts": ts,
+            "symbol": symbol,
             "side": f"exit_{exit_signal.exit_type.value}",
-            "price": fill_price, "size_filled": close_size,
-            "fee": fee, "pnl": pnl,
+            "price": fill_price,
+            "size_filled": close_size,
+            "fee": fee,
+            "pnl": pnl,
             "reason": f"exit_signal_{exit_signal.exit_type.value}",
             "confidence": exit_signal.confidence,
             "urgency": exit_signal.urgency,
-            "exit_percentage": exit_percentage
+            "exit_percentage": exit_percentage,
         }
 
     def _is_valid_stop_update(self, pos: Position, new_stop: float) -> bool:
         """Check if stop update is valid (tighter than current)."""
-        if pos.side == 'long':
+        if pos.side == "long":
             # For long positions, new stop should be higher (tighter)
             return new_stop > pos.stop
         else:
@@ -467,19 +549,23 @@ class PaperBroker:
         current_pnl_pct = 0.0  # Would need current price to calculate accurately
 
         return {
-            'symbol': symbol,
-            'bias': pos.side,
-            'size': pos.size,
-            'entry_time': pos.opened_at_ts.isoformat() if hasattr(pos.opened_at_ts, 'isoformat') else str(pos.opened_at_ts) if pos.opened_at_ts is not None else None,  # Use actual opened timestamp
-            'entry_price': pos.entry,
-            'stop_price': pos.stop,
-            'pnl_pct': current_pnl_pct,
-            'be_moved': pos.be_moved,
-            'trail_active': pos.trail_active,
+            "symbol": symbol,
+            "bias": pos.side,
+            "size": pos.size,
+            "entry_time": pos.opened_at_ts.isoformat()
+            if hasattr(pos.opened_at_ts, "isoformat")
+            else str(pos.opened_at_ts)
+            if pos.opened_at_ts is not None
+            else None,  # Use actual opened timestamp
+            "entry_price": pos.entry,
+            "stop_price": pos.stop,
+            "pnl_pct": current_pnl_pct,
+            "be_moved": pos.be_moved,
+            "trail_active": pos.trail_active,
             # Include new aging fields
-            'bars_held': pos.bars_held,
-            'timeframe': pos.timeframe,
-            'opened_at_ts': pos.opened_at_ts,
-            'opened_at_idx': pos.opened_at_idx,
-            'last_update_idx': pos.last_update_idx
+            "bars_held": pos.bars_held,
+            "timeframe": pos.timeframe,
+            "opened_at_ts": pos.opened_at_ts,
+            "opened_at_idx": pos.opened_at_idx,
+            "last_update_idx": pos.last_update_idx,
         }

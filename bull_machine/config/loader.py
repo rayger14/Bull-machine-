@@ -1,16 +1,18 @@
 import json
 import os
-from typing import Dict, Any
+from typing import Any, Dict
+
 
 def load_config(config_path: str = "config/config.json") -> Dict[str, Any]:
     """Load Bull Machine v1.1 configuration from repo /config, else defaults."""
     if os.path.exists(config_path):
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 return json.load(f)
         except Exception as e:
             print(f"Warning: Failed to load {config_path}: {e}")
     return get_v1_1_defaults()
+
 
 def get_v1_1_defaults() -> Dict[str, Any]:
     return {
@@ -22,11 +24,17 @@ def get_v1_1_defaults() -> Dict[str, Any]:
             "tp_ladder": True,
             "signal_ttl": True,
             "confidence_floor": True,
-            "dynamic_ttl": True
+            "dynamic_ttl": True,
         },
         "signals": {
             "confidence_threshold": 0.72,
-            "weights": {"wyckoff": 0.60, "liquidity": 0.40, "smt": 0.0, "macro": 0.0, "temporal": 0.0}
+            "weights": {
+                "wyckoff": 0.60,
+                "liquidity": 0.40,
+                "smt": 0.0,
+                "macro": 0.0,
+                "temporal": 0.0,
+            },
         },
         "wyckoff": {"lookback_bars": 50, "bias_hysteresis_bars": 2},
         "range": {"time_in_range_bars_min": 20, "net_progress_threshold": 0.25},
@@ -38,7 +46,7 @@ def get_v1_1_defaults() -> Dict[str, Any]:
                 "tp1": {"r": 1.0, "pct": 33, "action": "move_stop_to_breakeven"},
                 "tp2": {"r": 2.0, "pct": 33, "action": "trail_remainder"},
                 "tp3": {"r": 3.0, "pct": 34, "action": "liquidate_or_hard_trail"},
-                "range_mode_multiplier": 0.8
+                "range_mode_multiplier": 0.8,
             },
             "ttl_bars": 18,
             "ttl_dynamic": {
@@ -51,8 +59,8 @@ def get_v1_1_defaults() -> Dict[str, Any]:
                 "delta_low_vol": -3,
                 "trend_bonus": 3,
                 "range_penalty": -3,
-                "range_penetration_thresh": 0.25
+                "range_penetration_thresh": 0.25,
             },
-            "trail_mode": "swing"
-        }
+            "trail_mode": "swing",
+        },
     }

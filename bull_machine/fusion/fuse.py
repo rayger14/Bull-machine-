@@ -1,21 +1,19 @@
 """Bull Machine v1.3 - Fusion Engine with MTF Gating"""
 
-from typing import Optional, Dict
 import logging
-from bull_machine.core.types import Signal
-from bull_machine.core.types import SyncReport
+from typing import Dict, Optional
+
+from bull_machine.core.types import Signal, SyncReport
+
 
 class FusionEngineV1_3:
     """Fusion engine that integrates v1.2.1 modules with v1.3 MTF sync."""
 
     def __init__(self, config: dict):
         self.config = config
-        self.fusion_config = config.get('fusion', {})
-        self.weights = self.fusion_config.get('weights', {
-            'wyckoff': 0.60,
-            'liquidity': 0.40
-        })
-        self.enter_threshold = self.fusion_config.get('enter_threshold', 0.35)
+        self.fusion_config = config.get("fusion", {})
+        self.weights = self.fusion_config.get("weights", {"wyckoff": 0.60, "liquidity": 0.40})
+        self.enter_threshold = self.fusion_config.get("enter_threshold", 0.35)
 
     def fuse_with_mtf(self, modules: dict, sync_report: Optional[SyncReport]) -> Optional[Signal]:
         """
@@ -32,8 +30,8 @@ class FusionEngineV1_3:
             Signal if conditions met, None otherwise
         """
         # Extract module data
-        wyckoff = modules.get('wyckoff')
-        liquidity = modules.get('liquidity')
+        wyckoff = modules.get("wyckoff")
+        liquidity = modules.get("liquidity")
 
         if not wyckoff or not liquidity:
             logging.warning("Missing required modules for fusion")
@@ -41,23 +39,22 @@ class FusionEngineV1_3:
 
         # Calculate base scores
         wyckoff_score = self._calculate_wyckoff_score(wyckoff)
-        liquidity_score = liquidity.overall_score if hasattr(liquidity, 'overall_score') else liquidity.score
+        liquidity_score = (
+            liquidity.overall_score if hasattr(liquidity, "overall_score") else liquidity.score
+        )
 
         # Add optional v1.2.1 modules if present
-        scores = {
-            'wyckoff': wyckoff_score,
-            'liquidity': liquidity_score
-        }
+        scores = {"wyckoff": wyckoff_score, "liquidity": liquidity_score}
 
         # Check for v1.2.1 modules
-        if 'structure' in modules:
-            scores['structure'] = modules['structure'].get('score', 0.0)
-        if 'momentum' in modules:
-            scores['momentum'] = modules['momentum'].get('score', 0.0)
-        if 'volume' in modules:
-            scores['volume'] = modules['volume'].get('score', 0.0)
-        if 'context' in modules:
-            scores['context'] = modules['context'].get('score', 0.0)
+        if "structure" in modules:
+            scores["structure"] = modules["structure"].get("score", 0.0)
+        if "momentum" in modules:
+            scores["momentum"] = modules["momentum"].get("score", 0.0)
+        if "volume" in modules:
+            scores["volume"] = modules["volume"].get("score", 0.0)
+        if "context" in modules:
+            scores["context"] = modules["context"].get("score", 0.0)
 
         # Calculate weighted fusion score
         fusion_score = self._calculate_fusion_score(scores)
@@ -67,12 +64,14 @@ class FusionEngineV1_3:
 
         if sync_report:
             # Apply MTF gating
-            if sync_report.decision == 'veto':
+            if sync_report.decision == "veto":
                 logging.info(f"MTF VETO: {', '.join(sync_report.notes)}")
                 return None
-            elif sync_report.decision == 'raise':
+            elif sync_report.decision == "raise":
                 effective_threshold += sync_report.threshold_bump
-                logging.info(f"MTF RAISE: Threshold {self.enter_threshold:.2f} -> {effective_threshold:.2f}")
+                logging.info(
+                    f"MTF RAISE: Threshold {self.enter_threshold:.2f} -> {effective_threshold:.2f}"
+                )
 
             # Log alignment
             logging.info(f"MTF Alignment: {sync_report.alignment_score:.1%}")
@@ -84,7 +83,7 @@ class FusionEngineV1_3:
 
         # Determine side (never emit 'neutral')
         side = self._determine_side(wyckoff, liquidity)
-        if side == 'neutral':
+        if side == "neutral":
             logging.info("Cannot determine clear side (neutral)")
             return None
 
@@ -97,7 +96,7 @@ class FusionEngineV1_3:
             side=side,
             confidence=confidence,
             reasons=reasons,
-            ttl_bars=self._calculate_ttl(wyckoff, confidence)
+            ttl_bars=self._calculate_ttl(wyckoff, confidence),
         )
 
         logging.info(f"Signal generated: {side.upper()} @ {confidence:.3f}")
@@ -105,12 +104,12 @@ class FusionEngineV1_3:
 
     def _calculate_wyckoff_score(self, wyckoff) -> float:
         """Calculate Wyckoff score from result."""
-        if hasattr(wyckoff, 'confidence'):
+        if hasattr(wyckoff, "confidence"):
             return wyckoff.confidence
 
         # Fallback: average phase and trend confidence
-        phase_conf = getattr(wyckoff, 'phase_confidence', 0.5)
-        trend_conf = getattr(wyckoff, 'trend_confidence', 0.5)
+        phase_conf = getattr(wyckoff, "phase_confidence", 0.5)
+        trend_conf = getattr(wyckoff, "trend_confidence", 0.5)
         return (phase_conf + trend_conf) / 2
 
     def _calculate_fusion_score(self, scores: Dict[str, float]) -> float:
@@ -137,41 +136,41 @@ class FusionEngineV1_3:
         3. Fallback based on scores
         """
         # First try Wyckoff
-        if hasattr(wyckoff, 'bias') and wyckoff.bias != 'neutral':
-            return 'long' if wyckoff.bias in ['long', 'bullish'] else 'short'
+        if hasattr(wyckoff, "bias") and wyckoff.bias != "neutral":
+            return "long" if wyckoff.bias in ["long", "bullish"] else "short"
 
         # Then liquidity
-        if hasattr(liquidity, 'pressure'):
-            if liquidity.pressure == 'bullish':
-                return 'long'
-            elif liquidity.pressure == 'bearish':
-                return 'short'
+        if hasattr(liquidity, "pressure"):
+            if liquidity.pressure == "bullish":
+                return "long"
+            elif liquidity.pressure == "bearish":
+                return "short"
 
         # Fallback: use score differentials
-        if hasattr(liquidity, 'bullish_score') and hasattr(liquidity, 'bearish_score'):
+        if hasattr(liquidity, "bullish_score") and hasattr(liquidity, "bearish_score"):
             if liquidity.bullish_score > liquidity.bearish_score:
-                return 'long'
+                return "long"
             elif liquidity.bearish_score > liquidity.bullish_score:
-                return 'short'
+                return "short"
 
         # Last resort: slight bias based on overall scores
         # This ensures we never return neutral
         wyckoff_score = self._calculate_wyckoff_score(wyckoff)
         if wyckoff_score > 0.5:
-            return 'long'
+            return "long"
         else:
-            return 'short'
+            return "short"
 
     def _build_reasons(self, wyckoff, liquidity, sync_report) -> list:
         """Build signal reasons list."""
         reasons = []
 
         # Wyckoff reason
-        if hasattr(wyckoff, 'phase') and hasattr(wyckoff, 'bias'):
+        if hasattr(wyckoff, "phase") and hasattr(wyckoff, "bias"):
             reasons.append(f"Wyckoff {wyckoff.phase} {wyckoff.bias}")
 
         # Liquidity reason
-        if hasattr(liquidity, 'pressure'):
+        if hasattr(liquidity, "pressure"):
             reasons.append(f"Liquidity {liquidity.pressure}")
 
         # MTF reason
@@ -179,7 +178,7 @@ class FusionEngineV1_3:
             reasons.append(f"MTF aligned ({sync_report.alignment_score:.0%})")
 
         # Fusion score
-        reasons.append(f"Fusion score met")
+        reasons.append("Fusion score met")
 
         return reasons[:3]  # Limit to 3 reasons
 
@@ -188,12 +187,12 @@ class FusionEngineV1_3:
         base_ttl = 20
 
         # Adjust for Wyckoff phase
-        if hasattr(wyckoff, 'phase'):
-            if wyckoff.phase in ['C', 'D']:
+        if hasattr(wyckoff, "phase"):
+            if wyckoff.phase in ["C", "D"]:
                 base_ttl = 25
-            elif wyckoff.phase in ['E']:
+            elif wyckoff.phase in ["E"]:
                 base_ttl = 30
-            elif wyckoff.phase in ['A', 'B']:
+            elif wyckoff.phase in ["A", "B"]:
                 base_ttl = 15
 
         # Adjust for confidence

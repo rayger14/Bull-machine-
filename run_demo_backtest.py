@@ -14,20 +14,22 @@ from bull_machine.backtest.portfolio import Portfolio
 from bull_machine.backtest.engine import BacktestEngine
 from bull_machine.backtest.strategy_adapter_simple import generate_simple_signal as strategy_fn
 
+
 def create_demo_config():
     return {
         "run_id": "demo_btc_eth_results",
         "data": {
             "sources": {
                 "BTCUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_BTCUSD, 60_50ad4.csv",
-                "ETHUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 60_2f4ab.csv"
+                "ETHUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 60_2f4ab.csv",
             },
-            "timeframes": ["1D", "4H", "1H"]
+            "timeframes": ["1D", "4H", "1H"],
         },
         "broker": {"fee_bps": 10, "slippage_bps": 5, "spread_bps": 2},
         "portfolio": {"starting_cash": 100000, "exposure_cap_pct": 0.5},
-        "engine": {"lookback_bars": 50, "seed": 42}  # Smaller for demo
+        "engine": {"lookback_bars": 50, "seed": 42},  # Smaller for demo
     }
+
 
 def run_demo_backtest():
     print("🚀 BULL MACHINE v1.4 - DEMO BACKTEST RESULTS")
@@ -38,9 +40,11 @@ def run_demo_backtest():
 
     # Setup components
     try:
-        feed = DataFeed(config['data']['sources'])
-        broker = PaperBroker(**config['broker'])
-        portfolio = Portfolio(config['portfolio']['starting_cash'], config['portfolio']['exposure_cap_pct'])
+        feed = DataFeed(config["data"]["sources"])
+        broker = PaperBroker(**config["broker"])
+        portfolio = Portfolio(
+            config["portfolio"]["starting_cash"], config["portfolio"]["exposure_cap_pct"]
+        )
         engine = BacktestEngine(config, feed, broker, portfolio)
 
         print("✅ Data loaded successfully:")
@@ -50,10 +54,10 @@ def run_demo_backtest():
 
         # Run backtest with demo strategy
         def demo_strategy(symbol: str, tf: str, window_df):
-            return strategy_fn(symbol, tf, window_df, balance=config['portfolio']['starting_cash'])
+            return strategy_fn(symbol, tf, window_df, balance=config["portfolio"]["starting_cash"])
 
-        symbols = list(config['data']['sources'].keys())
-        timeframes = config['data']['timeframes']
+        symbols = list(config["data"]["sources"].keys())
+        timeframes = config["data"]["timeframes"]
 
         print(f"\n🔄 Running backtest...")
         print(f"   Symbols: {symbols}")
@@ -66,19 +70,23 @@ def run_demo_backtest():
         print(f"\n📈 BACKTEST RESULTS")
         print("=" * 40)
 
-        metrics = results['metrics']
+        metrics = results["metrics"]
         print(f"💰 Total Trades: {metrics.get('trades', 0)}")
-        print(f"📊 Win Rate: {metrics.get('win_rate', 0.0)*100:.1f}%")
+        print(f"📊 Win Rate: {metrics.get('win_rate', 0.0) * 100:.1f}%")
         print(f"💵 Average Win: ${metrics.get('avg_win', 0.0):,.2f}")
         print(f"💸 Average Loss: ${metrics.get('avg_loss', 0.0):,.2f}")
         print(f"🎯 Expectancy: ${metrics.get('expectancy', 0.0):,.2f}")
-        print(f"📉 Max Drawdown: {metrics.get('max_dd', 0.0)*100:.1f}%")
-        print(f"📈 CAGR: {metrics.get('cagr', 0.0)*100:.1f}%")
+        print(f"📉 Max Drawdown: {metrics.get('max_dd', 0.0) * 100:.1f}%")
+        print(f"📈 CAGR: {metrics.get('cagr', 0.0) * 100:.1f}%")
         print(f"⚡ Sharpe Ratio: {metrics.get('sharpe', 0.0):.2f}")
 
         # Portfolio performance
         final_equity = portfolio.equity()
-        total_return = (final_equity - config['portfolio']['starting_cash']) / config['portfolio']['starting_cash'] * 100
+        total_return = (
+            (final_equity - config["portfolio"]["starting_cash"])
+            / config["portfolio"]["starting_cash"]
+            * 100
+        )
 
         print(f"\n💼 PORTFOLIO PERFORMANCE")
         print("=" * 40)
@@ -91,7 +99,7 @@ def run_demo_backtest():
         # Risk analysis
         print(f"\n⚠️  RISK ANALYSIS")
         print("=" * 40)
-        print(f"🛡️  Exposure Cap: {config['portfolio']['exposure_cap_pct']*100:.0f}%")
+        print(f"🛡️  Exposure Cap: {config['portfolio']['exposure_cap_pct'] * 100:.0f}%")
         print(f"📊 Active Positions: {len(portfolio.positions)}")
         print(f"💹 Max Drawdown: ${portfolio.drawdown():,.2f}")
         print(f"🏔️  High Water Mark: ${portfolio.high_water:,.2f}")
@@ -107,7 +115,7 @@ def run_demo_backtest():
         # Artifacts
         print(f"\n📁 GENERATED REPORTS")
         print("=" * 40)
-        for name, path in results['artifacts'].items():
+        for name, path in results["artifacts"].items():
             print(f"   📄 {name.capitalize()}: {path}")
 
         return results
@@ -115,8 +123,10 @@ def run_demo_backtest():
     except Exception as e:
         print(f"❌ Demo failed: {e}")
         import traceback
+
         traceback.print_exc()
         return None
+
 
 if __name__ == "__main__":
     results = run_demo_backtest()

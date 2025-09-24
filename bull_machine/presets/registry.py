@@ -5,7 +5,7 @@ NOT WIRED YET - Future implementation stub
 """
 
 from typing import Dict, List, Optional
-import json
+
 
 class PresetRegistry:
     """
@@ -16,45 +16,45 @@ class PresetRegistry:
     def __init__(self):
         self.presets = {
             # Future optimal presets from testing
-            'btc_daily': {
-                'enter_threshold': 0.35,
-                'volatility_shock_sigma': 4.0,
-                'trend_alignment_threshold': 0.60,
-                'weights': {
-                    'wyckoff': 0.30,
-                    'liquidity': 0.25,
-                    'structure': 0.20,
-                    'momentum': 0.10,
-                    'volume': 0.10,
-                    'context': 0.05
-                }
+            "btc_daily": {
+                "enter_threshold": 0.35,
+                "volatility_shock_sigma": 4.0,
+                "trend_alignment_threshold": 0.60,
+                "weights": {
+                    "wyckoff": 0.30,
+                    "liquidity": 0.25,
+                    "structure": 0.20,
+                    "momentum": 0.10,
+                    "volume": 0.10,
+                    "context": 0.05,
+                },
             },
-            'eth_4h': {
-                'enter_threshold': 0.32,
-                'volatility_shock_sigma': 3.5,
-                'trend_alignment_threshold': 0.55,
-                'weights': {
-                    'wyckoff': 0.28,
-                    'liquidity': 0.27,
-                    'structure': 0.22,
-                    'momentum': 0.08,
-                    'volume': 0.08,
-                    'context': 0.07
-                }
+            "eth_4h": {
+                "enter_threshold": 0.32,
+                "volatility_shock_sigma": 3.5,
+                "trend_alignment_threshold": 0.55,
+                "weights": {
+                    "wyckoff": 0.28,
+                    "liquidity": 0.27,
+                    "structure": 0.22,
+                    "momentum": 0.08,
+                    "volume": 0.08,
+                    "context": 0.07,
+                },
             },
-            'coin_1h': {
-                'enter_threshold': 0.38,
-                'volatility_shock_sigma': 4.5,
-                'trend_alignment_threshold': 0.65,
-                'weights': {
-                    'wyckoff': 0.32,
-                    'liquidity': 0.23,
-                    'structure': 0.18,
-                    'momentum': 0.12,
-                    'volume': 0.10,
-                    'context': 0.05
-                }
-            }
+            "coin_1h": {
+                "enter_threshold": 0.38,
+                "volatility_shock_sigma": 4.5,
+                "trend_alignment_threshold": 0.65,
+                "weights": {
+                    "wyckoff": 0.32,
+                    "liquidity": 0.23,
+                    "structure": 0.18,
+                    "momentum": 0.12,
+                    "volume": 0.10,
+                    "context": 0.05,
+                },
+            },
         }
 
     def get_preset(self, name: str) -> Optional[Dict]:
@@ -80,11 +80,11 @@ class PresetRegistry:
         symbol_lower = symbol.lower()
         tf_lower = timeframe.lower()
 
-        if 'btc' in symbol_lower and ('1d' in tf_lower or 'daily' in tf_lower):
-            return 'btc_daily'
-        elif 'eth' in symbol_lower and ('4h' in tf_lower or '240' in tf_lower):
-            return 'eth_4h'
-        elif 'coin' in symbol_lower and ('1h' in tf_lower or '60' in tf_lower):
-            return 'coin_1h'
+        if "btc" in symbol_lower and ("1d" in tf_lower or "daily" in tf_lower):
+            return "btc_daily"
+        elif "eth" in symbol_lower and ("4h" in tf_lower or "240" in tf_lower):
+            return "eth_4h"
+        elif "coin" in symbol_lower and ("1h" in tf_lower or "60" in tf_lower):
+            return "coin_1h"
 
         return None
