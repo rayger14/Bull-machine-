@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from .rules import CHoCHAgainstDetector, MomentumFadeDetector, TimeStopEvaluator
-from .types import ExitEvaluationResult, ExitSignal
+from .types import ExitAction, ExitEvaluationResult, ExitSignal, ExitType
 
 
 class ExitSignalEvaluator:
