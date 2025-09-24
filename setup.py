@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 
 setup(
     name="bull_machine",
-    version="1.1",
-    description="Bull Machine v1.1 - Algorithmic Trading Engine",
+    version="1.4.2",
+    description="Bull Machine v1.4.2 - Advanced Algorithmic Trading Engine with 7-Layer Confluence",
     packages=find_packages(),
     install_requires=[
         "pandas>=2.0",
