@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-09-23T18:32:27.833583",
+  "results": {
+    "Configuration Loading": true,
+    "Fusion Engine Init": true,
+    "Layer Scoring": true,
+    "Fusion Scoring": true,
+    "Parameter Enforcement": true,
+    "Telemetry Generation": true,
+    "Determinism": true
+  },
+  "passed": 7,
+  "total": 7,
+  "pass_rate": 100.0
+}
