@@ -1,0 +1,46 @@
+repos:
+  - repo: local
+    hooks:
+      - id: version-sync
+        name: version-sync
+        language: system
+        entry: bash
+        args:
+          - -c
+          - |
+            echo "🔍 Checking version consistency..."
+            VER=$(python - <<'PY'
+            import sys
+            sys.path.insert(0, 'bull_machine')
+            from version import __version__
+            print(__version__)
+            PY
+            )
+            echo "Current version: v$VER"
+
+            # Check for stale versions (excluding archives and generated files)
+            STALE=$(grep -rInE "v[0-9]+\.[0-9]+\.[0-9]+" \
+              --exclude-dir=.git --exclude-dir=.github --exclude-dir=archive \
+              --exclude="*.png" --exclude="*.jpg" --exclude="*.svg" \
+              --exclude="*.json" --exclude="CHANGELOG.md" \
+              . | grep -v "v$VER" || true)
+
+            if [ ! -z "$STALE" ]; then
+              echo "❌ Stale version refs (not v$VER):"
+              echo "$STALE"
+              echo "💡 Run: python scripts/render_readme.py && git add README.md"
+              exit 1
+            fi
+
+            echo "✅ Version consistency check passed (v$VER)"
+        stages: [commit]
+        pass_filenames: false
+
+      - id: render-readme
+        name: render-readme
+        language: system
+        entry: python
+        args: [scripts/render_readme.py]
+        files: ^(README\.md\.j2|bull_machine/version\.py)$
+        stages: [commit]
+        pass_filenames: false

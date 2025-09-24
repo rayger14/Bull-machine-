@@ -1,0 +1,28 @@
+{
+  "backtest_period": {
+    "start": "2024-09-08",
+    "end": "2025-08-16",
+    "days": 342
+  },
+  "performance": {
+    "total_trades": 343,
+    "winning_trades": 178,
+    "losing_trades": 165,
+    "win_rate": 51.89504373177842,
+    "total_pnl_dollars": -936.4444883310348,
+    "total_pnl_percent": -9.364444883310389,
+    "avg_win_dollars": 109.03336234732723,
+    "avg_loss_dollars": -124.05111576923952,
+    "profit_factor": 0.9481887281254915,
+    "sharpe_ratio": -0.29487541101904124,
+    "max_drawdown_percent": 32.733578428114335,
+    "final_capital": 9063.555511668961
+  },
+  "system_info": {
+    "version": "1.4.2",
+    "enter_threshold": "N/A",
+    "weights": {},
+    "symbol": "SOLUSD",
+    "initial_capital": 10000
+  }
+}

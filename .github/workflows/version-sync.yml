@@ -1,0 +1,90 @@
+name: Version Sync Check
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  version-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Read current version
+        id: version
+        run: |
+          VER=$(python - <<'PY'
+import sys
+sys.path.insert(0, 'bull_machine')
+from version import __version__
+print(__version__)
+PY
+          )
+          echo "VER=$VER" >> $GITHUB_ENV
+          echo "Current version: v$VER"
+
+      - name: Find stale version references
+        run: |
+          echo "🔍 Checking for stale version references (expecting v$VER)"
+
+          # Search for old version patterns, excluding certain files and directories
+          STALE_REFS=$(grep -rInE 'v[0-9]+\.[0-9]+\.[0-9]+' \
+            --exclude-dir=.git \
+            --exclude-dir=.github \
+            --exclude-dir=node_modules \
+            --exclude-dir=archive \
+            --exclude="*.png" \
+            --exclude="*.jpg" \
+            --exclude="*.svg" \
+            --exclude="*.lock" \
+            --exclude="*.json" \
+            --exclude="CHANGELOG.md" \
+            . || true)
+
+          # Filter out the current version
+          STALE_REFS=$(echo "$STALE_REFS" | grep -v "v$VER" || true)
+
+          if [ ! -z "$STALE_REFS" ]; then
+            echo "❌ Found stale version references (not v$VER):"
+            echo "$STALE_REFS"
+            echo ""
+            echo "💡 Fix these by:"
+            echo "   1. Update hardcoded versions to use: from bull_machine.version import __version__"
+            echo "   2. Use get_version_banner() for display strings"
+            echo "   3. Re-render README: python scripts/render_readme.py"
+            exit 1
+          else
+            echo "✅ No stale version references found - all versions match v$VER"
+          fi
+
+      - name: Check README is up to date
+        run: |
+          echo "🔍 Checking if README.md is up to date with template"
+
+          # Render README and check for differences
+          python scripts/render_readme.py > /tmp/render.log 2>&1
+
+          if ! git diff --quiet README.md; then
+            echo "❌ README.md is not up to date with template!"
+            echo ""
+            echo "Git diff shows:"
+            git diff README.md
+            echo ""
+            echo "💡 Fix by running: python scripts/render_readme.py"
+            exit 1
+          else
+            echo "✅ README.md is up to date"
+          fi
+
+      - name: Version sync summary
+        run: |
+          echo "🎉 Version sync check passed!"
+          echo "   Current version: v$VER"
+          echo "   All version references are consistent"
+          echo "   README.md is up to date"
