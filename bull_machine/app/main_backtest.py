@@ -1,10 +1,14 @@
 
-import argparse, json, logging
+import argparse
+import json
+import logging
 from pathlib import Path
-from bull_machine.backtest.datafeed import DataFeed
+
 from bull_machine.backtest.broker import PaperBroker
-from bull_machine.backtest.portfolio import Portfolio
+from bull_machine.backtest.datafeed import DataFeed
 from bull_machine.backtest.engine import BacktestEngine
+from bull_machine.backtest.portfolio import Portfolio
+
 try:
     # Try optimized adapter first
     from bull_machine.backtest.strategy_adapter_optimized import strategy_from_df

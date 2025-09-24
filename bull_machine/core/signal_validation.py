@@ -3,9 +3,11 @@ Signal Format Validation and Standardization
 Ensures consistent signal schema between analyzers and backtest engine
 """
 
-import pandas as pd
-from typing import Dict, Any, List, Optional
 import logging
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
+
 
 def validate_signal(signal: Dict[str, Any]) -> bool:
     """
@@ -55,7 +57,7 @@ def validate_signal(signal: Dict[str, Any]) -> bool:
 
     # Validate reasons
     if len(signal["reasons"]) == 0:
-        logging.warning(f"Signal validation warning: empty reasons list")
+        logging.warning("Signal validation warning: empty reasons list")
 
     return True
 

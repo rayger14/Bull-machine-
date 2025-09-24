@@ -1,6 +1,7 @@
 
 from dataclasses import dataclass
 
+
 # Placeholder adapter. Claude should call your v1.3 pipeline using a DataFrame/Series entrypoint.
 @dataclass
 class Bar:

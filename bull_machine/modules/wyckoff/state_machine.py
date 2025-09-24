@@ -3,10 +3,10 @@ Enhanced Wyckoff State Machine
 Edge cases: Phase C trap scoring, spring/UTAD reclaim speed, dynamic range re-anchoring
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, Optional, Tuple, List
 import logging
+from typing import Dict, List, Tuple
+
+import pandas as pd
 
 
 class WyckoffStateMachine:

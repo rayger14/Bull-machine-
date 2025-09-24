@@ -1,9 +1,12 @@
 
-from typing import List, Dict, Callable, Optional
-import pandas as pd
 import logging
-from .metrics import trade_metrics, equity_metrics
+from typing import Callable, Dict, List, Optional
+
+import pandas as pd
+
+from .metrics import equity_metrics, trade_metrics
 from .report import write_report
+
 
 class BacktestEngine:
     def __init__(self, cfg: dict, datafeed, broker, portfolio, exit_evaluator=None):
@@ -52,7 +55,7 @@ class BacktestEngine:
                 print(f"   ✅ {sym} {tf}: {len(cached_frames[key])} bars")
 
         # 🚀 PERFORMANCE FIX 2: Precompute rolling features vectorized
-        print(f"📈 Precomputing rolling features (ATR, MA, etc.)...")
+        print("📈 Precomputing rolling features (ATR, MA, etc.)...")
         for key, df_tf in cached_frames.items():
             # Add common indicators as columns (vectorized)
             df_tf['sma20'] = df_tf['close'].rolling(20, min_periods=1).mean()
@@ -61,7 +64,7 @@ class BacktestEngine:
             df_tf['atr14'] = df_tf['high_low'].rolling(14, min_periods=1).mean()
             print(f"   ✅ {key[0]} {key[1]}: Features added")
 
-        print(f"🔄 Running backtest with cached data...")
+        print("🔄 Running backtest with cached data...")
 
         for sym in symbols:
             if sym not in [k[0] for k in cached_frames.keys()]:

@@ -5,7 +5,7 @@ NOT WIRED YET - Future implementation stub
 """
 
 from typing import Dict, List, Optional
-import json
+
 
 class PresetRegistry:
     """

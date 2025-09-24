@@ -3,14 +3,18 @@ Exit Signal Rules
 Core logic for detecting when to exit positions based on various criteria.
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, Any, Optional, List
 import logging
+from typing import Any, Dict, Optional
+
+import pandas as pd
 
 from .types import (
-    ExitSignal, ExitType, ExitAction, ExitEvaluationResult,
-    CHoCHContext, MomentumContext, TimeStopContext
+    CHoCHContext,
+    ExitAction,
+    ExitSignal,
+    ExitType,
+    MomentumContext,
+    TimeStopContext,
 )
 
 

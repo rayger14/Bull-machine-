@@ -2,7 +2,8 @@
 # NOTE: This is a focused patch for two areas:
 #  - Correct R calculation on stop/trailing stop exits
 #  - Respect Signal TTL when slicing future bars
-from typing import Dict, Any
+from typing import Any, Dict
+
 
 def calculate_single_r(entry_price, stop_price, exit_price, side):
     risk_per_unit = abs(entry_price - stop_price)

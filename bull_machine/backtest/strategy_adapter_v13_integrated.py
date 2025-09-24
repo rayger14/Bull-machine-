@@ -4,18 +4,19 @@ Bull Machine v1.4 Strategy Adapter
 Integrates v1.3 MTF engine with v1.4 backtest framework
 """
 
-from dataclasses import dataclass
-from typing import Dict, Any, Optional
-import pandas as pd
-import numpy as np
-import sys
 import os
+import sys
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
+
+import pandas as pd
 
 # Add parent to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from bull_machine.core.types import Bar, Series, Signal, RiskPlan
 from bull_machine.app.main_v13 import run_bull_machine_v1_3
+from bull_machine.core.types import Bar, Series
+
 
 @dataclass
 class BacktestSignal:

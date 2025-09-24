@@ -1,7 +1,9 @@
 import logging
 from typing import Dict, List
-from ..core.types import Series, Signal, RiskPlan
+
+from ..core.types import RiskPlan, Series, Signal
 from ..core.utils import calculate_atr, find_swing_high_low
+
 
 def plan(series: Series, signal: Signal, cfg: dict, account_balance: float) -> RiskPlan:
     try:

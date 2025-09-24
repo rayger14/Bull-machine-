@@ -3,13 +3,11 @@ Advanced Exit Rules for Bull Machine v1.4.1
 Implements Wyckoff phase-based exits, Moneytaur trailing, and Bojan protection.
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, Any, Optional, List
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
 
-from .types import ExitSignal, ExitType, ExitAction
+import pandas as pd
 
 
 @dataclass
@@ -724,10 +722,10 @@ def distribution_exit(df: pd.DataFrame, volume: float, displacement: float) -> D
         Exit decision dict
     """
     sma_vol = df['volume'].rolling(20).mean().iloc[-1]
-    
+
     # Relaxed thresholds - less aggressive clipping
     is_distribution = (volume >= 1.4 * sma_vol) and (displacement < 0.4)  # was 1.5, 0.5
-    
+
     if is_distribution:
         logging.info(f"Distribution detected: vol_ratio={volume/sma_vol:.2f}, displacement={displacement:.3f}")
         return {
@@ -740,5 +738,5 @@ def distribution_exit(df: pd.DataFrame, volume: float, displacement: float) -> D
                 'distribution_detected': True
             }
         }
-    
+
     return {'action': 'hold', 'size': 0}

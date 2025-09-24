@@ -2,7 +2,9 @@
 
 import logging
 from typing import Any, Dict, List, Optional
+
 from bull_machine.core.types import Signal
+
 
 class EnhancedFusionEngineV1_4:
     """

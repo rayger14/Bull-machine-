@@ -3,10 +3,11 @@ Dynamic Risk Management
 Scale base risk by sweep volume vs median & pool depth
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, Optional
 import logging
+from typing import Dict
+
+import numpy as np
+import pandas as pd
 
 
 def wyckoff_state(df: pd.DataFrame) -> Dict:

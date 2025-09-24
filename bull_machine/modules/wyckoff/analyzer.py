@@ -1,6 +1,8 @@
 import logging
 from typing import Dict, Optional, Tuple
+
 from ...core.types import Series, WyckoffResult
+
 
 def analyze(series: Series, cfg: dict, state: dict) -> WyckoffResult:
     """v1.1 Wyckoff Analysis (heuristic)."""

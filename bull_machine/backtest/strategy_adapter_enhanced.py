@@ -8,26 +8,31 @@ This adapter uses the enhanced fusion engine with:
 - Higher threshold with margin requirement
 """
 
-import pandas as pd
-import tempfile
 import os
-from typing import Dict, Any, Optional
+import tempfile
+from typing import Any, Dict
+
+import pandas as pd
+
 from bull_machine.app.main_v13 import (
-    resample_to_timeframes, build_composite_range, resolve_bias,
-    compute_eq_magnet, check_nested_confluence, load_csv_to_series
+    build_composite_range,
+    check_nested_confluence,
+    compute_eq_magnet,
+    load_csv_to_series,
+    resample_to_timeframes,
+    resolve_bias,
 )
+from bull_machine.config.loader import load_config
 from bull_machine.core.sync import decide_mtf_entry
 from bull_machine.core.utils import extract_key_levels
-from bull_machine.modules.wyckoff.advanced import AdvancedWyckoffAnalyzer
-from bull_machine.modules.liquidity.advanced import AdvancedLiquidityAnalyzer
-from bull_machine.modules.structure.advanced import AdvancedStructureAnalyzer
-from bull_machine.modules.momentum.advanced import AdvancedMomentumAnalyzer
-from bull_machine.modules.volume.advanced import AdvancedVolumeAnalyzer
 from bull_machine.modules.context.advanced import AdvancedContextAnalyzer
 from bull_machine.modules.fusion.enhanced import EnhancedFusionEngineV1_4
+from bull_machine.modules.liquidity.advanced import AdvancedLiquidityAnalyzer
+from bull_machine.modules.momentum.advanced import AdvancedMomentumAnalyzer
 from bull_machine.modules.risk.advanced import AdvancedRiskManager
-from bull_machine.config.loader import load_config
-import logging
+from bull_machine.modules.structure.advanced import AdvancedStructureAnalyzer
+from bull_machine.modules.volume.advanced import AdvancedVolumeAnalyzer
+from bull_machine.modules.wyckoff.advanced import AdvancedWyckoffAnalyzer
 
 # Global cache for MTF analysis
 _mtf_cache = {}

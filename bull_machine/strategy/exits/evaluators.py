@@ -3,16 +3,16 @@ Exit Signal Evaluators
 Coordinates multiple exit detection systems and provides unified evaluation.
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, Any, Optional, List
-import logging
 import json
+import logging
 import os
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from .types import ExitSignal, ExitEvaluationResult
+import pandas as pd
+
 from .rules import CHoCHAgainstDetector, MomentumFadeDetector, TimeStopEvaluator
+from .types import ExitEvaluationResult, ExitSignal
 
 
 class ExitSignalEvaluator:
@@ -327,7 +327,7 @@ class ExitSignalEvaluator:
         # Also save traditional exit_counts.json for backward compatibility
         self.save_exit_counts(str(output_dir))
 
-        print(f"\n🔍 TELEMETRY SAVED:")
+        print("\n🔍 TELEMETRY SAVED:")
         print(f"  • exits_applied.json - {len(self.exit_applications)} applications tracked")
         print(f"  • parameter_usage.json - {sum(data['evaluated'] for data in self.parameter_usage.values())} evaluations")
         print(f"  • layer_masks.json - {len(self.enabled_exits)} fusion layers")

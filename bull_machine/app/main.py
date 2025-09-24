@@ -1,22 +1,24 @@
-import sys
 import argparse
 import logging
+import sys
+
 from ..config.loader import load_config
+from ..core.utils import detect_sweep_displacement
 from ..io.feeders import load_csv_to_series
-from ..modules.wyckoff.analyzer import analyze as analyze_wyckoff
-from ..modules.liquidity.basic import analyze as analyze_liquidity
-from ..modules.liquidity.advanced import AdvancedLiquidityAnalyzer
+from ..modules.context.advanced import AdvancedContextAnalyzer
 from ..modules.fusion.advanced import AdvancedFusionEngine
+from ..modules.liquidity.advanced import AdvancedLiquidityAnalyzer
+from ..modules.liquidity.basic import analyze as analyze_liquidity
+from ..modules.momentum.advanced import AdvancedMomentumAnalyzer
 from ..modules.risk.advanced import AdvancedRiskManager
 from ..modules.structure.advanced import AdvancedStructureAnalyzer
-from ..modules.momentum.advanced import AdvancedMomentumAnalyzer
 from ..modules.volume.advanced import AdvancedVolumeAnalyzer
-from ..modules.context.advanced import AdvancedContextAnalyzer
+from ..modules.wyckoff.analyzer import analyze as analyze_wyckoff
+from ..risk.planner import plan as plan_risk
 from ..signals.fusion import combine as combine_signals
 from ..signals.gating import assign_ttl
-from ..risk.planner import plan as plan_risk
 from ..state.store import load_state, save_state
-from ..core.utils import detect_sweep_displacement
+
 
 def setup_logging():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', handlers=[logging.StreamHandler(sys.stdout)])
@@ -125,7 +127,7 @@ def run_bull_machine_v1_2_1(csv_file: str, account_balance: float = 10000, overr
             # Fallback to basic risk planning
             plan = plan_risk(series, signal, config, account_balance)
 
-        print(f"\n=== TRADE PLAN GENERATED (v1.2.1) ===")
+        print("\n=== TRADE PLAN GENERATED (v1.2.1) ===")
         print(f"Direction: {signal.side.upper()}")
         print(f"Entry: {plan.entry:.2f}")
         print(f"Stop: {plan.stop:.2f}")
@@ -260,7 +262,7 @@ def run_bull_machine_v1_1(csv_file: str, account_balance: float = 10000, overrid
             }
             print(f"[FUSION_LOG] {fusion_log}")
 
-        print(f"\n=== TRADE PLAN GENERATED ===")
+        print("\n=== TRADE PLAN GENERATED ===")
         print(f"Direction: {signal.side.upper()}")
         # entry price uses the last bar close; show the corresponding datetime (UTC)
         try:
@@ -302,7 +304,8 @@ def main():
     if args.enter_threshold is not None:
         override['confidence_threshold'] = float(args.enter_threshold)
     if args.weights is not None:
-        import json, os
+        import json
+        import os
         wtxt = args.weights
         parsed = None
         # if it's a file path, load it

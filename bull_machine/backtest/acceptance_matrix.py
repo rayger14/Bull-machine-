@@ -4,24 +4,27 @@ Bull Machine v1.4.1 Acceptance Matrix
 Comprehensive backtesting framework for production readiness validation
 """
 
-import pandas as pd
-import numpy as np
 import json
 import logging
-from typing import Dict, List, Tuple
-from pathlib import Path
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
 import sys
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Dict, List
+
+import numpy as np
+import pandas as pd
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from bull_machine.scoring.fusion import FusionEngineV141
-from bull_machine.modules.wyckoff.state_machine import WyckoffStateMachine
 from bull_machine.modules.liquidity.imbalance import calculate_liquidity_score
-from bull_machine.modules.risk.dynamic_risk import calculate_dynamic_position_size, calculate_stop_loss
+from bull_machine.modules.risk.dynamic_risk import (
+    calculate_dynamic_position_size,
+    calculate_stop_loss,
+)
+from bull_machine.modules.wyckoff.state_machine import WyckoffStateMachine
+from bull_machine.scoring.fusion import FusionEngineV141
 
 
 @dataclass
@@ -505,7 +508,7 @@ def run_acceptance_matrix(config_path: str, output_dir: str) -> Dict[str, Backte
         print(f"   Avg Duration: {result.avg_trade_duration_bars:.1f} bars")
 
         # Acceptance status
-        print(f"\n✅ Acceptance Status:")
+        print("\n✅ Acceptance Status:")
         for criterion, passed in result.acceptance_status.items():
             status = "✅ PASS" if passed else "❌ FAIL"
             print(f"   {criterion}: {status}")

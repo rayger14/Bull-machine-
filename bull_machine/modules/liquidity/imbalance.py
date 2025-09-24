@@ -3,10 +3,9 @@ Liquidity & pHOB Scoring
 Phase 1.2/1.3 Rules: Sweep mitigation, TTL decay, and imbalance detection
 """
 
+from typing import Dict, List
+
 import pandas as pd
-import numpy as np
-from typing import Dict, Optional, List
-import logging
 
 
 def calculate_fib_level(high: float, low: float, current: float) -> float:

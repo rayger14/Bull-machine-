@@ -1,7 +1,9 @@
 
+import math
+
 import numpy as np
 import pandas as pd
-import math
+
 
 def safe_cagr(start_equity: float, end_equity: float, days: float) -> float:
     """Compute CAGR safely, returning None for invalid inputs."""

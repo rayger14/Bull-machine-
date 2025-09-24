@@ -4,8 +4,9 @@ Defines the core types used throughout the exit signal system.
 """
 
 from dataclasses import dataclass
-from typing import Dict, Any, Optional, List
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
 import pandas as pd
 
 

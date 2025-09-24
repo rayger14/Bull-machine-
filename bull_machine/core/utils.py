@@ -1,6 +1,7 @@
 """Bull Machine v1.3 - Core Utility Functions"""
 
-from typing import List, Dict, Optional
+from typing import Dict, List
+
 
 def extract_key_levels(liquidity_result) -> List[Dict]:
     """

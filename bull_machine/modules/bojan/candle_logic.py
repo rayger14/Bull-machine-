@@ -3,10 +3,10 @@ Bojan Wick Magnets
 Phase 2.1: Present but soft-gated for v1.4.1
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, Optional, Tuple
 import logging
+from typing import Dict, Optional
+
+import pandas as pd
 
 
 def calculate_atr(df: pd.DataFrame, period: int = 14) -> float:
@@ -198,7 +198,7 @@ def bojan_exit_signal(df: pd.DataFrame, position_bias: str,
             return {
                 'action': 'partial',
                 'size_pct': 0.75,
-                'reason': f"Bojan High rejection at resistance",
+                'reason': "Bojan High rejection at resistance",
                 'confidence': patterns['bojan_high']['confidence']
             }
 
@@ -209,7 +209,7 @@ def bojan_exit_signal(df: pd.DataFrame, position_bias: str,
             return {
                 'action': 'partial',
                 'size_pct': 0.75,
-                'reason': f"Bojan Low rejection at support",
+                'reason': "Bojan Low rejection at support",
                 'confidence': patterns['bojan_low']['confidence']
             }
 

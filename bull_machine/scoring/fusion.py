@@ -3,10 +3,10 @@
 Combines all layer scores with v1.4.1 weights and guardrails
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, Optional, List
 import logging
+from typing import Dict
+
+import pandas as pd
 
 
 class FusionEngineV141:

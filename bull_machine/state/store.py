@@ -1,9 +1,10 @@
 """Bull Machine v1.3 - State Persistence"""
 
 import json
-import os
 import logging
-from typing import Dict, Any
+import os
+from typing import Any, Dict
+
 
 def load_state(path: str = ".bm_state.json") -> Dict[str, Any]:
     """

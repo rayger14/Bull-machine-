@@ -6,8 +6,17 @@ Claude Code should fill in TODOs to make them production-ready.
 """
 
 from typing import Any, Dict, List, Optional
+
 try:
-    from bull_machine.core.types import WyckoffResult, LiquidityResult, Signal, BiasCtx, RangeCtx, SyncReport, Series
+    from bull_machine.core.types import (
+        BiasCtx,
+        LiquidityResult,
+        RangeCtx,
+        Series,
+        Signal,
+        SyncReport,
+        WyckoffResult,
+    )
 except Exception:
     from dataclasses import dataclass, field
     @dataclass

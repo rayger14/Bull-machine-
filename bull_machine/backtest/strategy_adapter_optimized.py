@@ -8,29 +8,39 @@ This adapter uses the enhanced fusion engine with:
 - Higher threshold with margin requirement
 """
 
-import pandas as pd
-import tempfile
+import json
+import logging
 import os
-from typing import Dict, Any, Optional
+import tempfile
+import traceback
+from typing import Any, Dict
+
+import pandas as pd
+
 from bull_machine.app.main_v13 import (
-    resample_to_timeframes, build_composite_range, resolve_bias,
-    compute_eq_magnet, check_nested_confluence, load_csv_to_series
+    build_composite_range,
+    check_nested_confluence,
+    compute_eq_magnet,
+    load_csv_to_series,
+    resample_to_timeframes,
+    resolve_bias,
+)
+from bull_machine.config.loader import load_config
+from bull_machine.core.signal_validation import (
+    add_risk_management,
+    standardize_signal,
+    validate_signal,
 )
 from bull_machine.core.sync import decide_mtf_entry
 from bull_machine.core.utils import extract_key_levels
-from bull_machine.modules.wyckoff.advanced import AdvancedWyckoffAnalyzer
-from bull_machine.modules.liquidity.advanced import AdvancedLiquidityAnalyzer
-from bull_machine.modules.structure.advanced import AdvancedStructureAnalyzer
-from bull_machine.modules.momentum.advanced import AdvancedMomentumAnalyzer
-from bull_machine.modules.volume.advanced import AdvancedVolumeAnalyzer
 from bull_machine.modules.context.advanced import AdvancedContextAnalyzer
 from bull_machine.modules.fusion.enhanced import EnhancedFusionEngineV1_4
+from bull_machine.modules.liquidity.advanced import AdvancedLiquidityAnalyzer
+from bull_machine.modules.momentum.advanced import AdvancedMomentumAnalyzer
 from bull_machine.modules.risk.advanced import AdvancedRiskManager
-from bull_machine.config.loader import load_config
-from bull_machine.core.signal_validation import validate_signal, standardize_signal, add_risk_management, log_signal_stats
-import logging
-import traceback
-import json
+from bull_machine.modules.structure.advanced import AdvancedStructureAnalyzer
+from bull_machine.modules.volume.advanced import AdvancedVolumeAnalyzer
+from bull_machine.modules.wyckoff.advanced import AdvancedWyckoffAnalyzer
 
 # Global cache for MTF analysis
 _mtf_cache = {}
@@ -220,7 +230,7 @@ def strategy_from_df(symbol: str, tf: str, df_tf: pd.DataFrame,
         # Standardize signal format for backtest engine
         standardized_signal = standardize_signal(signal, symbol, current_bar.name)
         if not standardized_signal:
-            logging.error(f"[ADAPTER] Signal standardization failed")
+            logging.error("[ADAPTER] Signal standardization failed")
             return None
 
         # Add risk management
@@ -263,7 +273,7 @@ def strategy_from_df(symbol: str, tf: str, df_tf: pd.DataFrame,
             logging.info(f"ADAPTER_EMIT side={engine_signal['action']} conf={engine_signal['confidence']:.3f} sym={symbol}")
             return engine_signal
         else:
-            logging.error(f"[ADAPTER] Signal validation failed")
+            logging.error("[ADAPTER] Signal validation failed")
             return None
 
     except Exception as e:

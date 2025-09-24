@@ -1,6 +1,7 @@
 import json
 import os
-from typing import Dict, Any
+from typing import Any, Dict
+
 
 def load_config(config_path: str = "config/config.json") -> Dict[str, Any]:
     """Load Bull Machine v1.1 configuration from repo /config, else defaults."""

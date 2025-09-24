@@ -1,9 +1,10 @@
 """Bull Machine v1.3 - Fusion Engine with MTF Gating"""
 
-from typing import Optional, Dict
 import logging
-from bull_machine.core.types import Signal
-from bull_machine.core.types import SyncReport
+from typing import Dict, Optional
+
+from bull_machine.core.types import Signal, SyncReport
+
 
 class FusionEngineV1_3:
     """Fusion engine that integrates v1.2.1 modules with v1.3 MTF sync."""
@@ -179,7 +180,7 @@ class FusionEngineV1_3:
             reasons.append(f"MTF aligned ({sync_report.alignment_score:.0%})")
 
         # Fusion score
-        reasons.append(f"Fusion score met")
+        reasons.append("Fusion score met")
 
         return reasons[:3]  # Limit to 3 reasons
 

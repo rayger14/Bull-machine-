@@ -1,34 +1,32 @@
 """Bull Machine v1.3 - Main Application with MTF Sync"""
 
-import sys
-import argparse
 import logging
-import json
-import pandas as pd
+import sys
 from typing import Dict, Optional
 
-from bull_machine.core.types import (
-    Bar, Series, Signal, RiskPlan,
-    WyckoffResult, LiquidityResult,
-    BiasCtx, RangeCtx, SyncReport
-)
+import pandas as pd
+
 from bull_machine.config.loader import load_config
-from bull_machine.state.store import load_state, save_state
-from bull_machine.io.feeders import load_csv_to_series
-from bull_machine.core.timeframes import tf_to_pandas_freq
 from bull_machine.core.sync import decide_mtf_entry
+from bull_machine.core.timeframes import tf_to_pandas_freq
+from bull_machine.core.types import (
+    BiasCtx,
+    RangeCtx,
+)
 from bull_machine.core.utils import extract_key_levels
+from bull_machine.fusion.fuse import FusionEngineV1_3
+from bull_machine.io.feeders import load_csv_to_series
+from bull_machine.modules.context.advanced import AdvancedContextAnalyzer
+from bull_machine.modules.liquidity.advanced import AdvancedLiquidityAnalyzer
+from bull_machine.modules.momentum.advanced import AdvancedMomentumAnalyzer
+from bull_machine.modules.risk.advanced import AdvancedRiskManager
+from bull_machine.modules.structure.advanced import AdvancedStructureAnalyzer
+from bull_machine.modules.volume.advanced import AdvancedVolumeAnalyzer
 
 # Import analyzers
 from bull_machine.modules.wyckoff.advanced import AdvancedWyckoffAnalyzer
-from bull_machine.modules.liquidity.advanced import AdvancedLiquidityAnalyzer
-from bull_machine.modules.structure.advanced import AdvancedStructureAnalyzer
-from bull_machine.modules.momentum.advanced import AdvancedMomentumAnalyzer
-from bull_machine.modules.volume.advanced import AdvancedVolumeAnalyzer
-from bull_machine.modules.context.advanced import AdvancedContextAnalyzer
+from bull_machine.state.store import load_state, save_state
 
-from bull_machine.fusion.fuse import FusionEngineV1_3
-from bull_machine.modules.risk.advanced import AdvancedRiskManager
 
 def setup_logging(level: str = "INFO"):
     """Setup logging configuration"""

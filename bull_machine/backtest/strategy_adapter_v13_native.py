@@ -5,11 +5,14 @@ This adapter uses the actual main_v13.py pipeline without modifications,
 providing the true v1.3 performance baseline.
 """
 
-import pandas as pd
-import tempfile
 import os
-from typing import Dict, Any, Optional
+import tempfile
+from typing import Any, Dict
+
+import pandas as pd
+
 from bull_machine.app.main_v13 import run_bull_machine_v1_3
+
 
 def save_temp_csv(df_window: pd.DataFrame, symbol: str) -> str:
     """Save DataFrame window as temporary CSV for v1.3 pipeline."""

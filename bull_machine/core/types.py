@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
 
 @dataclass
 class Bar:

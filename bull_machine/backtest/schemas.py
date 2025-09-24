@@ -1,7 +1,9 @@
 
-from dataclasses import dataclass, asdict, field
-from typing import List, Dict, Any
-import json, hashlib
+import hashlib
+import json
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List
+
 
 def config_hash(cfg: dict) -> str:
     blob = json.dumps(cfg, sort_keys=True).encode()

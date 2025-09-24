@@ -4,8 +4,10 @@ Multi-timeframe bias analyzer for v1.2.2
 NOT WIRED YET - Future implementation stub
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
+
 from ...core.types import Series
+
 
 class MTFBiasAnalyzer:
     """

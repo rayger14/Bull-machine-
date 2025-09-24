@@ -4,15 +4,20 @@ Implements tiered logging, HTF/MTF stride caching, and boundary detection
 based on user requirements for production-ready performance.
 """
 
-import tempfile
 import os
+import tempfile
+from typing import Any, Dict
+
 import pandas as pd
-from typing import Dict, Any, Optional
+
 from bull_machine.app.main_v13 import run_bull_machine_v1_3
 from bull_machine.core.performance import (
-    PerformanceConfig, MTFCache, PerformanceLogger,
-    LogEntry, LogMode, create_performance_config
+    LogEntry,
+    MTFCache,
+    PerformanceLogger,
+    create_performance_config,
 )
+
 
 class EnhancedStrategyAdapter:
     """Performance-optimized strategy adapter with intelligent caching"""

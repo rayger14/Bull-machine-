@@ -1,8 +1,8 @@
 
-from typing import Dict
 import os
+from typing import Dict
+
 import pandas as pd
-import logging
 
 TF_MAP = {
     '1m':'1min','5m':'5min','15m':'15min','30m':'30min',

@@ -4,18 +4,20 @@ Simplified v1.4 Strategy Adapter
 Works with available v1.3 components without missing dependencies
 """
 
-from dataclasses import dataclass
-from typing import Dict, Any, Optional, Union
-import pandas as pd
-import numpy as np
-import sys
 import os
+import sys
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
+
+import numpy as np
+import pandas as pd
 
 # Add parent to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from bull_machine.core.types import BiasCtx
 from bull_machine.core.sync import decide_mtf_entry
+from bull_machine.core.types import BiasCtx
+
 
 @dataclass
 class BacktestSignal:

@@ -1,8 +1,10 @@
-import os
-import pandas as pd
 import logging
-from typing import List
-from ..core.types import Series, Bar
+import os
+
+import pandas as pd
+
+from ..core.types import Bar, Series
+
 
 def load_csv_to_series(file_path: str, symbol: str = "UNKNOWN", timeframe: str = "1h") -> Series:
     """Load CSV and convert to Series of Bars. Required columns: open,high,low,close."""

@@ -1,6 +1,8 @@
 import logging
-from typing import List, Dict
-from ...core.types import Series, LiquidityResult
+from typing import Dict, List
+
+from ...core.types import LiquidityResult, Series
+
 
 def analyze(series: Series, bias: str, cfg: dict) -> LiquidityResult:
     """Detect FVGs and Order Blocks; compute bias-aligned score + pressure."""
@@ -72,7 +74,7 @@ def _detect_order_blocks(series: Series) -> List[Dict]:
     for i in range(3, len(series.bars)):
         start_price = series.bars[i-3].close
         end_price = series.bars[i].close
-        if not start_price: 
+        if not start_price:
             continue
         move = (end_price - start_price) / start_price
         if move > 0.02:

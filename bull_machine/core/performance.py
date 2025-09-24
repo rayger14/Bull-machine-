@@ -3,10 +3,10 @@
 Implements tiered logging and performance modes based on user requirements.
 """
 
-from typing import Dict, Any, Optional, Union
-from enum import Enum
 from dataclasses import dataclass, field
-import logging
+from enum import Enum
+from typing import Any, Dict
+
 
 class PerformanceMode(Enum):
     DEBUG = "debug"

@@ -1,6 +1,8 @@
 import logging
+
 from ..core.types import Series, Signal
 from ..core.utils import calculate_atr
+
 
 def _compute_dynamic_ttl_bars(series, w, cfg):
     """Compute dynamic TTL based on ATR%%, regime and range conditions."""

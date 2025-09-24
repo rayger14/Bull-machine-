@@ -1,8 +1,8 @@
 
-from dataclasses import dataclass
-from typing import Dict, Any, Optional, List
-import pandas as pd
 import logging
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
 
 @dataclass
 class TPLevel:
@@ -139,8 +139,8 @@ class PaperBroker:
                     last_update_idx=getattr(self, '_current_bar_idx', 0)
                 )
 
-        import logging
         import json
+        import logging
 
         # Basic entry log
         logging.info(f"BROKER_ENTER_OK symbol={symbol} side={side} size={size:.4f} price={px:.4f}")
@@ -403,8 +403,8 @@ class PaperBroker:
                 r_multiple = pnl / (risk_per_unit * close_size)
 
         # Comprehensive exit log with structured data
-        import logging
         import json
+        import logging
 
         exit_log = {
             "event": "EXIT",

@@ -1,7 +1,7 @@
 """Bull Machine v1.3 - Multi-Timeframe Sync Decision Logic"""
 
-from typing import List
 from bull_machine.core.types import BiasCtx, SyncReport
+
 
 def decide_mtf_entry(
     htf: BiasCtx,

@@ -1,7 +1,8 @@
 import logging
-from typing import Optional, List, Tuple
-from ..core.types import WyckoffResult, LiquidityResult, Signal, Series
-from ..core.utils import detect_sweep_displacement
+from typing import List, Optional, Tuple
+
+from ..core.types import LiquidityResult, Signal, WyckoffResult
+
 
 def combine(w: WyckoffResult, l: LiquidityResult, cfg: dict, state: dict) -> Tuple[Optional[Signal], Optional[str]]:
     """Combine Wyckoff + Liquidity with range suppression and confidence floor.

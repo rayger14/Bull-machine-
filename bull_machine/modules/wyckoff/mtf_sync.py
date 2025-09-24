@@ -3,10 +3,10 @@ MTF Sync Hardening for Wyckoff Layer
 Phase 1.4 Rules: Multi-timeframe alignment with liquidity gating
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, Optional, Tuple
 import logging
+from typing import Dict, Tuple
+
+import pandas as pd
 
 
 def wyckoff_state(df: pd.DataFrame) -> Dict[str, any]:
