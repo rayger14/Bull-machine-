@@ -135,9 +135,62 @@ def detect_liquidity_pools(df: pd.DataFrame, lookback: int = 50) -> List[Dict]:
     return pools
 
 
+def detect_equal_clusters(df: pd.DataFrame, tolerance_pct: float = 0.1) -> Dict:
+    """
+    Detect equal highs/lows clustering within 10 bars (Moneytaur edge case).
+    3+ equal highs/lows within 10 bars = sweep magnet.
+    """
+    clusters = {'equal_highs': [], 'equal_lows': []}
+
+    if len(df) < 10:
+        return clusters
+
+    recent = df.tail(10)
+
+    # Group similar highs
+    highs = recent['high'].values
+    for i, h1 in enumerate(highs):
+        cluster_count = 1
+        cluster_indices = [i]
+
+        for j, h2 in enumerate(highs):
+            if i != j and abs(h1 - h2) / h1 <= tolerance_pct / 100:
+                cluster_count += 1
+                cluster_indices.append(j)
+
+        if cluster_count >= 3:
+            clusters['equal_highs'].append({
+                'level': h1,
+                'count': cluster_count,
+                'indices': cluster_indices,
+                'cluster_score': min(cluster_count / 5.0, 1.0)
+            })
+
+    # Group similar lows
+    lows = recent['low'].values
+    for i, l1 in enumerate(lows):
+        cluster_count = 1
+        cluster_indices = [i]
+
+        for j, l2 in enumerate(lows):
+            if i != j and abs(l1 - l2) / l1 <= tolerance_pct / 100:
+                cluster_count += 1
+                cluster_indices.append(j)
+
+        if cluster_count >= 3:
+            clusters['equal_lows'].append({
+                'level': l1,
+                'count': cluster_count,
+                'indices': cluster_indices,
+                'cluster_score': min(cluster_count / 5.0, 1.0)
+            })
+
+    return clusters
+
+
 def calculate_liquidity_score(df: pd.DataFrame, current_idx: int = -1) -> Dict:
     """
-    Calculate comprehensive liquidity score for current market state.
+    Calculate comprehensive liquidity score with clustering detection.
     """
 
     if len(df) < 20:
@@ -145,7 +198,9 @@ def calculate_liquidity_score(df: pd.DataFrame, current_idx: int = -1) -> Dict:
             'score': 0.5,
             'pools': [],
             'recent_sweep': None,
-            'imbalance_filled': False
+            'imbalance_filled': False,
+            'clusters': {'equal_highs': [], 'equal_lows': []},
+            'cluster_score': 0.0
         }
 
     current = df.iloc[current_idx]
@@ -208,23 +263,37 @@ def calculate_liquidity_score(df: pd.DataFrame, current_idx: int = -1) -> Dict:
             if current['high'] >= prev2['low'] - gap_size * 0.5:
                 imbalance_filled = True
 
+    # Detect equal clusters
+    clusters = detect_equal_clusters(df)
+
+    # Calculate cluster score boost
+    cluster_score = 0.0
+    for cluster_type in ['equal_highs', 'equal_lows']:
+        for cluster in clusters[cluster_type]:
+            cluster_score += cluster['cluster_score'] * 0.1  # +0.1 boost per strong cluster
+
+    cluster_score = min(cluster_score, 0.2)  # Cap cluster boost at 0.2
+
     # Calculate final score
     pool_score = min(len(pools) / 5.0, 1.0) * 0.3  # More pools = more liquidity
     pool_strength = max([p['strength'] for p in pools], default=0) * 0.3
     imbalance_score = 0.2 if imbalance_filled else 0
 
-    total_score = pool_score + pool_strength + sweep_score * 0.4 + imbalance_score
+    total_score = pool_score + pool_strength + sweep_score * 0.4 + imbalance_score + cluster_score
 
     return {
         'score': min(total_score, 1.0),
         'pools': pools,
         'recent_sweep': recent_sweep,
         'imbalance_filled': imbalance_filled,
+        'clusters': clusters,
+        'cluster_score': cluster_score,
         'components': {
             'pool_density': pool_score,
             'pool_strength': pool_strength,
             'sweep_quality': sweep_score,
-            'imbalance': imbalance_score
+            'imbalance': imbalance_score,
+            'clustering': cluster_score
         }
     }
 

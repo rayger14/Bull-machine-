@@ -277,6 +277,76 @@ class MarkupExhaustion(BaseExitRule):
 # MARKDOWN SHORT EXIT RULES
 # ============================================================================
 
+class AbsorptionVsDistributionExit(BaseExitRule):
+    """
+    Absorption vs Distribution Exit (CryptoChase/Moneytaur edge case)
+    Low-vol wick rejection → hold
+    High-vol close-through → partial exit 25%
+    """
+    name = "absorption_vs_distribution"
+    required_keys = {"low_vol_threshold", "high_vol_threshold", "wick_rejection_ratio",
+                     "close_through_pct", "partial_exit_pct"}
+
+    def evaluate(self, df: pd.DataFrame, trade_plan: Dict, scores: Dict,
+                bars_since_entry: int, mtf_context: Dict = None) -> Optional[ExitDecision]:
+
+        if len(df) < 10:
+            return None
+
+        current = df.iloc[-1]
+        vol_sma = df['volume'].tail(10).mean()
+        vol_ratio = current['volume'] / vol_sma if vol_sma > 0 else 1.0
+
+        # Calculate wick metrics
+        if trade_plan['bias'] == 'long':
+            # For longs: check upper wick rejection
+            body_top = max(current['open'], current['close'])
+            upper_wick = current['high'] - body_top
+            body_size = abs(current['close'] - current['open'])
+
+            if body_size > 0:
+                wick_rejection_ratio = upper_wick / body_size
+                close_through = current['close'] > current['open']  # Green candle
+            else:
+                wick_rejection_ratio = 0
+                close_through = False
+
+        else:
+            # For shorts: check lower wick rejection
+            body_bottom = min(current['open'], current['close'])
+            lower_wick = body_bottom - current['low']
+            body_size = abs(current['close'] - current['open'])
+
+            if body_size > 0:
+                wick_rejection_ratio = lower_wick / body_size
+                close_through = current['close'] < current['open']  # Red candle
+            else:
+                wick_rejection_ratio = 0
+                close_through = False
+
+        # Decision logic
+        if vol_ratio < self.cfg['low_vol_threshold'] and \
+           wick_rejection_ratio > self.cfg['wick_rejection_ratio']:
+            # Low-vol wick rejection → HOLD (absorption)
+            return None  # No exit signal
+
+        elif vol_ratio > self.cfg['high_vol_threshold'] and close_through:
+            # High-vol close-through → PARTIAL EXIT (distribution)
+            return ExitDecision(
+                action='partial',
+                size_pct=self.cfg['partial_exit_pct'],
+                reason=f"High-vol distribution: vol_ratio={vol_ratio:.2f}, close_through={close_through}",
+                metadata={
+                    'volume_ratio': vol_ratio,
+                    'wick_rejection_ratio': wick_rejection_ratio,
+                    'close_through': close_through,
+                    'pattern': 'distribution'
+                }
+            )
+
+        return None
+
+
 class MarkdownSOSSpringFlip(BaseExitRule):
     """
     SOS/Spring Flip (Partial: 50%)

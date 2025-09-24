@@ -42,13 +42,15 @@ class FusionEngineV141:
         }
 
     def fuse_scores(self, layer_scores: Dict[str, float],
-                   quality_floors: Dict[str, float] = None) -> Dict:
+                   quality_floors: Dict[str, float] = None,
+                   wyckoff_context: Dict = None) -> Dict:
         """
-        Fuse individual layer scores into final confluence score.
+        Fuse individual layer scores into final confluence score with enhanced logic.
 
         Args:
             layer_scores: Dict of layer name -> score (0-1)
             quality_floors: Optional per-layer minimum quality thresholds
+            wyckoff_context: Additional Wyckoff context (trap_score, reclaim_speed)
 
         Returns:
             Dict with fusion results and metadata
@@ -85,17 +87,36 @@ class FusionEngineV141:
                 'reason': f'missing_critical_layers: {missing_critical}'
             }
 
+        # Apply Wyckoff enhancements if context provided
+        enhanced_scores = filtered_scores.copy()
+        trap_penalty = 0.0
+        reclaim_bonus = 0.0
+
+        if wyckoff_context and 'wyckoff' in enhanced_scores:
+            # Apply trap penalty
+            trap_score = wyckoff_context.get('trap_score', 0.0)
+            trap_penalty = trap_score
+            enhanced_scores['wyckoff'] = max(0.1, enhanced_scores['wyckoff'] - trap_penalty)
+
+            # Apply reclaim speed bonus
+            reclaim_speed = wyckoff_context.get('reclaim_speed', 0.0)
+            reclaim_bonus = reclaim_speed * 0.15  # Max 0.15 boost
+            enhanced_scores['wyckoff'] = min(0.9, enhanced_scores['wyckoff'] + reclaim_bonus)
+
+            logging.debug(f"Wyckoff enhancements: trap_penalty={trap_penalty:.3f}, "
+                         f"reclaim_bonus={reclaim_bonus:.3f}")
+
         # Calculate weighted contributions
         contributions = {}
         total_weight = 0
 
         for layer, weight in self.weights.items():
-            if layer in filtered_scores:
+            if layer in enhanced_scores:
                 # Apply Bojan capping for v1.4.1
                 if layer == 'bojan':
-                    score = min(0.6, filtered_scores[layer])  # Cap Bojan influence
+                    score = min(0.6, enhanced_scores[layer])  # Cap Bojan influence
                 else:
-                    score = filtered_scores[layer]
+                    score = enhanced_scores[layer]
 
                 contributions[layer] = score * weight
                 total_weight += weight
@@ -106,14 +127,14 @@ class FusionEngineV141:
         else:
             weighted_score = 0.0
 
-        # Calculate simple aggregate (unweighted mean)
-        aggregate = sum(filtered_scores.values()) / len(filtered_scores) if filtered_scores else 0.0
+        # Calculate simple aggregate (unweighted mean of enhanced scores)
+        aggregate = sum(enhanced_scores.values()) / len(enhanced_scores) if enhanced_scores else 0.0
 
         # Global veto checks
-        global_veto = self._check_global_veto(aggregate, filtered_scores)
+        global_veto = self._check_global_veto(aggregate, enhanced_scores)
 
         # MTF gate (if enabled)
-        mtf_gate = self._check_mtf_gate(filtered_scores)
+        mtf_gate = self._check_mtf_gate(enhanced_scores)
 
         result = {
             'aggregate': aggregate,
@@ -122,8 +143,13 @@ class FusionEngineV141:
             'global_veto': global_veto,
             'mtf_gate': mtf_gate,
             'total_weight': total_weight,
-            'layers_active': list(filtered_scores.keys()),
-            'reason': 'success' if not global_veto else 'global_veto'
+            'layers_active': list(enhanced_scores.keys()),
+            'reason': 'success' if not global_veto else 'global_veto',
+            'wyckoff_adjustments': {
+                'trap_penalty': trap_penalty,
+                'reclaim_bonus': reclaim_bonus,
+                'enhanced_wyckoff_score': enhanced_scores.get('wyckoff', 0)
+            }
         }
 
         logging.debug(f"Fusion result: agg={aggregate:.3f}, weighted={weighted_score:.3f}, "
