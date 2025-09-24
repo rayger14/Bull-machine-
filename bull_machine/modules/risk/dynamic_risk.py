@@ -9,10 +9,34 @@ from typing import Dict, Optional
 import logging
 
 
+def wyckoff_state(df: pd.DataFrame) -> Dict:
+    """Get Wyckoff phase for stop calculation."""
+    if len(df) < 20:
+        return {'phase': 'unknown'}
+
+    # Simple phase detection based on range position
+    recent = df.tail(20)
+    high_20 = recent['high'].max()
+    low_20 = recent['low'].min()
+    current_close = df.iloc[-1]['close']
+
+    if high_20 > low_20:
+        range_pos = (current_close - low_20) / (high_20 - low_20)
+        if range_pos > 0.7:
+            return {'phase': 'D'}  # Markup phase
+        elif range_pos < 0.3:
+            return {'phase': 'E'}  # Markdown phase
+        else:
+            return {'phase': 'C'}  # Consolidation
+
+    return {'phase': 'unknown'}
+
+
 def calculate_stop_loss(df: pd.DataFrame, bias: str, entry_price: float,
                         pool_depth_score: float, atr: float) -> float:
     """
-    Calculate volatility-adjusted stop loss distance.
+    Calculate phase-aware volatility-adjusted stop loss distance.
+    Wider stops in markup/markdown phases to let winners run.
 
     Args:
         df: OHLCV data
@@ -24,11 +48,20 @@ def calculate_stop_loss(df: pd.DataFrame, bias: str, entry_price: float,
     Returns:
         Stop loss price level
     """
-    # Base stop distance
-    base_distance = 1.5 * atr
+    # Get Wyckoff phase
+    phase_info = wyckoff_state(df)
+    phase = phase_info['phase']
 
-    # Pool depth adjustment - stronger pools allow tighter stops
-    depth_multiplier = max(1.0, pool_depth_score * 1.5)
+    # Phase-based stop multiplier - wider in trending phases
+    if phase in ('D', 'E'):  # Markup/Markdown phases - let winners run
+        base_multiplier = 2.0
+    else:  # Consolidation phases - tighter stops
+        base_multiplier = 1.5
+
+    base_distance = base_multiplier * atr
+
+    # Pool depth adjustment - stronger pools allow slightly wider stops for better R:R
+    depth_multiplier = max(1.0, min(1.8, pool_depth_score * 1.8))
 
     # Volatility spike adjustment
     if len(df) >= 20:
@@ -47,8 +80,10 @@ def calculate_stop_loss(df: pd.DataFrame, bias: str, entry_price: float,
     else:
         stop_price = entry_price + stop_distance
 
-    logging.debug(f"Stop calculation: base={base_distance:.2f}, depth_mult={depth_multiplier:.2f}, "
-                 f"vol_adj={vol_adjustment:.2f}, final_dist={stop_distance:.2f}")
+    # Log for telemetry
+    logging.info(f"Stop calculation: phase={phase}, base_mult={base_multiplier:.1f}, "
+                f"depth_mult={depth_multiplier:.2f}, vol_adj={vol_adjustment:.2f}, "
+                f"final_dist={stop_distance:.2f}")
 
     return stop_price
 

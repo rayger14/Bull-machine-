@@ -42,7 +42,7 @@ class FusionEngineV141:
         }
 
     def regime_filter(self, df, wyckoff_score: float, wyckoff_context: Dict = None) -> bool:
-        """Check for regime filter - suppress low-vol A/C phases."""
+        """Check for regime filter - suppress low-vol A/C phases, allow high-vol opportunities."""
 
         if not wyckoff_context:
             return True  # Pass if no context available
@@ -54,12 +54,47 @@ class FusionEngineV141:
             if len(df) >= 20:
                 vol_ratio = df['volume'].iloc[-1] / df['volume'].rolling(20).mean().iloc[-1]
 
+                # Allow high-vol A/C entries (breakouts, volatile reversals)
+                if vol_ratio >= 1.2 or wyckoff_score >= 0.85:
+                    return True  # Override veto for high-vol or strong Wyckoff
+
                 # Suppress low-volume A/C phases with weak Wyckoff scores
-                if vol_ratio < 1.0 and wyckoff_score < 0.80:
-                    logging.info(f"Regime veto: phase={phase}, vol_ratio={vol_ratio:.2f}, wyckoff={wyckoff_score:.2f}")
+                if vol_ratio < 1.2 and wyckoff_score < 0.85:
+                    logging.info(f"Regime veto: low_vol_{phase}, vol_ratio={vol_ratio:.2f}, wyckoff={wyckoff_score:.2f}")
+                    # Log for telemetry
+                    self._log_telemetry('regime_veto', {'phase': phase, 'vol_ratio': vol_ratio, 'wyckoff': wyckoff_score})
                     return False
 
         return True
+
+    def _log_telemetry(self, event: str, data: Dict) -> None:
+        """Log telemetry data."""
+        try:
+            import json
+            from pathlib import Path
+
+            telemetry_dir = Path("reports/telemetry")
+            telemetry_dir.mkdir(parents=True, exist_ok=True)
+
+            telemetry_file = telemetry_dir / "layer_masks.json"
+
+            # Read existing telemetry
+            if telemetry_file.exists():
+                with open(telemetry_file, 'r') as f:
+                    telemetry = json.load(f)
+            else:
+                telemetry = {}
+
+            # Add new event
+            telemetry[event] = telemetry.get(event, 0) + 1
+            telemetry[f'{event}_latest'] = data
+
+            # Write back
+            with open(telemetry_file, 'w') as f:
+                json.dump(telemetry, f, indent=2)
+
+        except Exception as e:
+            logging.debug(f"Telemetry logging failed: {e}")
 
     def fuse_scores(self, layer_scores: Dict[str, float],
                    quality_floors: Dict[str, float] = None,

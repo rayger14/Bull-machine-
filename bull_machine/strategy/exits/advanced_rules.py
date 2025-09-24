@@ -709,3 +709,36 @@ class AbsorptionVsDistributionExit(BaseExitRule):
             logging.info(f"Absorption detected: vol_ratio={volume_ratio:.2f}, displacement={displacement:.3f}")
 
         return None  # Hold position
+
+
+def distribution_exit(df: pd.DataFrame, volume: float, displacement: float) -> Dict:
+    """
+    Relaxed distribution exit for v1.4.2 - less aggressive partial exits.
+    
+    Args:
+        df: OHLCV data
+        volume: Current volume
+        displacement: Price displacement from structure
+        
+    Returns:
+        Exit decision dict
+    """
+    sma_vol = df['volume'].rolling(20).mean().iloc[-1]
+    
+    # Relaxed thresholds - less aggressive clipping
+    is_distribution = (volume >= 1.4 * sma_vol) and (displacement < 0.4)  # was 1.5, 0.5
+    
+    if is_distribution:
+        logging.info(f"Distribution detected: vol_ratio={volume/sma_vol:.2f}, displacement={displacement:.3f}")
+        return {
+            'action': 'partial_exit',
+            'size': 0.25,
+            'reason': 'distribution_vol_spike',
+            'metadata': {
+                'volume_ratio': volume / sma_vol,
+                'displacement': displacement,
+                'distribution_detected': True
+            }
+        }
+    
+    return {'action': 'hold', 'size': 0}
