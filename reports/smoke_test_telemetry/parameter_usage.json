@@ -1,8 +1,0 @@
-{
-  "timestamp": "2024-01-01T12:00:00",
-  "phase_c_trap_score": 0.15,
-  "reclaim_speed_bonus": 0.08,
-  "cluster_score": 0.12,
-  "regime_veto": false,
-  "mtf_override": true
-}
