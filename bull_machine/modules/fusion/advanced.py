@@ -1,122 +1,171 @@
 
-from typing import Dict, List, Optional
-from ...core.types import Signal, FusionResult, WyckoffResult
+"""Advanced module scaffolds for Bull Machine v1.2.1 / v1.3.
 
-class AdvancedFusionEngine:
-    """v1.2.1 Fusion Engine with minimal effective vetoes & trend blocks"""
-    def __init__(self, config: dict):
-        self.config = config
-        self.fusion_cfg = config.get('fusion', {})
-        self.enter_threshold = self.fusion_cfg.get('enter_threshold', 0.40)
+These implement the **interfaces** expected by main_v13.py and friends.
+Claude Code should fill in TODOs to make them production-ready.
+"""
 
-    # Stubs (assuming real implementations exist in your repo)
-    def _calculate_module_scores(self, modules_data: Dict) -> Dict[str, float]:
-        # Fix: Use combined confidence like v1.1.2, not just trend_confidence
-        wy = modules_data.get("wyckoff")
-        wyckoff_score = 0.0
-        if wy:
-            phase_conf = getattr(wy, "phase_confidence", 0.0)
-            trend_conf = getattr(wy, "trend_confidence", 0.0)
-            wyckoff_score = (phase_conf + trend_conf) / 2
+from typing import Any, Dict, List, Optional
+try:
+    from bull_machine.core.types import WyckoffResult, LiquidityResult, Signal, BiasCtx, RangeCtx, SyncReport, Series
+except Exception:
+    from dataclasses import dataclass, field
+    @dataclass
+    class WyckoffResult:
+        regime: str = "neutral"
+        phase: str = "neutral"
+        bias: str = "neutral"
+        phase_confidence: float = 0.0
+        trend_confidence: float = 0.0
+        range: Optional[Dict] = None
+        notes: List[str] = field(default_factory=list)
+        @property
+        def confidence(self) -> float:
+            return (self.phase_confidence + self.trend_confidence) / 2.0
+    @dataclass
+    class LiquidityResult:
+        score: float = 0.0
+        pressure: str = "neutral"
+        fvgs: List[Dict] = field(default_factory=list)
+        order_blocks: List[Dict] = field(default_factory=list)
+        sweeps: List[Dict] = field(default_factory=list)
+        phobs: List[Dict] = field(default_factory=list)
+        metadata: Dict = field(default_factory=dict)
+    @dataclass
+    class Signal:
+        ts: int = 0
+        side: str = "neutral"
+        confidence: float = 0.0
+        reasons: List[str] = field(default_factory=list)
+        ttl_bars: int = 0
+        metadata: Dict = field(default_factory=dict)
+        mtf_sync: Optional[Any] = None
+    @dataclass
+    class BiasCtx:
+        tf: str = "1H"
+        bias: str = "neutral"
+        confirmed: bool = False
+        strength: float = 0.0
+        bars_confirmed: int = 0
+        ma_distance: float = 0.0
+        trend_quality: float = 0.0
+    @dataclass
+    class RangeCtx:
+        tf: str = "1H"
+        low: float = 0.0
+        high: float = 0.0
+        mid: float = 0.0
+    @dataclass
+    class SyncReport:
+        htf: BiasCtx = BiasCtx()
+        mtf: BiasCtx = BiasCtx()
+        ltf_bias: str = "neutral"
+        nested_ok: bool = False
+        eq_magnet: bool = False
+        desync: bool = False
+        decision: str = "raise"
+        threshold_bump: float = 0.0
+        alignment_score: float = 0.0
+        notes: List[str] = field(default_factory=list)
+    @dataclass
+    class Series:
+        bars: List[Any] = field(default_factory=list)
+        timeframe: str = "1H"
+        symbol: str = "UNKNOWN"
 
-        return {
-            "wyckoff": wyckoff_score,
-            "liquidity": modules_data.get("liquidity", {}).get("overall_score", 0.0),
-            "structure": modules_data.get("structure", {}).get("bos_strength", 0.0),
-            "momentum": modules_data.get("momentum", {}).get("score", 0.0),
-            "volume": modules_data.get("volume", {}).get("score", 0.0),
-            "context": modules_data.get("context", {}).get("score", 0.0),
-        }
-
-    def _calculate_fusion_score(self, scores: Dict[str, float]) -> float:
-        w = self.fusion_cfg.get("weights", {
-            "wyckoff": 0.30, "liquidity": 0.25, "structure": 0.20,
-            "momentum": 0.10, "volume": 0.10, "context": 0.05
+class FusionEngineV1_3:
+    """
+    6-layer fusion (v1.2.1) + MTF-gating hook (v1.3).
+    Expected API:
+      - __init__(config)
+      - fuse(modules: dict, sync_report: Optional[Any]) -> Signal|None
+    """
+    def __init__(self, config: Optional[Dict] = None):
+        self.config = config or {}
+        self.weights = self.config.get("signals", {}).get("weights", {
+            "wyckoff": 0.30, "liquidity": 0.25, "structure": 0.20, "momentum": 0.10, "volume": 0.10, "context": 0.05
         })
-        return sum(scores.get(k, 0.0) * w.get(k, 0.0) for k in w.keys())
+        self.base_threshold = self.config.get("signals", {}).get("enter_threshold", 0.35)
 
-    def _create_breakdown(self, scores: Dict[str, float], vetoes: List[str]) -> Dict:
-        return {"scores": scores, "vetoes": vetoes}
+    def fuse(self, modules: Dict[str, Any], sync_report: Optional[Any] = None) -> Optional[Signal]:
+        # Schema validation to catch field drift early
+        self._validate_modules(modules)
 
-    def _build_signal_reasons(self, modules_data: Dict, fusion_score: float) -> List[str]:
-        wy = modules_data.get("wyckoff")
-        wy_txt = f"Wyckoff {getattr(wy, 'phase', '?')} {getattr(wy, 'bias', '?')}" if wy else "Wyckoff n/a"
-        return [wy_txt, f"Fusion score {fusion_score:.2f}"]
+        wy = modules.get("wyckoff")
+        liq = modules.get("liquidity")
 
-    def _check_vetoes(self, modules_data: Dict) -> List[str]:
-        vetoes: List[str] = []
-        wy = modules_data.get('wyckoff')
-        liq = modules_data.get('liquidity', {})
+        # Safe field access with fallbacks
+        side = getattr(wy, "bias", "neutral") if wy else "neutral"
+        liq_score = self._safe_get_score(liq) if liq else 0.0
 
-        # Early Wyckoff phase veto (A/B) unless strong confluence - Fixed threshold
-        if isinstance(wy, WyckoffResult) and wy.phase in ['A', 'B']:
-            allow = (wy.phase_confidence > 0.6) or (liq.get('overall_score', 0) > 0.7) \
-                    or (liq.get('sweeps') and any(s.get('reclaimed') for s in liq['sweeps']))
-            if not allow:
-                vetoes.append('early_wyckoff_phase')
+        # Calculate weighted score
+        wyckoff_weight = self.weights.get("wyckoff", 0.30)
+        liquidity_weight = self.weights.get("liquidity", 0.25)
 
-        # Trend filter: block opposite direction unless highly aligned with Wyckoff
-        if self.config.get('features', {}).get('trend_filter', False) and isinstance(wy, WyckoffResult):
-            if wy.bias == 'long':
-                modules_data['_trend_block'] = {'short_blocked': True}
-            elif wy.bias == 'short':
-                modules_data['_trend_block'] = {'long_blocked': True}
+        wyckoff_score = 0.0
+        if wy and side in ("long", "short"):
+            # Use phase and trend confidence for wyckoff contribution
+            avg_confidence = (getattr(wy, "phase_confidence", 0.0) + getattr(wy, "trend_confidence", 0.0)) / 2
+            wyckoff_score = avg_confidence * wyckoff_weight
 
-        # Volatility shock veto using recent bar distribution
-        series = modules_data.get('series')
-        if series and hasattr(series, 'bars') and len(series.bars) > 15:
-            moves = []
-            for j in range(1, min(15, len(series.bars))):
-                prev, curr = series.bars[-j-1].close, series.bars[-j].close
-                if prev > 0:
-                    moves.append(abs(curr - prev)/prev)
-            if moves:
-                mu = sum(moves)/len(moves)
-                var = sum((m - mu)**2 for m in moves)/len(moves)
-                sigma = var ** 0.5
-                if len(series.bars) >= 2:
-                    last = abs(series.bars[-1].close - series.bars[-2].close) / max(series.bars[-2].close, 1e-12)
-                    if sigma > 0 and last > mu + self.fusion_cfg.get('volatility_shock_sigma', 3.0)*sigma:
-                        vetoes.append('volatility_shock')
+        liquidity_score = liq_score * liquidity_weight if liq_score > 0 else 0.0
 
-        # Range suppressor (optional if available)
-        try:
-            from ..suppressors.range import RangeSuppressor
-            rs = RangeSuppressor(self.config)
-            if rs.should_suppress(wy):
-                vetoes.append('range_suppressed')
-        except Exception:
-            pass
+        # Simple structure/momentum/volume/context contributions (placeholders)
+        other_score = 0.1 * (self.weights.get("structure", 0.20) +
+                           self.weights.get("momentum", 0.10) +
+                           self.weights.get("volume", 0.10) +
+                           self.weights.get("context", 0.05))
 
-        return vetoes
+        total_score = wyckoff_score + liquidity_score + other_score
 
-    def fuse(self, modules_data: Dict) -> 'FusionResult':
-        scores = self._calculate_module_scores(modules_data)
-        vetoes = self._check_vetoes(modules_data)
+        # Apply MTF gating if sync_report provided
+        if sync_report:
+            mtf_boost = getattr(sync_report, "threshold_bump", 0.0)
+            total_score += mtf_boost
 
-        tb = modules_data.get('_trend_block', {})
-        if tb:
-            wy_score = scores.get('wyckoff', 0.5)
-            align = self.fusion_cfg.get('trend_alignment_threshold', 0.85)
-            if tb.get('long_blocked') and wy_score < align:
-                vetoes.append('trend_filter_long')
-            if tb.get('short_blocked') and wy_score < align:
-                vetoes.append('trend_filter_short')
-
-        fusion_score = self._calculate_fusion_score(scores)
-
-        signal: Optional[Signal] = None
-        if fusion_score >= self.enter_threshold and not vetoes:
-            signal = self._generate_signal(modules_data, fusion_score)
-
-        breakdown = self._create_breakdown(scores, vetoes)
-        if vetoes:
-            breakdown['veto_reason'] = vetoes[0]
-        return FusionResult(signal=signal, breakdown=breakdown, raw_scores=scores)
-
-    def _generate_signal(self, modules_data: Dict, fusion_score: float) -> Optional[Signal]:
-        wy = modules_data.get('wyckoff')
-        if not wy or wy.bias == 'neutral':
+        # Only signal if above threshold and bias is clear
+        if side not in ("long", "short") or total_score < self.base_threshold:
             return None
-        return Signal(ts=0, side=wy.bias, confidence=fusion_score,
-                      reasons=self._build_signal_reasons(modules_data, fusion_score), ttl_bars=20)
+
+        # Build detailed reasons
+        reasons = []
+        if wyckoff_score > 0.1:
+            reasons.append(f"wyckoff_{side}")
+        if liquidity_score > 0.1:
+            reasons.append(f"liquidity_{getattr(liq, 'pressure', 'neutral')}")
+        if len(reasons) == 0:
+            reasons.append("minimal_signal")
+
+        return Signal(
+            ts=0,
+            side=side,
+            confidence=min(0.95, total_score),
+            reasons=reasons,
+            ttl_bars=20,
+            metadata={
+                "wyckoff_score": wyckoff_score,
+                "liquidity_score": liquidity_score,
+                "total_score": total_score,
+                "threshold": self.base_threshold
+            }
+        )
+
+    def _validate_modules(self, modules: Dict[str, Any]):
+        """Validate module schemas to catch field drift early"""
+        wy = modules.get("wyckoff")
+        liq = modules.get("liquidity")
+
+        if wy:
+            self._require(wy, ["bias", "phase", "regime", "phase_confidence", "trend_confidence"], "WyckoffResult")
+        if liq:
+            self._require(liq, ["score", "pressure", "fvgs", "order_blocks"], "LiquidityResult")
+
+    def _require(self, obj, keys, label):
+        """Ensure required fields exist on object"""
+        missing = [k for k in keys if not hasattr(obj, k)]
+        if missing:
+            raise ValueError(f"{label} missing fields: {missing}")
+
+    def _safe_get_score(self, liq_result):
+        """Safe access for liquidity score with fallbacks"""
+        return getattr(liq_result, "score", getattr(liq_result, "overall_score", 0.0)) or 0.0

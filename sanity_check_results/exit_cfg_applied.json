@@ -1,0 +1,24 @@
+{
+  "choch_against": {
+    "bars_confirm": 2,
+    "min_break_strength": 0.05,
+    "swing_lookback": 3
+  },
+  "emit_exit_edge_logs": true,
+  "enabled": true,
+  "enabled_exits": [
+    "choch_against",
+    "momentum_fade",
+    "time_stop"
+  ],
+  "momentum_fade": {
+    "drop_pct": 0.2,
+    "lookback": 6,
+    "min_bars_in_pos": 4
+  },
+  "time_stop": {
+    "max_bars_1d": 4,
+    "max_bars_1h": 20,
+    "max_bars_4h": 8
+  }
+}

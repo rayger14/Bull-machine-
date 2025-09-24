@@ -1,0 +1,66 @@
+{
+  "run_id": "validation_eth_10k",
+  "data": {
+    "sources": {
+      "ETHUSD_1H": "/Users/raymondghandchi/Downloads/Chart logs 2/COINBASE_ETHUSD, 60_2f4ab.csv"
+    },
+    "timeframes": ["1H"],
+    "schema": {
+      "timestamp": {"name": "time", "unit": "s"},
+      "open": "open",
+      "high": "high",
+      "low": "low",
+      "close": "close",
+      "volume": "volume"
+    }
+  },
+  "broker": {
+    "fee_bps": 10,
+    "slippage_bps": 5,
+    "spread_bps": 2,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 10000,
+    "exposure_cap_pct": 0.60,
+    "max_positions": 4
+  },
+  "engine": {
+    "lookback_bars": 250,
+    "seed": 42
+  },
+  "strategy": {
+    "version": "v1.4",
+    "config": "bull_machine/configs/diagnostic_v14_step4_config.json"
+  },
+  "risk": {
+    "base_risk_pct": 0.008,
+    "max_risk_per_trade": 0.02,
+    "min_stop_pct": 0.001
+  },
+  "exit_signals": {
+    "enabled": true,
+    "enabled_exits": ["choch_against", "momentum_fade", "time_stop"],
+    "emit_exit_edge_logs": true,
+    "choch_against": {
+      "swing_lookback": 3,
+      "bars_confirm": 2,
+      "min_break_strength": 0.05
+    },
+    "momentum_fade": {
+      "lookback": 6,
+      "drop_pct": 0.20,
+      "min_bars_in_pos": 4
+    },
+    "time_stop": {
+      "max_bars_1h": 24,
+      "max_bars_4h": 8,
+      "max_bars_1d": 4
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "emit_fusion_debug": false,
+    "emit_exit_debug": true
+  }
+}

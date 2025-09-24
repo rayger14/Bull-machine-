@@ -1,0 +1,58 @@
+{
+  "run_id": "btc_extended_backtest",
+  "data": {
+    "sources": {
+      "BTCUSD_1H": "/Users/raymondghandchi/Desktop/Chart Logs/COINBASE_BTCUSD, 240_1c8b8.csv"
+    },
+    "timeframes": ["1D", "4H", "1H"]
+  },
+  "broker": {
+    "fee_bps": 2,
+    "slippage_bps": 3,
+    "spread_bps": 1,
+    "partial_fill": true
+  },
+  "portfolio": {
+    "starting_cash": 100000
+  },
+  "engine": {
+    "lookback_bars": 100,
+    "seed": 42
+  },
+  "performance": {
+    "mode": "fast",
+    "htf_stride": 24,
+    "mtf_stride": 4,
+    "log_mode": "trades",
+    "sample_rate": 50
+  },
+  "strategy": {
+    "version": "v1.4_enhanced",
+    "config": "config/production.json"
+  },
+  "signals": {
+    "enter_threshold": 0.25,
+    "weights": {
+      "wyckoff": 0.45,
+      "liquidity": 0.35,
+      "structure": 0.10,
+      "momentum": 0.05,
+      "volume": 0.05,
+      "context": 0.00
+    }
+  },
+  "risk": {
+    "base_risk_pct": 1.5,
+    "max_exposure_pct": 60.0,
+    "tp_ladder": [1.0, 2.0, 3.0],
+    "tp_sizes": [0.4, 0.3, 0.3]
+  },
+  "meta": {
+    "notes": [
+      "Extended BTC backtest with lower signal threshold (0.25)",
+      "Treating 4H data as 1H for more granular analysis",
+      "Enhanced Wyckoff weighting for trend detection",
+      "Moderate risk sizing for consistent results"
+    ]
+  }
+}

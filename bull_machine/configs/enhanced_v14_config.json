@@ -1,0 +1,52 @@
+{
+  "mode": {
+    "fusion_profile": "full_v14_enhanced",
+    "enter_threshold": 0.42,
+    "exit_threshold": 0.40,
+    "min_score_delta": 0.01,
+    "strict_mtf": true,
+    "strict_mtf_relaxed": true,
+    "eq_magnet_gate": true
+  },
+  "weights": {
+    "wyckoff": 0.30,
+    "liquidity": 0.25,
+    "structure": 0.20,
+    "momentum": 0.10,
+    "volume": 0.10,
+    "context": 0.05
+  },
+  "quality_floors": {
+    "wyckoff": 0.50,
+    "liquidity": 0.45,
+    "structure": 0.45,
+    "momentum": 0.40,
+    "volume": 0.40,
+    "context": 0.35
+  },
+  "align_boosts": {
+    "triad": 1.12,
+    "momentum": 1.08,
+    "volume": 1.04
+  },
+  "penalties": {
+    "edge_no_reclaim": 0.03,
+    "weak_break": 0.03,
+    "frvp_chop": 0.02
+  },
+  "cooldowns": {
+    "after_stop_bars": 6,
+    "min_spacing_bars": 5
+  },
+  "signals": {
+    "weights": {
+      "wyckoff": 0.30,
+      "liquidity": 0.25,
+      "structure": 0.20,
+      "momentum": 0.10,
+      "volume": 0.10,
+      "context": 0.05
+    },
+    "enter_threshold": 0.45
+  }
+}

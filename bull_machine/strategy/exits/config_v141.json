@@ -1,0 +1,96 @@
+{
+  "enabled": true,
+  "version": "1.4.1",
+  "description": "Advanced exit system with Wyckoff phases, Moneytaur trailing, and Bojan protection",
+
+  "order": [
+    "global_veto",
+    "bojan_extreme_protection",
+    "markup_sow_ut_warning",
+    "markup_utad_rejection",
+    "markup_exhaustion",
+    "markdown_sos_spring_flip",
+    "moneytaur_trailing"
+  ],
+
+  "shared": {
+    "atr_period": 14,
+    "vol_sma": 10,
+    "range_lookback": 20,
+    "aggregate_floor": 0.35,
+    "mtf_desync_floor": 0.6,
+    "cooldown_bars": 8
+  },
+
+  "markup_sow_ut_warning": {
+    "enabled": true,
+    "premium_floor": 0.70,
+    "vol_divergence_ratio": 0.70,
+    "wick_atr_mult": 1.5,
+    "mtf_desync_floor": 0.6,
+    "veto_needed": 3,
+    "partial_pct": 0.25,
+    "trail_atr_buffer_R": 0.5
+  },
+
+  "markup_utad_rejection": {
+    "enabled": true,
+    "wick_close_frac": 0.5,
+    "fib_retrace": 0.618,
+    "partial_pct": 0.5,
+    "trail_to_structure_minus_atr": true
+  },
+
+  "markup_exhaustion": {
+    "enabled": true,
+    "min_bars_since_entry": 20,
+    "retest_frac": 0.95,
+    "wyckoff_drop_floor": 0.40,
+    "aggregate_floor": 0.35
+  },
+
+  "markdown_sos_spring_flip": {
+    "enabled": true,
+    "discount_ceiling": 0.30,
+    "vol_surge_mult": 1.5,
+    "sos_green_in_6": 4,
+    "wyckoff_flip_floor": 0.70,
+    "partial_pct": 0.5
+  },
+
+  "markdown_distribution_exhaustion": {
+    "enabled": false,
+    "retest_mult": 1.05,
+    "rsi_floor": 30,
+    "partial_pct": 0.25
+  },
+
+  "phase_flip": {
+    "enabled": false,
+    "wyckoff_accum_floor": 0.70,
+    "mtf_pivot_hold": 0.80,
+    "context_floor": 0.60
+  },
+
+  "moneytaur_trailing": {
+    "enabled": true,
+    "activate_after_R": 1.0,
+    "trail_rule": "max(BE + 0.5R, structure_pivot - 1*ATR)",
+    "update_every_bars": 3
+  },
+
+  "global_veto": {
+    "enabled": true,
+    "aggregate_floor": 0.40,
+    "context_floor": 0.30,
+    "cooldown_bars": 8
+  },
+
+  "bojan_extreme_protection": {
+    "enabled": false,
+    "wick_atr_mult": 2.0,
+    "vol_under_sma_mult": 0.5,
+    "exit_pct": 0.75,
+    "require_htf_alignment": true
+  }
+}
