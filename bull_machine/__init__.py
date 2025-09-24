@@ -1,5 +1,5 @@
 """
-Bull Machine v1.4.2 - Advanced Algorithmic Trading Engine with 7-Layer Confluence
+Bull Machine - Advanced Algorithmic Trading Engine with 7-Layer Confluence
 """
 
-__version__ = "1.4.2"
+from .version import __version__, get_version_banner

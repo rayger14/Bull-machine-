@@ -1,7 +1,7 @@
-# Bull Machine 1.4.2
+# Bull Machine {{ version }}
 
 [![CI](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml/badge.svg)](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-9%2F9%20passing-success)](https://github.com/rayger14/Bull-machine-/actions)
+[![Tests](https://img.shields.io/badge/tests-{{ test_stats.passing }}%2F{{ test_stats.total }}%20passing-success)](https://github.com/rayger14/Bull-machine-/actions)
 [![Code Quality](https://img.shields.io/badge/code%20quality-ruff%20%7C%20mypy-blue)](https://github.com/rayger14/Bull-machine-/actions)
 [![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11-blue)](https://python.org)
 
@@ -13,17 +13,19 @@ Advanced algorithmic trading system with **Multi-Timeframe Sync**, **7-Layer Con
 
 ---
 
-## 🚀 What's New in 1.4.2
-
+## 🚀 What's New in {{ version }}
+{% if version == "1.4.2" -%}
 - **🎯 Realistic Trade Frequency** - Fixed threshold bottleneck (344 trades vs 2 trades previously)
 - **⚡ Advanced Exit Parameter System** - Phase-aware ATR-based stops with dynamic multipliers
 - **🔄 Quality Floor Enforcement** - Prevents weak signal execution with real-time gating
 - **📊 Enhanced Fusion Engine** - 7-layer confluence with quality gates and alignment boosts
 - **📈 Wyckoff Phase Optimization** - Confidence scoring with trend/phase awareness
 - **🎪 Repository Cleanup** - Major debloat and CI improvements
+{%- else -%}
+- Latest improvements and bug fixes
+{%- endif %}
 
-
-## 🏗️ Core Features (1.4.2)
+## 🏗️ Core Features ({{ version }})
 - **7-Layer Confluence System**
   Wyckoff + Liquidity + Structure + Momentum + Volume + Context + **MTF Sync** with intelligent fusion.
 - **Multi-Timeframe Analysis**
