@@ -59,12 +59,12 @@ pip install -e .
 
 ## ▶️ Usage
 
-**v1.3.0 with MTF Sync (Recommended):**
+**1.4.2 with MTF Sync (Recommended):**
 ```bash
 python -m bull_machine.app.main_v13 --csv your_data.csv --balance 10000 --mtf-enabled
 ```
 
-**v1.2.1 Baseline (for comparison):**
+**v1.3.0 Baseline (for comparison):**
 ```bash
 python -m bull_machine.app.main --csv your_data.csv --balance 10000
 ```
@@ -74,7 +74,7 @@ python -m bull_machine.app.main --csv your_data.csv --balance 10000
 python -m bull_machine.app.main_v13 --csv your_data.csv --balance 10000
 ```
 
-**v1.3.0 Production Settings:**
+**1.4.2 Production Settings:**
 - **Enter Threshold:** 0.35 (dynamically adjusted by MTF sync)
 - **MTF Timeframes:** 1D (HTF) → 4H (MTF) → 1H (LTF)
 - **EQ Magnet Gate:** Enabled (prevents chop trades)
@@ -101,8 +101,8 @@ timestamp,open,high,low,close,volume
 ## 📋 Example Output
 
 ```
-Bull Machine v1.3.0 Starting...
-Config version: 1.3.0
+Bull Machine 1.4.2 Starting...
+Config version: 1.4.2
 7-Layer Confluence System: Enabled
 MTF Sync: ENABLED
 
@@ -144,7 +144,7 @@ Running Advanced Fusion Engine...
    Signal: LONG with confidence 0.413
    TTL: 20 bars
 
-=== TRADE PLAN GENERATED (v1.3.0 MTF) ===
+=== TRADE PLAN GENERATED (1.4.2 MTF) ===
 Direction: LONG (MTF Approved)
 Entry: 45.67
 Stop: 43.89
@@ -164,12 +164,12 @@ Take Profits:
 
 ---
 
-## 📈 Performance Results (v1.3.0)
+## 📈 Performance Results (1.4.2)
 
 ### Validated Performance Across Markets
-**Total Trades Analyzed:** 2,745 (v1.2.1) vs 1,768 (v1.3.0)
+**Total Trades Analyzed:** 2,745 (v1.3.0) vs 1,768 (1.4.2)
 
-| Asset | Timeframe | v1.2.1 Win Rate | v1.3.0 Win Rate | PnL Improvement |
+| Asset | Timeframe | v1.3.0 Win Rate | 1.4.2 Win Rate | PnL Improvement |
 |-------|-----------|-----------------|-----------------|------------------|
 | BTCUSD | 1D | 58.0% | 69.6% | +208.3% |
 | BTCUSD | 4H | 58.0% | 75.0% | +71.5% |
@@ -177,18 +177,18 @@ Take Profits:
 | SPY | All TFs | 58.0% | 75.0% | +50-80% |
 
 **Overall Results:**
-- **Total PnL:** +1,299.9% (v1.2.1) → +2,092.5% (v1.3.0)
+- **Total PnL:** +1,299.9% (v1.3.0) → +2,092.5% (1.4.2)
 - **Improvement:** +792.6% (+61.0% better performance)
 - **Win Rate:** 58% → 69.6-75% (+11.6-17% improvement)
 - **Signal Quality:** 36% fewer trades, but much higher success rate
 
 **12-Month Account Growth Simulation:**
-- v1.2.1: $10,000 → $25,182
-- v1.3.0: $10,000 → $34,985 (+$9,803 additional profit)
+- v1.3.0: $10,000 → $25,182
+- 1.4.2: $10,000 → $34,985 (+$9,803 additional profit)
 
 ---
 
-## ⚠️ Limitations (v1.3.0)
+## ⚠️ Limitations (1.4.2)
 - CSV input only — no live exchange feeds yet.
 - Requires sufficient historical data (200+ bars) for MTF analysis.
 - Production-validated but recommend paper trading before live deployment.  
@@ -197,30 +197,30 @@ Take Profits:
 
 ## 🔮 Roadmap
 
-- **v1.2.1** ✅ Enhanced Liquidity + 6-Layer Confluence (COMPLETE)
-- **v1.3.0** ✅ Multi-Timeframe Sync + 7-Layer System (COMPLETE)
-- **v1.4.0** → Advanced Backtesting Framework + Performance Analytics
+- **v1.3.0** ✅ Enhanced Liquidity + 6-Layer Confluence (COMPLETE)
+- **v1.4.0** ✅ Multi-Timeframe Sync + 7-Layer System (COMPLETE)
+- **1.4.2** ✅ Advanced Exit System + Quality Floor + Telemetry (CURRENT)
 - **v1.5.0** → Live Exchange Integration (Binance, Coinbase Pro)
 - **v2.x** → Machine Learning Layer (pattern recognition, adaptive thresholds)
 - **Beyond** → Multi-asset portfolio management, sentiment integration  
 
 ---
 
-## 📊 Production Testing (v1.3.0)
+## 📊 Production Testing (1.4.2)
 
 Run comprehensive analysis and backtests:
 
 ```bash
-# v1.3.0 MTF Performance Analysis
+# 1.4.2 MTF Performance Analysis
 python run_production_analysis.py
 
-# v1.3.0 vs v1.2.1 PnL Comparison
+# 1.4.2 vs v1.3.0 PnL Comparison
 python simulate_v13_pnl.py
 
 # MTF Core Functionality Demo
 python demonstrate_v13_mtf.py
 
-# v1.3.0 Production Test
+# 1.4.2 Production Test
 python production_test_v13.py
 ```
 
