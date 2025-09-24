@@ -152,7 +152,6 @@ class PaperBroker:
                 )
 
         import json
-        import logging
 
         # Basic entry log
         logging.info(f"BROKER_ENTER_OK symbol={symbol} side={side} size={size:.4f} price={px:.4f}")
@@ -479,7 +478,6 @@ class PaperBroker:
 
         # Comprehensive exit log with structured data
         import json
-        import logging
 
         exit_log = {
             "event": "EXIT",
