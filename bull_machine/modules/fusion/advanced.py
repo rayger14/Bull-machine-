@@ -1,4 +1,3 @@
-
 """Advanced module scaffolds for Bull Machine v1.2.1 / v1.3.
 
 These implement the **interfaces** expected by main_v13.py and friends.
@@ -19,6 +18,7 @@ try:
     )
 except Exception:
     from dataclasses import dataclass, field
+
     @dataclass
     class WyckoffResult:
         regime: str = "neutral"
@@ -28,9 +28,11 @@ except Exception:
         trend_confidence: float = 0.0
         range: Optional[Dict] = None
         notes: List[str] = field(default_factory=list)
+
         @property
         def confidence(self) -> float:
             return (self.phase_confidence + self.trend_confidence) / 2.0
+
     @dataclass
     class LiquidityResult:
         score: float = 0.0
@@ -40,6 +42,7 @@ except Exception:
         sweeps: List[Dict] = field(default_factory=list)
         phobs: List[Dict] = field(default_factory=list)
         metadata: Dict = field(default_factory=dict)
+
     @dataclass
     class Signal:
         ts: int = 0
@@ -49,6 +52,7 @@ except Exception:
         ttl_bars: int = 0
         metadata: Dict = field(default_factory=dict)
         mtf_sync: Optional[Any] = None
+
     @dataclass
     class BiasCtx:
         tf: str = "1H"
@@ -58,12 +62,14 @@ except Exception:
         bars_confirmed: int = 0
         ma_distance: float = 0.0
         trend_quality: float = 0.0
+
     @dataclass
     class RangeCtx:
         tf: str = "1H"
         low: float = 0.0
         high: float = 0.0
         mid: float = 0.0
+
     @dataclass
     class SyncReport:
         htf: BiasCtx = BiasCtx()
@@ -76,11 +82,13 @@ except Exception:
         threshold_bump: float = 0.0
         alignment_score: float = 0.0
         notes: List[str] = field(default_factory=list)
+
     @dataclass
     class Series:
         bars: List[Any] = field(default_factory=list)
         timeframe: str = "1H"
         symbol: str = "UNKNOWN"
+
 
 class FusionEngineV1_3:
     """
@@ -89,11 +97,20 @@ class FusionEngineV1_3:
       - __init__(config)
       - fuse(modules: dict, sync_report: Optional[Any]) -> Signal|None
     """
+
     def __init__(self, config: Optional[Dict] = None):
         self.config = config or {}
-        self.weights = self.config.get("signals", {}).get("weights", {
-            "wyckoff": 0.30, "liquidity": 0.25, "structure": 0.20, "momentum": 0.10, "volume": 0.10, "context": 0.05
-        })
+        self.weights = self.config.get("signals", {}).get(
+            "weights",
+            {
+                "wyckoff": 0.30,
+                "liquidity": 0.25,
+                "structure": 0.20,
+                "momentum": 0.10,
+                "volume": 0.10,
+                "context": 0.05,
+            },
+        )
         self.base_threshold = self.config.get("signals", {}).get("enter_threshold", 0.35)
 
     def fuse(self, modules: Dict[str, Any], sync_report: Optional[Any] = None) -> Optional[Signal]:
@@ -114,16 +131,20 @@ class FusionEngineV1_3:
         wyckoff_score = 0.0
         if wy and side in ("long", "short"):
             # Use phase and trend confidence for wyckoff contribution
-            avg_confidence = (getattr(wy, "phase_confidence", 0.0) + getattr(wy, "trend_confidence", 0.0)) / 2
+            avg_confidence = (
+                getattr(wy, "phase_confidence", 0.0) + getattr(wy, "trend_confidence", 0.0)
+            ) / 2
             wyckoff_score = avg_confidence * wyckoff_weight
 
         liquidity_score = liq_score * liquidity_weight if liq_score > 0 else 0.0
 
         # Simple structure/momentum/volume/context contributions (placeholders)
-        other_score = 0.1 * (self.weights.get("structure", 0.20) +
-                           self.weights.get("momentum", 0.10) +
-                           self.weights.get("volume", 0.10) +
-                           self.weights.get("context", 0.05))
+        other_score = 0.1 * (
+            self.weights.get("structure", 0.20)
+            + self.weights.get("momentum", 0.10)
+            + self.weights.get("volume", 0.10)
+            + self.weights.get("context", 0.05)
+        )
 
         total_score = wyckoff_score + liquidity_score + other_score
 
@@ -155,8 +176,8 @@ class FusionEngineV1_3:
                 "wyckoff_score": wyckoff_score,
                 "liquidity_score": liquidity_score,
                 "total_score": total_score,
-                "threshold": self.base_threshold
-            }
+                "threshold": self.base_threshold,
+            },
         )
 
     def _validate_modules(self, modules: Dict[str, Any]):
@@ -165,7 +186,11 @@ class FusionEngineV1_3:
         liq = modules.get("liquidity")
 
         if wy:
-            self._require(wy, ["bias", "phase", "regime", "phase_confidence", "trend_confidence"], "WyckoffResult")
+            self._require(
+                wy,
+                ["bias", "phase", "regime", "phase_confidence", "trend_confidence"],
+                "WyckoffResult",
+            )
         if liq:
             self._require(liq, ["score", "pressure", "fvgs", "order_blocks"], "LiquidityResult")
 
@@ -178,3 +203,15 @@ class FusionEngineV1_3:
     def _safe_get_score(self, liq_result):
         """Safe access for liquidity score with fallbacks"""
         return getattr(liq_result, "score", getattr(liq_result, "overall_score", 0.0)) or 0.0
+
+
+# Backward compatibility alias for tests
+from bull_machine.modules.fusion.enhanced import EnhancedFusionEngineV1_4
+
+
+class AdvancedFusionEngine(EnhancedFusionEngineV1_4):
+    """Compatibility wrapper to bridge API differences."""
+
+    def fuse(self, modules: Dict[str, Any], sync_report: Optional[Any] = None) -> Optional[Signal]:
+        """Bridge method - delegate to fuse_with_mtf."""
+        return self.fuse_with_mtf(modules, sync_report)

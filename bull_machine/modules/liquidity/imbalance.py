@@ -17,8 +17,9 @@ def calculate_fib_level(high: float, low: float, current: float) -> float:
     return (current - low) / (high - low)
 
 
-def score_sweep_mitigation(sweep_bar: Dict, reclaim_bar: Dict,
-                          atr: float, fib_level: float) -> float:
+def score_sweep_mitigation(
+    sweep_bar: Dict, reclaim_bar: Dict, atr: float, fib_level: float
+) -> float:
     """
     Score liquidity sweep mitigation quality.
 
@@ -33,10 +34,10 @@ def score_sweep_mitigation(sweep_bar: Dict, reclaim_bar: Dict,
     """
 
     # Calculate time to reclaim (in hours)
-    speed_hrs = abs(reclaim_bar['ts'] - sweep_bar['ts']) / 3600
+    speed_hrs = abs(reclaim_bar["ts"] - sweep_bar["ts"]) / 3600
 
     # Calculate displacement (in ATR units)
-    displacement = abs(reclaim_bar['close'] - sweep_bar['low']) / max(atr, 1e-9)
+    displacement = abs(reclaim_bar["close"] - sweep_bar["low"]) / max(atr, 1e-9)
 
     # Check if in discount zone (golden pocket)
     is_discount = 0.618 <= fib_level <= 0.786
@@ -71,7 +72,7 @@ def detect_liquidity_pools(df: pd.DataFrame, lookback: int = 50) -> List[Dict]:
     recent = df.tail(lookback)
 
     # Find equal highs (within 0.1% tolerance)
-    highs = recent['high'].values
+    highs = recent["high"].values
     high_counts = {}
 
     for h in highs:
@@ -82,15 +83,17 @@ def detect_liquidity_pools(df: pd.DataFrame, lookback: int = 50) -> List[Dict]:
     # Equal highs with 3+ touches
     for level, count in high_counts.items():
         if count >= 3:
-            pools.append({
-                'type': 'equal_highs',
-                'level': level,
-                'touches': count,
-                'strength': min(count / 5.0, 1.0)
-            })
+            pools.append(
+                {
+                    "type": "equal_highs",
+                    "level": level,
+                    "touches": count,
+                    "strength": min(count / 5.0, 1.0),
+                }
+            )
 
     # Find equal lows
-    lows = recent['low'].values
+    lows = recent["low"].values
     low_counts = {}
 
     for l in lows:
@@ -99,37 +102,43 @@ def detect_liquidity_pools(df: pd.DataFrame, lookback: int = 50) -> List[Dict]:
 
     for level, count in low_counts.items():
         if count >= 3:
-            pools.append({
-                'type': 'equal_lows',
-                'level': level,
-                'touches': count,
-                'strength': min(count / 5.0, 1.0)
-            })
+            pools.append(
+                {
+                    "type": "equal_lows",
+                    "level": level,
+                    "touches": count,
+                    "strength": min(count / 5.0, 1.0),
+                }
+            )
 
     # Detect order blocks (large volume candles with subsequent respect)
-    vol_threshold = recent['volume'].quantile(0.8)
+    vol_threshold = recent["volume"].quantile(0.8)
 
     for i in range(len(recent) - 10):
-        if recent.iloc[i]['volume'] > vol_threshold:
+        if recent.iloc[i]["volume"] > vol_threshold:
             # Check if this level was respected
-            ob_high = recent.iloc[i]['high']
-            ob_low = recent.iloc[i]['low']
+            ob_high = recent.iloc[i]["high"]
+            ob_low = recent.iloc[i]["low"]
 
             # Count subsequent touches
             touches = 0
             for j in range(i + 1, min(i + 10, len(recent))):
-                if ob_low <= recent.iloc[j]['low'] <= ob_high or \
-                   ob_low <= recent.iloc[j]['high'] <= ob_high:
+                if (
+                    ob_low <= recent.iloc[j]["low"] <= ob_high
+                    or ob_low <= recent.iloc[j]["high"] <= ob_high
+                ):
                     touches += 1
 
             if touches >= 2:
-                pools.append({
-                    'type': 'order_block',
-                    'level': (ob_high + ob_low) / 2,
-                    'range': (ob_high, ob_low),
-                    'touches': touches,
-                    'strength': min(touches / 3.0, 1.0) * 0.8
-                })
+                pools.append(
+                    {
+                        "type": "order_block",
+                        "level": (ob_high + ob_low) / 2,
+                        "range": (ob_high, ob_low),
+                        "touches": touches,
+                        "strength": min(touches / 3.0, 1.0) * 0.8,
+                    }
+                )
 
     return pools
 
@@ -139,7 +148,7 @@ def detect_equal_clusters(df: pd.DataFrame, tolerance_pct: float = 0.1) -> Dict:
     Detect equal highs/lows clustering within 10 bars (Moneytaur edge case).
     3+ equal highs/lows within 10 bars = sweep magnet.
     """
-    clusters = {'equal_highs': [], 'equal_lows': []}
+    clusters = {"equal_highs": [], "equal_lows": []}
 
     if len(df) < 10:
         return clusters
@@ -147,7 +156,7 @@ def detect_equal_clusters(df: pd.DataFrame, tolerance_pct: float = 0.1) -> Dict:
     recent = df.tail(10)
 
     # Group similar highs
-    highs = recent['high'].values
+    highs = recent["high"].values
     for i, h1 in enumerate(highs):
         cluster_count = 1
         cluster_indices = [i]
@@ -158,15 +167,17 @@ def detect_equal_clusters(df: pd.DataFrame, tolerance_pct: float = 0.1) -> Dict:
                 cluster_indices.append(j)
 
         if cluster_count >= 3:
-            clusters['equal_highs'].append({
-                'level': h1,
-                'count': cluster_count,
-                'indices': cluster_indices,
-                'cluster_score': min(cluster_count / 5.0, 1.0)
-            })
+            clusters["equal_highs"].append(
+                {
+                    "level": h1,
+                    "count": cluster_count,
+                    "indices": cluster_indices,
+                    "cluster_score": min(cluster_count / 5.0, 1.0),
+                }
+            )
 
     # Group similar lows
-    lows = recent['low'].values
+    lows = recent["low"].values
     for i, l1 in enumerate(lows):
         cluster_count = 1
         cluster_indices = [i]
@@ -177,12 +188,14 @@ def detect_equal_clusters(df: pd.DataFrame, tolerance_pct: float = 0.1) -> Dict:
                 cluster_indices.append(j)
 
         if cluster_count >= 3:
-            clusters['equal_lows'].append({
-                'level': l1,
-                'count': cluster_count,
-                'indices': cluster_indices,
-                'cluster_score': min(cluster_count / 5.0, 1.0)
-            })
+            clusters["equal_lows"].append(
+                {
+                    "level": l1,
+                    "count": cluster_count,
+                    "indices": cluster_indices,
+                    "cluster_score": min(cluster_count / 5.0, 1.0),
+                }
+            )
 
     return clusters
 
@@ -194,12 +207,12 @@ def calculate_liquidity_score(df: pd.DataFrame, current_idx: int = -1) -> Dict:
 
     if len(df) < 20:
         return {
-            'score': 0.5,
-            'pools': [],
-            'recent_sweep': None,
-            'imbalance_filled': False,
-            'clusters': {'equal_highs': [], 'equal_lows': []},
-            'cluster_score': 0.0
+            "score": 0.5,
+            "pools": [],
+            "recent_sweep": None,
+            "imbalance_filled": False,
+            "clusters": {"equal_highs": [], "equal_lows": []},
+            "cluster_score": 0.0,
         }
 
     current = df.iloc[current_idx]
@@ -217,27 +230,27 @@ def calculate_liquidity_score(df: pd.DataFrame, current_idx: int = -1) -> Dict:
 
         # Check if bar swept any pool
         for pool in pools:
-            if pool['type'] == 'equal_lows' and bar['low'] < pool['level'] * 0.998:
+            if pool["type"] == "equal_lows" and bar["low"] < pool["level"] * 0.998:
                 # Swept equal lows
-                if bar['close'] > pool['level']:
+                if bar["close"] > pool["level"]:
                     # Reclaimed in same bar - strong signal
                     recent_sweep = {
-                        'type': 'sweep_and_reclaim',
-                        'level': pool['level'],
-                        'bar_idx': i,
-                        'strength': 0.8
+                        "type": "sweep_and_reclaim",
+                        "level": pool["level"],
+                        "bar_idx": i,
+                        "strength": 0.8,
                     }
                     sweep_score = 0.8
                     break
-            elif pool['type'] == 'equal_highs' and bar['high'] > pool['level'] * 1.002:
+            elif pool["type"] == "equal_highs" and bar["high"] > pool["level"] * 1.002:
                 # Swept equal highs
-                if bar['close'] < pool['level']:
+                if bar["close"] < pool["level"]:
                     # Reclaimed in same bar
                     recent_sweep = {
-                        'type': 'sweep_and_reclaim',
-                        'level': pool['level'],
-                        'bar_idx': i,
-                        'strength': 0.8
+                        "type": "sweep_and_reclaim",
+                        "level": pool["level"],
+                        "bar_idx": i,
+                        "strength": 0.8,
                     }
                     sweep_score = 0.8
                     break
@@ -251,15 +264,15 @@ def calculate_liquidity_score(df: pd.DataFrame, current_idx: int = -1) -> Dict:
         prev1 = df.iloc[-2]
 
         # Bullish FVG
-        if prev2['high'] < prev1['low']:
-            gap_size = prev1['low'] - prev2['high']
-            if current['low'] <= prev2['high'] + gap_size * 0.5:
+        if prev2["high"] < prev1["low"]:
+            gap_size = prev1["low"] - prev2["high"]
+            if current["low"] <= prev2["high"] + gap_size * 0.5:
                 imbalance_filled = True
 
         # Bearish FVG
-        elif prev2['low'] > prev1['high']:
-            gap_size = prev2['low'] - prev1['high']
-            if current['high'] >= prev2['low'] - gap_size * 0.5:
+        elif prev2["low"] > prev1["high"]:
+            gap_size = prev2["low"] - prev1["high"]
+            if current["high"] >= prev2["low"] - gap_size * 0.5:
                 imbalance_filled = True
 
     # Detect equal clusters
@@ -267,38 +280,37 @@ def calculate_liquidity_score(df: pd.DataFrame, current_idx: int = -1) -> Dict:
 
     # Calculate cluster score boost
     cluster_score = 0.0
-    for cluster_type in ['equal_highs', 'equal_lows']:
+    for cluster_type in ["equal_highs", "equal_lows"]:
         for cluster in clusters[cluster_type]:
-            cluster_score += cluster['cluster_score'] * 0.1  # +0.1 boost per strong cluster
+            cluster_score += cluster["cluster_score"] * 0.1  # +0.1 boost per strong cluster
 
     cluster_score = min(cluster_score, 0.2)  # Cap cluster boost at 0.2
 
     # Calculate final score
     pool_score = min(len(pools) / 5.0, 1.0) * 0.3  # More pools = more liquidity
-    pool_strength = max([p['strength'] for p in pools], default=0) * 0.3
+    pool_strength = max([p["strength"] for p in pools], default=0) * 0.3
     imbalance_score = 0.2 if imbalance_filled else 0
 
     total_score = pool_score + pool_strength + sweep_score * 0.4 + imbalance_score + cluster_score
 
     return {
-        'score': min(total_score, 1.0),
-        'pools': pools,
-        'recent_sweep': recent_sweep,
-        'imbalance_filled': imbalance_filled,
-        'clusters': clusters,
-        'cluster_score': cluster_score,
-        'components': {
-            'pool_density': pool_score,
-            'pool_strength': pool_strength,
-            'sweep_quality': sweep_score,
-            'imbalance': imbalance_score,
-            'clustering': cluster_score
-        }
+        "score": min(total_score, 1.0),
+        "pools": pools,
+        "recent_sweep": recent_sweep,
+        "imbalance_filled": imbalance_filled,
+        "clusters": clusters,
+        "cluster_score": cluster_score,
+        "components": {
+            "pool_density": pool_score,
+            "pool_strength": pool_strength,
+            "sweep_quality": sweep_score,
+            "imbalance": imbalance_score,
+            "clustering": cluster_score,
+        },
     }
 
 
-def liquidity_ttl_decay(base_score: float, bars_since_event: int,
-                        ttl_bars: int = 12) -> float:
+def liquidity_ttl_decay(base_score: float, bars_since_event: int, ttl_bars: int = 12) -> float:
     """
     Apply time-to-live decay to liquidity scores.
 

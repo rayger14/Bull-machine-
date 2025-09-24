@@ -11,10 +11,12 @@ import numpy as np
 from datetime import datetime
 import logging
 
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
+
 
 def setup_logging():
-    logging.basicConfig(level=logging.INFO, format='%(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+
 
 def demonstrate_mtf_decision_matrix():
     """Demonstrate all MTF sync scenarios"""
@@ -27,75 +29,173 @@ def demonstrate_mtf_decision_matrix():
     # Test all possible MTF scenarios
     scenarios = [
         {
-            'name': '🚀 Perfect Bull Alignment',
-            'htf': BiasCtx(tf="1D", bias="long", confirmed=True, strength=0.85,
-                          bars_confirmed=3, ma_distance=0.04, trend_quality=0.8),
-            'mtf': BiasCtx(tf="4H", bias="long", confirmed=True, strength=0.75,
-                          bars_confirmed=2, ma_distance=0.02, trend_quality=0.7),
-            'ltf_bias': 'long',
-            'nested_ok': True,
-            'eq_magnet': False
+            "name": "🚀 Perfect Bull Alignment",
+            "htf": BiasCtx(
+                tf="1D",
+                bias="long",
+                confirmed=True,
+                strength=0.85,
+                bars_confirmed=3,
+                ma_distance=0.04,
+                trend_quality=0.8,
+            ),
+            "mtf": BiasCtx(
+                tf="4H",
+                bias="long",
+                confirmed=True,
+                strength=0.75,
+                bars_confirmed=2,
+                ma_distance=0.02,
+                trend_quality=0.7,
+            ),
+            "ltf_bias": "long",
+            "nested_ok": True,
+            "eq_magnet": False,
         },
         {
-            'name': '📉 Perfect Bear Alignment',
-            'htf': BiasCtx(tf="1D", bias="short", confirmed=True, strength=0.80,
-                          bars_confirmed=3, ma_distance=0.03, trend_quality=0.75),
-            'mtf': BiasCtx(tf="4H", bias="short", confirmed=True, strength=0.70,
-                          bars_confirmed=2, ma_distance=0.025, trend_quality=0.65),
-            'ltf_bias': 'short',
-            'nested_ok': True,
-            'eq_magnet': False
+            "name": "📉 Perfect Bear Alignment",
+            "htf": BiasCtx(
+                tf="1D",
+                bias="short",
+                confirmed=True,
+                strength=0.80,
+                bars_confirmed=3,
+                ma_distance=0.03,
+                trend_quality=0.75,
+            ),
+            "mtf": BiasCtx(
+                tf="4H",
+                bias="short",
+                confirmed=True,
+                strength=0.70,
+                bars_confirmed=2,
+                ma_distance=0.025,
+                trend_quality=0.65,
+            ),
+            "ltf_bias": "short",
+            "nested_ok": True,
+            "eq_magnet": False,
         },
         {
-            'name': '⚠️  HTF-MTF Conflict (Major Desync)',
-            'htf': BiasCtx(tf="1D", bias="long", confirmed=True, strength=0.85,
-                          bars_confirmed=3, ma_distance=0.04, trend_quality=0.8),
-            'mtf': BiasCtx(tf="4H", bias="short", confirmed=True, strength=0.70,
-                          bars_confirmed=2, ma_distance=0.03, trend_quality=0.65),
-            'ltf_bias': 'short',
-            'nested_ok': False,
-            'eq_magnet': False
+            "name": "⚠️  HTF-MTF Conflict (Major Desync)",
+            "htf": BiasCtx(
+                tf="1D",
+                bias="long",
+                confirmed=True,
+                strength=0.85,
+                bars_confirmed=3,
+                ma_distance=0.04,
+                trend_quality=0.8,
+            ),
+            "mtf": BiasCtx(
+                tf="4H",
+                bias="short",
+                confirmed=True,
+                strength=0.70,
+                bars_confirmed=2,
+                ma_distance=0.03,
+                trend_quality=0.65,
+            ),
+            "ltf_bias": "short",
+            "nested_ok": False,
+            "eq_magnet": False,
         },
         {
-            'name': '🔄 HTF-LTF Minor Desync',
-            'htf': BiasCtx(tf="1D", bias="long", confirmed=True, strength=0.75,
-                          bars_confirmed=3, ma_distance=0.02, trend_quality=0.7),
-            'mtf': BiasCtx(tf="4H", bias="long", confirmed=True, strength=0.70,
-                          bars_confirmed=2, ma_distance=0.015, trend_quality=0.65),
-            'ltf_bias': 'short',  # Only LTF is opposite
-            'nested_ok': True,
-            'eq_magnet': False
+            "name": "🔄 HTF-LTF Minor Desync",
+            "htf": BiasCtx(
+                tf="1D",
+                bias="long",
+                confirmed=True,
+                strength=0.75,
+                bars_confirmed=3,
+                ma_distance=0.02,
+                trend_quality=0.7,
+            ),
+            "mtf": BiasCtx(
+                tf="4H",
+                bias="long",
+                confirmed=True,
+                strength=0.70,
+                bars_confirmed=2,
+                ma_distance=0.015,
+                trend_quality=0.65,
+            ),
+            "ltf_bias": "short",  # Only LTF is opposite
+            "nested_ok": True,
+            "eq_magnet": False,
         },
         {
-            'name': '🚫 EQ Magnet Zone (Chop Risk)',
-            'htf': BiasCtx(tf="1D", bias="neutral", confirmed=False, strength=0.45,
-                          bars_confirmed=0, ma_distance=0.005, trend_quality=0.3),
-            'mtf': BiasCtx(tf="4H", bias="neutral", confirmed=False, strength=0.40,
-                          bars_confirmed=0, ma_distance=0.003, trend_quality=0.25),
-            'ltf_bias': 'neutral',
-            'nested_ok': False,
-            'eq_magnet': True  # Price in equilibrium
+            "name": "🚫 EQ Magnet Zone (Chop Risk)",
+            "htf": BiasCtx(
+                tf="1D",
+                bias="neutral",
+                confirmed=False,
+                strength=0.45,
+                bars_confirmed=0,
+                ma_distance=0.005,
+                trend_quality=0.3,
+            ),
+            "mtf": BiasCtx(
+                tf="4H",
+                bias="neutral",
+                confirmed=False,
+                strength=0.40,
+                bars_confirmed=0,
+                ma_distance=0.003,
+                trend_quality=0.25,
+            ),
+            "ltf_bias": "neutral",
+            "nested_ok": False,
+            "eq_magnet": True,  # Price in equilibrium
         },
         {
-            'name': '💪 Strong HTF Overrides Weak Signals',
-            'htf': BiasCtx(tf="1D", bias="long", confirmed=True, strength=0.90,
-                          bars_confirmed=5, ma_distance=0.06, trend_quality=0.9),
-            'mtf': BiasCtx(tf="4H", bias="neutral", confirmed=False, strength=0.35,
-                          bars_confirmed=0, ma_distance=0.01, trend_quality=0.3),
-            'ltf_bias': 'neutral',
-            'nested_ok': True,
-            'eq_magnet': False
+            "name": "💪 Strong HTF Overrides Weak Signals",
+            "htf": BiasCtx(
+                tf="1D",
+                bias="long",
+                confirmed=True,
+                strength=0.90,
+                bars_confirmed=5,
+                ma_distance=0.06,
+                trend_quality=0.9,
+            ),
+            "mtf": BiasCtx(
+                tf="4H",
+                bias="neutral",
+                confirmed=False,
+                strength=0.35,
+                bars_confirmed=0,
+                ma_distance=0.01,
+                trend_quality=0.3,
+            ),
+            "ltf_bias": "neutral",
+            "nested_ok": True,
+            "eq_magnet": False,
         },
         {
-            'name': '🎯 Nested Confluence Perfect',
-            'htf': BiasCtx(tf="1D", bias="long", confirmed=True, strength=0.80,
-                          bars_confirmed=3, ma_distance=0.04, trend_quality=0.75),
-            'mtf': BiasCtx(tf="4H", bias="long", confirmed=True, strength=0.75,
-                          bars_confirmed=2, ma_distance=0.02, trend_quality=0.7),
-            'ltf_bias': 'long',
-            'nested_ok': True,  # Perfect nesting
-            'eq_magnet': False
-        }
+            "name": "🎯 Nested Confluence Perfect",
+            "htf": BiasCtx(
+                tf="1D",
+                bias="long",
+                confirmed=True,
+                strength=0.80,
+                bars_confirmed=3,
+                ma_distance=0.04,
+                trend_quality=0.75,
+            ),
+            "mtf": BiasCtx(
+                tf="4H",
+                bias="long",
+                confirmed=True,
+                strength=0.75,
+                bars_confirmed=2,
+                ma_distance=0.02,
+                trend_quality=0.7,
+            ),
+            "ltf_bias": "long",
+            "nested_ok": True,  # Perfect nesting
+            "eq_magnet": False,
+        },
     ]
 
     policy = {
@@ -104,27 +204,27 @@ def demonstrate_mtf_decision_matrix():
         "eq_magnet_gate": True,
         "eq_bump": 0.05,
         "nested_bump": 0.03,
-        "alignment_discount": 0.05
+        "alignment_discount": 0.05,
     }
 
     print("\n📋 MTF SYNC DECISION MATRIX:")
     print("-" * 60)
 
-    results_summary = {'allow': 0, 'raise': 0, 'veto': 0}
+    results_summary = {"allow": 0, "raise": 0, "veto": 0}
 
     for i, scenario in enumerate(scenarios, 1):
         result = decide_mtf_entry(
-            scenario['htf'], scenario['mtf'], scenario['ltf_bias'],
-            scenario['nested_ok'], scenario['eq_magnet'], policy
+            scenario["htf"],
+            scenario["mtf"],
+            scenario["ltf_bias"],
+            scenario["nested_ok"],
+            scenario["eq_magnet"],
+            policy,
         )
 
-        decision_icons = {
-            'allow': '✅',
-            'raise': '⚠️ ',
-            'veto': '❌'
-        }
+        decision_icons = {"allow": "✅", "raise": "⚠️ ", "veto": "❌"}
 
-        icon = decision_icons.get(result.decision, '?')
+        icon = decision_icons.get(result.decision, "?")
         results_summary[result.decision] += 1
 
         print(f"{i}. {icon} {scenario['name']}")
@@ -151,6 +251,7 @@ def demonstrate_mtf_decision_matrix():
 
     return results_summary
 
+
 def demonstrate_fusion_integration():
     """Show how MTF integrates with fusion engine"""
     print("\n🔗 FUSION ENGINE v1.3 INTEGRATION")
@@ -169,8 +270,8 @@ def demonstrate_fusion_integration():
                 "structure": 0.20,
                 "momentum": 0.10,
                 "volume": 0.10,
-                "context": 0.05
-            }
+                "context": 0.05,
+            },
         }
     }
 
@@ -178,85 +279,135 @@ def demonstrate_fusion_integration():
 
     # Mock strong module results
     wy = WyckoffResult(
-        regime="accumulation", phase="C", bias="long",
-        phase_confidence=0.8, trend_confidence=0.85, range=None
+        regime="accumulation",
+        phase="C",
+        bias="long",
+        phase_confidence=0.8,
+        trend_confidence=0.85,
+        range=None,
     )
-    liq = LiquidityResult(
-        score=0.75, pressure="bullish", fvgs=[], order_blocks=[]
-    )
+    liq = LiquidityResult(score=0.75, pressure="bullish", fvgs=[], order_blocks=[])
 
     # Test scenarios
     test_cases = [
         {
-            'name': 'MTF ALLOW - Should generate signal',
-            'sync': decide_mtf_entry(
-                BiasCtx(tf="1D", bias="long", confirmed=True, strength=0.8,
-                       bars_confirmed=3, ma_distance=0.04, trend_quality=0.8),
-                BiasCtx(tf="4H", bias="long", confirmed=True, strength=0.7,
-                       bars_confirmed=2, ma_distance=0.02, trend_quality=0.7),
-                "long", True, False,
-                {"desync_behavior": "raise", "alignment_discount": 0.05}
-            )
+            "name": "MTF ALLOW - Should generate signal",
+            "sync": decide_mtf_entry(
+                BiasCtx(
+                    tf="1D",
+                    bias="long",
+                    confirmed=True,
+                    strength=0.8,
+                    bars_confirmed=3,
+                    ma_distance=0.04,
+                    trend_quality=0.8,
+                ),
+                BiasCtx(
+                    tf="4H",
+                    bias="long",
+                    confirmed=True,
+                    strength=0.7,
+                    bars_confirmed=2,
+                    ma_distance=0.02,
+                    trend_quality=0.7,
+                ),
+                "long",
+                True,
+                False,
+                {"desync_behavior": "raise", "alignment_discount": 0.05},
+            ),
         },
         {
-            'name': 'MTF RAISE - Higher threshold required',
-            'sync': decide_mtf_entry(
-                BiasCtx(tf="1D", bias="long", confirmed=True, strength=0.8,
-                       bars_confirmed=3, ma_distance=0.04, trend_quality=0.8),
-                BiasCtx(tf="4H", bias="long", confirmed=True, strength=0.7,
-                       bars_confirmed=2, ma_distance=0.02, trend_quality=0.7),
-                "short", True, False,  # LTF opposite = desync
-                {"desync_behavior": "raise", "desync_bump": 0.10}
-            )
+            "name": "MTF RAISE - Higher threshold required",
+            "sync": decide_mtf_entry(
+                BiasCtx(
+                    tf="1D",
+                    bias="long",
+                    confirmed=True,
+                    strength=0.8,
+                    bars_confirmed=3,
+                    ma_distance=0.04,
+                    trend_quality=0.8,
+                ),
+                BiasCtx(
+                    tf="4H",
+                    bias="long",
+                    confirmed=True,
+                    strength=0.7,
+                    bars_confirmed=2,
+                    ma_distance=0.02,
+                    trend_quality=0.7,
+                ),
+                "short",
+                True,
+                False,  # LTF opposite = desync
+                {"desync_behavior": "raise", "desync_bump": 0.10},
+            ),
         },
         {
-            'name': 'MTF VETO - No signal allowed',
-            'sync': decide_mtf_entry(
-                BiasCtx(tf="1D", bias="neutral", confirmed=False, strength=0.4,
-                       bars_confirmed=0, ma_distance=0.01, trend_quality=0.3),
-                BiasCtx(tf="4H", bias="neutral", confirmed=False, strength=0.35,
-                       bars_confirmed=0, ma_distance=0.005, trend_quality=0.25),
-                "neutral", False, True,  # EQ magnet
-                {"eq_magnet_gate": True}
-            )
-        }
+            "name": "MTF VETO - No signal allowed",
+            "sync": decide_mtf_entry(
+                BiasCtx(
+                    tf="1D",
+                    bias="neutral",
+                    confirmed=False,
+                    strength=0.4,
+                    bars_confirmed=0,
+                    ma_distance=0.01,
+                    trend_quality=0.3,
+                ),
+                BiasCtx(
+                    tf="4H",
+                    bias="neutral",
+                    confirmed=False,
+                    strength=0.35,
+                    bars_confirmed=0,
+                    ma_distance=0.005,
+                    trend_quality=0.25,
+                ),
+                "neutral",
+                False,
+                True,  # EQ magnet
+                {"eq_magnet_gate": True},
+            ),
+        },
     ]
 
     for case in test_cases:
         print(f"\n🧪 {case['name']}")
         print(f"   MTF Decision: {case['sync'].decision}")
 
-        signal = engine.fuse_with_mtf(
-            {"wyckoff": wy, "liquidity": liq},
-            case['sync']
-        )
+        signal = engine.fuse_with_mtf({"wyckoff": wy, "liquidity": liq}, case["sync"])
 
         if signal:
             print(f"   ✅ Signal: {signal.side} @ {signal.confidence:.3f}")
             print(f"   💡 Reasons: {', '.join(signal.reasons[:2])}")
         else:
             print(f"   ❌ No signal generated")
-            if case['sync'].decision == 'veto':
-                print(f"   📝 Reason: {case['sync'].notes[0] if case['sync'].notes else 'MTF veto'}")
+            if case["sync"].decision == "veto":
+                print(
+                    f"   📝 Reason: {case['sync'].notes[0] if case['sync'].notes else 'MTF veto'}"
+                )
+
 
 def analyze_data_suitability():
     """Analyze chart data suitability for MTF"""
     print("\n📈 DATA SUITABILITY ANALYSIS")
     print("=" * 40)
 
-    chart_dir = '/Users/raymondghandchi/Downloads/Chart logs 2'
+    chart_dir = "/Users/raymondghandchi/Downloads/Chart logs 2"
     datasets = [
-        ('COINBASE_BTCUSD, 1D_85c84.csv', 'BTCUSD', '1D'),
-        ('COINBASE_BTCUSD, 240_c2b76.csv', 'BTCUSD', '4H'),
-        ('COINBASE_ETHUSD, 1D_64942.csv', 'ETHUSD', '1D'),
-        ('COINBASE_ETHUSD, 240_1d04a.csv', 'ETHUSD', '4H'),
+        ("COINBASE_BTCUSD, 1D_85c84.csv", "BTCUSD", "1D"),
+        ("COINBASE_BTCUSD, 240_c2b76.csv", "BTCUSD", "4H"),
+        ("COINBASE_ETHUSD, 1D_64942.csv", "ETHUSD", "1D"),
+        ("COINBASE_ETHUSD, 240_1d04a.csv", "ETHUSD", "4H"),
     ]
 
     suitable_count = 0
     total_bars = 0
 
     for filename, symbol, timeframe in datasets:
-        csv_path = f'{chart_dir}/{filename}'
+        csv_path = f"{chart_dir}/{filename}"
 
         if not os.path.exists(csv_path):
             print(f"❌ Missing: {symbol} {timeframe}")
@@ -281,7 +432,8 @@ def analyze_data_suitability():
     print(f"\n📊 SUMMARY:")
     print(f"  Suitable datasets: {suitable_count}/{len(datasets)}")
     print(f"  Total bars analyzed: {total_bars:,}")
-    print(f"  Average per dataset: {total_bars//len(datasets):,} bars")
+    print(f"  Average per dataset: {total_bars // len(datasets):,} bars")
+
 
 def demonstrate_performance_impact():
     """Simulate MTF performance impact"""
@@ -297,7 +449,7 @@ def demonstrate_performance_impact():
 
     for i in range(1000):
         # Random market conditions
-        market_trend = np.random.choice(['bull', 'bear', 'sideways'], p=[0.3, 0.3, 0.4])
+        market_trend = np.random.choice(["bull", "bear", "sideways"], p=[0.3, 0.3, 0.4])
         volatility = np.random.uniform(0.5, 3.0)
 
         # Base signal strength
@@ -309,20 +461,20 @@ def demonstrate_performance_impact():
             baseline_signals += 1
 
         # MTF enhancement
-        if market_trend == 'sideways':
+        if market_trend == "sideways":
             # High chance of EQ magnet veto in choppy markets
-            mtf_decision = 'veto' if np.random.random() < 0.7 else 'allow'
+            mtf_decision = "veto" if np.random.random() < 0.7 else "allow"
         elif volatility > 2.0:
             # High volatility = more likely desync = raise threshold
-            mtf_decision = 'raise' if np.random.random() < 0.6 else 'allow'
+            mtf_decision = "raise" if np.random.random() < 0.6 else "allow"
         else:
             # Trending market = mostly allow
-            mtf_decision = np.random.choice(['allow', 'raise'], p=[0.8, 0.2])
+            mtf_decision = np.random.choice(["allow", "raise"], p=[0.8, 0.2])
 
-        if mtf_decision == 'allow':
+        if mtf_decision == "allow":
             if base_score >= baseline_threshold:
                 mtf_signals += 1
-        elif mtf_decision == 'raise':
+        elif mtf_decision == "raise":
             raised_threshold = baseline_threshold + 0.10
             if base_score >= raised_threshold:
                 mtf_signals += 1
@@ -340,6 +492,7 @@ def demonstrate_performance_impact():
 
     accuracy_improvement = (mtf_improvements / max(mtf_signals, 1)) * 100
     print(f"  🎯 Estimated accuracy boost: +{accuracy_improvement:.1f}%")
+
 
 def main():
     setup_logging()
@@ -372,6 +525,7 @@ def main():
 
     print(f"\n🚀 PRODUCTION READINESS: ✅ CONFIRMED")
     print(f"  Bull Machine v1.3 ready for live trading")
+
 
 if __name__ == "__main__":
     main()

@@ -17,8 +17,8 @@ class MTFBiasAnalyzer:
 
     def __init__(self, config: dict):
         self.config = config
-        self.mtf_cfg = config.get('mtf_bias', {})
-        self.enabled = self.mtf_cfg.get('enabled', False)
+        self.mtf_cfg = config.get("mtf_bias", {})
+        self.enabled = self.mtf_cfg.get("enabled", False)
 
     def analyze_bias_alignment(self, series: Series, higher_tf_data: Optional[Dict] = None) -> Dict:
         """
@@ -26,13 +26,13 @@ class MTFBiasAnalyzer:
         Returns: {'alignment_score': float, 'conflicts': List[str], 'dominant_bias': str}
         """
         if not self.enabled:
-            return {'alignment_score': 1.0, 'conflicts': [], 'dominant_bias': 'neutral'}
+            return {"alignment_score": 1.0, "conflicts": [], "dominant_bias": "neutral"}
 
         # Future implementation here
         return {
-            'alignment_score': 0.8,  # Placeholder
-            'conflicts': [],
-            'dominant_bias': 'bullish'
+            "alignment_score": 0.8,  # Placeholder
+            "conflicts": [],
+            "dominant_bias": "bullish",
         }
 
     def should_filter_signal(self, signal_bias: str, mtf_data: Dict) -> bool:

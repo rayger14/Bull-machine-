@@ -45,7 +45,7 @@ markers = [
 ]
 
 [tool.ruff]
-line-length = 100
+line-length = 120  # Pragmatic increase to reduce E501 warnings
 target-version = "py39"
 
 [tool.ruff.lint]

@@ -30,6 +30,7 @@ from bull_machine.scoring.fusion import FusionEngineV141
 @dataclass
 class AcceptanceCriteria:
     """Production readiness acceptance criteria."""
+
     min_trades_per_asset: int = 25
     min_non_timestop_exit_pct: float = 20.0
     max_drawdown_limit: float = 35.0
@@ -40,17 +41,18 @@ class AcceptanceCriteria:
     def __post_init__(self):
         if self.required_telemetry_hits is None:
             self.required_telemetry_hits = [
-                'phase_c_trap_score',
-                'reclaim_speed_bonus',
-                'cluster_score',
-                'absorption_pattern',
-                'distribution_pattern'
+                "phase_c_trap_score",
+                "reclaim_speed_bonus",
+                "cluster_score",
+                "absorption_pattern",
+                "distribution_pattern",
             ]
 
 
 @dataclass
 class BacktestResults:
     """Comprehensive backtest results."""
+
     symbol: str
     total_trades: int
     win_rate: float
@@ -78,14 +80,16 @@ class AcceptanceMatrixBacktester:
 
         # Load system config if extending
         if "extends" in self.base_config:
-            system_config_path = Path(config_path).parent / self.base_config["extends"].split("/")[-1]
+            system_config_path = (
+                Path(config_path).parent / self.base_config["extends"].split("/")[-1]
+            )
             with open(system_config_path) as f:
                 system_config = json.load(f)
 
             # Merge configs
             merged_config = {**system_config, **self.base_config}
             # Handle nested dict merging
-            for key in ['signals', 'quality_floors', 'risk_management']:
+            for key in ["signals", "quality_floors", "risk_management"]:
                 if key in self.base_config:
                     merged_config.setdefault(key, {})
                     merged_config[key].update(self.base_config[key])
@@ -100,19 +104,20 @@ class AcceptanceMatrixBacktester:
 
         # Telemetry tracking
         self.telemetry = {
-            'phase_c_trap_score': 0,
-            'reclaim_speed_bonus': 0,
-            'cluster_score': 0,
-            'absorption_pattern': 0,
-            'distribution_pattern': 0,
-            'regime_veto': 0,
-            'mtf_override': 0
+            "phase_c_trap_score": 0,
+            "reclaim_speed_bonus": 0,
+            "cluster_score": 0,
+            "absorption_pattern": 0,
+            "distribution_pattern": 0,
+            "regime_veto": 0,
+            "mtf_override": 0,
         }
 
         logging.info(f"Acceptance Matrix initialized with config: {config_path}")
 
-    def generate_realistic_data(self, symbol: str, start_date: str, end_date: str,
-                              timeframe: str = "1H") -> pd.DataFrame:
+    def generate_realistic_data(
+        self, symbol: str, start_date: str, end_date: str, timeframe: str = "1H"
+    ) -> pd.DataFrame:
         """Generate realistic OHLCV data for backtesting."""
         start = pd.to_datetime(start_date)
         end = pd.to_datetime(end_date)
@@ -145,7 +150,7 @@ class AcceptanceMatrixBacktester:
 
         # Add volatility clustering
         for i in range(1, len(returns)):
-            if abs(returns[i-1]) > volatility * 1.5:  # High volatility periods
+            if abs(returns[i - 1]) > volatility * 1.5:  # High volatility periods
                 returns[i] *= 1.3  # Increase next period volatility
 
         # Add trend components
@@ -172,7 +177,7 @@ class AcceptanceMatrixBacktester:
             if i == 0:
                 open_price = close
             else:
-                open_price = prices[i-1] * (1 + returns[i-1] * 0.1)  # Slight gap
+                open_price = prices[i - 1] * (1 + returns[i - 1] * 0.1)  # Slight gap
 
             # Ensure OHLC consistency
             high = max(high, open_price, close)
@@ -183,65 +188,71 @@ class AcceptanceMatrixBacktester:
             if abs(returns[i]) > volatility * 1.5:  # High volatility = high volume
                 base_volume *= 2
 
-            df_data.append({
-                'timestamp': date,
-                'open': open_price,
-                'high': high,
-                'low': low,
-                'close': close,
-                'volume': base_volume
-            })
+            df_data.append(
+                {
+                    "timestamp": date,
+                    "open": open_price,
+                    "high": high,
+                    "low": low,
+                    "close": close,
+                    "volume": base_volume,
+                }
+            )
 
         df = pd.DataFrame(df_data)
-        df.set_index('timestamp', inplace=True)
+        df.set_index("timestamp", inplace=True)
 
         # Calculate technical indicators - ATR
-        tr1 = df['high'] - df['low']
-        tr2 = (df['high'] - df['close'].shift()).abs()
-        tr3 = (df['low'] - df['close'].shift()).abs()
+        tr1 = df["high"] - df["low"]
+        tr2 = (df["high"] - df["close"].shift()).abs()
+        tr3 = (df["low"] - df["close"].shift()).abs()
         tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-        df['atr'] = tr.rolling(14).mean().fillna(volatility * base_price)
+        df["atr"] = tr.rolling(14).mean().fillna(volatility * base_price)
 
         logging.info(f"Generated {len(df)} bars of {symbol} data from {start_date} to {end_date}")
         return df
 
     def calculate_layer_scores(self, df: pd.DataFrame, idx: int) -> Dict[str, float]:
         """Calculate all layer scores for the current bar."""
-        current_df = df.iloc[:idx+1]
+        current_df = df.iloc[: idx + 1]
 
         scores = {}
 
         # 1. Wyckoff Analysis
         wyckoff_result = self.wyckoff_machine.analyze_wyckoff_state(current_df)
-        scores['wyckoff'] = wyckoff_result['confidence']
+        scores["wyckoff"] = wyckoff_result["confidence"]
 
         # Track trap scoring
-        if wyckoff_result.get('trap_score', 0) > 0.1:
-            self.telemetry['phase_c_trap_score'] += 1
-        if wyckoff_result.get('reclaim_bonus', 0) > 0.05:
-            self.telemetry['reclaim_speed_bonus'] += 1
+        if wyckoff_result.get("trap_score", 0) > 0.1:
+            self.telemetry["phase_c_trap_score"] += 1
+        if wyckoff_result.get("reclaim_bonus", 0) > 0.05:
+            self.telemetry["reclaim_speed_bonus"] += 1
 
         # 2. Liquidity Analysis
         liquidity_result = calculate_liquidity_score(current_df)
-        scores['liquidity'] = liquidity_result['score']
+        scores["liquidity"] = liquidity_result["score"]
 
         # Track clustering
-        if liquidity_result.get('cluster_score', 0) > 0.1:
-            self.telemetry['cluster_score'] += 1
+        if liquidity_result.get("cluster_score", 0) > 0.1:
+            self.telemetry["cluster_score"] += 1
 
         # 3. Structure (simplified)
         if len(current_df) >= 20:
-            recent_high = current_df.tail(20)['high'].max()
-            recent_low = current_df.tail(20)['low'].min()
-            current_price = current_df.iloc[-1]['close']
-            position = (current_price - recent_low) / (recent_high - recent_low) if recent_high > recent_low else 0.5
-            scores['structure'] = 0.3 + position * 0.4  # 0.3-0.7 range
+            recent_high = current_df.tail(20)["high"].max()
+            recent_low = current_df.tail(20)["low"].min()
+            current_price = current_df.iloc[-1]["close"]
+            position = (
+                (current_price - recent_low) / (recent_high - recent_low)
+                if recent_high > recent_low
+                else 0.5
+            )
+            scores["structure"] = 0.3 + position * 0.4  # 0.3-0.7 range
         else:
-            scores['structure'] = 0.5
+            scores["structure"] = 0.5
 
         # 4. Momentum (RSI-like)
         if len(current_df) >= 14:
-            returns = current_df['close'].pct_change().dropna()
+            returns = current_df["close"].pct_change().dropna()
             if len(returns) >= 14:
                 gains = returns.where(returns > 0, 0)
                 losses = -returns.where(returns < 0, 0)
@@ -249,30 +260,30 @@ class AcceptanceMatrixBacktester:
                 avg_loss = losses.rolling(14).mean().iloc[-1]
                 rs = avg_gain / avg_loss if avg_loss != 0 else 100
                 rsi = 100 - (100 / (1 + rs))
-                scores['momentum'] = rsi / 100
+                scores["momentum"] = rsi / 100
             else:
-                scores['momentum'] = 0.5
+                scores["momentum"] = 0.5
         else:
-            scores['momentum'] = 0.5
+            scores["momentum"] = 0.5
 
         # 5. Volume
         if len(current_df) >= 20:
-            vol_sma = current_df['volume'].rolling(20).mean().iloc[-1]
-            current_vol = current_df.iloc[-1]['volume']
+            vol_sma = current_df["volume"].rolling(20).mean().iloc[-1]
+            current_vol = current_df.iloc[-1]["volume"]
             vol_ratio = current_vol / vol_sma if vol_sma > 0 else 1.0
-            scores['volume'] = min(1.0, max(0.0, 0.3 + (vol_ratio - 0.8) * 0.5))
+            scores["volume"] = min(1.0, max(0.0, 0.3 + (vol_ratio - 0.8) * 0.5))
         else:
-            scores['volume'] = 0.5
+            scores["volume"] = 0.5
 
         # 6. Context (macro - simplified)
-        scores['context'] = np.random.uniform(0.4, 0.8)  # Simulate macro conditions
+        scores["context"] = np.random.uniform(0.4, 0.8)  # Simulate macro conditions
 
         # 7. MTF (simplified alignment)
-        scores['mtf'] = np.random.uniform(0.5, 0.9)
+        scores["mtf"] = np.random.uniform(0.5, 0.9)
 
         # 8. Bojan (phase-gated, capped at 0.6)
         bojan_raw = np.random.uniform(0.3, 0.8)
-        scores['bojan'] = min(0.6, bojan_raw)
+        scores["bojan"] = min(0.6, bojan_raw)
 
         return scores
 
@@ -286,10 +297,10 @@ class AcceptanceMatrixBacktester:
         trades = []
         positions = []
         current_position = None
-        balance = self.config['backtest']['initial_balance']
+        balance = self.config["backtest"]["initial_balance"]
         max_balance = balance
         max_drawdown = 0.0
-        exit_counts = {'stop_loss': 0, 'take_profit': 0, 'time_stop': 0, 'advanced_exit': 0}
+        exit_counts = {"stop_loss": 0, "take_profit": 0, "time_stop": 0, "advanced_exit": 0}
 
         # Backtest loop
         for i in range(50, len(df)):  # Start after warmup period
@@ -300,87 +311,95 @@ class AcceptanceMatrixBacktester:
             layer_scores = self.calculate_layer_scores(df, i)
 
             # Check regime filter
-            wyckoff_context = {'phase': 'B'}  # Simplified
+            wyckoff_context = {"phase": "B"}  # Simplified
 
             # Fuse scores
             fusion_result = self.fusion_engine.fuse_scores(
                 layer_scores,
-                quality_floors=self.config.get('quality_floors'),
+                quality_floors=self.config.get("quality_floors"),
                 wyckoff_context=wyckoff_context,
-                df=df.iloc[:i+1]
+                df=df.iloc[: i + 1],
             )
 
             # Entry logic
-            if current_position is None and not fusion_result['global_veto']:
+            if current_position is None and not fusion_result["global_veto"]:
                 if self.fusion_engine.should_enter(fusion_result):
-
                     # Calculate position size
-                    liquidity_data = {'pools': [], 'cluster_score': layer_scores.get('liquidity', 0) * 0.2}
+                    liquidity_data = {
+                        "pools": [],
+                        "cluster_score": layer_scores.get("liquidity", 0) * 0.2,
+                    }
                     risk_result = calculate_dynamic_position_size(
-                        self.config['risk_management']['max_risk_per_trade'],
-                        df.iloc[:i+1],
-                        liquidity_data
+                        self.config["risk_management"]["max_risk_per_trade"],
+                        df.iloc[: i + 1],
+                        liquidity_data,
                     )
 
                     # Calculate stop loss
-                    atr = df.iloc[i]['atr']
-                    pool_depth = layer_scores.get('liquidity', 0)
-                    stop_loss = calculate_stop_loss(df.iloc[:i+1], 'long', current_bar['close'], pool_depth, atr)
+                    atr = df.iloc[i]["atr"]
+                    pool_depth = layer_scores.get("liquidity", 0)
+                    stop_loss = calculate_stop_loss(
+                        df.iloc[: i + 1], "long", current_bar["close"], pool_depth, atr
+                    )
 
-                    position_size_usd = balance * risk_result['adjusted_risk_pct']
-                    position_size_units = position_size_usd / current_bar['close']
+                    position_size_usd = balance * risk_result["adjusted_risk_pct"]
+                    position_size_units = position_size_usd / current_bar["close"]
 
                     current_position = {
-                        'symbol': symbol,
-                        'side': 'long',
-                        'entry_price': current_bar['close'],
-                        'entry_time': current_time,
-                        'size_units': position_size_units,
-                        'size_usd': position_size_usd,
-                        'stop_loss': stop_loss,
-                        'bars_held': 0,
-                        'fusion_score': fusion_result['weighted_score'],
-                        'entry_scores': layer_scores.copy(),
-                        'risk_multiplier': risk_result['risk_multiplier']
+                        "symbol": symbol,
+                        "side": "long",
+                        "entry_price": current_bar["close"],
+                        "entry_time": current_time,
+                        "size_units": position_size_units,
+                        "size_usd": position_size_usd,
+                        "stop_loss": stop_loss,
+                        "bars_held": 0,
+                        "fusion_score": fusion_result["weighted_score"],
+                        "entry_scores": layer_scores.copy(),
+                        "risk_multiplier": risk_result["risk_multiplier"],
                     }
 
-                    logging.debug(f"ENTER LONG: {symbol} @ {current_bar['close']:.2f}, size={position_size_units:.4f}, SL={stop_loss:.2f}")
+                    logging.debug(
+                        f"ENTER LONG: {symbol} @ {current_bar['close']:.2f}, size={position_size_units:.4f}, SL={stop_loss:.2f}"
+                    )
 
             # Exit logic
             elif current_position is not None:
-                current_position['bars_held'] += 1
-                current_price = current_bar['close']
+                current_position["bars_held"] += 1
+                current_price = current_bar["close"]
 
                 exit_reason = None
                 exit_price = current_price
 
                 # Check stop loss
-                if current_price <= current_position['stop_loss']:
-                    exit_reason = 'stop_loss'
-                    exit_price = current_position['stop_loss']
+                if current_price <= current_position["stop_loss"]:
+                    exit_reason = "stop_loss"
+                    exit_price = current_position["stop_loss"]
 
                 # Check time stop (36 bars for 1H)
-                elif current_position['bars_held'] >= 36:
-                    exit_reason = 'time_stop'
+                elif current_position["bars_held"] >= 36:
+                    exit_reason = "time_stop"
                     exit_price = current_price
 
                 # Check advanced exits (simplified)
-                elif current_position['bars_held'] > 5:
+                elif current_position["bars_held"] > 5:
                     # Random advanced exit simulation
                     if np.random.random() < 0.05:  # 5% chance per bar after 5 bars
-                        exit_reason = 'advanced_exit'
+                        exit_reason = "advanced_exit"
                         exit_price = current_price
 
                         # Track absorption/distribution patterns
                         if np.random.random() < 0.3:
-                            self.telemetry['absorption_pattern'] += 1
+                            self.telemetry["absorption_pattern"] += 1
                         else:
-                            self.telemetry['distribution_pattern'] += 1
+                            self.telemetry["distribution_pattern"] += 1
 
                 # Execute exit
                 if exit_reason:
-                    pnl_dollars = (exit_price - current_position['entry_price']) * current_position['size_units']
-                    pnl_pct = pnl_dollars / current_position['size_usd']
+                    pnl_dollars = (exit_price - current_position["entry_price"]) * current_position[
+                        "size_units"
+                    ]
+                    pnl_pct = pnl_dollars / current_position["size_usd"]
 
                     balance += pnl_dollars
                     max_balance = max(max_balance, balance)
@@ -388,64 +407,70 @@ class AcceptanceMatrixBacktester:
                     max_drawdown = max(max_drawdown, drawdown)
 
                     trade_record = {
-                        'symbol': symbol,
-                        'side': current_position['side'],
-                        'entry_price': current_position['entry_price'],
-                        'exit_price': exit_price,
-                        'entry_time': current_position['entry_time'].strftime('%Y-%m-%d %H:%M:%S'),
-                        'exit_time': current_time.strftime('%Y-%m-%d %H:%M:%S'),
-                        'bars_held': current_position['bars_held'],
-                        'pnl_pct': pnl_pct,
-                        'pnl_dollars': pnl_dollars,
-                        'exit_reason': exit_reason,
-                        'fusion_score': current_position['fusion_score'],
-                        'entry_scores': current_position['entry_scores'],
-                        'risk_multiplier': current_position['risk_multiplier']
+                        "symbol": symbol,
+                        "side": current_position["side"],
+                        "entry_price": current_position["entry_price"],
+                        "exit_price": exit_price,
+                        "entry_time": current_position["entry_time"].strftime("%Y-%m-%d %H:%M:%S"),
+                        "exit_time": current_time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "bars_held": current_position["bars_held"],
+                        "pnl_pct": pnl_pct,
+                        "pnl_dollars": pnl_dollars,
+                        "exit_reason": exit_reason,
+                        "fusion_score": current_position["fusion_score"],
+                        "entry_scores": current_position["entry_scores"],
+                        "risk_multiplier": current_position["risk_multiplier"],
                     }
 
                     trades.append(trade_record)
                     exit_counts[exit_reason] += 1
 
-                    logging.debug(f"CLOSE: {current_position['side'].upper()} @ {exit_price:.2f}, PnL: {pnl_pct:.2%} (${pnl_dollars:.2f}), {exit_reason}")
+                    logging.debug(
+                        f"CLOSE: {current_position['side'].upper()} @ {exit_price:.2f}, PnL: {pnl_pct:.2%} (${pnl_dollars:.2f}), {exit_reason}"
+                    )
 
                     current_position = None
 
         # Calculate performance metrics
         total_trades = len(trades)
-        winning_trades = len([t for t in trades if t['pnl_dollars'] > 0])
+        winning_trades = len([t for t in trades if t["pnl_dollars"] > 0])
         win_rate = winning_trades / total_trades if total_trades > 0 else 0
 
-        total_pnl_dollars = sum(t['pnl_dollars'] for t in trades)
-        total_pnl_pct = total_pnl_dollars / self.config['backtest']['initial_balance']
+        total_pnl_dollars = sum(t["pnl_dollars"] for t in trades)
+        total_pnl_pct = total_pnl_dollars / self.config["backtest"]["initial_balance"]
 
         # Sharpe ratio (simplified)
         if trades:
-            returns = [t['pnl_pct'] for t in trades]
+            returns = [t["pnl_pct"] for t in trades]
             sharpe_ratio = np.mean(returns) / np.std(returns) if np.std(returns) > 0 else 0
         else:
             sharpe_ratio = 0
 
         # Profit factor
-        gross_profit = sum(t['pnl_dollars'] for t in trades if t['pnl_dollars'] > 0)
-        gross_loss = abs(sum(t['pnl_dollars'] for t in trades if t['pnl_dollars'] < 0))
+        gross_profit = sum(t["pnl_dollars"] for t in trades if t["pnl_dollars"] > 0)
+        gross_loss = abs(sum(t["pnl_dollars"] for t in trades if t["pnl_dollars"] < 0))
         profit_factor = gross_profit / gross_loss if gross_loss > 0 else 0
 
         # Non-timestop exit percentage
-        non_timestop_exits = exit_counts['stop_loss'] + exit_counts['advanced_exit'] + exit_counts['take_profit']
+        non_timestop_exits = (
+            exit_counts["stop_loss"] + exit_counts["advanced_exit"] + exit_counts["take_profit"]
+        )
         non_timestop_pct = (non_timestop_exits / total_trades * 100) if total_trades > 0 else 0
 
         # Average trade duration
-        avg_duration = np.mean([t['bars_held'] for t in trades]) if trades else 0
+        avg_duration = np.mean([t["bars_held"] for t in trades]) if trades else 0
 
         # Validate acceptance criteria
         criteria = AcceptanceCriteria()
         acceptance_status = {
-            'min_trades': total_trades >= criteria.min_trades_per_asset,
-            'max_drawdown': (max_drawdown * 100) <= criteria.max_drawdown_limit,
-            'min_non_timestop_exits': non_timestop_pct >= criteria.min_non_timestop_exit_pct,
-            'min_sharpe': sharpe_ratio >= criteria.min_sharpe_ratio,
-            'max_duration': avg_duration <= criteria.max_avg_trade_duration_hours,
-            'telemetry_coverage': all(self.telemetry[key] > 0 for key in criteria.required_telemetry_hits[:3])  # Check first 3
+            "min_trades": total_trades >= criteria.min_trades_per_asset,
+            "max_drawdown": (max_drawdown * 100) <= criteria.max_drawdown_limit,
+            "min_non_timestop_exits": non_timestop_pct >= criteria.min_non_timestop_exit_pct,
+            "min_sharpe": sharpe_ratio >= criteria.min_sharpe_ratio,
+            "max_duration": avg_duration <= criteria.max_avg_trade_duration_hours,
+            "telemetry_coverage": all(
+                self.telemetry[key] > 0 for key in criteria.required_telemetry_hits[:3]
+            ),  # Check first 3
         }
 
         return BacktestResults(
@@ -463,7 +488,7 @@ class AcceptanceMatrixBacktester:
             final_balance=balance,
             trades=trades,
             telemetry_hits=self.telemetry.copy(),
-            acceptance_status=acceptance_status
+            acceptance_status=acceptance_status,
         )
 
 
@@ -478,9 +503,9 @@ def run_acceptance_matrix(config_path: str, output_dir: str) -> Dict[str, Backte
     engine = AcceptanceMatrixBacktester(config_path)
 
     # Define test parameters
-    symbols = ['BTC', 'ETH']
-    start_date = '2024-01-01'
-    end_date = '2024-03-31'  # 90 days
+    symbols = ["BTC", "ETH"]
+    start_date = "2024-01-01"
+    end_date = "2024-03-31"  # 90 days
 
     results = {}
 
@@ -518,7 +543,7 @@ def run_acceptance_matrix(config_path: str, output_dir: str) -> Dict[str, Backte
 
     # Save detailed results
     results_file = output_path / "acceptance_matrix_results.json"
-    with open(results_file, 'w') as f:
+    with open(results_file, "w") as f:
         serializable_results = {}
         for symbol, result in results.items():
             serializable_results[symbol] = asdict(result)

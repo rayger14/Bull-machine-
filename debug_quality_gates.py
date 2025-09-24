@@ -8,6 +8,7 @@ import tempfile
 import subprocess
 from pathlib import Path
 
+
 def test_quality_gates_debug():
     """Test quality gates with detailed fusion logging."""
 
@@ -15,20 +16,20 @@ def test_quality_gates_debug():
     test_config = {
         "fusion": {
             "quality_floors": {
-                "wyckoff": 0.30,     # Low floor to allow signals through
-                "liquidity": 0.25,   # Low floor to allow signals through
-                "structure": 0.35,   # Low floor to allow signals through
+                "wyckoff": 0.30,  # Low floor to allow signals through
+                "liquidity": 0.25,  # Low floor to allow signals through
+                "structure": 0.35,  # Low floor to allow signals through
                 "momentum": 0.12,
                 "volume": 0.15,
-                "context": 0.15
+                "context": 0.15,
             },
             "variance_guards": {"enabled": True, "min_variance": 0.001},
-            "debug": {"emit_quality_scores": True, "emit_floor_rejections": True}
+            "debug": {"emit_quality_scores": True, "emit_floor_rejections": True},
         },
         "features": {
             "structure": {"enabled": True, "min_distance_bps": 50, "max_age_bars": 24},
             "wyckoff": {"enabled": True, "lookback": 10, "confidence_threshold": 0.7},
-            "liquidity": {"enabled": True, "volume_ma": 20, "price_action_weight": 0.6}
+            "liquidity": {"enabled": True, "volume_ma": 20, "price_action_weight": 0.6},
         },
         "mtf": {"enabled": True, "anchor_tf": "4H", "confirm_tf": "1H"},
         "risk": {"base_pct": 0.008, "max_pct": 0.02},
@@ -36,8 +37,8 @@ def test_quality_gates_debug():
             "enabled": True,
             "choch_against": {"enabled": True, "swing_lookback": 3, "bars_confirm": 2},
             "momentum_fade": {"enabled": True, "lookback": 6, "drop_pct": 0.20},
-            "time_stop": {"enabled": True, "max_bars_1h": 24}
-        }
+            "time_stop": {"enabled": True, "max_bars_1h": 24},
+        },
     }
 
     # Create temp directory and save test config
@@ -46,7 +47,7 @@ def test_quality_gates_debug():
 
     # Write test strategy config
     test_strategy_path = temp_dir_path / "test_strategy.json"
-    with open(test_strategy_path, 'w') as f:
+    with open(test_strategy_path, "w") as f:
         json.dump(test_config, f, indent=2)
 
     print(f"📝 Created test strategy config: {test_strategy_path}")
@@ -62,36 +63,56 @@ def test_quality_gates_debug():
             "timeframes": ["1H"],
             "schema": {
                 "timestamp": {"name": "time", "unit": "s"},
-                "open": "open", "high": "high", "low": "low", "close": "close", "volume": "volume"
-            }
+                "open": "open",
+                "high": "high",
+                "low": "low",
+                "close": "close",
+                "volume": "volume",
+            },
         },
         "broker": {"fee_bps": 10, "slippage_bps": 5, "spread_bps": 2, "partial_fill": True},
         "portfolio": {"starting_cash": 100000, "exposure_cap_pct": 0.60, "max_positions": 4},
         "engine": {"lookback_bars": 100, "seed": 42},
         "strategy": {
             "version": "v1.4",
-            "config": str(test_strategy_path.absolute())  # ABSOLUTE PATH
+            "config": str(test_strategy_path.absolute()),  # ABSOLUTE PATH
         },
         "risk": {"base_risk_pct": 0.008, "max_risk_per_trade": 0.02, "min_stop_pct": 0.001},
-        "exit_signals": {"enabled": True, "enabled_exits": ["choch_against", "momentum_fade", "time_stop"]},
-        "logging": {"level": "INFO", "emit_fusion_debug": True, "emit_exit_debug": True}  # INFO level to see quality gates
+        "exit_signals": {
+            "enabled": True,
+            "enabled_exits": ["choch_against", "momentum_fade", "time_stop"],
+        },
+        "logging": {
+            "level": "INFO",
+            "emit_fusion_debug": True,
+            "emit_exit_debug": True,
+        },  # INFO level to see quality gates
     }
 
     # Write test backtest config
     test_backtest_path = temp_dir_path / "test_backtest.json"
-    with open(test_backtest_path, 'w') as f:
+    with open(test_backtest_path, "w") as f:
         json.dump(test_backtest_config, f, indent=2)
 
     print(f"📝 Created test backtest config: {test_backtest_path}")
 
     # Run a brief backtest to test quality gates
     print(f"\n🧪 Running quality gates debug test...")
-    result = subprocess.run([
-        "python3", "-m", "bull_machine.app.main_backtest",
-        "--config", str(test_backtest_path.absolute()),
-        "--out", str(temp_dir_path / "debug_results"),
-        "--debug"  # Enable debug logging
-    ], capture_output=True, text=True, timeout=60)
+    result = subprocess.run(
+        [
+            "python3",
+            "-m",
+            "bull_machine.app.main_backtest",
+            "--config",
+            str(test_backtest_path.absolute()),
+            "--out",
+            str(temp_dir_path / "debug_results"),
+            "--debug",  # Enable debug logging
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
 
     print(f"Return code: {result.returncode}")
 
@@ -102,7 +123,7 @@ def test_quality_gates_debug():
     layers_masked = False
 
     print(f"\n🔍 Analyzing output for quality gate evidence...")
-    lines = result.stdout.split('\n')
+    lines = result.stdout.split("\n")
 
     for line in lines:
         # Look for quality floors config
@@ -139,11 +160,13 @@ def test_quality_gates_debug():
 
     # Cleanup
     import shutil
+
     try:
         shutil.rmtree(temp_dir)
         print(f"🗑️  Cleaned up: {temp_dir}")
     except Exception as e:
         print(f"⚠️  Cleanup failed: {e}")
+
 
 if __name__ == "__main__":
     test_quality_gates_debug()

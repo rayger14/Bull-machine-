@@ -1,4 +1,3 @@
-
 """Advanced module scaffolds for Bull Machine v1.2.1 / v1.3.
 
 These implement the **interfaces** expected by main_v13.py and friends.
@@ -19,6 +18,7 @@ try:
     )
 except Exception:
     from dataclasses import dataclass, field
+
     @dataclass
     class WyckoffResult:
         regime: str = "neutral"
@@ -28,9 +28,11 @@ except Exception:
         trend_confidence: float = 0.0
         range: Optional[Dict] = None
         notes: List[str] = field(default_factory=list)
+
         @property
         def confidence(self) -> float:
             return (self.phase_confidence + self.trend_confidence) / 2.0
+
     @dataclass
     class LiquidityResult:
         score: float = 0.0
@@ -40,6 +42,7 @@ except Exception:
         sweeps: List[Dict] = field(default_factory=list)
         phobs: List[Dict] = field(default_factory=list)
         metadata: Dict = field(default_factory=dict)
+
     @dataclass
     class Signal:
         ts: int = 0
@@ -49,6 +52,7 @@ except Exception:
         ttl_bars: int = 0
         metadata: Dict = field(default_factory=dict)
         mtf_sync: Optional[Any] = None
+
     @dataclass
     class BiasCtx:
         tf: str = "1H"
@@ -58,12 +62,14 @@ except Exception:
         bars_confirmed: int = 0
         ma_distance: float = 0.0
         trend_quality: float = 0.0
+
     @dataclass
     class RangeCtx:
         tf: str = "1H"
         low: float = 0.0
         high: float = 0.0
         mid: float = 0.0
+
     @dataclass
     class SyncReport:
         htf: BiasCtx = BiasCtx()
@@ -76,11 +82,13 @@ except Exception:
         threshold_bump: float = 0.0
         alignment_score: float = 0.0
         notes: List[str] = field(default_factory=list)
+
     @dataclass
     class Series:
         bars: List[Any] = field(default_factory=list)
         timeframe: str = "1H"
         symbol: str = "UNKNOWN"
+
 
 class AdvancedLiquidityAnalyzer:
     """
@@ -88,6 +96,7 @@ class AdvancedLiquidityAnalyzer:
       - analyze(series, bias) -> LiquidityResult
     TODO: OB/HOB/pHOB, FVG quality/age, sweeps+reclaims, scoring.
     """
+
     def __init__(self, config: Optional[Dict] = None):
         self.config = config or {}
 
@@ -100,7 +109,7 @@ class AdvancedLiquidityAnalyzer:
                 order_blocks=[],
                 sweeps=[],
                 phobs=[],
-                metadata={"notes": ["insufficient data"]}
+                metadata={"notes": ["insufficient data"]},
             )
 
         try:
@@ -147,24 +156,28 @@ class AdvancedLiquidityAnalyzer:
             order_blocks = []
             if len(highs) >= 3:
                 for i in range(1, len(highs) - 1):
-                    if highs[i] > highs[i-1] and highs[i] > highs[i+1]:
+                    if highs[i] > highs[i - 1] and highs[i] > highs[i + 1]:
                         # Resistance OB: use some thickness around the high
                         thickness = (highs[i] - lows[i]) * 0.1
-                        order_blocks.append({
-                            "type": "resistance",
-                            "high": highs[i],
-                            "low": highs[i] - thickness,
-                            "strength": 0.5
-                        })
-                    if lows[i] < lows[i-1] and lows[i] < lows[i+1]:
+                        order_blocks.append(
+                            {
+                                "type": "resistance",
+                                "high": highs[i],
+                                "low": highs[i] - thickness,
+                                "strength": 0.5,
+                            }
+                        )
+                    if lows[i] < lows[i - 1] and lows[i] < lows[i + 1]:
                         # Support OB: use some thickness around the low
                         thickness = (highs[i] - lows[i]) * 0.1
-                        order_blocks.append({
-                            "type": "support",
-                            "high": lows[i] + thickness,
-                            "low": lows[i],
-                            "strength": 0.5
-                        })
+                        order_blocks.append(
+                            {
+                                "type": "support",
+                                "high": lows[i] + thickness,
+                                "low": lows[i],
+                                "strength": 0.5,
+                            }
+                        )
 
             # Calculate quality based on data freshness and volume reliability
             vol_quality = min(1.0, volumes[-1] / max(avg_volume, 1e-6)) if volumes else 0.3
@@ -177,7 +190,7 @@ class AdvancedLiquidityAnalyzer:
                 score=base_score,
                 pressure=pressure,
                 fvgs=[],  # Could implement FVG detection
-                order_blocks=order_blocks
+                order_blocks=order_blocks,
             )
 
             # Add quality attribute for enhanced fusion
@@ -188,12 +201,7 @@ class AdvancedLiquidityAnalyzer:
             return self._neutral_result(f"analysis error: {str(e)}")
 
     def _neutral_result(self, note: str) -> LiquidityResult:
-        result = LiquidityResult(
-            score=0.0,
-            pressure="neutral",
-            fvgs=[],
-            order_blocks=[]
-        )
+        result = LiquidityResult(score=0.0, pressure="neutral", fvgs=[], order_blocks=[])
         # Add quality attribute for enhanced fusion
         result.quality = 0.0
         return result

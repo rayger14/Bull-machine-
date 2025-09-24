@@ -25,7 +25,7 @@ def create_test_data(bars=100):
     """Create synthetic test data."""
     np.random.seed(42)
 
-    dates = pd.date_range('2024-01-01', periods=bars, freq='H')
+    dates = pd.date_range("2024-01-01", periods=bars, freq="H")
     base_price = 60000
 
     # Create trending data with some volatility
@@ -39,14 +39,14 @@ def create_test_data(bars=100):
 
     # Generate OHLC
     df = pd.DataFrame(index=dates)
-    df['close'] = prices
-    df['open'] = df['close'].shift(1).fillna(prices[0])
+    df["close"] = prices
+    df["open"] = df["close"].shift(1).fillna(prices[0])
 
     # Add some spread for high/low
     spread = np.abs(np.random.normal(0, 0.01, bars)) * prices
-    df['high'] = df[['open', 'close']].max(axis=1) + spread
-    df['low'] = df[['open', 'close']].min(axis=1) - spread
-    df['volume'] = volume
+    df["high"] = df[["open", "close"]].max(axis=1) + spread
+    df["low"] = df[["open", "close"]].min(axis=1) - spread
+    df["volume"] = volume
 
     return df
 
@@ -62,38 +62,38 @@ def test_advanced_exits():
 
         # Test trade plan
         trade_plan = {
-            'bias': 'long',
-            'entry_price': 60000,
-            'sl': 58000,
-            'tp': 65000,
-            'initial_range_high': 62000,
-            'initial_range_low': 58000
+            "bias": "long",
+            "entry_price": 60000,
+            "sl": 58000,
+            "tp": 65000,
+            "initial_range_high": 62000,
+            "initial_range_low": 58000,
         }
 
         # Test with normal scores
         scores = {
-            'wyckoff': 0.7,
-            'liquidity': 0.6,
-            'structure': 0.5,
-            'momentum': 0.5,
-            'volume': 0.6,
-            'context': 0.5,
-            'mtf': 0.7
+            "wyckoff": 0.7,
+            "liquidity": 0.6,
+            "structure": 0.5,
+            "momentum": 0.5,
+            "volume": 0.6,
+            "context": 0.5,
+            "mtf": 0.7,
         }
 
         result = evaluator.evaluate_exits(df, trade_plan, scores, 10, None)
 
-        assert 'exits' in result
-        assert 'history' in result['exits']
+        assert "exits" in result
+        assert "history" in result["exits"]
         print("  ✅ Advanced exits initialized and running")
 
         # Test with low scores (should trigger global veto)
         low_scores = {k: 0.3 for k in scores.keys()}
-        low_scores['context'] = 0.2  # Below context floor
+        low_scores["context"] = 0.2  # Below context floor
 
         result_veto = evaluator.evaluate_exits(df, trade_plan, low_scores, 10, None)
 
-        if result_veto['exits']['history']:
+        if result_veto["exits"]["history"]:
             print("  ✅ Global veto triggered correctly")
         else:
             print("  ⚠️  Global veto may not be triggering")
@@ -116,8 +116,8 @@ def test_mtf_sync():
 
         # Test Wyckoff state detection
         state = wyckoff_state(df)
-        assert 'bias' in state
-        assert 'confidence' in state
+        assert "bias" in state
+        assert "confidence" in state
         print(f"  ✅ Wyckoff state: {state['bias']} (conf: {state['confidence']:.2f})")
 
         # Test MTF alignment
@@ -141,9 +141,9 @@ def test_liquidity_scoring():
         # Test liquidity score calculation
         result = calculate_liquidity_score(df)
 
-        assert 'score' in result
-        assert 0 <= result['score'] <= 1
-        assert 'pools' in result
+        assert "score" in result
+        assert 0 <= result["score"] <= 1
+        assert "pools" in result
 
         print(f"  ✅ Liquidity score: {result['score']:.3f}")
         print(f"  📊 Pools detected: {len(result['pools'])}")
@@ -163,7 +163,7 @@ def test_bojan_magnets():
         df = create_test_data(20)
 
         # Test wick magnet scoring
-        ob_level = df['close'].iloc[-1] * 1.02  # 2% above current price
+        ob_level = df["close"].iloc[-1] * 1.02  # 2% above current price
         score = wick_magnets(df, ob_level)
 
         assert 0 <= score <= 0.6  # Should be capped at 0.6 for v1.4.1
@@ -182,42 +182,42 @@ def test_fusion_engine():
 
     try:
         config = {
-            'weights': {
-                'wyckoff': 0.30,
-                'liquidity': 0.25,
-                'structure': 0.15,
-                'momentum': 0.15,
-                'volume': 0.15,
-                'context': 0.05,
-                'mtf': 0.10
+            "weights": {
+                "wyckoff": 0.30,
+                "liquidity": 0.25,
+                "structure": 0.15,
+                "momentum": 0.15,
+                "volume": 0.15,
+                "context": 0.05,
+                "mtf": 0.10,
             },
-            'features': {'bojan': True},
-            'signals': {'enter_threshold': 0.72, 'aggregate_floor': 0.35}
+            "features": {"bojan": True},
+            "signals": {"enter_threshold": 0.72, "aggregate_floor": 0.35},
         }
 
         fusion = FusionEngineV141(config)
 
         # Test normal scores
         scores = {
-            'wyckoff': 0.8,
-            'liquidity': 0.7,
-            'structure': 0.6,
-            'momentum': 0.6,
-            'volume': 0.6,
-            'context': 0.5,
-            'mtf': 0.7,
-            'bojan': 0.9  # Should be capped
+            "wyckoff": 0.8,
+            "liquidity": 0.7,
+            "structure": 0.6,
+            "momentum": 0.6,
+            "volume": 0.6,
+            "context": 0.5,
+            "mtf": 0.7,
+            "bojan": 0.9,  # Should be capped
         }
 
         result = fusion.fuse_scores(scores)
 
-        assert 'aggregate' in result
-        assert 'weighted_score' in result
-        assert not result['global_veto']
+        assert "aggregate" in result
+        assert "weighted_score" in result
+        assert not result["global_veto"]
 
         # Check Bojan capping
-        bojan_contrib = result['layer_contributions'].get('bojan', 0)
-        max_bojan = 0.6 * config['weights'].get('bojan', 0)  # Should be capped
+        bojan_contrib = result["layer_contributions"].get("bojan", 0)
+        max_bojan = 0.6 * config["weights"].get("bojan", 0)  # Should be capped
 
         print(f"  ✅ Fusion score: {result['weighted_score']:.3f}")
         print(f"  ✅ Aggregate: {result['aggregate']:.3f}")
@@ -242,9 +242,9 @@ def test_ablation():
         df = create_test_data(100)
 
         config = {
-            'features': {'wyckoff': True, 'liquidity': True, 'structure': True},
-            'weights': {'wyckoff': 0.5, 'liquidity': 0.3, 'structure': 0.2},
-            'signals': {'enter_threshold': 0.70}
+            "features": {"wyckoff": True, "liquidity": True, "structure": True},
+            "weights": {"wyckoff": 0.5, "liquidity": 0.3, "structure": 0.2},
+            "signals": {"enter_threshold": 0.70},
         }
 
         results = run_ablation(df, config)
@@ -253,11 +253,11 @@ def test_ablation():
         print(f"  ✅ Ablation completed: {len(results)} layer combinations")
 
         # Check that different layer sets produce different results
-        if 'wyckoff' in results:
+        if "wyckoff" in results:
             print(f"  📊 Sample result keys: {list(results['wyckoff'].keys())}")
 
             # Use weighted_score instead of estimated_sharpe
-            scores = [r.get('weighted_score', 0) for r in results.values()]
+            scores = [r.get("weighted_score", 0) for r in results.values()]
             unique_scores = len(set([round(s, 3) for s in scores]))  # Round for comparison
             print(f"  📊 Unique performance scores: {unique_scores}")
 
@@ -283,10 +283,10 @@ def test_config_loading():
         # Test system config
         config_path = "configs/v141/system_config.json"
         if Path(config_path).exists():
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 config = json.load(f)
 
-            required_keys = ['features', 'weights', 'signals']
+            required_keys = ["features", "weights", "signals"]
             for key in required_keys:
                 assert key in config
 
@@ -297,11 +297,11 @@ def test_config_loading():
         # Test exits config
         exits_path = "configs/v141/exits_config.json"
         if Path(exits_path).exists():
-            with open(exits_path, 'r') as f:
+            with open(exits_path, "r") as f:
                 exits_config = json.load(f)
 
-            assert 'order' in exits_config
-            assert 'shared' in exits_config
+            assert "order" in exits_config
+            assert "shared" in exits_config
 
             print(f"  ✅ Exits config loaded: {len(exits_config['order'])} rules")
         else:
@@ -326,7 +326,7 @@ def main():
         test_liquidity_scoring,
         test_bojan_magnets,
         test_advanced_exits,
-        test_ablation
+        test_ablation,
     ]
 
     passed = 0

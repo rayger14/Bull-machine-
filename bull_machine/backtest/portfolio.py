@@ -1,4 +1,3 @@
-
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
@@ -10,6 +9,7 @@ class BookPosition:
     size: float
     entry: float
 
+
 class Portfolio:
     def __init__(self, starting_cash: float, exposure_cap_pct: float = 0.5, max_positions: int = 8):
         self.cash = starting_cash
@@ -20,8 +20,9 @@ class Portfolio:
         self.exposure_cap_pct = exposure_cap_pct
         self.max_positions = max_positions
 
-    def compute_position_size(self, risk_plan: Dict[str, Any], balance: float,
-                            base_risk_pct: float = 0.01) -> Dict[str, Any]:
+    def compute_position_size(
+        self, risk_plan: Dict[str, Any], balance: float, base_risk_pct: float = 0.01
+    ) -> Dict[str, Any]:
         """
         Compute proper position size based on actual risk (entry to stop distance)
         instead of notional value.
@@ -36,7 +37,7 @@ class Portfolio:
                     "position_size": balance * base_risk_pct / 100,  # Tiny fallback
                     "risk_amount": balance * base_risk_pct,
                     "risk_per_unit": 100.0,
-                    "effective_risk_pct": base_risk_pct
+                    "effective_risk_pct": base_risk_pct,
                 }
 
             # Calculate per-unit risk (distance from entry to stop)
@@ -48,7 +49,7 @@ class Portfolio:
                     "position_size": balance * base_risk_pct / 100,
                     "risk_amount": balance * base_risk_pct,
                     "risk_per_unit": 100.0,
-                    "effective_risk_pct": base_risk_pct
+                    "effective_risk_pct": base_risk_pct,
                 }
 
             # Calculate position size based on risk tolerance
@@ -59,7 +60,7 @@ class Portfolio:
                 "position_size": position_size,
                 "risk_amount": target_risk_amount,  # This is the actual $ at risk
                 "risk_per_unit": risk_per_unit,
-                "effective_risk_pct": target_risk_amount / balance
+                "effective_risk_pct": target_risk_amount / balance,
             }
 
         except Exception as e:
@@ -68,7 +69,7 @@ class Portfolio:
                 "position_size": balance * base_risk_pct / 100,
                 "risk_amount": balance * base_risk_pct,
                 "risk_per_unit": 100.0,
-                "effective_risk_pct": base_risk_pct
+                "effective_risk_pct": base_risk_pct,
             }
 
     def scale_to_exposure(self, base_size: float, max_exposure_pct: float = 0.8) -> float:
@@ -97,8 +98,13 @@ class Portfolio:
             # Plenty of room, use full size
             return base_size
 
-    def can_add(self, side: str, risk_plan: Optional[Dict[str, Any]], equity: float,
-               base_risk_pct: float = 0.01) -> tuple[bool, str]:
+    def can_add(
+        self,
+        side: str,
+        risk_plan: Optional[Dict[str, Any]],
+        equity: float,
+        base_risk_pct: float = 0.01,
+    ) -> tuple[bool, str]:
         """
         Enhanced position validation using proper risk calculation.
         Returns (can_add, reason) tuple.
@@ -113,7 +119,7 @@ class Portfolio:
             logging.warning("No risk_plan provided, using conservative defaults")
             simple_risk = equity * base_risk_pct
             if simple_risk / equity > 0.05:  # 5% max for fallback
-                return False, f"Fallback risk too high: {simple_risk/equity:.1%}"
+                return False, f"Fallback risk too high: {simple_risk / equity:.1%}"
             return True, "Approved with fallback risk"
 
         # Calculate proper position sizing
@@ -141,13 +147,17 @@ class Portfolio:
         return result
 
     def on_fill(self, symbol: str, side: str, price: float, size: float, fee: float):
-        if side in ('long','short'):
+        if side in ("long", "short"):
             self.positions[symbol] = BookPosition(side, size, price)
             self.cash -= fee
-        elif side == 'exit':
+        elif side == "exit":
             pos = self.positions.pop(symbol, None)
             if pos:
-                pnl = (price - pos.entry) * pos.size if pos.side=='long' else (pos.entry - price) * pos.size
+                pnl = (
+                    (price - pos.entry) * pos.size
+                    if pos.side == "long"
+                    else (pos.entry - price) * pos.size
+                )
                 self.realized += pnl - fee
                 self.cash += pnl - fee
 
@@ -156,7 +166,9 @@ class Portfolio:
         if not pos:
             self.unrealized = 0.0
             return
-        self.unrealized = (price - pos.entry) * pos.size if pos.side=='long' else (pos.entry - price) * pos.size
+        self.unrealized = (
+            (price - pos.entry) * pos.size if pos.side == "long" else (pos.entry - price) * pos.size
+        )
 
     def equity(self) -> float:
         eq = self.cash + self.realized + self.unrealized

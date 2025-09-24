@@ -33,11 +33,13 @@ def setup_logging(level: str = "INFO"):
     logging.basicConfig(
         level=getattr(logging, level.upper()),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.StreamHandler(sys.stdout)]
+        handlers=[logging.StreamHandler(sys.stdout)],
     )
 
-def resample_to_timeframes(df: pd.DataFrame, htf: str = "1D",
-                          mtf: str = "4H", ltf: str = "1H") -> Dict[str, pd.DataFrame]:
+
+def resample_to_timeframes(
+    df: pd.DataFrame, htf: str = "1D", mtf: str = "4H", ltf: str = "1H"
+) -> Dict[str, pd.DataFrame]:
     """Resample data to multiple timeframes"""
 
     df = df.copy()
@@ -49,11 +51,11 @@ def resample_to_timeframes(df: pd.DataFrame, htf: str = "1D",
     if "timestamp" in df.columns:
         try:
             # Try parsing as Unix timestamp (seconds)
-            if df["timestamp"].dtype in ['int64', 'float64']:
-                df.index = pd.to_datetime(df["timestamp"], unit='s', utc=True).tz_localize(None)
+            if df["timestamp"].dtype in ["int64", "float64"]:
+                df.index = pd.to_datetime(df["timestamp"], unit="s", utc=True).tz_localize(None)
             else:
                 # Try parsing as datetime string
-                df.index = pd.to_datetime(df["timestamp"], utc=False, errors='coerce')
+                df.index = pd.to_datetime(df["timestamp"], utc=False, errors="coerce")
 
             # Drop any NaT values
             df = df[df.index.notna()]
@@ -73,13 +75,13 @@ def resample_to_timeframes(df: pd.DataFrame, htf: str = "1D",
         freq = tf_to_pandas_freq(tf_str)
 
         try:
-            resampled = df.resample(freq).agg({
-                "open": "first",
-                "high": "max",
-                "low": "min",
-                "close": "last",
-                "volume": "sum"
-            }).dropna()
+            resampled = (
+                df.resample(freq)
+                .agg(
+                    {"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}
+                )
+                .dropna()
+            )
 
             result[key] = resampled
             logging.debug(f"Resampled to {tf_str}: {len(resampled)} bars")
@@ -90,6 +92,7 @@ def resample_to_timeframes(df: pd.DataFrame, htf: str = "1D",
 
     return result
 
+
 def build_composite_range(df: pd.DataFrame, tf: str) -> RangeCtx:
     """Build range context from DataFrame"""
     if len(df) < 20:
@@ -97,8 +100,8 @@ def build_composite_range(df: pd.DataFrame, tf: str) -> RangeCtx:
 
     # Simple range: last 20 bars high/low
     recent_bars = df.tail(20)
-    low = recent_bars['low'].min()
-    high = recent_bars['high'].max()
+    low = recent_bars["low"].min()
+    high = recent_bars["high"].max()
     mid = (low + high) / 2
 
     return RangeCtx(
@@ -110,17 +113,23 @@ def build_composite_range(df: pd.DataFrame, tf: str) -> RangeCtx:
         compression=0.5,
         tests_high=0,
         tests_low=0,
-        last_test='none',
-        breakout_potential=0.5
+        last_test="none",
+        breakout_potential=0.5,
     )
+
 
 def resolve_bias(df: pd.DataFrame, tf: str, two_bar: bool = True) -> BiasCtx:
     """Resolve bias from DataFrame"""
     if len(df) < 3:
         return BiasCtx(
-            tf=tf, bias="neutral", confirmed=False,
-            strength=0.0, bars_confirmed=0, ma_distance=0.0,
-            trend_quality=0.0, ma_slope=0.0
+            tf=tf,
+            bias="neutral",
+            confirmed=False,
+            strength=0.0,
+            bars_confirmed=0,
+            ma_distance=0.0,
+            trend_quality=0.0,
+            ma_slope=0.0,
         )
 
     # Simple bias: EMA20 vs EMA50
@@ -166,18 +175,20 @@ def resolve_bias(df: pd.DataFrame, tf: str, two_bar: bool = True) -> BiasCtx:
         bars_confirmed=bars_confirmed,
         ma_distance=abs(current_close - ma20_current) / ma20_current,
         trend_quality=0.6,
-        ma_slope=0.01 if bias == "long" else -0.01
+        ma_slope=0.01 if bias == "long" else -0.01,
     )
+
 
 def compute_eq_magnet(htf_range: RangeCtx, current_price: float, config: dict) -> bool:
     """Check if price is in equilibrium zone (EQ magnet)"""
     if htf_range.height == 0:
         return False
 
-    eq_threshold = config.get('eq_threshold', 0.02)
+    eq_threshold = config.get("eq_threshold", 0.02)
     eq_zone = htf_range.equilibrium_zone
 
     return eq_zone[0] <= current_price <= eq_zone[1]
+
 
 def check_nested_confluence(htf_range: RangeCtx, ltf_levels: list) -> bool:
     """Check if LTF levels nest properly within HTF zones"""
@@ -189,21 +200,30 @@ def check_nested_confluence(htf_range: RangeCtx, ltf_levels: list) -> bool:
     discount_zone = htf_range.discount_zone
 
     for level in ltf_levels:
-        price = level['price']
-        if (discount_zone[0] <= price <= discount_zone[1] or
-            premium_zone[0] <= price <= premium_zone[1]):
+        price = level["price"]
+        if (
+            discount_zone[0] <= price <= discount_zone[1]
+            or premium_zone[0] <= price <= premium_zone[1]
+        ):
             return True
 
     return False
 
-def run_bull_machine_v1_3(csv_file: str,
-                         account_balance: float = 10000,
-                         config_path: Optional[str] = None,
-                         mtf_enabled: bool = True) -> Dict:
+
+def run_bull_machine_v1_3(
+    csv_file: str,
+    account_balance: float = 10000,
+    config_path: Optional[str] = None,
+    mtf_enabled: bool = True,
+) -> Dict:
     """Bull Machine v1.3 Pipeline with MTF Sync"""
 
     logging.info("=" * 60)
-    logging.info("Bull Machine v1.3 - MTF Sync Enabled" if mtf_enabled else "Bull Machine v1.3 - MTF Sync Disabled")
+    logging.info(
+        "Bull Machine v1.3 - MTF Sync Enabled"
+        if mtf_enabled
+        else "Bull Machine v1.3 - MTF Sync Disabled"
+    )
     logging.info("=" * 60)
 
     try:
@@ -247,7 +267,7 @@ def run_bull_machine_v1_3(csv_file: str,
         result = {
             "action": "no_trade",
             "version": "1.3.0",
-            "mtf_enabled": mtf_config.get("enabled", False)
+            "mtf_enabled": mtf_config.get("enabled", False),
         }
 
         # MTF SYNC PROCESSING
@@ -261,14 +281,16 @@ def run_bull_machine_v1_3(csv_file: str,
             # Convert to DataFrame with timestamps
             df_data = []
             for b in series_ltf.bars:
-                df_data.append({
-                    "timestamp": b.ts,
-                    "open": b.open,
-                    "high": b.high,
-                    "low": b.low,
-                    "close": b.close,
-                    "volume": b.volume
-                })
+                df_data.append(
+                    {
+                        "timestamp": b.ts,
+                        "open": b.open,
+                        "high": b.high,
+                        "low": b.low,
+                        "close": b.close,
+                        "volume": b.volume,
+                    }
+                )
             df = pd.DataFrame(df_data)
 
             # Resample with real timestamps
@@ -276,29 +298,35 @@ def run_bull_machine_v1_3(csv_file: str,
                 df,
                 htf=mtf_config.get("htf", "1D"),
                 mtf=mtf_config.get("mtf", "4H"),
-                ltf=mtf_config.get("ltf", "1H")
+                ltf=mtf_config.get("ltf", "1H"),
             )
 
             # Build ranges
             htf_range = build_composite_range(data_dict["htf"], mtf_config.get("htf", "1D"))
 
             if htf_range.height > 0:
-                logging.info(f"HTF Range: {htf_range.low:.2f} - {htf_range.high:.2f} (mid: {htf_range.mid:.2f})")
+                logging.info(
+                    f"HTF Range: {htf_range.low:.2f} - {htf_range.high:.2f} (mid: {htf_range.mid:.2f})"
+                )
 
             # Resolve biases
             htf_bias = resolve_bias(
                 data_dict["htf"],
                 mtf_config.get("htf", "1D"),
-                two_bar=mtf_config.get("two_bar_confirm", True)
+                two_bar=mtf_config.get("two_bar_confirm", True),
             )
             mtf_bias = resolve_bias(
                 data_dict["mtf"],
                 mtf_config.get("mtf", "4H"),
-                two_bar=mtf_config.get("two_bar_confirm", True)
+                two_bar=mtf_config.get("two_bar_confirm", True),
             )
 
-            logging.info(f"HTF Bias: {htf_bias.bias} (confirmed: {htf_bias.confirmed}, strength: {htf_bias.strength:.2f})")
-            logging.info(f"MTF Bias: {mtf_bias.bias} (confirmed: {mtf_bias.confirmed}, strength: {mtf_bias.strength:.2f})")
+            logging.info(
+                f"HTF Bias: {htf_bias.bias} (confirmed: {htf_bias.confirmed}, strength: {htf_bias.strength:.2f})"
+            )
+            logging.info(
+                f"MTF Bias: {mtf_bias.bias} (confirmed: {mtf_bias.confirmed}, strength: {mtf_bias.strength:.2f})"
+            )
 
         # LTF ANALYSIS (using v1.2.1 modules)
         logging.info("\nAnalyzing LTF structure...")
@@ -319,8 +347,12 @@ def run_bull_machine_v1_3(csv_file: str,
         volume_result = volume_analyzer.analyze(series_ltf, wyckoff_result)
         context_result = context_analyzer.analyze(series_ltf, wyckoff_result)
 
-        logging.info(f"Wyckoff: {wyckoff_result.regime}/{wyckoff_result.phase}, Bias: {wyckoff_result.bias}")
-        logging.info(f"Liquidity Score: {liquidity_result.score:.2f}, Pressure: {liquidity_result.pressure}")
+        logging.info(
+            f"Wyckoff: {wyckoff_result.regime}/{wyckoff_result.phase}, Bias: {wyckoff_result.bias}"
+        )
+        logging.info(
+            f"Liquidity Score: {liquidity_result.score:.2f}, Pressure: {liquidity_result.pressure}"
+        )
 
         # MTF SYNC DECISION
         if mtf_config.get("enabled", False) and htf_range:
@@ -334,14 +366,14 @@ def run_bull_machine_v1_3(csv_file: str,
             current_price = series_ltf.bars[-1].close
             eq_magnet = compute_eq_magnet(htf_range, current_price, mtf_config)
 
-            logging.info(f"Nested Confluence: {'✓' if nested_ok else '✗'} ({len(ltf_levels)} LTF levels)")
+            logging.info(
+                f"Nested Confluence: {'✓' if nested_ok else '✗'} ({len(ltf_levels)} LTF levels)"
+            )
             logging.info(f"EQ Magnet: {'ACTIVE ⚠️' if eq_magnet else 'Inactive'}")
 
             # Run sync decision
             sync_report = decide_mtf_entry(
-                htf_bias, mtf_bias, ltf_bias,
-                nested_ok, eq_magnet,
-                mtf_config
+                htf_bias, mtf_bias, ltf_bias, nested_ok, eq_magnet, mtf_config
             )
 
             logging.info(f"\nMTF Decision: {sync_report.decision.upper()}")
@@ -362,15 +394,19 @@ def run_bull_machine_v1_3(csv_file: str,
                 "structure": structure_result,
                 "momentum": momentum_result,
                 "volume": volume_result,
-                "context": context_result
+                "context": context_result,
             },
-            sync_report
+            sync_report,
         )
 
         if signal is None:
-            reason = 'mtf_sync_veto' if sync_report and sync_report.decision == 'veto' else 'below_threshold'
+            reason = (
+                "mtf_sync_veto"
+                if sync_report and sync_report.decision == "veto"
+                else "below_threshold"
+            )
             logging.info(f"No signal generated: {reason}")
-            result['reason'] = reason
+            result["reason"] = reason
             return result
 
         logging.info(f"Signal: {signal.side.upper()}")
@@ -394,20 +430,22 @@ def run_bull_machine_v1_3(csv_file: str,
         save_state(state)
 
         # Return result
-        result.update({
-            "action": "enter_trade",
-            "signal": {
-                "side": signal.side,
-                "confidence": signal.confidence,
-                "reasons": signal.reasons[:3]
-            },
-            "risk_plan": {
-                "entry": plan.entry,
-                "stop": plan.stop,
-                "size": plan.size,
-                "risk_amount": plan.risk_amount
+        result.update(
+            {
+                "action": "enter_trade",
+                "signal": {
+                    "side": signal.side,
+                    "confidence": signal.confidence,
+                    "reasons": signal.reasons[:3],
+                },
+                "risk_plan": {
+                    "entry": plan.entry,
+                    "stop": plan.stop,
+                    "size": plan.size,
+                    "risk_amount": plan.risk_amount,
+                },
             }
-        })
+        )
 
         logging.info("\n✅ TRADE SIGNAL GENERATED")
 
@@ -416,5 +454,6 @@ def run_bull_machine_v1_3(csv_file: str,
     except Exception as e:
         logging.error(f"Error in v1.3 pipeline: {e}")
         import traceback
+
         traceback.print_exc()
         return {"action": "error", "message": str(e), "version": "1.3.0"}

@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
+
 def create_intraday_from_daily(daily_df, timeframe_hours=1):
     """Create realistic intraday data from daily OHLCV."""
     np.random.seed(42)  # For reproducible results
@@ -16,11 +17,11 @@ def create_intraday_from_daily(daily_df, timeframe_hours=1):
     bars_per_day = 24 // timeframe_hours
 
     for i, row in daily_df.iterrows():
-        daily_open = row['open']
-        daily_high = row['high']
-        daily_low = row['low']
-        daily_close = row['close']
-        daily_volume = row['volume']
+        daily_open = row["open"]
+        daily_high = row["high"]
+        daily_low = row["low"]
+        daily_close = row["close"]
+        daily_volume = row["volume"]
 
         # Generate intraday progression
         intraday_prices = []
@@ -68,18 +69,21 @@ def create_intraday_from_daily(daily_df, timeframe_hours=1):
 
             timestamp = pd.Timestamp(i) + pd.Timedelta(hours=bar * timeframe_hours)
 
-            intraday_data.append({
-                'timestamp': timestamp,
-                'open': round(bar_open, 2),
-                'high': round(bar_high, 2),
-                'low': round(bar_low, 2),
-                'close': round(bar_close, 2),
-                'volume': round(bar_volume, 0)
-            })
+            intraday_data.append(
+                {
+                    "timestamp": timestamp,
+                    "open": round(bar_open, 2),
+                    "high": round(bar_high, 2),
+                    "low": round(bar_low, 2),
+                    "close": round(bar_close, 2),
+                    "volume": round(bar_volume, 0),
+                }
+            )
 
             current_price = bar_close
 
     return pd.DataFrame(intraday_data)
+
 
 def enhance_volume_patterns(df):
     """Add realistic volume patterns and clustering."""
@@ -87,19 +91,20 @@ def enhance_volume_patterns(df):
 
     # Add volume clustering around key levels
     for i in range(len(df)):
-        price_change_pct = abs(df.iloc[i]['close'] - df.iloc[i]['open']) / df.iloc[i]['open']
+        price_change_pct = abs(df.iloc[i]["close"] - df.iloc[i]["open"]) / df.iloc[i]["open"]
 
         # Higher volume on bigger moves
         if price_change_pct > 0.02:  # 2%+ moves
-            df.iloc[i, df.columns.get_loc('volume')] *= np.random.uniform(1.5, 3.0)
+            df.iloc[i, df.columns.get_loc("volume")] *= np.random.uniform(1.5, 3.0)
         elif price_change_pct > 0.01:  # 1%+ moves
-            df.iloc[i, df.columns.get_loc('volume')] *= np.random.uniform(1.2, 2.0)
+            df.iloc[i, df.columns.get_loc("volume")] *= np.random.uniform(1.2, 2.0)
 
         # Add some random volume spikes
         if np.random.random() < 0.05:  # 5% chance
-            df.iloc[i, df.columns.get_loc('volume')] *= np.random.uniform(2.0, 4.0)
+            df.iloc[i, df.columns.get_loc("volume")] *= np.random.uniform(2.0, 4.0)
 
     return df
+
 
 def main():
     """Create multi-timeframe BTC data."""
@@ -107,9 +112,9 @@ def main():
     print("=" * 60)
 
     # Load daily data
-    daily_df = pd.read_csv('btc_daily_clean.csv')
-    daily_df['timestamp'] = pd.to_datetime(daily_df['timestamp'], unit='s')
-    daily_df = daily_df.set_index('timestamp')
+    daily_df = pd.read_csv("btc_daily_clean.csv")
+    daily_df["timestamp"] = pd.to_datetime(daily_df["timestamp"], unit="s")
+    daily_df = daily_df.set_index("timestamp")
 
     print(f"Loaded {len(daily_df)} days of BTC data")
     print(f"Date range: {daily_df.index[0]} to {daily_df.index[-1]}")
@@ -120,15 +125,15 @@ def main():
 
     # Generate different timeframes
     timeframes = {
-        '1H': 1,
-        '4H': 4,
-        '1D': 24  # Just copy daily for consistency
+        "1H": 1,
+        "4H": 4,
+        "1D": 24,  # Just copy daily for consistency
     }
 
     for tf_name, hours in timeframes.items():
         print(f"\n🔄 Generating {tf_name} data...")
 
-        if tf_name == '1D':
+        if tf_name == "1D":
             # Use original daily data with enhancements
             tf_df = daily_df.reset_index()
             tf_df = enhance_volume_patterns(tf_df)
@@ -148,6 +153,7 @@ def main():
 
     print(f"\n📁 All data files saved to: {data_dir}")
     print("🚀 Ready for v1.4.2 multi-timeframe backtest!")
+
 
 if __name__ == "__main__":
     main()

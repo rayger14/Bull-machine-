@@ -42,45 +42,44 @@ class ExitSignalEvaluator:
             logging.warning("EXIT_EVAL_INIT failed to dump config: %s", e)
 
         # Initialize detectors
-        choch_config = config.get('choch_against', {})
-        momentum_config = config.get('momentum_fade', {})
-        time_config = config.get('time_stop', {})
+        choch_config = config.get("choch_against", {})
+        momentum_config = config.get("momentum_fade", {})
+        time_config = config.get("time_stop", {})
 
         self.choch_detector = CHoCHAgainstDetector(choch_config)
         self.momentum_detector = MomentumFadeDetector(momentum_config)
         self.time_evaluator = TimeStopEvaluator(time_config)
 
         # Global exit settings
-        self.enabled_exits = config.get('enabled_exits', [
-            'choch_against', 'momentum_fade', 'time_stop'
-        ])
-        self.min_confidence = config.get('min_confidence', 0.6)
-        self.priority_order = config.get('priority_order', [
-            'choch_against', 'momentum_fade', 'time_stop'
-        ])
+        self.enabled_exits = config.get(
+            "enabled_exits", ["choch_against", "momentum_fade", "time_stop"]
+        )
+        self.min_confidence = config.get("min_confidence", 0.6)
+        self.priority_order = config.get(
+            "priority_order", ["choch_against", "momentum_fade", "time_stop"]
+        )
 
         # Exit tracking for telemetry
-        self.exit_counts = {
-            'choch_against': 0,
-            'momentum_fade': 0,
-            'time_stop': 0,
-            'none': 0
-        }
+        self.exit_counts = {"choch_against": 0, "momentum_fade": 0, "time_stop": 0, "none": 0}
 
         # Enhanced telemetry tracking
         self.exit_applications = []  # Track each application with details
         self.parameter_usage = {
-            'choch_against': {'triggered': 0, 'evaluated': 0, 'params_used': choch_config},
-            'momentum_fade': {'triggered': 0, 'evaluated': 0, 'params_used': momentum_config},
-            'time_stop': {'triggered': 0, 'evaluated': 0, 'params_used': time_config}
+            "choch_against": {"triggered": 0, "evaluated": 0, "params_used": choch_config},
+            "momentum_fade": {"triggered": 0, "evaluated": 0, "params_used": momentum_config},
+            "time_stop": {"triggered": 0, "evaluated": 0, "params_used": time_config},
         }
         self.out_dir = out_dir
 
         logging.info(f"ExitSignalEvaluator initialized with exits: {self.enabled_exits}")
 
-    def evaluate_exits(self, symbol: str, position_data: Dict[str, Any],
-                      mtf_data: Dict[str, pd.DataFrame],
-                      current_bar: pd.Timestamp) -> ExitEvaluationResult:
+    def evaluate_exits(
+        self,
+        symbol: str,
+        position_data: Dict[str, Any],
+        mtf_data: Dict[str, pd.DataFrame],
+        current_bar: pd.Timestamp,
+    ) -> ExitEvaluationResult:
         """
         Evaluate all exit conditions for a position.
 
@@ -94,7 +93,7 @@ class ExitSignalEvaluator:
             ExitEvaluationResult with all detected signals
         """
         result = ExitEvaluationResult()
-        position_bias = position_data.get('bias', 'long')
+        position_bias = position_data.get("bias", "long")
 
         # Track signals for telemetry
         choch_sig = None
@@ -103,36 +102,34 @@ class ExitSignalEvaluator:
 
         try:
             # 1. CHoCH-Against Detection
-            if 'choch_against' in self.enabled_exits:
-                self.parameter_usage['choch_against']['evaluated'] += 1
+            if "choch_against" in self.enabled_exits:
+                self.parameter_usage["choch_against"]["evaluated"] += 1
                 choch_sig = self.choch_detector.evaluate(
                     symbol, position_bias, mtf_data, current_bar
                 )
                 if choch_sig and choch_sig.confidence >= self.min_confidence:
                     result.add_signal(choch_sig)
-                    self.parameter_usage['choch_against']['triggered'] += 1
+                    self.parameter_usage["choch_against"]["triggered"] += 1
                     logging.debug(f"CHoCH-Against signal: {choch_sig.confidence:.2f}")
 
             # 2. Momentum Fade Detection
-            if 'momentum_fade' in self.enabled_exits:
-                self.parameter_usage['momentum_fade']['evaluated'] += 1
+            if "momentum_fade" in self.enabled_exits:
+                self.parameter_usage["momentum_fade"]["evaluated"] += 1
                 mom_sig = self.momentum_detector.evaluate(
                     symbol, position_bias, mtf_data, current_bar
                 )
                 if mom_sig and mom_sig.confidence >= self.min_confidence:
                     result.add_signal(mom_sig)
-                    self.parameter_usage['momentum_fade']['triggered'] += 1
+                    self.parameter_usage["momentum_fade"]["triggered"] += 1
                     logging.debug(f"Momentum fade signal: {mom_sig.confidence:.2f}")
 
             # 3. Time Stop Evaluation
-            if 'time_stop' in self.enabled_exits:
-                self.parameter_usage['time_stop']['evaluated'] += 1
-                time_sig = self.time_evaluator.evaluate(
-                    symbol, position_data, current_bar
-                )
+            if "time_stop" in self.enabled_exits:
+                self.parameter_usage["time_stop"]["evaluated"] += 1
+                time_sig = self.time_evaluator.evaluate(symbol, position_data, current_bar)
                 if time_sig and time_sig.confidence >= self.min_confidence:
                     result.add_signal(time_sig)
-                    self.parameter_usage['time_stop']['triggered'] += 1
+                    self.parameter_usage["time_stop"]["triggered"] += 1
                     logging.debug(f"Time stop signal: {time_sig.confidence:.2f}")
 
         except Exception as e:
@@ -150,11 +147,13 @@ class ExitSignalEvaluator:
 
         # Log results
         if result.has_signals():
-            logging.info(f"Exit signals for {symbol}: {len(result.signals)} signals, "
-                        f"max confidence: {result.max_confidence:.2f}")
+            logging.info(
+                f"Exit signals for {symbol}: {len(result.signals)} signals, "
+                f"max confidence: {result.max_confidence:.2f}"
+            )
         else:
             logging.debug(f"No exit signals for {symbol}")
-            self.exit_counts['none'] += 1
+            self.exit_counts["none"] += 1
 
         return result
 
@@ -184,19 +183,23 @@ class ExitSignalEvaluator:
 
             # Track detailed application
             application_record = {
-                'timestamp': recommended.timestamp.isoformat() if hasattr(recommended.timestamp, 'isoformat') else str(recommended.timestamp),
-                'symbol': recommended.symbol,
-                'exit_type': exit_type,
-                'confidence': recommended.confidence,
-                'urgency': recommended.urgency,
-                'reasons': recommended.reasons,
-                'context': recommended.context
+                "timestamp": recommended.timestamp.isoformat()
+                if hasattr(recommended.timestamp, "isoformat")
+                else str(recommended.timestamp),
+                "symbol": recommended.symbol,
+                "exit_type": exit_type,
+                "confidence": recommended.confidence,
+                "urgency": recommended.urgency,
+                "reasons": recommended.reasons,
+                "context": recommended.context,
             }
             self.exit_applications.append(application_record)
 
-            logging.info(f"Recommended exit: {recommended.exit_type.value} "
-                        f"(confidence: {recommended.confidence:.2f}, "
-                        f"urgency: {recommended.urgency:.2f})")
+            logging.info(
+                f"Recommended exit: {recommended.exit_type.value} "
+                f"(confidence: {recommended.confidence:.2f}, "
+                f"urgency: {recommended.urgency:.2f})"
+            )
             return recommended
 
         return None
@@ -211,6 +214,7 @@ class ExitSignalEvaluator:
         Returns:
             Sorted list with highest priority first
         """
+
         def signal_priority_score(signal: ExitSignal) -> float:
             # Type priority (lower index = higher priority)
             type_priority = 1.0
@@ -221,9 +225,7 @@ class ExitSignalEvaluator:
                 type_priority = 0.5  # Unknown types get medium priority
 
             # Combine type priority, confidence, and urgency
-            return (type_priority * 0.4 +
-                   signal.confidence * 0.4 +
-                   signal.urgency * 0.2)
+            return type_priority * 0.4 + signal.confidence * 0.4 + signal.urgency * 0.2
 
         return sorted(signals, key=signal_priority_score, reverse=True)
 
@@ -232,7 +234,7 @@ class ExitSignalEvaluator:
         output_path = Path(output_dir) / "exit_counts.json"
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(self.exit_counts, f, indent=2)
 
         logging.info(f"Exit counts saved to {output_path}: {self.exit_counts}")
@@ -247,14 +249,16 @@ class ExitSignalEvaluator:
         exits_applied_data = {
             "total_applications": len(self.exit_applications),
             "applications_by_type": {
-                exit_type: len([app for app in self.exit_applications if app['exit_type'] == exit_type])
-                for exit_type in ['choch_against', 'momentum_fade', 'time_stop']
+                exit_type: len(
+                    [app for app in self.exit_applications if app["exit_type"] == exit_type]
+                )
+                for exit_type in ["choch_against", "momentum_fade", "time_stop"]
             },
             "detailed_applications": self.exit_applications,
-            "summary": self.exit_counts
+            "summary": self.exit_counts,
         }
 
-        with open(exits_applied_path, 'w') as f:
+        with open(exits_applied_path, "w") as f:
             json.dump(exits_applied_data, f, indent=2)
         logging.info(f"Exits applied telemetry saved to {exits_applied_path}")
 
@@ -263,28 +267,33 @@ class ExitSignalEvaluator:
         parameter_telemetry = {
             "parameter_effectiveness": {
                 exit_type: {
-                    "evaluated_count": data['evaluated'],
-                    "triggered_count": data['triggered'],
-                    "trigger_rate": data['triggered'] / data['evaluated'] if data['evaluated'] > 0 else 0.0,
-                    "parameters_applied": data['params_used']
+                    "evaluated_count": data["evaluated"],
+                    "triggered_count": data["triggered"],
+                    "trigger_rate": data["triggered"] / data["evaluated"]
+                    if data["evaluated"] > 0
+                    else 0.0,
+                    "parameters_applied": data["params_used"],
                 }
                 for exit_type, data in self.parameter_usage.items()
             },
             "global_stats": {
-                "total_evaluations": sum(data['evaluated'] for data in self.parameter_usage.values()),
-                "total_triggers": sum(data['triggered'] for data in self.parameter_usage.values()),
+                "total_evaluations": sum(
+                    data["evaluated"] for data in self.parameter_usage.values()
+                ),
+                "total_triggers": sum(data["triggered"] for data in self.parameter_usage.values()),
                 "overall_trigger_rate": (
-                    sum(data['triggered'] for data in self.parameter_usage.values()) /
-                    sum(data['evaluated'] for data in self.parameter_usage.values())
-                    if sum(data['evaluated'] for data in self.parameter_usage.values()) > 0 else 0.0
-                )
+                    sum(data["triggered"] for data in self.parameter_usage.values())
+                    / sum(data["evaluated"] for data in self.parameter_usage.values())
+                    if sum(data["evaluated"] for data in self.parameter_usage.values()) > 0
+                    else 0.0
+                ),
             },
             "enabled_exits": self.enabled_exits,
             "min_confidence": self.min_confidence,
-            "priority_order": self.priority_order
+            "priority_order": self.priority_order,
         }
 
-        with open(parameter_usage_path, 'w') as f:
+        with open(parameter_usage_path, "w") as f:
             json.dump(parameter_telemetry, f, indent=2)
         logging.info(f"Parameter usage telemetry saved to {parameter_usage_path}")
 
@@ -293,34 +302,47 @@ class ExitSignalEvaluator:
         layer_masks_data = {
             "fusion_layers": {
                 "choch_layer": {
-                    "active": 'choch_against' in self.enabled_exits,
-                    "evaluation_count": self.parameter_usage['choch_against']['evaluated'],
-                    "trigger_count": self.parameter_usage['choch_against']['triggered'],
-                    "mask_applied": self.parameter_usage['choch_against']['triggered'] > 0
+                    "active": "choch_against" in self.enabled_exits,
+                    "evaluation_count": self.parameter_usage["choch_against"]["evaluated"],
+                    "trigger_count": self.parameter_usage["choch_against"]["triggered"],
+                    "mask_applied": self.parameter_usage["choch_against"]["triggered"] > 0,
                 },
                 "momentum_layer": {
-                    "active": 'momentum_fade' in self.enabled_exits,
-                    "evaluation_count": self.parameter_usage['momentum_fade']['evaluated'],
-                    "trigger_count": self.parameter_usage['momentum_fade']['triggered'],
-                    "mask_applied": self.parameter_usage['momentum_fade']['triggered'] > 0
+                    "active": "momentum_fade" in self.enabled_exits,
+                    "evaluation_count": self.parameter_usage["momentum_fade"]["evaluated"],
+                    "trigger_count": self.parameter_usage["momentum_fade"]["triggered"],
+                    "mask_applied": self.parameter_usage["momentum_fade"]["triggered"] > 0,
                 },
                 "time_layer": {
-                    "active": 'time_stop' in self.enabled_exits,
-                    "evaluation_count": self.parameter_usage['time_stop']['evaluated'],
-                    "trigger_count": self.parameter_usage['time_stop']['triggered'],
-                    "mask_applied": self.parameter_usage['time_stop']['triggered'] > 0
-                }
+                    "active": "time_stop" in self.enabled_exits,
+                    "evaluation_count": self.parameter_usage["time_stop"]["evaluated"],
+                    "trigger_count": self.parameter_usage["time_stop"]["triggered"],
+                    "mask_applied": self.parameter_usage["time_stop"]["triggered"] > 0,
+                },
             },
             "layer_interaction": {
                 "total_layers": len(self.enabled_exits),
-                "active_layers": len([exit for exit in self.enabled_exits
-                                    if self.parameter_usage.get(exit, {}).get('triggered', 0) > 0]),
-                "fusion_effectiveness": len([exit for exit in self.enabled_exits
-                                           if self.parameter_usage.get(exit, {}).get('triggered', 0) > 0]) / len(self.enabled_exits) if self.enabled_exits else 0.0
-            }
+                "active_layers": len(
+                    [
+                        exit
+                        for exit in self.enabled_exits
+                        if self.parameter_usage.get(exit, {}).get("triggered", 0) > 0
+                    ]
+                ),
+                "fusion_effectiveness": len(
+                    [
+                        exit
+                        for exit in self.enabled_exits
+                        if self.parameter_usage.get(exit, {}).get("triggered", 0) > 0
+                    ]
+                )
+                / len(self.enabled_exits)
+                if self.enabled_exits
+                else 0.0,
+            },
         }
 
-        with open(layer_masks_path, 'w') as f:
+        with open(layer_masks_path, "w") as f:
             json.dump(layer_masks_data, f, indent=2)
         logging.info(f"Layer masks telemetry saved to {layer_masks_path}")
 
@@ -329,7 +351,9 @@ class ExitSignalEvaluator:
 
         print("\n🔍 TELEMETRY SAVED:")
         print(f"  • exits_applied.json - {len(self.exit_applications)} applications tracked")
-        print(f"  • parameter_usage.json - {sum(data['evaluated'] for data in self.parameter_usage.values())} evaluations")
+        print(
+            f"  • parameter_usage.json - {sum(data['evaluated'] for data in self.parameter_usage.values())} evaluations"
+        )
         print(f"  • layer_masks.json - {len(self.enabled_exits)} fusion layers")
         print(f"  • exit_counts.json - {sum(self.exit_counts.values())} total exits")
 
@@ -341,12 +365,16 @@ class MTFDesyncEvaluator:
     """
 
     def __init__(self, config: Dict[str, Any]):
-        self.min_desync_score = config.get('min_desync_score', 0.7)
-        self.critical_desync_score = config.get('critical_desync_score', 0.85)
+        self.min_desync_score = config.get("min_desync_score", 0.7)
+        self.critical_desync_score = config.get("critical_desync_score", 0.85)
 
-    def evaluate(self, symbol: str, position_bias: str,
-                 sync_report: Optional[Dict[str, Any]],
-                 current_bar: pd.Timestamp) -> Optional[ExitSignal]:
+    def evaluate(
+        self,
+        symbol: str,
+        position_bias: str,
+        sync_report: Optional[Dict[str, Any]],
+        current_bar: pd.Timestamp,
+    ) -> Optional[ExitSignal]:
         """
         Evaluate MTF desynchronization for exit signals.
 
@@ -384,7 +412,7 @@ class MTFDesyncEvaluator:
                     confidence=confidence,
                     urgency=urgency,
                     reasons=[f"MTF desync score: {desync_score:.2f}"],
-                    context={'desync_score': desync_score, 'sync_report': sync_report}
+                    context={"desync_score": desync_score, "sync_report": sync_report},
                 )
 
         except Exception as e:
@@ -397,8 +425,8 @@ class MTFDesyncEvaluator:
         # This would need to be implemented based on your sync report structure
         # For now, return a placeholder that integrates with existing sync logic
 
-        sync_score = sync_report.get('sync_score', 1.0)
-        bias_agreement = sync_report.get('bias_agreement', 1.0)
+        sync_score = sync_report.get("sync_score", 1.0)
+        bias_agreement = sync_report.get("bias_agreement", 1.0)
 
         # Desync is inverse of sync
         desync_score = 1.0 - (sync_score * bias_agreement)
@@ -414,33 +442,26 @@ def create_default_exit_config() -> Dict[str, Any]:
         Default exit configuration
     """
     return {
-        'enabled_exits': ['choch_against', 'momentum_fade', 'time_stop'],
-        'min_confidence': 0.6,
-        'priority_order': ['choch_against', 'momentum_fade', 'time_stop'],
-
-        'choch_against': {
-            'min_break_strength': 0.6,
-            'confirmation_bars': 2,
-            'volume_confirmation': True
+        "enabled_exits": ["choch_against", "momentum_fade", "time_stop"],
+        "min_confidence": 0.6,
+        "priority_order": ["choch_against", "momentum_fade", "time_stop"],
+        "choch_against": {
+            "min_break_strength": 0.6,
+            "confirmation_bars": 2,
+            "volume_confirmation": True,
         },
-
-        'momentum_fade': {
-            'rsi_period': 14,
-            'rsi_divergence_threshold': 0.7,
-            'volume_decline_threshold': 0.3,
-            'velocity_threshold': 0.4
+        "momentum_fade": {
+            "rsi_period": 14,
+            "rsi_divergence_threshold": 0.7,
+            "volume_decline_threshold": 0.3,
+            "velocity_threshold": 0.4,
         },
-
-        'time_stop': {
-            'max_bars_1h': 168,  # 1 week
-            'max_bars_4h': 42,   # 1 week
-            'max_bars_1d': 10,   # 10 days
-            'performance_threshold': 0.1,  # 10% gain to justify time
-            'time_decay_start': 0.7  # Start decay at 70% of max time
+        "time_stop": {
+            "max_bars_1h": 168,  # 1 week
+            "max_bars_4h": 42,  # 1 week
+            "max_bars_1d": 10,  # 10 days
+            "performance_threshold": 0.1,  # 10% gain to justify time
+            "time_decay_start": 0.7,  # Start decay at 70% of max time
         },
-
-        'mtf_desync': {
-            'min_desync_score': 0.7,
-            'critical_desync_score': 0.85
-        }
+        "mtf_desync": {"min_desync_score": 0.7, "critical_desync_score": 0.85},
     }

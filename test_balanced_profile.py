@@ -51,20 +51,22 @@ def test_balanced_config():
 
     # Mock layer scores that should trigger with relaxed thresholds
     mock_scores = {
-        "wyckoff": 0.70,      # Above new 0.37 floor
-        "liquidity": 0.75,    # Above new 0.32 floor, triggers MTF override at 0.70
+        "wyckoff": 0.70,  # Above new 0.37 floor
+        "liquidity": 0.75,  # Above new 0.32 floor, triggers MTF override at 0.70
         "structure": 0.65,
         "momentum": 0.60,
         "volume": 0.65,
         "context": 0.50,
-        "mtf": 0.65          # Below 0.70 MTF threshold, but liquidity should override
+        "mtf": 0.65,  # Below 0.70 MTF threshold, but liquidity should override
     }
 
     result = engine.fuse_scores(mock_scores)
 
     print(f"\n🧪 Test Fusion Result:")
     print(f"   Weighted Score: {result['weighted_score']:.3f}")
-    print(f"   Enter Decision: {'✅ ENTER' if result['weighted_score'] >= merged_config['signals']['enter_threshold'] else '❌ SKIP'}")
+    print(
+        f"   Enter Decision: {'✅ ENTER' if result['weighted_score'] >= merged_config['signals']['enter_threshold'] else '❌ SKIP'}"
+    )
     print(f"   Global Veto: {result['global_veto']}")
     print(f"   MTF Gate: {result['mtf_gate']}")
 

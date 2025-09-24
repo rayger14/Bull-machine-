@@ -10,7 +10,8 @@ from datetime import datetime, timedelta
 import sys
 import os
 
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
+
 
 def load_and_analyze_chart_data(csv_path):
     """Load chart data and calculate basic metrics"""
@@ -18,24 +19,25 @@ def load_and_analyze_chart_data(csv_path):
         df = pd.read_csv(csv_path)
 
         # Calculate returns
-        returns = df['close'].pct_change().dropna()
+        returns = df["close"].pct_change().dropna()
 
         # Calculate volatility and trend metrics
         volatility = returns.std() * 100
-        sma_20 = df['close'].rolling(20).mean()
-        trend_strength = ((df['close'].iloc[-1] - sma_20.iloc[-1]) / sma_20.iloc[-1]) * 100
+        sma_20 = df["close"].rolling(20).mean()
+        trend_strength = ((df["close"].iloc[-1] - sma_20.iloc[-1]) / sma_20.iloc[-1]) * 100
 
         return {
-            'bars': len(df),
-            'volatility': volatility,
-            'trend_strength': trend_strength,
-            'price_range': (df['close'].min(), df['close'].max()),
-            'current_price': df['close'].iloc[-1],
-            'returns': returns
+            "bars": len(df),
+            "volatility": volatility,
+            "trend_strength": trend_strength,
+            "price_range": (df["close"].min(), df["close"].max()),
+            "current_price": df["close"].iloc[-1],
+            "returns": returns,
         }
     except Exception as e:
         print(f"Error loading {csv_path}: {e}")
         return None
+
 
 def simulate_trading_signals(data_stats, mtf_enabled=False):
     """Simulate trading signals based on market conditions"""
@@ -46,10 +48,10 @@ def simulate_trading_signals(data_stats, mtf_enabled=False):
     # MTF adjustments
     if mtf_enabled:
         # MTF reduces signals by ~20% but improves quality
-        if abs(data_stats['trend_strength']) < 2:  # Sideways market
+        if abs(data_stats["trend_strength"]) < 2:  # Sideways market
             signal_rate = base_signal_rate * 0.6  # Heavy filtering in chop
             quality_multiplier = 1.4  # But much better quality
-        elif data_stats['volatility'] > 2.5:  # High volatility
+        elif data_stats["volatility"] > 2.5:  # High volatility
             signal_rate = base_signal_rate * 0.8  # Some filtering
             quality_multiplier = 1.2  # Better quality
         else:  # Trending market
@@ -59,26 +61,27 @@ def simulate_trading_signals(data_stats, mtf_enabled=False):
         signal_rate = base_signal_rate
         quality_multiplier = 1.0
 
-    num_signals = int(data_stats['bars'] * signal_rate)
+    num_signals = int(data_stats["bars"] * signal_rate)
 
     return {
-        'num_signals': num_signals,
-        'signal_rate': signal_rate,
-        'quality_multiplier': quality_multiplier
+        "num_signals": num_signals,
+        "signal_rate": signal_rate,
+        "quality_multiplier": quality_multiplier,
     }
+
 
 def calculate_pnl_metrics(data_stats, signal_stats, mtf_enabled=False):
     """Calculate PnL metrics based on signal quality and market conditions"""
 
     # Base win rate and average trade metrics
     base_win_rate = 0.58  # 58% win rate baseline
-    base_avg_win = 2.1    # 2.1% average win
+    base_avg_win = 2.1  # 2.1% average win
     base_avg_loss = -1.2  # -1.2% average loss
 
     # MTF quality improvements
     if mtf_enabled:
-        win_rate = min(0.75, base_win_rate * signal_stats['quality_multiplier'])
-        avg_win = base_avg_win * signal_stats['quality_multiplier']
+        win_rate = min(0.75, base_win_rate * signal_stats["quality_multiplier"])
+        avg_win = base_avg_win * signal_stats["quality_multiplier"]
         avg_loss = base_avg_loss * 0.9  # Slightly smaller losses due to better entries
     else:
         win_rate = base_win_rate
@@ -86,26 +89,27 @@ def calculate_pnl_metrics(data_stats, signal_stats, mtf_enabled=False):
         avg_loss = base_avg_loss
 
     # Calculate PnL
-    num_signals = signal_stats['num_signals']
+    num_signals = signal_stats["num_signals"]
     num_wins = int(num_signals * win_rate)
     num_losses = num_signals - num_wins
 
     total_pnl = (num_wins * avg_win) + (num_losses * avg_loss)
 
     # Account for market volatility impact
-    volatility_factor = min(1.5, data_stats['volatility'] / 2.0)
+    volatility_factor = min(1.5, data_stats["volatility"] / 2.0)
     total_pnl *= volatility_factor
 
     return {
-        'total_signals': num_signals,
-        'wins': num_wins,
-        'losses': num_losses,
-        'win_rate': win_rate,
-        'avg_win_pct': avg_win,
-        'avg_loss_pct': avg_loss,
-        'total_pnl_pct': total_pnl,
-        'sharpe_estimate': total_pnl / max(0.1, data_stats['volatility'])
+        "total_signals": num_signals,
+        "wins": num_wins,
+        "losses": num_losses,
+        "win_rate": win_rate,
+        "avg_win_pct": avg_win,
+        "avg_loss_pct": avg_loss,
+        "total_pnl_pct": total_pnl,
+        "sharpe_estimate": total_pnl / max(0.1, data_stats["volatility"]),
     }
+
 
 def run_pnl_comparison():
     """Run PnL comparison across available datasets"""
@@ -113,17 +117,17 @@ def run_pnl_comparison():
     print("💰 BULL MACHINE v1.3 vs v1.2.1 PnL ANALYSIS")
     print("=" * 60)
 
-    chart_dir = '/Users/raymondghandchi/Downloads/Chart logs 2'
+    chart_dir = "/Users/raymondghandchi/Downloads/Chart logs 2"
     datasets = [
-        ('COINBASE_BTCUSD, 1D_85c84.csv', 'BTCUSD', '1D'),
-        ('COINBASE_BTCUSD, 240_c2b76.csv', 'BTCUSD', '4H'),
-        ('COINBASE_BTCUSD, 60_50ad4.csv', 'BTCUSD', '1H'),
-        ('COINBASE_ETHUSD, 1D_64942.csv', 'ETHUSD', '1D'),
-        ('COINBASE_ETHUSD, 240_1d04a.csv', 'ETHUSD', '4H'),
-        ('COINBASE_ETHUSD, 60_2f4ab.csv', 'ETHUSD', '1H'),
-        ('BATS_SPY, 1D_c324d.csv', 'SPY', '1D'),
-        ('BATS_SPY, 240_48e36.csv', 'SPY', '4H'),
-        ('BATS_SPY, 60_9f7f8.csv', 'SPY', '1H'),
+        ("COINBASE_BTCUSD, 1D_85c84.csv", "BTCUSD", "1D"),
+        ("COINBASE_BTCUSD, 240_c2b76.csv", "BTCUSD", "4H"),
+        ("COINBASE_BTCUSD, 60_50ad4.csv", "BTCUSD", "1H"),
+        ("COINBASE_ETHUSD, 1D_64942.csv", "ETHUSD", "1D"),
+        ("COINBASE_ETHUSD, 240_1d04a.csv", "ETHUSD", "4H"),
+        ("COINBASE_ETHUSD, 60_2f4ab.csv", "ETHUSD", "1H"),
+        ("BATS_SPY, 1D_c324d.csv", "SPY", "1D"),
+        ("BATS_SPY, 240_48e36.csv", "SPY", "4H"),
+        ("BATS_SPY, 60_9f7f8.csv", "SPY", "1H"),
     ]
 
     total_v121_pnl = 0
@@ -131,7 +135,7 @@ def run_pnl_comparison():
     results = []
 
     for filename, symbol, timeframe in datasets:
-        csv_path = f'{chart_dir}/{filename}'
+        csv_path = f"{chart_dir}/{filename}"
 
         if not os.path.exists(csv_path):
             print(f"❌ Missing: {symbol} {timeframe}")
@@ -170,24 +174,26 @@ def run_pnl_comparison():
         print(f"  Sharpe: {pnl_v13['sharpe_estimate']:.2f}")
 
         # Calculate improvement
-        pnl_improvement = pnl_v13['total_pnl_pct'] - pnl_v121['total_pnl_pct']
-        winrate_improvement = pnl_v13['win_rate'] - pnl_v121['win_rate']
+        pnl_improvement = pnl_v13["total_pnl_pct"] - pnl_v121["total_pnl_pct"]
+        winrate_improvement = pnl_v13["win_rate"] - pnl_v121["win_rate"]
 
         print(f"\n✅ v1.3 Improvement:")
         print(f"  PnL: {pnl_improvement:+.1f}% pts")
         print(f"  Win Rate: {winrate_improvement:+.1%} pts")
         print(f"  Signal Quality: {signals_v13['quality_multiplier']:.1f}x")
 
-        total_v121_pnl += pnl_v121['total_pnl_pct']
-        total_v13_pnl += pnl_v13['total_pnl_pct']
+        total_v121_pnl += pnl_v121["total_pnl_pct"]
+        total_v13_pnl += pnl_v13["total_pnl_pct"]
 
-        results.append({
-            'symbol': symbol,
-            'timeframe': timeframe,
-            'v121_pnl': pnl_v121['total_pnl_pct'],
-            'v13_pnl': pnl_v13['total_pnl_pct'],
-            'improvement': pnl_improvement
-        })
+        results.append(
+            {
+                "symbol": symbol,
+                "timeframe": timeframe,
+                "v121_pnl": pnl_v121["total_pnl_pct"],
+                "v13_pnl": pnl_v13["total_pnl_pct"],
+                "improvement": pnl_improvement,
+            }
+        )
 
     # Summary
     print(f"\n" + "=" * 60)
@@ -203,9 +209,11 @@ def run_pnl_comparison():
     print(f"  Improvement: {total_improvement:+.1f}% ({improvement_pct:+.1f}%)")
 
     # Best performers
-    best_improvement = max(results, key=lambda x: x['improvement'])
+    best_improvement = max(results, key=lambda x: x["improvement"])
     print(f"\n🏆 Best v1.3 Performance:")
-    print(f"  {best_improvement['symbol']} {best_improvement['timeframe']}: {best_improvement['improvement']:+.1f}% improvement")
+    print(
+        f"  {best_improvement['symbol']} {best_improvement['timeframe']}: {best_improvement['improvement']:+.1f}% improvement"
+    )
 
     # MTF impact analysis
     print(f"\n🎯 MTF Impact Analysis:")
@@ -222,6 +230,7 @@ def run_pnl_comparison():
 
     return results
 
+
 def simulate_account_growth():
     """Simulate account growth over time"""
     print(f"\n📈 ACCOUNT GROWTH SIMULATION")
@@ -232,7 +241,7 @@ def simulate_account_growth():
 
     # Conservative estimates based on analysis
     v121_monthly_return = 0.08  # 8% monthly
-    v13_monthly_return = 0.11   # 11% monthly (MTF improvement)
+    v13_monthly_return = 0.11  # 11% monthly (MTF improvement)
 
     v121_balance = initial_balance
     v13_balance = initial_balance
@@ -243,8 +252,8 @@ def simulate_account_growth():
     print("-" * 45)
 
     for month in range(1, months + 1):
-        v121_balance *= (1 + v121_monthly_return)
-        v13_balance *= (1 + v13_monthly_return)
+        v121_balance *= 1 + v121_monthly_return
+        v13_balance *= 1 + v13_monthly_return
         diff = v13_balance - v121_balance
 
         print(f"{month:2d}     ${v121_balance:8,.0f}  ${v13_balance:8,.0f}  ${diff:+8,.0f}")
@@ -254,7 +263,10 @@ def simulate_account_growth():
 
     print("-" * 45)
     print(f"Final: ${v121_balance:8,.0f}  ${v13_balance:8,.0f}  ${total_improvement:+8,.0f}")
-    print(f"\n🎯 v1.3 generates ${total_improvement:,.0f} more ({improvement_pct:.1f}%) over {months} months")
+    print(
+        f"\n🎯 v1.3 generates ${total_improvement:,.0f} more ({improvement_pct:.1f}%) over {months} months"
+    )
+
 
 if __name__ == "__main__":
     results = run_pnl_comparison()

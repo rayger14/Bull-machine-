@@ -17,12 +17,12 @@ class WyckoffStateMachine:
     def __init__(self, config: Dict = None):
         self.config = config or {}
         self.current_state = {
-            'phase': 'unknown',
-            'bias': 'neutral',
-            'confidence': 0.0,
-            'range_low': None,
-            'range_high': None,
-            'last_significant_move': None
+            "phase": "unknown",
+            "bias": "neutral",
+            "confidence": 0.0,
+            "range_low": None,
+            "range_high": None,
+            "last_significant_move": None,
         }
 
     def analyze_wyckoff_state(self, df: pd.DataFrame) -> Dict:
@@ -31,12 +31,12 @@ class WyckoffStateMachine:
         """
         if len(df) < 50:
             return {
-                'bias': 'neutral',
-                'confidence': 0.0,
-                'phase': 'insufficient_data',
-                'trap_score': 0.0,
-                'reclaim_speed': 0.0,
-                'range_valid': False
+                "bias": "neutral",
+                "confidence": 0.0,
+                "phase": "insufficient_data",
+                "trap_score": 0.0,
+                "reclaim_speed": 0.0,
+                "range_valid": False,
             }
 
         # Build/update range
@@ -57,16 +57,16 @@ class WyckoffStateMachine:
         )
 
         return {
-            'bias': bias,
-            'confidence': confidence,
-            'phase': phase_analysis['phase'],
-            'trap_score': trap_score,
-            'reclaim_speed': reclaim_analysis['speed_score'],
-            'range_valid': range_info['valid'],
-            'range_low': range_info['low'],
-            'range_high': range_info['high'],
-            'volume_context': phase_analysis.get('volume_context', {}),
-            'structure_breaks': phase_analysis.get('structure_breaks', [])
+            "bias": bias,
+            "confidence": confidence,
+            "phase": phase_analysis["phase"],
+            "trap_score": trap_score,
+            "reclaim_speed": reclaim_analysis["speed_score"],
+            "range_valid": range_info["valid"],
+            "range_low": range_info["low"],
+            "range_high": range_info["high"],
+            "volume_context": phase_analysis.get("volume_context", {}),
+            "structure_breaks": phase_analysis.get("structure_breaks", []),
         }
 
     def build_dynamic_range(self, df: pd.DataFrame) -> Dict:
@@ -77,7 +77,7 @@ class WyckoffStateMachine:
         recent = df.tail(lookback)
 
         # Calculate volatility for dynamic range adjustment
-        returns = recent['close'].pct_change().dropna()
+        returns = recent["close"].pct_change().dropna()
         volatility = returns.std()
 
         # Adaptive range based on volatility
@@ -89,14 +89,14 @@ class WyckoffStateMachine:
         range_data = recent.tail(range_period)
 
         # Find significant highs and lows
-        range_high = range_data['high'].max()
-        range_low = range_data['low'].min()
+        range_high = range_data["high"].max()
+        range_low = range_data["low"].min()
         range_size = range_high - range_low
 
         # Check for range invalidation (new significant highs/lows)
-        current_price = df.iloc[-1]['close']
-        recent_high = recent.tail(10)['high'].max()
-        recent_low = recent.tail(10)['low'].min()
+        current_price = df.iloc[-1]["close"]
+        recent_high = recent.tail(10)["high"].max()
+        recent_low = recent.tail(10)["low"].min()
 
         # Re-anchor if we've broken significantly out of range
         needs_reanchor = False
@@ -105,8 +105,8 @@ class WyckoffStateMachine:
             # New accumulation range
             new_lookback = min(30, len(recent))
             range_data = recent.tail(new_lookback)
-            range_high = range_data['high'].max()
-            range_low = range_data['low'].min()
+            range_high = range_data["high"].max()
+            range_low = range_data["low"].min()
             range_size = range_high - range_low
             logging.info(f"Range re-anchored (upward): {range_low:.2f} - {range_high:.2f}")
 
@@ -115,8 +115,8 @@ class WyckoffStateMachine:
             # New distribution range
             new_lookback = min(30, len(recent))
             range_data = recent.tail(new_lookback)
-            range_high = range_data['high'].max()
-            range_low = range_data['low'].min()
+            range_high = range_data["high"].max()
+            range_low = range_data["low"].min()
             range_size = range_high - range_low
             logging.info(f"Range re-anchored (downward): {range_low:.2f} - {range_high:.2f}")
 
@@ -124,41 +124,41 @@ class WyckoffStateMachine:
         range_valid = range_size > 0 and range_size > (range_high * 0.02)  # At least 2% range
 
         return {
-            'high': range_high,
-            'low': range_low,
-            'size': range_size,
-            'valid': range_valid,
-            'reanchored': needs_reanchor,
-            'lookback_period': range_period,
-            'volatility': volatility
+            "high": range_high,
+            "low": range_low,
+            "size": range_size,
+            "valid": range_valid,
+            "reanchored": needs_reanchor,
+            "lookback_period": range_period,
+            "volatility": volatility,
         }
 
     def detect_phase(self, df: pd.DataFrame, range_info: Dict) -> Dict:
         """
         Detect current Wyckoff phase with enhanced pattern recognition.
         """
-        if not range_info['valid']:
-            return {'phase': 'ranging', 'confidence': 0.3, 'volume_context': {}}
+        if not range_info["valid"]:
+            return {"phase": "ranging", "confidence": 0.3, "volume_context": {}}
 
         current = df.iloc[-1]
         recent = df.tail(20)
 
         # Calculate position in range
-        range_position = (current['close'] - range_info['low']) / range_info['size']
+        range_position = (current["close"] - range_info["low"]) / range_info["size"]
 
         # Volume analysis
-        vol_sma = recent['volume'].mean()
-        current_vol = current['volume']
+        vol_sma = recent["volume"].mean()
+        current_vol = current["volume"]
         vol_expansion = current_vol > vol_sma * 1.2
 
         # Structural analysis
-        swing_highs = self.find_swing_points(recent, 'high')
-        swing_lows = self.find_swing_points(recent, 'low')
+        swing_highs = self.find_swing_points(recent, "high")
+        swing_lows = self.find_swing_points(recent, "low")
 
         volume_context = {
-            'expansion': vol_expansion,
-            'relative_volume': current_vol / vol_sma if vol_sma > 0 else 1.0,
-            'avg_volume': vol_sma
+            "expansion": vol_expansion,
+            "relative_volume": current_vol / vol_sma if vol_sma > 0 else 1.0,
+            "avg_volume": vol_sma,
         }
 
         # Phase determination logic
@@ -166,68 +166,69 @@ class WyckoffStateMachine:
             # Lower portion - potential accumulation
             if vol_expansion and len(swing_lows) >= 2:
                 # Multiple lows with volume = accumulation
-                phase = 'accumulation_C' if range_position < 0.2 else 'accumulation_B'
+                phase = "accumulation_C" if range_position < 0.2 else "accumulation_B"
                 confidence = 0.7 + (0.1 if vol_expansion else 0)
             else:
-                phase = 'accumulation_A'
+                phase = "accumulation_A"
                 confidence = 0.5
         elif range_position > 0.7:
             # Upper portion - potential distribution
             if vol_expansion and len(swing_highs) >= 2:
                 # Multiple highs with volume = distribution
-                phase = 'distribution_C' if range_position > 0.8 else 'distribution_B'
+                phase = "distribution_C" if range_position > 0.8 else "distribution_B"
                 confidence = 0.7 + (0.1 if vol_expansion else 0)
             else:
-                phase = 'distribution_A'
+                phase = "distribution_A"
                 confidence = 0.5
         else:
             # Middle range - transitional
             if vol_expansion:
-                phase = 'transition'
+                phase = "transition"
                 confidence = 0.6
             else:
-                phase = 'ranging'
+                phase = "ranging"
                 confidence = 0.4
 
         return {
-            'phase': phase,
-            'confidence': confidence,
-            'range_position': range_position,
-            'volume_context': volume_context,
-            'swing_highs': swing_highs,
-            'swing_lows': swing_lows
+            "phase": phase,
+            "confidence": confidence,
+            "range_position": range_position,
+            "volume_context": volume_context,
+            "swing_highs": swing_highs,
+            "swing_lows": swing_lows,
         }
 
-    def calculate_trap_score(self, df: pd.DataFrame, phase_analysis: Dict,
-                           range_info: Dict) -> float:
+    def calculate_trap_score(
+        self, df: pd.DataFrame, phase_analysis: Dict, range_info: Dict
+    ) -> float:
         """
         Calculate Phase C trap scoring: shallow pullback + low volume = high trap risk.
         """
-        if 'C' not in phase_analysis['phase']:
+        if "C" not in phase_analysis["phase"]:
             return 0.0  # No trap risk outside Phase C
 
         recent = df.tail(20)
         current = df.iloc[-1]
 
         # Check for shallow pullback
-        if phase_analysis['phase'] == 'accumulation_C':
+        if phase_analysis["phase"] == "accumulation_C":
             # For longs: look for shallow pullback from high
-            recent_high = recent['high'].max()
-            pullback_depth = (recent_high - current['close']) / recent_high
+            recent_high = recent["high"].max()
+            pullback_depth = (recent_high - current["close"]) / recent_high
             shallow_pullback = pullback_depth < 0.382  # Less than 38.2% Fib
 
-        elif phase_analysis['phase'] == 'distribution_C':
+        elif phase_analysis["phase"] == "distribution_C":
             # For shorts: look for shallow bounce from low
-            recent_low = recent['low'].min()
-            bounce_height = (current['close'] - recent_low) / recent_low
+            recent_low = recent["low"].min()
+            bounce_height = (current["close"] - recent_low) / recent_low
             shallow_pullback = bounce_height < 0.382
 
         else:
             return 0.0
 
         # Check for low volume (trap characteristic)
-        vol_context = phase_analysis.get('volume_context', {})
-        low_volume = vol_context.get('relative_volume', 1.0) < 0.8
+        vol_context = phase_analysis.get("volume_context", {})
+        low_volume = vol_context.get("relative_volume", 1.0) < 0.8
 
         # Calculate trap score
         if shallow_pullback and low_volume:
@@ -238,9 +239,9 @@ class WyckoffStateMachine:
             trap_score = 0.0
 
         # Additional penalty for multiple failed attempts
-        if len(phase_analysis.get('swing_lows', [])) > 3:  # Accumulation
+        if len(phase_analysis.get("swing_lows", [])) > 3:  # Accumulation
             trap_score += 0.1
-        elif len(phase_analysis.get('swing_highs', [])) > 3:  # Distribution
+        elif len(phase_analysis.get("swing_highs", [])) > 3:  # Distribution
             trap_score += 0.1
 
         return min(trap_score, 0.5)  # Cap at 0.5
@@ -250,7 +251,7 @@ class WyckoffStateMachine:
         Analyze spring/UTAD reclaim speed: require ≤5 bars for valid pattern.
         """
         if len(df) < 10:
-            return {'speed_score': 0.0, 'pattern_type': None, 'bars_to_reclaim': None}
+            return {"speed_score": 0.0, "pattern_type": None, "bars_to_reclaim": None}
 
         recent = df.tail(20)
 
@@ -261,50 +262,50 @@ class WyckoffStateMachine:
         utad_analysis = self.detect_utad_reclaim(recent, range_info)
 
         # Determine best pattern and speed score
-        if spring_analysis['detected'] and utad_analysis['detected']:
+        if spring_analysis["detected"] and utad_analysis["detected"]:
             # Both detected - use the faster one
-            if spring_analysis['bars_to_reclaim'] <= utad_analysis['bars_to_reclaim']:
+            if spring_analysis["bars_to_reclaim"] <= utad_analysis["bars_to_reclaim"]:
                 return {
-                    'speed_score': spring_analysis['speed_score'],
-                    'pattern_type': 'spring',
-                    'bars_to_reclaim': spring_analysis['bars_to_reclaim']
+                    "speed_score": spring_analysis["speed_score"],
+                    "pattern_type": "spring",
+                    "bars_to_reclaim": spring_analysis["bars_to_reclaim"],
                 }
             else:
                 return {
-                    'speed_score': utad_analysis['speed_score'],
-                    'pattern_type': 'utad',
-                    'bars_to_reclaim': utad_analysis['bars_to_reclaim']
+                    "speed_score": utad_analysis["speed_score"],
+                    "pattern_type": "utad",
+                    "bars_to_reclaim": utad_analysis["bars_to_reclaim"],
                 }
-        elif spring_analysis['detected']:
+        elif spring_analysis["detected"]:
             return {
-                'speed_score': spring_analysis['speed_score'],
-                'pattern_type': 'spring',
-                'bars_to_reclaim': spring_analysis['bars_to_reclaim']
+                "speed_score": spring_analysis["speed_score"],
+                "pattern_type": "spring",
+                "bars_to_reclaim": spring_analysis["bars_to_reclaim"],
             }
-        elif utad_analysis['detected']:
+        elif utad_analysis["detected"]:
             return {
-                'speed_score': utad_analysis['speed_score'],
-                'pattern_type': 'utad',
-                'bars_to_reclaim': utad_analysis['bars_to_reclaim']
+                "speed_score": utad_analysis["speed_score"],
+                "pattern_type": "utad",
+                "bars_to_reclaim": utad_analysis["bars_to_reclaim"],
             }
         else:
-            return {'speed_score': 0.0, 'pattern_type': None, 'bars_to_reclaim': None}
+            return {"speed_score": 0.0, "pattern_type": None, "bars_to_reclaim": None}
 
     def detect_spring_reclaim(self, df: pd.DataFrame, range_info: Dict) -> Dict:
         """Detect spring pattern with reclaim speed analysis."""
-        if not range_info['valid']:
-            return {'detected': False, 'speed_score': 0.0, 'bars_to_reclaim': None}
+        if not range_info["valid"]:
+            return {"detected": False, "speed_score": 0.0, "bars_to_reclaim": None}
 
-        range_low = range_info['low']
+        range_low = range_info["low"]
 
         # Look for sweep below range low
         sweep_bars = []
         for i, (idx, row) in enumerate(df.iterrows()):
-            if row['low'] < range_low * 0.995:  # 0.5% below range low
+            if row["low"] < range_low * 0.995:  # 0.5% below range low
                 sweep_bars.append(i)
 
         if not sweep_bars:
-            return {'detected': False, 'speed_score': 0.0, 'bars_to_reclaim': None}
+            return {"detected": False, "speed_score": 0.0, "bars_to_reclaim": None}
 
         # Find the last sweep
         last_sweep_idx = sweep_bars[-1]
@@ -312,12 +313,12 @@ class WyckoffStateMachine:
         # Look for reclaim above range low
         reclaim_idx = None
         for i in range(last_sweep_idx + 1, len(df)):
-            if df.iloc[i]['close'] > range_low:
+            if df.iloc[i]["close"] > range_low:
                 reclaim_idx = i
                 break
 
         if reclaim_idx is None:
-            return {'detected': False, 'speed_score': 0.0, 'bars_to_reclaim': None}
+            return {"detected": False, "speed_score": 0.0, "bars_to_reclaim": None}
 
         # Calculate speed
         bars_to_reclaim = reclaim_idx - last_sweep_idx
@@ -332,27 +333,23 @@ class WyckoffStateMachine:
         else:
             speed_score = 0.1  # Too slow
 
-        return {
-            'detected': True,
-            'speed_score': speed_score,
-            'bars_to_reclaim': bars_to_reclaim
-        }
+        return {"detected": True, "speed_score": speed_score, "bars_to_reclaim": bars_to_reclaim}
 
     def detect_utad_reclaim(self, df: pd.DataFrame, range_info: Dict) -> Dict:
         """Detect UTAD pattern with rejection speed analysis."""
-        if not range_info['valid']:
-            return {'detected': False, 'speed_score': 0.0, 'bars_to_reclaim': None}
+        if not range_info["valid"]:
+            return {"detected": False, "speed_score": 0.0, "bars_to_reclaim": None}
 
-        range_high = range_info['high']
+        range_high = range_info["high"]
 
         # Look for sweep above range high
         sweep_bars = []
         for i, (idx, row) in enumerate(df.iterrows()):
-            if row['high'] > range_high * 1.005:  # 0.5% above range high
+            if row["high"] > range_high * 1.005:  # 0.5% above range high
                 sweep_bars.append(i)
 
         if not sweep_bars:
-            return {'detected': False, 'speed_score': 0.0, 'bars_to_reclaim': None}
+            return {"detected": False, "speed_score": 0.0, "bars_to_reclaim": None}
 
         # Find the last sweep
         last_sweep_idx = sweep_bars[-1]
@@ -360,12 +357,12 @@ class WyckoffStateMachine:
         # Look for rejection below range high
         reject_idx = None
         for i in range(last_sweep_idx + 1, len(df)):
-            if df.iloc[i]['close'] < range_high:
+            if df.iloc[i]["close"] < range_high:
                 reject_idx = i
                 break
 
         if reject_idx is None:
-            return {'detected': False, 'speed_score': 0.0, 'bars_to_reclaim': None}
+            return {"detected": False, "speed_score": 0.0, "bars_to_reclaim": None}
 
         # Calculate speed
         bars_to_reject = reject_idx - last_sweep_idx
@@ -380,11 +377,7 @@ class WyckoffStateMachine:
         else:
             speed_score = 0.1  # Too slow
 
-        return {
-            'detected': True,
-            'speed_score': speed_score,
-            'bars_to_reclaim': bars_to_reject
-        }
+        return {"detected": True, "speed_score": speed_score, "bars_to_reclaim": bars_to_reject}
 
     def find_swing_points(self, df: pd.DataFrame, price_type: str) -> List[Dict]:
         """Find swing highs or lows in the data."""
@@ -395,49 +388,50 @@ class WyckoffStateMachine:
         prices = df[price_type].values
 
         for i in range(2, len(prices) - 2):
-            if price_type == 'high':
+            if price_type == "high":
                 # Swing high: higher than 2 bars on each side
-                if prices[i] > prices[i-2] and prices[i] > prices[i-1] and \
-                   prices[i] > prices[i+1] and prices[i] > prices[i+2]:
-                    swings.append({
-                        'index': i,
-                        'price': prices[i],
-                        'type': 'swing_high'
-                    })
+                if (
+                    prices[i] > prices[i - 2]
+                    and prices[i] > prices[i - 1]
+                    and prices[i] > prices[i + 1]
+                    and prices[i] > prices[i + 2]
+                ):
+                    swings.append({"index": i, "price": prices[i], "type": "swing_high"})
             else:  # low
                 # Swing low: lower than 2 bars on each side
-                if prices[i] < prices[i-2] and prices[i] < prices[i-1] and \
-                   prices[i] < prices[i+1] and prices[i] < prices[i+2]:
-                    swings.append({
-                        'index': i,
-                        'price': prices[i],
-                        'type': 'swing_low'
-                    })
+                if (
+                    prices[i] < prices[i - 2]
+                    and prices[i] < prices[i - 1]
+                    and prices[i] < prices[i + 1]
+                    and prices[i] < prices[i + 2]
+                ):
+                    swings.append({"index": i, "price": prices[i], "type": "swing_low"})
 
         return swings
 
-    def determine_bias_confidence(self, phase_analysis: Dict, trap_score: float,
-                                reclaim_analysis: Dict, range_info: Dict) -> Tuple[str, float]:
+    def determine_bias_confidence(
+        self, phase_analysis: Dict, trap_score: float, reclaim_analysis: Dict, range_info: Dict
+    ) -> Tuple[str, float]:
         """
         Determine final bias and confidence with trap penalties and reclaim boosts.
         """
-        base_confidence = phase_analysis['confidence']
-        phase = phase_analysis['phase']
+        base_confidence = phase_analysis["confidence"]
+        phase = phase_analysis["phase"]
 
         # Determine base bias from phase
-        if 'accumulation' in phase:
-            bias = 'long'
-        elif 'distribution' in phase:
-            bias = 'short'
+        if "accumulation" in phase:
+            bias = "long"
+        elif "distribution" in phase:
+            bias = "short"
         else:
-            bias = 'neutral'
+            bias = "neutral"
             return bias, base_confidence
 
         # Apply trap penalty
         confidence_after_trap = base_confidence - trap_score
 
         # Apply reclaim speed boost
-        speed_bonus = reclaim_analysis['speed_score'] * 0.15  # Max 0.12 boost
+        speed_bonus = reclaim_analysis["speed_score"] * 0.15  # Max 0.12 boost
         final_confidence = confidence_after_trap + speed_bonus
 
         # Ensure confidence stays in valid range
@@ -445,6 +439,6 @@ class WyckoffStateMachine:
 
         # Override bias to neutral if confidence too low
         if final_confidence < 0.4:
-            bias = 'neutral'
+            bias = "neutral"
 
         return bias, final_confidence

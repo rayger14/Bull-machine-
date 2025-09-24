@@ -1,4 +1,3 @@
-
 """Advanced module scaffolds for Bull Machine v1.2.1 / v1.3.
 
 These implement the **interfaces** expected by main_v13.py and friends.
@@ -19,6 +18,7 @@ try:
     )
 except Exception:
     from dataclasses import dataclass, field
+
     @dataclass
     class WyckoffResult:
         regime: str = "neutral"
@@ -28,9 +28,11 @@ except Exception:
         trend_confidence: float = 0.0
         range: Optional[Dict] = None
         notes: List[str] = field(default_factory=list)
+
         @property
         def confidence(self) -> float:
             return (self.phase_confidence + self.trend_confidence) / 2.0
+
     @dataclass
     class LiquidityResult:
         score: float = 0.0
@@ -40,6 +42,7 @@ except Exception:
         sweeps: List[Dict] = field(default_factory=list)
         phobs: List[Dict] = field(default_factory=list)
         metadata: Dict = field(default_factory=dict)
+
     @dataclass
     class Signal:
         ts: int = 0
@@ -49,6 +52,7 @@ except Exception:
         ttl_bars: int = 0
         metadata: Dict = field(default_factory=dict)
         mtf_sync: Optional[Any] = None
+
     @dataclass
     class BiasCtx:
         tf: str = "1H"
@@ -58,12 +62,14 @@ except Exception:
         bars_confirmed: int = 0
         ma_distance: float = 0.0
         trend_quality: float = 0.0
+
     @dataclass
     class RangeCtx:
         tf: str = "1H"
         low: float = 0.0
         high: float = 0.0
         mid: float = 0.0
+
     @dataclass
     class SyncReport:
         htf: BiasCtx = BiasCtx()
@@ -76,11 +82,13 @@ except Exception:
         threshold_bump: float = 0.0
         alignment_score: float = 0.0
         notes: List[str] = field(default_factory=list)
+
     @dataclass
     class Series:
         bars: List[Any] = field(default_factory=list)
         timeframe: str = "1H"
         symbol: str = "UNKNOWN"
+
 
 class AdvancedMomentumAnalyzer:
     """
@@ -88,6 +96,7 @@ class AdvancedMomentumAnalyzer:
       - analyze(series, config) -> Dict[str, Any]
     TODO: displacement, reluctant vs aggressive, volatility shocks.
     """
+
     def __init__(self, config: Optional[Dict] = None):
         self.config = config or {}
 
@@ -99,7 +108,7 @@ class AdvancedMomentumAnalyzer:
         """
         try:
             # Handle different input types
-            if hasattr(df_or_series, 'bars'):
+            if hasattr(df_or_series, "bars"):
                 bars = df_or_series.bars
                 if len(bars) < 10:
                     return self._neutral_result("insufficient bars")
@@ -107,7 +116,7 @@ class AdvancedMomentumAnalyzer:
                 closes = [bar.close for bar in bars[-10:]]
                 highs = [bar.high for bar in bars[-10:]]
                 lows = [bar.low for bar in bars[-10:]]
-                volumes = [getattr(bar, 'volume', 0) for bar in bars[-10:]]
+                volumes = [getattr(bar, "volume", 0) for bar in bars[-10:]]
             else:
                 return self._neutral_result("unsupported format")
 
@@ -155,7 +164,7 @@ class AdvancedMomentumAnalyzer:
                 "direction": direction,
                 "shock": shock,
                 "break_strength": displacement_ratio,
-                "notes": [f"momentum: {momentum_change:.3f}", f"vol_ratio: {volume_ratio:.2f}"]
+                "notes": [f"momentum: {momentum_change:.3f}", f"vol_ratio: {volume_ratio:.2f}"],
             }
 
         except Exception as e:
@@ -169,8 +178,9 @@ class AdvancedMomentumAnalyzer:
             "direction": "neutral",
             "shock": False,
             "break_strength": 0.0,
-            "notes": [note]
+            "notes": [note],
         }
+
 
 # Backward compatibility function
 def analyze(df_or_series: Any, config: Optional[Dict] = None) -> Dict[str, Any]:
