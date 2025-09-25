@@ -1,0 +1,1 @@
+"""Sentiment analysis modules for Bull Machine v1.5.0."""

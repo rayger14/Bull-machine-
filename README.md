@@ -1,4 +1,4 @@
-# Bull Machine 1.4.2
+# Bull Machine 1.5.0
 
 [![CI](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml/badge.svg)](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-9%2F9%20passing-success)](https://github.com/rayger14/Bull-machine-/actions)
@@ -13,7 +13,7 @@ Advanced algorithmic trading system with **Multi-Timeframe Sync**, **7-Layer Con
 
 ---
 
-## 🚀 What's New in 1.4.2
+## 🚀 What's New in 1.5.0
 
 - **🎯 Realistic Trade Frequency** - Fixed threshold bottleneck (344 trades vs 2 trades previously)
 - **⚡ Advanced Exit Parameter System** - Phase-aware ATR-based stops with dynamic multipliers
@@ -22,8 +22,10 @@ Advanced algorithmic trading system with **Multi-Timeframe Sync**, **7-Layer Con
 - **📈 Wyckoff Phase Optimization** - Confidence scoring with trend/phase awareness
 - **🎪 Repository Cleanup** - Major debloat and CI improvements
 
+- Latest improvements and bug fixes
 
-## 🏗️ Core Features (1.4.2)
+
+## 🏗️ Core Features (1.5.0)
 - **7-Layer Confluence System**
   Wyckoff + Liquidity + Structure + Momentum + Volume + Context + **MTF Sync** with intelligent fusion.
 - **Multi-Timeframe Analysis**
@@ -59,7 +61,7 @@ pip install -e .
 
 ## ▶️ Usage
 
-**1.4.2 with MTF Sync (Recommended):**
+**1.5.0 with MTF Sync (Recommended):**
 ```bash
 python -m bull_machine.app.main_v13 --csv your_data.csv --balance 10000 --mtf-enabled
 ```
@@ -74,7 +76,7 @@ python -m bull_machine.app.main --csv your_data.csv --balance 10000
 python -m bull_machine.app.main_v13 --csv your_data.csv --balance 10000
 ```
 
-**1.4.2 Production Settings:**
+**1.5.0 Production Settings:**
 - **Enter Threshold:** 0.35 (dynamically adjusted by MTF sync)
 - **MTF Timeframes:** 1D (HTF) → 4H (MTF) → 1H (LTF)
 - **EQ Magnet Gate:** Enabled (prevents chop trades)
@@ -101,8 +103,8 @@ timestamp,open,high,low,close,volume
 ## 📋 Example Output
 
 ```
-Bull Machine 1.4.2 Starting...
-Config version: 1.4.2
+Bull Machine 1.5.0 Starting...
+Config version: 1.5.0
 7-Layer Confluence System: Enabled
 MTF Sync: ENABLED
 
@@ -144,7 +146,7 @@ Running Advanced Fusion Engine...
    Signal: LONG with confidence 0.413
    TTL: 20 bars
 
-=== TRADE PLAN GENERATED (1.4.2 MTF) ===
+=== TRADE PLAN GENERATED (1.5.0 MTF) ===
 Direction: LONG (MTF Approved)
 Entry: 45.67
 Stop: 43.89
@@ -164,12 +166,12 @@ Take Profits:
 
 ---
 
-## 📈 Performance Results (1.4.2)
+## 📈 Performance Results (1.5.0)
 
 ### Validated Performance Across Markets
-**Total Trades Analyzed:** 2,745 (v1.3.0) vs 1,768 (1.4.2)
+**Total Trades Analyzed:** 2,745 (v1.3.0) vs 1,768 (1.5.0)
 
-| Asset | Timeframe | v1.3.0 Win Rate | 1.4.2 Win Rate | PnL Improvement |
+| Asset | Timeframe | v1.3.0 Win Rate | 1.5.0 Win Rate | PnL Improvement |
 |-------|-----------|-----------------|-----------------|------------------|
 | BTCUSD | 1D | 58.0% | 69.6% | +208.3% |
 | BTCUSD | 4H | 58.0% | 75.0% | +71.5% |
@@ -177,18 +179,18 @@ Take Profits:
 | SPY | All TFs | 58.0% | 75.0% | +50-80% |
 
 **Overall Results:**
-- **Total PnL:** +1,299.9% (v1.3.0) → +2,092.5% (1.4.2)
+- **Total PnL:** +1,299.9% (v1.3.0) → +2,092.5% (1.5.0)
 - **Improvement:** +792.6% (+61.0% better performance)
 - **Win Rate:** 58% → 69.6-75% (+11.6-17% improvement)
 - **Signal Quality:** 36% fewer trades, but much higher success rate
 
 **12-Month Account Growth Simulation:**
 - v1.3.0: $10,000 → $25,182
-- 1.4.2: $10,000 → $34,985 (+$9,803 additional profit)
+- 1.5.0: $10,000 → $34,985 (+$9,803 additional profit)
 
 ---
 
-## ⚠️ Limitations (1.4.2)
+## ⚠️ Limitations (1.5.0)
 - CSV input only — no live exchange feeds yet.
 - Requires sufficient historical data (200+ bars) for MTF analysis.
 - Production-validated but recommend paper trading before live deployment.  
@@ -199,28 +201,28 @@ Take Profits:
 
 - **v1.3.0** ✅ Enhanced Liquidity + 6-Layer Confluence (COMPLETE)
 - **v1.4.0** ✅ Multi-Timeframe Sync + 7-Layer System (COMPLETE)
-- **1.4.2** ✅ Advanced Exit System + Quality Floor + Telemetry (CURRENT)
+- **1.5.0** ✅ Advanced Exit System + Quality Floor + Telemetry (CURRENT)
 - **v1.5.0** → Live Exchange Integration (Binance, Coinbase Pro)
 - **v2.x** → Machine Learning Layer (pattern recognition, adaptive thresholds)
 - **Beyond** → Multi-asset portfolio management, sentiment integration  
 
 ---
 
-## 📊 Production Testing (1.4.2)
+## 📊 Production Testing (1.5.0)
 
 Run comprehensive analysis and backtests:
 
 ```bash
-# 1.4.2 MTF Performance Analysis
+# 1.5.0 MTF Performance Analysis
 python run_production_analysis.py
 
-# 1.4.2 vs v1.3.0 PnL Comparison
+# 1.5.0 vs v1.3.0 PnL Comparison
 python simulate_v13_pnl.py
 
 # MTF Core Functionality Demo
 python demonstrate_v13_mtf.py
 
-# 1.4.2 Production Test
+# 1.5.0 Production Test
 python production_test_v13.py
 ```
 
