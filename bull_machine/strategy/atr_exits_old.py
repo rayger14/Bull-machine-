@@ -1,6 +1,6 @@
 """
-Bull Machine ATR-Based Exit Logic - FIXED
-True R-based profit ladders with dynamic trailing stops
+Bull Machine ATR-Based Exit Logic
+Dynamic stops, profit ladders, and trailing stops based on market volatility
 """
 
 from typing import Dict, Tuple, List
@@ -68,32 +68,22 @@ def maybe_trail_sl(df: pd.DataFrame, side: str, current_sl: float, risk_cfg: Dic
 
 def check_profit_ladder_exit(df: pd.DataFrame, position: Dict, config: Dict) -> Dict:
     """
-    Check for TRUE R-BASED profit ladder exits with scaled position reduction.
-
-    R = abs(entry_price - initial_stop_loss)
-    Targets are based on R-multiples, not ATR!
+    Check for profit ladder exits with scaled position reduction.
 
     Args:
         df: Price DataFrame
-        position: Position details including initial_stop_loss
+        position: Position details
         config: Configuration dict
 
     Returns:
         Exit signal dict with close percentages and prices
     """
-    current_price = float(df['close'].iloc[-1])
-    entry_price = float(position['entry_price'])
+    current_price = df['close'].iloc[-1]
+    entry_price = position['entry_price']
     side = position['side']
+    atr = float(safe_atr(df, config.get('risk', {}).get('atr_window', 14)).iloc[-1])
 
-    # CRITICAL FIX: Use initial stop loss to calculate R
-    initial_stop = float(position.get('initial_stop_loss', position.get('stop_loss', entry_price)))
-    R = abs(entry_price - initial_stop)
-
-    # Protect against zero R
-    if R <= 0:
-        R = abs(entry_price) * 0.001  # Fallback to 0.1% of entry
-
-    # Profit ladder configuration - TRUE R-BASED
+    # Profit ladder configuration
     profit_levels = [
         {'ratio': 1.5, 'percent': 0.25},  # 25% at 1.5R
         {'ratio': 2.5, 'percent': 0.50},  # 50% at 2.5R
@@ -108,7 +98,7 @@ def check_profit_ladder_exit(df: pd.DataFrame, position: Dict, config: Dict) -> 
         'ladder_exits': []
     }
 
-    # Calculate profit targets based on R-multiples
+    # Calculate profit targets based on ATR
     already_closed = position.get('closed_percent', 0.0)
     remaining_position = 1.0 - already_closed
 
@@ -116,12 +106,11 @@ def check_profit_ladder_exit(df: pd.DataFrame, position: Dict, config: Dict) -> 
         return exit_signal
 
     for level in profit_levels:
-        # CRITICAL FIX: Calculate targets using R, not ATR
         if side == "long":
-            target_price = entry_price + (level['ratio'] * R)
+            target_price = entry_price + (level['ratio'] * atr)
             profit_achieved = current_price >= target_price
         else:  # short
-            target_price = entry_price - (level['ratio'] * R)
+            target_price = entry_price - (level['ratio'] * atr)
             profit_achieved = current_price <= target_price
 
         # Check if this level hasn't been triggered yet
@@ -136,8 +125,7 @@ def check_profit_ladder_exit(df: pd.DataFrame, position: Dict, config: Dict) -> 
             exit_signal['ladder_exits'].append({
                 'level': level['ratio'],
                 'percent': close_percent,
-                'price': target_price,
-                'R_value': R  # Log R for transparency
+                'price': target_price
             })
 
             # Mark this level as triggered
@@ -148,8 +136,7 @@ def check_profit_ladder_exit(df: pd.DataFrame, position: Dict, config: Dict) -> 
         "side": side,
         "current_price": current_price,
         "entry_price": entry_price,
-        "initial_stop": initial_stop,
-        "R_value": R,
+        "atr": atr,
         "exit_signal": exit_signal,
         "remaining_position": remaining_position
     })
@@ -160,8 +147,6 @@ def check_dynamic_trailing_stop(df: pd.DataFrame, position: Dict, config: Dict) 
     """
     Check dynamic trailing stop based on momentum loss.
 
-    Uses ATR for trailing distance, but tracks high/low water marks.
-
     Args:
         df: Price DataFrame
         position: Position details
@@ -170,20 +155,13 @@ def check_dynamic_trailing_stop(df: pd.DataFrame, position: Dict, config: Dict) 
     Returns:
         True if trailing stop triggered
     """
-    current_price = float(df['close'].iloc[-1])
+    current_price = df['close'].iloc[-1]
     side = position['side']
     high_price = position.get('high_price', position['entry_price'])
     low_price = position.get('low_price', position['entry_price'])
 
     atr = float(safe_atr(df, config.get('risk', {}).get('atr_window', 14)).iloc[-1])
-
-    # Get timeframe for adjustment
-    timeframe = config.get('timeframe', '1D')
-    trail_mult = float(config.get('risk', {}).get('trail_atr', 1.2))
-
-    # Tighter trailing for 4H
-    if timeframe == '4H':
-        trail_mult *= 0.8
+    trail_mult = config.get('risk', {}).get('trail_atr', 1.2)
 
     # Update position high/low tracking
     if side == "long":
@@ -207,8 +185,6 @@ def check_dynamic_trailing_stop(df: pd.DataFrame, position: Dict, config: Dict) 
             "current_price": current_price,
             "trailing_stop": trailing_stop,
             "trail_distance": trail_distance,
-            "trail_mult": trail_mult,
-            "timeframe": timeframe,
             "high_price": position.get('high_price'),
             "low_price": position.get('low_price')
         })
@@ -217,25 +193,18 @@ def check_dynamic_trailing_stop(df: pd.DataFrame, position: Dict, config: Dict) 
 
 def enhanced_exit_check(df: pd.DataFrame, position: Dict, config: Dict) -> Dict:
     """
-    Enhanced exit check with TRUE R-BASED profit ladders and dynamic trailing.
-
-    CRITICAL FIX: Uses initial_stop_loss to calculate R, not ATR!
+    Enhanced exit check with profit ladders and dynamic trailing.
 
     Args:
         df: Price DataFrame
-        position: Position details (MUST include initial_stop_loss)
+        position: Position details
         config: Configuration dict
 
     Returns:
         Comprehensive exit signal
     """
-    current_price = float(df['close'].iloc[-1])
+    current_price = df['close'].iloc[-1]
     side = position['side']
-
-    # Store initial stop for R calculations
-    if 'initial_stop_loss' not in position:
-        position['initial_stop_loss'] = position.get('stop_loss', current_price)
-
     stop_loss = position.get('stop_loss')
 
     # Initialize exit signal
@@ -246,7 +215,7 @@ def enhanced_exit_check(df: pd.DataFrame, position: Dict, config: Dict) -> Dict:
         'exit_reason': 'none'
     }
 
-    # 1. Check hard stop loss (current, possibly trailed)
+    # 1. Check hard stop loss
     if stop_loss:
         if side == "long" and current_price <= stop_loss:
             exit_signal.update({
@@ -265,7 +234,7 @@ def enhanced_exit_check(df: pd.DataFrame, position: Dict, config: Dict) -> Dict:
             })
             return exit_signal
 
-    # 2. Check R-BASED profit ladder exits
+    # 2. Check profit ladder exits
     ladder_signal = check_profit_ladder_exit(df, position, config)
     if ladder_signal['close_position']:
         return ladder_signal
@@ -274,22 +243,10 @@ def enhanced_exit_check(df: pd.DataFrame, position: Dict, config: Dict) -> Dict:
     if check_dynamic_trailing_stop(df, position, config):
         exit_signal.update({
             'close_position': True,
-            'closed_percent': 1.0 - position.get('closed_percent', 0.0),  # Close remaining
+            'closed_percent': 1.0,
             'exit_price': current_price,
             'exit_reason': 'trailing_stop'
         })
         return exit_signal
-
-    # 4. Check wick magnet exit (if enabled)
-    if config.get('features', {}).get('wick_magnet'):
-        from bull_machine.modules.exits.wick_magnet import wick_magnet_distance
-        if wick_magnet_distance(df):
-            exit_signal.update({
-                'close_position': True,
-                'closed_percent': 1.0 - position.get('closed_percent', 0.0),  # Close remaining
-                'exit_price': current_price,
-                'exit_reason': 'wick_magnet'
-            })
-            return exit_signal
 
     return exit_signal
