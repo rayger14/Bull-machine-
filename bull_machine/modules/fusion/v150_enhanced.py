@@ -105,14 +105,14 @@ class FusionEngineV150(EnhancedFusionEngineV1_4):
 
         if is_feature_enabled(config, "orderflow_lca"):
             # Orderflow LCA: 50% scaled impact
-            lca_score = orderflow_lca(df)
+            lca_score = orderflow_lca(df, config)
             delta = lca_score * 0.5  # Scale down impact
             layer_scores["structure"] = layer_scores.get("structure", 0.5) + delta
             alpha_deltas["orderflow_lca"] = float(delta)
 
         if is_feature_enabled(config, "negative_vip"):
             # Negative VIP: 50% scaled impact
-            vip_score = negative_vip_score(df)
+            vip_score = negative_vip_score(df, config)
             delta = vip_score * 0.5  # Scale down impact
             layer_scores["volume"] = layer_scores.get("volume", 0.5) + delta
             alpha_deltas["negative_vip"] = float(delta)
@@ -204,13 +204,13 @@ class FusionEngineV150(EnhancedFusionEngineV1_4):
 
         # Orderflow LCA (if not disabled for timeframe)
         if is_feature_enabled(config, "orderflow_lca"):
-            lca_impact = orderflow_lca(df) * 0.4  # Reduced from 0.8
+            lca_impact = orderflow_lca(df, config) * 0.4  # Reduced from 0.8
             enhanced_scores["structure"] += lca_impact
             alpha_deltas["orderflow_lca"] = lca_impact
 
         # Negative VIP (if not disabled for timeframe)
         if is_feature_enabled(config, "negative_vip"):
-            vip_impact = negative_vip_score(df) * 0.4  # Reduced from 0.8
+            vip_impact = negative_vip_score(df, config) * 0.4  # Reduced from 0.8
             enhanced_scores["volume"] += vip_impact
             alpha_deltas["negative_vip"] = vip_impact
 
