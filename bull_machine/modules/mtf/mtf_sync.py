@@ -46,7 +46,7 @@ def six_candle_structure(df: pd.DataFrame) -> bool:
     return valid
 
 
-def mtf_dl2_filter(df: pd.DataFrame, dl2_threshold: float = 2.0) -> bool:
+def mtf_dl2_filter(df: pd.DataFrame, timeframe: str = "") -> bool:
     """
     MTF DL2 Filter: Deviation Limit Level 2
     Prevents signals when price is too far from mean (in std deviations).
@@ -56,13 +56,21 @@ def mtf_dl2_filter(df: pd.DataFrame, dl2_threshold: float = 2.0) -> bool:
 
     Args:
         df: DataFrame with 'close' column
-        dl2_threshold: Maximum allowed deviation in standard deviations
+        timeframe: Timeframe string (e.g., "4H", "1D") for dynamic thresholds
 
     Returns:
         bool: True if price is within acceptable deviation range
     """
     if len(df) < 20:  # Need sufficient data for mean/std calculation
         return True
+
+    # Dynamic threshold based on timeframe
+    if str(timeframe).upper() == "4H":
+        dl2_threshold = 2.5  # More lenient for 4H
+    elif str(timeframe).upper() == "1D":
+        dl2_threshold = 2.2  # Slightly relaxed for daily
+    else:
+        dl2_threshold = 2.0  # Default for other timeframes
 
     closes = df["close"]
     mean_price = closes.mean()
@@ -80,6 +88,7 @@ def mtf_dl2_filter(df: pd.DataFrame, dl2_threshold: float = 2.0) -> bool:
         "mtf_dl2_deviation": float(z_score),
         "mtf_dl2_threshold": dl2_threshold,
         "mtf_dl2_ok": deviation_ok,
+        "timeframe": timeframe,
         "price_stats": {
             "current": float(current_price),
             "mean": float(mean_price),

@@ -1,5 +1,5 @@
 {
-  "entry_threshold": 0.46,
+  "entry_threshold": 0.38,
   "quality_floors": {
     "wyckoff": 0.34,
     "liquidity": 0.30,
@@ -12,11 +12,11 @@
   "features": {
     "mtf_dl2": true,
     "six_candle_leg": true,
-    "orderflow_lca": true,
-    "negative_vip": true,
+    "orderflow_lca": false,
+    "negative_vip": false,
     "live_data": false
   },
-  "cooldown_bars": 7,
-  "timeframe": "1D",
-  "profile_name": "ETH"
+  "cooldown_bars": 6,
+  "timeframe": "4H",
+  "profile_name": "ETH_4H"
 }
