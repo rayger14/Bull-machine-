@@ -1,22 +1,38 @@
 {
-  "entry_threshold": 0.38,
+  "entry_threshold": 0.32,
   "quality_floors": {
-    "wyckoff": 0.34,
-    "liquidity": 0.30,
-    "structure": 0.34,
-    "momentum": 0.37,
-    "volume": 0.30,
-    "context": 0.34,
-    "mtf": 0.37
+    "wyckoff": 0.28,
+    "liquidity": 0.26,
+    "structure": 0.28,
+    "momentum": 0.28,
+    "volume": 0.26,
+    "context": 0.28,
+    "mtf": 0.28
   },
   "features": {
     "mtf_dl2": true,
     "six_candle_leg": true,
     "orderflow_lca": false,
     "negative_vip": false,
+    "atr_exits": true,
+    "atr_sizing": true,
+    "regime_filter": true,
+    "ensemble_htf_bias": true,
     "live_data": false
   },
-  "cooldown_bars": 6,
+  "cooldown_bars": 4,
   "timeframe": "4H",
+  "risk": {
+    "risk_pct": 0.004,
+    "atr_window": 14,
+    "sl_atr": 1.6,
+    "tp_atr": 2.6,
+    "trail_atr": 1.0
+  },
+  "regime": {
+    "vol_ratio_min": 1.0,
+    "atr_pct_max": 0.06
+  },
+  "max_bars_held": 12,
   "profile_name": "ETH_4H"
 }

@@ -51,8 +51,12 @@ class FusionEngineV150(EnhancedFusionEngineV1_4):
                 })
                 return False
 
-        # Compute base scores and check confluence
-        layer_scores = self.compute_base_scores(df)
+        # Use externally computed base scores if available, otherwise compute them
+        if hasattr(self, '_layer_scores'):
+            layer_scores = self._layer_scores.copy()
+        else:
+            layer_scores = self.compute_base_scores(df)
+
         veto = self.check_confluence_vetoes(df, layer_scores, config)
 
         return not veto
