@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional
 from bull_machine.core.telemetry import log_telemetry
 from bull_machine.modules.fusion.v150_enhanced import FusionEngineV150
 from bull_machine.strategy.position_sizing import atr_risk_size
-from bull_machine.strategy.atr_exits import compute_exit_levels, maybe_trail_sl
+from bull_machine.strategy.atr_exits import compute_exit_levels, maybe_trail_sl, enhanced_exit_check
 from bull_machine.modules.regime_filter import regime_ok
 from bull_machine.modules.wyckoff.wyckoff_phase import wyckoff_phase_scores
 from bull_machine.modules.liquidity.liquidity_sweep import liquidity_sweep, rank_orderblocks, fvg_quality
@@ -72,20 +72,38 @@ class CoreTraderV151(FusionEngineV150):
         if veto:
             return None
 
-        # Ensemble HTF bias requirement
+        # Enhanced MTF ensemble confluence requirement
         if config.get("features", {}).get("ensemble_htf_bias"):
             ctx_floor = config.get("quality_floors", {}).get("context", 0.3)
             mtf_floor = config.get("quality_floors", {}).get("mtf", 0.3)
             ctx_score = layer_scores.get("context", 0.0)
             mtf_score = layer_scores.get("mtf", 0.0)
 
-            if ctx_score < ctx_floor or mtf_score < mtf_floor:
+            # Stricter ensemble requirements for better confluence
+            ensemble_threshold = 0.55  # Both context + MTF must average above this
+            combined_htf_score = (ctx_score + mtf_score) / 2.0
+
+            # Individual floor checks
+            ctx_passed = ctx_score >= ctx_floor
+            mtf_passed = mtf_score >= mtf_floor
+
+            # Ensemble confluence check
+            ensemble_passed = combined_htf_score >= ensemble_threshold
+
+            # All three must pass for strong HTF bias confirmation
+            if not (ctx_passed and mtf_passed and ensemble_passed):
                 log_telemetry("layer_masks.json", {
                     "ensemble_veto": True,
                     "context_score": ctx_score,
                     "context_floor": ctx_floor,
+                    "context_passed": ctx_passed,
                     "mtf_score": mtf_score,
-                    "mtf_floor": mtf_floor
+                    "mtf_floor": mtf_floor,
+                    "mtf_passed": mtf_passed,
+                    "combined_htf_score": combined_htf_score,
+                    "ensemble_threshold": ensemble_threshold,
+                    "ensemble_passed": ensemble_passed,
+                    "veto_reason": "htf_ensemble_confluence_failed"
                 })
                 return None
 
@@ -204,54 +222,75 @@ class CoreTraderV151(FusionEngineV150):
 
         return weighted_score
 
-    def check_exit(self, df: pd.DataFrame, trade_plan: Dict, config: dict) -> bool:
+    def check_exit(self, df: pd.DataFrame, trade_plan: Dict, config: dict) -> Dict:
         """
-        Check if position should be closed.
+        Check if position should be closed using enhanced exit logic.
 
         Args:
             df: Price data DataFrame
-            trade_plan: Current trade plan
+            trade_plan: Current trade plan (treated as position)
             config: Configuration dict
 
         Returns:
-            True if should exit, False otherwise
+            Dict with exit signal details or simple boolean for compatibility
         """
-        current_price = df['close'].iloc[-1]
-        side = trade_plan["side"]
-        stop_loss = trade_plan.get("stop_loss")
-        take_profit = trade_plan.get("take_profit")
+        # Convert trade_plan to position format for enhanced_exit_check
+        position = {
+            'side': trade_plan['side'],
+            'entry_price': trade_plan['entry_price'],
+            'stop_loss': trade_plan.get('stop_loss'),
+            'take_profit': trade_plan.get('take_profit'),
+            'entry_bar': trade_plan.get('entry_bar', len(df) - 1),
+            'closed_percent': trade_plan.get('closed_percent', 0.0),
+            'high_price': trade_plan.get('high_price', trade_plan['entry_price']),
+            'low_price': trade_plan.get('low_price', trade_plan['entry_price'])
+        }
 
-        # Wick magnet exit check (take profit at rejection levels)
-        if config.get("features", {}).get("wick_magnet"):
+        # Copy any ladder flags that might exist
+        for key in trade_plan:
+            if key.startswith('ladder_'):
+                position[key] = trade_plan[key]
+
+        # Use enhanced exit check with profit ladders and dynamic trailing
+        exit_signal = enhanced_exit_check(df, position, config)
+
+        # Update trade_plan with any position changes
+        for key in ['closed_percent', 'high_price', 'low_price']:
+            if key in position:
+                trade_plan[key] = position[key]
+
+        # Copy ladder flags back
+        for key in position:
+            if key.startswith('ladder_'):
+                trade_plan[key] = position[key]
+
+        # Legacy wick magnet check (only if enhanced exit didn't trigger)
+        if not exit_signal['close_position'] and config.get("features", {}).get("wick_magnet"):
             if wick_magnet_distance(df):
+                current_price = df['close'].iloc[-1]
                 log_telemetry("layer_masks.json", {"exit_reason": "wick_magnet", "price": current_price})
-                return True
+                return {
+                    'close_position': True,
+                    'closed_percent': 1.0,
+                    'exit_price': current_price,
+                    'exit_reason': 'wick_magnet'
+                }
 
-        # ATR-based exit checks
-        if stop_loss and take_profit:
-            if side == "long":
-                if current_price <= stop_loss:
-                    log_telemetry("layer_masks.json", {"exit_reason": "stop_loss", "price": current_price})
-                    return True
-                if current_price >= take_profit:
-                    log_telemetry("layer_masks.json", {"exit_reason": "take_profit", "price": current_price})
-                    return True
-            else:  # short
-                if current_price >= stop_loss:
-                    log_telemetry("layer_masks.json", {"exit_reason": "stop_loss", "price": current_price})
-                    return True
-                if current_price <= take_profit:
-                    log_telemetry("layer_masks.json", {"exit_reason": "take_profit", "price": current_price})
-                    return True
+        # Legacy bars held limit (only if enhanced exit didn't trigger)
+        if not exit_signal['close_position']:
+            bars_held = len(df) - 1 - trade_plan.get("entry_bar", len(df) - 1)
+            max_bars = config.get("max_bars_held", 10)
+            if bars_held >= max_bars:
+                current_price = df['close'].iloc[-1]
+                log_telemetry("layer_masks.json", {"exit_reason": "max_bars", "bars_held": bars_held})
+                return {
+                    'close_position': True,
+                    'closed_percent': 1.0,
+                    'exit_price': current_price,
+                    'exit_reason': 'max_bars'
+                }
 
-        # Fallback: bars held limit
-        bars_held = len(df) - 1 - trade_plan.get("entry_bar", len(df) - 1)
-        max_bars = config.get("max_bars_held", 10)
-        if bars_held >= max_bars:
-            log_telemetry("layer_masks.json", {"exit_reason": "max_bars", "bars_held": bars_held})
-            return True
-
-        return False
+        return exit_signal
 
     def _apply_knowledge_adapters(self, df: pd.DataFrame, layer_scores: Dict[str, float], config: dict):
         """
