@@ -1,0 +1,196 @@
+{
+  "performance": {
+    "total_trades": 244,
+    "winners": 101,
+    "losers": 143,
+    "win_rate": 0.4139344262295082,
+    "total_pnl_pct": 0.6421075481838614,
+    "avg_win_pct": 0.020743959498325148,
+    "avg_loss_pct": -0.010161065462566284,
+    "profit_factor": 1.4419086355908837,
+    "sharpe_ratio": 2.38749606235028,
+    "max_drawdown": 0.1997630964427958,
+    "avg_bars_held": 27.770491803278688
+  },
+  "sample_trades": [
+    {
+      "entry_time": "2024-04-15 10:00:00",
+      "exit_time": "2024-04-15 22:00:00",
+      "entry_price": 64625.56,
+      "exit_price": 63469.82,
+      "pnl_pct": -0.017883636134062096,
+      "bars_held": 12,
+      "exit_reason": "stop_loss",
+      "atr_multiplier": 2.0,
+      "entry_score": 0.6434539509484296
+    },
+    {
+      "entry_time": "2024-04-16 10:00:00",
+      "exit_time": "2024-04-17 09:00:00",
+      "entry_price": 63595.06,
+      "exit_price": 62727.43,
+      "pnl_pct": -0.013643040827384979,
+      "bars_held": 23,
+      "exit_reason": "stop_loss",
+      "atr_multiplier": 1.5,
+      "entry_score": 0.6851191177500581
+    },
+    {
+      "entry_time": "2024-04-18 12:00:00",
+      "exit_time": "2024-04-20 11:00:00",
+      "entry_price": 62499.32,
+      "exit_price": 64448.99,
+      "pnl_pct": 0.031195059402246268,
+      "bars_held": 47,
+      "exit_reason": "take_profit",
+      "atr_multiplier": 2.0,
+      "entry_score": 0.679047951273672
+    },
+    {
+      "entry_time": "2024-04-21 23:00:00",
+      "exit_time": "2024-04-23 23:00:00",
+      "entry_price": 65006.08,
+      "exit_price": 66429.97,
+      "pnl_pct": 0.021903951138108918,
+      "bars_held": 48,
+      "exit_reason": "time_stop",
+      "atr_multiplier": 1.5,
+      "entry_score": 0.62125549990243
+    },
+    {
+      "entry_time": "2024-04-25 01:00:00",
+      "exit_time": "2024-04-27 01:00:00",
+      "entry_price": 64257.97,
+      "exit_price": 63728.9,
+      "pnl_pct": -0.008233531186870667,
+      "bars_held": 48,
+      "exit_reason": "time_stop",
+      "atr_multiplier": 2.0,
+      "entry_score": 0.6147691729296783
+    },
+    {
+      "entry_time": "2024-04-28 13:00:00",
+      "exit_time": "2024-04-30 07:00:00",
+      "entry_price": 63221.3,
+      "exit_price": 62773.58,
+      "pnl_pct": -0.007081790472514819,
+      "bars_held": 42,
+      "exit_reason": "stop_loss",
+      "atr_multiplier": 2.0,
+      "entry_score": 0.6397666797289268
+    },
+    {
+      "entry_time": "2024-05-01 17:00:00",
+      "exit_time": "2024-05-03 10:00:00",
+      "entry_price": 58850.68,
+      "exit_price": 60806.08,
+      "pnl_pct": 0.03322646399327929,
+      "bars_held": 41,
+      "exit_reason": "take_profit",
+      "atr_multiplier": 2.0,
+      "entry_score": 0.6793485385298842
+    },
+    {
+      "entry_time": "2024-05-05 09:00:00",
+      "exit_time": "2024-05-06 16:00:00",
+      "entry_price": 63898.1,
+      "exit_price": 63416.94,
+      "pnl_pct": -0.007530114353947868,
+      "bars_held": 31,
+      "exit_reason": "stop_loss",
+      "atr_multiplier": 2.0,
+      "entry_score": 0.6715691208990512
+    },
+    {
+      "entry_time": "2024-05-08 12:00:00",
+      "exit_time": "2024-05-08 23:00:00",
+      "entry_price": 61735.44,
+      "exit_price": 61146.23,
+      "pnl_pct": -0.00954411274950011,
+      "bars_held": 11,
+      "exit_reason": "stop_loss",
+      "atr_multiplier": 2.0,
+      "entry_score": 0.5810962301843781
+    },
+    {
+      "entry_time": "2024-05-09 01:00:00",
+      "exit_time": "2024-05-09 23:00:00",
+      "entry_price": 61237.44,
+      "exit_price": 63119.88,
+      "pnl_pct": 0.030740017871419754,
+      "bars_held": 22,
+      "exit_reason": "take_profit",
+      "atr_multiplier": 2.0,
+      "entry_score": 0.6212941940965875
+    }
+  ],
+  "fusion_stats": {
+    "avg_weighted_score": 0.0612613550137112,
+    "avg_aggregate": 0.05893182213794386,
+    "veto_rate": 0.9044467073998642,
+    "signals_above_threshold": "1126",
+    "layers_enabled": [
+      "wyckoff",
+      "liquidity",
+      "structure",
+      "momentum",
+      "volume",
+      "context",
+      "mtf"
+    ]
+  },
+  "config_used": {
+    "version": "1.4.2",
+    "profile": "demo",
+    "signals": {
+      "enter_threshold": 0.45,
+      "weights": {
+        "wyckoff": 0.3,
+        "liquidity": 0.25,
+        "structure": 0.2,
+        "momentum": 0.1,
+        "volume": 0.1,
+        "context": 0.05
+      }
+    },
+    "features": {
+      "wyckoff": true,
+      "liquidity": true,
+      "structure": true,
+      "momentum": true,
+      "volume": true,
+      "context": true,
+      "mtf": true,
+      "bojan": false
+    },
+    "quality_floors": {
+      "wyckoff": 0.55,
+      "liquidity": 0.5,
+      "structure": 0.5,
+      "momentum": 0.45,
+      "volume": 0.45,
+      "context": 0.4
+    },
+    "mode": {
+      "enter_threshold": 0.45,
+      "exit_threshold": 0.4,
+      "min_score_delta": 0.01,
+      "strict_mtf_relaxed": true
+    },
+    "stop_loss": {
+      "base_atr_multipliers": {
+        "default": 1.5,
+        "markup_phases": 2.0
+      }
+    },
+    "risk_management": {
+      "position_size_pct": 0.02,
+      "max_drawdown_pct": 0.05
+    }
+  },
+  "data_range": {
+    "start": "2024-04-12 00:00:00",
+    "end": "2025-08-15 23:00:00",
+    "total_bars": 11784
+  }
+}

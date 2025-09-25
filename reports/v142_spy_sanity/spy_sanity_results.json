@@ -1,0 +1,144 @@
+{
+  "DEMO": {
+    "1H": {
+      "timeframe": "1H",
+      "profile": "DEMO",
+      "bars_total": 6000,
+      "trade_signals": 1616,
+      "avg_score": 0.1721439387187688,
+      "veto_rate": 0.7306666666666667,
+      "win_rate": 0.7004950495049505,
+      "avg_return": 0.010337294817183694,
+      "sharpe_ratio": 0.5047206833374996,
+      "max_drawdown": 0.0007525670243956201,
+      "errors": [],
+      "layers_enabled": [
+        "wyckoff",
+        "liquidity",
+        "structure",
+        "momentum",
+        "volume",
+        "context",
+        "mtf"
+      ],
+      "enter_threshold": 0.42
+    },
+    "4H": {
+      "timeframe": "4H",
+      "profile": "DEMO",
+      "bars_total": 1500,
+      "trade_signals": 468,
+      "avg_score": 0.2005784152591042,
+      "veto_rate": 0.688,
+      "win_rate": 0.6495726495726496,
+      "avg_return": 0.008071575341940022,
+      "sharpe_ratio": 0.40589467457248796,
+      "max_drawdown": 0.040826422896026414,
+      "errors": [],
+      "layers_enabled": [
+        "wyckoff",
+        "liquidity",
+        "structure",
+        "momentum",
+        "volume",
+        "context",
+        "mtf"
+      ],
+      "enter_threshold": 0.42
+    },
+    "1D": {
+      "timeframe": "1D",
+      "profile": "DEMO",
+      "bars_total": 500,
+      "trade_signals": 177,
+      "avg_score": 0.2299726173220243,
+      "veto_rate": 0.646,
+      "win_rate": 0.6836158192090396,
+      "avg_return": 0.011042818482053447,
+      "sharpe_ratio": 0.5440107561205567,
+      "max_drawdown": 0.031066549330016836,
+      "errors": [],
+      "layers_enabled": [
+        "wyckoff",
+        "liquidity",
+        "structure",
+        "momentum",
+        "volume",
+        "context",
+        "mtf"
+      ],
+      "enter_threshold": 0.42
+    }
+  },
+  "PROD": {
+    "1H": {
+      "timeframe": "1H",
+      "profile": "PROD",
+      "bars_total": 6000,
+      "trade_signals": 17,
+      "avg_score": 0.08654406765987502,
+      "veto_rate": 0.8696666666666667,
+      "win_rate": 0.7058823529411765,
+      "avg_return": 0.0074703974789913676,
+      "sharpe_ratio": 0.4659470738880798,
+      "max_drawdown": 0.0007525670243956201,
+      "errors": [],
+      "layers_enabled": [
+        "wyckoff",
+        "liquidity",
+        "structure",
+        "momentum",
+        "volume",
+        "context",
+        "mtf"
+      ],
+      "enter_threshold": 0.72
+    },
+    "4H": {
+      "timeframe": "4H",
+      "profile": "PROD",
+      "bars_total": 1500,
+      "trade_signals": 8,
+      "avg_score": 0.11256906239371456,
+      "veto_rate": 0.832,
+      "win_rate": 0.875,
+      "avg_return": 0.015599622550500476,
+      "sharpe_ratio": 0.7602906880352688,
+      "max_drawdown": 0.040826422896026414,
+      "errors": [],
+      "layers_enabled": [
+        "wyckoff",
+        "liquidity",
+        "structure",
+        "momentum",
+        "volume",
+        "context",
+        "mtf"
+      ],
+      "enter_threshold": 0.72
+    },
+    "1D": {
+      "timeframe": "1D",
+      "profile": "PROD",
+      "bars_total": 500,
+      "trade_signals": 7,
+      "avg_score": 0.13192507525910405,
+      "veto_rate": 0.804,
+      "win_rate": 0.5714285714285714,
+      "avg_return": 0.007424208115154128,
+      "sharpe_ratio": 0.4963195322392824,
+      "max_drawdown": 0.031066549330016836,
+      "errors": [],
+      "layers_enabled": [
+        "wyckoff",
+        "liquidity",
+        "structure",
+        "momentum",
+        "volume",
+        "context",
+        "mtf"
+      ],
+      "enter_threshold": 0.72
+    }
+  }
+}

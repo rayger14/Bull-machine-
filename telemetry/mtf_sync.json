@@ -1,0 +1,6 @@
+{"ts": "2025-09-25T00:53:52.918817Z", "mtf_enhanced": true, "decision": "ALLOW", "filters": [], "results": {}}
+{"ts": "2025-09-25T00:53:52.921747Z", "mtf_enhanced": true, "decision": "ALLOW", "filters": ["six_candle_leg"], "results": {"six_candle_leg": "True"}}
+{"ts": "2025-09-25T00:53:52.929635Z", "mtf_enhanced": true, "decision": "VETO", "filters": ["six_candle_leg"], "results": {"six_candle_leg": "False"}}
+{"ts": "2025-09-25T00:53:52.931780Z", "mtf_enhanced": true, "decision": "VETO", "filters": ["mtf_dl2"], "results": {"mtf_dl2": "False"}}
+{"ts": "2025-09-25T00:53:52.983578Z", "mtf_enhanced": true, "decision": "ALLOW", "filters": ["six_candle_leg", "mtf_dl2"], "results": {"six_candle_leg": "True", "mtf_dl2": "True"}}
+{"ts": "2025-09-25T00:53:53.011990Z", "mtf_enhanced": true, "decision": "VETO", "filters": ["six_candle_leg", "mtf_dl2"], "results": {"six_candle_leg": "False", "mtf_dl2": "True"}}

@@ -1,0 +1,68 @@
+{
+  "config": {
+    "extends": "configs/v141/system_config.json",
+    "profile": "balanced",
+    "description": "Balanced v1.4.2 profile - Hotfix for PnL optimization",
+    "signals": {
+      "enter_threshold": 0.69,
+      "exit_on_opposite": true,
+      "cooldown_bars": 5
+    },
+    "quality_floors": {
+      "wyckoff": 0.37,
+      "liquidity": 0.32
+    },
+    "stop_loss": {
+      "base_atr_multipliers": {
+        "default": 1.5,
+        "markup_phases": 2.0
+      },
+      "pool_depth_scaling": true,
+      "vol_spike_cap": 1.5
+    },
+    "regime_filter": {
+      "enable": true,
+      "min_vol_ratio": 1.2,
+      "phase_exclude": [
+        "A",
+        "C"
+      ],
+      "wyckoff_threshold": 0.85
+    },
+    "exit_thresholds": {
+      "distribution_exit": {
+        "volume_ratio": 1.4,
+        "displacement": 0.4
+      }
+    },
+    "risk_management": {
+      "position_size_pct": 0.8,
+      "max_risk_per_trade": 0.008,
+      "max_positions": 8,
+      "drawdown_limit": 0.15
+    },
+    "exits_overrides": {
+      "time_stop": {
+        "max_bars_1h": 36,
+        "max_bars_4h": 24,
+        "max_bars_1d": 18
+      }
+    }
+  },
+  "performance": {
+    "total_trades": 0,
+    "win_rate": 0.0,
+    "sharpe_ratio": 0.0,
+    "mar_ratio": 0.0,
+    "max_drawdown": 0.0,
+    "avg_pnl_pct": 0,
+    "avg_bars_held": 0
+  },
+  "trades": [],
+  "fusion_stats": {
+    "avg_weighted_score": 0.0,
+    "avg_aggregate": 0.0,
+    "veto_rate": 1.0,
+    "layers_enabled": []
+  }
+}

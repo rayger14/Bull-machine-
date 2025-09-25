@@ -1,0 +1,21 @@
+{
+  "entry_threshold": 0.40,
+  "quality_floors": {
+    "wyckoff": 0.32,
+    "liquidity": 0.28,
+    "structure": 0.32,
+    "momentum": 0.35,
+    "volume": 0.28,
+    "context": 0.32,
+    "mtf": 0.35
+  },
+  "atr": { "window": 14, "mult": { "trend": 1.8, "range": 1.4 } },
+  "context_weights": { "btcd": 0.25, "usdt.d": 0.25, "total": 0.15 },
+  "features": {
+    "mtf_dl2": true,
+    "six_candle_leg": true,
+    "orderflow_lca": true,
+    "negative_vip": true,
+    "live_data": false
+  }
+}

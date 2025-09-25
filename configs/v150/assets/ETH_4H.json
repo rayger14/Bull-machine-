@@ -1,0 +1,19 @@
+{
+  "entry_threshold": 0.40,
+  "quality_floors": {
+    "wyckoff": 0.32,
+    "liquidity": 0.28,
+    "structure": 0.32,
+    "momentum": 0.35,
+    "volume": 0.28,
+    "context": 0.32,
+    "mtf": 0.35
+  },
+  "features": {
+    "mtf_dl2": true,
+    "six_candle_leg": true,
+    "orderflow_lca": false,
+    "negative_vip": false,
+    "live_data": false
+  }
+}
