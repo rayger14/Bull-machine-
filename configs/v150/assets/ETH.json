@@ -1,0 +1,19 @@
+{
+  "entry_threshold": 0.42,
+  "atr": {
+    "window": 14,
+    "mult": {
+      "trend": 1.8,
+      "range": 1.4
+    }
+  },
+  "context_weights": {
+    "btcd": 0.25,
+    "usdt.d": 0.25,
+    "total": 0.15
+  },
+  "quality_floors": {
+    "wyckoff": 0.35,
+    "liquidity": 0.30
+  }
+}

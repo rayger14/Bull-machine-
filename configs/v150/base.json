@@ -1,0 +1,45 @@
+{
+  "entry_threshold": 0.45,
+  "quality_floors": {
+    "wyckoff": 0.37,
+    "liquidity": 0.32,
+    "structure": 0.35,
+    "momentum": 0.40,
+    "volume": 0.30,
+    "context": 0.35,
+    "mtf": 0.40
+  },
+  "atr": {
+    "window": 14,
+    "mult": {
+      "trend": 2.0,
+      "range": 1.5
+    }
+  },
+  "context_weights": {
+    "btcd": 0.30,
+    "usdt.d": 0.20,
+    "total": 0.10
+  },
+  "features": {
+    "mtf_dl2": false,
+    "six_candle_leg": false,
+    "orderflow_lca": false,
+    "negative_vip": false,
+    "live_data": false
+  },
+  "use_asset_profiles": true,
+  "acceptance_gates": {
+    "btc_1h": {
+      "trades_per_month": {"min": 10, "max": 18},
+      "win_rate_min": 40.0,
+      "sharpe_min": 2.0,
+      "max_drawdown": 22.0
+    },
+    "eth_1d": {
+      "trades_per_month": {"min": 2, "max": 4},
+      "win_rate_min": 50.0,
+      "max_drawdown": 20.0
+    }
+  }
+}
