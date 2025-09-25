@@ -84,8 +84,13 @@ def test_eth_1d_standard_floors():
 
     engine = FusionEngineV150(config)
 
+    # Create complete OHLCV data
+    closes = [100, 101, 100, 102, 101, 103] + [102] * 144
     df = pd.DataFrame({
-        "close": [100, 101, 100, 102, 101, 103] + [102] * 144,
+        "open": closes,
+        "high": [c * 1.01 for c in closes],  # High slightly above close
+        "low": [c * 0.99 for c in closes],   # Low slightly below close
+        "close": closes,
         "volume": [1000] * 150
     })
 
