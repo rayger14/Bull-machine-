@@ -1,13 +1,13 @@
 {
-  "entry_threshold": 0.40,
+  "entry_threshold": 0.38,
   "quality_floors": {
-    "wyckoff": 0.30,
-    "liquidity": 0.28,
-    "structure": 0.30,
-    "momentum": 0.30,
-    "volume": 0.28,
-    "context": 0.30,
-    "mtf": 0.30
+    "wyckoff": 0.26,
+    "liquidity": 0.26,
+    "structure": 0.26,
+    "momentum": 0.28,
+    "volume": 0.26,
+    "context": 0.26,
+    "mtf": 0.28
   },
   "features": {
     "mtf_dl2": true,
@@ -18,9 +18,13 @@
     "atr_sizing": true,
     "regime_filter": true,
     "ensemble_htf_bias": true,
+    "wyckoff_phase": true,
+    "liquidity_sweep": true,
+    "order_blocks": true,
+    "wick_magnet": false,
     "live_data": false
   },
-  "cooldown_bars": 5,
+  "cooldown_bars": 4,
   "timeframe": "1D",
   "risk": {
     "risk_pct": 0.005,
@@ -30,8 +34,8 @@
     "trail_atr": 1.2
   },
   "regime": {
-    "vol_ratio_min": 1.2,
-    "atr_pct_max": 0.05
+    "vol_ratio_min": 1.0,
+    "atr_pct_max": 0.08
   },
   "max_bars_held": 8,
   "profile_name": "ETH"
