@@ -10,6 +10,9 @@ from bull_machine.modules.fusion.v150_enhanced import FusionEngineV150
 from bull_machine.strategy.position_sizing import atr_risk_size
 from bull_machine.strategy.atr_exits import compute_exit_levels, maybe_trail_sl
 from bull_machine.modules.regime_filter import regime_ok
+from bull_machine.modules.wyckoff.wyckoff_phase import wyckoff_phase_scores
+from bull_machine.modules.liquidity.liquidity_sweep import liquidity_sweep, rank_orderblocks, fvg_quality
+from bull_machine.modules.exits.wick_magnet import wick_magnet_distance
 
 class CoreTraderV151(FusionEngineV150):
     """
@@ -60,6 +63,9 @@ class CoreTraderV151(FusionEngineV150):
             layer_scores = self._layer_scores.copy()
         else:
             layer_scores = self.compute_base_scores(df)
+
+        # Apply knowledge adapters to layer scores
+        self._apply_knowledge_adapters(df, layer_scores, config)
 
         # Check confluence vetoes with v1.5.0 alphas
         veto = self.check_confluence_vetoes(df, layer_scores, config)
@@ -215,6 +221,12 @@ class CoreTraderV151(FusionEngineV150):
         stop_loss = trade_plan.get("stop_loss")
         take_profit = trade_plan.get("take_profit")
 
+        # Wick magnet exit check (take profit at rejection levels)
+        if config.get("features", {}).get("wick_magnet"):
+            if wick_magnet_distance(df):
+                log_telemetry("layer_masks.json", {"exit_reason": "wick_magnet", "price": current_price})
+                return True
+
         # ATR-based exit checks
         if stop_loss and take_profit:
             if side == "long":
@@ -240,3 +252,56 @@ class CoreTraderV151(FusionEngineV150):
             return True
 
         return False
+
+    def _apply_knowledge_adapters(self, df: pd.DataFrame, layer_scores: Dict[str, float], config: dict):
+        """
+        Apply knowledge adapters to enhance layer scores.
+
+        Args:
+            df: Price data DataFrame
+            layer_scores: Layer scores dict (modified in-place)
+            config: Configuration dict
+        """
+        timeframe = config.get("timeframe", "")
+        features = config.get("features", {})
+
+        # Wyckoff Phase Analysis
+        if features.get("wyckoff_phase"):
+            wyckoff_score = wyckoff_phase_scores(df, timeframe)
+            layer_scores["wyckoff"] += wyckoff_score * 0.5
+            log_telemetry("layer_masks.json", {
+                "wyckoff_adapter_applied": True,
+                "wyckoff_contribution": wyckoff_score * 0.5
+            })
+
+        # Liquidity Sweep Analysis
+        if features.get("liquidity_sweep"):
+            sweep_detected = liquidity_sweep(df)
+            adjustment = 0.05 if sweep_detected else -0.05
+            layer_scores["liquidity"] += adjustment
+            log_telemetry("layer_masks.json", {
+                "liquidity_sweep_applied": True,
+                "sweep_detected": sweep_detected,
+                "liquidity_adjustment": adjustment
+            })
+
+        # Order Block Analysis
+        if features.get("order_blocks"):
+            ob_score = rank_orderblocks(df)
+            fvg_score = fvg_quality(df)
+
+            # Combine order block and FVG scores
+            liquidity_enhancement = (ob_score * 0.3) + (fvg_score * 0.2)
+            layer_scores["liquidity"] += liquidity_enhancement
+            layer_scores["structure"] += liquidity_enhancement * 0.5  # Also boost structure
+
+            log_telemetry("layer_masks.json", {
+                "order_blocks_applied": True,
+                "orderblock_score": ob_score,
+                "fvg_score": fvg_score,
+                "liquidity_enhancement": liquidity_enhancement
+            })
+
+        # Cap all scores to reasonable ranges
+        for layer in layer_scores:
+            layer_scores[layer] = max(0.1, min(0.9, layer_scores[layer]))
