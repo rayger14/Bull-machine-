@@ -22,8 +22,7 @@
     "liquidity_sweep": false,
     "order_blocks": true,
     "wick_magnet": true,
-    "live_data": false,
-    "use_asset_profiles": true
+    "live_data": false
   },
   "cooldown_bars": 5,
   "timeframe": "1D",
