@@ -1,5 +1,5 @@
 {
-  "entry_threshold": 0.34,
+  "entry_threshold": 0.80,
   "quality_floors": {
     "wyckoff": 0.26,
     "liquidity": 0.26,
@@ -24,7 +24,7 @@
     "wick_magnet": true,
     "live_data": false
   },
-  "cooldown_bars": 3,
+  "cooldown_bars": 25,
   "timeframe": "4H",
   "risk": {
     "risk_pct": 0.008,
