@@ -144,6 +144,13 @@ Ready for merge to `main` upon RC approval.
 
 ---
 
-**Final Status**: 🚀 **Bull Machine v1.5.1 Complete - RC Promotion Recommended**
+## v1.5.1 Completion
+- Merged to main, tagged v1.5.1.
+- Achieved RC targets: frequency (4.00 trades/mo), DD (1.77%).
+- Final config: threshold 0.44, quality floors 0.25–0.27, cooldown 168 bars, rolling_k 4/5, dynamic thresholds.
+- Performance: WR 33.33%, PnL -1.36%, PF 0.84, Sharpe -5.70 (to be addressed in v1.6.0).
+- Ready for v1.6.0: M1/M2 Wyckoff, hidden fibs, scoring granularity.
+
+**Final Status**: 🚀 **Bull Machine v1.5.1 Complete - Merged and Tagged**
 
 *Generated with systematic profit-taking and dynamic risk management* ⚡

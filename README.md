@@ -1,4 +1,4 @@
-# Bull Machine 1.5.0
+# Bull Machine 1.5.1
 
 [![CI](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml/badge.svg)](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-9%2F9%20passing-success)](https://github.com/rayger14/Bull-machine-/actions)
@@ -13,19 +13,19 @@ Advanced algorithmic trading system with **Multi-Timeframe Sync**, **7-Layer Con
 
 ---
 
-## 🚀 What's New in 1.5.0
+## 🚀 What's New in 1.5.1
 
-- **🎯 Realistic Trade Frequency** - Fixed threshold bottleneck (344 trades vs 2 trades previously)
-- **⚡ Advanced Exit Parameter System** - Phase-aware ATR-based stops with dynamic multipliers
-- **🔄 Quality Floor Enforcement** - Prevents weak signal execution with real-time gating
-- **📊 Enhanced Fusion Engine** - 7-layer confluence with quality gates and alignment boosts
-- **📈 Wyckoff Phase Optimization** - Confidence scoring with trend/phase awareness
-- **🎪 Repository Cleanup** - Major debloat and CI improvements
+- **🎯 True R-Based Profit Ladders** - Config-driven exits: 25% at 1.5R, 50% at 2.5R, 25% at 4R+
+- **⚡ Dynamic Threshold System** - Volatility-adjusted thresholds (±0.02 ATR-based) resolving scoring cliff
+- **🔄 Frequency Control Optimization** - 7-day cooldown achieving target 4 trades/month
+- **📊 Enhanced Exit Strategy** - Partial position management with trailing stops
+- **📈 RC Target Achievement** - 2/6 targets met: frequency ✅, max drawdown ✅ (1.77%)
+- **🎪 Production-Ready Infrastructure** - Stable foundation for v1.6.0 development
 
-- Latest improvements and bug fixes
+Ready for v1.6.0: M1/M2 Wyckoff + hidden Fibonacci zones to hit remaining RC targets.
 
 
-## 🏗️ Core Features (1.5.0)
+## 🏗️ Core Features (1.5.1)
 - **7-Layer Confluence System**
   Wyckoff + Liquidity + Structure + Momentum + Volume + Context + **MTF Sync** with intelligent fusion.
 - **Multi-Timeframe Analysis**
@@ -61,9 +61,9 @@ pip install -e .
 
 ## ▶️ Usage
 
-**1.5.0 with MTF Sync (Recommended):**
+**1.5.1 with Ensemble Mode (Recommended):**
 ```bash
-python -m bull_machine.app.main_v13 --csv your_data.csv --balance 10000 --mtf-enabled
+python run_eth_ensemble_backtest.py  # Optimized for ETH with true R-based exits
 ```
 
 **v1.3.0 Baseline (for comparison):**
@@ -76,12 +76,12 @@ python -m bull_machine.app.main --csv your_data.csv --balance 10000
 python -m bull_machine.app.main_v13 --csv your_data.csv --balance 10000
 ```
 
-**1.5.0 Production Settings:**
-- **Enter Threshold:** 0.35 (dynamically adjusted by MTF sync)
-- **MTF Timeframes:** 1D (HTF) → 4H (MTF) → 1H (LTF)
-- **EQ Magnet Gate:** Enabled (prevents chop trades)
-- **Desync Behavior:** RAISE (+0.10 threshold bump)
-- **2-Bar Confirmation:** Enabled for bias validation
+**1.5.1 Production Settings:**
+- **Enter Threshold:** 0.44 (with dynamic volatility adjustments ±0.02)
+- **Quality Floors:** Wyckoff/Liquidity/Structure: 0.25, Momentum/MTF: 0.27
+- **Cooldown Period:** 168 bars (7 days) for optimal frequency control
+- **Profit Ladders:** 1.5R/2.5R/4.0R with 25%/50%/25% position scaling
+- **Exit Strategy:** True R-based calculations with trailing stops
 
 ---
 
