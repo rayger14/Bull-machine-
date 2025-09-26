@@ -1,0 +1,65 @@
+{
+  "entry_threshold": 0.44,
+  "quality_floors": {
+    "wyckoff": 0.25,
+    "m1": 0.25,
+    "m2": 0.25,
+    "liquidity": 0.25,
+    "structure": 0.25,
+    "momentum": 0.27,
+    "volume": 0.25,
+    "context": 0.25,
+    "mtf": 0.27,
+    "fib_retracement": 0.25,
+    "fib_extension": 0.25
+  },
+  "features": {
+    "mtf_dl2": true,
+    "six_candle_leg": true,
+    "orderflow_lca": false,
+    "negative_vip": false,
+    "atr_exits": true,
+    "atr_sizing": true,
+    "regime_filter": true,
+    "ensemble_htf_bias": true,
+    "wyckoff_phase": true,
+    "wyckoff_m1m2": true,
+    "liquidity_sweep": false,
+    "order_blocks": true,
+    "wick_magnet": true,
+    "hidden_fibs": true,
+    "live_data": false,
+    "use_asset_profiles": true
+  },
+  "cooldown_bars": 168,
+  "timeframe": "1D",
+  "risk": {
+    "risk_pct": 0.005,
+    "atr_window": 14,
+    "sl_atr": 1.8,
+    "tp_atr": 3.0,
+    "trail_atr": 1.2,
+    "profit_ladders": [
+      {"ratio": 1.5, "percent": 0.25},
+      {"ratio": 2.5, "percent": 0.50},
+      {"ratio": 4.0, "percent": 0.25}
+    ]
+  },
+  "regime": {
+    "vol_ratio_min": 1.0,
+    "atr_pct_max": 0.08
+  },
+  "ensemble": {
+    "enabled": true,
+    "min_consensus": 2,
+    "consensus_penalty": 0.02,
+    "rolling_k": 4,
+    "rolling_n": 5,
+    "lead_lag_window": 3,
+    "dynamic_thresholds": true
+  },
+  "max_bars_held": 8,
+  "profile_name": "ETH_v1.6.0",
+  "version": "1.6.0",
+  "description": "ETH 1D profile with M1/M2 Wyckoff and hidden Fibonacci enhancements"
+}
