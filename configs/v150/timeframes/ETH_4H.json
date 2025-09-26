@@ -14,29 +14,24 @@
     "six_candle_leg": true,
     "orderflow_lca": false,
     "negative_vip": false,
-    "atr_exits": true,
-    "atr_sizing": true,
-    "regime_filter": true,
-    "ensemble_htf_bias": true,
     "wyckoff_phase": true,
-    "liquidity_sweep": false,
+    "liquidity_sweep": true,
     "order_blocks": true,
     "wick_magnet": true,
     "live_data": false,
-    "use_asset_profiles": true
+    "use_asset_profiles": true,
+    "cooldown_bars": 168
   },
-  "cooldown_bars": 168,
-  "timeframe": "1D",
   "risk": {
     "risk_pct": 0.005,
     "atr_window": 14,
     "sl_atr": 1.8,
     "tp_atr": 3.0,
-    "trail_atr": 1.2,
+    "trail_atr": 1.0,
     "profit_ladders": [
-      {"ratio": 1.5, "percent": 0.25},
-      {"ratio": 2.5, "percent": 0.50},
-      {"ratio": 4.0, "percent": 0.25}
+      {"ratio": 1.2, "percent": 0.30},
+      {"ratio": 2.0, "percent": 0.50},
+      {"ratio": 3.5, "percent": 0.20}
     ]
   },
   "regime": {
@@ -52,6 +47,6 @@
     "lead_lag_window": 3,
     "dynamic_thresholds": true
   },
-  "max_bars_held": 8,
-  "profile_name": "ETH"
+  "timeframe": "4H",
+  "profile_name": "ETH_4H"
 }
