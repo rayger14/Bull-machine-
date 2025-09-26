@@ -16,7 +16,7 @@ from typing import Dict, List, Optional
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from bull_machine.modules.fusion.v160_enhanced import CoreTraderV160
+from bull_machine.modules.fusion.v151_core_trader import CoreTraderV151
 from bull_machine.backtest.ensemble_mode import EnsembleAligner
 from bull_machine.strategy.atr_exits import check_exit
 from bull_machine.strategy.wyckoff_m1m2 import compute_m1m2_scores
@@ -184,11 +184,22 @@ def enhanced_ensemble_entry(engine, windows, config, aligner, bar_idx):
             tf_scores[tf] = {k: 0.0 for k in config['quality_floors'].keys()}
             continue
 
-        # Set timeframe context
-        engine.set_current_timeframe(tf)
-
-        # Get enhanced scores (includes M1/M2 and Fibs)
+        # Get base scores from v1.5.1 engine
         scores = engine.compute_base_scores(df)
+
+        # Add v1.6.0 enhanced signals
+        try:
+            # Add M1/M2 Wyckoff scores
+            m1m2_scores = compute_m1m2_scores(df, tf)
+            scores.update(m1m2_scores)
+
+            # Add hidden Fibonacci scores
+            fib_scores = compute_hidden_fib_scores(df, tf)
+            scores.update(fib_scores)
+        except Exception as e:
+            print(f"⚠️ Enhanced scoring error for {tf}: {e}")
+            # Add default values for missing signals
+            scores.update({'m1': 0.0, 'm2': 0.0, 'fib_retracement': 0.0, 'fib_extension': 0.0})
 
         # Ensure all expected keys exist
         for key in config['quality_floors'].keys():
@@ -214,8 +225,8 @@ def run_v160_backtest():
     config = load_v160_config()
     base_df, timeframes = load_and_align_eth_data()
 
-    # Initialize v1.6.0 components
-    engine = CoreTraderV160()
+    # Initialize v1.6.0 components (using v1.5.1 engine for compatibility)
+    engine = CoreTraderV151()
     aligner = EnsembleAligner(config)
 
     # Create aligned windows
@@ -310,10 +321,31 @@ def run_v160_backtest():
                 if fire:
                     signals_generated += 1
 
-                    # Determine trade side using v1.6.0 enhanced logic
-                    engine.set_current_timeframe('1H')
+                    # Determine trade side using enhanced logic
                     enhanced_scores = engine.compute_base_scores(current_df)
-                    side = engine._determine_trade_side_enhanced(enhanced_scores, config)
+
+                    # Add v1.6.0 signals for side determination
+                    try:
+                        enhanced_scores.update(compute_m1m2_scores(current_df, '1H'))
+                        enhanced_scores.update(compute_hidden_fib_scores(current_df, '1H'))
+                    except:
+                        pass
+
+                    # Enhanced side determination
+                    momentum_score = enhanced_scores.get("momentum", 0.5)
+                    momentum_floor = config.get("quality_floors", {}).get("momentum", 0.3)
+                    base_side = "LONG" if momentum_score >= momentum_floor else "SHORT"
+
+                    # M1/M2 bias adjustment
+                    m1_score = enhanced_scores.get('m1', 0.0)
+                    m2_score = enhanced_scores.get('m2', 0.0)
+
+                    if m1_score > 0.4:  # M1 spring suggests long
+                        side = "LONG"
+                    elif m2_score > 0.4:  # M2 markup follows trend
+                        side = base_side
+                    else:
+                        side = base_side
 
                     # Calculate position size
                     risk_pct = config['risk']['risk_pct']
