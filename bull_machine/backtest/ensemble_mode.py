@@ -330,7 +330,7 @@ class EnsembleAligner:
             weighted_score -= self.consensus_penalty
 
         # Compute dynamic threshold
-        entry_threshold = self.compute_dynamic_threshold(df) if df is not None else self.base_threshold
+        entry_threshold = self.compute_dynamic_threshold(dfs.get('1D') if dfs else None) if dfs else self.base_threshold
 
         # Check ensemble threshold
         fire = weighted_score >= entry_threshold
