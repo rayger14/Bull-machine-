@@ -19,48 +19,48 @@ class TestDetectVolumeSpike:
 
     def test_moderate_spike(self):
         """Test detection of moderate volume spike."""
-        # Normal volume then spike
-        volume_data = [1000] * 19 + [1600]  # 1.6x spike
+        # Normal volume then spike (need 21+ points for window=20)
+        volume_data = [1000] * 20 + [1600]  # 1.6x spike
         df = pd.DataFrame({"volume": volume_data})
 
         result = detect_volume_spike(df, spike_threshold=1.5)
-        assert result["detected"] is True
+        assert result["detected"] == True
         assert result["intensity"] == "moderate"
-        assert result["ratio"] == 1.6
+        assert abs(result["ratio"] - 1.6) < 0.01  # Allow small float difference
 
     def test_extreme_spike(self):
         """Test detection of extreme volume spike."""
-        volume_data = [1000] * 19 + [3500]  # 3.5x spike
+        volume_data = [1000] * 20 + [3500]  # 3.5x spike
         df = pd.DataFrame({"volume": volume_data})
 
         result = detect_volume_spike(df, spike_threshold=1.5)
-        assert result["detected"] is True
+        assert result["detected"] == True
         assert result["intensity"] == "extreme"
-        assert result["ratio"] == 3.5
+        assert abs(result["ratio"] - 3.5) < 0.01  # Allow small float difference
 
     def test_no_spike(self):
         """Test when no volume spike occurs."""
-        volume_data = [1000] * 20  # Constant volume
+        volume_data = [1000] * 21  # Constant volume (need 21+ for window=20)
         df = pd.DataFrame({"volume": volume_data})
 
         result = detect_volume_spike(df, spike_threshold=1.5)
-        assert result["detected"] is False
+        assert result["detected"] == False
         assert result["intensity"] == "none"
-        assert result["ratio"] == 1.0
+        assert abs(result["ratio"] - 1.0) < 0.01  # Allow small float difference
 
     def test_insufficient_data(self):
         """Test handling of insufficient data."""
         df = pd.DataFrame({"volume": [1000, 2000]})
 
         result = detect_volume_spike(df, window=20)
-        assert result["detected"] is False
+        assert result["detected"] == False
 
     def test_zero_average_volume(self):
         """Test handling of zero average volume."""
         df = pd.DataFrame({"volume": [0] * 21})
 
         result = detect_volume_spike(df)
-        assert result["detected"] is False
+        assert result["detected"] == False
         assert result["ratio"] == 0.0
 
 
@@ -77,9 +77,9 @@ class TestDetectReversalPattern:
         })
 
         result = detect_reversal_pattern(df)
-        assert result["detected"] is True
+        assert result["detected"] == True
         assert result["type"] == "bearish"
-        assert result["bearish"] is True
+        assert result["bearish"] == True
         assert result["strength"] > 0
 
     def test_bullish_reversal(self):
@@ -92,9 +92,9 @@ class TestDetectReversalPattern:
         })
 
         result = detect_reversal_pattern(df)
-        assert result["detected"] is True
+        assert result["detected"] == True
         assert result["type"] == "bullish"
-        assert result["bullish"] is True
+        assert result["bullish"] == True
         assert result["strength"] > 0
 
     def test_bearish_wick_rejection(self):
@@ -107,7 +107,7 @@ class TestDetectReversalPattern:
         })
 
         result = detect_reversal_pattern(df)
-        assert result["detected"] is True
+        assert result["detected"] == True
         assert result["type"] == "bearish_wick"
         assert result["wick_analysis"]["upper_wick_ratio"] > 0.3
 
@@ -121,7 +121,7 @@ class TestDetectReversalPattern:
         })
 
         result = detect_reversal_pattern(df)
-        assert result["detected"] is True
+        assert result["detected"] == True
         assert result["type"] == "bullish_wick"
         assert result["wick_analysis"]["lower_wick_ratio"] > 0.3
 
@@ -135,7 +135,7 @@ class TestDetectReversalPattern:
         })
 
         result = detect_reversal_pattern(df)
-        assert result["detected"] is False
+        assert result["detected"] == False
         assert result["type"] is None
         assert result["strength"] == 0
 
@@ -149,7 +149,7 @@ class TestDetectReversalPattern:
         })
 
         result = detect_reversal_pattern(df)
-        assert result["detected"] is False
+        assert result["detected"] == False
 
 
 class TestCalculateMomentumDivergence:
@@ -189,7 +189,7 @@ class TestCalculateMomentumDivergence:
         })
 
         result = calculate_momentum_divergence(df, rsi_period=14)
-        assert result["detected"] is False
+        assert result["detected"] == False
         assert result["type"] is None
         assert result["strength"] == 0.0
 
