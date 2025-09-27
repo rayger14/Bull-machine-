@@ -9,6 +9,51 @@ from typing import Dict, Any, Tuple
 from bull_machine.core.telemetry import log_telemetry
 
 
+def calculate_cvd(df: pd.DataFrame) -> float:
+    """
+    Calculate Cumulative Volume Delta (CVD).
+
+    CVD measures the cumulative difference between buy and sell volume,
+    helping identify true market intent behind price movements.
+
+    Simplified implementation using price action to estimate buy/sell volume.
+    For production, use actual orderbook data if available.
+
+    Args:
+        df: DataFrame with OHLCV data
+
+    Returns:
+        float: Latest cumulative volume delta
+    """
+    if len(df) < 2:
+        return 0.0
+
+    # Estimate buy/sell volume from price action
+    # Buy volume: portion of volume when close is in upper half of range
+    # Sell volume: portion when close is in lower half
+    price_range = df['high'] - df['low']
+
+    # Avoid division by zero
+    valid_range = price_range > 0
+
+    buy_vol = pd.Series(0.0, index=df.index)
+    sell_vol = pd.Series(0.0, index=df.index)
+
+    # Calculate buy/sell volumes where range is valid
+    buy_vol[valid_range] = df.loc[valid_range, 'volume'] * \
+        (df.loc[valid_range, 'close'] - df.loc[valid_range, 'low']) / price_range[valid_range]
+    sell_vol[valid_range] = df.loc[valid_range, 'volume'] - buy_vol[valid_range]
+
+    # For bars with no range, split volume 50/50
+    buy_vol[~valid_range] = df.loc[~valid_range, 'volume'] * 0.5
+    sell_vol[~valid_range] = df.loc[~valid_range, 'volume'] * 0.5
+
+    # Calculate cumulative delta
+    cvd = (buy_vol - sell_vol).cumsum()
+
+    return float(cvd.iloc[-1]) if len(cvd) > 0 else 0.0
+
+
 def detect_bos(df: pd.DataFrame, lookback: int = 5) -> Dict[str, Any]:
     """
     Detect Break of Structure (BOS) events.
@@ -26,29 +71,60 @@ def detect_bos(df: pd.DataFrame, lookback: int = 5) -> Dict[str, Any]:
     if len(df) < lookback + 2:
         return {"detected": False, "direction": None, "strength": 0.0}
 
-    # Calculate swing levels
-    highs = df["high"].rolling(window=lookback, center=True).max()
-    lows = df["low"].rolling(window=lookback, center=True).min()
-
+    # Calculate swing levels - look at recent high/low before current bar
     current_high = df["high"].iloc[-1]
     current_low = df["low"].iloc[-1]
-    prev_swing_high = highs.iloc[-2] if not pd.isna(highs.iloc[-2]) else df["high"].iloc[-lookback-1]
-    prev_swing_low = lows.iloc[-2] if not pd.isna(lows.iloc[-2]) else df["low"].iloc[-lookback-1]
 
-    # Detect bullish BOS (break above previous swing high)
-    bullish_bos = current_high > prev_swing_high
-    bullish_strength = (current_high - prev_swing_high) / prev_swing_high if prev_swing_high > 0 else 0
+    # Get the highest high and lowest low from the lookback period (excluding current bar)
+    lookback_data = df.iloc[-(lookback+1):-1]  # Last lookback bars before current
+    prev_swing_high = lookback_data["high"].max()
+    prev_swing_low = lookback_data["low"].min()
 
-    # Detect bearish BOS (break below previous swing low)
-    bearish_bos = current_low < prev_swing_low
-    bearish_strength = (prev_swing_low - current_low) / prev_swing_low if prev_swing_low > 0 else 0
+    # Enhanced BOS detection with body close validation (IamZeroIka's 1/3 rule)
+    current_close = df["close"].iloc[-1]
+    current_open = df["open"].iloc[-1]
+    body_range = current_high - current_low
+
+    # Check for liquidity sweep (fake break followed by reversal - Crypto Chase logic)
+    liquidity_sweep = False
+    if len(df) >= 3:
+        # Check if previous bar broke structure but current reversed
+        prev_high = df["high"].iloc[-2]
+        prev_low = df["low"].iloc[-2]
+        prev_close = df["close"].iloc[-2]
+
+        # Bullish sweep: previous broke below low, current recovered above
+        bullish_sweep = (prev_low < prev_swing_low and current_close > prev_swing_low)
+        # Bearish sweep: previous broke above high, current recovered below
+        bearish_sweep = (prev_high > prev_swing_high and current_close < prev_swing_high)
+        liquidity_sweep = bullish_sweep or bearish_sweep
+
+    # Detect bullish BOS with body close validation
+    bullish_bos = False
+    bullish_strength = 0.0
+    if current_high > prev_swing_high:
+        # Require close to be at least 1/3 beyond the swing level (body close rule)
+        if body_range > 0:
+            close_pct_above = (current_close - prev_swing_high) / body_range
+            bullish_bos = close_pct_above >= (1/3) or liquidity_sweep
+            bullish_strength = (current_high - prev_swing_high) / prev_swing_high if prev_swing_high > 0 else 0
+
+    # Detect bearish BOS with body close validation
+    bearish_bos = False
+    bearish_strength = 0.0
+    if current_low < prev_swing_low:
+        # Require close to be at least 1/3 beyond the swing level (body close rule)
+        if body_range > 0:
+            close_pct_below = (prev_swing_low - current_close) / body_range
+            bearish_bos = close_pct_below >= (1/3) or liquidity_sweep
+            bearish_strength = (prev_swing_low - current_low) / prev_swing_low if prev_swing_low > 0 else 0
 
     bos_result = {
-        "detected": bullish_bos or bearish_bos,
+        "detected": bool(bullish_bos or bearish_bos),
         "direction": "bullish" if bullish_bos else ("bearish" if bearish_bos else None),
-        "strength": max(bullish_strength, bearish_strength),
-        "bullish_bos": bullish_bos,
-        "bearish_bos": bearish_bos,
+        "strength": float(max(bullish_strength, bearish_strength)),
+        "bullish_bos": bool(bullish_bos),
+        "bearish_bos": bool(bearish_bos),
         "swing_levels": {
             "prev_high": float(prev_swing_high) if not pd.isna(prev_swing_high) else None,
             "prev_low": float(prev_swing_low) if not pd.isna(prev_swing_low) else None,
@@ -100,51 +176,95 @@ def detect_liquidity_capture(df: pd.DataFrame) -> bool:
 
 def calculate_intent_nudge(df: pd.DataFrame, volume_threshold: float = 1.2) -> Dict[str, Any]:
     """
-    Calculate intent nudge based on volume confirmation.
+    Calculate intent nudge based on volume confirmation and CVD.
 
-    Intent nudge measures the conviction behind price moves using volume.
-    Higher volume during breakouts indicates stronger intent.
+    Enhanced with CVD (Cumulative Volume Delta) to catch trap reversals
+    and true market intent, especially in inverted/choppy flows.
 
     Args:
         df: DataFrame with OHLC and volume data
         volume_threshold: Volume multiplier threshold for confirmation
 
     Returns:
-        Dict containing intent analysis
+        Dict containing intent analysis with CVD-based conviction
     """
     if len(df) < 10:
         return {"nudge_score": 0.0, "conviction": "low"}
 
     current_volume = df["volume"].iloc[-1]
-    avg_volume = df["volume"].rolling(window=10).mean().iloc[-2]
+    # Use the most recent available rolling average (excluding current bar if possible)
+    rolling_avg = df["volume"].rolling(window=10).mean()
+    if len(df) > 10:
+        avg_volume = rolling_avg.iloc[-2]  # Previous bar's average
+    else:
+        # For limited data, use average of all but current bar
+        avg_volume = df["volume"].iloc[:-1].mean() if len(df) > 1 else 0
 
-    if avg_volume == 0:
-        return {"nudge_score": 0.0, "conviction": "low"}
+    if pd.isna(avg_volume) or avg_volume == 0:
+        # Handle zero or NaN average volume edge case
+        return {
+            "nudge_score": 0.0,
+            "volume_ratio": 0.0,
+            "conviction": "low",
+            "current_volume": float(current_volume),
+            "avg_volume": 0.0,
+            "cvd_delta": 0.0,
+            "liquidity_pump": False
+        }
 
     volume_ratio = current_volume / avg_volume
-    nudge_score = min(1.0, volume_ratio / volume_threshold)
 
-    # Determine conviction level
-    if volume_ratio >= volume_threshold * 2:
-        conviction = "very_high"
-    elif volume_ratio >= volume_threshold * 1.5:
-        conviction = "high"
-    elif volume_ratio >= volume_threshold:
-        conviction = "medium"
-    else:
-        conviction = "low"
+    # Calculate CVD for true intent detection
+    cvd_delta = calculate_cvd(df)
+
+    # Check for liquidity pump (trap reversal - Moneytaur logic)
+    liquidity_pump = False
+    if len(df) >= 3:
+        # Volume spike with price reversal indicates pump
+        recent_vol_spike = df["volume"].iloc[-3:].max() > avg_volume * 1.5
+        price_reversal = (df["close"].iloc[-1] - df["close"].iloc[-3]) * \
+                        (df["close"].iloc[-2] - df["close"].iloc[-3]) < 0
+        liquidity_pump = recent_vol_spike and price_reversal
+
+    # Enhanced conviction determination with CVD and trap detection
+    if cvd_delta < 0:  # Bear flow
+        if liquidity_pump and volume_ratio > 1.0:
+            # Trap reversal detected - bullish intent despite bear CVD
+            conviction = "high"  # Upgraded for trap
+            nudge_score = min(1.0, volume_ratio / volume_threshold) * 1.2  # Boost for trap
+        else:
+            # True bear intent
+            conviction = "low" if volume_ratio < volume_threshold else "medium"
+            nudge_score = min(1.0, volume_ratio / volume_threshold) * 0.8  # Reduce for bear
+    else:  # Bull flow or neutral
+        if volume_ratio >= volume_threshold * 2:
+            conviction = "very_high"
+            nudge_score = 1.0
+        elif volume_ratio >= volume_threshold * 1.5:
+            conviction = "high"
+            nudge_score = min(1.0, volume_ratio / volume_threshold)
+        elif volume_ratio >= volume_threshold:
+            conviction = "medium"
+            nudge_score = min(1.0, volume_ratio / volume_threshold)
+        else:
+            conviction = "low"
+            nudge_score = min(1.0, volume_ratio / volume_threshold)
 
     result = {
-        "nudge_score": float(nudge_score),
+        "nudge_score": float(min(1.0, nudge_score)),
         "volume_ratio": float(volume_ratio),
         "conviction": conviction,
         "current_volume": float(current_volume),
-        "avg_volume": float(avg_volume)
+        "avg_volume": float(avg_volume),
+        "cvd_delta": float(cvd_delta),
+        "liquidity_pump": bool(liquidity_pump)
     }
 
     log_telemetry("layer_masks.json", {
         "intent_nudge": result["nudge_score"],
-        "volume_conviction": result["conviction"]
+        "volume_conviction": result["conviction"],
+        "cvd_delta": result["cvd_delta"],
+        "trap_detected": result["liquidity_pump"]
     })
 
     return result

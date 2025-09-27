@@ -53,14 +53,14 @@ class TestMTFDL2Filter:
         np.random.seed(42)
         prices = 100 + np.random.normal(0, 1, 20)  # Low volatility around 100
         df = pd.DataFrame({"close": prices})
-        assert mtf_dl2_filter(df, dl2_threshold=3.0) == True
+        assert mtf_dl2_filter(df, "4H") == True  # Use 4H timeframe (threshold=2.5)
 
     def test_extreme_deviation(self):
         """Test rejection of extreme deviation."""
         # Normal prices then extreme spike
-        prices = [100] * 19 + [130]  # Extreme spike
+        prices = [100] * 19 + [130]  # Extreme spike (z-score ~30)
         df = pd.DataFrame({"close": prices})
-        assert mtf_dl2_filter(df, dl2_threshold=2.0) == False
+        assert mtf_dl2_filter(df, "1H") == False  # Use 1H timeframe (threshold=2.0)
 
     def test_insufficient_data(self):
         """Test handling of insufficient data."""
@@ -73,15 +73,14 @@ class TestMTFDL2Filter:
         assert mtf_dl2_filter(df) is True
 
     def test_custom_threshold(self):
-        """Test custom threshold parameter."""
-        prices = [100] * 19 + [110]  # Moderate spike
+        """Test different timeframe thresholds."""
+        prices = [100] * 19 + [110]  # Moderate spike (z-score ~10)
         df = pd.DataFrame({"close": prices})
 
-        # Should pass with high threshold
-        assert mtf_dl2_filter(df, dl2_threshold=5.0) == True
-
-        # Should fail with low threshold
-        assert mtf_dl2_filter(df, dl2_threshold=1.0) == False
+        # Should fail with any timeframe since z-score is very high
+        assert mtf_dl2_filter(df, "4H") == False  # threshold=2.5
+        assert mtf_dl2_filter(df, "1D") == False  # threshold=2.2
+        assert mtf_dl2_filter(df, "1H") == False  # threshold=2.0
 
 
 class TestEnhancedMTFSync:

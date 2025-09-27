@@ -170,12 +170,13 @@ def test_trailing_stop_short():
 def test_regime_ok_volume():
     """Test regime filter with volume conditions."""
     # Create data with good volume regime
+    # v20 avg = 1500, v100 avg = 1000, ratio = 1.5 > 1.2 ✓
     df = pd.DataFrame({
         "open": [100] * 120,
         "high": [101] * 120,
         "low": [99] * 120,
         "close": [100] * 120,
-        "volume": [800] * 20 + [1200] * 100  # Recent volume higher
+        "volume": [800] * 80 + [1500] * 40  # Recent volume significantly higher
     })
 
     regime_cfg = {

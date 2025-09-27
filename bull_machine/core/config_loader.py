@@ -28,7 +28,7 @@ def _deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any
     return result
 
 
-def load_config(asset: Optional[str] = None, version: str = "v150") -> Dict[str, Any]:
+def load_config(asset: Optional[str] = None, version: str = "v160") -> Dict[str, Any]:
     """
     Load configuration with Asset Profile Layer support.
 

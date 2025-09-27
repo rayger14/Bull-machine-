@@ -20,54 +20,58 @@ class TestDetectBOS:
     def test_bullish_bos(self):
         """Test detection of bullish BOS."""
         df = pd.DataFrame({
+            "open": [98.5, 99.5, 100.5, 101.5, 106.5],
             "high": [100, 101, 102, 103, 108],  # Clear break above 103
             "low": [98, 99, 100, 101, 106],
             "close": [99, 100, 101, 102, 107]
         })
 
         result = detect_bos(df, lookback=3)
-        assert result["detected"] is True
+        assert result["detected"] == True
         assert result["direction"] == "bullish"
-        assert result["bullish_bos"] is True
+        assert result["bullish_bos"] == True
         assert result["strength"] > 0
 
     def test_bearish_bos(self):
         """Test detection of bearish BOS."""
         df = pd.DataFrame({
+            "open": [106.5, 105.5, 104.5, 103.5, 96],
             "high": [108, 107, 106, 105, 100],
             "low": [106, 105, 104, 103, 95],  # Clear break below 103
             "close": [107, 106, 105, 104, 97]
         })
 
         result = detect_bos(df, lookback=3)
-        assert result["detected"] is True
+        assert result["detected"] == True
         assert result["direction"] == "bearish"
-        assert result["bearish_bos"] is True
+        assert result["bearish_bos"] == True
         assert result["strength"] > 0
 
     def test_no_bos(self):
         """Test when no BOS occurs."""
         df = pd.DataFrame({
+            "open": [98.5, 99.5, 100.5, 99.5, 100.5],
             "high": [100, 101, 102, 101, 102],  # No significant break
             "low": [98, 99, 100, 99, 100],
             "close": [99, 100, 101, 100, 101]
         })
 
         result = detect_bos(df, lookback=3)
-        assert result["detected"] is False
+        assert result["detected"] == False
         assert result["direction"] is None
         assert result["strength"] == 0
 
     def test_insufficient_data(self):
         """Test handling of insufficient data."""
         df = pd.DataFrame({
+            "open": [98.5, 99.5],
             "high": [100, 101],
             "low": [98, 99],
             "close": [99, 100]
         })
 
         result = detect_bos(df, lookback=5)
-        assert result["detected"] is False
+        assert result["detected"] == False
 
 
 class TestDetectLiquidityCapture:
@@ -83,7 +87,7 @@ class TestDetectLiquidityCapture:
         })
 
         result = detect_liquidity_capture(df)
-        assert result is True
+        assert result == True
 
     def test_no_lca(self):
         """Test when no LCA pattern exists."""
@@ -95,7 +99,7 @@ class TestDetectLiquidityCapture:
         })
 
         result = detect_liquidity_capture(df)
-        assert result is False
+        assert result == False
 
     def test_insufficient_data(self):
         """Test handling of insufficient data."""
@@ -105,7 +109,7 @@ class TestDetectLiquidityCapture:
         })
 
         result = detect_liquidity_capture(df)
-        assert result is False
+        assert result == False
 
 
 class TestCalculateIntentNudge:
@@ -113,9 +117,14 @@ class TestCalculateIntentNudge:
 
     def test_high_volume_nudge(self):
         """Test high volume intent nudge."""
-        # High volume on latest bar
+        # High volume on latest bar (need more data for CVD calculation)
         volume_data = [1000] * 9 + [3000]  # 3x average volume
-        df = pd.DataFrame({"volume": volume_data})
+        df = pd.DataFrame({
+            "volume": volume_data,
+            "high": [101] * 10,
+            "low": [99] * 10,
+            "close": [100] * 10
+        })
 
         result = calculate_intent_nudge(df, volume_threshold=1.2)
         assert result["nudge_score"] > 0.5
@@ -126,7 +135,12 @@ class TestCalculateIntentNudge:
         """Test low volume intent nudge."""
         # Low volume throughout
         volume_data = [1000] * 10
-        df = pd.DataFrame({"volume": volume_data})
+        df = pd.DataFrame({
+            "volume": volume_data,
+            "high": [101] * 10,
+            "low": [99] * 10,
+            "close": [100] * 10
+        })
 
         result = calculate_intent_nudge(df, volume_threshold=1.2)
         assert result["nudge_score"] <= 1.0
@@ -134,7 +148,12 @@ class TestCalculateIntentNudge:
 
     def test_zero_average_volume(self):
         """Test handling of zero average volume."""
-        df = pd.DataFrame({"volume": [0] * 10})
+        df = pd.DataFrame({
+            "volume": [0] * 10,
+            "high": [101] * 10,
+            "low": [99] * 10,
+            "close": [100] * 10
+        })
 
         result = calculate_intent_nudge(df)
         assert result["nudge_score"] == 0.0
@@ -267,6 +286,7 @@ def test_orderflow_integration():
         volumes.append(2500 + np.random.normal(0, 200))
 
     df = pd.DataFrame({
+        "open": [p * 0.995 for p in prices],
         "close": prices,
         "high": [p * 1.01 for p in prices],
         "low": [p * 0.99 for p in prices],
