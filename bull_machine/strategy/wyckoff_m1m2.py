@@ -2,14 +2,58 @@
 Bull Machine v1.6.0 - Advanced M1/M2 Wyckoff Phase Detection
 Implementation of Wyckoff_Insider post:31 concepts for enhanced signal quality
 
-M1 Phase: Spring/shakeout at range lows with volume confirmation
-M2 Phase: Markup/re-accumulation with breakout confirmation
+M1 (Spring): Identifies false breakdowns at range lows indicating accumulation.
+M2 (Markup): Identifies re-accumulation at range highs indicating continuation.
+
+Returns:
+    Dict[str, float]: {'m1': 0.0-1.0, 'm2': 0.0-1.0, 'side': 'long'|'short'|'neutral'}
 """
 
 import pandas as pd
 import numpy as np
 from typing import Dict
 from bull_machine.core.telemetry import log_telemetry
+import numpy as np
+
+def _sma(series, n:int)->float:
+    s = series.rolling(n).mean()
+    v = s.iloc[-1]
+    return float(v) if np.isfinite(v) else float(series.iloc[-1])
+
+def _rsi(series, n:int=14)->float:
+    delta = series.diff()
+    up = np.clip(delta, 0, None)
+    down = -np.clip(delta, None, 0)
+    roll_up = up.rolling(n).mean()
+    roll_dn = down.rolling(n).mean()
+    rs = np.where(roll_dn.iloc[-1]==0, np.inf, roll_up.iloc[-1]/roll_dn.iloc[-1])
+    rsi = 100 - (100/(1+rs))
+    if not np.isfinite(rsi): rsi = 50.0
+    return float(rsi)
+
+def _determine_trade_side_enhanced(df_ltf, df_htf, m1_score: float, m2_score: float, fib_r: float, fib_x: float) -> str:
+    """
+    Decide long/short bias using HTF trend + LTF confirmation.
+    - LONG: M1 (spring) & HTF uptrend; or Fib retracement in uptrend; RSI>50 as tie-breaker
+    - SHORT: M2 (markdown) & HTF downtrend; or Fib extension in downtrend; RSI<50 as tie-breaker
+    """
+    df_t = df_htf if df_htf is not None and len(df_htf)>=60 else df_ltf
+    sma_20 = _sma(df_t['close'], 20)
+    sma_50 = _sma(df_t['close'], 50)
+    rsi_ltf = _rsi(df_ltf['close'], 14)
+    uptrend = sma_20 > sma_50
+    downtrend = sma_20 < sma_50
+    # Primary cues
+    if m1_score >= 0.60 and uptrend:
+        return "long"
+    if m2_score >= 0.50 and downtrend:
+        return "short"
+    # Secondary cues using fibs + RSI
+    if fib_r >= 0.45 and uptrend and rsi_ltf >= 50:
+        return "long"
+    if fib_x >= 0.45 and downtrend and rsi_ltf <= 50:
+        return "short"
+    return "neutral"
 
 def _identify_range(df: pd.DataFrame, lookback: int = 20) -> Dict[str, float]:
     """Identify current trading range from recent price action."""
@@ -146,65 +190,89 @@ def _detect_m2_markup(df: pd.DataFrame, range_info: Dict, vol_info: Dict, tf: st
 
     return min(score, 0.75)  # Cap at 0.75
 
-def compute_m1m2_scores(df: pd.DataFrame, tf: str) -> Dict[str, float]:
+def compute_m1m2_scores(df_ltf: pd.DataFrame, tf: str = None, df_htf: pd.DataFrame = None, fib_scores: dict = None) -> Dict[str, float]:
     """
-    Compute Wyckoff M1 (spring/shakeout) and M2 (markup/re-accumulation) scores.
-
-    Based on Wyckoff_Insider post:31:
-    - M1: Spring patterns at range lows with volume spikes
-    - M2: Markup patterns at range highs with sustained volume
-    - Enhanced with price structure and momentum confirmation
-
-    Args:
-        df: OHLCV DataFrame with sufficient history (min 20 bars)
-        tf: Timeframe string ('1H', '4H', '1D')
-
-    Returns:
-        Dict with 'm1' and 'm2' scores (0.0 to 0.8 range)
+    Return {'m1': float, 'm2': float, 'side': 'long'|'short'|'neutral'} with HTF-aware bias.
+    df_ltf: lower timeframe frame used for entries / local momentum
+    df_htf: higher timeframe for trend bias (1D recommended); if None, falls back to df_ltf
+    fib_scores: optional {'fib_retracement':..., 'fib_extension':...} to aid bias decision
     """
-    if len(df) < 20:
-        return {'m1': 0.0, 'm2': 0.0}
+    if len(df_ltf) < 20:
+        return {'m1': 0.0, 'm2': 0.0, 'side': 'neutral'}
 
     try:
+        # Diagnostic telemetry for M1/M2 prerequisites
+        required = {'open', 'high', 'low', 'close', 'volume'}
+        have = set(df_ltf.columns.str.lower())
+        if not required.issubset(have):
+            log_telemetry('layer_masks.json', {
+                'm1m2_diag': 'missing_columns',
+                'have_cols': list(have),
+                'need_cols': list(required),
+                'len': int(len(df_ltf))
+            })
+            return {'m1': 0.0, 'm2': 0.0, 'side': 'neutral'}
+
         # Analyze current range and volume context
-        range_info = _identify_range(df)
-        vol_info = _volume_confirmation(df)
+        range_info = _identify_range(df_ltf)
+        vol_info = _volume_confirmation(df_ltf)
+
+        # Diagnostic: log range and volume context
+        log_telemetry('layer_masks.json', {
+            'm1m2_diag': 'range_context',
+            'range_size_pct': range_info['size'] / df_ltf['close'].iloc[-1] * 100,
+            'vol_spike_ratio': vol_info['spike_ratio'],
+            'range_high': range_info['high'],
+            'range_low': range_info['low']
+        })
 
         # Skip if range too small (consolidation)
-        if range_info['size'] < df['close'].iloc[-1] * 0.01:  # Less than 1% range
-            return {'m1': 0.0, 'm2': 0.0}
+        if range_info['size'] < df_ltf['close'].iloc[-1] * 0.01:  # Less than 1% range
+            log_telemetry('layer_masks.json', {
+                'm1m2_diag': 'range_too_small',
+                'range_size_pct': range_info['size'] / df_ltf['close'].iloc[-1] * 100
+            })
+            return {'m1': 0.0, 'm2': 0.0, 'side': 'neutral'}
 
         # Detect M1 and M2 patterns
-        m1_score = _detect_m1_spring(df, range_info, vol_info, tf)
-        m2_score = _detect_m2_markup(df, range_info, vol_info, tf)
+        m1_score = _detect_m1_spring(df_ltf, range_info, vol_info, tf or '1H')
+        m2_score = _detect_m2_markup(df_ltf, range_info, vol_info, tf or '1H')
 
-        # Log for analysis
+        # Enhanced bias decision with HTF and fib context
+        fib_r = (fib_scores or {}).get('fib_retracement', 0.0)
+        fib_x = (fib_scores or {}).get('fib_extension', 0.0)
+        side = _determine_trade_side_enhanced(df_ltf, df_htf, m1_score, m2_score, fib_r, fib_x)
+
+        # Log for analysis with HTF trend info
         log_telemetry('layer_masks.json', {
             'module': 'wyckoff_m1m2',
-            'tf': tf,
+            'tf': tf or '1H',
             'm1_score': m1_score,
             'm2_score': m2_score,
+            'side': side,
+            'htf_sma20_gt_sma50': bool(_sma((df_htf or df_ltf)['close'],20) > _sma((df_htf or df_ltf)['close'],50)),
             'range_high': range_info['high'],
             'range_low': range_info['low'],
             'range_size': range_info['size'],
             'volume_spike_ratio': vol_info['spike_ratio'],
-            'current_price': df['close'].iloc[-1]
+            'current_price': df_ltf['close'].iloc[-1]
         })
 
         return {
             'm1': float(m1_score),
-            'm2': float(m2_score)
+            'm2': float(m2_score),
+            'side': side
         }
 
     except Exception as e:
         log_telemetry('layer_masks.json', {
             'module': 'wyckoff_m1m2',
-            'tf': tf,
+            'tf': tf or '1H',
             'error': str(e),
             'm1_score': 0.0,
             'm2_score': 0.0
         })
-        return {'m1': 0.0, 'm2': 0.0}
+        return {'m1': 0.0, 'm2': 0.0, 'side': 'neutral'}
 
 def validate_m1m2_signals(df: pd.DataFrame, m1_score: float, m2_score: float) -> Dict[str, bool]:
     """

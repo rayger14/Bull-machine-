@@ -2,8 +2,8 @@
   "entry_threshold": 0.44,
   "quality_floors": {
     "wyckoff": 0.25,
-    "m1": 0.25,
-    "m2": 0.25,
+    "m1": 0.30,
+    "m2": 0.30,
     "liquidity": 0.25,
     "structure": 0.25,
     "momentum": 0.27,
@@ -56,7 +56,12 @@
     "rolling_k": 4,
     "rolling_n": 5,
     "lead_lag_window": 3,
-    "dynamic_thresholds": true
+    "dynamic_thresholds": true,
+    "confluence_mode": "adaptive",
+    "m1m2_backoff_bars": 30,
+    "m1m2_epsilon": 0.05,
+    "solo_fib_min_entry": 0.44,
+    "vol_override_atr_pct": 0.05
   },
   "max_bars_held": 8,
   "profile_name": "ETH_v1.6.0",

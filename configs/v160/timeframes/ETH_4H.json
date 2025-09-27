@@ -2,8 +2,8 @@
   "entry_threshold": 0.44,
   "quality_floors": {
     "wyckoff": 0.25,
-    "m1": 0.25,
-    "m2": 0.25,
+    "m1": 0.30,
+    "m2": 0.30,
     "liquidity": 0.25,
     "structure": 0.25,
     "momentum": 0.27,
