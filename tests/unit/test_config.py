@@ -39,7 +39,7 @@ class TestConfigLoader:
         eth_config = load_config("ETH")
 
         # Should have ETH-specific overrides
-        assert eth_config["entry_threshold"] == 0.42  # ETH override
+        assert eth_config["entry_threshold"] == 0.44  # ETH override (updated v1.6.0)
 
         # Should inherit base config values where not overridden
         assert "quality_floors" in eth_config
@@ -53,12 +53,16 @@ class TestConfigLoader:
         assert "wyckoff" in eth_config["quality_floors"]
         assert "liquidity" in eth_config["quality_floors"]
 
-        # ETH overrides should take precedence
-        assert eth_config["quality_floors"]["wyckoff"] == 0.35  # ETH override
-        assert eth_config["quality_floors"]["liquidity"] == 0.30  # ETH override
+        # ETH overrides should take precedence (v1.6.0 values)
+        assert eth_config["quality_floors"]["wyckoff"] == 0.25  # ETH override
+        assert eth_config["quality_floors"]["liquidity"] == 0.25  # ETH override
+
+        # v1.6.0 specific fields
+        assert eth_config["quality_floors"]["m1"] == 0.30  # M1 Wyckoff
+        assert eth_config["quality_floors"]["m2"] == 0.30  # M2 Wyckoff
 
         # Base values should remain for non-overridden fields
-        assert eth_config["quality_floors"]["momentum"] == 0.40  # From base
+        assert eth_config["quality_floors"]["momentum"] == 0.27  # From v1.6.0
 
     def test_nonexistent_asset_profile(self):
         """Test loading nonexistent asset profile falls back to base."""
@@ -301,8 +305,10 @@ def test_config_integration():
     base_flags = get_feature_flags(base_config)
     eth_flags = get_feature_flags(eth_config)
 
-    # Feature flags should be the same (inherited from base)
-    assert base_flags == eth_flags
+    # ETH has enhanced features in v1.6.0, so flags will differ
+    assert len(eth_flags) > len(base_flags)  # ETH has more features
+    assert is_feature_enabled(eth_config, "mtf_dl2") is True  # ETH v1.6.0 feature
+    assert is_feature_enabled(eth_config, "wyckoff_m1m2") is True  # ETH v1.6.0 feature
 
     # Test acceptance gates
     base_gates = get_acceptance_gates(base_config)
@@ -313,9 +319,14 @@ def test_config_integration():
 
     # Test that ETH config has proper overrides
     assert base_config["entry_threshold"] == 0.45
-    assert eth_config["entry_threshold"] == 0.42
+    assert eth_config["entry_threshold"] == 0.44  # Updated for v1.6.0
 
-    # Test that both have all required features disabled by default
+    # Test that base has default features disabled
     for feature in ["mtf_dl2", "six_candle_leg", "orderflow_lca", "negative_vip", "live_data"]:
         assert is_feature_enabled(base_config, feature) is False
-        assert is_feature_enabled(eth_config, feature) is False
+
+    # ETH v1.6.0 has some features enabled
+    assert is_feature_enabled(eth_config, "mtf_dl2") is True
+    assert is_feature_enabled(eth_config, "six_candle_leg") is True
+    assert is_feature_enabled(eth_config, "orderflow_lca") is False  # Still disabled
+    assert is_feature_enabled(eth_config, "live_data") is False  # Still disabled

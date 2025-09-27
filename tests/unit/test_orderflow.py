@@ -26,9 +26,9 @@ class TestDetectBOS:
         })
 
         result = detect_bos(df, lookback=3)
-        assert result["detected"] is True
+        assert result["detected"] == True
         assert result["direction"] == "bullish"
-        assert result["bullish_bos"] is True
+        assert result["bullish_bos"] == True
         assert result["strength"] > 0
 
     def test_bearish_bos(self):
@@ -40,9 +40,9 @@ class TestDetectBOS:
         })
 
         result = detect_bos(df, lookback=3)
-        assert result["detected"] is True
+        assert result["detected"] == True
         assert result["direction"] == "bearish"
-        assert result["bearish_bos"] is True
+        assert result["bearish_bos"] == True
         assert result["strength"] > 0
 
     def test_no_bos(self):
@@ -54,7 +54,7 @@ class TestDetectBOS:
         })
 
         result = detect_bos(df, lookback=3)
-        assert result["detected"] is False
+        assert result["detected"] == False
         assert result["direction"] is None
         assert result["strength"] == 0
 
@@ -67,7 +67,7 @@ class TestDetectBOS:
         })
 
         result = detect_bos(df, lookback=5)
-        assert result["detected"] is False
+        assert result["detected"] == False
 
 
 class TestDetectLiquidityCapture:
@@ -83,7 +83,7 @@ class TestDetectLiquidityCapture:
         })
 
         result = detect_liquidity_capture(df)
-        assert result is True
+        assert result == True
 
     def test_no_lca(self):
         """Test when no LCA pattern exists."""
@@ -95,7 +95,7 @@ class TestDetectLiquidityCapture:
         })
 
         result = detect_liquidity_capture(df)
-        assert result is False
+        assert result == False
 
     def test_insufficient_data(self):
         """Test handling of insufficient data."""
@@ -105,7 +105,7 @@ class TestDetectLiquidityCapture:
         })
 
         result = detect_liquidity_capture(df)
-        assert result is False
+        assert result == False
 
 
 class TestCalculateIntentNudge:
