@@ -1,0 +1,60 @@
+{
+  "entry_threshold": 0.44,
+  "quality_floors": {
+    "wyckoff": 0.25,
+    "m1": 0.30,
+    "m2": 0.30,
+    "liquidity": 0.25,
+    "structure": 0.25,
+    "momentum": 0.27,
+    "volume": 0.25,
+    "context": 0.25,
+    "mtf": 0.27,
+    "fib_retracement": 0.25,
+    "fib_extension": 0.25
+  },
+  "features": {
+    "mtf_dl2": true,
+    "six_candle_leg": true,
+    "orderflow_lca": false,
+    "negative_vip": false,
+    "wyckoff_phase": true,
+    "wyckoff_m1m2": true,
+    "liquidity_sweep": true,
+    "order_blocks": true,
+    "wick_magnet": true,
+    "hidden_fibs": true,
+    "live_data": false,
+    "use_asset_profiles": true,
+    "cooldown_bars": 168
+  },
+  "risk": {
+    "risk_pct": 0.005,
+    "atr_window": 14,
+    "sl_atr": 1.8,
+    "tp_atr": 3.0,
+    "trail_atr": 1.0,
+    "profit_ladders": [
+      {"ratio": 1.2, "percent": 0.30},
+      {"ratio": 2.0, "percent": 0.50},
+      {"ratio": 3.5, "percent": 0.20}
+    ]
+  },
+  "regime": {
+    "vol_ratio_min": 1.0,
+    "atr_pct_max": 0.08
+  },
+  "ensemble": {
+    "enabled": true,
+    "min_consensus": 2,
+    "consensus_penalty": 0.02,
+    "rolling_k": 4,
+    "rolling_n": 5,
+    "lead_lag_window": 3,
+    "dynamic_thresholds": true
+  },
+  "timeframe": "4H",
+  "profile_name": "ETH_4H_v1.6.0",
+  "version": "1.6.0",
+  "description": "ETH 4H profile with aggressive ladders and enhanced M1/M2 + Fib signals"
+}
