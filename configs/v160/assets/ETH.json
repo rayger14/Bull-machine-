@@ -28,6 +28,8 @@
     "order_blocks": true,
     "wick_magnet": true,
     "hidden_fibs": true,
+    "temporal_fib": true,
+    "fib_clusters": true,
     "live_data": false,
     "use_asset_profiles": true
   },
@@ -62,6 +64,17 @@
     "m1m2_epsilon": 0.05,
     "solo_fib_min_entry": 0.44,
     "vol_override_atr_pct": 0.05
+  },
+  "weights": {
+    "temporal": 0.10
+  },
+  "fib": {
+    "tolerance": 0.02
+  },
+  "temporal": {
+    "fib_nums": [21, 34, 55, 89, 144],
+    "tolerance_bars": 3,
+    "pivot_window": 5
   },
   "max_bars_held": 8,
   "profile_name": "ETH_v1.6.0",
