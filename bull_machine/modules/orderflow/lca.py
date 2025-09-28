@@ -66,6 +66,68 @@ def detect_bos(df: pd.DataFrame, lookback: int = 5) -> Dict[str, Any]:
     return bos_result
 
 
+def calculate_cvd(df: pd.DataFrame) -> Dict[str, float]:
+    """
+    Calculate Cumulative Volume Delta with slope for divergence detection.
+
+    CVD measures buying vs selling pressure by estimating volume distribution
+    within each bar based on where price closes relative to the range.
+    Enhanced with IamZeroIka's slope analysis for trend divergence detection.
+
+    Args:
+        df: DataFrame with OHLC and volume data
+
+    Returns:
+        Dict with CVD delta and slope values
+    """
+    if len(df) < 2:
+        return {"delta": 0.0, "slope": 0.0, "current_delta": 0.0, "delta_ma": 0.0}
+
+    try:
+        # Estimate buying vs selling volume based on bar position
+        # Close near high = more buying, close near low = more selling
+        ranges = df['high'] - df['low']
+
+        # Avoid division by zero
+        ranges = ranges.where(ranges != 0, df['close'] * 0.001)  # Use small fraction of price
+
+        # Calculate volume distribution
+        buy_pressure = (df['close'] - df['low']) / ranges
+        buy_volume = df['volume'] * buy_pressure
+        sell_volume = df['volume'] * (1 - buy_pressure)
+
+        # Calculate cumulative delta
+        volume_delta = buy_volume - sell_volume
+
+        # Handle NaN values by filling with zeros
+        volume_delta = volume_delta.fillna(0)
+        cvd = volume_delta.cumsum()
+
+        # IamZeroIka slope for divergence detection (post:39)
+        cvd_slope = 0.0
+        slope_window = min(10, len(cvd) - 1)
+        if slope_window > 0:
+            cvd_slope = (cvd.iloc[-1] - cvd.iloc[-slope_window-1]) / slope_window
+
+        # Calculate delta moving average with available data
+        ma_window = min(10, len(volume_delta))
+        delta_ma = volume_delta.rolling(ma_window).mean().iloc[-1] if ma_window > 0 else 0.0
+
+        return {
+            "delta": float(cvd.iloc[-1]),
+            "slope": float(cvd_slope),
+            "current_delta": float(volume_delta.iloc[-1]),
+            "delta_ma": float(delta_ma)
+        }
+
+    except Exception as e:
+        log_telemetry("layer_masks.json", {
+            "cvd_calculation_error": str(e),
+            "fallback_values": True
+        })
+        return {"delta": 0.0, "slope": 0.0, "current_delta": 0.0, "delta_ma": 0.0}
+
+
 def detect_liquidity_capture(df: pd.DataFrame) -> bool:
     """
     Detect Liquidity Capture Analysis (LCA) patterns.
@@ -154,10 +216,13 @@ def orderflow_lca(df: pd.DataFrame, config: Dict[str, Any]) -> float:
     """
     Main Orderflow LCA function combining BOS detection and intent analysis.
 
+    Enhanced v1.6.1 with CVD (Cumulative Volume Delta) analysis for true market intent.
+
     Combines:
     1. Liquidity Capture Analysis (LCA) - price above previous highs
     2. Break of Structure (BOS) detection
     3. Intent nudging via volume confirmation
+    4. CVD slope analysis for divergence detection
 
     Args:
         df: Price/volume DataFrame
@@ -178,26 +243,50 @@ def orderflow_lca(df: pd.DataFrame, config: Dict[str, Any]) -> float:
     # Calculate intent nudge
     intent_result = calculate_intent_nudge(df)
 
+    # Calculate CVD for true volume intent
+    cvd_result = calculate_cvd(df)
+
     # Combine signals
     base_score = 0.4  # Baseline
-    lca_bonus = 0.3 if lca_detected else 0.0
+    lca_bonus = 0.25 if lca_detected else 0.0
     bos_bonus = 0.2 * bos_result["strength"] if bos_result["detected"] else 0.0
     intent_bonus = 0.1 * intent_result["nudge_score"]
 
-    final_score = min(1.0, base_score + lca_bonus + bos_bonus + intent_bonus)
+    # CVD enhancement - IamZeroIka's divergence insights
+    cvd_bonus = 0.0
+    if abs(cvd_result["slope"]) > 100:  # Significant slope change
+        if cvd_result["delta"] > 0 and cvd_result["slope"] > 0:
+            cvd_bonus = 0.15  # Strong bullish confluence
+        elif cvd_result["delta"] < 0 and cvd_result["slope"] > 0:
+            cvd_bonus = 0.20  # Hidden bullish divergence (bears exhausting)
+        elif cvd_result["delta"] > 0 and cvd_result["slope"] < 0:
+            cvd_bonus = -0.10  # Hidden bearish divergence (bulls weakening)
+
+    final_score = min(1.0, max(0.0, base_score + lca_bonus + bos_bonus + intent_bonus + cvd_bonus))
 
     # Enhanced scoring for strong confluence
-    if lca_detected and bos_result["detected"] and intent_result["conviction"] in ["high", "very_high"]:
-        final_score = min(1.0, final_score + 0.1)  # Confluence bonus
+    confluence_count = sum([
+        lca_detected,
+        bos_result["detected"],
+        intent_result["conviction"] in ["high", "very_high"],
+        abs(cvd_result["slope"]) > 100
+    ])
+
+    if confluence_count >= 3:
+        final_score = min(1.0, final_score + 0.1)  # Strong confluence bonus
 
     log_telemetry("layer_masks.json", {
         "ofl_lca": float(final_score),
         "ofl_bos": bos_result["detected"],
+        "ofl_cvd_delta": float(cvd_result["delta"]),
+        "ofl_cvd_slope": float(cvd_result["slope"]),
         "ofl_components": {
             "base": float(base_score),
             "lca_bonus": float(lca_bonus),
             "bos_bonus": float(bos_bonus),
-            "intent_bonus": float(intent_bonus)
+            "intent_bonus": float(intent_bonus),
+            "cvd_bonus": float(cvd_bonus),
+            "confluence_count": confluence_count
         }
     })
 
@@ -208,6 +297,8 @@ def analyze_market_structure(df: pd.DataFrame, config: Dict[str, Any]) -> Dict[s
     """
     Comprehensive market structure analysis for orderflow.
 
+    Enhanced v1.6.1 with CVD analysis and slope divergence detection.
+
     Args:
         df: Price/volume DataFrame
         config: Configuration parameters
@@ -215,9 +306,20 @@ def analyze_market_structure(df: pd.DataFrame, config: Dict[str, Any]) -> Dict[s
     Returns:
         Dict containing comprehensive market structure analysis
     """
+    lca_score = orderflow_lca(df, config)
+    bos_analysis = detect_bos(df)
+    intent_analysis = calculate_intent_nudge(df)
+    cvd_analysis = calculate_cvd(df)
+
     return {
-        "lca_score": orderflow_lca(df, config),
-        "bos_analysis": detect_bos(df),
-        "intent_analysis": calculate_intent_nudge(df),
-        "structure_health": "strong" if orderflow_lca(df, config) > 0.7 else "weak"
+        "lca_score": lca_score,
+        "bos_analysis": bos_analysis,
+        "intent_analysis": intent_analysis,
+        "cvd_analysis": cvd_analysis,
+        "structure_health": "strong" if lca_score > 0.7 else "weak",
+        "orderflow_divergence": {
+            "detected": abs(cvd_analysis["slope"]) > 100,
+            "type": "bullish" if cvd_analysis["slope"] > 0 else "bearish",
+            "strength": min(1.0, abs(cvd_analysis["slope"]) / 500)  # Normalize slope strength
+        }
     }

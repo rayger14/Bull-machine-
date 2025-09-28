@@ -8,7 +8,8 @@ from typing import Dict, Any, Optional
 from bull_machine.core.telemetry import log_telemetry
 from bull_machine.modules.fusion.v151_core_trader import CoreTraderV151
 from bull_machine.strategy.wyckoff_m1m2 import compute_m1m2_scores
-from bull_machine.strategy.hidden_fibs import compute_hidden_fib_scores
+from bull_machine.strategy.hidden_fibs import compute_hidden_fib_scores, detect_price_time_confluence
+from bull_machine.oracle import trigger_whisper, format_whisper_for_log
 
 class CoreTraderV160(CoreTraderV151):
     """
@@ -166,6 +167,39 @@ class CoreTraderV160(CoreTraderV151):
 
         # Compute enhanced layer scores (includes M1/M2 and fibs)
         layer_scores = self.compute_base_scores(df)
+
+        # v1.6.1: Price and time symmetry = where structure and vibration align.
+        # Check for Fibonacci price-time confluence
+        if config.get('features', {}).get('temporal_fib', False):
+            confluence_data = detect_price_time_confluence(df, config, current_bar)
+
+            # Enhance scores with cluster confluence
+            if confluence_data['confluence_detected']:
+                cluster_strength = confluence_data['confluence_strength']
+
+                # Boost Fibonacci scores for price clusters
+                if confluence_data['price_cluster']:
+                    layer_scores['fib_retracement'] = min(1.0,
+                        layer_scores.get('fib_retracement', 0.0) + cluster_strength * 0.5)
+                    layer_scores['fib_extension'] = min(1.0,
+                        layer_scores.get('fib_extension', 0.0) + cluster_strength * 0.5)
+
+                # Boost ensemble score for time clusters
+                if confluence_data['time_cluster']:
+                    temporal_weight = config.get('weights', {}).get('temporal', 0.10)
+                    layer_scores['ensemble_entry'] = layer_scores.get('ensemble_entry', 0.0) + \
+                        confluence_data['time_cluster']['strength'] * temporal_weight
+
+                # Add cluster tags for Oracle whispers
+                layer_scores['cluster_tags'] = confluence_data['tags']
+                layer_scores['confluence_strength'] = cluster_strength
+
+                # Trigger Oracle whispers for high confluence events
+                wyckoff_phase = layer_scores.get('wyckoff_phase', '')
+                whispers = trigger_whisper(layer_scores, phase=wyckoff_phase)
+                if whispers:
+                    whisper_log = format_whisper_for_log(whispers, layer_scores)
+                    log_telemetry('oracle_whispers.json', whisper_log)
 
         # Apply knowledge adapters (from v1.5.1)
         self._apply_knowledge_adapters(df, layer_scores, config)
