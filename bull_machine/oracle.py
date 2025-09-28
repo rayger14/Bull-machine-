@@ -27,6 +27,12 @@ def trigger_whisper(scores: Dict[str, Any], phase: str) -> Optional[List[str]]:
     """
     whispers = []
 
+    # PO3 Manipulation Recognition
+    if 'po3_confluence' in scores.get('cluster_tags', []):
+        whispers.append("PO3 manipulation: Sweep complete, structure awaits. Clean displacement signals strength.")
+        if phase in ['C', 'D']:  # Enhanced PO3 in key phases
+            whispers.append("Wyckoff meets PO3. Liquidity swept, true intent revealed.")
+
     # Price-Time Confluence: The Golden Moment
     if 'price_time_confluence' in scores.get('cluster_tags', []):
         if phase in ['C', 'D']:  # Key Wyckoff inflection phases

@@ -190,9 +190,31 @@ class CoreTraderV160(CoreTraderV151):
                     layer_scores['ensemble_entry'] = layer_scores.get('ensemble_entry', 0.0) + \
                         confluence_data['time_cluster']['strength'] * temporal_weight
 
+                    # Add time confluence tag
+                    if 'cluster_tags' not in layer_scores:
+                        layer_scores['cluster_tags'] = []
+                    if 'time_confluence' not in layer_scores['cluster_tags']:
+                        layer_scores['cluster_tags'].append('time_confluence')
+
+                    # Price-Time confluence bonus
+                    if confluence_data['price_cluster'] and 'price_confluence' not in layer_scores.get('cluster_tags', []):
+                        layer_scores['cluster_tags'].append('price_confluence')
+
+                    if 'price_confluence' in layer_scores.get('cluster_tags', []) and 'time_confluence' in layer_scores.get('cluster_tags', []):
+                        layer_scores['cluster_tags'].append('price_time_confluence')
+
                 # Add cluster tags for Oracle whispers
                 layer_scores['cluster_tags'] = confluence_data['tags']
                 layer_scores['confluence_strength'] = cluster_strength
+
+        # PO3 Integration: Boost if sweep + fib align
+        po3_tags = layer_scores.get('cluster_tags', [])
+        if 'po3_confluence' in po3_tags:
+            layer_scores['ensemble_entry'] = layer_scores.get('ensemble_entry', 0.0) + 0.15  # Stack confluences
+
+            # Additional boost if PO3 aligns with other confluences
+            if 'price_time_confluence' in po3_tags:
+                layer_scores['ensemble_entry'] = layer_scores.get('ensemble_entry', 0.0) + 0.10  # Extra stacking bonus
 
                 # Trigger Oracle whispers for high confluence events
                 wyckoff_phase = layer_scores.get('wyckoff_phase', '')
