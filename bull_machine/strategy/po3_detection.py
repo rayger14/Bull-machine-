@@ -113,3 +113,69 @@ def has_bojan_high(df):
             return True
 
     return False
+
+def detect_po3_with_bojan_confluence(df, irh, irl, vol_spike_threshold=1.4, reverse_bars=3):
+    """Enhanced PO3 detection with Bojan microstructure confluence"""
+    # Get base PO3 result
+    po3_result = detect_po3(df, irh, irl, vol_spike_threshold, reverse_bars)
+
+    if not po3_result:
+        return None
+
+    # Check for Bojan confluence
+    try:
+        from bull_machine.modules.bojan.bojan import compute_bojan_score
+        bojan_analysis = compute_bojan_score(df)
+
+        # Enhance PO3 with Bojan signals
+        bojan_score = bojan_analysis.get('bojan_score', 0.0)
+        bojan_signals = bojan_analysis.get('signals', {})
+
+        # Additional confluence checks
+        confluence_boost = 0.0
+        confluence_tags = []
+
+        # Wick magnet at sweep zone
+        if bojan_signals.get('wick_magnet', {}).get('is_magnet', False):
+            confluence_boost += 0.05
+            confluence_tags.append('bojan_wick_magnet')
+
+        # Trap reset alignment with PO3 pattern
+        trap_reset = bojan_signals.get('trap_reset', {})
+        if trap_reset.get('is_trap_reset', False):
+            confluence_boost += 0.10
+            confluence_tags.append('bojan_trap_reset')
+
+        # pHOB zones near IRH/IRL levels
+        phob_zones = bojan_signals.get('phob_zones', {})
+        if phob_zones.get('phob_detected', False):
+            current_price = df['close'].iloc[-1]
+            for zone in phob_zones.get('zones', []):
+                zone_distance = min(abs(current_price - irh), abs(current_price - irl))
+                price_range = irh - irl if irh > irl else 1
+                if zone_distance / price_range < 0.02:  # Within 2% of key levels
+                    confluence_boost += 0.08
+                    confluence_tags.append('bojan_phob_confluence')
+                    break
+
+        # Fibonacci prime zone confluence
+        fib_prime = bojan_signals.get('fib_prime', {})
+        if fib_prime.get('in_prime_zone', False):
+            confluence_boost += 0.12
+            confluence_tags.append('bojan_fib_prime')
+
+        # Apply confluence boost
+        enhanced_strength = po3_result['strength'] + confluence_boost
+
+        # Update result with Bojan enhancements
+        po3_result['strength'] = min(enhanced_strength, 1.0)
+        po3_result['bojan_confluence'] = confluence_boost > 0
+        po3_result['bojan_score'] = bojan_score
+        po3_result['confluence_tags'] = confluence_tags
+        po3_result['bojan_signals'] = bojan_signals
+
+        return po3_result
+
+    except ImportError:
+        # Fallback to original PO3 if Bojan module not available
+        return po3_result

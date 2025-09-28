@@ -207,14 +207,75 @@ class CoreTraderV160(CoreTraderV151):
                 layer_scores['cluster_tags'] = confluence_data['tags']
                 layer_scores['confluence_strength'] = cluster_strength
 
-        # PO3 Integration: Boost if sweep + fib align
-        po3_tags = layer_scores.get('cluster_tags', [])
-        if 'po3_confluence' in po3_tags:
-            layer_scores['ensemble_entry'] = layer_scores.get('ensemble_entry', 0.0) + 0.15  # Stack confluences
+        # PO3 + Bojan Integration: Enhanced microstructure analysis
+        po3_tags = []
+        bojan_tags = []
+        try:
+            from bull_machine.strategy.po3_detection import detect_po3_with_bojan_confluence
+            from bull_machine.modules.bojan.bojan import compute_bojan_score
 
-            # Additional boost if PO3 aligns with other confluences
-            if 'price_time_confluence' in po3_tags:
-                layer_scores['ensemble_entry'] = layer_scores.get('ensemble_entry', 0.0) + 0.10  # Extra stacking bonus
+            # Define IRH/IRL from recent range
+            range_data = df.iloc[-25:-5] if len(df) > 25 else df.iloc[:-5] if len(df) > 5 else df
+            if len(range_data) >= 5:
+                irh = range_data['high'].max()
+                irl = range_data['low'].min()
+
+                # Enhanced PO3 with Bojan confluence
+                po3_result = detect_po3_with_bojan_confluence(df.tail(20), irh, irl, vol_spike_threshold=1.4)
+                if po3_result and po3_result['strength'] > 0.5:
+                    base_boost = po3_result['strength'] * 0.15
+                    layer_scores['ensemble_entry'] += base_boost
+                    po3_tags.append('po3_confluence')
+
+                    # Bojan confluence bonuses
+                    if po3_result.get('bojan_confluence', False):
+                        confluence_boost = min(po3_result.get('bojan_score', 0) * 0.10, 0.15)
+                        layer_scores['ensemble_entry'] += confluence_boost
+                        bojan_tags.extend(po3_result.get('confluence_tags', []))
+
+                        # Specific Bojan pattern bonuses
+                        if 'bojan_trap_reset' in po3_result.get('confluence_tags', []):
+                            layer_scores['momentum'] += 0.08  # Trap resets boost momentum
+                        if 'bojan_fib_prime' in po3_result.get('confluence_tags', []):
+                            layer_scores['structure'] += 0.12  # Fib prime zones boost structure
+
+            # Standalone Bojan analysis for non-PO3 scenarios
+            bojan_analysis = compute_bojan_score(df.tail(20))
+            bojan_score = bojan_analysis.get('bojan_score', 0.0)
+
+            if bojan_score > 0.3:  # Significant Bojan signal
+                # Apply Bojan boost with anti-double-counting
+                max_bojan_boost = 0.10
+                if po3_result and po3_result.get('bojan_confluence', False):
+                    max_bojan_boost = 0.05  # Reduce if already counted in PO3
+
+                bojan_boost = min(bojan_score * 0.08, max_bojan_boost)
+                layer_scores['structure'] += bojan_boost * 0.5
+                layer_scores['volume'] += bojan_boost * 0.3
+                layer_scores['wyckoff'] += bojan_boost * 0.2
+
+                # Tag significant Bojan signals
+                bojan_signals = bojan_analysis.get('signals', {})
+                if bojan_signals.get('wick_magnet', {}).get('is_magnet', False):
+                    bojan_tags.append('bojan_wick_magnet')
+                if bojan_signals.get('trap_reset', {}).get('is_trap_reset', False):
+                    bojan_tags.append('bojan_trap_reset')
+                if bojan_signals.get('phob_zones', {}).get('phob_detected', False):
+                    bojan_tags.append('bojan_phob')
+
+        except ImportError:
+            # Fallback: Check existing cluster tags for PO3
+            po3_tags = layer_scores.get('cluster_tags', [])
+            if 'po3_confluence' in po3_tags:
+                layer_scores['ensemble_entry'] = layer_scores.get('ensemble_entry', 0.0) + 0.15  # Stack confluences
+
+        # Combine all tags and check for additional confluences
+        all_confluence_tags = po3_tags + bojan_tags
+        existing_tags = layer_scores.get('cluster_tags', [])
+
+        # Additional boost if PO3/Bojan aligns with other confluences
+        if po3_tags and 'price_time_confluence' in existing_tags:
+            layer_scores['ensemble_entry'] = layer_scores.get('ensemble_entry', 0.0) + 0.10  # Extra stacking bonus
 
                 # Trigger Oracle whispers for high confluence events
                 wyckoff_phase = layer_scores.get('wyckoff_phase', '')

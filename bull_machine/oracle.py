@@ -33,6 +33,32 @@ def trigger_whisper(scores: Dict[str, Any], phase: str) -> Optional[List[str]]:
         if phase in ['C', 'D']:  # Enhanced PO3 in key phases
             whispers.append("Wyckoff meets PO3. Liquidity swept, true intent revealed.")
 
+    # Bojan microstructure whispers
+    bojan_tags = [tag for tag in scores.get('cluster_tags', []) if tag.startswith('bojan_')]
+
+    if 'bojan_wick_magnet' in bojan_tags:
+        whispers.append("Wick magnetism: Unfinished business draws price home.")
+
+    if 'bojan_trap_reset' in bojan_tags:
+        whispers.append("Trap springs shut: Direction flipped, commitment shown.")
+
+    if 'bojan_phob_confluence' in bojan_tags:
+        whispers.append("Hidden orders stir: pHOB zones guard the threshold.")
+
+    if 'bojan_fib_prime' in bojan_tags:
+        whispers.append("Golden ratios whisper: .705 and .786 hold the keys.")
+
+    # Enhanced confluence whispers for Bojan + PO3
+    if 'po3_confluence' in scores.get('cluster_tags', []) and bojan_tags:
+        whispers.append("Microstructure aligned: Bojan wisdom guides PO3 precision.")
+
+        # Specific combinations
+        if 'bojan_trap_reset' in bojan_tags:
+            whispers.append("Perfect storm: PO3 sweep meets Bojan trap, reversal certain.")
+
+        if 'bojan_fib_prime' in bojan_tags:
+            whispers.append("Sacred geometry: PO3 power amplified by prime fib zones.")
+
     # Price-Time Confluence: The Golden Moment
     if 'price_time_confluence' in scores.get('cluster_tags', []):
         if phase in ['C', 'D']:  # Key Wyckoff inflection phases

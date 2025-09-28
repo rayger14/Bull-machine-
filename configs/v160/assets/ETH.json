@@ -30,6 +30,8 @@
     "hidden_fibs": true,
     "temporal_fib": true,
     "fib_clusters": true,
+    "po3": true,
+    "bojan": true,
     "live_data": false,
     "use_asset_profiles": true
   },
@@ -66,7 +68,9 @@
     "vol_override_atr_pct": 0.05
   },
   "weights": {
-    "temporal": 0.10
+    "temporal": 0.10,
+    "po3": 0.10,
+    "bojan": 0.08
   },
   "fib": {
     "tolerance": 0.02
@@ -76,8 +80,16 @@
     "tolerance_bars": 3,
     "pivot_window": 5
   },
+  "bojan": {
+    "lookback": 50,
+    "wick_magnet_threshold": 0.70,
+    "trap_body_min": 1.25,
+    "unfinished_threshold": 0.10,
+    "phob_confidence_min": 0.30,
+    "fib_prime_zones": [0.705, 0.786]
+  },
   "max_bars_held": 8,
-  "profile_name": "ETH_v1.6.0",
-  "version": "1.6.0",
-  "description": "ETH 1D profile with M1/M2 Wyckoff and hidden Fibonacci enhancements"
+  "profile_name": "ETH_v1.6.2",
+  "version": "1.6.2",
+  "description": "ETH 1D profile with PO3, Bojan microstructure, Wyckoff M1/M2, and Fibonacci enhancements"
 }
