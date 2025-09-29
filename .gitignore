@@ -58,6 +58,11 @@ data/**/*
 *.csv
 *.feather
 *.pickle
+*.png
+*.pdf
+*.xlsx
+*.zip
+*.tar.gz
 .cache/
 **/*_results_*/
 **/final_*_results*/
