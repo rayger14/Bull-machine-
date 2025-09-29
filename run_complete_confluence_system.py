@@ -845,11 +845,38 @@ def run_complete_confluence_backtest(asset, data, config):
     print(f"\n=== Running {asset} Complete 5-Domain Confluence Backtest ===")
 
     # Use 1D timeframe for extended 24-month validation (better data coverage)
-    if '1D' not in data or data['1D'] is None or len(data['1D']) < 300:
+    # Allow shorter periods for walk-forward tuning (minimum 100 bars)
+    if '1D' not in data or data['1D'] is None or len(data['1D']) < 100:
         print(f"Insufficient {asset} 1D data")
         return {}
 
+    # Apply date filtering if specified in config
+    filtered_data = {}
+    for timeframe, df in data.items():
+        if df is not None and len(df) > 0:
+            # Apply date range filtering if specified in config
+            start_date = config.get('start_date')
+            end_date = config.get('end_date')
+
+            if start_date and end_date:
+                # Filter data to specified date range
+                start_ts = pd.Timestamp(start_date)
+                end_ts = pd.Timestamp(end_date)
+                df_filtered = df[(df.index >= start_ts) & (df.index <= end_ts)]
+                filtered_data[timeframe] = df_filtered if len(df_filtered) > 0 else df
+            else:
+                filtered_data[timeframe] = df
+        else:
+            filtered_data[timeframe] = df
+
+    # Use filtered data
+    data = filtered_data
     primary_df = data['1D']
+
+    if len(primary_df) < 100:
+        print(f"Insufficient {asset} 1D data after filtering")
+        return {}
+
     print(f"Backtesting {len(primary_df)} daily bars with 5-domain confluence validation")
     print(f"Available timeframes: {list(data.keys())}")
     print(f"Period: {primary_df.index[0].strftime('%Y-%m-%d')} to {primary_df.index[-1].strftime('%Y-%m-%d')}")
