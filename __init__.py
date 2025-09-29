@@ -16,14 +16,35 @@ __author__ = "Bull Machine Capital"
 __description__ = "Institutional-grade multi-domain confluence trading framework"
 
 # Core system components
-from .run_complete_confluence_system import (
-    load_multi_timeframe_data,
-    run_complete_confluence_backtest,
-    ConfluenceSignalGenerator
-)
+try:
+    from .run_complete_confluence_system import (
+        load_multi_timeframe_data,
+        run_complete_confluence_backtest,
+        ConfluenceSignalGenerator
+    )
+    from .safe_grid_runner import SafeGridRunner
+    from .generate_institutional_tearsheet import generate_tearsheet
+except ImportError:
+    # Fallback for direct execution contexts
+    import sys
+    import os
+    sys.path.insert(0, os.path.dirname(__file__))
 
-from .safe_grid_runner import SafeGridRunner
-from .generate_institutional_tearsheet import generate_tearsheet
+    try:
+        from run_complete_confluence_system import (
+            load_multi_timeframe_data,
+            run_complete_confluence_backtest,
+            ConfluenceSignalGenerator
+        )
+        from safe_grid_runner import SafeGridRunner
+        from generate_institutional_tearsheet import generate_tearsheet
+    except ImportError:
+        # Graceful degradation if modules not available
+        load_multi_timeframe_data = None
+        run_complete_confluence_backtest = None
+        ConfluenceSignalGenerator = None
+        SafeGridRunner = None
+        generate_tearsheet = None
 
 __all__ = [
     "__version__",
