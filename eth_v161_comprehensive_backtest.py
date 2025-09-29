@@ -473,7 +473,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    <function_calls>
-    <invoke name="TodoWrite">
-    <parameter name="todos">[{"content": "Run comprehensive ETH backtest with v1.6.1 features", "status": "in_progress", "activeForm": "Running comprehensive ETH backtest with v1.6.1 features"}, {"content": "Test Fibonacci clusters on multiple timeframes", "status": "completed", "activeForm": "Testing Fibonacci clusters on multiple timeframes"}, {"content": "Validate Oracle whisper system in live conditions", "status": "pending", "activeForm": "Validating Oracle whisper system"}, {"content": "Analyze CVD divergence detection performance", "status": "pending", "activeForm": "Analyzing CVD divergence detection"}, {"content": "Generate performance report with cluster insights", "status": "pending", "activeForm": "Generating performance report"}]

@@ -255,7 +255,7 @@ def generate_stage_c_configs(base_config):
                 cfg = deepcopy(base_config)
 
                 name_parts = []
-                for key, delta in zip(keys_to_change, delta):
+                for key, delta in zip(keys_to_change, deltas):
                     if delta != 0:
                         # Adjust floor (ensure stays in [0, 1])
                         current = cfg.get(f"{key}_floor", 0.1)
