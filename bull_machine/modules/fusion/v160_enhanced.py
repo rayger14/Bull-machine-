@@ -277,12 +277,12 @@ class CoreTraderV160(CoreTraderV151):
         if po3_tags and 'price_time_confluence' in existing_tags:
             layer_scores['ensemble_entry'] = layer_scores.get('ensemble_entry', 0.0) + 0.10  # Extra stacking bonus
 
-                # Trigger Oracle whispers for high confluence events
-                wyckoff_phase = layer_scores.get('wyckoff_phase', '')
-                whispers = trigger_whisper(layer_scores, phase=wyckoff_phase)
-                if whispers:
-                    whisper_log = format_whisper_for_log(whispers, layer_scores)
-                    log_telemetry('oracle_whispers.json', whisper_log)
+            # Trigger Oracle whispers for high confluence events
+            wyckoff_phase = layer_scores.get('wyckoff_phase', '')
+            whispers = trigger_whisper(layer_scores, phase=wyckoff_phase)
+            if whispers:
+                whisper_log = format_whisper_for_log(whispers, layer_scores)
+                log_telemetry('oracle_whispers.json', whisper_log)
 
         # Apply knowledge adapters (from v1.5.1)
         self._apply_knowledge_adapters(df, layer_scores, config)
