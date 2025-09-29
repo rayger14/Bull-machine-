@@ -1,0 +1,83 @@
+{
+  "entry_threshold": 0.42,
+  "quality_floors": {
+    "wyckoff": 0.20,
+    "m1": 0.25,
+    "m2": 0.25,
+    "liquidity": 0.20,
+    "structure": 0.22,
+    "momentum": 0.25,
+    "volume": 0.22,
+    "context": 0.22,
+    "mtf": 0.25,
+    "fib_retracement": 0.22,
+    "fib_extension": 0.20
+  },
+  "features": {
+    "mtf_dl2": true,
+    "six_candle_leg": true,
+    "orderflow_lca": true,
+    "negative_vip": true,
+    "atr_exits": true,
+    "atr_sizing": true,
+    "regime_filter": true,
+    "ensemble_htf_bias": true,
+    "wyckoff_phase": true,
+    "wyckoff_m1m2": true,
+    "liquidity_sweep": true,
+    "order_blocks": true,
+    "wick_magnet": true,
+    "hidden_fibs": true,
+    "temporal_fib": true,
+    "fib_clusters": true,
+    "live_data": false,
+    "use_asset_profiles": true
+  },
+  "cooldown_bars": 96,
+  "timeframe": "1D",
+  "risk": {
+    "risk_pct": 0.01,
+    "atr_window": 14,
+    "sl_atr": 2.0,
+    "tp_atr": 3.5,
+    "trail_atr": 1.5,
+    "profit_ladders": [
+      {"ratio": 1.2, "percent": 0.30},
+      {"ratio": 2.0, "percent": 0.40},
+      {"ratio": 3.0, "percent": 0.30}
+    ]
+  },
+  "regime": {
+    "vol_ratio_min": 0.8,
+    "atr_pct_max": 0.12
+  },
+  "ensemble": {
+    "enabled": true,
+    "min_consensus": 2,
+    "consensus_penalty": 0.01,
+    "rolling_k": 3,
+    "rolling_n": 4,
+    "lead_lag_window": 2,
+    "dynamic_thresholds": true,
+    "confluence_mode": "adaptive",
+    "m1m2_backoff_bars": 20,
+    "m1m2_epsilon": 0.03,
+    "solo_fib_min_entry": 0.40,
+    "vol_override_atr_pct": 0.04
+  },
+  "weights": {
+    "temporal": 0.12
+  },
+  "fib": {
+    "tolerance": 0.025
+  },
+  "temporal": {
+    "fib_nums": [21, 34, 55, 89, 144],
+    "tolerance_bars": 4,
+    "pivot_window": 6
+  },
+  "max_bars_held": 12,
+  "profile_name": "SPY_v1.6.1",
+  "version": "1.6.1",
+  "description": "SPY equity profile with enhanced Fibonacci clusters and lower thresholds for institutional markets"
+}

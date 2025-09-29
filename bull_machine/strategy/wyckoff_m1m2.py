@@ -190,6 +190,8 @@ def _detect_m2_markup(df: pd.DataFrame, range_info: Dict, vol_info: Dict, tf: st
 
     return min(score, 0.75)  # Cap at 0.75
 
+from bull_machine.strategy.po3_detection import detect_po3
+
 def compute_m1m2_scores(df_ltf: pd.DataFrame, tf: str = None, df_htf: pd.DataFrame = None, fib_scores: dict = None) -> Dict[str, float]:
     """
     Return {'m1': float, 'm2': float, 'side': 'long'|'short'|'neutral'} with HTF-aware bias.
@@ -238,6 +240,23 @@ def compute_m1m2_scores(df_ltf: pd.DataFrame, tf: str = None, df_htf: pd.DataFra
         m1_score = _detect_m1_spring(df_ltf, range_info, vol_info, tf or '1H')
         m2_score = _detect_m2_markup(df_ltf, range_info, vol_info, tf or '1H')
 
+        # PO3 Integration: Wyckoff manipulation phase with PO3
+        irh = range_info['high']  # Initial Range High
+        irl = range_info['low']   # Initial Range Low
+        po3 = detect_po3(df_ltf, irh, irl)
+
+        cluster_tags = []
+        if po3:
+            # Boost Phase C springs with PO3 sweep patterns
+            if m1_score > 0.3:  # Existing M1 signal (Phase C spring)
+                m1_score += po3['strength'] * 0.10
+                cluster_tags.append('po3_confluence')
+
+            # Boost Phase D markups with PO3 break patterns
+            if m2_score > 0.3:  # Existing M2 signal (Phase D markup)
+                m2_score += po3['strength'] * 0.10
+                cluster_tags.append('po3_confluence')
+
         # Enhanced bias decision with HTF and fib context
         fib_r = (fib_scores or {}).get('fib_retracement', 0.0)
         fib_x = (fib_scores or {}).get('fib_extension', 0.0)
@@ -258,11 +277,17 @@ def compute_m1m2_scores(df_ltf: pd.DataFrame, tf: str = None, df_htf: pd.DataFra
             'current_price': df_ltf['close'].iloc[-1]
         })
 
-        return {
+        result = {
             'm1': float(m1_score),
             'm2': float(m2_score),
             'side': side
         }
+
+        # Add PO3 cluster tags if detected
+        if cluster_tags:
+            result['cluster_tags'] = cluster_tags
+
+        return result
 
     except Exception as e:
         log_telemetry('layer_masks.json', {

@@ -1,0 +1,12 @@
+# .github/workflows/bojan-smoke.yml
+name: Bojan Smoke
+on: [push, pull_request]
+jobs:
+  bojan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with: { python-version: "3.11" }
+      - run: pip install pandas numpy pytest
+      - run: python3 -m pytest -q tests/unit/test_bojan_basic.py tests/unit/test_bojan_primitives.py tests/integration/test_bojan_fusion_path.py

@@ -8,7 +8,7 @@ not visible on standard charts but act as entry/exit magnets.
 
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional, Any
 from bull_machine.core.telemetry import log_telemetry
 
 def _find_swing_points(df: pd.DataFrame, lookback: int = 20) -> Dict[str, float]:
@@ -275,3 +275,176 @@ def get_active_fib_levels(df: pd.DataFrame, tolerance: float = 0.03) -> List[Dic
 
     except:
         return []
+
+
+# Fib levels divide reality: premium, equilibrium, discount. Smart money lives here.
+def fib_price_clusters(swings_df: pd.DataFrame, tolerance: float = 0.02,
+                      volume_confirm: bool = False) -> Optional[Dict[str, Any]]:
+    """
+    Enhance fib zones with cluster overlaps for premium/discount zones.
+
+    Detects when multiple Fibonacci levels from different swings overlap,
+    creating high-confidence entry/exit zones. Based on Moneytaur's hidden
+    liquidity concepts and Crypto Chase's demand zone analysis.
+
+    Args:
+        swings_df: DataFrame with swing data (high, low, close columns)
+        tolerance: Price tolerance as percentage for cluster detection
+        volume_confirm: Whether to require volume confirmation for strength boost
+
+    Returns:
+        Dict with strongest cluster info, or None if no clusters found
+
+    Example:
+        >>> swings = pd.DataFrame({'high': [105, 110], 'low': [95, 100], 'close': [102, 108]})
+        >>> cluster = fib_price_clusters(swings, tolerance=0.02, volume_confirm=True)
+        >>> # Returns cluster with strength 0.60+ if overlaps detected
+    """
+    if len(swings_df) < 2:
+        return None
+
+    # Fibonacci levels for retracements and extensions
+    levels = [0.236, 0.382, 0.5, 0.618, 0.786, 1.0, 1.272, 1.618, 2.618]
+    clusters = []
+
+    # Generate Fibonacci zones from each swing
+    for _, swing in swings_df.iterrows():
+        swing_range = swing['high'] - swing['low']
+        swing_close = swing['close']
+
+        for level in levels:
+            # Calculate both retracement and extension zones
+            retracement_zone = swing['high'] - (swing_range * level)
+            extension_zone = swing['low'] + (swing_range * level)
+
+            # Check existing clusters for overlaps
+            for zone_price in [retracement_zone, extension_zone]:
+                found_overlap = False
+
+                for cluster in clusters:
+                    # Check if zone overlaps with existing cluster
+                    price_diff = abs(zone_price - cluster['zone'])
+                    tolerance_amount = swing_close * tolerance
+
+                    if price_diff < tolerance_amount:
+                        # Strengthen existing cluster
+                        cluster['strength'] += 0.20
+                        cluster['overlap_count'] += 1
+                        cluster['levels'].append(level)
+
+                        # Extra boost for volume confirmation
+                        if volume_confirm:
+                            cluster['strength'] += 0.10
+
+                        # Bonus for key Fibonacci levels
+                        if level in [0.382, 0.618, 1.618]:
+                            cluster['strength'] += 0.15
+
+                        found_overlap = True
+                        break
+
+                # Create new cluster if no overlap found
+                if not found_overlap:
+                    base_strength = 0.50
+                    if volume_confirm:
+                        base_strength += 0.10
+                    if level in [0.382, 0.618, 1.618]:  # Key levels
+                        base_strength += 0.15
+
+                    clusters.append({
+                        'zone': zone_price,
+                        'strength': base_strength,
+                        'overlap_count': 1,
+                        'levels': [level],
+                        'zone_type': 'retracement' if zone_price < swing['high'] else 'extension'
+                    })
+
+    if not clusters:
+        return None
+
+    # Find strongest cluster
+    strongest_cluster = max(clusters, key=lambda c: c['strength'])
+
+    # Only return clusters with meaningful strength
+    if strongest_cluster['strength'] < 0.60:
+        return None
+
+    # Cap maximum strength
+    strongest_cluster['strength'] = min(0.85, strongest_cluster['strength'])
+
+    # Add cluster classification
+    if strongest_cluster['zone_type'] == 'retracement':
+        if any(level <= 0.5 for level in strongest_cluster['levels']):
+            strongest_cluster['classification'] = 'discount'  # Good buying zone
+        else:
+            strongest_cluster['classification'] = 'premium'   # Good selling zone
+    else:
+        strongest_cluster['classification'] = 'target'       # Exit/profit zone
+
+    return strongest_cluster
+
+
+def detect_price_time_confluence(df: pd.DataFrame, config: Dict[str, Any],
+                                current_idx: int) -> Dict[str, Any]:
+    """
+    Detect confluence between price clusters and time clusters.
+
+    The highest probability setups occur when Fibonacci price levels
+    align with Fibonacci time projections - "where structure and vibration align"
+
+    Args:
+        df: OHLC DataFrame
+        config: Configuration with fib settings
+        current_idx: Current bar index
+
+    Returns:
+        Dict with confluence analysis
+    """
+    from bull_machine.strategy.temporal_fib_clusters import get_time_cluster_for_current_bar
+
+    # Get recent swings for price cluster analysis
+    window_size = min(50, current_idx)
+    recent_df = df.iloc[current_idx - window_size:current_idx + 1]
+
+    # Detect price clusters from recent swings
+    price_cluster = fib_price_clusters(recent_df,
+                                     tolerance=config.get('fib', {}).get('tolerance', 0.02),
+                                     volume_confirm=recent_df['volume'].iloc[-1] > recent_df['volume'].rolling(20).mean().iloc[-1] * 1.5)
+
+    # Get time cluster analysis
+    time_cluster = get_time_cluster_for_current_bar(df, current_idx, config)
+
+    confluence_data = {
+        'price_cluster': price_cluster,
+        'time_cluster': time_cluster,
+        'confluence_detected': False,
+        'confluence_strength': 0.0,
+        'tags': []
+    }
+
+    # Check for price-time confluence
+    if price_cluster and time_cluster:
+        confluence_data['confluence_detected'] = True
+        confluence_data['tags'].append('price_time_confluence')
+
+        # Calculate combined strength
+        price_strength = price_cluster['strength']
+        time_strength = time_cluster['strength']
+
+        # Multiplicative confluence (both must be strong)
+        confluence_strength = (price_strength * time_strength) * 1.5
+        confluence_data['confluence_strength'] = min(0.90, confluence_strength)
+
+        # Add classification tags
+        if price_cluster.get('classification'):
+            confluence_data['tags'].append(f"price_{price_cluster['classification']}")
+
+    elif price_cluster:
+        confluence_data['tags'].append('price_confluence')
+        confluence_data['confluence_strength'] = price_cluster['strength'] * 0.7
+
+    elif time_cluster:
+        confluence_data['tags'].append('time_confluence')
+        confluence_data['confluence_strength'] = time_cluster['strength'] * 0.7
+
+    return confluence_data
