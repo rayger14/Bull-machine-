@@ -1,0 +1,9 @@
+{
+  "entry_threshold": 0.3,
+  "min_active_domains": 3,
+  "cooldown_days": 7,
+  "risk_pct": 0.03,
+  "sl_atr_multiplier": 1.4,
+  "tp_atr_multiplier": 2.5,
+  "trail_atr_multiplier": 0.8
+}
