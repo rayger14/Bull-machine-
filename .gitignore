@@ -51,8 +51,14 @@ Thumbs.db
 *.log
 
 # Results & reports (don't commit large backtest artifacts)
-reports/
-data/
+reports/**/*
+data/**/*
+*.parquet
+*.jsonl
+*.csv
+*.feather
+*.pickle
+.cache/
 **/*_results_*/
 **/final_*_results*/
 **/acceptance_matrix*/
