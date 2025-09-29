@@ -82,7 +82,7 @@ def run_deterministic_backtest(args) -> dict:
         np.random.seed(seed)
 
         # Import and run backtest
-        from run_complete_confluence_system import (
+        from scripts.backtests.run_complete_confluence_system import (
             load_multi_timeframe_data,
             run_complete_confluence_backtest
         )
@@ -153,35 +153,108 @@ def run_deterministic_backtest(args) -> dict:
             "timestamp": datetime.now().isoformat()
         }
 
+def run_mode(mode: str, args) -> dict:
+    """Run specific mode"""
+    if mode == "confluence":
+        return run_deterministic_backtest(args)
+
+    elif mode == "ensemble":
+        try:
+            from scripts.backtests.run_full_ensemble_backtests import main as ensemble_main
+            # Run ensemble backtest - this would need to be refactored to accept args
+            return {"status": "ok", "mode": "ensemble", "message": "Ensemble mode - use run_full_ensemble_backtests.py directly for now"}
+        except ImportError:
+            return {"status": "error", "error": "Ensemble mode not available"}
+
+    elif mode in ["stage-a", "stage-b", "stage-c"]:
+        stage_map = {
+            "stage-a": "scripts.opt.run_stage_a_complete",
+            "stage-b": "scripts.opt.run_stage_b_optimization",
+            "stage-c": "scripts.opt.run_stage_c_validation"
+        }
+        try:
+            # These would need refactoring to accept CLI args
+            return {"status": "ok", "mode": mode, "message": f"Optimization {mode} - use {stage_map[mode]}.py directly for now"}
+        except ImportError:
+            return {"status": "error", "error": f"Optimization {mode} not available"}
+
+    elif mode == "weight-opt":
+        try:
+            # Signal weight optimization
+            return {"status": "ok", "mode": "weight-opt", "message": "Weight optimization - use scripts/opt/run_signal_weight_optimization.py directly for now"}
+        except ImportError:
+            return {"status": "error", "error": "Weight optimization not available"}
+
+    elif mode == "risk-scaling":
+        try:
+            # Risk scaling analysis
+            return {"status": "ok", "mode": "risk-scaling", "message": "Risk scaling - use test_risk_scaling.py directly for now"}
+        except ImportError:
+            return {"status": "error", "error": "Risk scaling not available"}
+
+    elif mode == "tearsheet":
+        try:
+            from generate_institutional_tearsheet import generate_tearsheet
+            # Generate professional tearsheet
+            return {"status": "ok", "mode": "tearsheet", "message": "Tearsheet generation - use generate_institutional_tearsheet.py directly for now"}
+        except ImportError:
+            return {"status": "error", "error": "Tearsheet generation not available"}
+
+    else:
+        return {"status": "error", "error": f"Unknown mode: {mode}"}
+
 def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
-        description="Bull Machine Deterministic Backtest CLI",
+        description="Bull Machine v1.6.2 - Unified CLI for Institutional Trading System",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Basic backtest
-  python bull_machine_cli.py --config configs/v160/assets/ETH.json --start 2023-01-01 --end 2024-01-01
+  # 5-Domain Confluence Backtest (default mode)
+  python bull_machine_cli.py --config configs/v160/rc/ETH_production_v162.json --start 2024-01-01 --end 2024-12-31
+
+  # Ensemble Backtesting
+  python bull_machine_cli.py --mode ensemble --asset ETH --config configs/v160/assets/ETH.json
+
+  # Multi-Stage Optimization
+  python bull_machine_cli.py --mode stage-a --asset ETH --config configs/v160/assets/ETH.json
+  python bull_machine_cli.py --mode stage-b --asset ETH --config configs/v160/assets/ETH.json
+  python bull_machine_cli.py --mode stage-c --asset ETH --config configs/v160/assets/ETH.json
+
+  # Risk Parameter Scaling
+  python bull_machine_cli.py --mode risk-scaling --asset ETH --config configs/v160/assets/ETH.json
+
+  # Signal Weight Optimization
+  python bull_machine_cli.py --mode weight-opt --asset ETH --config configs/v160/assets/ETH.json
+
+  # Professional Tearsheet Generation
+  python bull_machine_cli.py --mode tearsheet --asset ETH --config configs/v160/rc/ETH_production_v162.json
 
   # With runtime config override
-  BM_RTCFG="thresh0.3_min3_cd7_r0.025_sl1.4_tp2.5" python bull_machine_cli.py --config configs/v160/assets/ETH.json
+  BM_RTCFG="thresh0.3_min3_cd7_r0.075_sl1.4_tp2.5" python bull_machine_cli.py --config configs/v160/rc/ETH_production_v162.json
 
   # Quiet mode for grid optimization
-  python bull_machine_cli.py --config configs/v160/assets/ETH.json --quiet --seed 42
+  python bull_machine_cli.py --mode confluence --config configs/v160/assets/ETH.json --quiet --seed 42
         """
     )
+
+    # Mode selection
+    parser.add_argument("--mode", default="confluence",
+                       choices=["confluence", "ensemble", "stage-a", "stage-b", "stage-c", "weight-opt", "risk-scaling", "tearsheet"],
+                       help="Operation mode (default: confluence)")
 
     # Required arguments
     parser.add_argument("--config", required=True, help="Path to configuration JSON file")
 
     # Optional arguments
-    parser.add_argument("--asset", help="Asset symbol (ETH, BTC) - auto-detected if not provided")
+    parser.add_argument("--asset", help="Asset symbol (ETH, BTC, SOL) - auto-detected if not provided")
     parser.add_argument("--start", help="Start date (YYYY-MM-DD)")
     parser.add_argument("--end", help="End date (YYYY-MM-DD)")
     parser.add_argument("--risk-pct", type=float, help="Risk percentage per trade")
     parser.add_argument("--fee-bps", type=float, help="Fee in basis points")
     parser.add_argument("--slip-bps", type=float, help="Slippage in basis points")
     parser.add_argument("--seed", type=int, help="Random seed for reproducibility")
+    parser.add_argument("--out", help="Output directory for results")
     parser.add_argument("--quiet", action="store_true", help="Suppress progress output")
 
     args = parser.parse_args()
@@ -191,8 +264,8 @@ Examples:
         import logging
         logging.getLogger().setLevel(logging.ERROR)
 
-    # Run backtest
-    result = run_deterministic_backtest(args)
+    # Run mode
+    result = run_mode(args.mode, args)
 
     # Output clean JSON (no extra text)
     print(json.dumps(result))
