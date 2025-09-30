@@ -1,0 +1,36 @@
+{
+  "version": "1.7.1-enhanced",
+  "description": "Enhanced fusion with Moneytaur/Wyckoff/ZeroIKA alignment",
+
+  "entry_thresholds": {
+    "confidence": 0.30,
+    "strength": 0.40
+  },
+
+  "counter_trend_discipline": {
+    "enabled": true,
+    "require_3_engines_if_countertrend": true,
+    "min_engines_with_trend": 2,
+    "trend_lookback_bars": 20
+  },
+
+  "engine_weights": {
+    "smc": 0.35,
+    "wyckoff": 0.25,
+    "momentum": 0.20,
+    "hob": 0.20
+  },
+
+  "delta_caps": {
+    "macro": 0.10,
+    "momentum": 0.06,
+    "hob": 0.05,
+    "hps": 0.03
+  },
+
+  "quality_gates": {
+    "min_confluence_score": 0.60,
+    "max_engines_disagreement": 0.40,
+    "require_htf_alignment": true
+  }
+}

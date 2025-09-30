@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-09-29T22:54:43.846406",
+  "slice_start": "2025-06-01T20:00:00",
+  "slice_end": "2025-08-15T20:00:00",
+  "config_hash": "13e9c085",
+  "assets": [
+    "ETH",
+    "BTC",
+    "SOL"
+  ],
+  "bar_counts": {
+    "ETH": 451,
+    "BTC": 451,
+    "SOL": 150
+  }
+}
