@@ -113,7 +113,7 @@ class FusionEngineV1_3:
         )
         self.base_threshold = self.config.get("signals", {}).get("enter_threshold", 0.35)
 
-    def _fuse_impl(self, modules: Dict[str, Any], sync_report: Optional[Any] = None) -> Optional[Signal]:
+    def fuse(self, modules: Dict[str, Any], sync_report: Optional[Any] = None) -> Optional[Signal]:
         # Schema validation to catch field drift early
         self._validate_modules(modules)
 
