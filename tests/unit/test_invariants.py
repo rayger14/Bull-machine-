@@ -145,29 +145,40 @@ class TestInvariants:
             assert position_value <= capital * 0.15
 
     def test_mtf_alignment_logic(self):
-        """Test multi-timeframe confluence logic"""
-        # Test cases: (1H_trend, 4H_trend, 1D_trend, expected_aligned)
+        """Test multi-timeframe confluence logic with VIX persistence"""
+        # Test cases: (1H_trend, 4H_trend, 1D_trend, vix_level, expected_aligned)
         test_cases = [
-            ('bullish', 'bullish', 'bullish', True),   # Full alignment
-            ('bearish', 'bearish', 'bearish', True),   # Full alignment
-            ('bullish', 'bearish', 'bullish', True),   # 2/3 bullish = aligned
-            ('neutral', 'bullish', 'bullish', False),  # Neutral blocks
-            ('bullish', 'bullish', 'neutral', False),  # HTF neutral
+            ('bullish', 'bullish', 'bullish', 15.0, True),   # Full alignment, low VIX
+            ('bearish', 'bearish', 'bearish', 18.0, True),   # Full alignment, low VIX
+            ('bullish', 'bearish', 'bullish', 20.0, False),  # Mixed signals, normal VIX - 4H/1D precedence
+            ('bullish', 'bullish', 'bullish', 25.0, True),   # Full alignment overrides high VIX
+            ('neutral', 'bullish', 'bullish', 15.0, True),   # HTF agreement, ignore 1H neutral
+            ('bullish', 'bullish', 'neutral', 16.0, False),  # 1D neutral blocks signal
         ]
 
-        for h1_trend, h4_trend, d1_trend, expected in test_cases:
-            # At least 60% must agree and be non-neutral
-            trends = [h1_trend, h4_trend, d1_trend]
-            bullish_count = trends.count('bullish')
-            bearish_count = trends.count('bearish')
-
+        for h1_trend, h4_trend, d1_trend, vix, expected in test_cases:
+            # MTF confluence with VIX hysteresis and HTF precedence
             aligned = False
-            if bullish_count >= 2 and 'neutral' not in trends:
-                aligned = True
-            elif bearish_count >= 2 and 'neutral' not in trends:
-                aligned = True
 
-            assert aligned == expected, f"MTF logic failed for {trends}"
+            # 1) Check HTF (4H + 1D) agreement first
+            htf_bullish = (h4_trend == 'bullish' and d1_trend == 'bullish')
+            htf_bearish = (h4_trend == 'bearish' and d1_trend == 'bearish')
+
+            if htf_bullish or htf_bearish:
+                # HTF aligned - check VIX override
+                if vix < 22.0:  # Low volatility - allow 1H disagreement
+                    aligned = True
+                else:  # High volatility - require full alignment
+                    if htf_bullish:
+                        aligned = (h1_trend == 'bullish')
+                    else:
+                        aligned = (h1_trend == 'bearish')
+            elif d1_trend != 'neutral':
+                # 1D trend dominates when 4H disagrees
+                if h4_trend == d1_trend:
+                    aligned = True
+
+            assert aligned == expected, f"MTF logic failed for {[h1_trend, h4_trend, d1_trend]} VIX:{vix}"
 
 
 class TestWyckoffPhases:

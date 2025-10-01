@@ -1,0 +1,75 @@
+{
+  "timestamp": "2025-10-01T13:09:01.748144",
+  "version": "1.7.0",
+  "overall_success": true,
+  "test_results": {
+    "manifest": {
+      "timestamp": "2025-10-01T13:09:01.613079",
+      "git_commit": "c09539a3a28e2d0ff6efc2a5aee566fd2d539271",
+      "config_hash": "f80fecdd3c7d1d32",
+      "data_snapshot_id": "cc969cd55d75",
+      "random_seed": 42,
+      "cost_model_version": "1.7.0",
+      "python_version": "3.9.6 (default, Apr 30 2025, 02:07:18) \n[Clang 17.0.0 (clang-1700.0.13.5)]",
+      "dependencies": {
+        "pandas": "2.3.2",
+        "numpy": "2.0.2"
+      }
+    },
+    "transaction_costs": true,
+    "health_bands": {
+      "macro_veto_rate": 0.11,
+      "smc_2hit_rate": 0.35,
+      "hob_relevance": 0.22,
+      "delta_breaches": 0
+    },
+    "health_bands_check": {
+      "overall_healthy": true,
+      "metrics": {
+        "macro_veto_rate": {
+          "value": 0.11,
+          "range": [
+            0.05,
+            0.15
+          ],
+          "healthy": true
+        },
+        "smc_2hit_rate": {
+          "value": 0.35,
+          "range": [
+            0.3,
+            1.0
+          ],
+          "healthy": true
+        },
+        "hob_relevance": {
+          "value": 0.22,
+          "range": [
+            0.0,
+            0.3
+          ],
+          "healthy": true
+        },
+        "delta_breaches": {
+          "value": 0,
+          "range": [
+            0,
+            0
+          ],
+          "healthy": true
+        }
+      },
+      "critical_failures": []
+    },
+    "guard_violations_check": {
+      "violations": [],
+      "has_violations": false,
+      "ci_mode": false
+    }
+  },
+  "summary": {
+    "passed": 1,
+    "total": 1,
+    "success_rate": 1.0
+  }
+}
