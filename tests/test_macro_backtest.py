@@ -115,7 +115,7 @@ def test_fusion_engine():
         }
 
         # Mock market data
-        dates = pd.date_range('2024-01-01', periods=50, freq='1H')
+        dates = pd.date_range('2024-01-01', periods=50, freq='1h')
         market_data = {
             '1H': pd.DataFrame({
                 'open': 50000, 'high': 50100, 'low': 49900, 'close': 50000,
