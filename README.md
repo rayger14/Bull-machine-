@@ -110,6 +110,18 @@ bull-machine/
 └── results/archive/        # 📈 Organized Results Archive
 ```
 
+### 📋 Configuration Path Reference
+
+| Configuration Type | Path | Description |
+|-------------------|------|-------------|
+| **Production Configs** | `configs/v160/rc/ETH_production_v162.json` | Frozen production parameters (12.76% returns) |
+| **Asset Configs** | `configs/v160/assets/{ETH,BTC,SPY}.json` | Asset-specific parameters |
+| **Adaptive Configs** | `configs/adaptive/COINBASE_{BTCUSD,ETHUSD,SOLUSD,XRPUSD}_config.json` | Multi-asset adaptive configurations |
+| **v1.7.1 Configs** | `configs/v171/{context,exits,fusion,liquidity,momentum,risk}.json` | Modular system configurations |
+| **v1.7.0 Configs** | `configs/v170/assets/ETH_v17_*.json` | Historical calibration and tuning |
+| **Legacy Configs** | `configs/v15x/` | Version 1.5x backward compatibility |
+| **Profile Configs** | `configs/v14x/profile_{aggressive,balanced,conservative}.json` | Risk profile templates |
+
 ---
 
 ## 🏗️ Core Features (v1.7.2)
