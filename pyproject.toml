@@ -4,36 +4,67 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bull-machine"
-version = "1.4.2"
-description = "Advanced algorithmic trading system with 7-layer confluence"
-authors = [{name = "Bull Machine Team"}]
-license = {text = "MIT"}
+version = "1.7.2"
+description = "Advanced multi-domain confluence trading system"
+authors = [{name = "Bull Machine Team", email = "team@bullmachine.ai"}]
+license = "MIT"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.8"
+keywords = ["trading", "algorithmic-trading", "confluence", "technical-analysis", "quantitative-finance"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Financial and Insurance Industry",
-    "License :: OSI Approved :: MIT License",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
 ]
 
 dependencies = [
-    "pandas>=1.5.0",
-    "numpy>=1.20.0",
-    "ta>=0.10.0",
-    "requests>=2.28.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "quantlib>=1.31",
+    "TA-Lib>=0.4.25",
+    "pyyaml>=6.0",
+    "structlog>=23.1.0",
+    "python-dotenv>=1.0.0",
+    "numba>=0.57.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0",
-    "pytest-cov>=4.0",
-    "ruff>=0.1.0",
-    "mypy>=1.0",
-    "black>=22.0",
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.0.280",
+    "mypy>=1.5.0",
 ]
+api = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+]
+db = [
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.11.0",
+]
+docs = [
+    "sphinx>=7.0.0",
+]
+
+[project.scripts]
+bull-machine = "analyze_btc_production:main"
+bull-backtest = "bin.production_backtest:main"
+bull-analyze = "scripts.research.analyze_btc_with_bull_machine:main"
+bull-confluence = "run_complete_confluence_system:main"
+
+[project.urls]
+"Bug Reports" = "https://github.com/bullmachine/bull-machine/issues"
+"Source" = "https://github.com/bullmachine/bull-machine"
+"Documentation" = "https://docs.bullmachine.ai"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

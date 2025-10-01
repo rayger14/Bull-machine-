@@ -1,0 +1,12 @@
+{
+  "total_return": 0.0,
+  "total_pnl": 0,
+  "final_balance": 100000,
+  "total_trades": 0,
+  "win_rate": 0,
+  "profit_factor": 0,
+  "trades": [],
+  "period": "2025-05-21 12:00:00+00:00 to 2025-10-01 16:00:00+00:00",
+  "mtf_enabled": true,
+  "confluence_threshold": 0.25
+}

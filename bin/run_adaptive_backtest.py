@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 import json
 from datetime import datetime, timedelta
-from data.real_data_loader import RealDataLoader
+from engine.io.tradingview_loader import load_tv
 
 class AdaptiveBullMachine:
     """

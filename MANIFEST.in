@@ -1,0 +1,35 @@
+# Bull Machine v1.7.2 Package Manifest
+# Specify additional files to include in the package
+
+# Documentation
+include README.md
+include LICENSE
+include CHANGELOG.md
+include docs/INSTITUTIONAL_STRUCTURE.md
+
+# Configuration files
+recursive-include configs *.json *.yaml *.yml
+
+# Requirements
+include requirements-production.txt
+include requirements.txt
+
+# Scripts and tools
+include bin/*.py
+recursive-include scripts *.py
+
+# Data files (if present)
+recursive-include data *.csv *.json
+
+# Engine configuration
+recursive-include engine *.py *.json
+
+# Exclude development and temporary files
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude .DS_Store
+global-exclude *.log
+global-exclude .git*
+recursive-exclude results *
+recursive-exclude logs *
+recursive-exclude .pytest_cache *
