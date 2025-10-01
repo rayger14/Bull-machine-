@@ -350,6 +350,10 @@ class ProductionBacktester:
         # Load data
         df_1h, df_4h, df_1d = self.load_eth_data()
 
+        # Store period info for results
+        self.period_start = df_4h.index[0]
+        self.period_end = df_4h.index[-1]
+
         # Track position
         in_position = False
         entry_price = 0
@@ -563,7 +567,7 @@ class ProductionBacktester:
         # Save results
         results = {
             'backtest_summary': {
-                'period': f"{df_4h.index[0]} to {df_4h.index[-1]}",
+                'period': f"{self.period_start} to {self.period_end}",
                 'starting_balance': self.starting_balance,
                 'final_balance': self.current_balance,
                 'total_return_pct': ((self.current_balance - self.starting_balance) / self.starting_balance * 100),
