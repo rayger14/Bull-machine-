@@ -458,7 +458,9 @@ def run_comprehensive_test_suite(args):
         }
 
         with open(results_file, 'w') as f:
-            json.dump(convert_to_json_serializable(detailed_results), f, indent=2)
+            # Convert all boolean values to strings to avoid JSON serialization issues
+            serializable_results = json.loads(json.dumps(detailed_results, default=str))
+            json.dump(serializable_results, f, indent=2)
 
         print(f"\n💾 Detailed results saved to {results_file}")
 

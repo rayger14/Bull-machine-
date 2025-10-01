@@ -301,7 +301,7 @@ def test_cost_adjusted_metrics():
     ]
 
     # Create mock price data
-    dates = pd.date_range('2025-01-01', '2025-01-05', freq='1H')
+    dates = pd.date_range('2025-01-01', '2025-01-05', freq='1h')
     prices = 100 + np.cumsum(np.random.randn(len(dates)) * 0.5)
 
     price_data = pd.DataFrame({

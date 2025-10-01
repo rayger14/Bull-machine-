@@ -24,7 +24,7 @@ class TestInvariants:
     def test_no_future_leak(self):
         """Ensure no future data is used in signals"""
         # Create mock data
-        dates = pd.date_range('2025-01-01', periods=100, freq='4H')
+        dates = pd.date_range('2025-01-01', periods=100, freq='4h')
         df = pd.DataFrame({
             'open': np.random.randn(100).cumsum() + 100,
             'high': np.random.randn(100).cumsum() + 101,
