@@ -12,6 +12,7 @@ import hashlib
 import subprocess
 import uuid
 import numpy as np
+import pandas as pd
 from datetime import datetime
 from pathlib import Path
 
@@ -27,22 +28,19 @@ from engine.timeframes.mtf_alignment import create_1h_integration_test
 from scripts.research.validation.regime_aware_validation import run_regime_validation_test
 from engine.metrics.cost_adjusted_metrics import test_cost_adjusted_metrics
 
-def convert_to_json_serializable(obj):
-    """Convert numpy types and other non-serializable objects to JSON-compatible types"""
-    if isinstance(obj, dict):
-        return {k: convert_to_json_serializable(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_to_json_serializable(item) for item in obj]
-    elif isinstance(obj, (np.bool_, bool)):
-        return bool(obj)
-    elif isinstance(obj, (np.integer, int)):
-        return int(obj)
-    elif isinstance(obj, (np.floating, float)):
-        return float(obj)
-    elif isinstance(obj, (np.ndarray,)):
-        return obj.tolist()
-    else:
-        return obj
+def _json_default(o):
+    """Safe JSON serialization handler for NumPy/Pandas types"""
+    if isinstance(o, (np.integer,)):
+        return int(o)
+    if isinstance(o, (np.floating,)):
+        return float(o)
+    if isinstance(o, (np.bool_,)):
+        return bool(o)
+    if isinstance(o, (pd.Timestamp, datetime)):
+        return o.isoformat()
+    if hasattr(o, "item"):
+        return o.item()
+    return str(o)
 
 def create_determinism_manifest():
     """Create manifest for full reproducibility"""
@@ -458,9 +456,7 @@ def run_comprehensive_test_suite(args):
         }
 
         with open(results_file, 'w') as f:
-            # Convert all boolean values to strings to avoid JSON serialization issues
-            serializable_results = json.loads(json.dumps(detailed_results, default=str))
-            json.dump(serializable_results, f, indent=2)
+            json.dump(detailed_results, f, indent=2, default=_json_default)
 
         print(f"\n💾 Detailed results saved to {results_file}")
 
