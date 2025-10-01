@@ -1,0 +1,189 @@
+{
+  "timestamp": "2025-09-28T17:30:47.322752",
+  "git_commit": "7966c717",
+  "validation_summary": {
+    "total_configs_tested": 2,
+    "deployment_ready_count": 2,
+    "time_folds": 2
+  },
+  "all_results": [
+    {
+      "config": "test_thresh0.3_min3_cd7_r0.025_sl1.4_tp2.5_tr0.8",
+      "asset": "ETH",
+      "folds": [
+        {
+          "fold": "fold_1",
+          "period": "2024-01-01 to 2024-06-29",
+          "trades": 15,
+          "wr": 60.0,
+          "pnl_pct": 0.7672190006600312,
+          "profit_factor": 1.7952399323046964,
+          "sharpe_ratio": 17.637496536058777,
+          "max_dd_pct": 0.36435874585370187,
+          "status": "ok"
+        },
+        {
+          "fold": "fold_2",
+          "period": "2024-06-29 to 2024-12-26",
+          "trades": 15,
+          "wr": 60.0,
+          "pnl_pct": 0.7672190006600312,
+          "profit_factor": 1.7952399323046964,
+          "sharpe_ratio": 17.637496536058777,
+          "max_dd_pct": 0.36435874585370187,
+          "status": "ok"
+        }
+      ],
+      "stability_metrics": {
+        "total_folds": 2,
+        "successful_folds": 2,
+        "avg_pnl_pct": 0.7672190006600312,
+        "std_pnl_pct": 0.0,
+        "cv_pnl": 0.0,
+        "avg_sharpe": 17.637496536058777,
+        "std_sharpe": 0.0,
+        "avg_trades_per_fold": 15.0,
+        "positive_folds": 2,
+        "negative_folds": 0,
+        "consistency_ratio": 1.0,
+        "max_fold_pnl": 0.7672190006600312,
+        "min_fold_pnl": 0.7672190006600312
+      },
+      "deployment_ready": true
+    },
+    {
+      "config": "test_thresh0.25_min3_cd7_r0.02_sl1.2_tp2.0_tr0.8",
+      "asset": "ETH",
+      "folds": [
+        {
+          "fold": "fold_1",
+          "period": "2024-01-01 to 2024-06-29",
+          "trades": 15,
+          "wr": 60.0,
+          "pnl_pct": 0.6139460362299177,
+          "profit_factor": 1.7962056757767844,
+          "sharpe_ratio": 17.65247452937943,
+          "max_dd_pct": 0.2908333058453879,
+          "status": "ok"
+        },
+        {
+          "fold": "fold_2",
+          "period": "2024-06-29 to 2024-12-26",
+          "trades": 15,
+          "wr": 60.0,
+          "pnl_pct": 0.6139460362299177,
+          "profit_factor": 1.7962056757767844,
+          "sharpe_ratio": 17.65247452937943,
+          "max_dd_pct": 0.2908333058453879,
+          "status": "ok"
+        }
+      ],
+      "stability_metrics": {
+        "total_folds": 2,
+        "successful_folds": 2,
+        "avg_pnl_pct": 0.6139460362299177,
+        "std_pnl_pct": 0.0,
+        "cv_pnl": 0.0,
+        "avg_sharpe": 17.65247452937943,
+        "std_sharpe": 0.0,
+        "avg_trades_per_fold": 15.0,
+        "positive_folds": 2,
+        "negative_folds": 0,
+        "consistency_ratio": 1.0,
+        "max_fold_pnl": 0.6139460362299177,
+        "min_fold_pnl": 0.6139460362299177
+      },
+      "deployment_ready": true
+    }
+  ],
+  "deployment_ready": [
+    {
+      "config": "test_thresh0.3_min3_cd7_r0.025_sl1.4_tp2.5_tr0.8",
+      "asset": "ETH",
+      "folds": [
+        {
+          "fold": "fold_1",
+          "period": "2024-01-01 to 2024-06-29",
+          "trades": 15,
+          "wr": 60.0,
+          "pnl_pct": 0.7672190006600312,
+          "profit_factor": 1.7952399323046964,
+          "sharpe_ratio": 17.637496536058777,
+          "max_dd_pct": 0.36435874585370187,
+          "status": "ok"
+        },
+        {
+          "fold": "fold_2",
+          "period": "2024-06-29 to 2024-12-26",
+          "trades": 15,
+          "wr": 60.0,
+          "pnl_pct": 0.7672190006600312,
+          "profit_factor": 1.7952399323046964,
+          "sharpe_ratio": 17.637496536058777,
+          "max_dd_pct": 0.36435874585370187,
+          "status": "ok"
+        }
+      ],
+      "stability_metrics": {
+        "total_folds": 2,
+        "successful_folds": 2,
+        "avg_pnl_pct": 0.7672190006600312,
+        "std_pnl_pct": 0.0,
+        "cv_pnl": 0.0,
+        "avg_sharpe": 17.637496536058777,
+        "std_sharpe": 0.0,
+        "avg_trades_per_fold": 15.0,
+        "positive_folds": 2,
+        "negative_folds": 0,
+        "consistency_ratio": 1.0,
+        "max_fold_pnl": 0.7672190006600312,
+        "min_fold_pnl": 0.7672190006600312
+      },
+      "deployment_ready": true
+    },
+    {
+      "config": "test_thresh0.25_min3_cd7_r0.02_sl1.2_tp2.0_tr0.8",
+      "asset": "ETH",
+      "folds": [
+        {
+          "fold": "fold_1",
+          "period": "2024-01-01 to 2024-06-29",
+          "trades": 15,
+          "wr": 60.0,
+          "pnl_pct": 0.6139460362299177,
+          "profit_factor": 1.7962056757767844,
+          "sharpe_ratio": 17.65247452937943,
+          "max_dd_pct": 0.2908333058453879,
+          "status": "ok"
+        },
+        {
+          "fold": "fold_2",
+          "period": "2024-06-29 to 2024-12-26",
+          "trades": 15,
+          "wr": 60.0,
+          "pnl_pct": 0.6139460362299177,
+          "profit_factor": 1.7962056757767844,
+          "sharpe_ratio": 17.65247452937943,
+          "max_dd_pct": 0.2908333058453879,
+          "status": "ok"
+        }
+      ],
+      "stability_metrics": {
+        "total_folds": 2,
+        "successful_folds": 2,
+        "avg_pnl_pct": 0.6139460362299177,
+        "std_pnl_pct": 0.0,
+        "cv_pnl": 0.0,
+        "avg_sharpe": 17.65247452937943,
+        "std_sharpe": 0.0,
+        "avg_trades_per_fold": 15.0,
+        "positive_folds": 2,
+        "negative_folds": 0,
+        "consistency_ratio": 1.0,
+        "max_fold_pnl": 0.6139460362299177,
+        "min_fold_pnl": 0.6139460362299177
+      },
+      "deployment_ready": true
+    }
+  ]
+}

@@ -1,0 +1,2623 @@
+{
+  "SOL": {
+    "asset": "SOL",
+    "trades": [
+      {
+        "entry_time": "2023-04-14T00:00:00",
+        "exit_time": "2023-04-19T00:00:00",
+        "entry_price": 24.74,
+        "exit_price": 22.68,
+        "pnl": -21.15191996766371,
+        "score": 1.03,
+        "confluence_analysis": {
+          "final_score": 1.03,
+          "base_score": 0.88,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.3,
+              "signals": [
+                "wick_magnet_above",
+                "wick_magnet_below"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.25,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.08,
+              "signals": [
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 5,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "liquidity_active",
+          "wick_magnet_above",
+          "wick_magnet_below",
+          "momentum_active",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2023-06-30T00:00:00",
+        "exit_time": "2023-07-07T00:00:00",
+        "entry_price": 18.85,
+        "exit_price": 21.51,
+        "pnl": 34.82999134871209,
+        "score": 0.59,
+        "confluence_analysis": {
+          "final_score": 0.59,
+          "base_score": 1.03,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.2,
+              "signals": [
+                "wyckoff_markup"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.35,
+              "signals": [
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.38,
+              "signals": [
+                "fib_zone_1d",
+                "golden_ratio_1d",
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.1,
+              "signals": [
+                "plus_three_domains"
+              ],
+              "veto": "No higher timeframe support"
+            }
+          },
+          "total_signals": 6,
+          "confluence_grade": "B (Adequate Confluence)",
+          "major_vetos": [
+            "No higher timeframe support"
+          ]
+        },
+        "tags": [
+          "wyckoff_active",
+          "wyckoff_markup",
+          "momentum_active",
+          "orderflow_bos",
+          "temporal_active",
+          "fib_zone_1d",
+          "golden_ratio_1d",
+          "round_number_1000",
+          "plus_three_domains",
+          "b"
+        ],
+        "side": "long",
+        "exit_days": 7,
+        "confluence_grade": "B (Adequate Confluence)"
+      },
+      {
+        "entry_time": "2023-10-17T00:00:00",
+        "exit_time": "2023-10-22T00:00:00",
+        "entry_price": 23.95,
+        "exit_price": 29.05,
+        "pnl": 52.9209297574062,
+        "score": 0.98,
+        "confluence_analysis": {
+          "final_score": 0.98,
+          "base_score": 0.83,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.3,
+              "signals": [
+                "wick_magnet_above",
+                "wick_magnet_below"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.2,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.08,
+              "signals": [
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 5,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "liquidity_active",
+          "wick_magnet_above",
+          "wick_magnet_below",
+          "momentum_active",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2023-10-30T00:00:00",
+        "exit_time": "2023-11-04T00:00:00",
+        "entry_price": 34.95,
+        "exit_price": 42.44,
+        "pnl": 53.54326799058535,
+        "score": 1.03,
+        "confluence_analysis": {
+          "final_score": 1.03,
+          "base_score": 0.88,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.2,
+              "signals": [
+                "wyckoff_markup"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.35,
+              "signals": [
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.08,
+              "signals": [
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 5,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wyckoff_active",
+          "wyckoff_markup",
+          "momentum_active",
+          "orderflow_bos",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2023-12-07T00:00:00",
+        "exit_time": "2023-12-12T00:00:00",
+        "entry_price": 67.77,
+        "exit_price": 68.54,
+        "pnl": 2.518398971645272,
+        "score": 1.05,
+        "confluence_analysis": {
+          "final_score": 1.05,
+          "base_score": 0.9000000000000001,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.2,
+              "signals": [
+                "wyckoff_markup"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.4,
+              "signals": [
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.05,
+              "signals": [],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 4,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wyckoff_active",
+          "wyckoff_markup",
+          "momentum_active",
+          "orderflow_bos",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2023-12-20T00:00:00",
+        "exit_time": "2023-12-25T00:00:00",
+        "entry_price": 82.26,
+        "exit_price": 120.95,
+        "pnl": 118.58917552174819,
+        "score": 0.9500000000000001,
+        "confluence_analysis": {
+          "final_score": 0.9500000000000001,
+          "base_score": 0.8,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.2,
+              "signals": [
+                "wyckoff_markup"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.35,
+              "signals": [
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 4,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wyckoff_active",
+          "wyckoff_markup",
+          "momentum_active",
+          "orderflow_bos",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-01-03T00:00:00",
+        "exit_time": "2024-01-08T00:00:00",
+        "entry_price": 98.59,
+        "exit_price": 98.0,
+        "pnl": -1.8895594184166,
+        "score": 1.0999999999999999,
+        "confluence_analysis": {
+          "final_score": 1.0999999999999999,
+          "base_score": 0.95,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.15,
+              "signals": [
+                "wick_magnet_below"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.2,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.35,
+              "signals": [
+                "fib_zone_1d",
+                "golden_ratio_1d",
+                "round_number_100"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 6,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wick_magnet_below",
+          "momentum_active",
+          "temporal_active",
+          "fib_zone_1d",
+          "golden_ratio_1d",
+          "round_number_100",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-02-28T00:00:00",
+        "exit_time": "2024-03-04T00:00:00",
+        "entry_price": 119.0,
+        "exit_price": 133.49,
+        "pnl": 30.78962085365657,
+        "score": 1.05,
+        "confluence_analysis": {
+          "final_score": 1.05,
+          "base_score": 0.9000000000000001,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.2,
+              "signals": [
+                "wyckoff_markup"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.45000000000000007,
+              "signals": [
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 4,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wyckoff_active",
+          "wyckoff_markup",
+          "momentum_active",
+          "orderflow_bos",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-03-07T00:00:00",
+        "exit_time": "2024-03-12T00:00:00",
+        "entry_price": 144.06,
+        "exit_price": 151.06,
+        "pnl": 12.10769830060693,
+        "score": 1.05,
+        "confluence_analysis": {
+          "final_score": 1.05,
+          "base_score": 0.9000000000000001,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.2,
+              "signals": [
+                "wyckoff_markup"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.45000000000000007,
+              "signals": [
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 4,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wyckoff_active",
+          "wyckoff_markup",
+          "momentum_active",
+          "orderflow_bos",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-07-27T00:00:00",
+        "exit_time": "2024-08-01T00:00:00",
+        "entry_price": 183.56,
+        "exit_price": 167.22,
+        "pnl": -23.226309716761346,
+        "score": 0.9,
+        "confluence_analysis": {
+          "final_score": 0.9,
+          "base_score": 0.75,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.3,
+              "signals": [
+                "wick_magnet_above",
+                "wick_magnet_below"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.2,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 4,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "liquidity_active",
+          "wick_magnet_above",
+          "wick_magnet_below",
+          "momentum_active",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-09-10T00:00:00",
+        "exit_time": "2024-09-17T00:00:00",
+        "entry_price": 135.61,
+        "exit_price": 131.56,
+        "pnl": -8.013367471564367,
+        "score": 0.59,
+        "confluence_analysis": {
+          "final_score": 0.59,
+          "base_score": 1.03,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.3,
+              "signals": [
+                "wick_magnet_above",
+                "wick_magnet_below"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.1,
+              "signals": [
+                "momentum_confluence"
+              ],
+              "veto": "No volume confirmation"
+            },
+            "Temporal": {
+              "score": 0.3,
+              "signals": [
+                "fib_zone_4h",
+                "hidden_fib_alignment"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.33,
+              "signals": [
+                "h4_structure_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 7,
+          "confluence_grade": "B (Adequate Confluence)",
+          "major_vetos": [
+            "No volume confirmation"
+          ]
+        },
+        "tags": [
+          "liquidity_active",
+          "wick_magnet_above",
+          "wick_magnet_below",
+          "momentum_confluence",
+          "temporal_active",
+          "fib_zone_4h",
+          "hidden_fib_alignment",
+          "fusion_active",
+          "h4_structure_bullish",
+          "plus_two_domains",
+          "b"
+        ],
+        "side": "long",
+        "exit_days": 7,
+        "confluence_grade": "B (Adequate Confluence)"
+      },
+      {
+        "entry_time": "2024-09-19T00:00:00",
+        "exit_time": "2024-09-24T00:00:00",
+        "entry_price": 142.89,
+        "exit_price": 152.74,
+        "pnl": 17.29497702290482,
+        "score": 1.6999999999999997,
+        "confluence_analysis": {
+          "final_score": 1.6999999999999997,
+          "base_score": 1.5499999999999998,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.35,
+              "signals": [
+                "wyckoff_markup",
+                "automatic_rally"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.1,
+              "signals": [
+                "fvg_4h"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.85,
+              "signals": [
+                "volume_expansion",
+                "body_dominance_4h",
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "h4_structure_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 8,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wyckoff_active",
+          "wyckoff_markup",
+          "automatic_rally",
+          "fvg_4h",
+          "momentum_active",
+          "volume_expansion",
+          "body_dominance_4h",
+          "orderflow_bos",
+          "fusion_active",
+          "h4_structure_bullish",
+          "plus_two_domains",
+          "b+",
+          "high_signal_density"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-09-26T00:00:00",
+        "exit_time": "2024-10-03T00:00:00",
+        "entry_price": 155.57,
+        "exit_price": 136.8,
+        "pnl": -31.310300161243227,
+        "score": 1.35,
+        "confluence_analysis": {
+          "final_score": 1.35,
+          "base_score": 1.1500000000000001,
+          "plus_one_bonus": 0.2,
+          "active_domains": 4,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.2,
+              "signals": [
+                "wyckoff_markup"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.35,
+              "signals": [
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.3,
+              "signals": [
+                "fib_zone_4h",
+                "golden_ratio_4h"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.30000000000000004,
+              "signals": [
+                "h4_structure_bullish",
+                "plus_three_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 6,
+          "confluence_grade": "A (Excellent Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wyckoff_active",
+          "wyckoff_markup",
+          "momentum_active",
+          "orderflow_bos",
+          "temporal_active",
+          "fib_zone_4h",
+          "golden_ratio_4h",
+          "fusion_active",
+          "h4_structure_bullish",
+          "plus_three_domains",
+          "a",
+          "multi_domain_confluence"
+        ],
+        "side": "long",
+        "exit_days": 7,
+        "confluence_grade": "A (Excellent Confluence)"
+      },
+      {
+        "entry_time": "2024-10-15T00:00:00",
+        "exit_time": "2024-10-20T00:00:00",
+        "entry_price": 154.72,
+        "exit_price": 167.37,
+        "pnl": 20.55164452082194,
+        "score": 1.2999999999999998,
+        "confluence_analysis": {
+          "final_score": 1.2999999999999998,
+          "base_score": 1.15,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.15,
+              "signals": [
+                "wick_magnet_below"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.35,
+              "signals": [
+                "volume_expansion"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.3,
+              "signals": [
+                "fib_zone_4h",
+                "hidden_fib_alignment"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.35,
+              "signals": [
+                "d1_bias_bullish",
+                "h4_structure_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 7,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wick_magnet_below",
+          "momentum_active",
+          "volume_expansion",
+          "temporal_active",
+          "fib_zone_4h",
+          "hidden_fib_alignment",
+          "fusion_active",
+          "d1_bias_bullish",
+          "h4_structure_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-10-23T00:00:00",
+        "exit_time": "2024-10-30T00:00:00",
+        "entry_price": 170.65,
+        "exit_price": 174.85,
+        "pnl": 5.947983935679693,
+        "score": 0.45,
+        "confluence_analysis": {
+          "final_score": 0.45,
+          "base_score": 0.75,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.0,
+              "signals": [],
+              "veto": "Distribution phase detected"
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.2,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.3,
+              "signals": [
+                "fib_zone_4h",
+                "golden_ratio_4h"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 4,
+          "confluence_grade": "B (Adequate Confluence)",
+          "major_vetos": [
+            "Distribution phase detected"
+          ]
+        },
+        "tags": [
+          "momentum_active",
+          "temporal_active",
+          "fib_zone_4h",
+          "golden_ratio_4h",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b"
+        ],
+        "side": "long",
+        "exit_days": 7,
+        "confluence_grade": "B (Adequate Confluence)"
+      },
+      {
+        "entry_time": "2024-11-06T00:00:00",
+        "exit_time": "2024-11-13T00:00:00",
+        "entry_price": 186.76,
+        "exit_price": 215.46,
+        "pnl": 39.043797378510504,
+        "score": 2.1,
+        "confluence_analysis": {
+          "final_score": 2.1,
+          "base_score": 1.9,
+          "plus_one_bonus": 0.2,
+          "active_domains": 4,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.35,
+              "signals": [
+                "wyckoff_markup",
+                "automatic_rally"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.2,
+              "signals": [
+                "liquidity_cluster"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.95,
+              "signals": [
+                "volume_expansion",
+                "momentum_confluence",
+                "body_dominance_4h",
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.4,
+              "signals": [
+                "d1_bias_bullish",
+                "h4_structure_bullish",
+                "plus_three_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 10,
+          "confluence_grade": "A (Excellent Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wyckoff_active",
+          "wyckoff_markup",
+          "automatic_rally",
+          "liquidity_active",
+          "liquidity_cluster",
+          "momentum_active",
+          "volume_expansion",
+          "momentum_confluence",
+          "body_dominance_4h",
+          "orderflow_bos",
+          "fusion_active",
+          "d1_bias_bullish",
+          "h4_structure_bullish",
+          "plus_three_domains",
+          "a",
+          "multi_domain_confluence",
+          "high_signal_density"
+        ],
+        "side": "long",
+        "exit_days": 7,
+        "confluence_grade": "A (Excellent Confluence)"
+      },
+      {
+        "entry_time": "2024-11-14T00:00:00",
+        "exit_time": "2024-11-19T00:00:00",
+        "entry_price": 209.58,
+        "exit_price": 237.99,
+        "pnl": 34.5294822158368,
+        "score": 1.2999999999999998,
+        "confluence_analysis": {
+          "final_score": 1.2999999999999998,
+          "base_score": 1.15,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.15,
+              "signals": [
+                "wick_magnet_above"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.30000000000000004,
+              "signals": [
+                "momentum_confluence"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.35,
+              "signals": [
+                "fib_zone_4h",
+                "hidden_fib_alignment",
+                "round_number_100"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.35,
+              "signals": [
+                "d1_bias_bullish",
+                "h4_structure_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 8,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wick_magnet_above",
+          "momentum_active",
+          "momentum_confluence",
+          "temporal_active",
+          "fib_zone_4h",
+          "hidden_fib_alignment",
+          "round_number_100",
+          "fusion_active",
+          "d1_bias_bullish",
+          "h4_structure_bullish",
+          "plus_two_domains",
+          "b+",
+          "high_signal_density"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-11-21T00:00:00",
+        "exit_time": "2024-11-26T00:00:00",
+        "entry_price": 256.65,
+        "exit_price": 230.6,
+        "pnl": -26.57379067734663,
+        "score": 1.15,
+        "confluence_analysis": {
+          "final_score": 1.15,
+          "base_score": 1.0,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.2,
+              "signals": [
+                "wyckoff_markup"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.4,
+              "signals": [
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.15,
+              "signals": [
+                "fib_zone_4h"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 5,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wyckoff_active",
+          "wyckoff_markup",
+          "momentum_active",
+          "orderflow_bos",
+          "fib_zone_4h",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-12-04T00:00:00",
+        "exit_time": "2024-12-09T00:00:00",
+        "entry_price": 229.49,
+        "exit_price": 216.72,
+        "pnl": -14.69405652211826,
+        "score": 1.05,
+        "confluence_analysis": {
+          "final_score": 1.05,
+          "base_score": 0.9,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.25,
+              "signals": [
+                "fvg_4h",
+                "wick_magnet_above"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.4,
+              "signals": [
+                "momentum_confluence"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "h4_structure_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 5,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "liquidity_active",
+          "fvg_4h",
+          "wick_magnet_above",
+          "momentum_active",
+          "momentum_confluence",
+          "fusion_active",
+          "h4_structure_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-12-29T00:00:00",
+        "exit_time": "2025-01-01T00:00:00",
+        "entry_price": 189.6,
+        "exit_price": 193.84,
+        "pnl": 5.391712467222651,
+        "score": 0.9,
+        "confluence_analysis": {
+          "final_score": 0.9,
+          "base_score": 0.75,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.2,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.3,
+              "signals": [
+                "fib_zone_4h",
+                "golden_ratio_4h"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "h4_structure_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 4,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "momentum_active",
+          "temporal_active",
+          "fib_zone_4h",
+          "golden_ratio_4h",
+          "fusion_active",
+          "h4_structure_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      }
+    ],
+    "metrics": {
+      "total_trades": 20,
+      "win_rate": 65.0,
+      "total_pnl_pct": 3.0119937635022285,
+      "max_drawdown_pct": 0.4525500032666412,
+      "profit_factor": 3.3742789610786454,
+      "sharpe_ratio": 33.83167202896827,
+      "avg_trade": 15.059968817511143,
+      "trades_per_month": 0.9740800000000002,
+      "gross_profit": 428.05868028533706,
+      "gross_loss": 126.85930393511414,
+      "confluence_distribution": {
+        "A+": 0,
+        "A": 5,
+        "B+": 15,
+        "B": 18,
+        "C": 20
+      },
+      "avg_domains_per_trade": 3.1,
+      "avg_signals_per_trade": 5.55
+    },
+    "final_capital": 10301.199376350227,
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025
+    }
+  },
+  "XRP": {
+    "asset": "XRP",
+    "trades": [
+      {
+        "entry_time": "2023-10-24T00:00:00",
+        "exit_time": "2023-10-29T00:00:00",
+        "entry_price": 0.5591,
+        "exit_price": 0.5564,
+        "pnl": -1.5564523341084289,
+        "score": 1.3299999999999998,
+        "confluence_analysis": {
+          "final_score": 1.3299999999999998,
+          "base_score": 1.18,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.2,
+              "signals": [
+                "wyckoff_markup"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.15,
+              "signals": [
+                "wick_magnet_above"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.5,
+              "signals": [
+                "volume_expansion",
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.08,
+              "signals": [
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 7,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wyckoff_active",
+          "wyckoff_markup",
+          "wick_magnet_above",
+          "momentum_active",
+          "volume_expansion",
+          "orderflow_bos",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2023-10-31T00:00:00",
+        "exit_time": "2023-11-05T00:00:00",
+        "entry_price": 0.5999,
+        "exit_price": 0.6614,
+        "pnl": 25.25739924940753,
+        "score": 1.1300000000000001,
+        "confluence_analysis": {
+          "final_score": 1.1300000000000001,
+          "base_score": 0.9800000000000001,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.2,
+              "signals": [
+                "wyckoff_markup"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.4,
+              "signals": [
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.13,
+              "signals": [
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 5,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wyckoff_active",
+          "wyckoff_markup",
+          "momentum_active",
+          "orderflow_bos",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2023-11-08T00:00:00",
+        "exit_time": "2023-11-13T00:00:00",
+        "entry_price": 0.6873,
+        "exit_price": 0.6702,
+        "pnl": -6.581198458353601,
+        "score": 0.98,
+        "confluence_analysis": {
+          "final_score": 0.98,
+          "base_score": 0.83,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.3,
+              "signals": [
+                "wick_magnet_above",
+                "wick_magnet_below"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.2,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.08,
+              "signals": [
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 5,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "liquidity_active",
+          "wick_magnet_above",
+          "wick_magnet_below",
+          "momentum_active",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2023-12-06T00:00:00",
+        "exit_time": "2023-12-11T00:00:00",
+        "entry_price": 0.6401,
+        "exit_price": 0.6185,
+        "pnl": -8.795308131833075,
+        "score": 1.03,
+        "confluence_analysis": {
+          "final_score": 1.03,
+          "base_score": 0.88,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.25,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.38,
+              "signals": [
+                "fib_zone_1d",
+                "golden_ratio_1d",
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 5,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "momentum_active",
+          "temporal_active",
+          "fib_zone_1d",
+          "golden_ratio_1d",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2023-12-13T00:00:00",
+        "exit_time": "2023-12-18T00:00:00",
+        "entry_price": 0.6276,
+        "exit_price": 0.6125,
+        "pnl": -6.366062191117793,
+        "score": 0.98,
+        "confluence_analysis": {
+          "final_score": 0.98,
+          "base_score": 0.83,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.15,
+              "signals": [
+                "wick_magnet_below"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.2,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.22999999999999998,
+              "signals": [
+                "fib_zone_1d",
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 5,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wick_magnet_below",
+          "momentum_active",
+          "temporal_active",
+          "fib_zone_1d",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-02-27T00:00:00",
+        "exit_time": "2024-03-03T00:00:00",
+        "entry_price": 0.5865,
+        "exit_price": 0.627,
+        "pnl": 16.904652632997454,
+        "score": 1.1300000000000001,
+        "confluence_analysis": {
+          "final_score": 1.1300000000000001,
+          "base_score": 0.9800000000000001,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.2,
+              "signals": [
+                "wyckoff_markup"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.45000000000000007,
+              "signals": [
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.08,
+              "signals": [
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 5,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wyckoff_active",
+          "wyckoff_markup",
+          "momentum_active",
+          "orderflow_bos",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-03-05T00:00:00",
+        "exit_time": "2024-03-10T00:00:00",
+        "entry_price": 0.5921,
+        "exit_price": 0.6085,
+        "pnl": 6.582051209097395,
+        "score": 1.2799999999999998,
+        "confluence_analysis": {
+          "final_score": 1.2799999999999998,
+          "base_score": 1.13,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.15,
+              "signals": [
+                "wick_magnet_below"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.35,
+              "signals": [
+                "volume_expansion"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.38,
+              "signals": [
+                "fib_zone_1d",
+                "golden_ratio_1d",
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 7,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wick_magnet_below",
+          "momentum_active",
+          "volume_expansion",
+          "temporal_active",
+          "fib_zone_1d",
+          "golden_ratio_1d",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-04-09T00:00:00",
+        "exit_time": "2024-04-14T00:00:00",
+        "entry_price": 0.6137,
+        "exit_price": 0.5039,
+        "pnl": -45.16200815534894,
+        "score": 1.1099999999999999,
+        "confluence_analysis": {
+          "final_score": 1.1099999999999999,
+          "base_score": 0.96,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.15,
+              "signals": [
+                "wick_magnet_above"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.25,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.22999999999999998,
+              "signals": [
+                "fib_zone_1d",
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.33,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 5,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wick_magnet_above",
+          "momentum_active",
+          "temporal_active",
+          "fib_zone_1d",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-09-19T00:00:00",
+        "exit_time": "2024-09-24T00:00:00",
+        "entry_price": 0.5872,
+        "exit_price": 0.5912,
+        "pnl": 1.3491398328231206,
+        "score": 1.3599999999999999,
+        "confluence_analysis": {
+          "final_score": 1.3599999999999999,
+          "base_score": 1.21,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.15,
+              "signals": [
+                "wick_magnet_above"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.35,
+              "signals": [
+                "volume_expansion"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.38,
+              "signals": [
+                "fib_zone_4h",
+                "golden_ratio_4h",
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.33,
+              "signals": [
+                "h4_structure_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 7,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "wick_magnet_above",
+          "momentum_active",
+          "volume_expansion",
+          "temporal_active",
+          "fib_zone_4h",
+          "golden_ratio_4h",
+          "round_number_1000",
+          "fusion_active",
+          "h4_structure_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-09-27T00:00:00",
+        "exit_time": "2024-10-04T00:00:00",
+        "entry_price": 0.5889,
+        "exit_price": 0.5341,
+        "pnl": -23.554084156536206,
+        "score": 1.5799999999999998,
+        "confluence_analysis": {
+          "final_score": 1.5799999999999998,
+          "base_score": 1.38,
+          "plus_one_bonus": 0.2,
+          "active_domains": 4,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.3,
+              "signals": [
+                "wick_magnet_above",
+                "wick_magnet_below"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.35,
+              "signals": [
+                "volume_expansion"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.43,
+              "signals": [
+                "fib_zone_1d",
+                "golden_ratio_1d",
+                "fib_zone_4h",
+                "golden_ratio_4h",
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.30000000000000004,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_three_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 10,
+          "confluence_grade": "A (Excellent Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "liquidity_active",
+          "wick_magnet_above",
+          "wick_magnet_below",
+          "momentum_active",
+          "volume_expansion",
+          "temporal_active",
+          "fib_zone_1d",
+          "golden_ratio_1d",
+          "fib_zone_4h",
+          "golden_ratio_4h",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_three_domains",
+          "a",
+          "multi_domain_confluence",
+          "high_signal_density"
+        ],
+        "side": "long",
+        "exit_days": 7,
+        "confluence_grade": "A (Excellent Confluence)"
+      },
+      {
+        "entry_time": "2024-10-14T00:00:00",
+        "exit_time": "2024-10-19T00:00:00",
+        "entry_price": 0.5483,
+        "exit_price": 0.5439,
+        "pnl": -2.34492489617511,
+        "score": 1.1099999999999999,
+        "confluence_analysis": {
+          "final_score": 1.1099999999999999,
+          "base_score": 0.96,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.25,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.38,
+              "signals": [
+                "fib_zone_4h",
+                "golden_ratio_4h",
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.33,
+              "signals": [
+                "h4_structure_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 5,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "momentum_active",
+          "temporal_active",
+          "fib_zone_4h",
+          "golden_ratio_4h",
+          "round_number_1000",
+          "fusion_active",
+          "h4_structure_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-11-06T00:00:00",
+        "exit_time": "2024-11-11T00:00:00",
+        "entry_price": 0.5426,
+        "exit_price": 0.6217,
+        "pnl": 35.90971592171243,
+        "score": 1.5299999999999998,
+        "confluence_analysis": {
+          "final_score": 1.5299999999999998,
+          "base_score": 1.38,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.15,
+              "signals": [
+                "automatic_rally"
+              ],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.2,
+              "signals": [
+                "liquidity_cluster"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.7,
+              "signals": [
+                "volume_expansion",
+                "body_dominance_4h",
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.08,
+              "signals": [
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "h4_structure_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 8,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "automatic_rally",
+          "liquidity_active",
+          "liquidity_cluster",
+          "momentum_active",
+          "volume_expansion",
+          "body_dominance_4h",
+          "orderflow_bos",
+          "round_number_1000",
+          "fusion_active",
+          "h4_structure_bullish",
+          "plus_two_domains",
+          "b+",
+          "high_signal_density"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-11-13T00:00:00",
+        "exit_time": "2024-11-20T00:00:00",
+        "entry_price": 0.6908,
+        "exit_price": 1.105,
+        "pnl": 149.31884782248025,
+        "score": 1.88,
+        "confluence_analysis": {
+          "final_score": 1.88,
+          "base_score": 1.68,
+          "plus_one_bonus": 0.2,
+          "active_domains": 4,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.3,
+              "signals": [
+                "wick_magnet_above",
+                "wick_magnet_below"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.5499999999999999,
+              "signals": [
+                "volume_expansion",
+                "momentum_confluence"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.5299999999999999,
+              "signals": [
+                "fib_zone_4h",
+                "golden_ratio_4h",
+                "hidden_fib_alignment",
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.30000000000000004,
+              "signals": [
+                "h4_structure_bullish",
+                "plus_three_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 10,
+          "confluence_grade": "A (Excellent Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "liquidity_active",
+          "wick_magnet_above",
+          "wick_magnet_below",
+          "momentum_active",
+          "volume_expansion",
+          "momentum_confluence",
+          "temporal_active",
+          "fib_zone_4h",
+          "golden_ratio_4h",
+          "hidden_fib_alignment",
+          "round_number_1000",
+          "fusion_active",
+          "h4_structure_bullish",
+          "plus_three_domains",
+          "a",
+          "multi_domain_confluence",
+          "high_signal_density"
+        ],
+        "side": "long",
+        "exit_days": 7,
+        "confluence_grade": "A (Excellent Confluence)"
+      },
+      {
+        "entry_time": "2024-11-21T00:00:00",
+        "exit_time": "2024-11-28T00:00:00",
+        "entry_price": 1.2487,
+        "exit_price": 1.5426,
+        "pnl": 59.273927626888415,
+        "score": 0.415,
+        "confluence_analysis": {
+          "final_score": 0.415,
+          "base_score": 0.6799999999999999,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.0,
+              "signals": [],
+              "veto": "Distribution phase detected"
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.2,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.22999999999999998,
+              "signals": [
+                "fib_zone_4h",
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 4,
+          "confluence_grade": "B (Adequate Confluence)",
+          "major_vetos": [
+            "Distribution phase detected"
+          ]
+        },
+        "tags": [
+          "momentum_active",
+          "temporal_active",
+          "fib_zone_4h",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b"
+        ],
+        "side": "long",
+        "exit_days": 7,
+        "confluence_grade": "B (Adequate Confluence)"
+      },
+      {
+        "entry_time": "2024-12-02T00:00:00",
+        "exit_time": "2024-12-07T00:00:00",
+        "entry_price": 2.7289,
+        "exit_price": 2.6121,
+        "pnl": -11.263908080967122,
+        "score": 0.8999999999999999,
+        "confluence_analysis": {
+          "final_score": 0.8999999999999999,
+          "base_score": 1.65,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0.06999999999999999,
+              "signals": [
+                "wyckoff_markup",
+                "automatic_rally"
+              ],
+              "veto": "Distribution phase detected"
+            },
+            "Liquidity": {
+              "score": 0.30000000000000004,
+              "signals": [
+                "fvg_4h",
+                "liquidity_cluster"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.85,
+              "signals": [
+                "volume_expansion",
+                "momentum_confluence",
+                "orderflow_bos"
+              ],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.08,
+              "signals": [
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.35,
+              "signals": [
+                "d1_bias_bullish",
+                "h4_structure_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 11,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": [
+            "Distribution phase detected"
+          ]
+        },
+        "tags": [
+          "wyckoff_markup",
+          "automatic_rally",
+          "liquidity_active",
+          "fvg_4h",
+          "liquidity_cluster",
+          "momentum_active",
+          "volume_expansion",
+          "momentum_confluence",
+          "orderflow_bos",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "h4_structure_bullish",
+          "plus_two_domains",
+          "b+",
+          "high_signal_density"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-12-09T00:00:00",
+        "exit_time": "2024-12-14T00:00:00",
+        "entry_price": 2.2129,
+        "exit_price": 2.4005,
+        "pnl": 21.2226834210309,
+        "score": 1.1799999999999997,
+        "confluence_analysis": {
+          "final_score": 1.1799999999999997,
+          "base_score": 1.0299999999999998,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.25,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.5299999999999999,
+              "signals": [
+                "fib_zone_4h",
+                "golden_ratio_4h",
+                "hidden_fib_alignment",
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.25,
+              "signals": [
+                "d1_bias_bullish",
+                "plus_two_domains"
+              ],
+              "veto": null
+            }
+          },
+          "total_signals": 6,
+          "confluence_grade": "B+ (Good Confluence)",
+          "major_vetos": []
+        },
+        "tags": [
+          "momentum_active",
+          "temporal_active",
+          "fib_zone_4h",
+          "golden_ratio_4h",
+          "hidden_fib_alignment",
+          "round_number_1000",
+          "fusion_active",
+          "d1_bias_bullish",
+          "plus_two_domains",
+          "b+"
+        ],
+        "side": "long",
+        "exit_days": 5,
+        "confluence_grade": "B+ (Good Confluence)"
+      },
+      {
+        "entry_time": "2024-12-19T00:00:00",
+        "exit_time": "2024-12-26T00:00:00",
+        "entry_price": 2.2376,
+        "exit_price": 2.1537,
+        "pnl": -9.921573728887921,
+        "score": 0.515,
+        "confluence_analysis": {
+          "final_score": 0.515,
+          "base_score": 0.88,
+          "plus_one_bonus": 0.15,
+          "active_domains": 3,
+          "domain_breakdown": {
+            "Wyckoff": {
+              "score": 0,
+              "signals": [],
+              "veto": null
+            },
+            "Liquidity": {
+              "score": 0.25,
+              "signals": [
+                "fvg_4h",
+                "wick_magnet_above"
+              ],
+              "veto": null
+            },
+            "Momentum": {
+              "score": 0.25,
+              "signals": [],
+              "veto": null
+            },
+            "Temporal": {
+              "score": 0.28,
+              "signals": [
+                "fib_zone_4h",
+                "round_number_1000"
+              ],
+              "veto": null
+            },
+            "Fusion": {
+              "score": 0.1,
+              "signals": [
+                "plus_three_domains"
+              ],
+              "veto": "No higher timeframe support"
+            }
+          },
+          "total_signals": 5,
+          "confluence_grade": "B (Adequate Confluence)",
+          "major_vetos": [
+            "No higher timeframe support"
+          ]
+        },
+        "tags": [
+          "liquidity_active",
+          "fvg_4h",
+          "wick_magnet_above",
+          "momentum_active",
+          "temporal_active",
+          "fib_zone_4h",
+          "round_number_1000",
+          "plus_three_domains",
+          "b"
+        ],
+        "side": "long",
+        "exit_days": 7,
+        "confluence_grade": "B (Adequate Confluence)"
+      }
+    ],
+    "metrics": {
+      "total_trades": 17,
+      "win_rate": 47.05882352941176,
+      "total_pnl_pct": 2.0027289758310927,
+      "max_drawdown_pct": 0.6971187737523713,
+      "profit_factor": 2.7332813712899817,
+      "sharpe_ratio": 22.12591141123902,
+      "avg_trade": 11.78075868135937,
+      "trades_per_month": 1.2262559241706161,
+      "gross_profit": 315.8184177164375,
+      "gross_loss": 115.54552013332821,
+      "confluence_distribution": {
+        "A+": 0,
+        "A": 4,
+        "B+": 13,
+        "B": 15,
+        "C": 17
+      },
+      "avg_domains_per_trade": 3.1176470588235294,
+      "avg_signals_per_trade": 6.470588235294118
+    },
+    "final_capital": 10200.272897583103,
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025
+    }
+  }
+}

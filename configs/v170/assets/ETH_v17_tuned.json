@@ -1,0 +1,357 @@
+{
+  "asset": "ETH",
+  "version": "1.7.0-tuned",
+  "description": "v1.7 with relaxed SMC thresholds for increased valid entries while maintaining DD control",
+  "risk_management": {
+    "risk_pct": 0.075,
+    "max_positions": 12,
+    "max_correlation": 0.7,
+    "portfolio_heat_limit": 0.25
+  },
+  "domains": {
+    "wyckoff": {
+      "enabled": true,
+      "weight": 0.22,
+      "accumulation_threshold": 0.2,
+      "distribution_threshold": 0.8,
+      "range_min_pct": 0.03,
+      "sc_ar_vol_min": 0.8,
+      "crt_vol_std_max": 0.005,
+      "hps_floor": 0.4,
+      "hps_max_delta": 0.03
+    },
+    "liquidity": {
+      "enabled": true,
+      "weight": 0.18,
+      "hob_detection": {
+        "min_reaction_pips": 25,
+        "max_consolidation_bars": 36,
+        "volume_threshold": 1.15,
+        "institutional_threshold": 0.45,
+        "quality_weights": {
+          "volume_surge": 0.3,
+          "level_strength": 0.25,
+          "reaction_speed": 0.2,
+          "wick_presence": 0.15,
+          "confluence": 0.1
+        },
+        "hob_quality_factors": {
+          "volume_z_min": 1.3,
+          "volume_window_bars": 84,
+          "mitigation_fib": 0.5,
+          "tf_mult": [
+            "1D",
+            "4H"
+          ],
+          "fib_levels": [
+            0.618,
+            0.786
+          ],
+          "x_hob_min": 2
+        },
+        "hob_volume_conf_boost": 0.05,
+        "hob_relevance": {
+          "max_atr_dist": 0.25,
+          "max_bars_unmitigated": 200
+        }
+      },
+      "bojan_engine": {
+        "min_reaction_strength": 0.35,
+        "reaction_timeframe_bars": 18,
+        "require_volume_confirmation": true,
+        "partial_exit_levels": [
+          0.5,
+          1.0,
+          1.5
+        ],
+        "partial_exit_percentages": [
+          30,
+          40,
+          30
+        ],
+        "max_hold_bars": 72,
+        "adverse_move_threshold": 0.4
+      },
+      "wick_magnets": {
+        "min_wick_ratio": 1.2,
+        "min_volume_ratio": 1.08,
+        "institutional_ratio": 2.0,
+        "magnet_decay_hours": 168,
+        "min_distance_pct": 0.003
+      }
+    },
+    "smc": {
+      "enabled": true,
+      "weight": 0.25,
+      "order_blocks": {
+        "min_displacement_pct": 0.003,
+        "min_volume_ratio": 1.02,
+        "lookback_bars": 30,
+        "min_reaction_bars": 1
+      },
+      "fvg": {
+        "min_gap_pct": 0.001,
+        "min_volume_ratio": 1.01,
+        "lookback_bars": 60,
+        "fill_threshold": 0.6
+      },
+      "liquidity_sweeps": {
+        "min_pip_sweep": 3,
+        "min_wick_ratio": 0.25,
+        "lookback_bars": 25,
+        "min_volume_ratio": 1.02,
+        "reversal_bars": 1
+      },
+      "bos": {
+        "swing_lookback": 3,
+        "min_break_pct": 0.0005,
+        "min_volume_ratio": 1.01,
+        "follow_through_bars": 1
+      },
+      "min_confluence": 1,
+      "proximity_pct": 0.04,
+      "hit_counters": {
+        "enabled": true,
+        "log_per_trade": true,
+        "confluence_target": 0.35
+      }
+    },
+    "momentum": {
+      "enabled": true,
+      "weight": 0.12,
+      "rsi_period": 14,
+      "rsi_overbought": 70,
+      "rsi_oversold": 30,
+      "macd_fast": 12,
+      "macd_slow": 26,
+      "macd_signal": 9,
+      "use_as_delta": true,
+      "momentum_weight": 0.06
+    },
+    "temporal": {
+      "enabled": true,
+      "weight": 0.08,
+      "max_projection_days": 25,
+      "min_cycle_bars": 15,
+      "max_cycle_bars": 600,
+      "min_confidence": 0.4,
+      "major_cycles": [
+        21,
+        34,
+        55,
+        89,
+        144,
+        233,
+        377
+      ],
+      "price_time_ratios": [
+        0.618,
+        1.0,
+        1.618,
+        2.618
+      ]
+    },
+    "macro_context": {
+      "enabled": true,
+      "weight": 0.15,
+      "smt": {
+        "usdt_stagnation_hours": 40,
+        "usdt_range_pct": 0.0025,
+        "btc_wedge_touches": 2,
+        "btc_wedge_angle": 25,
+        "btc_break_volume": 1.2,
+        "total3_lookback": 144,
+        "total3_correlation": 0.5,
+        "min_hps_score": 1,
+        "suppression_cooldown": 15
+      },
+      "smt_analysis": {
+        "regime_lookback_hours": 144,
+        "regime_confidence": 0.5,
+        "crt_min_hours": 45,
+        "crt_max_volatility": 0.2
+      },
+      "context_filter": {
+        "regime_confidence": 0.5,
+        "crt_enhancement": 1.2,
+        "premium_discount_factor": 0.85
+      },
+      "macro_pulse": {
+        "enabled": true,
+        "veto_threshold": 0.7,
+        "boost_cap": 0.1,
+        "fire_rate_monitoring": {
+          "enabled": true,
+          "target_veto_rate": 0.1,
+          "max_veto_rate": 0.15,
+          "min_veto_rate": 0.05
+        },
+        "series": {
+          "DXY": "DXY_1D",
+          "WTI": "WTI_1D",
+          "GOLD": "GOLD_1D",
+          "US2Y": "US2Y_1D",
+          "US10Y": "US10Y_1D",
+          "VIX": "VIX_1D",
+          "MOVE": "MOVE_1D",
+          "USDJPY": "USDJPY_1D",
+          "HYG": "HYG_1D",
+          "ETHD": "ETH.D_1D",
+          "USDT": "USDT.D_4H",
+          "BTCD_W": "BTC.D_1W",
+          "TOTAL": "TOTAL_4H",
+          "TOTAL3": "TOTAL3_4H",
+          "ETHBTC": "ETHBTC_1D"
+        },
+        "thresholds": {
+          "dxy_time_shift_days": [
+            100,
+            180,
+            220
+          ],
+          "dxy_breakout_len": 18,
+          "oil_dxy_stagflation_veto": 0.8,
+          "yields_spike_std": 2.0,
+          "vix_spike": 25.0,
+          "move_spike": 125.0,
+          "usd_jpy_break_level": 135.0,
+          "hyg_break_len": 15,
+          "usdt_sfp_lookback": 50,
+          "wolfe_min_points": 2,
+          "ethbtc_ma_length": 50
+        },
+        "weights": {
+          "boost_macro": 0.05,
+          "boost_context_max": 0.1
+        }
+      }
+    }
+  },
+  "fusion": {
+    "domain_weights": {
+      "wyckoff": 0.22,
+      "liquidity": 0.18,
+      "smc": 0.25,
+      "temporal": 0.08,
+      "macro_context": 0.15
+    },
+    "min_domains": 1,
+    "entry_threshold_confidence": 0.35,
+    "entry_threshold_strength": 0.4,
+    "calibration_mode": true,
+    "calibration_thresholds": {
+      "confidence": 0.3,
+      "strength": 0.4
+    },
+    "veto_thresholds": {
+      "macro_regime_conflict": 0.75,
+      "low_volume_threshold": 0.2,
+      "high_volatility_threshold": 4.0,
+      "liquidity_grab_protection": 0.7
+    },
+    "quality_weights": {
+      "domain_confluence": 0.28,
+      "signal_strength": 0.22,
+      "confidence_consistency": 0.18,
+      "institutional_quality": 0.18,
+      "temporal_alignment": 0.14
+    },
+    "multi_timeframe": {
+      "enabled": true,
+      "primary_weight": 0.6,
+      "higher_tf_weight": 0.4,
+      "timeframes": [
+        "4H",
+        "12H",
+        "1D"
+      ],
+      "trend_alignment_bonus": 0.1
+    }
+  },
+  "entry_criteria": {
+    "min_confluence": 1,
+    "entry_threshold": 0.4,
+    "max_risk_per_trade": 0.02,
+    "min_reward_risk": 1.8
+  },
+  "exit_criteria": {
+    "use_exit_signals": true,
+    "tp_levels": [
+      0.5,
+      1.0,
+      1.5
+    ],
+    "tp_percentages": [
+      40,
+      35,
+      25
+    ],
+    "sl_atr_multiplier": 1.4,
+    "trail_activation": 0.7,
+    "max_hold_days": 8
+  },
+  "data_requirements": {
+    "primary_timeframe": "4H",
+    "additional_timeframes": [
+      "12H",
+      "1D"
+    ],
+    "macro_data": [
+      "DXY",
+      "WTI",
+      "VIX",
+      "US10Y",
+      "USDT.D",
+      "BTC.D",
+      "TOTAL3"
+    ],
+    "min_history_bars": 600
+  },
+  "bounded_deltas": {
+    "max_parameter_change": 0.12,
+    "optimization_bounds": {
+      "risk_pct": [
+        0.05,
+        0.1
+      ],
+      "entry_threshold": [
+        0.4,
+        0.7
+      ],
+      "domain_weights": {
+        "min_weight": 0.08,
+        "max_weight": 0.35
+      }
+    }
+  },
+  "suppression_flags": {
+    "high_volatility_suppression": true,
+    "low_volume_suppression": true,
+    "macro_regime_suppression": true,
+    "correlation_suppression": true
+  },
+  "tuning_notes": {
+    "purpose": "Surgical improvements with delta routing and proper threshold relaxation",
+    "changes": [
+      "SMC PROPERLY relaxed: displacement 0.004\u21920.003, gap 0.0015\u21920.001, sweep 4\u21923 (RELAXED)",
+      "SMC volume ratios: 1.05+\u21921.01-1.02 (RELAXED)",
+      "Calibration mode: confidence 0.35\u21920.32 (RELAXED)",
+      "HOB volume boost: +0.05 delta channel (not base score)",
+      "Momentum routing: \u00b10.06 delta channel (not base weight)",
+      "Wyckoff HPS: +0.03 confidence when Phase B/C + HPS\u22650.5",
+      "Added momentum-only entry guardrails (0.5x sizing)",
+      "Added HOB recency filter (200 bars, 0.25\u00d7ATR proximity)"
+    ],
+    "delta_architecture": {
+      "base": "wyckoff*0.22 + liquidity*0.18 + smc*0.25 + temporal*0.08 + macro_context*0.15",
+      "deltas": "momentum(\u00b10.06) + macro(\u00b10.10) + hob_volume(\u00b10.05) + wyckoff_hps(\u00b10.03)"
+    },
+    "targets": {
+      "trade_count_increase": "Signal generation enabled with proper thresholds",
+      "hob_delta_usage": "\u226430% of entries",
+      "momentum_only_rate": "Minimize with 0.5x sizing guard",
+      "smc_confluence_rate": "\u226525% with \u22652 hits",
+      "pf_dd_stability": "Flat/up PF, flat/down DD vs pre-tweak"
+    }
+  }
+}

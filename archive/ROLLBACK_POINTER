@@ -1,0 +1,6 @@
+configs/v170/calibration.json
+last_green_manifest: institutional_testing_results_2025-09-30.json
+git_commit: 7966c71
+config_hash: 13e9c085
+rollback_date: 2025-09-30T12:00:00Z
+reason: Stable baseline before production deployment

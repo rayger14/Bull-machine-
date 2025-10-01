@@ -1,0 +1,41 @@
+[
+  {
+    "name": "spring_pattern",
+    "path": "tests/fixtures/data/spring_pattern.csv",
+    "expected_signal": "long",
+    "expected_phase": "C",
+    "trigger_index": 65,
+    "description": "Wyckoff Spring with false breakdown and reversal"
+  },
+  {
+    "name": "utad_pattern",
+    "path": "tests/fixtures/data/utad_pattern.csv",
+    "expected_signal": "short",
+    "expected_phase": "E",
+    "trigger_index": 74,
+    "description": "UTAD false breakout with distribution"
+  },
+  {
+    "name": "dxy_veto",
+    "eth_path": "tests/fixtures/data/dxy_veto_eth.csv",
+    "macro_path": "tests/fixtures/data/dxy_veto_macro.csv",
+    "expected_signal": null,
+    "veto_reason": "DXY > 106 and Oil > 85",
+    "description": "Macro veto scenario with risk-off conditions"
+  },
+  {
+    "name": "hob_pattern",
+    "path": "tests/fixtures/data/hob_pattern.csv",
+    "expected_signal": "long",
+    "hob_index": 50,
+    "volume_z_score": 3.2,
+    "description": "Institutional HOB pattern with volume spike"
+  },
+  {
+    "name": "total3_leadership",
+    "path": "tests/fixtures/data/total3_leadership.csv",
+    "expected_signal": "risk_on",
+    "avg_dominance": 31.3306129892052,
+    "description": "TOTAL3 showing altcoin market leadership"
+  }
+]

@@ -1,0 +1,99 @@
+{
+  "volatility": {
+    "atr": {
+      "p10": 1.690050954538669,
+      "p20": 1.856317876918814,
+      "p50": 2.252480738140239,
+      "p80": 2.794474326817043,
+      "p90": 3.118478516537731,
+      "current": 1.8960755172811599
+    },
+    "returns": {
+      "daily_mean": 0.06592230975223835,
+      "daily_std": 1.5609569830182735,
+      "skew": 0.40654827004440625,
+      "kurtosis": 4.192179867433014,
+      "max_daily_gain": 11.666353560022547,
+      "max_daily_loss": -6.003654398329427
+    },
+    "historical_vol": {
+      "hv20_mean": 23.35794836761093,
+      "hv20_current": 16.75543376714003,
+      "hv60_mean": 23.240558769676902,
+      "vol_of_vol": 8.07689157997243
+    },
+    "regime": "high"
+  },
+  "liquidity": {
+    "volume": {
+      "mean": 198409.42618614613,
+      "median": 150613.79660575,
+      "p25": 92585.505271635,
+      "p75": 248227.09089783,
+      "p90": 385332.804640024,
+      "ratio_75_25": 2.6810577980814694
+    },
+    "volume_z_scores": {
+      "z50": 0.5286629073718301,
+      "z70": 1.0722941336221006,
+      "z85": 1.9260701955918453,
+      "z95": 3.0930059320579826
+    },
+    "dollar_volume": {
+      "daily_mean": 34282983.063013546,
+      "daily_median": 25872824.39715743
+    },
+    "spread_estimate": 0.3026147376119951,
+    "slippage_factor": 0.18111208787915054
+  },
+  "price_action": {
+    "candle_structure": {
+      "avg_body_pct": 44.33502573934821,
+      "avg_upper_wick_pct": 26.71028204311341,
+      "avg_lower_wick_pct": 28.954692217538376,
+      "doji_frequency": 10.604651162790697
+    },
+    "gaps": {
+      "frequency": 0.0,
+      "avg_gap_size": NaN,
+      "max_gap": 0.07709109597841741
+    },
+    "trend_persistence": 0.5034580596049911,
+    "mean_reversion": 0.10697674418604651
+  },
+  "sessions": {
+    "type": "continuous",
+    "volume_variation": 0.31995498501950614,
+    "weekend_trading": true,
+    "typical_bar_count_per_day": 6
+  },
+  "correlations": {
+    "full_period": 0.7139899926396377,
+    "rolling_20d": {
+      "mean": 0.7123760333638727,
+      "std": 0.1446779808052155,
+      "current": 0.5764331256076416
+    },
+    "rolling_60d": {
+      "mean": 0.7104144203503863,
+      "current": 0.6448805623537437
+    },
+    "beta": 1.4631448822893538
+  },
+  "microstructure": {
+    "tick_size": 0.009999999999990905,
+    "tick_size_pct": 0.005845278681404212,
+    "typical_spread_bps": 30.261473761199507,
+    "round_number_attraction": 0.5068744186046508,
+    "typical_trade_size": 150613.79660575
+  },
+  "meta": {
+    "symbol": "SOLUSD",
+    "exchange": "COINBASE",
+    "data_start": "2025-04-04T04:00:00",
+    "data_end": "2025-09-30T04:00:00",
+    "total_bars": 1075,
+    "profile_generated": "2025-10-01T02:30:08.303712",
+    "profile_hash": "f6216b1a283cccb9"
+  }
+}
