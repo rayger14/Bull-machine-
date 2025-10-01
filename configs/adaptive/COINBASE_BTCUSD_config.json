@@ -1,0 +1,73 @@
+{
+  "asset": "BTC",
+  "exchange": "COINBASE",
+  "symbol": "BTCUSD",
+
+  "fusion": {
+    "calibration_thresholds": {
+      "confidence": 0.25,
+      "strength": 0.35
+    },
+    "min_active_domains": 2,
+    "required_domains": ["smc", "momentum"]
+  },
+
+  "risk": {
+    "risk_pct": 0.075,
+    "sl_atr_multiplier": 1.5,
+    "tp_atr_multiplier": 2.8,
+    "min_rr": 1.5,
+    "max_risk_per_day": 0.15,
+    "max_consecutive_losses": 3
+  },
+
+  "domains": {
+    "smc": {
+      "ob_lookback": 50,
+      "fvg_threshold": 0.003,
+      "liquidity_sweep_bars": 20,
+      "bos_strength": 0.02
+    },
+    "momentum": {
+      "rsi_period": 14,
+      "rsi_ob": 70,
+      "rsi_os": 30,
+      "momentum_lookback": 20
+    },
+    "wyckoff": {
+      "phase_lookback": 100,
+      "volume_surge_threshold": 1.5,
+      "spring_deviation": 0.02
+    },
+    "hob": {
+      "volume_z_min": 1.8,
+      "proximity_atr_pct": 0.3,
+      "recency_bars": 30
+    }
+  },
+
+  "timeframes": {
+    "primary": "4h",
+    "confluence": ["1h", "4h", "1d"],
+    "weights": {
+      "1h": 0.2,
+      "4h": 0.5,
+      "1d": 0.3
+    }
+  },
+
+  "filters": {
+    "trend_alignment": true,
+    "volatility_filter": {
+      "enabled": true,
+      "min_atr": 0.005,
+      "max_atr": 0.05
+    },
+    "volume_filter": {
+      "enabled": true,
+      "min_volume_ratio": 0.8
+    }
+  },
+
+  "optimization_note": "BTC-specific: Lower confidence thresholds for higher volatility, wider stops for whipsaws, higher TP targets for trending moves"
+}

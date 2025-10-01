@@ -6,7 +6,7 @@ Complete multi-timeframe analysis with immediate setup identification
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 import pandas as pd
 import numpy as np
@@ -23,7 +23,7 @@ from engine.momentum.momentum_engine import MomentumEngine
 
 class BTCBullMachineAnalyzer:
     def __init__(self):
-        # Load calibrated config
+        # Load ETH config (works for BTC too with adaptive parameters)
         with open('configs/v170/assets/ETH_v17_tuned.json', 'r') as f:
             self.config = json.load(f)
 
@@ -49,7 +49,7 @@ class BTCBullMachineAnalyzer:
 
         # Load 1H data
         try:
-            btc_1h = pd.read_csv('/Users/raymondghandchi/Downloads/COINBASE_BTCUSD, 60_d205d.csv')
+            btc_1h = pd.read_csv('data/btc/COINBASE_BTCUSD, 60_9db64.csv')
             btc_1h['time'] = pd.to_datetime(btc_1h['time'], unit='s', utc=True)
             btc_1h = btc_1h.set_index('time').sort_index()
             btc_1h.columns = btc_1h.columns.str.lower()
@@ -68,7 +68,7 @@ class BTCBullMachineAnalyzer:
 
         # Load 4H data
         try:
-            btc_4h = pd.read_csv('/Users/raymondghandchi/Downloads/COINBASE_BTCUSD, 240_20795.csv')
+            btc_4h = pd.read_csv('data/btc/COINBASE_BTCUSD, 240_3e00d.csv')
             btc_4h['time'] = pd.to_datetime(btc_4h['time'], unit='s', utc=True)
             btc_4h = btc_4h.set_index('time').sort_index()
             btc_4h.columns = btc_4h.columns.str.lower()
@@ -87,7 +87,7 @@ class BTCBullMachineAnalyzer:
 
         # Load 1D data
         try:
-            btc_1d = pd.read_csv('/Users/raymondghandchi/Downloads/COINBASE_BTCUSD, 1D_9620b.csv')
+            btc_1d = pd.read_csv('data/btc/COINBASE_BTCUSD, 1D_96a85.csv')
             btc_1d['time'] = pd.to_datetime(btc_1d['time'], unit='s', utc=True)
             btc_1d = btc_1d.set_index('time').sort_index()
             btc_1d.columns = btc_1d.columns.str.lower()
@@ -626,7 +626,7 @@ def main():
         return
 
     # Run backtest
-    backtest_results = analyzer.run_btc_backtest(btc_data, lookback_bars=200)
+    backtest_results = analyzer.run_btc_backtest(btc_data, lookback_bars=500)  # Test on 2-3 months for better sample size
 
     if backtest_results:
         print(f"\n📈 BTC BACKTEST RESULTS")
