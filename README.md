@@ -47,7 +47,7 @@
 
 ---
 
-## ⚡ Quick Start (v1.7.2)
+## ⚡ Quick Start (v1.7.3)
 
 ### Production CLI Interfaces
 ```bash
@@ -66,6 +66,30 @@ python bin/run_multi_asset_profiler.py --asset SOL
 # Institutional testing and validation
 python bin/run_institutional_testing.py --all
 ```
+
+### 🚀 Live Trading (v1.7.3) - NEW!
+
+**Three-tier live pipeline: Mock → Shadow → Paper**
+
+```bash
+# Mock Feed (CSV replay)
+bull-live-mock --asset ETH --start 2025-05-01 --end 2025-06-15 --config configs/live/presets/ETH_conservative.json
+
+# Shadow Mode (log signals only, no orders)
+bull-live-shadow --asset BTC --duration 2 --config configs/live/presets/BTC_vanilla.json
+
+# Paper Trading (simulate fills, PnL, risk)
+bull-live-paper --asset SOL --start 2025-08-01 --end 2025-09-30 --balance 25000 --config configs/live/presets/SOL_tuned.json
+```
+
+**Live Features:**
+- ✅ **Right-edge enforcement** - No future leak, VIX hysteresis (on=22, off=18)
+- ✅ **Health band monitoring** - Macro veto 5-15%, SMC ≥2-hit ≥30%, HOB ≤30%
+- ✅ **Realistic execution** - 10bps fees, 5bps slippage, 2bps spread
+- ✅ **Delta caps** - Macro ±0.10, Momentum ±0.06, HOB ±0.05, HPS ±0.03
+- ✅ **Asset presets** - ETH/BTC/SOL configurations optimized for live trading
+
+**⚠️ v1.7.3 Scope:** Mock/Shadow/Paper modes only. NO real exchange connections, MCP servers, or persistent execution services.
 
 ### Production Configuration
 ```python
@@ -87,7 +111,14 @@ bull-machine/
 │   ├── production_backtest.py      # ETH production backtesting
 │   ├── run_adaptive_backtest.py    # Multi-asset system (v1.7.2)
 │   ├── run_institutional_testing.py # Institutional validation
-│   └── run_multi_asset_profiler.py  # Asset profiling system
+│   ├── run_multi_asset_profiler.py  # Asset profiling system
+│   └── live/                        # 📡 Live Trading Pipeline (v1.7.3)
+│       ├── live_mock_feed.py        # CSV replay mock feed
+│       ├── shadow_live.py           # Shadow mode (signals only)
+│       ├── paper_trading.py         # Paper trading simulation
+│       ├── adapters.py              # Data streaming adapters
+│       ├── execution_sim.py         # Execution & PnL simulation
+│       └── health_monitor.py        # Health band monitoring
 ├── bull_machine/           # 🔧 Core Production Package (112 files)
 │   ├── backtest/           # Backtesting framework
 │   ├── core/               # Core trading logic
@@ -102,7 +133,11 @@ bull-machine/
 │   └── timeframes/         # Multi-timeframe alignment
 ├── configs/                # ⚙️ Configuration Management
 │   ├── v171/              # v1.7.1 production configs
-│   └── adaptive/          # v1.7.2 asset-specific configs
+│   ├── adaptive/          # v1.7.2 asset-specific configs
+│   └── live/presets/      # v1.7.3 live trading presets
+│       ├── ETH_conservative.json # Conservative ETH live config
+│       ├── BTC_vanilla.json      # Standard BTC live config
+│       └── SOL_tuned.json        # Optimized SOL live config
 ├── profiles/               # 📊 Asset Profiles (v1.7.2)
 ├── tests/                  # 🧪 Comprehensive Test Suite
 ├── scripts/research/       # 🔬 Research & Development

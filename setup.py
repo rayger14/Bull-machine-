@@ -93,6 +93,10 @@ setup(
             "bull-backtest=bin.production_backtest:main",
             "bull-analyze=scripts.research.analyze_btc_with_bull_machine:main",
             "bull-confluence=bin.run_full_confluence_backtest:main",
+            # Live trading commands (v1.7.3)
+            "bull-live-mock=bin.live.live_mock_feed:main",
+            "bull-live-shadow=bin.live.shadow_live:main",
+            "bull-live-paper=bin.live.paper_trading:main",
         ]
     },
 

@@ -1,0 +1,54 @@
+{
+  "asset": "SOL",
+  "mode": "tuned",
+  "description": "Tuned SOL live trading configuration optimized for higher volatility",
+
+  "risk": {
+    "position_size_pct": 0.06,
+    "momentum_sizing": 0.4,
+    "max_leverage": 2.5,
+    "max_position_size": 0.4
+  },
+
+  "fusion": {
+    "enter_threshold": 0.40,
+    "weights": {
+      "wyckoff": 0.28,
+      "liquidity": 0.30,
+      "structure": 0.18,
+      "momentum": 0.12,
+      "context": 0.12
+    },
+    "quality_floors": {
+      "wyckoff": 0.58,
+      "liquidity": 0.52,
+      "structure": 0.48
+    }
+  },
+
+  "mtf": {
+    "timeframes": ["1H", "4H", "1D"],
+    "primary_tf": "4H",
+    "alignment_tolerance_mins": 5,
+    "min_confluence_rate": 0.62
+  },
+
+  "health_bands": {
+    "macro_veto_min": 6.0,
+    "macro_veto_max": 16.0,
+    "smc_2hit_min": 32.0,
+    "hob_relevance_max": 28.0,
+    "delta_breaches_max": 0
+  },
+
+  "vix_hysteresis": {
+    "on_threshold": 25.0,
+    "off_threshold": 20.0
+  },
+
+  "execution": {
+    "fees_bps": 12,
+    "slippage_bps": 7,
+    "spread_bps": 3
+  }
+}
