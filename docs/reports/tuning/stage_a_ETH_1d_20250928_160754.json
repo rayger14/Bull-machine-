@@ -1,0 +1,1058 @@
+[
+  {
+    "name": "r0.03_sl1.4_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.03,
+      "sl_atr_multiplier": 1.4,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 57.142857142857146,
+      "max_drawdown_pct": 0.19265270494305622,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 9.699816683648542,
+      "trades_per_month": 1.4495238095238097,
+      "total_pnl_pct": 0.28400420009163085
+    },
+    "utility": 1.028400420009163,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.03_sl2.0_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.03,
+      "sl_atr_multiplier": 2.0,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 57.142857142857146,
+      "max_drawdown_pct": 0.19265270494305622,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 9.699816683648542,
+      "trades_per_month": 1.4495238095238097,
+      "total_pnl_pct": 0.28400420009163085
+    },
+    "utility": 1.028400420009163,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.025_sl1.6_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025,
+      "sl_atr_multiplier": 1.6,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 57.142857142857146,
+      "max_drawdown_pct": 0.16028223057684463,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 9.708201149455634,
+      "trades_per_month": 1.4495238095238097,
+      "total_pnl_pct": 0.23669802178460173
+    },
+    "utility": 1.02366980217846,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.02_sl1.8_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.02,
+      "sl_atr_multiplier": 1.8,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 57.142857142857146,
+      "max_drawdown_pct": 0.12801670209438154,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 9.716569371951895,
+      "trades_per_month": 1.4495238095238097,
+      "total_pnl_pct": 0.18938050490245392
+    },
+    "utility": 1.0189380504902454,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.03_sl1.4_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.03,
+      "sl_atr_multiplier": 1.4,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.2032161397355263,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.413029880177616,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.20164480815263233
+    },
+    "utility": 1.0178255984151958,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.03_sl1.4_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.03,
+      "sl_atr_multiplier": 1.4,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.2032161397355263,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.413029880177616,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.20164480815263233
+    },
+    "utility": 1.0178255984151958,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.03_sl1.6_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.03,
+      "sl_atr_multiplier": 1.6,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.2032161397355263,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.413029880177616,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.20164480815263233
+    },
+    "utility": 1.0178255984151958,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.03_sl1.8_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.03,
+      "sl_atr_multiplier": 1.8,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.2032161397355263,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.413029880177616,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.20164480815263233
+    },
+    "utility": 1.0178255984151958,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.03_sl1.8_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.03,
+      "sl_atr_multiplier": 1.8,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.2032161397355263,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.413029880177616,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.20164480815263233
+    },
+    "utility": 1.0178255984151958,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.03_sl2.0_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.03,
+      "sl_atr_multiplier": 2.0,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.2032161397355263,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.413029880177616,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.20164480815263233
+    },
+    "utility": 1.0178255984151958,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.03_sl2.0_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.03,
+      "sl_atr_multiplier": 2.0,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.2032161397355263,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.413029880177616,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.20164480815263233
+    },
+    "utility": 1.0178255984151958,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.025_sl1.4_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025,
+      "sl_atr_multiplier": 1.4,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.16913508515656495,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.421402596649639,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.168070998123804
+    },
+    "utility": 1.014468217412313,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.025_sl1.4_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025,
+      "sl_atr_multiplier": 1.4,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.16913508515656495,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.421402596649639,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.168070998123804
+    },
+    "utility": 1.014468217412313,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.025_sl1.6_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025,
+      "sl_atr_multiplier": 1.6,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.16913508515656495,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.421402596649639,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.168070998123804
+    },
+    "utility": 1.014468217412313,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.025_sl1.6_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025,
+      "sl_atr_multiplier": 1.6,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.16913508515656495,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.421402596649639,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.168070998123804
+    },
+    "utility": 1.014468217412313,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.025_sl1.8_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025,
+      "sl_atr_multiplier": 1.8,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.16913508515656495,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.421402596649639,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.168070998123804
+    },
+    "utility": 1.014468217412313,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.025_sl2.0_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025,
+      "sl_atr_multiplier": 2.0,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.16913508515656495,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.421402596649639,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.168070998123804
+    },
+    "utility": 1.014468217412313,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.025_sl2.0_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025,
+      "sl_atr_multiplier": 2.0,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.16913508515656495,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.421402596649639,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.168070998123804
+    },
+    "utility": 1.014468217412313,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.015_sl2.0_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.015,
+      "sl_atr_multiplier": 2.0,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 57.142857142857146,
+      "max_drawdown_pct": 0.09585591702684772,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 9.724921284689083,
+      "trades_per_month": 1.4495238095238097,
+      "total_pnl_pct": 0.14205179699469062
+    },
+    "utility": 1.014205179699469,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.02_sl1.4_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.02,
+      "sl_atr_multiplier": 1.4,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.13513891377561327,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.429763743659504,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.13448357581210582
+    },
+    "utility": 1.0111094751811431,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.02_sl1.6_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.02,
+      "sl_atr_multiplier": 1.6,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.13513891377561327,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.429763743659504,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.13448357581210582
+    },
+    "utility": 1.0111094751811431,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.02_sl1.6_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.02,
+      "sl_atr_multiplier": 1.6,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.13513891377561327,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.429763743659504,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.13448357581210582
+    },
+    "utility": 1.0111094751811431,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.02_sl1.8_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.02,
+      "sl_atr_multiplier": 1.8,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.13513891377561327,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.429763743659504,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.13448357581210582
+    },
+    "utility": 1.0111094751811431,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.02_sl1.8_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.02,
+      "sl_atr_multiplier": 1.8,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.13513891377561327,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.429763743659504,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.13448357581210582
+    },
+    "utility": 1.0111094751811431,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.02_sl2.0_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.02,
+      "sl_atr_multiplier": 2.0,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.13513891377561327,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.429763743659504,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.13448357581210582
+    },
+    "utility": 1.0111094751811431,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.015_sl1.4_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.015,
+      "sl_atr_multiplier": 1.4,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.10122747249203717,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.438113271578292,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.10088265312868483
+    },
+    "utility": 1.007749382912801,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.015_sl1.4_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.015,
+      "sl_atr_multiplier": 1.4,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.10122747249203717,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.438113271578292,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.10088265312868483
+    },
+    "utility": 1.007749382912801,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.015_sl1.4_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.015,
+      "sl_atr_multiplier": 1.4,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.10122747249203717,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.438113271578292,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.10088265312868483
+    },
+    "utility": 1.007749382912801,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.015_sl1.6_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.015,
+      "sl_atr_multiplier": 1.6,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.10122747249203717,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.438113271578292,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.10088265312868483
+    },
+    "utility": 1.007749382912801,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.015_sl1.6_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.015,
+      "sl_atr_multiplier": 1.6,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.10122747249203717,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.438113271578292,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.10088265312868483
+    },
+    "utility": 1.007749382912801,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.015_sl1.6_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.015,
+      "sl_atr_multiplier": 1.6,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.10122747249203717,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.438113271578292,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.10088265312868483
+    },
+    "utility": 1.007749382912801,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.015_sl1.8_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.015,
+      "sl_atr_multiplier": 1.8,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.10122747249203717,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.438113271578292,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.10088265312868483
+    },
+    "utility": 1.007749382912801,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.015_sl1.8_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.015,
+      "sl_atr_multiplier": 1.8,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.10122747249203717,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.438113271578292,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.10088265312868483
+    },
+    "utility": 1.007749382912801,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.015_sl1.8_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.015,
+      "sl_atr_multiplier": 1.8,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.10122747249203717,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.438113271578292,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.10088265312868483
+    },
+    "utility": 1.007749382912801,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.015_sl2.0_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.015,
+      "sl_atr_multiplier": 2.0,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.10122747249203717,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.438113271578292,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.10088265312868483
+    },
+    "utility": 1.007749382912801,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.015_sl2.0_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.015,
+      "sl_atr_multiplier": 2.0,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 59.52380952380952,
+      "max_drawdown_pct": 0.10122747249203717,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 5.438113271578292,
+      "trades_per_month": 2.1248701298701302,
+      "total_pnl_pct": 0.10088265312868483
+    },
+    "utility": 1.007749382912801,
+    "windows_tested": 4
+  },
+  {
+    "name": "r0.03_sl1.6_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.03,
+      "sl_atr_multiplier": 1.6,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 79.36507936507935,
+      "max_drawdown_pct": 0.2242930023160867,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 7.217373173570155,
+      "trades_per_month": 2.8331601731601737,
+      "total_pnl_pct": 0.3155215948681248
+    },
+    "utility": 0.9274287783657689,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.025_sl1.8_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025,
+      "sl_atr_multiplier": 1.8,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 79.36507936507935,
+      "max_drawdown_pct": 0.18662857132157407,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 7.228536795532851,
+      "trades_per_month": 2.8331601731601737,
+      "total_pnl_pct": 0.26297953971891785
+    },
+    "utility": 0.9221745728508481,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.02_sl1.4_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.02,
+      "sl_atr_multiplier": 1.4,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 79.36507936507935,
+      "max_drawdown_pct": 0.14907731792440765,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 7.239684991546006,
+      "trades_per_month": 2.8331601731601737,
+      "total_pnl_pct": 0.2104193348592178
+    },
+    "utility": 0.9169185523648782,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.02_sl2.0_tp3.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.02,
+      "sl_atr_multiplier": 2.0,
+      "tp_atr_multiplier": 3.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 79.36507936507935,
+      "max_drawdown_pct": 0.14907731792440765,
+      "profit_factor": Infinity,
+      "sharpe_ratio": 7.239684991546006,
+      "trades_per_month": 2.8331601731601737,
+      "total_pnl_pct": 0.2104193348592178
+    },
+    "utility": 0.9169185523648782,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.03_sl1.6_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.03,
+      "sl_atr_multiplier": 1.6,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 46.031746031746025,
+      "max_drawdown_pct": 0.2709548529807017,
+      "profit_factor": 1.1499317912832834,
+      "sharpe_ratio": 7.217373173570155,
+      "trades_per_month": 2.8331601731601737,
+      "total_pnl_pct": 0.22660894247925642
+    },
+    "utility": 0.6603676426005544,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.025_sl1.8_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025,
+      "sl_atr_multiplier": 1.8,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 46.031746031746025,
+      "max_drawdown_pct": 0.22551344687541994,
+      "profit_factor": 1.1510437631886765,
+      "sharpe_ratio": 7.228536795532851,
+      "trades_per_month": 2.8331601731601737,
+      "total_pnl_pct": 0.18888566272819418
+    },
+    "utility": 0.6569289061970661,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.02_sl1.4_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.02,
+      "sl_atr_multiplier": 1.4,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 46.031746031746025,
+      "max_drawdown_pct": 0.18018521836748436,
+      "profit_factor": 1.1521576853225957,
+      "sharpe_ratio": 7.239684991546006,
+      "trades_per_month": 2.8331601731601737,
+      "total_pnl_pct": 0.15114423326663887
+    },
+    "utility": 0.6534889398910864,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.02_sl2.0_tp2.5_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.02,
+      "sl_atr_multiplier": 2.0,
+      "tp_atr_multiplier": 2.5,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 46.031746031746025,
+      "max_drawdown_pct": 0.18018521836748436,
+      "profit_factor": 1.1521576853225957,
+      "sharpe_ratio": 7.239684991546006,
+      "trades_per_month": 2.8331601731601737,
+      "total_pnl_pct": 0.15114423326663887
+    },
+    "utility": 0.6534889398910864,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.02_sl1.6_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.02,
+      "sl_atr_multiplier": 1.6,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 55.55555555555555,
+      "max_drawdown_pct": 0.08327641671617948,
+      "profit_factor": Infinity,
+      "sharpe_ratio": -2.4768843804058895,
+      "trades_per_month": 1.3836363636363638,
+      "total_pnl_pct": -0.013009769779887237
+    },
+    "utility": 0.26844777230122596,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.025_sl1.4_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025,
+      "sl_atr_multiplier": 1.4,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 55.55555555555555,
+      "max_drawdown_pct": 0.10411609185242117,
+      "profit_factor": Infinity,
+      "sharpe_ratio": -2.4796643539227827,
+      "trades_per_month": 1.3836363636363638,
+      "total_pnl_pct": -0.01627923173649777
+    },
+    "utility": 0.2677501629699791,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.025_sl2.0_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.025,
+      "sl_atr_multiplier": 2.0,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 55.55555555555555,
+      "max_drawdown_pct": 0.10411609185242117,
+      "profit_factor": Infinity,
+      "sharpe_ratio": -2.4796643539227827,
+      "trades_per_month": 1.3836363636363638,
+      "total_pnl_pct": -0.01627923173649777
+    },
+    "utility": 0.2677501629699791,
+    "windows_tested": 3
+  },
+  {
+    "name": "r0.03_sl1.8_tp3.0_tr0.9",
+    "config": {
+      "entry_threshold": 0.3,
+      "min_active_domains": 3,
+      "cooldown_days": 7,
+      "risk_pct": 0.03,
+      "sl_atr_multiplier": 1.8,
+      "tp_atr_multiplier": 3.0,
+      "trail_atr_multiplier": 0.9
+    },
+    "metrics": {
+      "win_rate": 55.55555555555555,
+      "max_drawdown_pct": 0.12496399870226053,
+      "profit_factor": Infinity,
+      "sharpe_ratio": -2.482443510078387,
+      "trades_per_month": 1.3836363636363638,
+      "total_pnl_pct": -0.019555504828482746
+    },
+    "utility": 0.2670519815067001,
+    "windows_tested": 3
+  }
+]

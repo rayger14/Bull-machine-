@@ -1,0 +1,167 @@
+name: v1.7 Test Suite
+
+on:
+  push:
+    branches: [ feature/v1.7 ]
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'engine/**'
+      - 'configs/v170/**'
+      - 'tests/v170/**'
+
+jobs:
+  test-v17:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pandas numpy scipy scikit-learn
+        pip install -r requirements.txt
+
+    - name: Run v1.7 integration tests
+      run: |
+        python -m pytest tests/v170/ -v --tb=short
+
+    - name: Test Macro Context Engine
+      run: |
+        python -c "
+        from engine.context.signals import MacroContextEngine
+        config = {'smt': {'usdt_stagnation_hours': 36}}
+        engine = MacroContextEngine(config)
+        print('✓ Macro Context Engine initialized')
+        "
+
+    - name: Test Bojan Liquidity Engine
+      run: |
+        python -c "
+        from engine.liquidity.hob import HOBDetector
+        from engine.liquidity.bojan_rules import BojanEngine
+        config = {'hob_detection': {}, 'bojan_engine': {}}
+        hob = HOBDetector(config)
+        bojan = BojanEngine(config)
+        print('✓ Bojan Liquidity Engine initialized')
+        "
+
+    - name: Test Temporal Engine
+      run: |
+        python -c "
+        from engine.temporal.tpi import TemporalEngine
+        config = {'temporal': {'max_projection_days': 30}}
+        engine = TemporalEngine(config)
+        print('✓ Temporal Engine initialized')
+        "
+
+    - name: Test Fusion Engine
+      run: |
+        python -c "
+        from engine.fusion import FusionEngine
+        config = {'fusion': {'min_domains': 3}}
+        engine = FusionEngine(config)
+        print('✓ Fusion Engine initialized')
+        "
+
+    - name: Validate v1.7 config
+      run: |
+        python -c "
+        import json
+        with open('configs/v170/assets/ETH_v17_baseline.json') as f:
+            config = json.load(f)
+        assert config['version'] == '1.7.0'
+        assert len(config['domains']) == 5
+        print('✓ v1.7 config validated')
+        "
+
+    - name: Test bounded parameters
+      run: |
+        python -c "
+        import json
+        with open('configs/v170/assets/ETH_v17_baseline.json') as f:
+            config = json.load(f)
+
+        # Test domain weights sum
+        weights = [d['weight'] for d in config['domains'].values()]
+        total = sum(weights)
+        assert 0.9 <= total <= 1.1, f'Domain weights sum to {total}'
+
+        # Test bounded deltas
+        bounds = config['bounded_deltas']['optimization_bounds']
+        assert bounds['risk_pct'][0] < bounds['risk_pct'][1]
+
+        print('✓ Bounded parameters validated')
+        "
+
+  validate-architecture:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Check directory structure
+      run: |
+        # Verify v1.7 structure exists
+        test -d engine/context || { echo "Missing engine/context"; exit 1; }
+        test -d engine/liquidity || { echo "Missing engine/liquidity"; exit 1; }
+        test -d engine/temporal || { echo "Missing engine/temporal"; exit 1; }
+        test -f engine/fusion.py || { echo "Missing fusion.py"; exit 1; }
+        test -d configs/v170 || { echo "Missing v170 configs"; exit 1; }
+        test -d tests/v170 || { echo "Missing v170 tests"; exit 1; }
+        echo "✓ v1.7 architecture validated"
+
+    - name: Check required files
+      run: |
+        # Core engine files
+        test -f engine/context/__init__.py
+        test -f engine/context/signals.py
+        test -f engine/context/analysis.py
+        test -f engine/liquidity/__init__.py
+        test -f engine/liquidity/hob.py
+        test -f engine/liquidity/bojan_rules.py
+        test -f engine/liquidity/wick_magnets.py
+        test -f engine/temporal/__init__.py
+        test -f engine/temporal/tpi.py
+
+        # Config files
+        test -f configs/v170/assets/ETH_v17_baseline.json
+
+        # Test files
+        test -f tests/v170/test_v17_integration.py
+
+        echo "✓ Required files present"
+
+  gap-analysis-validation:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Validate gap coverage
+      run: |
+        echo "Checking v1.7 gap coverage..."
+
+        # Check HPS scoring implementation
+        grep -r "HPS_Score" engine/context/ || { echo "Missing HPS scoring"; exit 1; }
+
+        # Check CRT detection
+        grep -r "CRT" engine/context/ || { echo "Missing CRT detection"; exit 1; }
+
+        # Check HOB quality assessment
+        grep -r "HOBQuality" engine/liquidity/ || { echo "Missing HOB quality"; exit 1; }
+
+        # Check temporal bounds
+        grep -r "max_projection_days" engine/temporal/ || { echo "Missing temporal bounds"; exit 1; }
+
+        # Check veto logic
+        grep -r "VetoCondition" engine/fusion.py || { echo "Missing veto logic"; exit 1; }
+
+        echo "✓ Gap analysis coverage validated"

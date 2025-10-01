@@ -1,0 +1,873 @@
+{
+  "ETH": {
+    "asset": "ETH",
+    "trades": [
+      {
+        "entry_time": "2025-07-06T12:00:00",
+        "exit_time": "2025-07-06T18:00:00",
+        "entry_price": 2521.26,
+        "exit_price": 2532.58,
+        "pnl": 0.6173351419528188,
+        "score": 0.30476000000000003,
+        "components": {
+          "htf_bias_1d": 0.06,
+          "htf_bias_4h": 0.042,
+          "wyckoff_1d": 0.105,
+          "wyckoff_4h": 0.04000000000000001,
+          "wyckoff_1h": 0.012,
+          "m1_score": 0.012,
+          "m2_score": 0.03,
+          "po3_confluence": 0.0,
+          "bojan_confluence": 0.0005600000000000001,
+          "fibonacci_clusters": 0.0032,
+          "volume_confluence": 0,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0
+        },
+        "tags": [],
+        "confluence_count": 2,
+        "side": "long",
+        "exit_hours": 6
+      },
+      {
+        "entry_time": "2025-07-11T12:00:00",
+        "exit_time": "2025-07-11T20:00:00",
+        "entry_price": 2987.22,
+        "exit_price": 2976.77,
+        "pnl": -0.9792178573969258,
+        "score": 0.41953000000000007,
+        "components": {
+          "htf_bias_1d": 0.06,
+          "htf_bias_4h": 0.055999999999999994,
+          "wyckoff_1d": 0.15,
+          "wyckoff_4h": 0.048,
+          "wyckoff_1h": 0.0,
+          "m1_score": 0.0,
+          "m2_score": 0.024,
+          "po3_confluence": 0.00768,
+          "bojan_confluence": 0.0038500000000000006,
+          "fibonacci_clusters": 0.0,
+          "volume_confluence": 0.05,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.02
+        },
+        "tags": [
+          "high_confidence",
+          "volume_confluence"
+        ],
+        "confluence_count": 3,
+        "side": "long",
+        "exit_hours": 8
+      },
+      {
+        "entry_time": "2025-07-16T12:00:00",
+        "exit_time": "2025-07-17T00:00:00",
+        "entry_price": 3166.2,
+        "exit_price": 3378.75,
+        "pnl": 13.136315392469376,
+        "score": 0.5619999999999999,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.055999999999999994,
+          "wyckoff_1d": 0.15,
+          "wyckoff_4h": 0.08000000000000002,
+          "wyckoff_1h": 0.012,
+          "m1_score": 0.0,
+          "m2_score": 0.03,
+          "po3_confluence": 0.008639999999999998,
+          "bojan_confluence": 0.0033600000000000006,
+          "fibonacci_clusters": 0.002,
+          "volume_confluence": 0.05,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.05
+        },
+        "tags": [
+          "mtf_confluence",
+          "high_confidence",
+          "volume_confluence"
+        ],
+        "confluence_count": 3,
+        "side": "long",
+        "exit_hours": 12
+      },
+      {
+        "entry_time": "2025-07-21T12:00:00",
+        "exit_time": "2025-07-22T00:00:00",
+        "entry_price": 3811.86,
+        "exit_price": 3744.71,
+        "pnl": -3.80560337882595,
+        "score": 0.5293300000000001,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.055999999999999994,
+          "wyckoff_1d": 0.135,
+          "wyckoff_4h": 0.055999999999999994,
+          "wyckoff_1h": 0.018000000000000002,
+          "m1_score": 0.0,
+          "m2_score": 0.03,
+          "po3_confluence": 0.00768,
+          "bojan_confluence": 0.0038500000000000006,
+          "fibonacci_clusters": 0.0028,
+          "volume_confluence": 0.05,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.05
+        },
+        "tags": [
+          "mtf_confluence",
+          "high_confidence",
+          "volume_confluence"
+        ],
+        "confluence_count": 3,
+        "side": "long",
+        "exit_hours": 12
+      },
+      {
+        "entry_time": "2025-07-27T00:00:00",
+        "exit_time": "2025-07-27T08:00:00",
+        "entry_price": 3758.03,
+        "exit_price": 3772.3,
+        "pnl": 0.479338368363518,
+        "score": 0.3536161617107584,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.055999999999999994,
+          "wyckoff_1d": 0.105,
+          "wyckoff_4h": 0.03200000000000001,
+          "wyckoff_1h": 0.006,
+          "m1_score": 0.010616161710758347,
+          "m2_score": 0.024,
+          "po3_confluence": 0.0,
+          "bojan_confluence": 0.0,
+          "fibonacci_clusters": 0.0,
+          "volume_confluence": 0,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0
+        },
+        "tags": [],
+        "confluence_count": 2,
+        "side": "long",
+        "exit_hours": 8
+      },
+      {
+        "entry_time": "2025-08-04T00:00:00",
+        "exit_time": "2025-08-04T08:00:00",
+        "entry_price": 3546.28,
+        "exit_price": 3551.03,
+        "pnl": -0.01231279428576342,
+        "score": 0.4165399999999999,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.027999999999999997,
+          "wyckoff_1d": 0.09,
+          "wyckoff_4h": 0.055999999999999994,
+          "wyckoff_1h": 0.021,
+          "m1_score": 0.032,
+          "m2_score": 0.015,
+          "po3_confluence": 0.00064,
+          "bojan_confluence": 0.0007000000000000002,
+          "fibonacci_clusters": 0.0032,
+          "volume_confluence": 0.02,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.03
+        },
+        "tags": [
+          "mtf_confluence",
+          "high_confidence"
+        ],
+        "confluence_count": 2,
+        "side": "long",
+        "exit_hours": 8
+      },
+      {
+        "entry_time": "2025-08-09T00:00:00",
+        "exit_time": "2025-08-09T08:00:00",
+        "entry_price": 4017.69,
+        "exit_price": 4190.33,
+        "pnl": 8.31581655730182,
+        "score": 0.4615087273376247,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.055999999999999994,
+          "wyckoff_1d": 0.135,
+          "wyckoff_4h": 0.055999999999999994,
+          "wyckoff_1h": 0.009,
+          "m1_score": 0.027198727337624764,
+          "m2_score": 0.024,
+          "po3_confluence": 0.0,
+          "bojan_confluence": 0.0023100000000000004,
+          "fibonacci_clusters": 0.002,
+          "volume_confluence": 0,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.03
+        },
+        "tags": [
+          "mtf_confluence",
+          "high_confidence"
+        ],
+        "confluence_count": 2,
+        "side": "long",
+        "exit_hours": 8
+      },
+      {
+        "entry_time": "2025-08-14T00:00:00",
+        "exit_time": "2025-08-14T08:00:00",
+        "entry_price": 4719.05,
+        "exit_price": 4727.85,
+        "pnl": 0.09285990156155219,
+        "score": 0.43051000000000006,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.055999999999999994,
+          "wyckoff_1d": 0.105,
+          "wyckoff_4h": 0.055999999999999994,
+          "wyckoff_1h": 0.009,
+          "m1_score": 0.0,
+          "m2_score": 0.024,
+          "po3_confluence": 0.00384,
+          "bojan_confluence": 0.0014700000000000002,
+          "fibonacci_clusters": 0.005200000000000001,
+          "volume_confluence": 0.02,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.03
+        },
+        "tags": [
+          "mtf_confluence",
+          "high_confidence"
+        ],
+        "confluence_count": 2,
+        "side": "long",
+        "exit_hours": 8
+      },
+      {
+        "entry_time": "2025-08-19T00:00:00",
+        "exit_time": "2025-08-19T08:00:00",
+        "entry_price": 4343.64,
+        "exit_price": 4257.68,
+        "pnl": -4.242757670894408,
+        "score": 0.39962,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": -0.042,
+          "wyckoff_1d": 0.1275,
+          "wyckoff_4h": 0.06800000000000002,
+          "wyckoff_1h": 0.009,
+          "m1_score": 0.032,
+          "m2_score": 0.024,
+          "po3_confluence": 0.0057599999999999995,
+          "bojan_confluence": 0.0033600000000000006,
+          "fibonacci_clusters": 0.002,
+          "volume_confluence": 0.02,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.03
+        },
+        "tags": [
+          "mtf_confluence"
+        ],
+        "confluence_count": 2,
+        "side": "long",
+        "exit_hours": 8
+      },
+      {
+        "entry_time": "2025-08-24T00:00:00",
+        "exit_time": "2025-08-24T08:00:00",
+        "entry_price": 4796.23,
+        "exit_price": 4776.02,
+        "pnl": -1.1236816480869634,
+        "score": 0.36545644049974746,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.055999999999999994,
+          "wyckoff_1d": 0.06,
+          "wyckoff_4h": 0.03200000000000001,
+          "wyckoff_1h": 0.021,
+          "m1_score": 0.017816440499747444,
+          "m2_score": 0.03,
+          "po3_confluence": 0.00064,
+          "bojan_confluence": 0.0028000000000000004,
+          "fibonacci_clusters": 0.005200000000000001,
+          "volume_confluence": 0.02,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0
+        },
+        "tags": [],
+        "confluence_count": 2,
+        "side": "long",
+        "exit_hours": 8
+      }
+    ],
+    "metrics": {
+      "total_trades": 10,
+      "win_rate": 50.0,
+      "total_pnl_pct": 0.12478092012159073,
+      "max_drawdown_pct": 0.053664393189813704,
+      "profit_factor": 2.2277268617129824,
+      "sharpe_ratio": 18.977677727522128,
+      "avg_trade": 1.2478092012159074,
+      "trades_per_month": 6.276288659793814,
+      "gross_profit": 22.641665361649085,
+      "gross_loss": 10.16357334949001
+    },
+    "final_capital": 10012.47809201216,
+    "config": {
+      "entry_threshold": 0.3,
+      "quality_floors": {
+        "wyckoff": 0.25,
+        "m1": 0.3,
+        "m2": 0.3,
+        "liquidity": 0.25,
+        "structure": 0.25,
+        "momentum": 0.27,
+        "volume": 0.25,
+        "context": 0.25,
+        "mtf": 0.27,
+        "fib_retracement": 0.25,
+        "fib_extension": 0.25
+      },
+      "features": {
+        "mtf_dl2": true,
+        "six_candle_leg": true,
+        "orderflow_lca": false,
+        "negative_vip": false,
+        "atr_exits": true,
+        "atr_sizing": true,
+        "regime_filter": true,
+        "ensemble_htf_bias": true,
+        "wyckoff_phase": true,
+        "wyckoff_m1m2": true,
+        "liquidity_sweep": false,
+        "order_blocks": true,
+        "wick_magnet": true,
+        "hidden_fibs": true,
+        "temporal_fib": true,
+        "fib_clusters": true,
+        "po3": true,
+        "bojan": true,
+        "live_data": false,
+        "use_asset_profiles": true
+      },
+      "cooldown_bars": 120,
+      "timeframe": "1D",
+      "risk": {
+        "risk_pct": 0.02,
+        "atr_window": 14,
+        "sl_atr": 1.8,
+        "tp_atr": 3.0,
+        "trail_atr": 1.2,
+        "profit_ladders": [
+          {
+            "ratio": 1.5,
+            "percent": 0.25
+          },
+          {
+            "ratio": 2.5,
+            "percent": 0.5
+          },
+          {
+            "ratio": 4.0,
+            "percent": 0.25
+          }
+        ]
+      },
+      "regime": {
+        "vol_ratio_min": 1.0,
+        "atr_pct_max": 0.08
+      },
+      "ensemble": {
+        "enabled": true,
+        "min_consensus": 2,
+        "consensus_penalty": 0.02,
+        "rolling_k": 4,
+        "rolling_n": 5,
+        "lead_lag_window": 3,
+        "dynamic_thresholds": true,
+        "confluence_mode": "adaptive",
+        "m1m2_backoff_bars": 30,
+        "m1m2_epsilon": 0.05,
+        "solo_fib_min_entry": 0.44,
+        "vol_override_atr_pct": 0.05
+      },
+      "weights": {
+        "temporal": 0.1,
+        "po3": 0.1,
+        "bojan": 0.08
+      },
+      "fib": {
+        "tolerance": 0.02
+      },
+      "temporal": {
+        "fib_nums": [
+          21,
+          34,
+          55,
+          89,
+          144
+        ],
+        "tolerance_bars": 3,
+        "pivot_window": 5
+      },
+      "bojan": {
+        "lookback": 50,
+        "wick_magnet_threshold": 0.7,
+        "trap_body_min": 1.25,
+        "unfinished_threshold": 0.1,
+        "phob_confidence_min": 0.3,
+        "fib_prime_zones": [
+          0.705,
+          0.786
+        ]
+      },
+      "max_bars_held": 8,
+      "profile_name": "ETH_v1.6.2",
+      "version": "1.6.2",
+      "description": "ETH 1D profile with PO3, Bojan microstructure, Wyckoff M1/M2, and Fibonacci enhancements"
+    }
+  },
+  "BTC": {
+    "asset": "BTC",
+    "trades": [
+      {
+        "entry_time": "2025-06-23T00:00:00",
+        "exit_time": "2025-06-23T08:00:00",
+        "entry_price": 100959.18,
+        "exit_price": 101903.31,
+        "pnl": 1.589011037926439,
+        "score": 0.35441000000000006,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": -0.055999999999999994,
+          "wyckoff_1d": 0.13499999999999998,
+          "wyckoff_4h": 0.04000000000000001,
+          "wyckoff_1h": 0.021,
+          "m1_score": 0.04000000000000001,
+          "m2_score": 0.021,
+          "po3_confluence": 0.0057599999999999995,
+          "bojan_confluence": 0.0024500000000000004,
+          "fibonacci_clusters": 0.005200000000000001,
+          "volume_confluence": 0.02,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0
+        },
+        "tags": [],
+        "confluence_count": 2,
+        "side": "long",
+        "exit_hours": 8
+      },
+      {
+        "entry_time": "2025-06-27T07:00:00",
+        "exit_time": "2025-06-27T13:00:00",
+        "entry_price": 106962.68,
+        "exit_price": 106867.42,
+        "pnl": -0.4580662926665411,
+        "score": 0.34026000000000006,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.042,
+          "wyckoff_1d": 0.075,
+          "wyckoff_4h": 0.036,
+          "wyckoff_1h": 0.0165,
+          "m1_score": 0.0,
+          "m2_score": 0.024,
+          "po3_confluence": 0.0,
+          "bojan_confluence": 0.0019600000000000004,
+          "fibonacci_clusters": 0.0048000000000000004,
+          "volume_confluence": 0.02,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0
+        },
+        "tags": [],
+        "confluence_count": 2,
+        "side": "long",
+        "exit_hours": 6
+      },
+      {
+        "entry_time": "2025-07-01T12:00:00",
+        "exit_time": "2025-07-01T18:00:00",
+        "entry_price": 106462.43,
+        "exit_price": 105759.99,
+        "pnl": -1.5988587465283663,
+        "score": 0.3342156335001657,
+        "components": {
+          "htf_bias_1d": 0.06,
+          "htf_bias_4h": -0.027999999999999997,
+          "wyckoff_1d": 0.12,
+          "wyckoff_4h": 0.05199999999999999,
+          "wyckoff_1h": 0.0165,
+          "m1_score": 0.030955633500165648,
+          "m2_score": 0.03,
+          "po3_confluence": 0.00192,
+          "bojan_confluence": 0.0008400000000000001,
+          "fibonacci_clusters": 0.0,
+          "volume_confluence": 0.02,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.03
+        },
+        "tags": [
+          "mtf_confluence"
+        ],
+        "confluence_count": 2,
+        "side": "long",
+        "exit_hours": 6
+      },
+      {
+        "entry_time": "2025-07-06T20:00:00",
+        "exit_time": "2025-07-07T02:00:00",
+        "entry_price": 108695.55,
+        "exit_price": 109405.59,
+        "pnl": 1.0255123083045035,
+        "score": 0.34368,
+        "components": {
+          "htf_bias_1d": 0.06,
+          "htf_bias_4h": 0.055999999999999994,
+          "wyckoff_1d": 0.06,
+          "wyckoff_4h": 0.048000000000000015,
+          "wyckoff_1h": 0.018,
+          "m1_score": 0.0,
+          "m2_score": 0.024,
+          "po3_confluence": 0.00192,
+          "bojan_confluence": 0.0005600000000000001,
+          "fibonacci_clusters": 0.005200000000000001,
+          "volume_confluence": 0.05,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.02
+        },
+        "tags": [
+          "volume_confluence"
+        ],
+        "confluence_count": 3,
+        "side": "long",
+        "exit_hours": 6
+      },
+      {
+        "entry_time": "2025-07-10T20:00:00",
+        "exit_time": "2025-07-11T08:00:00",
+        "entry_price": 113575.56,
+        "exit_price": 118028.29,
+        "pnl": 7.5559328935502315,
+        "score": 0.5664,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.055999999999999994,
+          "wyckoff_1d": 0.15,
+          "wyckoff_4h": 0.08000000000000002,
+          "wyckoff_1h": 0.018000000000000002,
+          "m1_score": 0.0,
+          "m2_score": 0.03,
+          "po3_confluence": 0.0096,
+          "bojan_confluence": 0.0028000000000000004,
+          "fibonacci_clusters": 0.0,
+          "volume_confluence": 0.05,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.05
+        },
+        "tags": [
+          "mtf_confluence",
+          "high_confidence",
+          "volume_confluence"
+        ],
+        "confluence_count": 3,
+        "side": "long",
+        "exit_hours": 12
+      },
+      {
+        "entry_time": "2025-07-14T20:00:00",
+        "exit_time": "2025-07-15T04:00:00",
+        "entry_price": 120186.93,
+        "exit_price": 117482.36,
+        "pnl": -4.781331627177602,
+        "score": 0.49756155388515133,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.055999999999999994,
+          "wyckoff_1d": 0.15,
+          "wyckoff_4h": 0.04400000000000001,
+          "wyckoff_1h": 0.0075,
+          "m1_score": 0.011451553885151282,
+          "m2_score": 0.021,
+          "po3_confluence": 0.0057599999999999995,
+          "bojan_confluence": 0.0038500000000000006,
+          "fibonacci_clusters": 0.008,
+          "volume_confluence": 0.05,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.02
+        },
+        "tags": [
+          "high_confidence",
+          "volume_confluence"
+        ],
+        "confluence_count": 3,
+        "side": "long",
+        "exit_hours": 8
+      },
+      {
+        "entry_time": "2025-07-21T12:00:00",
+        "exit_time": "2025-07-21T20:00:00",
+        "entry_price": 118210.64,
+        "exit_price": 116985.37,
+        "pnl": -2.3523607550390064,
+        "score": 0.3694556907703149,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.027999999999999997,
+          "wyckoff_1d": 0.0525,
+          "wyckoff_4h": 0.04000000000000001,
+          "wyckoff_1h": 0.0195,
+          "m1_score": 0.007015690770314893,
+          "m2_score": 0.021,
+          "po3_confluence": 0.00064,
+          "bojan_confluence": 0.0028000000000000004,
+          "fibonacci_clusters": 0.008,
+          "volume_confluence": 0.05,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.02
+        },
+        "tags": [
+          "volume_confluence"
+        ],
+        "confluence_count": 3,
+        "side": "long",
+        "exit_hours": 8
+      },
+      {
+        "entry_time": "2025-07-27T14:00:00",
+        "exit_time": "2025-07-27T20:00:00",
+        "entry_price": 118450.0,
+        "exit_price": 118794.62,
+        "pnl": 0.3015048727753186,
+        "score": 0.33484,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.027999999999999997,
+          "wyckoff_1d": 0.06,
+          "wyckoff_4h": 0.03200000000000001,
+          "wyckoff_1h": 0.021,
+          "m1_score": 0.020000000000000004,
+          "m2_score": 0.03,
+          "po3_confluence": 0.00064,
+          "bojan_confluence": 0.0,
+          "fibonacci_clusters": 0.0032,
+          "volume_confluence": 0.02,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0
+        },
+        "tags": [],
+        "confluence_count": 2,
+        "side": "long",
+        "exit_hours": 6
+      },
+      {
+        "entry_time": "2025-08-07T00:00:00",
+        "exit_time": "2025-08-07T06:00:00",
+        "entry_price": 114925.45,
+        "exit_price": 114678.36,
+        "pnl": -0.709790428175472,
+        "score": 0.3345000000000001,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.027999999999999997,
+          "wyckoff_1d": 0.105,
+          "wyckoff_4h": 0.024,
+          "wyckoff_1h": 0.0105,
+          "m1_score": 0.020000000000000004,
+          "m2_score": 0.021,
+          "po3_confluence": 0.0,
+          "bojan_confluence": 0.0,
+          "fibonacci_clusters": 0.006,
+          "volume_confluence": 0,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0
+        },
+        "tags": [],
+        "confluence_count": 1,
+        "side": "long",
+        "exit_hours": 6
+      },
+      {
+        "entry_time": "2025-08-11T00:00:00",
+        "exit_time": "2025-08-11T08:00:00",
+        "entry_price": 119153.98,
+        "exit_price": 121662.14,
+        "pnl": 3.927224983935009,
+        "score": 0.45473000000000013,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.042,
+          "wyckoff_1d": 0.06,
+          "wyckoff_4h": 0.08000000000000002,
+          "wyckoff_1h": 0.021,
+          "m1_score": 0.020000000000000004,
+          "m2_score": 0.03,
+          "po3_confluence": 0.0035199999999999997,
+          "bojan_confluence": 0.0030100000000000005,
+          "fibonacci_clusters": 0.005200000000000001,
+          "volume_confluence": 0.05,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.02
+        },
+        "tags": [
+          "high_confidence",
+          "volume_confluence"
+        ],
+        "confluence_count": 3,
+        "side": "long",
+        "exit_hours": 8
+      },
+      {
+        "entry_time": "2025-08-22T12:00:00",
+        "exit_time": "2025-08-22T20:00:00",
+        "entry_price": 112308.69,
+        "exit_price": 117044.19,
+        "pnl": 8.150769373049414,
+        "score": 0.48799000000000003,
+        "components": {
+          "htf_bias_1d": 0.12,
+          "htf_bias_4h": 0.027999999999999997,
+          "wyckoff_1d": 0.09,
+          "wyckoff_4h": 0.08000000000000002,
+          "wyckoff_1h": 0.0165,
+          "m1_score": 0.032,
+          "m2_score": 0.009,
+          "po3_confluence": 0.0028799999999999997,
+          "bojan_confluence": 0.00161,
+          "fibonacci_clusters": 0.008,
+          "volume_confluence": 0.05,
+          "final_multiplier": 1.0,
+          "tf_alignment_bonus": 0.05
+        },
+        "tags": [
+          "mtf_confluence",
+          "high_confidence",
+          "volume_confluence"
+        ],
+        "confluence_count": 3,
+        "side": "long",
+        "exit_hours": 8
+      }
+    ],
+    "metrics": {
+      "total_trades": 11,
+      "win_rate": 54.54545454545454,
+      "total_pnl_pct": 0.12649547619953927,
+      "max_drawdown_pct": 0.07541977937616763,
+      "profit_factor": 2.2776794463554975,
+      "sharpe_ratio": 23.468378157735334,
+      "avg_trade": 1.149958874541266,
+      "trades_per_month": 5.534545454545455,
+      "gross_profit": 22.549955469540915,
+      "gross_loss": 9.900407849586989
+    },
+    "final_capital": 10012.64954761995,
+    "config": {
+      "entry_threshold": 0.32,
+      "quality_floors": {
+        "wyckoff": 0.25,
+        "m1": 0.3,
+        "m2": 0.3,
+        "liquidity": 0.25,
+        "structure": 0.25,
+        "momentum": 0.27,
+        "volume": 0.25,
+        "context": 0.25,
+        "mtf": 0.27,
+        "fib_retracement": 0.25,
+        "fib_extension": 0.25
+      },
+      "features": {
+        "mtf_dl2": true,
+        "six_candle_leg": true,
+        "orderflow_lca": false,
+        "negative_vip": false,
+        "atr_exits": true,
+        "atr_sizing": true,
+        "regime_filter": true,
+        "ensemble_htf_bias": true,
+        "wyckoff_phase": true,
+        "wyckoff_m1m2": true,
+        "liquidity_sweep": false,
+        "order_blocks": true,
+        "wick_magnet": true,
+        "hidden_fibs": true,
+        "temporal_fib": true,
+        "fib_clusters": true,
+        "po3": true,
+        "bojan": true,
+        "live_data": false,
+        "use_asset_profiles": true
+      },
+      "cooldown_bars": 96,
+      "timeframe": "1D",
+      "risk": {
+        "risk_pct": 0.02,
+        "atr_window": 14,
+        "sl_atr": 1.6,
+        "tp_atr": 2.8,
+        "trail_atr": 1.1,
+        "profit_ladders": [
+          {
+            "ratio": 1.5,
+            "percent": 0.25
+          },
+          {
+            "ratio": 2.5,
+            "percent": 0.5
+          },
+          {
+            "ratio": 4.0,
+            "percent": 0.25
+          }
+        ]
+      },
+      "regime": {
+        "vol_ratio_min": 1.0,
+        "atr_pct_max": 0.09
+      },
+      "ensemble": {
+        "enabled": true,
+        "min_consensus": 2,
+        "consensus_penalty": 0.02,
+        "rolling_k": 4,
+        "rolling_n": 5,
+        "lead_lag_window": 3,
+        "dynamic_thresholds": true,
+        "confluence_mode": "adaptive",
+        "m1m2_backoff_bars": 30,
+        "m1m2_epsilon": 0.05,
+        "solo_fib_min_entry": 0.38,
+        "vol_override_atr_pct": 0.05
+      },
+      "weights": {
+        "temporal": 0.1,
+        "po3": 0.12,
+        "bojan": 0.08
+      },
+      "fib": {
+        "tolerance": 0.025
+      },
+      "temporal": {
+        "fib_nums": [
+          21,
+          34,
+          55,
+          89,
+          144
+        ],
+        "tolerance_bars": 3,
+        "pivot_window": 5
+      },
+      "bojan": {
+        "lookback": 50,
+        "wick_magnet_threshold": 0.65,
+        "trap_body_min": 1.15,
+        "unfinished_threshold": 0.12,
+        "phob_confidence_min": 0.28,
+        "fib_prime_zones": [
+          0.705,
+          0.786
+        ]
+      },
+      "max_bars_held": 7,
+      "profile_name": "BTC_v1.6.2",
+      "version": "1.6.2",
+      "description": "BTC 1D profile with PO3, Bojan microstructure, Wyckoff M1/M2, and Fibonacci enhancements"
+    }
+  }
+}

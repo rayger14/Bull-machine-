@@ -1,0 +1,99 @@
+{
+  "volatility": {
+    "atr": {
+      "p10": 1.484206647190372,
+      "p20": 1.7112411141252677,
+      "p50": 2.0853762736733383,
+      "p80": 2.5758316694268837,
+      "p90": 2.9311680664172215,
+      "current": 2.727063591905508
+    },
+    "returns": {
+      "daily_mean": 0.11581189142293366,
+      "daily_std": 1.401601120746278,
+      "skew": -0.023185429716751107,
+      "kurtosis": 2.189028392884143,
+      "max_daily_gain": 4.9240638043313245,
+      "max_daily_loss": -6.605624084167438
+    },
+    "historical_vol": {
+      "hv20_mean": 21.21500221010289,
+      "hv20_current": 24.171404268183082,
+      "hv60_mean": 21.408179722368093,
+      "vol_of_vol": 5.699104101475626
+    },
+    "regime": "high"
+  },
+  "liquidity": {
+    "volume": {
+      "mean": 25754.892302173103,
+      "median": 19720.23153044,
+      "p25": 11323.25966717,
+      "p75": 34203.84320349,
+      "p90": 53037.961826874045,
+      "ratio_75_25": 3.0206710972688047
+    },
+    "volume_z_scores": {
+      "z50": 0.7269818795020043,
+      "z70": 1.1788138114501994,
+      "z85": 1.8593742257639796,
+      "z95": 2.7562768839542406
+    },
+    "dollar_volume": {
+      "daily_mean": 80023872.13115256,
+      "daily_median": 59541392.33884969
+    },
+    "spread_estimate": 0.28760348202666247,
+    "slippage_factor": 0.1779493693754308
+  },
+  "price_action": {
+    "candle_structure": {
+      "avg_body_pct": 41.43145127443959,
+      "avg_upper_wick_pct": 27.343394859002935,
+      "avg_lower_wick_pct": 31.225153866557488,
+      "doji_frequency": 13.659359190556492
+    },
+    "gaps": {
+      "frequency": 0.0,
+      "avg_gap_size": NaN,
+      "max_gap": 0.032594807429877706
+    },
+    "trend_persistence": 0.48846482140184044,
+    "mean_reversion": 0.10286677908937605
+  },
+  "sessions": {
+    "type": "continuous",
+    "volume_variation": 0.34488350688597696,
+    "weekend_trading": true,
+    "typical_bar_count_per_day": 6
+  },
+  "correlations": {
+    "full_period": 0.7219652288326827,
+    "rolling_20d": {
+      "mean": 0.719474325251967,
+      "std": 0.17477432511018934,
+      "current": 0.7230576550705463
+    },
+    "rolling_60d": {
+      "mean": 0.7249978769345485,
+      "current": 0.5912096204746633
+    },
+    "beta": 1.394879471868353
+  },
+  "microstructure": {
+    "tick_size": 0.02999999999974534,
+    "tick_size_pct": 0.001010762627723351,
+    "typical_spread_bps": 28.760348202666247,
+    "round_number_attraction": 0.5208094435075872,
+    "typical_trade_size": 19720.23153044
+  },
+  "meta": {
+    "symbol": "ETHUSD",
+    "exchange": "COINBASE",
+    "data_start": "2025-05-09T04:00:00",
+    "data_end": "2025-08-15T20:00:00",
+    "total_bars": 593,
+    "profile_generated": "2025-10-01T02:30:08.248970",
+    "profile_hash": "c4206d75430f462b"
+  }
+}

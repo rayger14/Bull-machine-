@@ -1,0 +1,1789 @@
+{
+  "total_trades": 88,
+  "final_balance": 35111.06499785873,
+  "total_return": 251.1106499785873,
+  "win_rate": 54.54545454545454,
+  "profit_factor": 2.9818822398984537,
+  "max_drawdown": 14.84490448384504,
+  "avg_win": 4.084518439888996,
+  "avg_loss": -1.6437343038850893,
+  "engine_usage": {
+    "smc": 0,
+    "wyckoff": 88,
+    "momentum": 52,
+    "hob": 37,
+    "macro_veto": 0,
+    "ethbtc_veto": 0,
+    "atr_throttle": 2,
+    "counter_trend_blocked": 16
+  },
+  "trades": [
+    {
+      "entry_time": "2025-05-18 20:00:00",
+      "entry_price": 2498.24,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2445.0971428571424,
+      "tp_price": 2631.097142857143,
+      "position_size": 187.5,
+      "status": "closed",
+      "exit_time": "2025-05-19 00:00:00",
+      "exit_price": 2445.0971428571424,
+      "exit_type": "stop_loss",
+      "pnl": -2.1365868428516612,
+      "r_multiple": 1.0044071774193548,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-05-22 12:00:00",
+      "entry_price": 2665.03,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5000000000000004,
+      "sl_price": 2607.6597142857145,
+      "tp_price": 2808.4557142857143,
+      "position_size": 183.49389966965313,
+      "status": "closed",
+      "exit_time": "2025-05-23 08:00:00",
+      "exit_price": 2607.6597142857145,
+      "exit_type": "stop_loss",
+      "pnl": -2.1620819381690155,
+      "r_multiple": 1.0043549820153288,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-05-25 04:00:00",
+      "entry_price": 2494.85,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2450.522571428571,
+      "tp_price": 2605.6685714285713,
+      "position_size": 179.52661120725358,
+      "status": "closed",
+      "exit_time": "2025-05-27 04:00:00",
+      "exit_price": 2605.6685714285713,
+      "exit_type": "take_profit",
+      "pnl": 4.432518157046372,
+      "r_multiple": -2.4947235335989864,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-05-25 08:00:00",
+      "entry_price": 2498.48,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2456.9548571428572,
+      "tp_price": 2602.2928571428574,
+      "position_size": 179.52661120725358,
+      "status": "closed",
+      "exit_time": "2025-05-27 04:00:00",
+      "exit_price": 2602.2928571428574,
+      "exit_type": "take_profit",
+      "pnl": 4.14606346146458,
+      "r_multiple": -2.4945986755150167,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-05-25 12:00:00",
+      "entry_price": 2512.25,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2472.422,
+      "tp_price": 2611.82,
+      "position_size": 179.52661120725358,
+      "status": "closed",
+      "exit_time": "2025-05-27 08:00:00",
+      "exit_price": 2611.82,
+      "exit_type": "take_profit",
+      "pnl": 3.954759730493085,
+      "r_multiple": -2.4945629037188057,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-05-27 12:00:00",
+      "entry_price": 2669.31,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2632.3842857142854,
+      "tp_price": 2761.6242857142856,
+      "position_size": 202.97933309815,
+      "status": "closed",
+      "exit_time": "2025-05-28 12:00:00",
+      "exit_price": 2632.3842857142854,
+      "exit_type": "stop_loss",
+      "pnl": -1.392718046919037,
+      "r_multiple": 1.0067770608461002,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-05-27 04:00:00",
+      "entry_price": 2608.25,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2571.464285714286,
+      "tp_price": 2700.214285714286,
+      "position_size": 195.25737313460405,
+      "status": "closed",
+      "exit_time": "2025-05-29 00:00:00",
+      "exit_price": 2700.214285714286,
+      "exit_type": "take_profit",
+      "pnl": 3.5167542401145844,
+      "r_multiple": -2.4935153292214434,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-05-27 08:00:00",
+      "entry_price": 2653.07,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2617.222,
+      "tp_price": 2742.6900000000005,
+      "position_size": 202.97933309815,
+      "status": "closed",
+      "exit_time": "2025-05-29 00:00:00",
+      "exit_price": 2742.6900000000005,
+      "exit_type": "take_profit",
+      "pnl": 3.368789024063318,
+      "r_multiple": -2.493202715931622,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-05-28 12:00:00",
+      "entry_price": 2628.17,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2588.746,
+      "tp_price": 2726.73,
+      "position_size": 200.15240329457617,
+      "status": "closed",
+      "exit_time": "2025-05-29 00:00:00",
+      "exit_price": 2726.73,
+      "exit_type": "take_profit",
+      "pnl": 3.741376575209426,
+      "r_multiple": -2.4941593125172896,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-05-29 00:00:00",
+      "entry_price": 2763.63,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2716.831142857143,
+      "tp_price": 2880.627142857143,
+      "position_size": 222.18405590904155,
+      "status": "closed",
+      "exit_time": "2025-05-29 12:00:00",
+      "exit_price": 2716.831142857143,
+      "exit_type": "stop_loss",
+      "pnl": -1.7027585984866744,
+      "r_multiple": 1.0055362529838943,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-05-29 12:00:00",
+      "entry_price": 2643.84,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2596.0640000000003,
+      "tp_price": 2763.28,
+      "position_size": 218.40079779258392,
+      "status": "closed",
+      "exit_time": "2025-05-30 16:00:00",
+      "exit_price": 2596.0640000000003,
+      "exit_type": "stop_loss",
+      "pnl": -1.8164435064149054,
+      "r_multiple": 1.0051879604822505,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-05-31 12:00:00",
+      "entry_price": 2537.59,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2494.224857142857,
+      "tp_price": 2646.002857142857,
+      "position_size": 214.4336706831222,
+      "status": "closed",
+      "exit_time": "2025-06-02 08:00:00",
+      "exit_price": 2494.224857142857,
+      "exit_type": "stop_loss",
+      "pnl": -1.7182855354743247,
+      "r_multiple": 1.005485951315408,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-02 12:00:00",
+      "entry_price": 2545.68,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2513.990857142857,
+      "tp_price": 2624.902857142857,
+      "position_size": 210.74908793658744,
+      "status": "closed",
+      "exit_time": "2025-06-03 12:00:00",
+      "exit_price": 2624.902857142857,
+      "exit_type": "take_profit",
+      "pnl": 3.1026758918189747,
+      "r_multiple": -2.4924687928267386,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-05-31 04:00:00",
+      "entry_price": 2522.35,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2472.268285714286,
+      "tp_price": 2647.5542857142855,
+      "position_size": 214.4336706831222,
+      "status": "closed",
+      "exit_time": "2025-06-04 12:00:00",
+      "exit_price": 2647.5542857142855,
+      "exit_type": "take_profit",
+      "pnl": 4.9545432496793484,
+      "r_multiple": -2.4953403341054434,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-05-31 08:00:00",
+      "entry_price": 2520.64,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2475.6062857142856,
+      "tp_price": 2633.2242857142855,
+      "position_size": 214.4336706831222,
+      "status": "closed",
+      "exit_time": "2025-06-04 12:00:00",
+      "exit_price": 2633.2242857142855,
+      "exit_type": "take_profit",
+      "pnl": 4.4576809346648005,
+      "r_multiple": -2.495065985422807,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-04 12:00:00",
+      "entry_price": 2669.22,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2629.3622857142855,
+      "tp_price": 2768.8642857142854,
+      "position_size": 238.21947520477454,
+      "status": "closed",
+      "exit_time": "2025-06-04 16:00:00",
+      "exit_price": 2629.3622857142855,
+      "exit_type": "stop_loss",
+      "pnl": -1.502609513667451,
+      "r_multiple": 1.0062783172463476,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-03 12:00:00",
+      "entry_price": 2625.51,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2586.4688571428574,
+      "tp_price": 2723.112857142857,
+      "position_size": 217.28794908022434,
+      "status": "closed",
+      "exit_time": "2025-06-05 16:00:00",
+      "exit_price": 2586.4688571428574,
+      "exit_type": "stop_loss",
+      "pnl": -1.4956744342923018,
+      "r_multiple": 1.0058384300756518,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-06 20:00:00",
+      "entry_price": 2478.24,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2435.0759999999996,
+      "tp_price": 2586.1499999999996,
+      "position_size": 231.13051671227126,
+      "status": "closed",
+      "exit_time": "2025-06-09 20:00:00",
+      "exit_price": 2586.1499999999996,
+      "exit_type": "take_profit",
+      "pnl": 4.344924825682737,
+      "r_multiple": -2.4946173894912267,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-09 16:00:00",
+      "entry_price": 2582.28,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2556.749142857143,
+      "tp_price": 2646.107142857143,
+      "position_size": 231.13051671227126,
+      "status": "closed",
+      "exit_time": "2025-06-09 20:00:00",
+      "exit_price": 2646.107142857143,
+      "exit_type": "take_profit",
+      "pnl": 2.46275131618937,
+      "r_multiple": -2.4909126368868044,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-09 20:00:00",
+      "entry_price": 2681.29,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.4999999999999996,
+      "sl_price": 2650.803142857143,
+      "tp_price": 2757.5071428571428,
+      "position_size": 247.1124542556828,
+      "status": "closed",
+      "exit_time": "2025-06-10 08:00:00",
+      "exit_price": 2757.5071428571428,
+      "exit_type": "take_profit",
+      "pnl": 2.833179996182539,
+      "r_multiple": -2.491754776941367,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-10 00:00:00",
+      "entry_price": 2689.7,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff",
+        "hob"
+      ],
+      "confidence": 0.6,
+      "expected_rr": 2.5,
+      "sl_price": 2657.2685714285712,
+      "tp_price": 2770.778571428571,
+      "position_size": 247.1124542556828,
+      "status": "closed",
+      "exit_time": "2025-06-10 08:00:00",
+      "exit_price": 2770.778571428571,
+      "exit_type": "take_profit",
+      "pnl": 3.005292759528694,
+      "r_multiple": -2.4924390603087967,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-10 04:00:00",
+      "entry_price": 2678.24,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2644.7942857142857,
+      "tp_price": 2761.8542857142857,
+      "position_size": 247.1124542556828,
+      "status": "closed",
+      "exit_time": "2025-06-10 08:00:00",
+      "exit_price": 2761.8542857142857,
+      "exit_type": "take_profit",
+      "pnl": 3.113135576463919,
+      "r_multiple": -2.492912591156734,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-10 08:00:00",
+      "entry_price": 2774.77,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2735.037428571429,
+      "tp_price": 2874.1014285714286,
+      "position_size": 269.89909879909413,
+      "status": "closed",
+      "exit_time": "2025-06-10 12:00:00",
+      "exit_price": 2735.037428571429,
+      "exit_type": "stop_loss",
+      "pnl": -1.441298057715457,
+      "r_multiple": 1.006547139491529,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-10 12:00:00",
+      "entry_price": 2733.56,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2689.4125714285715,
+      "tp_price": 2843.928571428571,
+      "position_size": 266.0090483303113,
+      "status": "closed",
+      "exit_time": "2025-06-11 12:00:00",
+      "exit_price": 2843.928571428571,
+      "exit_type": "take_profit",
+      "pnl": 4.028164744090898,
+      "r_multiple": -2.4941951035815055,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-11 12:00:00",
+      "entry_price": 2865.75,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2808.4785714285713,
+      "tp_price": 3008.928571428571,
+      "position_size": 276.7243310312446,
+      "status": "closed",
+      "exit_time": "2025-06-11 20:00:00",
+      "exit_price": 2808.4785714285713,
+      "exit_type": "stop_loss",
+      "pnl": -2.0078545802644583,
+      "r_multiple": 1.0046910661948116,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-10 20:00:00",
+      "entry_price": 2816.5,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2765.8725714285715,
+      "tp_price": 2943.0685714285714,
+      "position_size": 266.0090483303113,
+      "status": "closed",
+      "exit_time": "2025-06-12 00:00:00",
+      "exit_price": 2765.8725714285715,
+      "exit_type": "stop_loss",
+      "pnl": -1.8067264998987855,
+      "r_multiple": 1.00511626415818,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-10 16:00:00",
+      "entry_price": 2775.25,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff",
+        "hob"
+      ],
+      "confidence": 0.6,
+      "expected_rr": 2.5,
+      "sl_price": 2728.2774285714286,
+      "tp_price": 2892.6814285714286,
+      "position_size": 266.0090483303113,
+      "status": "closed",
+      "exit_time": "2025-06-12 12:00:00",
+      "exit_price": 2728.2774285714286,
+      "exit_type": "stop_loss",
+      "pnl": -1.7019186474265176,
+      "r_multiple": 1.0055335662116827,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-13 12:00:00",
+      "entry_price": 2553.2,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2494.3045714285713,
+      "tp_price": 2700.4385714285713,
+      "position_size": 261.73716370580087,
+      "status": "closed",
+      "exit_time": "2025-06-18 16:00:00",
+      "exit_price": 2494.3045714285713,
+      "exit_type": "stop_loss",
+      "pnl": -2.3161049299478504,
+      "r_multiple": 1.0040641948926428,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-13 04:00:00",
+      "entry_price": 2527.99,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2469.8579999999997,
+      "tp_price": 2673.3199999999997,
+      "position_size": 261.73716370580087,
+      "status": "closed",
+      "exit_time": "2025-06-20 16:00:00",
+      "exit_price": 2469.8579999999997,
+      "exit_type": "stop_loss",
+      "pnl": -2.309131695863378,
+      "r_multiple": 1.0041735766575473,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-13 08:00:00",
+      "entry_price": 2546.63,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2489.820857142857,
+      "tp_price": 2688.652857142857,
+      "position_size": 261.73716370580087,
+      "status": "closed",
+      "exit_time": "2025-06-20 16:00:00",
+      "exit_price": 2489.820857142857,
+      "exit_type": "stop_loss",
+      "pnl": -2.2405817584715115,
+      "r_multiple": 1.0044039456685574,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-21 16:00:00",
+      "entry_price": 2385.14,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2349.693714285714,
+      "tp_price": 2473.755714285714,
+      "position_size": 244.17485503401687,
+      "status": "closed",
+      "exit_time": "2025-06-21 20:00:00",
+      "exit_price": 2349.693714285714,
+      "exit_type": "stop_loss",
+      "pnl": -1.495505194214417,
+      "r_multiple": 1.0063083302098947,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-22 04:00:00",
+      "entry_price": 2271.2,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2225.348,
+      "tp_price": 2385.83,
+      "position_size": 240.52320739401762,
+      "status": "closed",
+      "exit_time": "2025-06-22 12:00:00",
+      "exit_price": 2225.348,
+      "exit_type": "stop_loss",
+      "pnl": -2.028219663613943,
+      "r_multiple": 1.0046437450929078,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-22 16:00:00",
+      "entry_price": 2184.72,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2131.560571428571,
+      "tp_price": 2317.618571428571,
+      "position_size": 235.6448684060972,
+      "status": "closed",
+      "exit_time": "2025-06-23 20:00:00",
+      "exit_price": 2317.618571428571,
+      "exit_type": "take_profit",
+      "pnl": 6.0737190087778465,
+      "r_multiple": -2.4961471086972837,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-23 00:00:00",
+      "entry_price": 2235.54,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2184.5234285714287,
+      "tp_price": 2363.0814285714287,
+      "position_size": 235.6448684060972,
+      "status": "closed",
+      "exit_time": "2025-06-23 20:00:00",
+      "exit_price": 2363.0814285714287,
+      "exit_type": "take_profit",
+      "pnl": 5.696334989837394,
+      "r_multiple": -2.49612711450251,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-23 08:00:00",
+      "entry_price": 2254.36,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2203.8674285714287,
+      "tp_price": 2380.591428571429,
+      "position_size": 235.6448684060972,
+      "status": "closed",
+      "exit_time": "2025-06-23 20:00:00",
+      "exit_price": 2380.591428571429,
+      "exit_type": "take_profit",
+      "pnl": 5.591073380373041,
+      "r_multiple": -2.4962666446109307,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-29 20:00:00",
+      "entry_price": 2500.69,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2477.861428571429,
+      "tp_price": 2557.7614285714285,
+      "position_size": 278.9670536182629,
+      "status": "closed",
+      "exit_time": "2025-06-30 08:00:00",
+      "exit_price": 2477.861428571429,
+      "exit_type": "stop_loss",
+      "pnl": -0.9222658992546534,
+      "r_multiple": 1.0102695732947433,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-30 00:00:00",
+      "entry_price": 2500.39,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2479.463714285714,
+      "tp_price": 2552.705714285714,
+      "position_size": 278.9670536182629,
+      "status": "closed",
+      "exit_time": "2025-06-30 08:00:00",
+      "exit_price": 2479.463714285714,
+      "exit_type": "stop_loss",
+      "pnl": -0.8463831361801547,
+      "r_multiple": 1.0113060476990279,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-30 16:00:00",
+      "entry_price": 2516.47,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2487.7922857142858,
+      "tp_price": 2588.1642857142856,
+      "position_size": 274.0548814129873,
+      "status": "closed",
+      "exit_time": "2025-06-30 20:00:00",
+      "exit_price": 2487.7922857142858,
+      "exit_type": "stop_loss",
+      "pnl": -1.1489758808256822,
+      "r_multiple": 1.0082265643680508,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-30 12:00:00",
+      "entry_price": 2475.33,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2449.216857142857,
+      "tp_price": 2540.612857142857,
+      "position_size": 274.0548814129873,
+      "status": "closed",
+      "exit_time": "2025-07-01 12:00:00",
+      "exit_price": 2449.216857142857,
+      "exit_type": "stop_loss",
+      "pnl": -1.064419789477755,
+      "r_multiple": 1.0089900905081028,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-06-23 20:00:00",
+      "entry_price": 2413.0,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff",
+        "hob"
+      ],
+      "confidence": 0.6,
+      "expected_rr": 2.5,
+      "sl_price": 2346.153142857143,
+      "tp_price": 2580.117142857143,
+      "position_size": 278.9670536182629,
+      "status": "closed",
+      "exit_time": "2025-07-02 16:00:00",
+      "exit_price": 2580.117142857143,
+      "exit_type": "take_profit",
+      "pnl": 6.915942253161214,
+      "r_multiple": -2.496477676013109,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-02 16:00:00",
+      "entry_price": 2606.69,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2569.580857142857,
+      "tp_price": 2699.4628571428575,
+      "position_size": 286.5587591345616,
+      "status": "closed",
+      "exit_time": "2025-07-03 00:00:00",
+      "exit_price": 2569.580857142857,
+      "exit_type": "stop_loss",
+      "pnl": -1.4329866629573544,
+      "r_multiple": 1.0065853633009192,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-02 20:00:00",
+      "entry_price": 2571.13,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2534.2705714285717,
+      "tp_price": 2663.2785714285715,
+      "position_size": 286.5587591345616,
+      "status": "closed",
+      "exit_time": "2025-07-04 12:00:00",
+      "exit_price": 2534.2705714285717,
+      "exit_type": "stop_loss",
+      "pnl": -1.4430999733938579,
+      "r_multiple": 1.0066346056889934,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-03 12:00:00",
+      "entry_price": 2571.45,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2533.254571428571,
+      "tp_price": 2666.9385714285713,
+      "position_size": 282.45241033462725,
+      "status": "closed",
+      "exit_time": "2025-07-04 12:00:00",
+      "exit_price": 2533.254571428571,
+      "exit_type": "stop_loss",
+      "pnl": -1.4948776713215515,
+      "r_multiple": 1.0064039943238732,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-06 20:00:00",
+      "entry_price": 2570.84,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2547.8165714285715,
+      "tp_price": 2628.398571428572,
+      "position_size": 274.2149539321756,
+      "status": "closed",
+      "exit_time": "2025-07-07 12:00:00",
+      "exit_price": 2547.8165714285715,
+      "exit_type": "stop_loss",
+      "pnl": -0.9049355394123582,
+      "r_multiple": 1.010468304025713,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-07 12:00:00",
+      "entry_price": 2533.79,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2509.2362857142857,
+      "tp_price": 2595.174285714286,
+      "position_size": 271.7334853596601,
+      "status": "closed",
+      "exit_time": "2025-07-08 16:00:00",
+      "exit_price": 2595.174285714286,
+      "exit_type": "take_profit",
+      "pnl": 2.413252199345086,
+      "r_multiple": -2.490325585378422,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-07 16:00:00",
+      "entry_price": 2544.3,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2518.1645714285714,
+      "tp_price": 2609.6385714285716,
+      "position_size": 271.7334853596601,
+      "status": "closed",
+      "exit_time": "2025-07-08 16:00:00",
+      "exit_price": 2609.6385714285716,
+      "exit_type": "take_profit",
+      "pnl": 2.5588831485460712,
+      "r_multiple": -2.49108843845902,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-08 12:00:00",
+      "entry_price": 2565.24,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2534.8771428571426,
+      "tp_price": 2641.1471428571426,
+      "position_size": 271.7334853596601,
+      "status": "closed",
+      "exit_time": "2025-07-09 12:00:00",
+      "exit_price": 2641.1471428571426,
+      "exit_type": "take_profit",
+      "pnl": 2.950140239026881,
+      "r_multiple": -2.4924590301745186,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-09 12:00:00",
+      "entry_price": 2657.4,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5000000000000004,
+      "sl_price": 2625.569142857143,
+      "tp_price": 2736.977142857143,
+      "position_size": 293.83230517409214,
+      "status": "closed",
+      "exit_time": "2025-07-09 16:00:00",
+      "exit_price": 2736.977142857143,
+      "exit_type": "take_profit",
+      "pnl": 2.9851739146211678,
+      "r_multiple": -2.4921732786245294,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-09 16:00:00",
+      "entry_price": 2765.82,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2727.744,
+      "tp_price": 2861.01,
+      "position_size": 302.60371050087923,
+      "status": "closed",
+      "exit_time": "2025-07-10 20:00:00",
+      "exit_price": 2861.01,
+      "exit_type": "take_profit",
+      "pnl": 3.4322806391956107,
+      "r_multiple": -2.4931900508194134,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-09 20:00:00",
+      "entry_price": 2769.83,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff",
+        "hob"
+      ],
+      "confidence": 0.6,
+      "expected_rr": 2.5,
+      "sl_price": 2731.174571428571,
+      "tp_price": 2866.4685714285715,
+      "position_size": 302.60371050087923,
+      "status": "closed",
+      "exit_time": "2025-07-10 20:00:00",
+      "exit_price": 2866.4685714285715,
+      "exit_type": "take_profit",
+      "pnl": 3.4799073144065633,
+      "r_multiple": -2.493505319402148,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-10 16:00:00",
+      "entry_price": 2818.29,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2775.9962857142855,
+      "tp_price": 2924.0242857142857,
+      "position_size": 302.60371050087923,
+      "status": "closed",
+      "exit_time": "2025-07-10 20:00:00",
+      "exit_price": 2924.0242857142857,
+      "exit_type": "take_profit",
+      "pnl": 3.7429586404584225,
+      "r_multiple": -2.4941632781542213,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-11 16:00:00",
+      "entry_price": 3009.76,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.4999999999999996,
+      "sl_price": 2950.3114285714287,
+      "tp_price": 3158.381428571429,
+      "position_size": 336.00443541439415,
+      "status": "closed",
+      "exit_time": "2025-07-12 12:00:00",
+      "exit_price": 2950.3114285714287,
+      "exit_type": "stop_loss",
+      "pnl": -1.9845680861122326,
+      "r_multiple": 1.0047463714134666,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-14 12:00:00",
+      "entry_price": 3012.9,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2974.918857142857,
+      "tp_price": 3107.8528571428574,
+      "position_size": 329.33619862123845,
+      "status": "closed",
+      "exit_time": "2025-07-15 00:00:00",
+      "exit_price": 2974.918857142857,
+      "exit_type": "stop_loss",
+      "pnl": -1.2699924402450433,
+      "r_multiple": 1.0074368319053064,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-10 20:00:00",
+      "entry_price": 2951.22,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2900.8171428571427,
+      "tp_price": 3077.2271428571426,
+      "position_size": 336.00443541439415,
+      "status": "closed",
+      "exit_time": "2025-07-15 20:00:00",
+      "exit_price": 3077.2271428571426,
+      "exit_type": "take_profit",
+      "pnl": 4.259974957166629,
+      "r_multiple": -2.4943275055729597,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-11 12:00:00",
+      "entry_price": 2951.52,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2894.881142857143,
+      "tp_price": 3093.117142857143,
+      "position_size": 336.00443541439415,
+      "status": "closed",
+      "exit_time": "2025-07-15 20:00:00",
+      "exit_price": 3093.117142857143,
+      "exit_type": "take_profit",
+      "pnl": 4.788139233145939,
+      "r_multiple": -2.4951578160854893,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-15 12:00:00",
+      "entry_price": 3039.37,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 2991.612857142857,
+      "tp_price": 3158.7628571428572,
+      "position_size": 325.1536537957583,
+      "status": "closed",
+      "exit_time": "2025-07-16 04:00:00",
+      "exit_price": 3158.7628571428572,
+      "exit_type": "take_profit",
+      "pnl": 3.9196296148019685,
+      "r_multiple": -2.494538816523625,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-16 12:00:00",
+      "entry_price": 3246.18,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3191.464,
+      "tp_price": 3382.97,
+      "position_size": 369.1611358112663,
+      "status": "closed",
+      "exit_time": "2025-07-16 16:00:00",
+      "exit_price": 3382.97,
+      "exit_type": "take_profit",
+      "pnl": 4.204501001946903,
+      "r_multiple": -2.494438018586889,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-16 16:00:00",
+      "entry_price": 3385.07,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3325.1734285714288,
+      "tp_price": 3534.8114285714287,
+      "position_size": 384.6825194652495,
+      "status": "closed",
+      "exit_time": "2025-07-18 00:00:00",
+      "exit_price": 3534.8114285714287,
+      "exit_type": "take_profit",
+      "pnl": 4.414209403614357,
+      "r_multiple": -2.494701694856133,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-16 20:00:00",
+      "entry_price": 3373.12,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.4999999999999996,
+      "sl_price": 3312.888,
+      "tp_price": 3523.7,
+      "position_size": 384.6825194652495,
+      "status": "closed",
+      "exit_time": "2025-07-18 00:00:00",
+      "exit_price": 3523.7,
+      "exit_type": "take_profit",
+      "pnl": 4.455137644737723,
+      "r_multiple": -2.494971757905717,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-17 16:00:00",
+      "entry_price": 3414.74,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3343.331428571428,
+      "tp_price": 3593.2614285714285,
+      "position_size": 384.6825194652495,
+      "status": "closed",
+      "exit_time": "2025-07-18 00:00:00",
+      "exit_price": 3593.2614285714285,
+      "exit_type": "take_profit",
+      "pnl": 5.219369771887622,
+      "r_multiple": -2.495889551954317,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-18 00:00:00",
+      "entry_price": 3599.4,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3519.1565714285716,
+      "tp_price": 3800.0085714285715,
+      "position_size": 441.4561364889943,
+      "status": "closed",
+      "exit_time": "2025-07-21 08:00:00",
+      "exit_price": 3800.0085714285715,
+      "exit_type": "take_profit",
+      "pnl": 5.564014215662926,
+      "r_multiple": -2.495794749102733,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-21 12:00:00",
+      "entry_price": 3812.7,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff",
+        "hob"
+      ],
+      "confidence": 0.6,
+      "expected_rr": 2.5,
+      "sl_price": 3754.7285714285713,
+      "tp_price": 3957.6285714285714,
+      "position_size": 466.01881867915824,
+      "status": "closed",
+      "exit_time": "2025-07-21 16:00:00",
+      "exit_price": 3754.7285714285713,
+      "exit_type": "stop_loss",
+      "pnl": -1.529857297884138,
+      "r_multiple": 1.0061658067397732,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-24 16:00:00",
+      "entry_price": 3735.69,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3660.133428571429,
+      "tp_price": 3924.5814285714287,
+      "position_size": 458.8893957720816,
+      "status": "closed",
+      "exit_time": "2025-07-25 00:00:00",
+      "exit_price": 3660.133428571429,
+      "exit_type": "stop_loss",
+      "pnl": -2.0319349936978512,
+      "r_multiple": 1.0046352147917548,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-23 16:00:00",
+      "entry_price": 3590.9,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3521.282857142857,
+      "tp_price": 3764.9428571428575,
+      "position_size": 458.8893957720816,
+      "status": "closed",
+      "exit_time": "2025-07-27 00:00:00",
+      "exit_price": 3764.9428571428575,
+      "exit_type": "take_profit",
+      "pnl": 4.8372059357252235,
+      "r_multiple": -2.4950640146550502,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-07-28 04:00:00",
+      "entry_price": 3894.19,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff",
+        "hob"
+      ],
+      "confidence": 0.6,
+      "expected_rr": 2.5,
+      "sl_price": 3849.092857142857,
+      "tp_price": 4006.9328571428573,
+      "position_size": 471.3114493996031,
+      "status": "closed",
+      "exit_time": "2025-07-28 12:00:00",
+      "exit_price": 3849.092857142857,
+      "exit_type": "stop_loss",
+      "pnl": -1.1674372120939887,
+      "r_multiple": 1.0080954200060188,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-02 00:00:00",
+      "entry_price": 3527.44,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3463.157142857143,
+      "tp_price": 3688.147142857143,
+      "position_size": 465.8091841544526,
+      "status": "closed",
+      "exit_time": "2025-08-02 12:00:00",
+      "exit_price": 3463.157142857143,
+      "exit_type": "stop_loss",
+      "pnl": -1.8317407140265236,
+      "r_multiple": 1.0051444119738655,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-02 04:00:00",
+      "entry_price": 3518.17,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3453.178,
+      "tp_price": 3680.65,
+      "position_size": 465.8091841544526,
+      "status": "closed",
+      "exit_time": "2025-08-02 16:00:00",
+      "exit_price": 3453.178,
+      "exit_type": "stop_loss",
+      "pnl": -1.8568739648937735,
+      "r_multiple": 1.0051696019618275,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-02 08:00:00",
+      "entry_price": 3508.02,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3444.018857142857,
+      "tp_price": 3668.022857142857,
+      "position_size": 465.8091841544526,
+      "status": "closed",
+      "exit_time": "2025-08-02 16:00:00",
+      "exit_price": 3444.018857142857,
+      "exit_type": "stop_loss",
+      "pnl": -1.8341541606100646,
+      "r_multiple": 1.005333528631703,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-02 12:00:00",
+      "entry_price": 3458.29,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3391.934,
+      "tp_price": 3624.18,
+      "position_size": 457.2767676786207,
+      "status": "closed",
+      "exit_time": "2025-08-02 16:00:00",
+      "exit_price": 3391.934,
+      "exit_type": "stop_loss",
+      "pnl": -1.9284826074807884,
+      "r_multiple": 1.005071450452824,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-02 16:00:00",
+      "entry_price": 3381.73,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3311.922,
+      "tp_price": 3556.25,
+      "position_size": 432.0582796697203,
+      "status": "closed",
+      "exit_time": "2025-08-04 00:00:00",
+      "exit_price": 3556.25,
+      "exit_type": "take_profit",
+      "pnl": 5.151297200323502,
+      "r_multiple": -2.4954584404724383,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-02 20:00:00",
+      "entry_price": 3392.8,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3323.5988571428575,
+      "tp_price": 3565.802857142857,
+      "position_size": 432.0582796697203,
+      "status": "closed",
+      "exit_time": "2025-08-04 12:00:00",
+      "exit_price": 3565.802857142857,
+      "exit_type": "take_profit",
+      "pnl": 5.09020173428855,
+      "r_multiple": -2.4956287903721575,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-03 00:00:00",
+      "entry_price": 3443.0,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3373.089142857143,
+      "tp_price": 3617.7771428571427,
+      "position_size": 432.0582796697203,
+      "status": "closed",
+      "exit_time": "2025-08-04 12:00:00",
+      "exit_price": 3617.7771428571427,
+      "exit_type": "take_profit",
+      "pnl": 5.067820009780062,
+      "r_multiple": -2.4958218232138414,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-04 16:00:00",
+      "entry_price": 3670.4,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3617.7914285714287,
+      "tp_price": 3801.9214285714284,
+      "position_size": 501.6362515694958,
+      "status": "closed",
+      "exit_time": "2025-08-05 04:00:00",
+      "exit_price": 3617.7914285714287,
+      "exit_type": "stop_loss",
+      "pnl": -1.442694840577904,
+      "r_multiple": 1.0065407592461846,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-04 12:00:00",
+      "entry_price": 3649.37,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5000000000000004,
+      "sl_price": 3597.904857142857,
+      "tp_price": 3778.0328571428568,
+      "position_size": 501.6362515694958,
+      "status": "closed",
+      "exit_time": "2025-08-05 12:00:00",
+      "exit_price": 3597.904857142857,
+      "exit_type": "stop_loss",
+      "pnl": -1.4197595589338785,
+      "r_multiple": 1.0067450810286493,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-05 16:00:00",
+      "entry_price": 3569.95,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3513.697428571428,
+      "tp_price": 3710.581428571428,
+      "position_size": 487.3798917565277,
+      "status": "closed",
+      "exit_time": "2025-08-07 08:00:00",
+      "exit_price": 3710.581428571428,
+      "exit_type": "take_profit",
+      "pnl": 3.929935874702122,
+      "r_multiple": -2.4940503553170785,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-06 16:00:00",
+      "entry_price": 3684.8,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5000000000000004,
+      "sl_price": 3621.8817142857147,
+      "tp_price": 3842.0957142857146,
+      "position_size": 487.3798917565277,
+      "status": "closed",
+      "exit_time": "2025-08-07 16:00:00",
+      "exit_price": 3842.0957142857146,
+      "exit_type": "take_profit",
+      "pnl": 4.25975159837572,
+      "r_multiple": -2.4947171575799985,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-07 08:00:00",
+      "entry_price": 3827.56,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3766.2428571428572,
+      "tp_price": 3980.852857142857,
+      "position_size": 506.5336089687519,
+      "status": "closed",
+      "exit_time": "2025-08-08 16:00:00",
+      "exit_price": 3980.852857142857,
+      "exit_type": "take_profit",
+      "pnl": 3.995983976762992,
+      "r_multiple": -2.494387004582568,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-07 12:00:00",
+      "entry_price": 3838.76,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff",
+        "hob"
+      ],
+      "confidence": 0.6,
+      "expected_rr": 2.5000000000000004,
+      "sl_price": 3778.3874285714287,
+      "tp_price": 3989.691428571429,
+      "position_size": 506.5336089687519,
+      "status": "closed",
+      "exit_time": "2025-08-08 16:00:00",
+      "exit_price": 3989.691428571429,
+      "exit_type": "take_profit",
+      "pnl": 3.923129134511442,
+      "r_multiple": -2.4945021952916147,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-07 16:00:00",
+      "entry_price": 3869.91,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3809.0065714285715,
+      "tp_price": 4022.1685714285713,
+      "position_size": 528.1106824731085,
+      "status": "closed",
+      "exit_time": "2025-08-08 16:00:00",
+      "exit_price": 4022.1685714285713,
+      "exit_type": "take_profit",
+      "pnl": 3.9257470483633004,
+      "r_multiple": -2.4944880963661857,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-08 16:00:00",
+      "entry_price": 4062.35,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 3998.3574285714285,
+      "tp_price": 4222.331428571429,
+      "position_size": 593.1668757771952,
+      "status": "closed",
+      "exit_time": "2025-08-09 16:00:00",
+      "exit_price": 4222.331428571429,
+      "exit_type": "take_profit",
+      "pnl": 3.9287748042125554,
+      "r_multiple": -2.4940486012048306,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-11 00:00:00",
+      "entry_price": 4309.99,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 4242.854571428571,
+      "tp_price": 4477.828571428571,
+      "position_size": 616.4710665396643,
+      "status": "closed",
+      "exit_time": "2025-08-11 08:00:00",
+      "exit_price": 4242.854571428571,
+      "exit_type": "stop_loss",
+      "pnl": -1.5670451702655632,
+      "r_multiple": 1.0060186040530015,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-11 12:00:00",
+      "entry_price": 4329.68,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 4257.277714285715,
+      "tp_price": 4510.685714285715,
+      "position_size": 606.8106864653698,
+      "status": "closed",
+      "exit_time": "2025-08-11 16:00:00",
+      "exit_price": 4257.277714285715,
+      "exit_type": "stop_loss",
+      "pnl": -1.6816067980609517,
+      "r_multiple": 1.0056062801884706,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-09 04:00:00",
+      "entry_price": 4170.96,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 4102.321714285715,
+      "tp_price": 4342.555714285714,
+      "position_size": 593.1668757771952,
+      "status": "closed",
+      "exit_time": "2025-08-12 12:00:00",
+      "exit_price": 4342.555714285714,
+      "exit_type": "take_profit",
+      "pnl": 4.104737067562289,
+      "r_multiple": -2.494335914883779,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-12 12:00:00",
+      "entry_price": 4472.91,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 4395.1351428571425,
+      "tp_price": 4667.347142857143,
+      "position_size": 621.0956455493123,
+      "status": "closed",
+      "exit_time": "2025-08-13 08:00:00",
+      "exit_price": 4667.347142857143,
+      "exit_type": "take_profit",
+      "pnl": 4.337619302526611,
+      "r_multiple": -2.494608343519934,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-12 16:00:00",
+      "entry_price": 4518.34,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 4440.126285714286,
+      "tp_price": 4713.874285714286,
+      "position_size": 621.0956455493123,
+      "status": "closed",
+      "exit_time": "2025-08-13 16:00:00",
+      "exit_price": 4713.874285714286,
+      "exit_type": "take_profit",
+      "pnl": 4.318583847022303,
+      "r_multiple": -2.4948092949625713,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-13 16:00:00",
+      "entry_price": 4740.92,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 4655.721714285714,
+      "tp_price": 4953.915714285715,
+      "position_size": 676.0224058897098,
+      "status": "closed",
+      "exit_time": "2025-08-14 12:00:00",
+      "exit_price": 4655.721714285714,
+      "exit_type": "stop_loss",
+      "pnl": -1.8064583870701405,
+      "r_multiple": 1.0052167863035475,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-13 12:00:00",
+      "entry_price": 4665.48,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 4578.927428571428,
+      "tp_price": 4881.861428571428,
+      "position_size": 648.0364101578115,
+      "status": "closed",
+      "exit_time": "2025-08-14 16:00:00",
+      "exit_price": 4578.927428571428,
+      "exit_type": "stop_loss",
+      "pnl": -1.8643219269356712,
+      "r_multiple": 1.004933362477617,
+      "cost_bps": 25
+    },
+    {
+      "entry_time": "2025-08-12 20:00:00",
+      "entry_price": 4589.88,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "confidence": 0.44999999999999996,
+      "expected_rr": 2.5,
+      "sl_price": 4508.463428571428,
+      "tp_price": 4793.421428571429,
+      "position_size": 621.0956455493123,
+      "status": "closed",
+      "exit_time": "2025-08-15 00:00:00",
+      "exit_price": 4638.89,
+      "exit_type": "time_exit",
+      "pnl": 1.0588455271091366,
+      "r_multiple": -0.5969268691486748,
+      "cost_bps": 25
+    }
+  ]
+}

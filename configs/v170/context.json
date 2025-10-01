@@ -1,0 +1,45 @@
+{
+  "enabled": true,
+  "suppress_new_entries": true,
+  "range_hours": 36,
+  "atr_pct_max": 0.05,
+  "context_delta_cap": 0.15,
+  "ethbtc_ma_length": 50,
+
+  "veto_threshold": 0.70,
+  "boost_cap": 0.10,
+
+  "series": {
+    "DXY": "DXY_1D",
+    "WTI": "WTI_1D",
+    "GOLD": "GOLD_1D",
+    "US2Y": "US2Y_1D",
+    "US10Y": "US10Y_1D",
+    "VIX": "VIX_1D",
+    "MOVE": "MOVE_1D",
+    "USDJPY": "USDJPY_1D",
+    "HYG": "HYG_1D",
+    "ETHD": "ETH.D_1D",
+    "USDT": "USDT.D_4H",
+    "BTCD_W": "BTC.D_1W",
+    "TOTAL": "TOTAL_4H",
+    "TOTAL3": "TOTAL3_4H",
+    "ETHBTC": "ETHBTC_1D"
+  },
+
+  "dxy_time_shift_days": [120, 200, 240],
+  "dxy_breakout_len": 20,
+  "oil_dxy_stagflation_veto": 0.85,
+  "yields_spike_std": 2.0,
+  "vix_spike": 24.0,
+  "move_spike": 130.0,
+  "usd_jpy_break_level": 145.0,
+  "hyg_break_len": 15,
+  "usdt_sfp_lookback": 50,
+  "wolfe_min_points": 4,
+
+  "weights": {
+    "boost_macro": 0.05,
+    "boost_context_max": 0.10
+  }
+}

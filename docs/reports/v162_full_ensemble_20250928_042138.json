@@ -1,0 +1,173 @@
+{
+  "ETH": {
+    "asset": "ETH",
+    "trades": [
+      {
+        "entry_time": "2024-11-11T00:00:00",
+        "entry_price": 3375.78,
+        "exit_price": 3134.25,
+        "pnl": -3.6448912695732583,
+        "score": 0.4825,
+        "components": {
+          "wyckoff": 0.1825,
+          "m1": 0.0,
+          "m2": 0.06999999999999999,
+          "structure": 0.05,
+          "volume": 0.07500000000000001,
+          "ensemble_entry": 0.105
+        },
+        "tags": [
+          "ensemble_signal"
+        ],
+        "side": "long",
+        "exit_bars": 5
+      },
+      {
+        "entry_time": "2025-06-10T00:00:00",
+        "entry_price": 2816.5,
+        "exit_price": 2548.03,
+        "pnl": -4.830923981627659,
+        "score": 0.595,
+        "components": {
+          "wyckoff": 0.1825,
+          "m1": 0.1125,
+          "m2": 0.06999999999999999,
+          "structure": 0.05,
+          "volume": 0.07500000000000001,
+          "ensemble_entry": 0.105
+        },
+        "tags": [
+          "ensemble_signal"
+        ],
+        "side": "long",
+        "exit_bars": 5
+      }
+    ],
+    "metrics": {
+      "total_trades": 2,
+      "win_rate": 0.0,
+      "total_pnl_pct": -0.08475815251200916,
+      "max_drawdown_pct": 0.08475815251200916,
+      "profit_factor": 0.0,
+      "sharpe_ratio": -113.44492821464867,
+      "avg_trade": -4.237907625600458,
+      "trades_per_month": 0.2885308056872038,
+      "gross_profit": 0,
+      "gross_loss": 8.475815251200917
+    },
+    "final_capital": 9991.524184748798,
+    "config": {
+      "entry_threshold": 0.44,
+      "quality_floors": {
+        "wyckoff": 0.25,
+        "m1": 0.3,
+        "m2": 0.3,
+        "liquidity": 0.25,
+        "structure": 0.25,
+        "momentum": 0.27,
+        "volume": 0.25,
+        "context": 0.25,
+        "mtf": 0.27,
+        "fib_retracement": 0.25,
+        "fib_extension": 0.25
+      },
+      "features": {
+        "mtf_dl2": true,
+        "six_candle_leg": true,
+        "orderflow_lca": false,
+        "negative_vip": false,
+        "atr_exits": true,
+        "atr_sizing": true,
+        "regime_filter": true,
+        "ensemble_htf_bias": true,
+        "wyckoff_phase": true,
+        "wyckoff_m1m2": true,
+        "liquidity_sweep": false,
+        "order_blocks": true,
+        "wick_magnet": true,
+        "hidden_fibs": true,
+        "temporal_fib": true,
+        "fib_clusters": true,
+        "po3": true,
+        "bojan": true,
+        "live_data": false,
+        "use_asset_profiles": true
+      },
+      "cooldown_bars": 168,
+      "timeframe": "1D",
+      "risk": {
+        "risk_pct": 0.005,
+        "atr_window": 14,
+        "sl_atr": 1.8,
+        "tp_atr": 3.0,
+        "trail_atr": 1.2,
+        "profit_ladders": [
+          {
+            "ratio": 1.5,
+            "percent": 0.25
+          },
+          {
+            "ratio": 2.5,
+            "percent": 0.5
+          },
+          {
+            "ratio": 4.0,
+            "percent": 0.25
+          }
+        ]
+      },
+      "regime": {
+        "vol_ratio_min": 1.0,
+        "atr_pct_max": 0.08
+      },
+      "ensemble": {
+        "enabled": true,
+        "min_consensus": 2,
+        "consensus_penalty": 0.02,
+        "rolling_k": 4,
+        "rolling_n": 5,
+        "lead_lag_window": 3,
+        "dynamic_thresholds": true,
+        "confluence_mode": "adaptive",
+        "m1m2_backoff_bars": 30,
+        "m1m2_epsilon": 0.05,
+        "solo_fib_min_entry": 0.44,
+        "vol_override_atr_pct": 0.05
+      },
+      "weights": {
+        "temporal": 0.1,
+        "po3": 0.1,
+        "bojan": 0.08
+      },
+      "fib": {
+        "tolerance": 0.02
+      },
+      "temporal": {
+        "fib_nums": [
+          21,
+          34,
+          55,
+          89,
+          144
+        ],
+        "tolerance_bars": 3,
+        "pivot_window": 5
+      },
+      "bojan": {
+        "lookback": 50,
+        "wick_magnet_threshold": 0.7,
+        "trap_body_min": 1.25,
+        "unfinished_threshold": 0.1,
+        "phob_confidence_min": 0.3,
+        "fib_prime_zones": [
+          0.705,
+          0.786
+        ]
+      },
+      "max_bars_held": 8,
+      "profile_name": "ETH_v1.6.2",
+      "version": "1.6.2",
+      "description": "ETH 1D profile with PO3, Bojan microstructure, Wyckoff M1/M2, and Fibonacci enhancements"
+    }
+  }
+}

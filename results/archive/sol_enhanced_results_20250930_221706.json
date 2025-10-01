@@ -1,0 +1,97 @@
+{
+  "period": {
+    "start": "2025-08-07",
+    "end": "2025-09-30",
+    "days": 54,
+    "years": 0.14784394250513347
+  },
+  "performance": {
+    "total_trades": 6,
+    "winning_trades": 3,
+    "losing_trades": 3,
+    "win_rate": 50.0,
+    "avg_win": 3.978337309388815,
+    "avg_loss": -2.442342983793265,
+    "final_balance": 10426.601051289153,
+    "total_return": 4.266010512891527,
+    "max_drawdown": 7.152412060398659,
+    "profit_factor": 1.6289019747791351
+  },
+  "engine_usage": {
+    "smc": 57,
+    "wyckoff": 18,
+    "hob": 9,
+    "momentum": 4,
+    "macro": 0,
+    "counter_trend_blocked": 2,
+    "solbtc_veto": 0
+  },
+  "trades": [
+    {
+      "entry_time": "2025-09-03 12:00:00",
+      "exit_time": "2025-09-07 16:00:00",
+      "side": "short",
+      "entry_price": 211.44,
+      "exit_price": 203.06,
+      "pnl_pct": 3.6632992811199365,
+      "balance": 10366.329928111994,
+      "engines_used": 2,
+      "exit_type": "signal_reversal"
+    },
+    {
+      "entry_time": "2025-09-07 16:00:00",
+      "exit_time": "2025-09-07 20:00:00",
+      "side": "short",
+      "entry_price": 203.06,
+      "exit_price": 206.34,
+      "pnl_pct": -1.9152861223283744,
+      "balance": 10167.785049604092,
+      "engines_used": 2,
+      "exit_type": "signal_reversal"
+    },
+    {
+      "entry_time": "2025-09-07 20:00:00",
+      "exit_time": "2025-09-17 12:00:00",
+      "side": "short",
+      "entry_price": 206.34,
+      "exit_price": 233.93,
+      "pnl_pct": -3.0,
+      "balance": 9862.75149811597,
+      "engines_used": 2,
+      "exit_type": "stop_loss"
+    },
+    {
+      "entry_time": "2025-09-17 12:00:00",
+      "exit_time": "2025-09-17 16:00:00",
+      "side": "short",
+      "entry_price": 233.93,
+      "exit_price": 238.87,
+      "pnl_pct": -2.4117428290514216,
+      "balance": 9624.887296112996,
+      "engines_used": 2,
+      "exit_type": "signal_reversal"
+    },
+    {
+      "entry_time": "2025-09-17 16:00:00",
+      "exit_time": "2025-09-21 20:00:00",
+      "side": "short",
+      "entry_price": 238.87,
+      "exit_price": 236.31,
+      "pnl_pct": 0.7717126470465077,
+      "balance": 9699.163768641074,
+      "engines_used": 2,
+      "exit_type": "signal_reversal"
+    },
+    {
+      "entry_time": "2025-09-21 20:00:00",
+      "exit_time": "2025-09-21 20:00:00",
+      "side": "short",
+      "entry_price": 236.31,
+      "exit_price": 210.82,
+      "pnl_pct": 7.5,
+      "balance": 10426.601051289153,
+      "engines_used": 2,
+      "exit_type": "take_profit"
+    }
+  ]
+}

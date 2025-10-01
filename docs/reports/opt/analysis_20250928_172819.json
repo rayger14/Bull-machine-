@@ -1,0 +1,105 @@
+{
+  "performance_summary": {
+    "total_configs_with_trades": 2,
+    "avg_pnl_pct": 0.6905825184449745,
+    "median_pnl_pct": 0.6905825184449745,
+    "avg_win_rate": 60.0,
+    "avg_profit_factor": 1.7957228040407403,
+    "avg_sharpe": 17.644985532719105,
+    "avg_max_dd": 0.3275960258495449,
+    "avg_trades": 15.0
+  },
+  "top_performers": [
+    {
+      "rank": 1,
+      "utility_score": 36.743415045602845,
+      "asset": "ETH",
+      "cfg": "test_thresh0.3_min3_cd7_r0.025_sl1.4_tp2.5_tr0.8",
+      "fold": "2023-01-01..2025-01-01",
+      "trades": 15,
+      "win_rate": 60.0,
+      "pnl_pct": 0.7672190006600312,
+      "profit_factor": 1.7952399323046964,
+      "sharpe_ratio": 17.637496536058777,
+      "max_dd_pct": 0.36435874585370187,
+      "strategy": "stage_a"
+    },
+    {
+      "rank": 2,
+      "utility_score": 36.73878473688241,
+      "asset": "ETH",
+      "cfg": "test_thresh0.25_min3_cd7_r0.02_sl1.2_tp2.0_tr0.8",
+      "fold": "2023-01-01..2025-01-01",
+      "trades": 15,
+      "win_rate": 60.0,
+      "pnl_pct": 0.6139460362299177,
+      "profit_factor": 1.7962056757767844,
+      "sharpe_ratio": 17.65247452937943,
+      "max_dd_pct": 0.2908333058453879,
+      "strategy": "stage_a"
+    }
+  ],
+  "parameter_insights": {
+    "entry_threshold": {
+      "0.3": {
+        "avg_pnl": 0.7672190006600312,
+        "avg_utility": 82.64053120846748,
+        "sample_count": 1
+      },
+      "0.25": {
+        "avg_pnl": 0.6139460362299177,
+        "avg_utility": 66.16640129381025,
+        "sample_count": 1
+      }
+    },
+    "risk_pct": {
+      "0.025": {
+        "avg_pnl": 0.7672190006600312,
+        "avg_utility": 82.64053120846748,
+        "sample_count": 1
+      },
+      "0.02": {
+        "avg_pnl": 0.6139460362299177,
+        "avg_utility": 66.16640129381025,
+        "sample_count": 1
+      }
+    },
+    "cooldown_days": {
+      "7": {
+        "avg_pnl": 0.6905825184449745,
+        "avg_utility": 74.40346625113887,
+        "sample_count": 2
+      }
+    },
+    "sl_atr_multiplier": {
+      "1.4": {
+        "avg_pnl": 0.7672190006600312,
+        "avg_utility": 82.64053120846748,
+        "sample_count": 1
+      },
+      "1.2": {
+        "avg_pnl": 0.6139460362299177,
+        "avg_utility": 66.16640129381025,
+        "sample_count": 1
+      }
+    },
+    "tp_atr_multiplier": {
+      "2.5": {
+        "avg_pnl": 0.7672190006600312,
+        "avg_utility": 82.64053120846748,
+        "sample_count": 1
+      },
+      "2.0": {
+        "avg_pnl": 0.6139460362299177,
+        "avg_utility": 66.16640129381025,
+        "sample_count": 1
+      }
+    }
+  },
+  "risk_analysis": {
+    "max_drawdown_seen": 0.36435874585370187,
+    "configs_with_high_dd": 0,
+    "configs_with_low_trades": 0,
+    "negative_pnl_configs": 0
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "version": "1.7.1-enhanced",
+  "description": "Asymmetric R/R management system",
+
+  "stop_loss": {
+    "initial_sl_atr": 0.8,
+    "max_sl_pct": 0.03,
+    "dynamic_adjustment": true,
+    "volatility_scaling": true
+  },
+
+  "breakeven": {
+    "trigger_r": 0.7,
+    "buffer_atr": 0.1,
+    "partial_close_pct": 0.0
+  },
+
+  "take_profit": {
+    "tp1_r": 1.2,
+    "tp1_close_pct": 0.5,
+    "tp2_r": 2.0,
+    "tp2_close_pct": 0.3,
+    "runner_pct": 0.2
+  },
+
+  "trailing_stops": {
+    "activation_r": 1.0,
+    "trail_atr": 1.1,
+    "step_size_r": 0.2,
+    "max_trail_distance": 0.05
+  },
+
+  "risk_reward": {
+    "min_expected_rr": 1.7,
+    "target_rr": 2.5,
+    "asymmetric_management": true,
+    "skew_bias": "reward"
+  },
+
+  "time_exits": {
+    "max_bars_in_trade": 20,
+    "weekend_close": false,
+    "session_boundaries": true
+  },
+
+  "dynamic_exits": {
+    "momentum_reversal": true,
+    "volume_exhaustion": true,
+    "correlation_breakdown": true,
+    "volatility_compression": false
+  }
+}

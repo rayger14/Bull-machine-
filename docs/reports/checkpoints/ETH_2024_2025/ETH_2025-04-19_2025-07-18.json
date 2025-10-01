@@ -1,0 +1,787 @@
+{
+  "chunk_info": {
+    "asset": "ETH",
+    "start": "2025-04-19 00:00:00",
+    "end": "2025-07-18 00:00:00",
+    "primary_tf": "4H",
+    "ltf": "1H",
+    "htf": "1D",
+    "config_version": "1.7.1-enhanced"
+  },
+  "performance": {
+    "total_trades": 50,
+    "final_balance": 5784.680258295295,
+    "total_return": -42.15319741704705,
+    "win_rate": 42.0,
+    "profit_factor": 0.82891400304142,
+    "max_drawdown": 69.10950357988727
+  },
+  "engine_utilization": {
+    "smc": 37,
+    "wyckoff": 24,
+    "momentum": 18,
+    "hob": 17
+  },
+  "trades": [
+    {
+      "entry_time": "2025-04-28 04:00:00",
+      "entry_price": 2492.296480271115,
+      "exit_price": 2759.8095751846417,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "pnl": 10.724223391328893,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 11072.422339132889
+    },
+    {
+      "entry_time": "2025-04-28 08:00:00",
+      "entry_price": 2472.6133954114894,
+      "exit_price": 2733.083906373116,
+      "direction": "bullish",
+      "engines": [
+        "hob"
+      ],
+      "pnl": 10.524844035009293,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 12237.777521224152
+    },
+    {
+      "entry_time": "2025-04-28 20:00:00",
+      "entry_price": 2471.336827921833,
+      "exit_price": 2722.656246180334,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "wyckoff"
+      ],
+      "pnl": 10.159996306210726,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 13481.135265342813
+    },
+    {
+      "entry_time": "2025-04-29 00:00:00",
+      "entry_price": 2494.351900082793,
+      "exit_price": 2596.909043226036,
+      "direction": "bearish",
+      "engines": [
+        "smc",
+        "wyckoff",
+        "momentum"
+      ],
+      "pnl": 4.102199759753784,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 14034.158363809789
+    },
+    {
+      "entry_time": "2025-04-30 00:00:00",
+      "entry_price": 2281.621052950095,
+      "exit_price": 2541.5334159404947,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "wyckoff"
+      ],
+      "pnl": 11.382190775321785,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 15631.553042489399
+    },
+    {
+      "entry_time": "2025-04-30 12:00:00",
+      "entry_price": 2264.9547524636146,
+      "exit_price": 2166.8305925109225,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "wyckoff"
+      ],
+      "pnl": -4.341654037625876,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 14952.885088676527
+    },
+    {
+      "entry_time": "2025-05-01 04:00:00",
+      "entry_price": 2293.3452746779794,
+      "exit_price": 2192.1841621384187,
+      "direction": "bullish",
+      "engines": [
+        "smc"
+      ],
+      "pnl": -4.420447055155981,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 14291.900720113268
+    },
+    {
+      "entry_time": "2025-05-01 16:00:00",
+      "entry_price": 2454.7367361235088,
+      "exit_price": 2356.918210708171,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff",
+        "hob",
+        "momentum"
+      ],
+      "pnl": -3.9942636430816116,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 13721.044525744464
+    },
+    {
+      "entry_time": "2025-05-02 12:00:00",
+      "entry_price": 2792.8976282076837,
+      "exit_price": 2703.5333422441345,
+      "direction": "bullish",
+      "engines": [
+        "smc"
+      ],
+      "pnl": -3.20907287152199,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 13280.726208179345
+    },
+    {
+      "entry_time": "2025-05-02 16:00:00",
+      "entry_price": 2812.120758296729,
+      "exit_price": 3039.7178877541724,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "pnl": 8.084058711406351,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 14354.347912149693
+    },
+    {
+      "entry_time": "2025-05-03 00:00:00",
+      "entry_price": 2752.527273451695,
+      "exit_price": 2664.180860519004,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "hob",
+        "momentum"
+      ],
+      "pnl": -3.2190221408220987,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 13892.27827468696
+    },
+    {
+      "entry_time": "2025-05-03 16:00:00",
+      "entry_price": 2571.3460877307475,
+      "exit_price": 2806.4217083037747,
+      "direction": "bullish",
+      "engines": [
+        "smc"
+      ],
+      "pnl": 9.132747940770104,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 15161.025032744486
+    },
+    {
+      "entry_time": "2025-05-04 00:00:00",
+      "entry_price": 2651.423294786622,
+      "exit_price": 2552.827375401735,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "wyckoff",
+        "hob"
+      ],
+      "pnl": -3.7279784979307835,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 14595.82527945787
+    },
+    {
+      "entry_time": "2025-05-04 08:00:00",
+      "entry_price": 2671.265290783741,
+      "exit_price": 2576.4382543199677,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "hob",
+        "momentum"
+      ],
+      "pnl": -3.559267135047033,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 14076.320867197239
+    },
+    {
+      "entry_time": "2025-05-04 12:00:00",
+      "entry_price": 2881.9790791566593,
+      "exit_price": 3127.3709584872336,
+      "direction": "bullish",
+      "engines": [
+        "smc"
+      ],
+      "pnl": 8.505325231702658,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 15273.557737610392
+    },
+    {
+      "entry_time": "2025-05-04 16:00:00",
+      "entry_price": 3025.9363604111363,
+      "exit_price": 2927.7645103630716,
+      "direction": "bullish",
+      "engines": [
+        "momentum"
+      ],
+      "pnl": -3.253721157852636,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 14776.598757944925
+    },
+    {
+      "entry_time": "2025-05-04 20:00:00",
+      "entry_price": 2788.3367735080205,
+      "exit_price": 2683.3198648164507,
+      "direction": "bullish",
+      "engines": [
+        "smc"
+      ],
+      "pnl": -3.7756671383577136,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 14218.683574474224
+    },
+    {
+      "entry_time": "2025-05-05 00:00:00",
+      "entry_price": 2879.5356207242944,
+      "exit_price": 3158.23019176979,
+      "direction": "bullish",
+      "engines": [
+        "smc"
+      ],
+      "pnl": 9.669080409257802,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 15593.499522428068
+    },
+    {
+      "entry_time": "2025-05-07 04:00:00",
+      "entry_price": 3125.7131551778593,
+      "exit_price": 2974.3176782270916,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "wyckoff",
+        "hob",
+        "momentum"
+      ],
+      "pnl": -4.852924917559637,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 14836.758698584614
+    },
+    {
+      "entry_time": "2025-05-07 12:00:00",
+      "entry_price": 2942.9046452423713,
+      "exit_price": 3318.8157061391917,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "hob",
+        "momentum"
+      ],
+      "pnl": 12.764095642500584,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 16730.53676911898
+    },
+    {
+      "entry_time": "2025-05-08 00:00:00",
+      "entry_price": 2642.7301397431675,
+      "exit_price": 2499.988331238156,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "wyckoff",
+        "momentum"
+      ],
+      "pnl": -5.410675963664922,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 15825.301637560136
+    },
+    {
+      "entry_time": "2025-05-09 04:00:00",
+      "entry_price": 2580.5777597697547,
+      "exit_price": 2432.221669619891,
+      "direction": "bullish",
+      "engines": [
+        "smc"
+      ],
+      "pnl": -5.758323644860844,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 14914.02955149396
+    },
+    {
+      "entry_time": "2025-05-09 08:00:00",
+      "entry_price": 2797.785942461651,
+      "exit_price": 3159.347631690873,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "wyckoff",
+        "hob"
+      ],
+      "pnl": 12.913761246481378,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 16839.991720003567
+    },
+    {
+      "entry_time": "2025-05-09 16:00:00",
+      "entry_price": 2676.930166607274,
+      "exit_price": 2538.3909411851228,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff"
+      ],
+      "pnl": -5.184677185702321,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 15966.892511222382
+    },
+    {
+      "entry_time": "2025-05-10 08:00:00",
+      "entry_price": 2565.5824019158595,
+      "exit_price": 2228.7130159655308,
+      "direction": "bearish",
+      "engines": [
+        "hob"
+      ],
+      "pnl": -13.139703057238389,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 13868.890247779327
+    },
+    {
+      "entry_time": "2025-05-11 20:00:00",
+      "entry_price": 2064.069794023834,
+      "exit_price": 1834.569488438374,
+      "direction": "bearish",
+      "engines": [
+        "smc",
+        "wyckoff",
+        "momentum"
+      ],
+      "pnl": -11.128199869679289,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 12325.532421299984
+    },
+    {
+      "entry_time": "2025-05-12 04:00:00",
+      "entry_price": 2080.69984069085,
+      "exit_price": 2163.4547071368634,
+      "direction": "bearish",
+      "engines": [
+        "wyckoff",
+        "momentum"
+      ],
+      "pnl": 3.967886151639075,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 12814.59551536053
+    },
+    {
+      "entry_time": "2025-05-12 16:00:00",
+      "entry_price": 2086.1064695279333,
+      "exit_price": 1866.5371324338255,
+      "direction": "bearish",
+      "engines": [
+        "smc"
+      ],
+      "pnl": -10.534692873339143,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 11464.617234856607
+    },
+    {
+      "entry_time": "2025-05-12 20:00:00",
+      "entry_price": 2033.6278934714812,
+      "exit_price": 2122.5230259167156,
+      "direction": "bearish",
+      "engines": [
+        "momentum"
+      ],
+      "pnl": 4.361883514431905,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 11964.690484016537
+    },
+    {
+      "entry_time": "2025-05-13 00:00:00",
+      "entry_price": 2061.1298197615884,
+      "exit_price": 2287.6416277038234,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "wyckoff",
+        "momentum"
+      ],
+      "pnl": 10.980316467781282,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 13278.451363552065
+    },
+    {
+      "entry_time": "2025-05-13 04:00:00",
+      "entry_price": 2181.009739887711,
+      "exit_price": 1954.4724912809877,
+      "direction": "bearish",
+      "engines": [
+        "smc",
+        "hob",
+        "momentum"
+      ],
+      "pnl": -10.396180912127036,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 11897.999537468393
+    },
+    {
+      "entry_time": "2025-05-13 08:00:00",
+      "entry_price": 2142.9975740289988,
+      "exit_price": 1921.423459931425,
+      "direction": "bearish",
+      "engines": [
+        "smc",
+        "wyckoff"
+      ],
+      "pnl": -10.348822733531383,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 10666.696656499405
+    },
+    {
+      "entry_time": "2025-05-13 16:00:00",
+      "entry_price": 2182.284163311879,
+      "exit_price": 2270.0136130842307,
+      "direction": "bearish",
+      "engines": [
+        "wyckoff",
+        "hob"
+      ],
+      "pnl": 4.010699527746719,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 11094.505808927803
+    },
+    {
+      "entry_time": "2025-05-15 00:00:00",
+      "entry_price": 2534.2789564958543,
+      "exit_price": 2438.319650565728,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "wyckoff",
+        "momentum"
+      ],
+      "pnl": -3.795828960964479,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 10673.377344356635
+    },
+    {
+      "entry_time": "2025-05-15 04:00:00",
+      "entry_price": 2584.802760977189,
+      "exit_price": 2489.098938885873,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "wyckoff",
+        "momentum"
+      ],
+      "pnl": -3.711933026328277,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 10277.188725686821
+    },
+    {
+      "entry_time": "2025-05-15 08:00:00",
+      "entry_price": 2422.0449484805577,
+      "exit_price": 2167.9924378982937,
+      "direction": "bearish",
+      "engines": [
+        "smc"
+      ],
+      "pnl": -10.498549065148579,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 9198.233024802672
+    },
+    {
+      "entry_time": "2025-05-15 16:00:00",
+      "entry_price": 2321.5875289622973,
+      "exit_price": 2064.1974932545804,
+      "direction": "bearish",
+      "engines": [
+        "wyckoff"
+      ],
+      "pnl": -11.096186610448521,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 8177.579923506664
+    },
+    {
+      "entry_time": "2025-05-16 04:00:00",
+      "entry_price": 2388.8627131854914,
+      "exit_price": 2083.2117703336685,
+      "direction": "bearish",
+      "engines": [
+        "smc",
+        "hob"
+      ],
+      "pnl": -12.804205827437743,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 7130.505758397645
+    },
+    {
+      "entry_time": "2025-05-16 16:00:00",
+      "entry_price": 2341.0650984135195,
+      "exit_price": 2639.8667851473956,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "wyckoff",
+        "momentum"
+      ],
+      "pnl": 12.754118289288124,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 8039.938897448182
+    },
+    {
+      "entry_time": "2025-05-16 20:00:00",
+      "entry_price": 2231.9388253488155,
+      "exit_price": 1927.4226451434988,
+      "direction": "bearish",
+      "engines": [
+        "smc",
+        "wyckoff"
+      ],
+      "pnl": -13.65294698086403,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 6942.250302485718
+    },
+    {
+      "entry_time": "2025-05-17 00:00:00",
+      "entry_price": 2106.19183498097,
+      "exit_price": 2232.0482789179337,
+      "direction": "bearish",
+      "engines": [
+        "smc"
+      ],
+      "pnl": 5.966170144875229,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 7356.436767415131
+    },
+    {
+      "entry_time": "2025-05-17 04:00:00",
+      "entry_price": 2229.6844228032446,
+      "exit_price": 1915.3499735300452,
+      "direction": "bearish",
+      "engines": [
+        "smc"
+      ],
+      "pnl": -14.107085243587125,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 6318.6579617452935
+    },
+    {
+      "entry_time": "2025-05-18 04:00:00",
+      "entry_price": 2160.8827793181713,
+      "exit_price": 2267.4183182312972,
+      "direction": "bearish",
+      "engines": [
+        "smc",
+        "hob"
+      ],
+      "pnl": 4.920810937561184,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 6629.5871738339365
+    },
+    {
+      "entry_time": "2025-05-19 00:00:00",
+      "entry_price": 2076.5331065138616,
+      "exit_price": 2178.926132452655,
+      "direction": "bearish",
+      "engines": [
+        "smc"
+      ],
+      "pnl": 4.9215854367778835,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 6955.867970699842
+    },
+    {
+      "entry_time": "2025-05-19 16:00:00",
+      "entry_price": 2177.69198526093,
+      "exit_price": 1953.305833600693,
+      "direction": "bearish",
+      "engines": [
+        "smc",
+        "hob"
+      ],
+      "pnl": -10.313226654822122,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 6238.4935410713915
+    },
+    {
+      "entry_time": "2025-05-20 12:00:00",
+      "entry_price": 1911.9109164260776,
+      "exit_price": 1677.25651975042,
+      "direction": "bearish",
+      "engines": [
+        "smc",
+        "hob",
+        "momentum"
+      ],
+      "pnl": -12.28266632647537,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 5472.240195622875
+    },
+    {
+      "entry_time": "2025-05-20 16:00:00",
+      "entry_price": 1990.3512968866635,
+      "exit_price": 1895.964317104972,
+      "direction": "bullish",
+      "engines": [
+        "wyckoff",
+        "hob",
+        "momentum"
+      ],
+      "pnl": -4.751602160066314,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 5212.221112283642
+    },
+    {
+      "entry_time": "2025-05-20 20:00:00",
+      "entry_price": 2079.129580427304,
+      "exit_price": 2171.709091831424,
+      "direction": "bearish",
+      "engines": [
+        "wyckoff"
+      ],
+      "pnl": 4.443426416306756,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 5443.822322063171
+    },
+    {
+      "entry_time": "2025-05-21 00:00:00",
+      "entry_price": 2135.2092865786008,
+      "exit_price": 2040.543581996373,
+      "direction": "bullish",
+      "engines": [
+        "smc",
+        "wyckoff"
+      ],
+      "pnl": -4.442931240939615,
+      "r_multiple": -1.0,
+      "exit_type": "stop_loss",
+      "cost_bps": 25,
+      "exit_balance": 5201.957039414981
+    },
+    {
+      "entry_time": "2025-05-21 04:00:00",
+      "entry_price": 2163.4314967003056,
+      "exit_price": 2405.981911055681,
+      "direction": "bullish",
+      "engines": [
+        "smc"
+      ],
+      "pnl": 11.201999833236757,
+      "r_multiple": 2.5,
+      "exit_type": "take_profit",
+      "cost_bps": 25,
+      "exit_balance": 5784.680258295295
+    }
+  ],
+  "health_check": {
+    "data_quality": "PASS",
+    "right_edge_aligned": true,
+    "vix_guard_active": true,
+    "ci_health_active": true
+  },
+  "metadata": {
+    "chunk_index": 4,
+    "total_chunks": 5,
+    "runtime_minutes": 0.01588145097096761,
+    "timestamp": "2025-09-30T15:27:14.522187",
+    "git_commit": "v1.7.1-enhanced",
+    "seed": 42
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "summary": {
+    "total_files": 7,
+    "successful": 7,
+    "failed": 0,
+    "best_return": null,
+    "worst_return": null,
+    "all_trades": []
+  },
+  "results": {
+    "1D_Desktop_1D": {
+      "timeframe": "1D",
+      "label": "Desktop_1D",
+      "file": "temp_eth_data/eth_1D_Desktop_1D.csv",
+      "success": true,
+      "output": ""
+    },
+    "1D_Downloads_1D": {
+      "timeframe": "1D",
+      "label": "Downloads_1D",
+      "file": "temp_eth_data/eth_1D_Downloads_1D.csv",
+      "success": true,
+      "output": ""
+    },
+    "4H_Desktop_4H": {
+      "timeframe": "4H",
+      "label": "Desktop_4H",
+      "file": "temp_eth_data/eth_4H_Desktop_4H.csv",
+      "success": true,
+      "output": ""
+    },
+    "4H_Downloads_4H": {
+      "timeframe": "4H",
+      "label": "Downloads_4H",
+      "file": "temp_eth_data/eth_4H_Downloads_4H.csv",
+      "success": true,
+      "output": ""
+    },
+    "6H_Desktop_6H": {
+      "timeframe": "6H",
+      "label": "Desktop_6H",
+      "file": "temp_eth_data/eth_6H_Desktop_6H.csv",
+      "success": true,
+      "output": ""
+    },
+    "12H_Desktop_12H": {
+      "timeframe": "12H",
+      "label": "Desktop_12H",
+      "file": "temp_eth_data/eth_12H_Desktop_12H.csv",
+      "success": true,
+      "output": ""
+    },
+    "1H_Downloads_1H": {
+      "timeframe": "1H",
+      "label": "Downloads_1H",
+      "file": "temp_eth_data/eth_1H_Downloads_1H.csv",
+      "success": true,
+      "output": ""
+    }
+  },
+  "version": "1.4.2",
+  "timestamp": "2025-09-24T14:35:33.612878"
+}

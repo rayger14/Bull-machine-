@@ -1,0 +1,50 @@
+{
+  "version": "1.7.1-enhanced",
+  "description": "Directional momentum bias with trend alignment",
+
+  "momentum_calculation": {
+    "rsi_period": 14,
+    "macd_fast": 12,
+    "macd_slow": 26,
+    "macd_signal": 9,
+    "stoch_k": 14,
+    "stoch_d": 3
+  },
+
+  "momentum_weights": {
+    "base_weight": 0.06,
+    "with_trend_bonus": 0.02,
+    "countertrend_bonus": 0.00,
+    "max_delta_contribution": 0.06
+  },
+
+  "trend_alignment": {
+    "trend_timeframe": "1D",
+    "lookback_periods": 20,
+    "momentum_threshold": 0.02,
+    "correlation_window": 14
+  },
+
+  "signal_generation": {
+    "rsi_oversold": 30,
+    "rsi_overbought": 70,
+    "rsi_extreme_oversold": 20,
+    "rsi_extreme_overbought": 80,
+    "macd_divergence_window": 10,
+    "momentum_persistence_bars": 3
+  },
+
+  "filters": {
+    "min_momentum_strength": 0.3,
+    "max_momentum_age_bars": 5,
+    "require_volume_confirmation": true,
+    "exclude_whipsaw_conditions": true
+  },
+
+  "regime_adjustments": {
+    "trending_market_boost": 1.2,
+    "ranging_market_reduction": 0.7,
+    "high_volatility_reduction": 0.8,
+    "low_volatility_boost": 1.1
+  }
+}

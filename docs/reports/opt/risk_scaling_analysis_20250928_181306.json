@@ -1,0 +1,92 @@
+{
+  "timestamp": "2025-09-28T18:13:06.709014",
+  "analysis_period": "2024-01-01 to 2024-12-31",
+  "results": [
+    {
+      "risk_level": "Conservative (2.5%)",
+      "risk_pct": 0.025,
+      "trades": 8,
+      "total_return_pct": 1.5010576037386425,
+      "final_balance": 10150.105760373865,
+      "profit_loss_dollar": 150.10576037386454,
+      "max_single_loss": -93.15405318559812,
+      "max_single_gain": 147.50196842076372,
+      "win_rate": 62.5,
+      "profit_factor": 2.0892662306397707,
+      "sharpe_ratio": 21.971288593269445,
+      "max_dd_pct": 0.36376721817515906
+    },
+    {
+      "risk_level": "Moderate (5.0%)",
+      "risk_pct": 0.05,
+      "trades": 8,
+      "total_return_pct": 5.88670028541074,
+      "final_balance": 10588.670028541073,
+      "profit_loss_dollar": 588.6700285410734,
+      "max_single_loss": -403.71589807518245,
+      "max_single_gain": 580.4871499907249,
+      "win_rate": 62.5,
+      "profit_factor": 2.0803245404945505,
+      "sharpe_ratio": 21.874100808147496,
+      "max_dd_pct": 0.7345373438857359
+    },
+    {
+      "risk_level": "Aggressive (7.5%)",
+      "risk_pct": 0.075,
+      "trades": 8,
+      "total_return_pct": 12.761995191983932,
+      "final_balance": 11276.199519198393,
+      "profit_loss_dollar": 1276.1995191983933,
+      "max_single_loss": -1026.3648057678104,
+      "max_single_gain": 1272.4841677675981,
+      "win_rate": 62.5,
+      "profit_factor": 2.071429871824119,
+      "sharpe_ratio": 21.775935664994584,
+      "max_dd_pct": 1.1123586689266698
+    },
+    {
+      "risk_level": "High Risk (10%)",
+      "risk_pct": 0.1,
+      "trades": 8,
+      "total_return_pct": 21.28089016170758,
+      "final_balance": 12128.089016170758,
+      "profit_loss_dollar": 2128.0890161707575,
+      "max_single_loss": -2135.685629561046,
+      "max_single_gain": 2181.678759641909,
+      "win_rate": 62.5,
+      "profit_factor": 2.0625821273977847,
+      "sharpe_ratio": 21.67681057101126,
+      "max_dd_pct": 1.4972794246999088
+    },
+    {
+      "risk_level": "Maximum (12.5%)",
+      "risk_pct": 0.125,
+      "trades": 8,
+      "total_return_pct": 29.840598118415905,
+      "final_balance": 12984.059811841591,
+      "profit_loss_dollar": 2984.059811841591,
+      "max_single_loss": -4014.531296612263,
+      "max_single_gain": 3252.5092420720507,
+      "win_rate": 62.5,
+      "profit_factor": 2.0537812050287862,
+      "sharpe_ratio": 21.576743065018462,
+      "max_dd_pct": 1.8893477799419411
+    }
+  ],
+  "recommendations": [
+    {
+      "risk_level": "Aggressive (7.5%)",
+      "risk_pct": 0.075,
+      "trades": 8,
+      "total_return_pct": 12.761995191983932,
+      "final_balance": 11276.199519198393,
+      "profit_loss_dollar": 1276.1995191983933,
+      "max_single_loss": -1026.3648057678104,
+      "max_single_gain": 1272.4841677675981,
+      "win_rate": 62.5,
+      "profit_factor": 2.071429871824119,
+      "sharpe_ratio": 21.775935664994584,
+      "max_dd_pct": 1.1123586689266698
+    }
+  ]
+}

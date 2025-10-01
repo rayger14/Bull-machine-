@@ -1,0 +1,251 @@
+{
+  "asset": "ETH",
+  "version": "1.7.0-ultra-calibration",
+  "description": "v1.7 ultra-low thresholds for signal validation with real data",
+
+  "risk_management": {
+    "risk_pct": 0.075,
+    "max_positions": 12,
+    "max_correlation": 0.7,
+    "portfolio_heat_limit": 0.25
+  },
+
+  "domains": {
+    "wyckoff": {
+      "enabled": true,
+      "weight": 0.22,
+      "accumulation_threshold": 0.15,
+      "distribution_threshold": 0.85
+    },
+    "liquidity": {
+      "enabled": true,
+      "weight": 0.18,
+      "hob_detection": {
+        "min_reaction_pips": 15,
+        "max_consolidation_bars": 48,
+        "volume_threshold": 1.1,
+        "institutional_threshold": 0.3,
+        "quality_weights": {
+          "volume_surge": 0.3,
+          "level_strength": 0.25,
+          "reaction_speed": 0.2,
+          "wick_presence": 0.15,
+          "confluence": 0.1
+        }
+      },
+      "bojan_engine": {
+        "min_reaction_strength": 0.2,
+        "reaction_timeframe_bars": 24,
+        "require_volume_confirmation": false,
+        "partial_exit_levels": [0.5, 1.0, 1.5],
+        "partial_exit_percentages": [30, 40, 30],
+        "max_hold_bars": 72,
+        "adverse_move_threshold": 0.5
+      },
+      "wick_magnets": {
+        "min_wick_ratio": 1.1,
+        "min_volume_ratio": 1.05,
+        "institutional_ratio": 1.5,
+        "magnet_decay_hours": 168,
+        "min_distance_pct": 0.002
+      }
+    },
+    "smc": {
+      "enabled": true,
+      "weight": 0.25,
+      "order_blocks": {
+        "min_displacement_pct": 0.005,
+        "min_volume_ratio": 1.05,
+        "lookback_bars": 20,
+        "min_reaction_bars": 1
+      },
+      "fvg": {
+        "min_gap_pct": 0.002,
+        "min_volume_ratio": 1.05,
+        "lookback_bars": 40,
+        "fill_threshold": 0.5
+      },
+      "liquidity_sweeps": {
+        "min_pip_sweep": 5,
+        "min_wick_ratio": 0.3,
+        "lookback_bars": 20,
+        "min_volume_ratio": 1.05,
+        "reversal_bars": 1
+      },
+      "bos": {
+        "swing_lookback": 3,
+        "min_break_pct": 0.001,
+        "min_volume_ratio": 1.05,
+        "follow_through_bars": 1
+      },
+      "min_confluence": 1,
+      "proximity_pct": 0.05
+    },
+    "momentum": {
+      "enabled": true,
+      "weight": 0.12,
+      "rsi_period": 14,
+      "macd_fast": 12,
+      "macd_slow": 26,
+      "macd_signal": 9
+    },
+    "temporal": {
+      "enabled": true,
+      "weight": 0.08,
+      "max_projection_days": 25,
+      "min_cycle_bars": 10,
+      "max_cycle_bars": 600,
+      "min_confidence": 0.3,
+      "major_cycles": [21, 34, 55, 89, 144, 233, 377],
+      "price_time_ratios": [0.618, 1.0, 1.618, 2.618]
+    },
+    "macro_context": {
+      "enabled": true,
+      "weight": 0.15,
+      "smt": {
+        "usdt_stagnation_hours": 50,
+        "usdt_range_pct": 0.003,
+        "btc_wedge_touches": 2,
+        "btc_wedge_angle": 30,
+        "btc_break_volume": 1.1,
+        "total3_lookback": 144,
+        "total3_correlation": 0.4,
+        "min_hps_score": 0,
+        "suppression_cooldown": 10
+      },
+      "smt_analysis": {
+        "regime_lookback_hours": 144,
+        "regime_confidence": 0.4,
+        "crt_min_hours": 30,
+        "crt_max_volatility": 0.25
+      },
+      "context_filter": {
+        "regime_confidence": 0.4,
+        "crt_enhancement": 1.1,
+        "premium_discount_factor": 0.9
+      },
+      "macro_pulse": {
+        "enabled": true,
+        "veto_threshold": 0.8,
+        "boost_cap": 0.08,
+        "series": {
+          "DXY": "DXY_1D",
+          "WTI": "WTI_1D",
+          "GOLD": "GOLD_1D",
+          "US2Y": "US2Y_1D",
+          "US10Y": "US10Y_1D",
+          "VIX": "VIX_1D",
+          "MOVE": "MOVE_1D",
+          "USDJPY": "USDJPY_1D",
+          "HYG": "HYG_1D",
+          "ETHD": "ETH.D_1D",
+          "USDT": "USDT.D_4H",
+          "BTCD_W": "BTC.D_1W",
+          "TOTAL": "TOTAL_4H",
+          "TOTAL3": "TOTAL3_4H",
+          "ETHBTC": "ETHBTC_1D"
+        },
+        "thresholds": {
+          "dxy_time_shift_days": [100, 180, 220],
+          "dxy_breakout_len": 18,
+          "oil_dxy_stagflation_veto": 0.9,
+          "yields_spike_std": 2.5,
+          "vix_spike": 30.0,
+          "move_spike": 150.0,
+          "usd_jpy_break_level": 120.0,
+          "hyg_break_len": 20,
+          "usdt_sfp_lookback": 60,
+          "wolfe_min_points": 2,
+          "ethbtc_ma_length": 60
+        },
+        "weights": {
+          "boost_macro": 0.04,
+          "boost_context_max": 0.08
+        }
+      }
+    }
+  },
+
+  "fusion": {
+    "domain_weights": {
+      "wyckoff": 0.22,
+      "liquidity": 0.18,
+      "smc": 0.25,
+      "momentum": 0.12,
+      "temporal": 0.08,
+      "macro_context": 0.15
+    },
+    "min_domains": 1,
+    "min_confidence": 0.30,
+    "min_strength": 0.25,
+    "veto_thresholds": {
+      "macro_regime_conflict": 0.9,
+      "low_volume_threshold": 0.1,
+      "high_volatility_threshold": 5.0,
+      "liquidity_grab_protection": 0.8
+    },
+    "quality_weights": {
+      "domain_confluence": 0.28,
+      "signal_strength": 0.22,
+      "confidence_consistency": 0.18,
+      "institutional_quality": 0.18,
+      "temporal_alignment": 0.14
+    }
+  },
+
+  "entry_criteria": {
+    "min_confluence": 1,
+    "entry_threshold": 0.35,
+    "max_risk_per_trade": 0.02,
+    "min_reward_risk": 1.5
+  },
+
+  "exit_criteria": {
+    "use_exit_signals": true,
+    "tp_levels": [0.5, 1.0, 1.5],
+    "tp_percentages": [40, 35, 25],
+    "sl_atr_multiplier": 1.5,
+    "trail_activation": 0.6,
+    "max_hold_days": 10
+  },
+
+  "data_requirements": {
+    "primary_timeframe": "4H",
+    "additional_timeframes": ["12H", "1D"],
+    "macro_data": ["USDT.D", "BTC.D", "TOTAL3"],
+    "min_history_bars": 400
+  },
+
+  "bounded_deltas": {
+    "max_parameter_change": 0.15,
+    "optimization_bounds": {
+      "risk_pct": [0.05, 0.10],
+      "entry_threshold": [0.25, 0.75],
+      "domain_weights": {
+        "min_weight": 0.05,
+        "max_weight": 0.35
+      }
+    }
+  },
+
+  "suppression_flags": {
+    "high_volatility_suppression": false,
+    "low_volume_suppression": false,
+    "macro_regime_suppression": false,
+    "correlation_suppression": false
+  },
+
+  "calibration_notes": {
+    "purpose": "Ultra-low thresholds for signal validation with real data",
+    "changes": [
+      "min_domains: 2 → 1",
+      "min_confidence: 0.50 → 0.30",
+      "min_strength: 0.40 → 0.25",
+      "entry_threshold: 0.55 → 0.35",
+      "All domain thresholds reduced by 50-70%",
+      "Volume requirements greatly relaxed",
+      "All suppression flags disabled"
+    ],
+    "restore_after_calibration": true
+  }
+}

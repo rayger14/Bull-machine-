@@ -1,0 +1,50 @@
+{
+  "wyckoff": {
+    "spring_wick_min_atr": 1.46,
+    "utad_wick_min_atr": 1.33,
+    "volume_spike_z": 1.07,
+    "volume_climax_z": 1.93,
+    "range_contraction_pct": 1.86,
+    "test_volume_max_z": 0.53
+  },
+  "smc": {
+    "min_displacement_atr": 1.8,
+    "ob_volume_min_z": 1.07,
+    "fvg_min_gap_pct": 0.3,
+    "bos_strength_min": 2.7,
+    "choch_strength_min": 3.38
+  },
+  "liquidity": {
+    "hob_volume_z_min_long": 1.07,
+    "hob_volume_z_min_short": 1.93,
+    "absorption_time_max": 20,
+    "sweep_wick_min_atr": 2.25,
+    "magnet_distance_max_atr": 4.5
+  },
+  "momentum": {
+    "rsi_oversold": 25,
+    "rsi_overbought": 75,
+    "macd_signal_min_atr": 0.93,
+    "momentum_lookback": 9
+  },
+  "risk": {
+    "atr_multiplier_stop": 2.5,
+    "atr_multiplier_target": 4.0,
+    "position_size_scalar": 0.5,
+    "max_spread_bps": 0.6,
+    "slippage_bps": 18.1,
+    "fee_bps": 10
+  },
+  "filters": {
+    "min_atr_percentile": 20,
+    "max_atr_percentile": 90,
+    "min_volume_z": -0.5,
+    "correlation_veto_threshold": 0.8,
+    "trend_alignment_required": true
+  },
+  "meta": {
+    "generated_from_profile": "f6216b1a283cccb9",
+    "config_version": "1.7.2",
+    "config_generated": "2025-10-01T02:30:08.303840"
+  }
+}

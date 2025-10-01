@@ -1,0 +1,34 @@
+{
+  "version": "1.7.1-enhanced",
+  "description": "Enhanced context with ETHBTC/TOTAL2 rotation gates",
+
+  "macro_context": {
+    "vix_regime_switch_threshold": 20.0,
+    "vix_hysteresis": {
+      "guard_on": 22.0,
+      "guard_off": 18.0
+    },
+    "dxy_veto_threshold": 106.0,
+    "oil_veto_threshold": 85.0
+  },
+
+  "rotation_gates": {
+    "ethbtc_short_block": true,
+    "premium_fib_min": 0.618,
+    "total2_dominance_threshold": 0.25,
+    "usdt_dominance_max": 0.7
+  },
+
+  "market_regime_detection": {
+    "trend_lookback_days": 20,
+    "volatility_window": 14,
+    "correlation_window": 30
+  },
+
+  "timeframe_hierarchy": {
+    "primary": "4H",
+    "confirmation": "1D",
+    "entry": "1H",
+    "alignment_tolerance_minutes": 5
+  }
+}

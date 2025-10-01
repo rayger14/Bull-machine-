@@ -1,0 +1,106 @@
+{
+  "timestamp": "2025-09-28T17:34:14.200542",
+  "validation": {
+    "timestamp": "2025-09-28T17:34:13.125357",
+    "config_path": "configs/v160/rc/ETH_production_v162.json",
+    "validation_status": "pass",
+    "checks": {
+      "config_completeness": {
+        "status": "pass",
+        "missing_fields": []
+      },
+      "performance_thresholds": {
+        "min_trades": {
+          "threshold": 10,
+          "actual": 15,
+          "status": "pass"
+        },
+        "min_win_rate": {
+          "threshold": 50.0,
+          "actual": 0.6,
+          "status": "fail"
+        },
+        "min_profit_factor": {
+          "threshold": 1.2,
+          "actual": 1.8,
+          "status": "pass"
+        },
+        "max_drawdown": {
+          "threshold": 20.0,
+          "actual": 7.39,
+          "status": "pass"
+        },
+        "min_sharpe": {
+          "threshold": 1.0,
+          "actual": 17.64,
+          "status": "pass"
+        }
+      },
+      "optimization_validation": {
+        "total_tested": 116,
+        "stage_a_tested": 66,
+        "stage_b_tested": 50,
+        "quality_gates_passed": true,
+        "status": "pass"
+      },
+      "git_validation": {
+        "commit_hash": "7966c717",
+        "status": "pass"
+      }
+    },
+    "deployment_ready": true
+  },
+  "health_check": {
+    "timestamp": "2025-09-28T17:34:13.125385",
+    "overall_status": "healthy",
+    "checks": {
+      "data_availability": {
+        "1D": {
+          "status": "available",
+          "rows": 1936,
+          "last_modified": "2025-09-18T02:05:13.875670"
+        },
+        "4H": {
+          "status": "available",
+          "rows": 1936,
+          "last_modified": "2025-09-18T02:05:24.039478"
+        },
+        "1H": {
+          "status": "available",
+          "rows": 1927,
+          "last_modified": "2025-09-18T02:05:32.225186"
+        }
+      },
+      "system_resources": {
+        "cpu_percent": 10.1,
+        "memory_percent": 66.7,
+        "disk_usage_percent": 3.6,
+        "status": "healthy"
+      },
+      "framework_integrity": {
+        "safe_grid_runner.py": {
+          "exists": true,
+          "size": 14610
+        },
+        "run_complete_confluence_system.py": {
+          "exists": true,
+          "size": 52644
+        },
+        "analyze_optimization_results.py": {
+          "exists": true,
+          "size": 12167
+        },
+        "metric_gates.py": {
+          "exists": true,
+          "size": 16374
+        }
+      },
+      "optimization_activity": {
+        "recent_results_24h": 184,
+        "results_file_size": 81116,
+        "status": "active"
+      }
+    }
+  },
+  "deployment_recommendation": "approved"
+}
