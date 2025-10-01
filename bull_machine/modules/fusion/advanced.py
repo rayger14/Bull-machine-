@@ -113,7 +113,7 @@ class FusionEngineV1_3:
         )
         self.base_threshold = self.config.get("signals", {}).get("enter_threshold", 0.35)
 
-    def fuse(self, modules: Dict[str, Any], sync_report: Optional[Any] = None) -> Optional[Signal]:
+    def _fuse_impl(self, modules: Dict[str, Any], sync_report: Optional[Any] = None) -> Optional[Signal]:
         # Schema validation to catch field drift early
         self._validate_modules(modules)
 
@@ -213,5 +213,6 @@ class AdvancedFusionEngine(EnhancedFusionEngineV1_4):
     """Compatibility wrapper to bridge API differences."""
 
     def fuse(self, modules: Dict[str, Any], sync_report: Optional[Any] = None) -> Optional[Signal]:
-        """Bridge method - delegate to fuse_with_mtf."""
-        return self.fuse_with_mtf(modules, sync_report)
+        """Main fusion entry point - delegate to parent's fuse_with_mtf."""
+        # Parent class only has fuse_with_mtf, so call that
+        return super().fuse_with_mtf(modules, sync_report)
