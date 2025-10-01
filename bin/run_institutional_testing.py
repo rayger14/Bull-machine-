@@ -11,6 +11,7 @@ import json
 import hashlib
 import subprocess
 import uuid
+import numpy as np
 from datetime import datetime
 from pathlib import Path
 
@@ -25,6 +26,23 @@ from tests.robustness.perturbation_tests import run_perturbation_tests
 from engine.timeframes.mtf_alignment import create_1h_integration_test
 from validation.regime_aware_validation import run_regime_validation_test
 from engine.metrics.cost_adjusted_metrics import test_cost_adjusted_metrics
+
+def convert_to_json_serializable(obj):
+    """Convert numpy types and other non-serializable objects to JSON-compatible types"""
+    if isinstance(obj, dict):
+        return {k: convert_to_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_to_json_serializable(item) for item in obj]
+    elif isinstance(obj, (np.bool_, bool)):
+        return bool(obj)
+    elif isinstance(obj, (np.integer, int)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, float)):
+        return float(obj)
+    elif isinstance(obj, (np.ndarray,)):
+        return obj.tolist()
+    else:
+        return obj
 
 def create_determinism_manifest():
     """Create manifest for full reproducibility"""
@@ -440,7 +458,7 @@ def run_comprehensive_test_suite(args):
         }
 
         with open(results_file, 'w') as f:
-            json.dump(detailed_results, f, indent=2)
+            json.dump(convert_to_json_serializable(detailed_results), f, indent=2)
 
         print(f"\n💾 Detailed results saved to {results_file}")
 

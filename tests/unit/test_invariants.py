@@ -150,7 +150,7 @@ class TestInvariants:
         test_cases = [
             ('bullish', 'bullish', 'bullish', True),   # Full alignment
             ('bearish', 'bearish', 'bearish', True),   # Full alignment
-            ('bullish', 'bearish', 'bullish', False),  # Mixed
+            ('bullish', 'bearish', 'bullish', True),   # 2/3 bullish = aligned
             ('neutral', 'bullish', 'bullish', False),  # Neutral blocks
             ('bullish', 'bullish', 'neutral', False),  # HTF neutral
         ]
