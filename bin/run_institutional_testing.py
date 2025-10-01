@@ -24,7 +24,7 @@ from tests.unit.test_invariants import run_all_unit_tests
 from tests.fixtures.golden_scenarios import create_all_fixtures, test_all_fixtures
 from tests.robustness.perturbation_tests import run_perturbation_tests
 from engine.timeframes.mtf_alignment import create_1h_integration_test
-from validation.regime_aware_validation import run_regime_validation_test
+from scripts.research.validation.regime_aware_validation import run_regime_validation_test
 from engine.metrics.cost_adjusted_metrics import test_cost_adjusted_metrics
 
 def convert_to_json_serializable(obj):
