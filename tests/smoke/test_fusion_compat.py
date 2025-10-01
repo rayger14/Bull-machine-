@@ -1,5 +1,10 @@
 """Smoke tests for v1.4.2 fusion compatibility"""
 
+import sys
+import os
+# Add parent directory to path when running directly
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+
 import pytest
 from bull_machine.modules.fusion.advanced import AdvancedFusionEngine
 from bull_machine.core.types import WyckoffResult
@@ -43,3 +48,23 @@ def test_enhanced_fusion_basic():
     engine = EnhancedFusionEngineV1_4(config)
     assert hasattr(engine, "fuse_with_mtf")
     assert engine.enter_threshold == 0.42
+
+
+if __name__ == "__main__":
+    # Run tests when executed directly
+    print("Running fusion compatibility tests...")
+    try:
+        test_compat_legacy_keys()
+        print("✅ test_compat_legacy_keys passed")
+    except AssertionError as e:
+        print(f"❌ test_compat_legacy_keys failed: {e}")
+        exit(1)
+
+    try:
+        test_enhanced_fusion_basic()
+        print("✅ test_enhanced_fusion_basic passed")
+    except AssertionError as e:
+        print(f"❌ test_enhanced_fusion_basic failed: {e}")
+        exit(1)
+
+    print("✅ All fusion compatibility tests passed!")
