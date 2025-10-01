@@ -1,0 +1,949 @@
+{
+  "period": {
+    "start": "2023-06-21",
+    "end": "2025-08-16",
+    "days": 787,
+    "years": 2.1546885694729636
+  },
+  "performance": {
+    "total_trades": 92,
+    "winning_trades": 46,
+    "losing_trades": 46,
+    "win_rate": 50.0,
+    "avg_win": 10.211220139009768,
+    "avg_loss": -9.094302186946024,
+    "final_balance": 6600.747687374808,
+    "total_return": -33.99252312625192,
+    "max_drawdown": 91.61780926246188,
+    "profit_factor": 1.1228151351366984
+  },
+  "engine_usage": {
+    "smc": 166,
+    "wyckoff": 69,
+    "hob": 86,
+    "momentum": 3,
+    "macro": 457
+  },
+  "trades": [
+    {
+      "entry_time": "2023-08-13 00:00:00",
+      "exit_time": "2023-08-31 00:00:00",
+      "side": "long",
+      "entry_price": 25.18,
+      "exit_price": 19.33,
+      "pnl_pct": -23.53272438443209,
+      "balance": 7646.7275615567905,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-08-31 00:00:00",
+      "exit_time": "2023-09-07 00:00:00",
+      "side": "long",
+      "entry_price": 19.33,
+      "exit_price": 19.61,
+      "pnl_pct": 1.1485256078634378,
+      "balance": 7734.552185764823,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-09-07 00:00:00",
+      "exit_time": "2023-09-11 00:00:00",
+      "side": "short",
+      "entry_price": 19.61,
+      "exit_price": 17.92,
+      "pnl_pct": 8.31805201427842,
+      "balance": 8377.91625964825,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-09-11 00:00:00",
+      "exit_time": "2023-09-15 00:00:00",
+      "side": "short",
+      "entry_price": 17.92,
+      "exit_price": 19.13,
+      "pnl_pct": -7.052232142857117,
+      "balance": 7787.086156283683,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-09-15 00:00:00",
+      "exit_time": "2023-10-11 00:00:00",
+      "side": "short",
+      "entry_price": 19.13,
+      "exit_price": 21.27,
+      "pnl_pct": -11.486617877679052,
+      "balance": 6892.613325705731,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-10-11 00:00:00",
+      "exit_time": "2023-10-20 00:00:00",
+      "side": "long",
+      "entry_price": 21.27,
+      "exit_price": 29.32,
+      "pnl_pct": 37.546732487071004,
+      "balance": 9480.56441247667,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-10-20 00:00:00",
+      "exit_time": "2023-10-21 00:00:00",
+      "side": "long",
+      "entry_price": 29.32,
+      "exit_price": 29.05,
+      "pnl_pct": -1.2208731241473367,
+      "balance": 9364.818749547265,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-10-21 00:00:00",
+      "exit_time": "2023-10-22 00:00:00",
+      "side": "long",
+      "entry_price": 29.05,
+      "exit_price": 31.91,
+      "pnl_pct": 9.545094664371778,
+      "balance": 10258.699564338387,
+      "engines_used": 3
+    },
+    {
+      "entry_time": "2023-10-22 00:00:00",
+      "exit_time": "2023-10-23 00:00:00",
+      "side": "long",
+      "entry_price": 31.91,
+      "exit_price": 30.18,
+      "pnl_pct": -5.721497963020993,
+      "balance": 9671.748277732322,
+      "engines_used": 3
+    },
+    {
+      "entry_time": "2023-10-23 00:00:00",
+      "exit_time": "2023-10-24 00:00:00",
+      "side": "long",
+      "entry_price": 30.18,
+      "exit_price": 32.43,
+      "pnl_pct": 7.155268389662018,
+      "balance": 10363.787824976585,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-10-24 00:00:00",
+      "exit_time": "2023-11-05 00:00:00",
+      "side": "long",
+      "entry_price": 32.43,
+      "exit_price": 42.16,
+      "pnl_pct": 29.703083564600664,
+      "balance": 13442.152383087288,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-11-05 00:00:00",
+      "exit_time": "2023-11-06 00:00:00",
+      "side": "long",
+      "entry_price": 42.16,
+      "exit_price": 42.95,
+      "pnl_pct": 1.573814041745736,
+      "balance": 13653.706864805177,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-11-06 00:00:00",
+      "exit_time": "2023-11-15 00:00:00",
+      "side": "long",
+      "entry_price": 42.95,
+      "exit_price": 57.8,
+      "pnl_pct": 34.27508731082653,
+      "balance": 18333.526813881468,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-11-15 00:00:00",
+      "exit_time": "2023-11-17 00:00:00",
+      "side": "long",
+      "entry_price": 57.8,
+      "exit_price": 58.59,
+      "pnl_pct": 1.0667820069204195,
+      "balance": 18529.105579165887,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-11-17 00:00:00",
+      "exit_time": "2023-11-22 00:00:00",
+      "side": "long",
+      "entry_price": 58.59,
+      "exit_price": 56.52,
+      "pnl_pct": -3.833026113671278,
+      "balance": 17818.880123686737,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-11-22 00:00:00",
+      "exit_time": "2023-11-26 00:00:00",
+      "side": "long",
+      "entry_price": 56.52,
+      "exit_price": 55.07,
+      "pnl_pct": -2.8654635527247003,
+      "balance": 17308.286608238788,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-11-26 00:00:00",
+      "exit_time": "2023-12-05 00:00:00",
+      "side": "long",
+      "entry_price": 55.07,
+      "exit_price": 61.85,
+      "pnl_pct": 12.011603413836946,
+      "balance": 19387.28935335068,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-12-05 00:00:00",
+      "exit_time": "2023-12-06 00:00:00",
+      "side": "long",
+      "entry_price": 61.85,
+      "exit_price": 67.77,
+      "pnl_pct": 9.271544058205327,
+      "balance": 21184.790427438336,
+      "engines_used": 3
+    },
+    {
+      "entry_time": "2023-12-06 00:00:00",
+      "exit_time": "2023-12-07 00:00:00",
+      "side": "long",
+      "entry_price": 67.77,
+      "exit_price": 74.95,
+      "pnl_pct": 10.294658403423352,
+      "balance": 23365.692235424245,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-12-07 00:00:00",
+      "exit_time": "2023-12-11 00:00:00",
+      "side": "short",
+      "entry_price": 74.95,
+      "exit_price": 68.54,
+      "pnl_pct": 8.252368245496989,
+      "balance": 25293.91520180095,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-12-11 00:00:00",
+      "exit_time": "2023-12-13 00:00:00",
+      "side": "long",
+      "entry_price": 68.54,
+      "exit_price": 75.68,
+      "pnl_pct": 10.117274584184422,
+      "balance": 27852.97005585792,
+      "engines_used": 3
+    },
+    {
+      "entry_time": "2023-12-13 00:00:00",
+      "exit_time": "2023-12-22 00:00:00",
+      "side": "long",
+      "entry_price": 75.68,
+      "exit_price": 107.94,
+      "pnl_pct": 42.32684989429173,
+      "balance": 39642.25488250293,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-12-22 00:00:00",
+      "exit_time": "2023-12-24 00:00:00",
+      "side": "long",
+      "entry_price": 107.94,
+      "exit_price": 120.95,
+      "pnl_pct": 11.752992403186957,
+      "balance": 44301.40608729551,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-12-24 00:00:00",
+      "exit_time": "2023-12-25 00:00:00",
+      "side": "long",
+      "entry_price": 120.95,
+      "exit_price": 112.5,
+      "pnl_pct": -7.28635799917321,
+      "balance": 41073.44704110765,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-12-25 00:00:00",
+      "exit_time": "2023-12-29 00:00:00",
+      "side": "long",
+      "entry_price": 112.5,
+      "exit_price": 101.92,
+      "pnl_pct": -9.704444444444437,
+      "balance": 37087.49719158505,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-12-29 00:00:00",
+      "exit_time": "2023-12-30 00:00:00",
+      "side": "long",
+      "entry_price": 101.92,
+      "exit_price": 101.69,
+      "pnl_pct": -0.5256671899529051,
+      "balance": 36892.54038727418,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2023-12-30 00:00:00",
+      "exit_time": "2024-01-02 00:00:00",
+      "side": "long",
+      "entry_price": 101.69,
+      "exit_price": 98.59,
+      "pnl_pct": -3.348480676566023,
+      "balance": 35657.20080131199,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-01-02 00:00:00",
+      "exit_time": "2024-01-05 00:00:00",
+      "side": "long",
+      "entry_price": 98.59,
+      "exit_price": 93.84,
+      "pnl_pct": -5.117932853230555,
+      "balance": 33832.289206959256,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-01-05 00:00:00",
+      "exit_time": "2024-01-25 00:00:00",
+      "side": "long",
+      "entry_price": 93.84,
+      "exit_price": 92.3,
+      "pnl_pct": -1.9410912190963356,
+      "balance": 33175.57361194369,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-01-25 00:00:00",
+      "exit_time": "2024-01-29 00:00:00",
+      "side": "long",
+      "entry_price": 92.3,
+      "exit_price": 101.4,
+      "pnl_pct": 9.559154929577474,
+      "balance": 36346.87809228541,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-01-29 00:00:00",
+      "exit_time": "2024-02-14 00:00:00",
+      "side": "long",
+      "entry_price": 101.4,
+      "exit_price": 113.62,
+      "pnl_pct": 11.751282051282052,
+      "balance": 40618.102253745514,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-02-14 00:00:00",
+      "exit_time": "2024-02-17 00:00:00",
+      "side": "long",
+      "entry_price": 113.62,
+      "exit_price": 112.25,
+      "pnl_pct": -1.5057736314029289,
+      "balance": 40006.48558043234,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-02-17 00:00:00",
+      "exit_time": "2024-02-26 00:00:00",
+      "side": "long",
+      "entry_price": 112.25,
+      "exit_price": 108.41,
+      "pnl_pct": -3.7209354120267264,
+      "balance": 38517.87009136267,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-02-26 00:00:00",
+      "exit_time": "2024-03-04 00:00:00",
+      "side": "long",
+      "entry_price": 108.41,
+      "exit_price": 125.55,
+      "pnl_pct": 15.5103495987455,
+      "balance": 44492.12640052365,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-03-04 00:00:00",
+      "exit_time": "2024-03-12 00:00:00",
+      "side": "long",
+      "entry_price": 125.55,
+      "exit_price": 163.95,
+      "pnl_pct": 30.285424133811222,
+      "balance": 57966.75558707363,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-03-12 00:00:00",
+      "exit_time": "2024-03-17 00:00:00",
+      "side": "long",
+      "entry_price": 163.95,
+      "exit_price": 195.96,
+      "pnl_pct": 19.224245196706324,
+      "balance": 69110.42681370812,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-03-17 00:00:00",
+      "exit_time": "2024-03-18 00:00:00",
+      "side": "long",
+      "entry_price": 195.96,
+      "exit_price": 169.76,
+      "pnl_pct": -13.670075525617488,
+      "balance": 59662.97927219763,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-03-18 00:00:00",
+      "exit_time": "2024-03-20 00:00:00",
+      "side": "long",
+      "entry_price": 169.76,
+      "exit_price": 179.4,
+      "pnl_pct": 5.378605089538191,
+      "balance": 62872.01531190217,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-03-20 00:00:00",
+      "exit_time": "2024-03-21 00:00:00",
+      "side": "long",
+      "entry_price": 179.4,
+      "exit_price": 175.24,
+      "pnl_pct": -2.618840579710146,
+      "balance": 61225.4974616325,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-03-21 00:00:00",
+      "exit_time": "2024-04-01 00:00:00",
+      "side": "long",
+      "entry_price": 175.24,
+      "exit_price": 181.54,
+      "pnl_pct": 3.2950696188084887,
+      "balance": 63242.92022745512,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-04-01 00:00:00",
+      "exit_time": "2024-04-20 00:00:00",
+      "side": "long",
+      "entry_price": 181.54,
+      "exit_price": 148.82,
+      "pnl_pct": -18.323576071389226,
+      "balance": 51654.55562980938,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-04-20 00:00:00",
+      "exit_time": "2024-04-26 00:00:00",
+      "side": "short",
+      "entry_price": 148.82,
+      "exit_price": 141.22,
+      "pnl_pct": 4.80684047843032,
+      "balance": 54137.50771877637,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-04-26 00:00:00",
+      "exit_time": "2024-05-27 00:00:00",
+      "side": "short",
+      "entry_price": 141.22,
+      "exit_price": 168.5,
+      "pnl_pct": -19.617377142047864,
+      "balance": 43517.14865427873,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-05-27 00:00:00",
+      "exit_time": "2024-05-29 00:00:00",
+      "side": "long",
+      "entry_price": 168.5,
+      "exit_price": 166.83,
+      "pnl_pct": -1.2910979228486605,
+      "balance": 42955.29965192037,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-05-29 00:00:00",
+      "exit_time": "2024-06-20 00:00:00",
+      "side": "long",
+      "entry_price": 166.83,
+      "exit_price": 134.54,
+      "pnl_pct": -19.655032068572808,
+      "balance": 34512.42173018388,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-06-20 00:00:00",
+      "exit_time": "2024-06-21 00:00:00",
+      "side": "long",
+      "entry_price": 134.54,
+      "exit_price": 133.65,
+      "pnl_pct": -0.9615133045934197,
+      "balance": 34180.58020351077,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-06-21 00:00:00",
+      "exit_time": "2024-07-07 00:00:00",
+      "side": "long",
+      "entry_price": 133.65,
+      "exit_price": 139.77,
+      "pnl_pct": 4.279124579124572,
+      "balance": 35643.209812286594,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-07-07 00:00:00",
+      "exit_time": "2024-07-21 00:00:00",
+      "side": "short",
+      "entry_price": 139.77,
+      "exit_price": 178.98,
+      "pnl_pct": -28.353230306932808,
+      "balance": 25537.208445425702,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-07-21 00:00:00",
+      "exit_time": "2024-07-22 00:00:00",
+      "side": "long",
+      "entry_price": 178.98,
+      "exit_price": 173.03,
+      "pnl_pct": -3.6243937870153005,
+      "balance": 24611.639449152546,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-07-22 00:00:00",
+      "exit_time": "2024-08-13 00:00:00",
+      "side": "long",
+      "entry_price": 173.03,
+      "exit_price": 143.73,
+      "pnl_pct": -17.23347974339711,
+      "balance": 20370.19755016491,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-08-13 00:00:00",
+      "exit_time": "2024-08-18 00:00:00",
+      "side": "long",
+      "entry_price": 143.73,
+      "exit_price": 144.31,
+      "pnl_pct": 0.10353440478675396,
+      "balance": 20391.287712952362,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-08-18 00:00:00",
+      "exit_time": "2024-08-20 00:00:00",
+      "side": "short",
+      "entry_price": 144.31,
+      "exit_price": 142.82,
+      "pnl_pct": 0.732499480285498,
+      "balance": 20540.65378947326,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-08-20 00:00:00",
+      "exit_time": "2024-08-21 00:00:00",
+      "side": "short",
+      "entry_price": 142.82,
+      "exit_price": 143.25,
+      "pnl_pct": -0.6010782803529067,
+      "balance": 20417.18838090225,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-08-21 00:00:00",
+      "exit_time": "2024-08-31 00:00:00",
+      "side": "short",
+      "entry_price": 143.25,
+      "exit_price": 128.5,
+      "pnl_pct": 9.996684118673649,
+      "balance": 22458.230209255587,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-08-31 00:00:00",
+      "exit_time": "2024-09-02 00:00:00",
+      "side": "short",
+      "entry_price": 128.5,
+      "exit_price": 127.5,
+      "pnl_pct": 0.47821011673151476,
+      "balance": 22565.627738155104,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-09-02 00:00:00",
+      "exit_time": "2024-09-03 00:00:00",
+      "side": "short",
+      "entry_price": 127.5,
+      "exit_price": 133.61,
+      "pnl_pct": -5.0921568627451,
+      "balance": 21416.550576665126,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-09-03 00:00:00",
+      "exit_time": "2024-09-17 00:00:00",
+      "side": "short",
+      "entry_price": 133.61,
+      "exit_price": 134.35,
+      "pnl_pct": -0.8538507596736686,
+      "balance": 21233.685196870374,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-09-17 00:00:00",
+      "exit_time": "2024-10-18 00:00:00",
+      "side": "short",
+      "entry_price": 134.35,
+      "exit_price": 159.71,
+      "pnl_pct": -19.176069966505416,
+      "balance": 17161.898867051008,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-10-18 00:00:00",
+      "exit_time": "2024-10-19 00:00:00",
+      "side": "long",
+      "entry_price": 159.71,
+      "exit_price": 167.37,
+      "pnl_pct": 4.496193099993729,
+      "balance": 17933.53097973926,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-10-19 00:00:00",
+      "exit_time": "2024-10-21 00:00:00",
+      "side": "long",
+      "entry_price": 167.37,
+      "exit_price": 167.48,
+      "pnl_pct": -0.2342773495847547,
+      "balance": 17891.516778672965,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-10-21 00:00:00",
+      "exit_time": "2024-10-28 00:00:00",
+      "side": "short",
+      "entry_price": 167.48,
+      "exit_price": 179.39,
+      "pnl_pct": -7.411296871268213,
+      "balance": 16565.52335543275,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-10-28 00:00:00",
+      "exit_time": "2024-11-30 00:00:00",
+      "side": "long",
+      "entry_price": 179.39,
+      "exit_price": 236.95,
+      "pnl_pct": 31.78651541334524,
+      "balance": 21831.12599010869,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-11-30 00:00:00",
+      "exit_time": "2024-12-19 00:00:00",
+      "side": "long",
+      "entry_price": 236.95,
+      "exit_price": 194.43,
+      "pnl_pct": -18.2447140746993,
+      "balance": 17848.09947392599,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-12-19 00:00:00",
+      "exit_time": "2024-12-23 00:00:00",
+      "side": "long",
+      "entry_price": 194.43,
+      "exit_price": 196.95,
+      "pnl_pct": 0.9960962814380305,
+      "balance": 18025.88372909313,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-12-23 00:00:00",
+      "exit_time": "2024-12-25 00:00:00",
+      "side": "short",
+      "entry_price": 196.95,
+      "exit_price": 188.24,
+      "pnl_pct": 4.122442244224412,
+      "balance": 18768.99037483604,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2024-12-25 00:00:00",
+      "exit_time": "2025-01-10 00:00:00",
+      "side": "short",
+      "entry_price": 188.24,
+      "exit_price": 188.03,
+      "pnl_pct": -0.1884402889927747,
+      "balance": 18733.622035132674,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-01-10 00:00:00",
+      "exit_time": "2025-01-26 00:00:00",
+      "side": "short",
+      "entry_price": 188.03,
+      "exit_price": 234.87,
+      "pnl_pct": -25.210918470456836,
+      "balance": 14010.703857291839,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-01-26 00:00:00",
+      "exit_time": "2025-01-27 00:00:00",
+      "side": "long",
+      "entry_price": 234.87,
+      "exit_price": 226.89,
+      "pnl_pct": -3.6976242176523284,
+      "balance": 13492.640678401067,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-01-27 00:00:00",
+      "exit_time": "2025-01-28 00:00:00",
+      "side": "long",
+      "entry_price": 226.89,
+      "exit_price": 228.16,
+      "pnl_pct": 0.2597426065494293,
+      "balance": 13527.686814991495,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-01-28 00:00:00",
+      "exit_time": "2025-03-10 00:00:00",
+      "side": "long",
+      "entry_price": 228.16,
+      "exit_price": 125.34,
+      "pnl_pct": -45.3648667601683,
+      "balance": 7390.869715637748,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-03-10 00:00:00",
+      "exit_time": "2025-03-11 00:00:00",
+      "side": "short",
+      "entry_price": 125.34,
+      "exit_price": 126.6,
+      "pnl_pct": -1.3052656773575697,
+      "balance": 7294.3992299813135,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-03-11 00:00:00",
+      "exit_time": "2025-03-12 00:00:00",
+      "side": "short",
+      "entry_price": 126.6,
+      "exit_price": 123.3,
+      "pnl_pct": 2.3066350710900467,
+      "balance": 7462.654400845386,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-03-12 00:00:00",
+      "exit_time": "2025-04-02 00:00:00",
+      "side": "short",
+      "entry_price": 123.3,
+      "exit_price": 117.12,
+      "pnl_pct": 4.712165450121653,
+      "balance": 7814.307023184005,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-04-02 00:00:00",
+      "exit_time": "2025-04-03 00:00:00",
+      "side": "long",
+      "entry_price": 117.12,
+      "exit_price": 122.74,
+      "pnl_pct": 4.498497267759561,
+      "balance": 8165.833411116281,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-04-03 00:00:00",
+      "exit_time": "2025-04-05 00:00:00",
+      "side": "long",
+      "entry_price": 122.74,
+      "exit_price": 105.82,
+      "pnl_pct": -14.08523708652436,
+      "balance": 7015.656415069933,
+      "engines_used": 3
+    },
+    {
+      "entry_time": "2025-04-05 00:00:00",
+      "exit_time": "2025-04-07 00:00:00",
+      "side": "short",
+      "entry_price": 105.82,
+      "exit_price": 105.35,
+      "pnl_pct": 0.14415044415044848,
+      "balance": 7025.769514952327,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-04-07 00:00:00",
+      "exit_time": "2025-04-08 00:00:00",
+      "side": "long",
+      "entry_price": 105.35,
+      "exit_price": 119.04,
+      "pnl_pct": 12.694779307071668,
+      "balance": 7917.675449499044,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-04-08 00:00:00",
+      "exit_time": "2025-04-29 00:00:00",
+      "side": "short",
+      "entry_price": 119.04,
+      "exit_price": 147.56,
+      "pnl_pct": -24.258333333333326,
+      "balance": 5996.979346708068,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-04-29 00:00:00",
+      "exit_time": "2025-05-08 00:00:00",
+      "side": "long",
+      "entry_price": 147.56,
+      "exit_price": 172.8,
+      "pnl_pct": 16.804906478720515,
+      "balance": 7004.7661174705445,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-05-08 00:00:00",
+      "exit_time": "2025-05-09 00:00:00",
+      "side": "long",
+      "entry_price": 172.8,
+      "exit_price": 177.91,
+      "pnl_pct": 2.6571759259259258,
+      "balance": 7190.895076411389,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-05-09 00:00:00",
+      "exit_time": "2025-05-17 00:00:00",
+      "side": "long",
+      "entry_price": 177.91,
+      "exit_price": 173.39,
+      "pnl_pct": -2.8406104209993894,
+      "balance": 6986.629761507715,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-05-17 00:00:00",
+      "exit_time": "2025-05-25 00:00:00",
+      "side": "long",
+      "entry_price": 173.39,
+      "exit_price": 174.97,
+      "pnl_pct": 0.6112405559720926,
+      "balance": 7029.334876105667,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-05-25 00:00:00",
+      "exit_time": "2025-06-13 00:00:00",
+      "side": "long",
+      "entry_price": 174.97,
+      "exit_price": 144.72,
+      "pnl_pct": -17.58867805909584,
+      "balance": 5792.967795051698,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-06-13 00:00:00",
+      "exit_time": "2025-06-23 00:00:00",
+      "side": "long",
+      "entry_price": 144.72,
+      "exit_price": 145.98,
+      "pnl_pct": 0.5706467661691474,
+      "balance": 5826.025178439381,
+      "engines_used": 3
+    },
+    {
+      "entry_time": "2025-06-23 00:00:00",
+      "exit_time": "2025-07-16 00:00:00",
+      "side": "long",
+      "entry_price": 145.98,
+      "exit_price": 175.99,
+      "pnl_pct": 20.25761063159338,
+      "balance": 7006.238674386225,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-07-16 00:00:00",
+      "exit_time": "2025-07-22 00:00:00",
+      "side": "short",
+      "entry_price": 175.99,
+      "exit_price": 189.49,
+      "pnl_pct": -7.970890391499507,
+      "balance": 6447.779069084051,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-07-22 00:00:00",
+      "exit_time": "2025-07-26 00:00:00",
+      "side": "long",
+      "entry_price": 189.49,
+      "exit_price": 188.71,
+      "pnl_pct": -0.7116312206448925,
+      "balance": 6401.894660190243,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-07-26 00:00:00",
+      "exit_time": "2025-08-08 00:00:00",
+      "side": "long",
+      "entry_price": 188.71,
+      "exit_price": 179.96,
+      "pnl_pct": -4.9367442106936545,
+      "balance": 6085.849496178595,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-08-08 00:00:00",
+      "exit_time": "2025-08-10 00:00:00",
+      "side": "long",
+      "entry_price": 179.96,
+      "exit_price": 174.89,
+      "pnl_pct": -3.1172927317181682,
+      "balance": 5896.135752170912,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-08-10 00:00:00",
+      "exit_time": "2025-08-13 00:00:00",
+      "side": "long",
+      "entry_price": 174.89,
+      "exit_price": 192.61,
+      "pnl_pct": 9.832083023614857,
+      "balance": 6475.848714509394,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-08-13 00:00:00",
+      "exit_time": "2025-08-14 00:00:00",
+      "side": "short",
+      "entry_price": 192.61,
+      "exit_price": 185.86,
+      "pnl_pct": 3.2044909402419446,
+      "balance": 6683.366699869623,
+      "engines_used": 2
+    },
+    {
+      "entry_time": "2025-08-14 00:00:00",
+      "exit_time": "2025-08-16 00:00:00",
+      "side": "short",
+      "entry_price": 185.86,
+      "exit_price": 187.6,
+      "pnl_pct": -1.2361885290003036,
+      "balance": 6600.747687374808,
+      "engines_used": 2
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "ETHUSD": {
+    "atr_p50": 2.0853762736733383,
+    "atr_p80": 2.5758316694268837,
+    "volatility_regime": "high",
+    "volume_z70": 1.1788138114501994,
+    "volume_z85": 1.8593742257639796,
+    "spread_estimate": 0.28760348202666247,
+    "slippage_factor": 0.1779493693754308,
+    "risk_scalar": 0.5,
+    "spring_wick_atr": 1.46,
+    "volume_spike_z": 1.18,
+    "stop_atr_mult": 2.5,
+    "target_atr_mult": 4.0,
+    "btc_correlation": 0.7219652288326827
+  },
+  "SOLUSD": {
+    "atr_p50": 2.252480738140239,
+    "atr_p80": 2.794474326817043,
+    "volatility_regime": "high",
+    "volume_z70": 1.0722941336221006,
+    "volume_z85": 1.9260701955918453,
+    "spread_estimate": 0.3026147376119951,
+    "slippage_factor": 0.18111208787915054,
+    "risk_scalar": 0.5,
+    "spring_wick_atr": 1.46,
+    "volume_spike_z": 1.07,
+    "stop_atr_mult": 2.5,
+    "target_atr_mult": 4.0,
+    "btc_correlation": 0.7139899926396377
+  },
+  "XRPUSD": {
+    "atr_p50": 1.9418535287786627,
+    "atr_p80": 2.534814329401472,
+    "volatility_regime": "high",
+    "volume_z70": 0.9750575109976566,
+    "volume_z85": 1.6786159132652945,
+    "spread_estimate": 0.26319415736530105,
+    "slippage_factor": 0.19654010549194123,
+    "risk_scalar": 0.5,
+    "spring_wick_atr": 1.56,
+    "volume_spike_z": 0.98,
+    "stop_atr_mult": 2.5,
+    "target_atr_mult": 4.0,
+    "btc_correlation": 0.6292533483384726
+  }
+}

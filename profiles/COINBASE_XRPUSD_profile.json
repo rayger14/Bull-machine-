@@ -1,0 +1,99 @@
+{
+  "volatility": {
+    "atr": {
+      "p10": 1.3388096198901929,
+      "p20": 1.4936279313836602,
+      "p50": 1.9418535287786627,
+      "p80": 2.534814329401472,
+      "p90": 3.0863154316370287,
+      "current": 1.3254892667824036
+    },
+    "returns": {
+      "daily_mean": 0.0373897660191405,
+      "daily_std": 1.4759643879945006,
+      "skew": 0.6338083065963456,
+      "kurtosis": 6.524282010977036,
+      "max_daily_gain": 11.543513957307061,
+      "max_daily_loss": -7.99714583676383
+    },
+    "historical_vol": {
+      "hv20_mean": 21.522897038450527,
+      "hv20_current": 14.087427264778778,
+      "hv60_mean": 21.514688519532047,
+      "vol_of_vol": 9.464311479072931
+    },
+    "regime": "high"
+  },
+  "liquidity": {
+    "volume": {
+      "mean": 14938816.310949681,
+      "median": 11032393.965721,
+      "p25": 6842993.976752,
+      "p75": 17563898.42546,
+      "p90": 28602026.7358534,
+      "ratio_75_25": 2.566697922741214
+    },
+    "volume_z_scores": {
+      "z50": 0.544010398179823,
+      "z70": 0.9750575109976566,
+      "z85": 1.6786159132652945,
+      "z95": 3.1488276222772114
+    },
+    "dollar_volume": {
+      "daily_mean": 38843189.01081419,
+      "daily_median": 27669726.931166947
+    },
+    "spread_estimate": 0.26319415736530105,
+    "slippage_factor": 0.19654010549194123
+  },
+  "price_action": {
+    "candle_structure": {
+      "avg_body_pct": 44.1653712447884,
+      "avg_upper_wick_pct": 26.750821182447716,
+      "avg_lower_wick_pct": 29.08380757276388,
+      "doji_frequency": 10.892018779342722
+    },
+    "gaps": {
+      "frequency": 0.0,
+      "avg_gap_size": NaN,
+      "max_gap": 0.05429864253393067
+    },
+    "trend_persistence": 0.504469526340313,
+    "mean_reversion": 0.10140845070422536
+  },
+  "sessions": {
+    "type": "continuous",
+    "volume_variation": 0.3219289423771818,
+    "weekend_trading": true,
+    "typical_bar_count_per_day": 6
+  },
+  "correlations": {
+    "full_period": 0.6292533483384726,
+    "rolling_20d": {
+      "mean": 0.6579235906114577,
+      "std": 0.17256325792547847,
+      "current": 0.7354658071800952
+    },
+    "rolling_60d": {
+      "mean": 0.6480040463938485,
+      "current": 0.5811739511372761
+    },
+    "beta": 1.272553973335998
+  },
+  "microstructure": {
+    "tick_size": 9.999999999976694e-05,
+    "tick_size_pct": 0.003878490427421364,
+    "typical_spread_bps": 26.319415736530104,
+    "round_number_attraction": 0.6291890140845071,
+    "typical_trade_size": 11032393.965721
+  },
+  "meta": {
+    "symbol": "XRPUSD",
+    "exchange": "COINBASE",
+    "data_start": "2025-04-04T04:00:00",
+    "data_end": "2025-09-28T12:00:00",
+    "total_bars": 1065,
+    "profile_generated": "2025-10-01T02:30:08.357751",
+    "profile_hash": "bf2899829765a64c"
+  }
+}
