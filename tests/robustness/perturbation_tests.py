@@ -442,8 +442,9 @@ def run_perturbation_tests():
 
     # Load test data
     try:
-        eth_data = load_tv('ETH_4H').tail(200)
-        print(f"✅ Loaded {len(eth_data)} bars of ETH data")
+        # Use BTC data since it's available
+        eth_data = load_tv('BTC_4H').tail(200)
+        print(f"✅ Loaded {len(eth_data)} bars of BTC data for testing")
     except Exception as e:
         print(f"❌ Data loading failed: {e}")
         return False

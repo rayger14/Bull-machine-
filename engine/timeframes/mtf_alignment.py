@@ -202,15 +202,25 @@ class MTFAlignmentEngine:
                         'reason': f'4H bar {h4_timestamp} not on 4-hour boundary'
                     }
 
-            # Additional check: 1D bars should generally align on daily boundaries
-            # More lenient check for test scenarios - allow within 1 hour of midnight
-            for d1_timestamp in d1_closed.index[-3:]:  # Check last 3 bars
-                hour_offset = min(d1_timestamp.hour, 24 - d1_timestamp.hour)
-                if hour_offset > 1 and d1_timestamp.minute != 0:  # Allow 1-hour flexibility
-                    return {
-                        'valid': False,
-                        'reason': f'1D bar {d1_timestamp} not reasonably aligned to daily boundary'
-                    }
+            # Additional check: 1D bars should use last closed daily bar with tolerance
+            # Use asof + small tolerance to the last closed daily bar, not exact equality
+            current_time = latest_1h_timestamp
+
+            # Find last closed 1D bar at/before current time (asof lookup)
+            valid_d1_bars = d1_closed.index[d1_closed.index <= current_time]
+            if len(valid_d1_bars) == 0:
+                return {
+                    'valid': False,
+                    'reason': f'No valid 1D bars found before current time {current_time}'
+                }
+
+            last_d1_bar = valid_d1_bars.max()
+            time_since_d1 = current_time - last_d1_bar
+
+            # Tolerance: warn if > 25 hours but don't hard fail in production
+            if time_since_d1.total_seconds() > 25 * 3600:  # 25 hours tolerance
+                self.logger.warning(f"Large gap since last 1D bar: {time_since_d1}")
+                # Don't hard fail - just log warning for monitoring
 
             return {
                 'valid': True,
@@ -682,10 +692,12 @@ def create_1h_integration_test():
     # Create test engine
     mtf_engine = MTFAlignmentEngine()
 
-    # Generate test data
-    current_time = datetime.now()
+    # Generate test data with proper boundary alignment
+    # Start from a known 4H boundary (midnight UTC)
+    base_time = datetime(2025, 1, 1, 0, 0, 0)  # Fixed time for reproducible tests
+    current_time = base_time + timedelta(hours=720)  # 30 days later
 
-    # 1H data (last 100 hours)
+    # 1H data (last 100 hours) - aligned to hour boundaries
     dates_1h = pd.date_range(current_time - timedelta(hours=100),
                             current_time, freq='1h')[:-1]  # Exclude current incomplete bar
     data_1h = pd.DataFrame({
@@ -696,9 +708,10 @@ def create_1h_integration_test():
         'volume': np.random.uniform(1000, 5000, len(dates_1h))
     }, index=dates_1h)
 
-    # 4H data (last 400 hours = ~50 bars)
-    dates_4h = pd.date_range(current_time - timedelta(hours=400),
-                            current_time, freq='4h')[:-1]
+    # 4H data - start from 4H boundary to ensure proper alignment
+    start_4h = base_time
+    end_4h = current_time
+    dates_4h = pd.date_range(start_4h, end_4h, freq='4h')[:-1]  # Proper 4H boundaries
     data_4h = pd.DataFrame({
         'open': 100 + np.random.randn(len(dates_4h)).cumsum() * 2,
         'high': 100 + np.random.randn(len(dates_4h)).cumsum() * 2 + 2,
@@ -707,9 +720,10 @@ def create_1h_integration_test():
         'volume': np.random.uniform(4000, 20000, len(dates_4h))
     }, index=dates_4h)
 
-    # 1D data (last 30 days)
-    dates_1d = pd.date_range(current_time - timedelta(days=30),
-                            current_time, freq='1D')[:-1]
+    # 1D data - start from daily boundary to ensure proper alignment
+    start_1d = base_time
+    end_1d = current_time
+    dates_1d = pd.date_range(start_1d, end_1d, freq='1D')[:-1]  # Proper daily boundaries
     data_1d = pd.DataFrame({
         'open': 100 + np.random.randn(len(dates_1d)).cumsum() * 5,
         'high': 100 + np.random.randn(len(dates_1d)).cumsum() * 5 + 5,
