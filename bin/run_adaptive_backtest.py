@@ -4,15 +4,19 @@ Adaptive Backtest Engine - Bull Machine v1.7.2
 Uses asset-specific configurations for improved multi-asset performance
 """
 
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-import pandas as pd
-import numpy as np
 import json
-from datetime import datetime, timedelta
-from engine.io.tradingview_loader import load_tv
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
+
+from scripts.research.data.real_data_loader import RealDataLoader
+
 
 class AdaptiveBullMachine:
     """
