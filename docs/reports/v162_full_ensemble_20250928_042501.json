@@ -1,0 +1,358 @@
+{
+  "ETH": {
+    "asset": "ETH",
+    "trades": [
+      {
+        "entry_time": "2024-10-29T00:00:00",
+        "entry_price": 2637.85,
+        "exit_price": 2456.57,
+        "pnl": -3.503726405974554,
+        "score": 0.42,
+        "components": {
+          "wyckoff": 0.1825,
+          "m1": 0.1125,
+          "m2": 0.0,
+          "structure": 0.05,
+          "volume": 0.07500000000000001,
+          "ensemble_entry": 0.0
+        },
+        "tags": [],
+        "side": "long",
+        "exit_bars": 5
+      },
+      {
+        "entry_time": "2025-05-09T00:00:00",
+        "entry_price": 2345.29,
+        "exit_price": 2610.31,
+        "pnl": 5.574138798559016,
+        "score": 0.4125,
+        "components": {
+          "wyckoff": 0.1825,
+          "m1": 0.0,
+          "m2": 0.0,
+          "structure": 0.05,
+          "volume": 0.07500000000000001,
+          "ensemble_entry": 0.105
+        },
+        "tags": [
+          "ensemble_signal"
+        ],
+        "side": "long",
+        "exit_bars": 5
+      }
+    ],
+    "metrics": {
+      "total_trades": 2,
+      "win_rate": 50.0,
+      "total_pnl_pct": 0.020704123925844618,
+      "max_drawdown_pct": 0.03503726405974554,
+      "profit_factor": 1.5909172557120885,
+      "sharpe_ratio": 3.6205404103526813,
+      "avg_trade": 1.035206196292231,
+      "trades_per_month": 0.31708333333333333,
+      "gross_profit": 5.574138798559016,
+      "gross_loss": 3.503726405974554
+    },
+    "final_capital": 10002.070412392584,
+    "config": {
+      "entry_threshold": 0.36,
+      "quality_floors": {
+        "wyckoff": 0.25,
+        "m1": 0.3,
+        "m2": 0.3,
+        "liquidity": 0.25,
+        "structure": 0.25,
+        "momentum": 0.27,
+        "volume": 0.25,
+        "context": 0.25,
+        "mtf": 0.27,
+        "fib_retracement": 0.25,
+        "fib_extension": 0.25
+      },
+      "features": {
+        "mtf_dl2": true,
+        "six_candle_leg": true,
+        "orderflow_lca": false,
+        "negative_vip": false,
+        "atr_exits": true,
+        "atr_sizing": true,
+        "regime_filter": true,
+        "ensemble_htf_bias": true,
+        "wyckoff_phase": true,
+        "wyckoff_m1m2": true,
+        "liquidity_sweep": false,
+        "order_blocks": true,
+        "wick_magnet": true,
+        "hidden_fibs": true,
+        "temporal_fib": true,
+        "fib_clusters": true,
+        "po3": true,
+        "bojan": true,
+        "live_data": false,
+        "use_asset_profiles": true
+      },
+      "cooldown_bars": 168,
+      "timeframe": "1D",
+      "risk": {
+        "risk_pct": 0.005,
+        "atr_window": 14,
+        "sl_atr": 1.8,
+        "tp_atr": 3.0,
+        "trail_atr": 1.2,
+        "profit_ladders": [
+          {
+            "ratio": 1.5,
+            "percent": 0.25
+          },
+          {
+            "ratio": 2.5,
+            "percent": 0.5
+          },
+          {
+            "ratio": 4.0,
+            "percent": 0.25
+          }
+        ]
+      },
+      "regime": {
+        "vol_ratio_min": 1.0,
+        "atr_pct_max": 0.08
+      },
+      "ensemble": {
+        "enabled": true,
+        "min_consensus": 2,
+        "consensus_penalty": 0.02,
+        "rolling_k": 4,
+        "rolling_n": 5,
+        "lead_lag_window": 3,
+        "dynamic_thresholds": true,
+        "confluence_mode": "adaptive",
+        "m1m2_backoff_bars": 30,
+        "m1m2_epsilon": 0.05,
+        "solo_fib_min_entry": 0.44,
+        "vol_override_atr_pct": 0.05
+      },
+      "weights": {
+        "temporal": 0.1,
+        "po3": 0.1,
+        "bojan": 0.08
+      },
+      "fib": {
+        "tolerance": 0.02
+      },
+      "temporal": {
+        "fib_nums": [
+          21,
+          34,
+          55,
+          89,
+          144
+        ],
+        "tolerance_bars": 3,
+        "pivot_window": 5
+      },
+      "bojan": {
+        "lookback": 50,
+        "wick_magnet_threshold": 0.7,
+        "trap_body_min": 1.25,
+        "unfinished_threshold": 0.1,
+        "phob_confidence_min": 0.3,
+        "fib_prime_zones": [
+          0.705,
+          0.786
+        ]
+      },
+      "max_bars_held": 8,
+      "profile_name": "ETH_v1.6.2",
+      "version": "1.6.2",
+      "description": "ETH 1D profile with PO3, Bojan microstructure, Wyckoff M1/M2, and Fibonacci enhancements"
+    }
+  },
+  "BTC": {
+    "asset": "BTC",
+    "trades": [
+      {
+        "entry_time": "2024-10-11T00:00:00",
+        "entry_price": 62518.75,
+        "exit_price": 67608.44,
+        "pnl": 3.997681469159257,
+        "score": 0.413585638174156,
+        "components": {
+          "wyckoff": 0.1825,
+          "m1": 0.106085638174156,
+          "m2": 0.0,
+          "structure": 0.05,
+          "volume": 0.07500000000000001,
+          "ensemble_entry": 0.0
+        },
+        "tags": [],
+        "side": "long",
+        "exit_bars": 5
+      },
+      {
+        "entry_time": "2025-04-02T00:00:00",
+        "entry_price": 82490.08,
+        "exit_price": 79140.01,
+        "pnl": -2.1000073854147248,
+        "score": 0.4725,
+        "components": {
+          "wyckoff": 0.16499999999999998,
+          "m1": 0.1125,
+          "m2": 0.06999999999999999,
+          "structure": 0.05,
+          "volume": 0.07500000000000001,
+          "ensemble_entry": 0.0
+        },
+        "tags": [],
+        "side": "long",
+        "exit_bars": 5
+      },
+      {
+        "entry_time": "2025-08-25T00:00:00",
+        "entry_price": 110127.74,
+        "exit_price": 108827.93,
+        "pnl": -0.6598495147680866,
+        "score": 0.4375,
+        "components": {
+          "wyckoff": 0.025,
+          "m1": 0.1125,
+          "m2": 0.06999999999999999,
+          "structure": 0.05,
+          "volume": 0.07500000000000001,
+          "ensemble_entry": 0.105
+        },
+        "tags": [
+          "ensemble_signal"
+        ],
+        "side": "long",
+        "exit_bars": 5
+      }
+    ],
+    "metrics": {
+      "total_trades": 3,
+      "win_rate": 33.33333333333333,
+      "total_pnl_pct": 0.012378245689764455,
+      "max_drawdown_pct": 0.027598569001828114,
+      "profit_factor": 1.448510416933013,
+      "sharpe_ratio": 2.5169697985705035,
+      "avg_trade": 0.4126081896588151,
+      "trades_per_month": 0.2871698113207547,
+      "gross_profit": 3.997681469159257,
+      "gross_loss": 2.7598569001828115
+    },
+    "final_capital": 10001.237824568978,
+    "config": {
+      "entry_threshold": 0.38,
+      "quality_floors": {
+        "wyckoff": 0.25,
+        "m1": 0.3,
+        "m2": 0.3,
+        "liquidity": 0.25,
+        "structure": 0.25,
+        "momentum": 0.27,
+        "volume": 0.25,
+        "context": 0.25,
+        "mtf": 0.27,
+        "fib_retracement": 0.25,
+        "fib_extension": 0.25
+      },
+      "features": {
+        "mtf_dl2": true,
+        "six_candle_leg": true,
+        "orderflow_lca": false,
+        "negative_vip": false,
+        "atr_exits": true,
+        "atr_sizing": true,
+        "regime_filter": true,
+        "ensemble_htf_bias": true,
+        "wyckoff_phase": true,
+        "wyckoff_m1m2": true,
+        "liquidity_sweep": false,
+        "order_blocks": true,
+        "wick_magnet": true,
+        "hidden_fibs": true,
+        "temporal_fib": true,
+        "fib_clusters": true,
+        "po3": true,
+        "bojan": true,
+        "live_data": false,
+        "use_asset_profiles": true
+      },
+      "cooldown_bars": 144,
+      "timeframe": "1D",
+      "risk": {
+        "risk_pct": 0.005,
+        "atr_window": 14,
+        "sl_atr": 1.6,
+        "tp_atr": 2.8,
+        "trail_atr": 1.1,
+        "profit_ladders": [
+          {
+            "ratio": 1.5,
+            "percent": 0.25
+          },
+          {
+            "ratio": 2.5,
+            "percent": 0.5
+          },
+          {
+            "ratio": 4.0,
+            "percent": 0.25
+          }
+        ]
+      },
+      "regime": {
+        "vol_ratio_min": 1.0,
+        "atr_pct_max": 0.09
+      },
+      "ensemble": {
+        "enabled": true,
+        "min_consensus": 2,
+        "consensus_penalty": 0.02,
+        "rolling_k": 4,
+        "rolling_n": 5,
+        "lead_lag_window": 3,
+        "dynamic_thresholds": true,
+        "confluence_mode": "adaptive",
+        "m1m2_backoff_bars": 30,
+        "m1m2_epsilon": 0.05,
+        "solo_fib_min_entry": 0.38,
+        "vol_override_atr_pct": 0.05
+      },
+      "weights": {
+        "temporal": 0.1,
+        "po3": 0.12,
+        "bojan": 0.08
+      },
+      "fib": {
+        "tolerance": 0.025
+      },
+      "temporal": {
+        "fib_nums": [
+          21,
+          34,
+          55,
+          89,
+          144
+        ],
+        "tolerance_bars": 3,
+        "pivot_window": 5
+      },
+      "bojan": {
+        "lookback": 50,
+        "wick_magnet_threshold": 0.65,
+        "trap_body_min": 1.15,
+        "unfinished_threshold": 0.12,
+        "phob_confidence_min": 0.28,
+        "fib_prime_zones": [
+          0.705,
+          0.786
+        ]
+      },
+      "max_bars_held": 7,
+      "profile_name": "BTC_v1.6.2",
+      "version": "1.6.2",
+      "description": "BTC 1D profile with PO3, Bojan microstructure, Wyckoff M1/M2, and Fibonacci enhancements"
+    }
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "metadata": {
+    "timestamp": "20250927_171628",
+    "version": "v1.6.1",
+    "asset": "ETH-USD",
+    "test_period": "2024-06-01 00:00:00+00:00 to 2024-11-30 00:00:00+00:00",
+    "philosophy": "Price and time symmetry = where structure and vibration align"
+  },
+  "summary": {
+    "total_analysis_points": 14,
+    "confluence_events": 12,
+    "price_clusters": 14,
+    "time_clusters": 12,
+    "oracle_events": 12,
+    "cvd_events": 14,
+    "high_confluence_events": 11
+  },
+  "sample_events": {
+    "cluster_events": [
+      {
+        "date": "2024-07-21 00:00:00+00:00",
+        "price": 3536.60546875,
+        "confluence_detected": true,
+        "confluence_strength": 0.45899999999999996,
+        "price_cluster": true,
+        "time_cluster": true,
+        "cluster_tags": [
+          "price_time_confluence",
+          "price_discount"
+        ],
+        "orderflow_score": 0.6319822686012709,
+        "cvd_delta": 13855853564.350597,
+        "cvd_slope": 4935796325.058359,
+        "orderflow_divergence": true,
+        "bos_detected": "True",
+        "structure_health": "weak"
+      },
+      {
+        "date": "2024-08-10 00:00:00+00:00",
+        "price": 2610.02294921875,
+        "confluence_detected": true,
+        "confluence_strength": 0.6885,
+        "price_cluster": true,
+        "time_cluster": true,
+        "cluster_tags": [
+          "price_time_confluence",
+          "price_discount"
+        ],
+        "orderflow_score": 0.43046173086969314,
+        "cvd_delta": -27876289810.215508,
+        "cvd_slope": -4651520432.880809,
+        "orderflow_divergence": true,
+        "bos_detected": "False",
+        "structure_health": "weak"
+      },
+      {
+        "date": "2024-08-30 00:00:00+00:00",
+        "price": 2525.822021484375,
+        "confluence_detected": true,
+        "confluence_strength": 0.765,
+        "price_cluster": true,
+        "time_cluster": true,
+        "cluster_tags": [
+          "price_time_confluence",
+          "price_discount"
+        ],
+        "orderflow_score": 0.7150131715498393,
+        "cvd_delta": -45828260837.480125,
+        "cvd_slope": 787090671.2462547,
+        "orderflow_divergence": true,
+        "bos_detected": "True",
+        "structure_health": "strong"
+      },
+      {
+        "date": "2024-09-09 00:00:00+00:00",
+        "price": 2358.482177734375,
+        "confluence_detected": true,
+        "confluence_strength": 0.6885,
+        "price_cluster": true,
+        "time_cluster": true,
+        "cluster_tags": [
+          "price_time_confluence",
+          "price_discount"
+        ],
+        "orderflow_score": 0.8507994542954104,
+        "cvd_delta": -6369909196.937473,
+        "cvd_slope": -705685268.8265431,
+        "orderflow_divergence": true,
+        "bos_detected": "True",
+        "structure_health": "strong"
+      },
+      {
+        "date": "2024-09-19 00:00:00+00:00",
+        "price": 2464.752197265625,
+        "confluence_detected": true,
+        "confluence_strength": 0.9,
+        "price_cluster": true,
+        "time_cluster": true,
+        "cluster_tags": [
+          "price_time_confluence",
+          "price_discount"
+        ],
+        "orderflow_score": 1.0,
+        "cvd_delta": 51874904017.093796,
+        "cvd_slope": 5106084999.289669,
+        "orderflow_divergence": true,
+        "bos_detected": "True",
+        "structure_health": "strong"
+      }
+    ],
+    "oracle_events": [
+      {
+        "date": "2024-07-21 00:00:00+00:00",
+        "whispers": [
+          "Symmetry detected. Time and price converge. Pressure must resolve.",
+          "\u03c6 \u2248 1.618 \u2014 The golden spiral speaks in this moment.",
+          "Discount revealed. Smart money accumulates in shadows."
+        ],
+        "confluence_strength": 0.45899999999999996,
+        "orderflow_score": 0.6319822686012709
+      },
+      {
+        "date": "2024-08-10 00:00:00+00:00",
+        "whispers": [
+          "Symmetry detected. Time and price converge. Pressure must resolve.",
+          "\u03c6 \u2248 1.618 \u2014 The golden spiral speaks in this moment.",
+          "Discount revealed. Smart money accumulates in shadows."
+        ],
+        "confluence_strength": 0.6885,
+        "orderflow_score": 0.43046173086969314
+      },
+      {
+        "date": "2024-08-30 00:00:00+00:00",
+        "whispers": [
+          "Symmetry detected. Time and price converge. Pressure must resolve.",
+          "\u03c6 \u2248 1.618 \u2014 The golden spiral speaks in this moment.",
+          "Discount revealed. Smart money accumulates in shadows.",
+          "Hidden intent revealed. Bears exhaust as bulls accumulate."
+        ],
+        "confluence_strength": 0.765,
+        "orderflow_score": 0.7150131715498393
+      }
+    ],
+    "high_confluence": [
+      {
+        "date": "2024-08-10 00:00:00+00:00",
+        "type": "high_confluence",
+        "confluence_strength": 0.6885,
+        "orderflow_score": 0.43046173086969314,
+        "features": {
+          "price_cluster": true,
+          "time_cluster": true,
+          "cvd_divergence": true,
+          "bos_detected": "False"
+        }
+      },
+      {
+        "date": "2024-08-30 00:00:00+00:00",
+        "type": "high_confluence",
+        "confluence_strength": 0.765,
+        "orderflow_score": 0.7150131715498393,
+        "features": {
+          "price_cluster": true,
+          "time_cluster": true,
+          "cvd_divergence": true,
+          "bos_detected": "True"
+        }
+      },
+      {
+        "date": "2024-09-09 00:00:00+00:00",
+        "type": "high_confluence",
+        "confluence_strength": 0.6885,
+        "orderflow_score": 0.8507994542954104,
+        "features": {
+          "price_cluster": true,
+          "time_cluster": true,
+          "cvd_divergence": true,
+          "bos_detected": "True"
+        }
+      },
+      {
+        "date": "2024-09-19 00:00:00+00:00",
+        "type": "high_confluence",
+        "confluence_strength": 0.9,
+        "orderflow_score": 1.0,
+        "features": {
+          "price_cluster": true,
+          "time_cluster": true,
+          "cvd_divergence": true,
+          "bos_detected": "True"
+        }
+      },
+      {
+        "date": "2024-09-29 00:00:00+00:00",
+        "type": "high_confluence",
+        "confluence_strength": 0.9,
+        "orderflow_score": 0.6100309838574731,
+        "features": {
+          "price_cluster": true,
+          "time_cluster": true,
+          "cvd_divergence": true,
+          "bos_detected": "True"
+        }
+      }
+    ]
+  }
+}

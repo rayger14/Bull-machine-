@@ -1,0 +1,59 @@
+{
+  "summary": {
+    "asset": "ETH",
+    "period_start": "2024-08-01 00:00:00",
+    "period_end": "2025-08-01 00:00:00",
+    "total_chunks": 5,
+    "successful_chunks": 5,
+    "failed_chunks": 0,
+    "config_version": "1.7.1-enhanced"
+  },
+  "performance": {
+    "total_trades": 211,
+    "final_balance": 1992.7512116999123,
+    "total_return": -80.07248788300087,
+    "win_rate": 43.60189573459716,
+    "profit_factor": 0.9026707901389717,
+    "max_drawdown": 94.02052624481762,
+    "sharpe_ratio": -0.3374891391922974,
+    "avg_win": 8.424510381970583,
+    "avg_loss": -7.215329133364458,
+    "avg_r_multiple": 0.7582938388625592,
+    "r_gt_1_count": 106,
+    "r_gt_2_count": 106,
+    "winning_trades": 92,
+    "losing_trades": 119
+  },
+  "engine_utilization": {
+    "smc": 155,
+    "wyckoff": 102,
+    "momentum": 77,
+    "hob": 75,
+    "macro_veto": 0,
+    "ethbtc_veto": 0
+  },
+  "exit_type_breakdown": {
+    "take_profit": 106,
+    "stop_loss": 105
+  },
+  "engine_combinations": {
+    "hob": 12,
+    "smc+wyckoff": 24,
+    "momentum+smc+wyckoff": 28,
+    "smc": 54,
+    "hob+momentum+wyckoff": 9,
+    "wyckoff": 18,
+    "hob+momentum+smc": 23,
+    "hob+smc+wyckoff": 9,
+    "momentum": 8,
+    "hob+momentum+smc+wyckoff": 5,
+    "momentum+wyckoff": 4,
+    "hob+wyckoff": 5,
+    "hob+smc": 12
+  },
+  "metadata": {
+    "generated_at": "2025-09-30T15:27:24.732979",
+    "bull_machine_version": "1.7.1-enhanced",
+    "total_manifests_processed": 5
+  }
+}

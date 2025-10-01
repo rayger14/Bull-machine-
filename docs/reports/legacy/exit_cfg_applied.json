@@ -1,0 +1,35 @@
+{
+  "choch_against": {
+    "confirmation_bars": 2,
+    "min_break_strength": 0.6,
+    "volume_confirmation": true
+  },
+  "enabled_exits": [
+    "choch_against",
+    "momentum_fade",
+    "time_stop"
+  ],
+  "min_confidence": 0.6,
+  "momentum_fade": {
+    "rsi_divergence_threshold": 0.7,
+    "rsi_period": 14,
+    "velocity_threshold": 0.4,
+    "volume_decline_threshold": 0.3
+  },
+  "mtf_desync": {
+    "critical_desync_score": 0.85,
+    "min_desync_score": 0.7
+  },
+  "priority_order": [
+    "choch_against",
+    "momentum_fade",
+    "time_stop"
+  ],
+  "time_stop": {
+    "max_bars_1d": 10,
+    "max_bars_1h": 168,
+    "max_bars_4h": 42,
+    "performance_threshold": 0.1,
+    "time_decay_start": 0.7
+  }
+}
