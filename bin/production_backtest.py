@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 # Add project root to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from engine.risk.transaction_costs import TransactionCostModel
 from engine.timeframes.mtf_alignment import MTFAlignmentEngine
