@@ -44,7 +44,7 @@ class TestMacroContextEngine:
     def test_usdt_stagnation_detection(self):
         """Test USDT.D stagnation detection"""
         # Create mock USDT.D data with tight range
-        dates = pd.date_range('2024-01-01', periods=48, freq='1H')
+        dates = pd.date_range('2024-01-01', periods=48, freq='1h')
         usdt_data = pd.DataFrame({
             'high': [1.002] * 48,
             'low': [1.001] * 48,
@@ -104,7 +104,7 @@ class TestBojanLiquidityEngine:
     def test_liquidity_level_identification(self):
         """Test liquidity level detection"""
         # Create test data with clear support/resistance
-        dates = pd.date_range('2024-01-01', periods=100, freq='1H')
+        dates = pd.date_range('2024-01-01', periods=100, freq='1h')
         prices = np.linspace(50000, 51000, 100)
 
         # Add clear support at 50500
@@ -164,7 +164,7 @@ class TestTemporalEngine:
     def test_cycle_detection_bounds(self):
         """Test that cycles are bounded appropriately"""
         # Create data shorter than some cycles
-        dates = pd.date_range('2024-01-01', periods=50, freq='1H')
+        dates = pd.date_range('2024-01-01', periods=50, freq='1h')
         df = pd.DataFrame({
             'high': np.random.randn(50).cumsum() + 50000,
             'low': np.random.randn(50).cumsum() + 49900,
@@ -182,7 +182,7 @@ class TestTemporalEngine:
 
     def test_projection_limits(self):
         """Test that projections are limited to max days"""
-        dates = pd.date_range('2024-01-01', periods=200, freq='1H')
+        dates = pd.date_range('2024-01-01', periods=200, freq='1h')
         df = pd.DataFrame({
             'high': np.random.randn(200).cumsum() + 50000,
             'low': np.random.randn(200).cumsum() + 49900,
@@ -315,7 +315,7 @@ class TestFusionEngine:
             '1H': pd.DataFrame({
                 'close': [50000] * 50,
                 'volume': [100000] + [500000] * 49  # Low recent volume
-            }, index=pd.date_range('2024-01-01', periods=50, freq='1H'))
+            }, index=pd.date_range('2024-01-01', periods=50, freq='1h'))
         }
 
         signals = {}

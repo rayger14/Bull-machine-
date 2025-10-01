@@ -501,7 +501,7 @@ class ProductionBacktester:
             pd.DataFrame({
                 'close': [2000 + i * 10 for i in range(len(self.trades) * 2)],
                 'volume': [1000000] * (len(self.trades) * 2)
-            }, index=pd.date_range('2025-01-01', periods=len(self.trades) * 2, freq='4H'))
+            }, index=pd.date_range('2025-01-01', periods=len(self.trades) * 2, freq='4h'))
         )
 
         # Calculate performance metrics
