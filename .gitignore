@@ -77,3 +77,6 @@ data/**/*
 # Notebooks & scratch
 notebooks/.ipynb_checkpoints/
 scratch/
+
+# Archive folder (temporary storage for old files)
+archive/

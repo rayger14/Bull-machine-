@@ -89,10 +89,10 @@ setup(
     # Console scripts for CLI tools
     entry_points={
         "console_scripts": [
-            "bull-machine=run_full_confluence_backtest:main",
+            "bull-machine=bin.run_full_confluence_backtest:main",
             "bull-backtest=bin.production_backtest:main",
             "bull-analyze=scripts.research.analyze_btc_with_bull_machine:main",
-            "bull-confluence=run_full_confluence_backtest:main",
+            "bull-confluence=bin.run_full_confluence_backtest:main",
         ]
     },
 
