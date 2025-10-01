@@ -1,13 +1,13 @@
-# Bull Machine v1.6.2 - Production Release
+# Bull Machine v1.7.2 - Institutional Repository + Asset Adapter Architecture
 
 [![CI](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml/badge.svg)](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-100%25%20passing-success)](https://github.com/rayger14/Bull-machine-/actions)
 [![Code Quality](https://img.shields.io/badge/code%20quality-ruff%20%7C%20mypy-blue)](https://github.com/rayger14/Bull-machine-/actions)
 [![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11-blue)](https://python.org)
-[![Version](https://img.shields.io/badge/version-1.6.2-green)](https://github.com/rayger14/Bull-machine-/releases/tag/v1.6.2)
+[![Version](https://img.shields.io/badge/version-1.7.2-green)](https://github.com/rayger14/Bull-machine-/releases/tag/v1.7.2)
 [![Production](https://img.shields.io/badge/status-production%20ready-brightgreen)](https://github.com/rayger14/Bull-machine-)
 
-**Institutional-grade multi-domain confluence trading framework** with **5-Domain Confluence System**, **Crash-Resistant Optimization**, **Professional Tearsheet Generation**, and **Risk Parameter Scaling** achieving **12.76% annual returns**.
+**Institutional-grade multi-asset trading framework** with **Universal Asset Adapter Architecture**, **Professional Repository Organization**, and **Multi-Asset Backtesting System** supporting **ETH, SOL, XRP, BTC, SPY**.
 
 **Branch Protection:** ✅ Required CI checks must pass before merging to main
 
@@ -15,43 +15,56 @@
 
 ---
 
-## 🚀 What's New in v1.6.2: Institutional-Grade Production Release
+## 🚀 What's New in v1.7.2: Institutional Repository + Asset Adapter Architecture
 
-### 🎯 Institutional Performance Achievements
-- **12.76% Annual Returns** with 7.5% risk allocation (Target: 8-15% ✅)
-- **62.5% Win Rate** across 8 trades with 2.07 profit factor
-- **8.34% Maximum Drawdown** within institutional tolerances (<10% ✅)
-- **0.57 Sharpe Ratio** demonstrating risk-adjusted performance
+### 🏛️ Professional Repository Organization
+- **Clean Directory Structure** - Organized `/bin/`, `/scripts/research/`, `/tests/`, `/docs/` for institutional standards
+- **Production Entry Points** - 5 dedicated executables in `/bin/` for professional deployment
+- **Comprehensive Documentation** - Institutional-grade documentation in `/docs/` with detailed structure guide
+- **Test Consolidation** - All tests organized in `/tests/` with robust validation framework
+- **Root Directory Cleanup** - Reduced from 45 to 3 Python files for professional appearance
 
-### 🚀 Major Features
-- **🏗️ 5-Domain Confluence System** - Wyckoff, Liquidity, Momentum, Temporal, and Fusion domains with multi-timeframe integration
-- **🛡️ Crash-Resistant Optimization** - Process isolation, resource guardrails, and append-only logging preventing system crashes
-- **📊 Professional Tearsheet Generation** - Fund-style reporting with institutional metrics and scaling projections
-- **⚖️ Risk Parameter Scaling** - Optimized to achieve 8-15% institutional return targets
-- **🔒 Production Monitoring** - Deployment validation with frozen, reproducible configurations
+### 🌐 Universal Asset Adapter Architecture
+- **Multi-Asset Support** - ETH, SOL, XRP, BTC, SPY with adaptive configuration system
+- **Asset-Specific Profiling** - Automated parameter optimization for each asset class
+- **Universal Backtesting** - Consistent framework across all supported assets
+- **Adaptive Configuration** - Dynamic parameter adjustment based on asset characteristics
+- **Cross-Asset Validation** - Comprehensive testing across multiple asset classes
 
-### 📈 Scaling Projections
-- **$250K AUM**: $31,905 annual profit
-- **$1M AUM**: $127,620 annual profit
-- **$5M AUM**: $638,100 annual profit
-- **$10M AUM**: $1,276,200 annual profit
+### 🚀 Production Features
+- **Professional CLI Interfaces** - 5 production-ready command-line tools
+- **Institutional Testing Suite** - Comprehensive validation with robust error handling
+- **Multi-Asset Backtesting** - Unified framework supporting diverse asset classes
+- **Asset Profiler System** - Automated configuration generation for new assets
+- **Enhanced Error Handling** - Improved reliability and debugging capabilities
 
-*"Institutional-grade precision meets crash-resistant reliability."* - v1.6.2 Philosophy
+### 📊 Repository Transformation
+- **Before**: 45 Python files in root, scattered experimental code, debug directories
+- **After**: 3 Python files in root, organized structure, professional appearance
+- **Benefits**: Team collaboration ready, code audit compliant, institutional standards
+
+*"Professional organization meets universal asset adaptability."* - v1.7.2 Philosophy
 
 ---
 
-## ⚡ Quick Start (v1.6.2)
+## ⚡ Quick Start (v1.7.2)
 
-### Production-Ready Backtest
+### Production CLI Interfaces
 ```bash
-# Run institutional-grade ETH backtest with frozen parameters
-python run_complete_confluence_system.py
+# Main CLI interface for all operations
+python bin/bull_machine_cli.py --help
 
-# Generate professional tearsheet
-python generate_institutional_tearsheet.py
+# ETH production backtesting
+python bin/production_backtest.py
 
-# Run optimization framework
-python safe_grid_runner.py
+# Multi-asset adaptive backtesting (v1.7.2)
+python bin/run_adaptive_backtest.py --asset ETH
+
+# Asset profiling and configuration generation
+python bin/run_multi_asset_profiler.py --asset SOL
+
+# Institutional testing and validation
+python bin/run_institutional_testing.py --all
 ```
 
 ### Production Configuration
@@ -66,12 +79,55 @@ python safe_grid_runner.py
 }
 ```
 
+### 📁 Institutional Directory Structure
+```
+bull-machine/
+├── bin/                    # 🚀 Production Executables
+│   ├── bull_machine_cli.py         # Main CLI interface
+│   ├── production_backtest.py      # ETH production backtesting
+│   ├── run_adaptive_backtest.py    # Multi-asset system (v1.7.2)
+│   ├── run_institutional_testing.py # Institutional validation
+│   └── run_multi_asset_profiler.py  # Asset profiling system
+├── bull_machine/           # 🔧 Core Production Package (112 files)
+│   ├── backtest/           # Backtesting framework
+│   ├── core/               # Core trading logic
+│   ├── modules/            # Engine modules
+│   ├── signals/            # Signal generation
+│   └── strategy/           # Strategy implementations
+├── engine/                 # 🌐 Asset Adapter Architecture (v1.7.2)
+│   ├── adapters/           # Universal asset adapters
+│   ├── context/            # Market context analysis
+│   ├── fusion/             # Multi-domain fusion
+│   ├── smc/               # Smart Money Concepts
+│   └── timeframes/         # Multi-timeframe alignment
+├── configs/                # ⚙️ Configuration Management
+│   ├── v171/              # v1.7.1 production configs
+│   └── adaptive/          # v1.7.2 asset-specific configs
+├── profiles/               # 📊 Asset Profiles (v1.7.2)
+├── tests/                  # 🧪 Comprehensive Test Suite
+├── scripts/research/       # 🔬 Research & Development
+├── docs/                   # 📚 Documentation & Reports
+└── results/archive/        # 📈 Organized Results Archive
+```
+
 ---
 
-## 🏗️ Core Features (v1.6.2)
+## 🏗️ Core Features (v1.7.2)
 
-### 🔮 Fibonacci Price-Time Clusters
-- **Price Clusters**: Overlapping fib levels (0.382, 0.618, 1.272, etc.) for premium/discount zones
+### 🌐 Universal Asset Adapter Architecture
+- **Multi-Asset Support**: ETH, SOL, XRP, BTC, SPY with unified framework
+- **Asset-Specific Optimization**: Automated parameter tuning for each asset class
+- **Adaptive Configuration System**: Dynamic adjustment based on asset characteristics
+- **Cross-Asset Validation**: Comprehensive testing across all supported assets
+
+### 🏛️ Professional Repository Organization
+- **Clean Architecture**: Proper separation of production vs research code
+- **Production CLI Tools**: 5 dedicated command-line interfaces in `/bin/`
+- **Institutional Documentation**: Comprehensive structure in `/docs/`
+- **Test Consolidation**: Organized testing framework in `/tests/`
+
+### 🔮 Advanced Trading Features
+- **5-Domain Confluence System**: Wyckoff, Liquidity, Momentum, Temporal, and Fusion domains
   - Entry refinement with Order Block (OB) / Fair Value Gap (FVG) alignment
   - Exit targets at extensions (1.272–1.618 for exhaustion)
   - Risk anchoring (invalidation cuts if no reaction at cluster)
