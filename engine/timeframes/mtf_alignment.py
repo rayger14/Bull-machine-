@@ -687,7 +687,7 @@ def create_1h_integration_test():
 
     # 1H data (last 100 hours)
     dates_1h = pd.date_range(current_time - timedelta(hours=100),
-                            current_time, freq='1H')[:-1]  # Exclude current incomplete bar
+                            current_time, freq='1h')[:-1]  # Exclude current incomplete bar
     data_1h = pd.DataFrame({
         'open': 100 + np.random.randn(len(dates_1h)).cumsum() * 0.5,
         'high': 100 + np.random.randn(len(dates_1h)).cumsum() * 0.5 + 1,
@@ -698,7 +698,7 @@ def create_1h_integration_test():
 
     # 4H data (last 400 hours = ~50 bars)
     dates_4h = pd.date_range(current_time - timedelta(hours=400),
-                            current_time, freq='4H')[:-1]
+                            current_time, freq='4h')[:-1]
     data_4h = pd.DataFrame({
         'open': 100 + np.random.randn(len(dates_4h)).cumsum() * 2,
         'high': 100 + np.random.randn(len(dates_4h)).cumsum() * 2 + 2,
