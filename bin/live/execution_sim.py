@@ -288,7 +288,16 @@ class ExecutionSimulator:
     def get_trade_summary(self) -> Dict:
         """Get trading performance summary."""
         if not self.fills:
-            return {'trades': 0, 'win_rate': 0, 'avg_pnl': 0}
+            return {
+                'total_trades': 0,
+                'winning_trades': 0,
+                'losing_trades': 0,
+                'win_rate': 0,
+                'avg_win': 0,
+                'avg_loss': 0,
+                'profit_factor': float('inf'),
+                'total_fees': 0
+            }
 
         winning_trades = [f for f in self.fills if f.pnl > 0]
         losing_trades = [f for f in self.fills if f.pnl < 0]
