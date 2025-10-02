@@ -24,6 +24,10 @@ from bull_machine_config import RESULTS_DIR, get_config_path
 # Import existing engines
 from engine.timeframes.mtf_alignment import MTFAlignmentEngine
 
+# Import new macro context system
+from engine.context.loader import load_macro_data, fetch_macro_snapshot, get_macro_health_status
+from engine.context.macro_engine import analyze_macro, create_default_macro_config
+
 
 class LiveMockFeedRunner:
     """Production-grade mock feed runner using existing Bull Machine engines."""
@@ -51,6 +55,21 @@ class LiveMockFeedRunner:
         # Initialize engines using existing production code
         self.mtf_engine = MTFAlignmentEngine(self.config.get('mtf', {}))
         self.fusion_engine = EnhancedFusionEngineV1_4(self.config.get('fusion', {}))
+
+        # Initialize macro context system
+        self.macro_config = create_default_macro_config()
+        # Override with config if provided
+        if 'context' in self.config:
+            self.macro_config.update(self.config['context'])
+
+        # Load macro data
+        print("📊 Loading macro context data...")
+        self.macro_data = load_macro_data()
+        macro_health = get_macro_health_status(
+            {k: {'value': 1.0, 'stale': len(v) == 0}
+             for k, v in self.macro_data.items()}
+        )
+        print(f"   Macro health: {macro_health['fresh_series']}/{macro_health['total_series']} series available")
 
         # Initialize data containers (right-edge aligned)
         self.df_1h = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume'])
@@ -171,12 +190,44 @@ class LiveMockFeedRunner:
             # MTF confluence analysis
             sync_report = self.mtf_engine.mtf_confluence(df_1h, df_4h, df_1d)
 
-            # Apply VIX hysteresis (mock VIX with volatility proxy)
+            # Macro context analysis
             current_price = df_1h['Close'].iloc[-1]
-            volatility_proxy = self._calculate_volatility_proxy(df_1h)
-            vix_active = self.vix_hysteresis.update(volatility_proxy)
+            macro_snapshot = fetch_macro_snapshot(self.macro_data, pd.Timestamp(timestamp))
+            macro_result = analyze_macro(macro_snapshot, self.macro_config)
 
-            # Generate signal via existing fusion engine
+            # Apply VIX hysteresis (use real VIX if available, otherwise proxy)
+            if macro_snapshot.get('VIX', {}).get('value') is not None:
+                vix_value = macro_snapshot['VIX']['value']
+            else:
+                vix_value = self._calculate_volatility_proxy(df_1h)
+            vix_active = self.vix_hysteresis.update(vix_value)
+
+            # Check macro veto BEFORE generating signal
+            if macro_result['veto_strength'] >= self.macro_config['macro_veto_threshold']:
+                # Macro veto - no signal generated
+                signal_result = {
+                    'timestamp': timestamp.isoformat(),
+                    'asset': self.asset,
+                    'price': current_price,
+                    'action': 'hold',
+                    'side': 'neutral',
+                    'confidence': 0.0,
+                    'vix_active': vix_active,
+                    'macro_vetoed': True,
+                    'veto_reason': macro_result['notes'],
+                    'macro_delta': macro_result.get('macro_delta', 0.0),
+                    'macro_regime': macro_result['regime'],
+                    'macro_signals': macro_result['signals'],
+                    'modules': {k: bool(v) for k, v in modules.items() if v},
+                    'sync_report': {
+                        'nested_ok': getattr(sync_report, 'nested_ok', False),
+                        'eq_magnet': getattr(sync_report, 'eq_magnet', False),
+                        'decision': getattr(sync_report, 'decision', 'hold')
+                    }
+                }
+                return signal_result
+
+            # Generate signal via existing fusion engine (no macro veto)
             signal = self.fusion_engine.fuse_with_mtf(modules, sync_report)
 
             # Build comprehensive result
@@ -188,6 +239,10 @@ class LiveMockFeedRunner:
                 'side': 'neutral',
                 'confidence': 0.0,
                 'vix_active': vix_active,
+                'macro_vetoed': False,
+                'macro_delta': macro_result.get('macro_delta', 0.0),
+                'macro_regime': macro_result['regime'],
+                'macro_signals': macro_result['signals'],
                 'modules': {k: bool(v) for k, v in modules.items() if v},
                 'sync_report': {
                     'nested_ok': getattr(sync_report, 'nested_ok', False),
