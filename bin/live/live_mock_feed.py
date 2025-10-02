@@ -168,8 +168,8 @@ class LiveMockFeedRunner:
                 'context': self._analyze_context(df_1d)
             }
 
-            # MTF sync analysis
-            sync_report = self.mtf_engine.analyze_mtf_sync(df_1h, df_4h, df_1d)
+            # MTF confluence analysis
+            sync_report = self.mtf_engine.mtf_confluence(df_1h, df_4h, df_1d)
 
             # Apply VIX hysteresis (mock VIX with volatility proxy)
             current_price = df_1h['Close'].iloc[-1]

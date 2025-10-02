@@ -125,7 +125,10 @@ class LiveDataAdapter:
                 return df
 
         # Append new data
-        updated_df = pd.concat([df, new_row])
+        if df.empty:
+            updated_df = new_row.copy()
+        else:
+            updated_df = pd.concat([df, new_row])
 
         # Keep only recent bars
         if len(updated_df) > max_bars:
