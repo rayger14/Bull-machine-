@@ -10,39 +10,60 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Global macro series list (traders' complete context)
-MACRO_SERIES = [
+UNIVERSAL_MACRO_SERIES = [
     'DXY',       # Dollar Index (Moneytaur: liquidity drain)
     'WTI',       # Oil/Energy (ZeroIKA: inflation/stagflation)
     'US10Y',     # 10Y Treasury (yield curve)
     'US2Y',      # 2Y Treasury (inversion detection)
+    'VIX',       # Volatility Index (Wyckoff: risk regime)
+    'GOLD',      # Gold (Wyckoff: flight to safety)
+    'MOVE',      # Bond Volatility (Wyckoff: credit stress)
+    'EURUSD'     # EUR/USD (ZeroIKA: USD weakness)
+]
+
+CRYPTO_MACRO_SERIES = [
     'USDT.D',    # USDT Dominance (ZeroIKA: stablecoin coil)
     'USDC.D',    # USDC Dominance (Wyckoff: alt bleed)
     'TOTAL',     # Total Market Cap (flow strength)
     'TOTAL2',    # Alt Market Cap (alt flows)
     'TOTAL3',    # Alt Market Cap ex ETH/BTC (alt momentum)
-    'VIX',       # Volatility Index (Wyckoff: risk regime)
-    'GOLD',      # Gold (Wyckoff: flight to safety)
-    'MOVE',      # Bond Volatility (Wyckoff: credit stress)
-    'EURUSD',    # EUR/USD (ZeroIKA: USD weakness)
     'BTC.D',     # Bitcoin Dominance (Wyckoff: crypto dominance)
     'FUNDING',   # Funding Rates (Moneytaur: leverage stress)
     'OI'         # Open Interest Premium (ZeroIKA: leverage stress)
 ]
 
+STOCK_MACRO_SERIES = [
+    'SPY_QQQ',   # SPY/QQQ ratio (large-cap tech dominance)
+    'SPY_IWM',   # SPY/IWM ratio (large vs small-cap)
+    'SPY_OI'     # SPY options/futures OI premium
+]
+
+# Complete series list
+MACRO_SERIES = UNIVERSAL_MACRO_SERIES + CRYPTO_MACRO_SERIES + STOCK_MACRO_SERIES
+
 def load_macro_data(data_dir: str = "data",
-                   symbols: Optional[List[str]] = None) -> Dict[str, pd.DataFrame]:
+                   symbols: Optional[List[str]] = None,
+                   asset_type: str = "crypto") -> Dict[str, pd.DataFrame]:
     """
-    Load all macro series from CSV files.
+    Load macro series from CSV files based on asset type.
 
     Args:
         data_dir: Directory containing macro CSV files
-        symbols: List of symbols to load (default: all MACRO_SERIES)
+        symbols: List of symbols to load (default: auto-selected by asset_type)
+        asset_type: "crypto", "stock", or "all" to determine which series to load
 
     Returns:
         Dict mapping symbol to DataFrame
     """
     if symbols is None:
-        symbols = MACRO_SERIES
+        if asset_type == "crypto":
+            symbols = UNIVERSAL_MACRO_SERIES + CRYPTO_MACRO_SERIES
+        elif asset_type == "stock":
+            symbols = UNIVERSAL_MACRO_SERIES + STOCK_MACRO_SERIES
+        elif asset_type == "all":
+            symbols = MACRO_SERIES
+        else:
+            symbols = UNIVERSAL_MACRO_SERIES  # Default to universal only
 
     macro_data = {}
     data_path = Path(data_dir)

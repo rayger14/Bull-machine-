@@ -8,18 +8,20 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict) -> Dict:
+def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str = "crypto") -> Dict:
     """
     Analyze macro indicators for vetoes and signals based on traders' logic.
+    Supports both crypto and stock/index analysis.
 
     Traders' Logic:
-    - Wyckoff Insider: VIX/MOVE (crisis), Gold/DXY (fiat), USDT.D/USDC.D/BTC.D (dominance)
+    - Wyckoff Insider: VIX/MOVE (crisis), Gold/DXY (fiat), dominance signals
     - Moneytaur: DXY/Oil (rotations), funding/OI (leverage), yields (curve)
-    - ZeroIKA: USDT.D/USDC.D (coil), DXY/EUR/USD (USD), OI (crisis blocks)
+    - ZeroIKA: USD strength, dominance coils, structural shifts
 
     Args:
         macro_snapshot: Dict of macro values with staleness info
         config: Configuration dict with thresholds
+        asset_type: "crypto" or "stock" for asset-specific logic
 
     Returns:
         {
@@ -27,7 +29,8 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict) -> Dict:
             'signals': Dict,            # Individual signal flags
             'health': Dict,             # Health metrics
             'regime': str,              # Risk On/Off/Neutral
-            'notes': List[str]          # Human-readable analysis
+            'notes': List[str],         # Human-readable analysis
+            'asset_type': str           # Asset type analyzed
         }
     """
     veto_strength = 0.0
@@ -138,14 +141,39 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict) -> Dict:
         signals['oi_stress'] = True
         notes.append(f"OI premium {oi_premium:.3f} - leverage crisis")
 
-    # TOTAL3: Alt market cap (lag = alt weakness, ZeroIKA: structural shifts)
-    total3 = get_value('TOTAL3', 1.0)
-    total2 = get_value('TOTAL2', 1.0)
-    if total3 is not None and total2 is not None:
-        if total3 / total2 < config.get('total3_lag_threshold', 0.9):
+    # ASSET-SPECIFIC LOGIC
+    # ====================
+    if asset_type == "crypto":
+        # TOTAL3: Alt market cap (lag = alt weakness, ZeroIKA: structural shifts)
+        total3 = get_value('TOTAL3', 1.0)
+        total2 = get_value('TOTAL2', 1.0)
+        if total3 is not None and total2 is not None:
+            if total3 / total2 < config.get('total3_lag_threshold', 0.9):
+                veto_strength += 0.2
+                signals['alt_bleed'] = True
+                notes.append(f"TOTAL3 lagging - alt sector bleed")
+
+    elif asset_type == "stock":
+        # SPY/QQQ: Large-cap tech dominance (risk-off = SPY leadership)
+        spy_qqq = get_value('SPY_QQQ', 1.0)
+        if spy_qqq is not None and spy_qqq > config.get('spy_qqq_dominance_threshold', 1.2):
             veto_strength += 0.2
-            signals['alt_bleed'] = True
-            notes.append(f"TOTAL3 lagging - alt sector bleed")
+            signals['spy_dominance'] = True
+            notes.append(f"SPY/QQQ dominance {spy_qqq:.3f} - tech weakness")
+
+        # SPY/IWM: Large vs small-cap (defensive shift = risk-off)
+        spy_iwm = get_value('SPY_IWM', 1.0)
+        if spy_iwm is not None and spy_iwm > config.get('spy_iwm_dominance_threshold', 1.5):
+            veto_strength += 0.2
+            signals['defensive_shift'] = True
+            notes.append(f"SPY/IWM dominance {spy_iwm:.3f} - defensive shift")
+
+        # SPY_OI: Equity leverage stress (options/futures OI premium)
+        spy_oi = get_value('SPY_OI', 0.015)
+        if spy_oi is not None and spy_oi > config.get('spy_oi_max', 0.015):
+            veto_strength += 0.3
+            signals['spy_oi_stress'] = True
+            notes.append(f"SPY OI premium {spy_oi:.3f} - equity leverage stress")
 
     # 4. REGIME DETECTION
     # ===================
@@ -176,6 +204,7 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict) -> Dict:
         'health': health,
         'regime': regime,
         'notes': notes,
+        'asset_type': asset_type,
         'macro_delta': _calculate_macro_delta(signals, config)
     }
 
@@ -218,27 +247,35 @@ def _calculate_macro_delta(signals: Dict, config: Dict) -> float:
 def create_default_macro_config() -> Dict:
     """
     Create default macro configuration with traders' thresholds.
+    Supports both crypto and stock market analysis.
     """
     return {
-        # Wyckoff Insider thresholds
+        # Universal Indicators (Wyckoff Insider)
         'vix_regime_switch_threshold': 20.0,
         'move_threshold': 80.0,
         'gold_cycle_high': 2600.0,
-        'stablecoin_dominance_threshold': 0.08,
-        'btc_dominance_threshold': 0.60,
 
-        # Moneytaur thresholds
+        # Universal Indicators (Moneytaur)
         'dxy_breakout_threshold': 105.0,
         'wti_low_threshold': 65.0,
         'yield_inversion_threshold': 0.2,
-        'funding_max': 0.01,
 
-        # ZeroIKA thresholds
+        # Universal Indicators (ZeroIKA)
         'eurusd_bullish_threshold': 1.12,
+
+        # Crypto-Specific Thresholds
+        'stablecoin_dominance_threshold': 0.08,
+        'btc_dominance_threshold': 0.60,
+        'funding_max': 0.01,
         'oi_spot_max': 0.015,
         'total3_lag_threshold': 0.9,
 
-        # Fusion integration
+        # Stock-Specific Thresholds
+        'spy_qqq_dominance_threshold': 1.2,
+        'spy_iwm_dominance_threshold': 1.5,
+        'spy_oi_max': 0.015,
+
+        # Fusion Integration
         'macro_weight': 0.3,
         'macro_veto_threshold': 0.70
     }
