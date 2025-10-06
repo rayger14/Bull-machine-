@@ -12,8 +12,8 @@ from unittest.mock import Mock, patch
 import sys
 import os
 
-# Mark all tests in this module as xfail (legacy v1.7.0 tests with changed APIs)
-pytestmark = pytest.mark.xfail(reason="v1.7.0 legacy integration tests - macro pulse helper functions and thresholds changed in v1.7.3", strict=False)
+# Note: Only specific failing tests are marked as xfail below
+# Many v1.7.0 tests still pass despite API evolution
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
@@ -26,6 +26,7 @@ from engine.context.macro_pulse import (
 from engine.fusion import FusionEngine, FusionSignal
 import json
 
+@pytest.mark.xfail(reason="v1.7.0 macro pulse helper functions return different values due to threshold changes", strict=False)
 class TestMacroPulseHelpers:
     """Test individual macro pulse helper functions"""
 
@@ -234,6 +235,7 @@ class TestMacroGreenlights:
         assert result['greenlight_score'] >= 0.0
 
 
+@pytest.mark.xfail(reason="v1.7.0 macro pulse engine tests fail due to API/threshold changes", strict=False)
 class TestMacroPulseEngine:
     """Test complete Macro Pulse Engine"""
 
@@ -365,6 +367,7 @@ class TestMacroPulseEngine:
             assert 0 <= signal.value <= 1
             assert 0 <= signal.confidence <= 1
 
+@pytest.mark.xfail(reason="v1.7.0 fusion macro integration tests fail due to API changes", strict=False)
 class TestFusionMacroIntegration:
     """Test Fusion Engine integration with Macro Pulse"""
 
@@ -533,6 +536,7 @@ class TestFusionMacroIntegration:
             assert isinstance(pulse.boost_strength, float)
             assert isinstance(pulse.active_signals, list)
 
+@pytest.mark.xfail(reason="v1.7.0 macro wisdom integration tests fail due to threshold changes", strict=False)
 class TestMacroWisdomIntegration:
     """Test integration of macro wisdom and edge cases"""
 
