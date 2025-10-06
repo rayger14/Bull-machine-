@@ -15,24 +15,26 @@ class TestWyckoffMTF(unittest.TestCase):
     def setUp(self):
         """Set up test data."""
         # Create accumulation pattern (low in range with volume expansion)
+        # Position < 0.35 and vol_expansion > 1.2
         self.accumulation_data = pd.DataFrame(
             {
                 "open": [100] * 20,
                 "high": [105] * 10 + [110] * 10,
-                "low": [95] * 10 + [98] * 10,
-                "close": [98] * 10 + [102] * 10,  # Moving up
-                "volume": [1000] * 10 + [1500] * 10,  # Volume expansion
+                "low": [95] * 10 + [95] * 10,  # Keep lows at range bottom
+                "close": [97] * 10 + [98] * 10,  # Close near lows (position ~0.20)
+                "volume": [1000] * 10 + [1600] * 10,  # Volume expansion > 1.2x
             }
         )
 
         # Create distribution pattern (high in range with volume expansion)
+        # Position > 0.65 and vol_expansion > 1.2
         self.distribution_data = pd.DataFrame(
             {
                 "open": [200] * 20,
-                "high": [205] * 10 + [202] * 10,
+                "high": [205] * 10 + [205] * 10,  # Keep highs at range top
                 "low": [195] * 10 + [190] * 10,
-                "close": [202] * 10 + [198] * 10,  # Moving down
-                "volume": [1000] * 10 + [1500] * 10,  # Volume expansion
+                "close": [203] * 10 + [204] * 10,  # Close near highs (position ~0.93)
+                "volume": [1000] * 10 + [1600] * 10,  # Volume expansion > 1.2x
             }
         )
 
@@ -148,13 +150,13 @@ class TestWyckoffMTF(unittest.TestCase):
 
     def test_mtf_context_bias_determination(self):
         """Test HTF bias determination in context."""
-        # Create bullish daily pattern (high in range)
+        # Create bullish daily pattern (high in range, needs >=5 rows)
         bullish_daily = pd.DataFrame(
             {
-                "open": [100],
-                "high": [120],
-                "low": [90],
-                "close": [115],  # 83% of range (> 65%)
+                "open": [100] * 5,
+                "high": [120] * 5,
+                "low": [90] * 5,
+                "close": [95, 100, 105, 110, 115],  # Last close at 83% of range (> 65%)
             }
         )
 
@@ -163,13 +165,13 @@ class TestWyckoffMTF(unittest.TestCase):
         self.assertEqual(context["htf_bias"], "bullish")
         self.assertTrue(context["htf_resistance_near"])
 
-        # Create bearish daily pattern (low in range)
+        # Create bearish daily pattern (low in range, needs >=5 rows)
         bearish_daily = pd.DataFrame(
             {
-                "open": [100],
-                "high": [120],
-                "low": [90],
-                "close": [95],  # 17% of range (< 35%)
+                "open": [100] * 5,
+                "high": [120] * 5,
+                "low": [90] * 5,
+                "close": [115, 110, 105, 100, 95],  # Last close at 17% of range (< 35%)
             }
         )
 

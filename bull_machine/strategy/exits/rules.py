@@ -27,11 +27,12 @@ class CHoCHAgainstDetector:
     def __init__(self, config: Dict[str, Any]):
         # STEP 3: Kill silent fallbacks and use sweep parameter names
         # Use bars_confirm (from sweep) not confirmation_bars (legacy name)
-        if "bars_confirm" not in config:
+        # Backwards compatibility: accept confirmation_bars as alias
+        if "bars_confirm" not in config and "confirmation_bars" not in config:
             raise ValueError(f"CHOCH missing required key bars_confirm in {list(config.keys())}")
 
         self.min_break_strength = config.get("min_break_strength", 0.6)
-        self.bars_confirm = int(config["bars_confirm"])  # STEP 3: Use sweep parameter name
+        self.bars_confirm = int(config.get("bars_confirm", config.get("confirmation_bars", 2)))
         self.volume_confirmation_required = config.get("volume_confirmation", True)
 
         # STEP 2: Echo effective config at init
@@ -294,11 +295,12 @@ class MomentumFadeDetector:
     def __init__(self, config: Dict[str, Any]):
         # STEP 3: Kill silent fallbacks and use sweep parameter names
         # Use drop_pct (from sweep) as the main momentum threshold
-        if "drop_pct" not in config:
+        # Backwards compatibility: use rsi_divergence_threshold if drop_pct not present
+        if "drop_pct" not in config and "rsi_divergence_threshold" not in config:
             raise ValueError(f"MOMENTUM missing required key drop_pct in {list(config.keys())}")
 
         self.rsi_period = config.get("rsi_period", 14)
-        self.drop_pct = float(config["drop_pct"])  # STEP 3: Use sweep parameter name
+        self.drop_pct = float(config.get("drop_pct", config.get("rsi_divergence_threshold", 0.7)))
         self.volume_decline_threshold = config.get("volume_decline_threshold", 0.3)
         self.velocity_threshold = config.get("velocity_threshold", 0.4)
         self.lookback = config.get("lookback", 6)
