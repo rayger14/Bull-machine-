@@ -28,6 +28,15 @@ from engine.timeframes.mtf_alignment import MTFAlignmentEngine
 from engine.context.loader import load_macro_data, fetch_macro_snapshot, get_macro_health_status
 from engine.context.macro_engine import analyze_macro, create_default_macro_config
 
+# Import real domain engines (v1.7.3+)
+from engine.wyckoff.wyckoff_engine import detect_wyckoff_phase
+from engine.liquidity.hob import HOBDetector
+from engine.momentum.momentum_engine import calculate_rsi, calculate_macd_norm, momentum_delta
+from engine.smc.smc_engine import SMCEngine
+
+# Import fast signal generation for live trading
+from bin.live.fast_signals import generate_fast_signal
+
 
 class LiveMockFeedRunner:
     """Production-grade mock feed runner using existing Bull Machine engines."""
@@ -193,22 +202,23 @@ class LiveMockFeedRunner:
             vix_prev = self.vix_hysteresis.previous_value if hasattr(self.vix_hysteresis, 'previous_value') else vix_now
             vix_active = self.vix_hysteresis.update(vix_now)
 
-            # Prepare modules dict (simplified for mock)
-            modules = {
-                'wyckoff': self._analyze_wyckoff(df_1h, df_4h, df_1d),
-                'liquidity': self._analyze_liquidity(df_1h),
-                'structure': self._analyze_structure(df_1h),
-                'momentum': self._analyze_momentum(df_1h, df_4h),
-                'context': self._analyze_context(df_1d)
-            }
+            # Generate fast signal (price action: ADX + SMA + RSI)
+            fast_signal = generate_fast_signal(df_1h, df_4h, df_1d, self.config)
 
-            # MTF confluence analysis (with VIX)
-            sync_report = self.mtf_engine.mtf_confluence(df_1h, df_4h, df_1d, vix_now, vix_prev)
+            # Debug: Log signal generation
+            debug_trigger = (len(df_1h) == 50 or len(df_1h) % 100 == 0)
+            if debug_trigger or fast_signal:
+                print(f"\n🔍 Signal check at {timestamp} (bar {len(df_1h)}):")
+                if fast_signal:
+                    print(f"   ✓ SIGNAL: {fast_signal['side'].upper()} @ {fast_signal['confidence']:.2f} confidence")
+                    print(f"   Reasons: {', '.join(fast_signal['reasons'])}")
+                else:
+                    print(f"   ✗ No signal (ADX < 20 or no clear setup)")
 
-            # Check macro veto BEFORE generating signal
+            # Check macro veto BEFORE returning signal
             if macro_result['veto_strength'] >= self.macro_config['macro_veto_threshold']:
                 # Macro veto - no signal generated
-                signal_result = {
+                return {
                     'timestamp': timestamp.isoformat(),
                     'asset': self.asset,
                     'price': current_price,
@@ -220,51 +230,47 @@ class LiveMockFeedRunner:
                     'veto_reason': macro_result['notes'],
                     'macro_delta': macro_result.get('macro_delta', 0.0),
                     'macro_regime': macro_result['regime'],
-                    'macro_signals': macro_result['signals'],
-                    'modules': {k: bool(v) for k, v in modules.items() if v},
-                    'sync_report': {
-                        'nested_ok': getattr(sync_report, 'nested_ok', False),
-                        'eq_magnet': getattr(sync_report, 'eq_magnet', False),
-                        'decision': getattr(sync_report, 'decision', 'hold')
-                    }
+                    'macro_signals': macro_result['signals']
                 }
-                return signal_result
 
-            # Generate signal via existing fusion engine (no macro veto)
-            signal = self.fusion_engine.fuse_with_mtf(modules, sync_report)
+            # Convert fast signal to full signal result
+            signal = fast_signal
 
-            # Build comprehensive result
-            signal_result = {
-                'timestamp': timestamp.isoformat(),
-                'asset': self.asset,
-                'price': current_price,
-                'action': 'hold',
-                'side': 'neutral',
-                'confidence': 0.0,
-                'vix_active': vix_active,
-                'macro_vetoed': False,
-                'macro_delta': macro_result.get('macro_delta', 0.0),
-                'macro_regime': macro_result['regime'],
-                'macro_signals': macro_result['signals'],
-                'modules': {k: bool(v) for k, v in modules.items() if v},
-                'sync_report': {
-                    'nested_ok': getattr(sync_report, 'nested_ok', False),
-                    'eq_magnet': getattr(sync_report, 'eq_magnet', False),
-                    'decision': getattr(sync_report, 'decision', 'hold')
-                }
-            }
-
-            # Update with signal if generated
+            # Build result
             if signal:
-                signal_result.update({
+                # Signal generated
+                return {
+                    'timestamp': timestamp.isoformat(),
+                    'asset': self.asset,
+                    'price': current_price,
                     'action': 'signal',
-                    'side': getattr(signal, 'side', 'neutral'),
-                    'confidence': getattr(signal, 'confidence', 0.0),
-                    'reasons': getattr(signal, 'reasons', []),
-                    'ttl_bars': getattr(signal, 'ttl_bars', 0)
-                })
-
-            return signal_result
+                    'side': signal['side'],
+                    'confidence': signal['confidence'],
+                    'reasons': signal.get('reasons', []),
+                    'vix_active': vix_active,
+                    'macro_vetoed': False,
+                    'macro_delta': macro_result.get('macro_delta', 0.0),
+                    'macro_regime': macro_result['regime'],
+                    'macro_signals': macro_result['signals'],
+                    'adx': signal.get('adx', 0.0),
+                    'rsi': signal.get('rsi', 0.0),
+                    'price_vs_ma20': signal.get('price_vs_ma20', 0.0)
+                }
+            else:
+                # No signal
+                return {
+                    'timestamp': timestamp.isoformat(),
+                    'asset': self.asset,
+                    'price': current_price,
+                    'action': 'hold',
+                    'side': 'neutral',
+                    'confidence': 0.0,
+                    'vix_active': vix_active,
+                    'macro_vetoed': False,
+                    'macro_delta': macro_result.get('macro_delta', 0.0),
+                    'macro_regime': macro_result['regime'],
+                    'macro_signals': macro_result['signals']
+                }
 
         except Exception as e:
             import traceback
@@ -273,74 +279,158 @@ class LiveMockFeedRunner:
             return None
 
     def _analyze_wyckoff(self, df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame):
-        """Simplified Wyckoff analysis for mock."""
-        if len(df_1h) < 20:
+        """Real Wyckoff phase detection using production engine."""
+        if len(df_1d) < 50:
             return None
 
-        # Simple trend + pullback detection
-        close = df_1h['Close'].iloc[-1]
-        ma20 = df_1h['Close'].rolling(20).mean().iloc[-1]
-        ma50 = df_1h['Close'].rolling(50).mean().iloc[-1] if len(df_1h) >= 50 else ma20
+        try:
+            # Standardize column names (engines expect lowercase)
+            df_1d_std = df_1d.rename(columns={
+                'Open': 'open', 'High': 'high', 'Low': 'low',
+                'Close': 'close', 'Volume': 'volume'
+            })
 
-        if close > ma20 > ma50:
-            return {'bias': 'long', 'phase': 'D', 'confidence': 0.7}
-        elif close < ma20 < ma50:
-            return {'bias': 'short', 'phase': 'D', 'confidence': 0.7}
+            # Get USDT stagnation strength from macro context (0.0 if no macro data)
+            usdt_stag_strength = 0.0
+            if hasattr(self, 'macro_snapshot') and self.macro_snapshot:
+                usdt_stag_strength = self.macro_snapshot.get('usdt_stag_strength', 0.0)
 
-        return None
+            # Call real Wyckoff engine on daily timeframe
+            wyckoff_cfg = self.config.get('wyckoff', {})
+            result = detect_wyckoff_phase(df_1d_std, wyckoff_cfg, usdt_stag_strength)
+
+            if result and result.get('confidence', 0) > 0.0:
+                phase = result.get('phase', '')
+                confidence = result.get('confidence', 0.0)
+
+                # Map phases to bias
+                bullish_phases = ['accumulation', 'spring', 'sos', 'ar']
+                bearish_phases = ['distribution', 'utad', 'markdown', 'bc']
+
+                if any(p in phase.lower() for p in bullish_phases):
+                    return {'bias': 'long', 'phase': phase, 'confidence': confidence}
+                elif any(p in phase.lower() for p in bearish_phases):
+                    return {'bias': 'short', 'phase': phase, 'confidence': confidence}
+
+            return None
+
+        except Exception as e:
+            print(f"⚠️  Wyckoff engine error: {e}")
+            return None
 
     def _analyze_liquidity(self, df_1h: pd.DataFrame):
-        """Simplified liquidity analysis for mock."""
-        if len(df_1h) < 10:
+        """Real HOB/pHOB detection using production engine."""
+        if len(df_1h) < 50:
             return None
 
-        # Simple wick analysis
-        recent = df_1h.tail(10)
-        avg_wick = (recent['High'] - recent['Close']).mean()
-        current_wick = df_1h['High'].iloc[-1] - df_1h['Close'].iloc[-1]
+        try:
+            # Standardize column names (engines expect lowercase)
+            df_1h_std = df_1h.rename(columns={
+                'Open': 'open', 'High': 'high', 'Low': 'low',
+                'Close': 'close', 'Volume': 'volume'
+            })
 
-        if current_wick > avg_wick * 1.5:
-            return {'score': 0.6, 'pressure': 'bearish'}
+            # Initialize HOB detector with config
+            hob_cfg = self.config.get('liquidity', {})
+            detector = HOBDetector(hob_cfg)
 
-        return None
+            # Detect HOB pattern
+            hob_signal = detector.detect_hob(df_1h_std)
+
+            if hob_signal and hob_signal.quality_score > 0.0:
+                return {
+                    'score': hob_signal.quality_score,
+                    'pressure': hob_signal.direction,  # 'bullish' or 'bearish'
+                    'confidence': hob_signal.confidence
+                }
+
+            return None
+
+        except Exception as e:
+            print(f"⚠️  Liquidity engine error: {e}")
+            return None
 
     def _analyze_structure(self, df_1h: pd.DataFrame):
-        """Simplified structure analysis for mock."""
-        if len(df_1h) < 20:
+        """Real SMC analysis using production engine."""
+        if len(df_1h) < 50:
             return None
 
-        # Simple support/resistance
-        high_20 = df_1h['High'].rolling(20).max().iloc[-1]
-        low_20 = df_1h['Low'].rolling(20).min().iloc[-1]
-        close = df_1h['Close'].iloc[-1]
+        try:
+            # Standardize column names (engines expect lowercase)
+            df_1h_std = df_1h.rename(columns={
+                'Open': 'open', 'High': 'high', 'Low': 'low',
+                'Close': 'close', 'Volume': 'volume'
+            })
 
-        if close >= high_20 * 0.98:  # Near resistance
-            return {'level': 'resistance', 'strength': 0.6}
-        elif close <= low_20 * 1.02:  # Near support
-            return {'level': 'support', 'strength': 0.6}
+            # Initialize SMC engine
+            smc_cfg = self.config.get('smc', {})
+            smc_engine = SMCEngine(smc_cfg)
 
-        return None
+            # Analyze market structure
+            smc_signal = smc_engine.analyze(df_1h_std)
+
+            if smc_signal and smc_signal.strength > 0.0:
+                return {
+                    'level': smc_signal.direction,  # 'long', 'short', 'neutral'
+                    'strength': smc_signal.strength,
+                    'confidence': smc_signal.confidence,
+                    'institutional_bias': smc_signal.institutional_bias
+                }
+
+            return None
+
+        except Exception as e:
+            print(f"⚠️  Structure engine error: {e}")
+            return None
 
     def _analyze_momentum(self, df_1h: pd.DataFrame, df_4h: pd.DataFrame):
-        """Simplified momentum analysis for mock."""
-        if len(df_1h) < 14:
+        """Real momentum analysis using production engine."""
+        if len(df_1h) < 26:
             return None
 
-        # Simple RSI
-        close = df_1h['Close']
-        delta = close.diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-        rs = gain / loss
-        rsi = 100 - (100 / (1 + rs))
+        try:
+            # Standardize column names (engines expect lowercase)
+            df_1h_std = df_1h.rename(columns={
+                'Open': 'open', 'High': 'high', 'Low': 'low',
+                'Close': 'close', 'Volume': 'volume'
+            })
 
-        current_rsi = rsi.iloc[-1]
-        if current_rsi > 70:
-            return {'rsi': current_rsi, 'signal': 'overbought'}
-        elif current_rsi < 30:
-            return {'rsi': current_rsi, 'signal': 'oversold'}
+            # Calculate real momentum metrics
+            rsi = calculate_rsi(df_1h_std, period=14)
+            macd_norm = calculate_macd_norm(df_1h_std, fast=12, slow=26, signal=9)
 
-        return None
+            # Get momentum delta
+            momentum_cfg = self.config.get('momentum', {})
+            delta = momentum_delta(df_1h_std, momentum_cfg)
+
+            # Combine metrics into signal
+            if rsi > 70 and macd_norm > 0:
+                return {
+                    'rsi': rsi,
+                    'macd': macd_norm,
+                    'delta': delta,
+                    'signal': 'overbought'
+                }
+            elif rsi < 30 and macd_norm < 0:
+                return {
+                    'rsi': rsi,
+                    'macd': macd_norm,
+                    'delta': delta,
+                    'signal': 'oversold'
+                }
+            elif abs(delta) > 0.02:  # Significant momentum shift
+                return {
+                    'rsi': rsi,
+                    'macd': macd_norm,
+                    'delta': delta,
+                    'signal': 'momentum_shift'
+                }
+
+            return None
+
+        except Exception as e:
+            print(f"⚠️  Momentum engine error: {e}")
+            return None
 
     def _analyze_context(self, df_1d: pd.DataFrame):
         """Simplified context analysis for mock."""
