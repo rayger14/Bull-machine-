@@ -268,6 +268,7 @@ class VIXHysteresis:
         self.on_threshold = on_threshold
         self.off_threshold = off_threshold
         self.is_active = False
+        self.previous_value = None
 
     def update(self, vix_value: float) -> bool:
         """
@@ -279,9 +280,17 @@ class VIXHysteresis:
         Returns:
             True if hysteresis is active
         """
+        # Track previous value before updating
+        if self.previous_value is None:
+            self.previous_value = vix_value
+
         if not self.is_active and vix_value >= self.on_threshold:
             self.is_active = True
         elif self.is_active and vix_value <= self.off_threshold:
             self.is_active = False
+
+        # Update previous value for next iteration
+        old_value = self.previous_value
+        self.previous_value = vix_value
 
         return self.is_active

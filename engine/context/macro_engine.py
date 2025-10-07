@@ -26,6 +26,7 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
     Returns:
         {
             'veto_strength': float,     # 0.0-1.0 veto strength
+            'greenlight_score': float,  # 0.0-1.0 positive macro signals (v1.7.3+)
             'signals': Dict,            # Individual signal flags
             'health': Dict,             # Health metrics
             'regime': str,              # Risk On/Off/Neutral
@@ -34,6 +35,7 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
         }
     """
     veto_strength = 0.0
+    greenlight_score = 0.0  # New: positive macro signals
     signals = {}
     notes = []
     regime = "neutral"
@@ -46,13 +48,18 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
     # 1. WYCKOFF INSIDER LOGIC
     # ======================
 
-    # VIX: Risk regime (>20 = risk-off veto, Wyckoff: systemic pivots)
+    # VIX: Risk regime (>20 = risk-off veto, <18 = calm greenlight)
     vix = get_value('VIX', 20.0)
-    if vix is not None and vix > config.get('vix_regime_switch_threshold', 20.0):
-        veto_strength += 0.4
-        signals['vix_risk_off'] = True
-        notes.append(f"VIX spike {vix:.1f} - risk off regime")
-        regime = "risk_off"
+    if vix is not None:
+        if vix > config.get('vix_regime_switch_threshold', 20.0):
+            veto_strength += 0.4
+            signals['vix_risk_off'] = True
+            notes.append(f"VIX spike {vix:.1f} - risk off regime")
+            regime = "risk_off"
+        elif vix < config.get('vix_calm_threshold', 18.0):
+            greenlight_score += 0.2
+            signals['vix_calm'] = True
+            notes.append(f"VIX calm {vix:.1f} - low volatility environment")
 
     # MOVE: Bond volatility (>80 = credit stress, Wyckoff: crisis detection)
     move = get_value('MOVE', 80.0)
@@ -88,12 +95,17 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
     # 2. MONEYTAUR LOGIC
     # ==================
 
-    # DXY: USD strength (breakout = crypto suppression, liquidity drain)
+    # DXY: USD strength (>105 = veto, <100 = greenlight for crypto)
     dxy = get_value('DXY', 100.0)
-    if dxy is not None and dxy > config.get('dxy_breakout_threshold', 105.0):
-        veto_strength += 0.3
-        signals['dxy_breakout'] = True
-        notes.append(f"DXY breakout {dxy:.1f} - liquidity drain")
+    if dxy is not None:
+        if dxy > config.get('dxy_breakout_threshold', 105.0):
+            veto_strength += 0.3
+            signals['dxy_breakout'] = True
+            notes.append(f"DXY breakout {dxy:.1f} - liquidity drain")
+        elif dxy < config.get('dxy_bullish_threshold', 100.0):
+            greenlight_score += 0.2
+            signals['dxy_weak'] = True
+            notes.append(f"DXY weak {dxy:.1f} - USD weakness favorable")
 
     # WTI: Oil/energy (stagflation combo with DXY)
     wti = get_value('WTI', 70.0)
@@ -184,14 +196,16 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
     else:
         regime = "neutral"
 
-    # 5. CAP VETO STRENGTH
-    # ====================
+    # 5. CAP SCORES
+    # =============
     veto_strength = min(max(veto_strength, 0.0), 1.0)
+    greenlight_score = min(max(greenlight_score, 0.0), 1.0)
 
     # 6. HEALTH METRICS
     # =================
     health = {
         'macro_veto_rate': veto_strength * 100,  # Convert to percentage
+        'greenlight_rate': greenlight_score * 100,  # Convert to percentage
         'active_signals': len([k for k, v in signals.items() if v]),
         'regime': regime,
         'data_freshness': sum(1 for v in macro_snapshot.values()
@@ -200,6 +214,7 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
 
     return {
         'veto_strength': veto_strength,
+        'greenlight_score': greenlight_score,  # New: positive macro signals
         'signals': signals,
         'health': health,
         'regime': regime,
