@@ -178,6 +178,21 @@ class LiveMockFeedRunner:
                         df_1d: pd.DataFrame, timestamp: datetime) -> dict:
         """Generate signal using existing MTF + Fusion engines."""
         try:
+            # Macro context analysis (must be done first for VIX)
+            current_price = df_1h['Close'].iloc[-1]
+            macro_snapshot = fetch_macro_snapshot(self.macro_data, pd.Timestamp(timestamp))
+            macro_result = analyze_macro(macro_snapshot, self.macro_config)
+
+            # Get VIX values (use real VIX if available, otherwise proxy)
+            if macro_snapshot.get('VIX', {}).get('value') is not None:
+                vix_now = macro_snapshot['VIX']['value']
+            else:
+                vix_now = self._calculate_volatility_proxy(df_1h)
+
+            # Get previous VIX (use hysteresis state if available)
+            vix_prev = self.vix_hysteresis.previous_value if hasattr(self.vix_hysteresis, 'previous_value') else vix_now
+            vix_active = self.vix_hysteresis.update(vix_now)
+
             # Prepare modules dict (simplified for mock)
             modules = {
                 'wyckoff': self._analyze_wyckoff(df_1h, df_4h, df_1d),
@@ -187,20 +202,8 @@ class LiveMockFeedRunner:
                 'context': self._analyze_context(df_1d)
             }
 
-            # MTF confluence analysis
-            sync_report = self.mtf_engine.mtf_confluence(df_1h, df_4h, df_1d)
-
-            # Macro context analysis
-            current_price = df_1h['Close'].iloc[-1]
-            macro_snapshot = fetch_macro_snapshot(self.macro_data, pd.Timestamp(timestamp))
-            macro_result = analyze_macro(macro_snapshot, self.macro_config)
-
-            # Apply VIX hysteresis (use real VIX if available, otherwise proxy)
-            if macro_snapshot.get('VIX', {}).get('value') is not None:
-                vix_value = macro_snapshot['VIX']['value']
-            else:
-                vix_value = self._calculate_volatility_proxy(df_1h)
-            vix_active = self.vix_hysteresis.update(vix_value)
+            # MTF confluence analysis (with VIX)
+            sync_report = self.mtf_engine.mtf_confluence(df_1h, df_4h, df_1d, vix_now, vix_prev)
 
             # Check macro veto BEFORE generating signal
             if macro_result['veto_strength'] >= self.macro_config['macro_veto_threshold']:
@@ -264,7 +267,9 @@ class LiveMockFeedRunner:
             return signal_result
 
         except Exception as e:
+            import traceback
             print(f"⚠️  Signal generation error: {e}")
+            print(f"   Traceback: {traceback.format_exc()}")
             return None
 
     def _analyze_wyckoff(self, df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame):
