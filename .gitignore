@@ -80,3 +80,22 @@ scratch/
 
 # Archive folder (temporary storage for old files)
 archive/
+# Test artifacts and results
+results/health_summary_*.json
+results/portfolio_summary_*.json
+results/live_signals_*.jsonl
+results/live_trades_*.jsonl
+*_backtest_results_*.json
+eth_production_backtest_results.json
+btc_backtest_results_*.json
+
+# Temporary analysis files
+analyze_trade_details.py
+branch_system_check.md
+mtf_confluence_analysis.py
+run_eth_macro_backtest.py
+run_full_system_backtest.py
+test_macro_impact.py
+btc_year_backtest.py
+configs/test_no_macro.json
+exit_cfg_applied.json
