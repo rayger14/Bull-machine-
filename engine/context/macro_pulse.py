@@ -339,9 +339,13 @@ class MacroPulseEngine:
             # 10. Apply suppression logic
             suppression_flag = veto_strength >= self.veto_threshold
 
+            # 11. Calculate fire rate stats
+            fire_rate_stats = self._get_fire_rate_stats(suppression_flag)
+
             return MacroPulse(
                 regime=regime,
                 veto_strength=veto_strength,
+                fire_rate_stats=fire_rate_stats,
                 boost_strength=boost_strength,
                 suppression_flag=suppression_flag,
                 risk_bias=risk_bias,
@@ -696,11 +700,40 @@ class MacroPulseEngine:
 
         return 0.0
 
+    def _get_fire_rate_stats(self, veto_fired: bool) -> Dict[str, Any]:
+        """Calculate veto fire rate statistics"""
+        # Track veto event
+        if veto_fired:
+            self.veto_history.append(1)
+        else:
+            self.veto_history.append(0)
+
+        # Keep rolling window
+        window_size = 100
+        if len(self.veto_history) > window_size:
+            self.veto_history = self.veto_history[-window_size:]
+
+        # Calculate fire rate
+        if len(self.veto_history) == 0:
+            fire_rate = 0.0
+        else:
+            fire_rate = sum(self.veto_history) / len(self.veto_history)
+
+        return {
+            'veto_fire_rate': fire_rate,
+            'target_rate': self.target_veto_rate,
+            'min_rate': self.min_veto_rate,
+            'max_rate': self.max_veto_rate,
+            'total_signals': len(self.veto_history),
+            'within_bounds': self.min_veto_rate <= fire_rate <= self.max_veto_rate
+        }
+
     def _default_macro_pulse(self) -> MacroPulse:
         """Return default neutral macro pulse"""
         return MacroPulse(
             regime=MacroRegime.NEUTRAL,
             veto_strength=0.0,
+            fire_rate_stats=self._get_fire_rate_stats(False),
             boost_strength=0.0,
             suppression_flag=False,
             risk_bias="neutral",

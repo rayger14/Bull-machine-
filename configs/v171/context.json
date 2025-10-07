@@ -4,12 +4,16 @@
 
   "macro_context": {
     "vix_regime_switch_threshold": 20.0,
+    "vix_calm_threshold": 18.0,
     "vix_hysteresis": {
       "guard_on": 22.0,
       "guard_off": 18.0
     },
+    "dxy_breakout_threshold": 105.0,
+    "dxy_bullish_threshold": 100.0,
     "dxy_veto_threshold": 106.0,
-    "oil_veto_threshold": 85.0
+    "oil_veto_threshold": 85.0,
+    "macro_greenlight_weight": 0.0
   },
 
   "rotation_gates": {

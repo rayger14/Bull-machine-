@@ -1,0 +1,54 @@
+{
+  "asset": "ETH",
+  "mode": "conservative",
+  "description": "Conservative ETH live trading configuration with reduced risk",
+
+  "risk": {
+    "position_size_pct": 0.05,
+    "momentum_sizing": 0.3,
+    "max_leverage": 2.0,
+    "max_position_size": 0.3
+  },
+
+  "fusion": {
+    "enter_threshold": 0.45,
+    "weights": {
+      "wyckoff": 0.35,
+      "liquidity": 0.25,
+      "structure": 0.20,
+      "momentum": 0.10,
+      "context": 0.10
+    },
+    "quality_floors": {
+      "wyckoff": 0.60,
+      "liquidity": 0.55,
+      "structure": 0.50
+    }
+  },
+
+  "mtf": {
+    "timeframes": ["1H", "4H", "1D"],
+    "primary_tf": "4H",
+    "alignment_tolerance_mins": 5,
+    "min_confluence_rate": 0.65
+  },
+
+  "health_bands": {
+    "macro_veto_min": 8.0,
+    "macro_veto_max": 18.0,
+    "smc_2hit_min": 35.0,
+    "hob_relevance_max": 25.0,
+    "delta_breaches_max": 0
+  },
+
+  "vix_hysteresis": {
+    "on_threshold": 20.0,
+    "off_threshold": 16.0
+  },
+
+  "execution": {
+    "fees_bps": 10,
+    "slippage_bps": 5,
+    "spread_bps": 2
+  }
+}

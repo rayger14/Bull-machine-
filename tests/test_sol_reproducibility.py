@@ -8,7 +8,8 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from run_adaptive_backtest import AdaptiveBullMachine
+# Import from scripts wrapper for test compatibility
+from scripts.run_adaptive_backtest import AdaptiveBullMachine
 import json
 from datetime import datetime
 

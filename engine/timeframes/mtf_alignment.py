@@ -23,6 +23,19 @@ class MTFAlignmentEngine:
         self.config = config or self._default_config()
         self.logger = logging.getLogger(__name__)
 
+    @staticmethod
+    def _get_column(df: pd.DataFrame, col_name: str) -> str:
+        """Get column name handling both uppercase and lowercase OHLCV columns"""
+        # Handle both 'Close' and 'close', etc.
+        if col_name.capitalize() in df.columns:
+            return col_name.capitalize()
+        elif col_name.lower() in df.columns:
+            return col_name.lower()
+        elif col_name.upper() in df.columns:
+            return col_name.upper()
+        else:
+            raise KeyError(f"Column '{col_name}' not found in dataframe. Available: {list(df.columns)}")
+
     def _default_config(self) -> Dict:
         """Default MTF alignment configuration"""
         return {
@@ -359,6 +372,12 @@ class MTFAlignmentEngine:
         vix_guard_on = self.config.get('vix_guard_on', 22.0)
         vix_guard_off = self.config.get('vix_guard_off', 18.0)
 
+        # Handle None values for VIX (use proxy or default to False)
+        if vix_now is None:
+            vix_now = 15.0  # Default low VIX
+        if vix_prev is None:
+            vix_prev = vix_now
+
         enter_guard = vix_now >= vix_guard_on or (vix_prev >= vix_guard_on and vix_now >= vix_guard_off)
         guard_active = bool(enter_guard)
 
@@ -422,7 +441,8 @@ class MTFAlignmentEngine:
             return {'confidence': 0.0, 'direction': 'neutral'}
 
         # Simple momentum-based mock
-        returns = df['close'].pct_change().dropna()
+        close_col = self._get_column(df, 'close')
+        returns = df[close_col].pct_change().dropna()
         momentum = returns.tail(5).mean()
 
         confidence = min(0.8, abs(momentum) * 100)  # Scale to 0-0.8
@@ -436,8 +456,10 @@ class MTFAlignmentEngine:
             return {'confidence': 0.0, 'direction': 'neutral'}
 
         # Simple volume-price divergence mock
-        volume_trend = np.polyfit(range(len(df.tail(10))), df['volume'].tail(10).values, 1)[0]
-        price_trend = np.polyfit(range(len(df.tail(10))), df['close'].tail(10).values, 1)[0]
+        volume_col = self._get_column(df, 'volume')
+        close_col = self._get_column(df, 'close')
+        volume_trend = np.polyfit(range(len(df.tail(10))), df[volume_col].tail(10).values, 1)[0]
+        price_trend = np.polyfit(range(len(df.tail(10))), df[close_col].tail(10).values, 1)[0]
 
         # Divergence = good signal
         divergence = abs(np.sign(volume_trend) - np.sign(price_trend))
@@ -453,7 +475,8 @@ class MTFAlignmentEngine:
             return False
 
         # Simple trend persistence check
-        closes = df_4h['close'].tail(required_bars + 1).values
+        close_col = self._get_column(df_4h, 'close')
+        closes = df_4h[close_col].tail(required_bars + 1).values
         trend_directions = np.sign(np.diff(closes))
 
         # All bars must have same trend direction
@@ -503,7 +526,8 @@ class MTFAlignmentEngine:
                 continue
 
             # Simple trend analysis using moving averages
-            close_prices = df['close'].values
+            close_col = self._get_column(df, 'close')
+            close_prices = df[close_col].values
             sma_20 = np.mean(close_prices[-20:]) if len(close_prices) >= 20 else np.mean(close_prices)
             sma_50 = np.mean(close_prices[-50:]) if len(close_prices) >= 50 else sma_20
 
@@ -556,7 +580,8 @@ class MTFAlignmentEngine:
                 continue
 
             # Simple RSI calculation
-            closes = df['close'].values
+            close_col = self._get_column(df, 'close')
+            closes = df[close_col].values
             deltas = np.diff(closes)
 
             gains = np.where(deltas > 0, deltas, 0)
@@ -600,8 +625,11 @@ class MTFAlignmentEngine:
                 sr_levels[tf] = []
                 continue
 
-            highs = df['high'].values
-            lows = df['low'].values
+            high_col = self._get_column(df, 'high')
+            low_col = self._get_column(df, 'low')
+            close_col = self._get_column(df, 'close')
+            highs = df[high_col].values
+            lows = df[low_col].values
 
             # Find recent highs and lows
             recent_highs = highs[-20:]
@@ -614,7 +642,7 @@ class MTFAlignmentEngine:
             sr_levels[tf] = {
                 'resistance': resistance,
                 'support': support,
-                'current_price': df['close'].iloc[-1]
+                'current_price': df[close_col].iloc[-1]
             }
 
         # Calculate confluence score based on level proximity
