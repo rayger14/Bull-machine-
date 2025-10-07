@@ -17,10 +17,10 @@
     "entry_threshold_confidence": 0.75,
     "full_engine_validation_interval_bars": 4,
     "weights": {
-      "wyckoff": 0.25,
+      "wyckoff": 0.30,
       "liquidity": 0.25,
-      "momentum": 0.25,
-      "smc": 0.25
+      "momentum": 0.30,
+      "smc": 0.15
     }
   },
 

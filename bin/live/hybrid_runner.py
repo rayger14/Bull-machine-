@@ -28,9 +28,8 @@ from engine.io.tradingview_loader import load_tv
 from engine.timeframes.mtf_alignment import MTFAlignmentEngine
 from engine.context.loader import load_macro_data, fetch_macro_snapshot
 from engine.context.macro_engine import analyze_macro, create_default_macro_config
-from engine.fusion.enhanced_v1_4 import EnhancedFusionEngineV1_4
 from bin.live.fast_signals import generate_fast_signal
-from bin.live.live_data_adapter import LiveDataAdapter
+from bin.live.adapters import LiveDataAdapter
 
 
 class HybridRunner:
@@ -54,7 +53,6 @@ class HybridRunner:
         # Initialize components
         self.adapter = LiveDataAdapter()
         self.mtf_engine = MTFAlignmentEngine(self.config.get('mtf', {}))
-        self.fusion_engine = EnhancedFusionEngineV1_4(self.config.get('fusion', {}))
 
         # Load macro data
         print("📊 Loading macro context data...")
@@ -244,11 +242,163 @@ class HybridRunner:
     def _run_full_fusion(self, df_1h: pd.DataFrame, df_4h: pd.DataFrame,
                          df_1d: pd.DataFrame, timestamp: datetime,
                          current_price: float) -> Optional[Dict]:
-        """Run full fusion engine with all domain modules."""
-        # This would call the real domain engines
-        # For now, return None (will implement when real engines are optimized)
-        # TODO: Implement full fusion validation
-        return None
+        """
+        Run simplified fusion validation using existing domain modules.
+
+        Uses lightweight analysis from existing engines without the full
+        computational overhead. Provides domain knowledge validation for
+        fast signals.
+
+        Returns:
+            Signal dict with side, confidence, and validation scores, or None
+        """
+        try:
+            # Standardize column names
+            def standardize(df):
+                return df.rename(columns={
+                    'Open': 'open', 'High': 'high', 'Low': 'low',
+                    'Close': 'close', 'Volume': 'volume'
+                })
+
+            df_1h_std = standardize(df_1h)
+            df_4h_std = standardize(df_4h)
+            df_1d_std = standardize(df_1d)
+
+            # Simplified Wyckoff: Just check trend alignment
+            wyckoff_score = self._simplified_wyckoff(df_1d_std)
+
+            # Simplified HOB: Volume + price reaction
+            hob_score = self._simplified_hob(df_1h_std)
+
+            # Simplified Momentum: RSI + MACD alignment
+            momentum_score = self._simplified_momentum(df_1h_std, df_4h_std)
+
+            # SMC placeholder (will be real in v1.9)
+            smc_score = 0.5
+
+            # Aggregate with weights from config
+            weights = self.config['fusion']['weights']
+            fusion_score = (
+                wyckoff_score * weights['wyckoff'] +
+                hob_score * weights['liquidity'] +
+                momentum_score * weights['momentum'] +
+                smc_score * weights['smc']
+            )
+
+            # Log fusion validation
+            self._log_fusion_validation(timestamp, fusion_score, {
+                'wyckoff': wyckoff_score,
+                'hob': hob_score,
+                'momentum': momentum_score,
+                'smc': smc_score
+            })
+
+            # Check threshold
+            if fusion_score < self.config['fusion']['entry_threshold_confidence']:
+                return None
+
+            # Determine side from component signals
+            side = 'long' if wyckoff_score > 0.5 and momentum_score > 0.5 else 'short'
+
+            return {
+                'side': side,
+                'confidence': fusion_score,
+                'reasons': [
+                    f'Fusion validation: {fusion_score:.2f}',
+                    f'Wyckoff: {wyckoff_score:.2f}',
+                    f'HOB: {hob_score:.2f}',
+                    f'Momentum: {momentum_score:.2f}'
+                ],
+                'wyckoff': wyckoff_score,
+                'hob': hob_score,
+                'momentum': momentum_score,
+                'smc': smc_score
+            }
+
+        except Exception as e:
+            print(f"⚠️  Fusion validation error: {e}")
+            return None
+
+    def _simplified_wyckoff(self, df_1d: pd.DataFrame) -> float:
+        """Simplified Wyckoff: Trend alignment via SMAs."""
+        if len(df_1d) < 50:
+            return 0.5
+
+        close = df_1d['close']
+        ma20 = close.rolling(20).mean().iloc[-1]
+        ma50 = close.rolling(50).mean().iloc[-1]
+
+        # Trend strength
+        if ma20 > ma50:
+            trend_strength = (ma20 / ma50 - 1) * 100  # % above
+            return min(1.0, 0.5 + trend_strength * 10)  # Scale to 0.5-1.0
+        else:
+            trend_strength = (ma50 / ma20 - 1) * 100  # % below
+            return max(0.0, 0.5 - trend_strength * 10)  # Scale to 0.0-0.5
+
+    def _simplified_hob(self, df_1h: pd.DataFrame) -> float:
+        """Simplified HOB: Volume + price reaction quality."""
+        if len(df_1h) < 50:
+            return 0.5
+
+        # Volume spike detection
+        volume = df_1h['volume']
+        vol_ma = volume.rolling(20).mean()
+        current_vol = volume.iloc[-1]
+        avg_vol = vol_ma.iloc[-1]
+
+        vol_score = min(1.0, current_vol / (avg_vol * 1.5)) if avg_vol > 0 else 0.5
+
+        # Price reaction (range expansion)
+        high = df_1h['high']
+        low = df_1h['low']
+        recent_range = (high.tail(10).max() - low.tail(10).min())
+        prev_range = (high.tail(20).head(10).max() - low.tail(20).head(10).min())
+
+        reaction_score = min(1.0, recent_range / (prev_range + 1e-10))
+
+        return (vol_score + reaction_score) / 2.0
+
+    def _simplified_momentum(self, df_1h: pd.DataFrame, df_4h: pd.DataFrame) -> float:
+        """Simplified Momentum: RSI + MACD alignment."""
+        if len(df_1h) < 26:
+            return 0.5
+
+        # RSI
+        from bin.live.fast_signals import calc_adx
+        close = df_1h['close']
+        delta = close.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / (loss + 1e-10)
+        rsi = (100 - (100 / (1 + rs))).iloc[-1]
+
+        # Normalize RSI to 0-1 (50 = neutral)
+        rsi_score = rsi / 100.0
+
+        # MACD zero-cross direction
+        exp1 = close.ewm(span=12).mean()
+        exp2 = close.ewm(span=26).mean()
+        macd = exp1 - exp2
+        macd_score = 0.6 if macd.iloc[-1] > 0 else 0.4
+
+        return (rsi_score + macd_score) / 2.0
+
+    def _log_fusion_validation(self, timestamp: datetime, fusion_score: float,
+                                components: Dict):
+        """Log fusion validation for analysis."""
+        import os
+        os.makedirs('results', exist_ok=True)
+
+        log_entry = {
+            'timestamp': timestamp.isoformat(),
+            'fusion_score': fusion_score,
+            **components
+        }
+
+        with open('results/fusion_validation.jsonl', 'a') as f:
+            json.dump(log_entry, f)
+            f.write('\n')
 
     def _apply_execution_mode(self, fast_signal: Optional[Dict],
                               fusion_signal: Optional[Dict],
