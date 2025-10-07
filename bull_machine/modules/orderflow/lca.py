@@ -277,7 +277,8 @@ def calculate_intent_nudge(df: pd.DataFrame, volume_threshold: float = 1.2) -> D
     volume_ratio = current_volume / avg_volume
 
     # Calculate CVD for true intent detection
-    cvd_delta = calculate_cvd(df)
+    cvd_result = calculate_cvd(df)
+    cvd_delta = cvd_result.get('delta', 0.0) if isinstance(cvd_result, dict) else cvd_result
 
     # Check for liquidity pump (trap reversal - Moneytaur logic)
     liquidity_pump = False
