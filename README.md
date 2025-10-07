@@ -1,17 +1,51 @@
-# Bull Machine v1.7.2 - Institutional Repository + Asset Adapter Architecture
+# Bull Machine v1.7.3 - Live Feeds + Macro Context Integration
 
 [![CI](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml/badge.svg)](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-100%25%20passing-success)](https://github.com/rayger14/Bull-machine-/actions)
+[![Tests](https://img.shields.io/badge/tests-318%20passed%2C%200%20failed-success)](https://github.com/rayger14/Bull-machine-/actions)
 [![Code Quality](https://img.shields.io/badge/code%20quality-ruff%20%7C%20mypy-blue)](https://github.com/rayger14/Bull-machine-/actions)
 [![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11-blue)](https://python.org)
-[![Version](https://img.shields.io/badge/version-1.7.2-green)](https://github.com/rayger14/Bull-machine-/releases/tag/v1.7.2)
-[![Production](https://img.shields.io/badge/status-production%20ready-brightgreen)](https://github.com/rayger14/Bull-machine-)
+[![Version](https://img.shields.io/badge/version-1.7.3-green)](https://github.com/rayger14/Bull-machine-/releases/tag/v1.7.3)
+[![Production](https://img.shields.io/badge/status-validated-brightgreen)](https://github.com/rayger14/Bull-machine-)
 
-**Institutional-grade multi-asset trading framework** with **Universal Asset Adapter Architecture**, **Professional Repository Organization**, and **Multi-Asset Backtesting System** supporting **ETH, SOL, XRP, BTC, SPY**.
+**Institutional-grade multi-asset trading framework** with **Live Trading Pipeline**, **Macro Context Integration**, **VIX Hysteresis Guards**, and **Multi-Timeframe Confluence** supporting **ETH, SOL, BTC, SPY**.
 
 **Branch Protection:** ✅ Required CI checks must pass before merging to main
 
-**Status:** Production deployment ready ✅ | All tests passing ✅
+**Status:** v1.7.3 validated ✅ | 318 tests passing ✅ | Determinism confirmed ✅
+
+---
+
+## 🚀 What's New in v1.7.3: Live Feeds + Macro Context Integration
+
+### 🎯 Live Trading Pipeline
+- **Mock Feed Runner** - CSV replay with MTF alignment for validation (168 ETH, 97 SOL, 263 BTC signals)
+- **Paper Trading** - Realistic execution simulation with P&L tracking (30-day ETH: 697 bars, $10K→$10K)
+- **Shadow Mode** - Log-only signal tracking for live monitoring without execution
+- **Health Monitoring** - Macro veto rate (5-15%), SMC 2+ hit (≥30%), continuous validation
+
+### 🏥 Macro Context System
+- **VIX Hysteresis Guards** - On=22.0, Off=18.0 with proper state memory to prevent threshold thrashing
+- **Macro Veto Integration** - Suppression flag with veto_strength calculation (85% threshold)
+- **Fire Rate Monitoring** - Rolling window (100 bars) veto engagement tracking
+- **Greenlight Signals** - Positive macro confirmation (VIX calm <18, DXY bullish >100)
+- **Stock Market Context** - SPY/QQQ support for equity correlation analysis
+
+### ✅ Production Validation
+- **Test Suite**: 318 passed, 0 failed, 0 errors (45 xfailed with documentation)
+- **Determinism**: 2 independent runs identical (48 signals each)
+- **Backtest Parity**: 8 trades, -0.4% return, 62.5% win rate
+- **Mock Feeds**: All assets validated (ETH/SOL/BTC)
+- **Paper Trading**: 30-day clean execution
+
+### 🔧 Critical Fixes
+- Fixed VIX parameter passing to mtf_confluence() (vix_now + vix_prev)
+- Added VIXHysteresis.previous_value tracking for proper hysteresis memory
+- Fixed OHLCV column case sensitivity (Close vs close) throughout MTF engine
+- Added None/NaN handling for VIX values with safe defaults
+- Fixed MacroPulse fire_rate_stats initialization (TypeError)
+- Fixed CVD dict/float type mismatch in orderflow
+
+*"Live validation meets institutional macro analysis."* - v1.7.3 Philosophy
 
 ---
 
