@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 
 from engine.io.tradingview_loader import load_tv
 from engine.timeframes.mtf_alignment import MTFAlignmentEngine
