@@ -6,7 +6,7 @@
   "fast_signals": {
     "enabled": true,
     "mode": "execute_only_if_fusion_confirms",
-    "min_confidence": 0.70,
+    "min_confidence": 0.66,
     "adx_threshold": 20,
     "rsi_overbought": 70,
     "rsi_oversold": 30,
@@ -14,7 +14,7 @@
   },
 
   "fusion": {
-    "entry_threshold_confidence": 0.75,
+    "entry_threshold_confidence": 0.70,
     "full_engine_validation_interval_bars": 4,
     "weights": {
       "wyckoff": 0.30,
@@ -31,10 +31,23 @@
   },
 
   "context": {
-    "macro_veto_threshold": 0.70,
+    "macro_veto_threshold": 0.85,
+    "vix_regime_switch_threshold": 22.0,
+    "vix_hysteresis": {
+      "on": 22.0,
+      "off": 18.0
+    },
+    "funding_weight_cap": 0.20,
+    "move_weight_cap": 0.25,
     "vix_panic_threshold": 30,
     "move_panic_threshold": 120,
-    "dxy_extreme_threshold": 105
+    "dxy_extreme_threshold": 105,
+    "crisis_fuse": {
+      "enabled": true,
+      "lookback_hours": 24,
+      "allow_one_trade_if_fusion_confidence_ge": 0.80,
+      "requires_mtf_alignment": true
+    }
   },
 
   "entries": {

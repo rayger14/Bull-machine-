@@ -22,11 +22,12 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 
-def run_hybrid_test(asset='BTC', start='2024-10-01', end='2024-10-15'):
+def run_hybrid_test(asset='BTC', start='2025-09-01', end='2025-09-15'):
     """
     Run hybrid runner and return signals.
 
     Uses a short 2-week period for fast testing from historical data.
+    Actual data range: 2025-08-06 to 2025-10-01
     """
     from bin.live.hybrid_runner import HybridRunner
 
@@ -159,8 +160,8 @@ def test_determinism_empty_period():
     print("\n🔍 Testing determinism with empty period...")
 
     # Use a very short period that likely has no signals
-    signals1 = run_hybrid_test(start='2024-10-01', end='2024-10-02')
-    signals2 = run_hybrid_test(start='2024-10-01', end='2024-10-02')
+    signals1 = run_hybrid_test(start='2025-09-01', end='2025-09-02')
+    signals2 = run_hybrid_test(start='2025-09-01', end='2025-09-02')
 
     assert len(signals1) == len(signals2), \
         f"Empty period signal count mismatch: {len(signals1)} vs {len(signals2)}"
