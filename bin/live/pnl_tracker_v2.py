@@ -246,7 +246,11 @@ class Portfolio:
                 'total_trades': 0,
                 'profit_factor': 0.0,
                 'win_rate': 0.0,
-                'total_return': 0.0
+                'total_return': 0.0,
+                'ending_balance': self.balance,
+                'max_drawdown': 0.0,
+                'wins': 0,
+                'losses': 0
             }
 
         wins = [t for t in self.closed_trades if t.pnl > 0.10]
