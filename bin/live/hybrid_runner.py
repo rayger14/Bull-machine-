@@ -16,6 +16,14 @@ Modes:
 - execute_only_if_fusion_confirms: Both must agree (conservative)
 """
 
+import sys
+import os
+from pathlib import Path
+
+# Add project root to path (needed for imports)
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
 import json
 import pandas as pd
 import numpy as np
@@ -25,11 +33,9 @@ import hashlib
 
 # Bull Machine imports
 from engine.io.tradingview_loader import load_tv
-from engine.timeframes.mtf_alignment import MTFAlignmentEngine
 from engine.context.loader import load_macro_data, fetch_macro_snapshot
 from engine.context.macro_engine import analyze_macro, create_default_macro_config
 from bin.live.fast_signals import generate_fast_signal
-from bin.live.adapters import LiveDataAdapter
 
 
 class HybridRunner:
@@ -50,9 +56,7 @@ class HybridRunner:
         # Validate v1.8 config
         self._validate_config()
 
-        # Initialize components
-        self.adapter = LiveDataAdapter()
-        self.mtf_engine = MTFAlignmentEngine(self.config.get('mtf', {}))
+        # No adapter needed - using load_tv directly
 
         # Load macro data
         print("📊 Loading macro context data...")
@@ -101,49 +105,64 @@ class HybridRunner:
         """Execute hybrid paper trading with fast signals + periodic fusion."""
         print("\n💰 Starting Hybrid Paper Trading...")
 
-        # Load data streams
-        stream_1h = self.adapter.stream_csv(self.asset, "1H", self.start_date, self.end_date)
-        stream_4h = self.adapter.stream_csv(self.asset, "4H", self.start_date, self.end_date)
-        stream_1d = self.adapter.stream_csv(self.asset, "1D", self.start_date, self.end_date)
+        # Load data using TradingView loader (same as btc_simple_backtest.py)
+        print("📊 Loading data...")
+        df_1h_full = load_tv(f'{self.asset}_1H')
+        df_4h_full = load_tv(f'{self.asset}_4H')
+        df_1d_full = load_tv(f'{self.asset}_1D')
 
-        all_1h = list(stream_1h)
-        all_4h = list(stream_4h)
-        all_1d = list(stream_1d)
+        # Standardize column names (load_tv returns lowercase)
+        for df in [df_1h_full, df_4h_full, df_1d_full]:
+            df.rename(columns={'open': 'Open', 'high': 'High', 'low': 'Low',
+                              'close': 'Close', 'volume': 'Volume'}, inplace=True)
 
-        print(f"📊 Data loaded: {len(all_1h)} 1H bars, {len(all_4h)} 4H bars, {len(all_1d)} 1D bars")
+        # Filter to date range
+        if self.start_date:
+            df_1h_full = df_1h_full[df_1h_full.index >= self.start_date]
+            df_4h_full = df_4h_full[df_4h_full.index >= self.start_date]
+            df_1d_full = df_1d_full[df_1d_full.index >= self.start_date]
 
-        # Process each 1H bar
-        for i, tick_1h in enumerate(all_1h):
-            current_time = tick_1h['timestamp']
-            current_price = tick_1h['Close']
+        if self.end_date:
+            df_1h_full = df_1h_full[df_1h_full.index <= self.end_date]
+            df_4h_full = df_4h_full[df_4h_full.index <= self.end_date]
+            df_1d_full = df_1d_full[df_1d_full.index <= self.end_date]
 
-            # Update data structures
-            self.df_1h = self.adapter.update_ohlcv(self.df_1h, tick_1h, max_bars=500)
-            self._update_higher_timeframes(current_time, all_4h, all_1d)
+        print(f"📊 Data loaded: {len(df_1h_full)} 1H bars, {len(df_4h_full)} 4H bars, {len(df_1d_full)} 1D bars")
+
+        # Reset data containers
+        self.df_1h = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume'])
+        self.df_4h = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume'])
+        self.df_1d = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume'])
+
+        # Process each 1H bar incrementally (simulate live streaming)
+        for i in range(len(df_1h_full)):
+            current_time = df_1h_full.index[i]
+            current_price = df_1h_full['Close'].iloc[i]
+
+            # Build incremental dataframes (growing window)
+            self.df_1h = df_1h_full.iloc[:i+1].copy()
+
+            # Update higher timeframes to match current time
+            self.df_4h = df_4h_full[df_4h_full.index <= current_time].copy()
+            self.df_1d = df_1d_full[df_1d_full.index <= current_time].copy()
 
             # Need minimum data
             if len(self.df_1h) < 50 or len(self.df_4h) < 14 or len(self.df_1d) < 50:
                 continue
 
-            # Align timeframes
-            df_1h_aligned, df_4h_aligned, df_1d_aligned = self.adapter.align_mtf(
-                self.df_1h, self.df_4h, self.df_1d
-            )
-
-            # Generate signal
+            # Generate signal (dataframes already aligned by time)
             signal_result = self._generate_hybrid_signal(
-                df_1h_aligned, df_4h_aligned, df_1d_aligned, current_time, current_price
+                self.df_1h, self.df_4h, self.df_1d, current_time, current_price
             )
 
             if signal_result:
                 self.signals.append(signal_result)
-
                 # Log signal
                 self._log_signal(signal_result)
 
             # Progress
             if i % 100 == 0:
-                print(f"   Progress: {i+1}/{len(all_1h)} | Signals: {len(self.signals)}")
+                print(f"   Progress: {i+1}/{len(df_1h_full)} | Signals: {len(self.signals)}")
 
         print(f"\n✅ Hybrid run complete: {len(self.signals)} signals generated")
         return self.signals
@@ -164,7 +183,9 @@ class HybridRunner:
         """
 
         # 1. MACRO VETO (first check)
-        macro_snapshot = fetch_macro_snapshot(self.macro_data, timestamp)
+        # Convert timestamp to timezone-naive for macro data comparison
+        timestamp_naive = timestamp.replace(tzinfo=None) if hasattr(timestamp, 'tzinfo') else timestamp
+        macro_snapshot = fetch_macro_snapshot(self.macro_data, timestamp_naive)
         macro_result = analyze_macro(macro_snapshot, self.macro_config)
 
         if macro_result['veto_strength'] >= self.macro_config['macro_veto_threshold']:
@@ -476,20 +497,6 @@ class HybridRunner:
     def _get_4h_bar_id(self, timestamp: datetime) -> int:
         """Get 4H bar ID for tracking fusion validation intervals."""
         return timestamp.hour // 4
-
-    def _update_higher_timeframes(self, current_time: datetime, all_4h: List, all_1d: List):
-        """Update 4H and 1D dataframes when appropriate."""
-        # Find matching 4H bar
-        for tick_4h in all_4h:
-            if tick_4h['timestamp'] <= current_time:
-                if self.df_4h.empty or tick_4h['timestamp'] != self.df_4h.index[-1]:
-                    self.df_4h = self.adapter.update_ohlcv(self.df_4h, tick_4h, max_bars=200)
-
-        # Find matching 1D bar
-        for tick_1d in all_1d:
-            if tick_1d['timestamp'] <= current_time:
-                if self.df_1d.empty or tick_1d['timestamp'] != self.df_1d.index[-1]:
-                    self.df_1d = self.adapter.update_ohlcv(self.df_1d, tick_1d, max_bars=100)
 
     def _log_signal(self, signal: Dict):
         """Log signal to JSONL file."""
