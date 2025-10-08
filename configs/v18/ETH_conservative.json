@@ -74,5 +74,17 @@
     "timeframes": ["1H", "4H", "1D"],
     "require_alignment": true,
     "nested_threshold": 0.02
+  },
+
+  "pnl_tracker": {
+    "leverage": 5.0,
+    "risk_per_trade": 0.02,
+    "atr_period": 20,
+    "stop_buffer_multiplier": 2.0,
+    "r_multiple_target": 2.0,
+    "fees_bps": 10.0,
+    "slippage_bps": 5.0,
+    "max_margin_util": 0.50,
+    "funding_rate_bps": 0.0
   }
 }

@@ -36,6 +36,7 @@ from engine.io.tradingview_loader import load_tv
 from engine.context.loader import load_macro_data, fetch_macro_snapshot
 from engine.context.macro_engine import analyze_macro, create_default_macro_config
 from bin.live.fast_signals import generate_fast_signal
+from bin.live.pnl_tracker_v2 import Portfolio
 
 
 class HybridRunner:
@@ -105,6 +106,9 @@ class HybridRunner:
         """Execute hybrid paper trading with fast signals + periodic fusion."""
         print("\n💰 Starting Hybrid Paper Trading...")
 
+        # Initialize portfolio for P&L tracking
+        self.portfolio = Portfolio(initial_balance=10000, config=self.config)
+
         # Load data using TradingView loader (same as btc_simple_backtest.py)
         print("📊 Loading data...")
         df_1h_full = load_tv(f'{self.asset}_1H')
@@ -138,6 +142,8 @@ class HybridRunner:
         for i in range(len(df_1h_full)):
             current_time = df_1h_full.index[i]
             current_price = df_1h_full['Close'].iloc[i]
+            high = df_1h_full['High'].iloc[i]
+            low = df_1h_full['Low'].iloc[i]
 
             # Build incremental dataframes (growing window)
             self.df_1h = df_1h_full.iloc[:i+1].copy()
@@ -145,6 +151,9 @@ class HybridRunner:
             # Update higher timeframes to match current time
             self.df_4h = df_4h_full[df_4h_full.index <= current_time].copy()
             self.df_1d = df_1d_full[df_1d_full.index <= current_time].copy()
+
+            # Update open positions (check stops/targets)
+            self.portfolio.update_positions(self.asset, current_time, high, low, current_price)
 
             # Need minimum data
             if len(self.df_1h) < 50 or len(self.df_4h) < 14 or len(self.df_1d) < 50:
@@ -160,11 +169,38 @@ class HybridRunner:
                 # Log signal
                 self._log_signal(signal_result)
 
+                # Open position if tradeable signal
+                if signal_result.get('action') == 'signal' and signal_result.get('side') in ['long', 'short']:
+                    # Check if we already have a position for this asset
+                    if self.asset in self.portfolio.positions:
+                        # Close opposite position if signal flipped
+                        if self.portfolio.positions[self.asset].side != signal_result.get('side'):
+                            self.portfolio.force_close_position(self.asset, current_price, current_time)
+
+                    # Try to open new position
+                    self.portfolio.open_position(
+                        asset=self.asset,
+                        side=signal_result.get('side'),
+                        entry_price=current_price,
+                        df_1h=self.df_1h,
+                        timestamp=current_time
+                    )
+
             # Progress
             if i % 100 == 0:
                 print(f"   Progress: {i+1}/{len(df_1h_full)} | Signals: {len(self.signals)}")
 
         print(f"\n✅ Hybrid run complete: {len(self.signals)} signals generated")
+
+        # Close any remaining open positions at final price
+        final_time = df_1h_full.index[-1]
+        final_price = df_1h_full['Close'].iloc[-1]
+        if self.asset in self.portfolio.positions:
+            self.portfolio.force_close_position(self.asset, final_price, final_time)
+
+        # Print P&L summary
+        self.portfolio.print_summary()
+
         return self.signals
 
     def _generate_hybrid_signal(self, df_1h: pd.DataFrame, df_4h: pd.DataFrame,
@@ -516,8 +552,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Bull Machine v1.8 Hybrid Runner')
     parser.add_argument('--asset', required=True, help='Asset symbol (BTC, ETH, SOL)')
-    parser.add_argument('--start', required=True, help='Start date (YYYY-MM-DD)')
-    parser.add_argument('--end', required=True, help='End date (YYYY-MM-DD)')
+    parser.add_argument('--start', help='Start date (YYYY-MM-DD), optional for full range')
+    parser.add_argument('--end', help='End date (YYYY-MM-DD), optional for full range')
     parser.add_argument('--config', required=True, help='Path to v1.8 config file')
 
     args = parser.parse_args()
