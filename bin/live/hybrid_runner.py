@@ -199,14 +199,16 @@ class HybridRunner:
                         if self.portfolio.positions[self.asset].side != signal_result.get('side'):
                             self.portfolio.force_close_position(self.asset, current_price, current_time)
 
-                    # Try to open new position
+                    # Try to open new position with dynamic risk sizing
                     self.portfolio.open_position(
                         asset=self.asset,
                         side=signal_result.get('side'),
                         entry_price=current_price,
                         df_1h=self.df_1h,
                         timestamp=current_time,
-                        config_hash=self.config_hash
+                        config_hash=self.config_hash,
+                        fusion_score=signal_result.get('fusion_score', 0.5),
+                        df_4h=self.df_4h
                     )
 
             # Progress
