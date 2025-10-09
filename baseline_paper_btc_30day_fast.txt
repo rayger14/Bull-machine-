@@ -1,0 +1,658 @@
+📋 Using config: configs/live/presets/BTC_vanilla.json
+🚀 Bull Machine v1.7.3 Mock Feed - BTC
+📅 Period: 2025-09-01 → 2025-09-30
+⚡ Speed: 1.0x
+📊 Loading macro context data...
+   Macro health: 16/16 series available
+💰 Bull Machine v1.7.3 Paper Trading - BTC
+💵 Initial Balance: $10,000.00
+⚖️  Base Risk: 7.5%
+
+💰 Starting Paper Trading...
+📊 Paper Trading Data Loaded:
+   1H bars: 697
+   4H bars: 175
+   1D bars: 30
+   Progress: 1/697 | Balance: $10,000.00 | P&L: +0.0%
+
+🔍 Signal check at 2025-09-03 01:00:00 (bar 50):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-05 03:00:00 (bar 100):
+   ✗ No signal (ADX < 20 or no clear setup)
+   Progress: 101/697 | Balance: $10,000.00 | P&L: +0.0%
+
+🔍 Signal check at 2025-09-09 07:00:00 (bar 200):
+   ✗ No signal (ADX < 20 or no clear setup)
+   Progress: 201/697 | Balance: $10,000.00 | P&L: +0.0%
+
+🔍 Signal check at 2025-09-13 11:00:00 (bar 300):
+   ✗ No signal (ADX < 20 or no clear setup)
+   Progress: 301/697 | Balance: $10,000.00 | P&L: +0.0%
+
+🔍 Signal check at 2025-09-17 15:00:00 (bar 400):
+   ✗ No signal (ADX < 20 or no clear setup)
+   Progress: 401/697 | Balance: $10,000.00 | P&L: +0.0%
+
+🔍 Signal check at 2025-09-21 19:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-21 20:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+   Progress: 501/697 | Balance: $10,000.00 | P&L: +0.0%
+
+🔍 Signal check at 2025-09-21 21:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-21 22:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-21 23:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 00:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 01:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 02:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 03:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 04:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 05:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 06:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 07:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 08:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 09:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 10:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 11:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 12:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 13:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 14:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 15:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 16:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 17:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 18:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 19:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 20:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 21:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 22:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-22 23:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 00:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 01:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 02:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 03:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 04:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 05:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 06:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 07:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 08:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 09:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 10:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 11:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 12:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 13:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 14:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 15:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 16:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 17:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 18:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 19:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 20:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 21:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 22:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-23 23:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 00:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 01:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 02:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 03:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 04:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 05:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 06:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 07:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 08:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 09:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 10:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 11:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 12:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 13:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 14:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 15:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 16:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 17:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 18:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 19:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 20:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 21:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 22:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-24 23:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 00:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 01:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 02:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 03:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 04:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 05:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 06:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 07:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 08:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 09:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 10:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 11:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 12:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 13:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 14:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 15:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 16:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 17:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 18:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 19:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 20:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 21:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 22:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-25 23:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 00:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+   Progress: 601/697 | Balance: $10,000.00 | P&L: +0.0%
+
+🔍 Signal check at 2025-09-26 01:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 02:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 03:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 04:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 05:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 06:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 07:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 08:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 09:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 10:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 11:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 12:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 13:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 14:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 15:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 16:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 17:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 18:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 19:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 20:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 21:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 22:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-26 23:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 00:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 01:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 02:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 03:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 04:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 05:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 06:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 07:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 08:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 09:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 10:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 11:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 12:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 13:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 14:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 15:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 16:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 17:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 18:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 19:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 20:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 21:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 22:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-27 23:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 00:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 01:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 02:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 03:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 04:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 05:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 06:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 07:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 08:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 09:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 10:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 11:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 12:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 13:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 14:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 15:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 16:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 17:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 18:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 19:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 20:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 21:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 22:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-28 23:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 00:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 01:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 02:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 03:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 04:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 05:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 06:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 07:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 08:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 09:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 10:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 11:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 12:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 13:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 14:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 15:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 16:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 17:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 18:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 19:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 20:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 21:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 22:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-29 23:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+🔍 Signal check at 2025-09-30 00:00:00 (bar 500):
+   ✗ No signal (ADX < 20 or no clear setup)
+
+✅ Paper Trading Complete
+📁 Paper Trading Results Saved:
+   Trades: /Users/raymondghandchi/Bull-machine-/Bull-machine-/results/live_trades_BTC_20251007_033921.jsonl
+   Signals: /Users/raymondghandchi/Bull-machine-/Bull-machine-/results/live_signals_BTC_20251007_033921.jsonl
+   Summary: /Users/raymondghandchi/Bull-machine-/Bull-machine-/results/portfolio_summary_BTC_20251007_033921.json
+
+📊 Paper Trading Summary:
+   Asset: BTC
+   Period: 2025-09-01 → 2025-09-30
+
+💰 Portfolio Performance:
+   Initial Balance: $10,000.00
+   Final Equity: $10,000.00
+   Total Return: +0.00%
+   Realized P&L: $+0.00
+   Unrealized P&L: $+0.00
+
+📈 Trading Statistics:
+   Total Trades: 0
+   Win Rate: 0.0%
+   Average Win: $+0.00
+   Average Loss: $+0.00
+   Profit Factor: inf
+   Total Fees: $0.00
+
+🏥 Health Status: no_data

@@ -4,7 +4,7 @@
   "profile": "conservative",
 
   "fast_signals": {
-    "enabled": true,
+    "enabled": false,
     "mode": "execute_only_if_fusion_confirms",
     "min_confidence": 0.66,
     "adx_threshold": 20,
@@ -14,7 +14,7 @@
   },
 
   "fusion": {
-    "entry_threshold_confidence": 0.70,
+    "entry_threshold_confidence": 0.50,
     "full_engine_validation_interval_bars": 4,
     "weights": {
       "wyckoff": 0.30,
@@ -31,7 +31,7 @@
   },
 
   "context": {
-    "macro_veto_threshold": 0.85,
+    "macro_veto_threshold": 0.95,
     "vix_regime_switch_threshold": 22.0,
     "vix_hysteresis": {
       "on": 22.0,
@@ -39,11 +39,11 @@
     },
     "funding_weight_cap": 0.20,
     "move_weight_cap": 0.25,
-    "vix_panic_threshold": 30,
-    "move_panic_threshold": 120,
+    "vix_panic_threshold": 60,
+    "move_panic_threshold": 200,
     "dxy_extreme_threshold": 105,
     "crisis_fuse": {
-      "enabled": true,
+      "enabled": false,
       "lookback_hours": 24,
       "allow_one_trade_if_fusion_confidence_ge": 0.80,
       "requires_mtf_alignment": true
@@ -72,7 +72,7 @@
 
   "mtf": {
     "timeframes": ["1H", "4H", "1D"],
-    "require_alignment": true,
+    "require_alignment": false,
     "nested_threshold": 0.02
   },
 

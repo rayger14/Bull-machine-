@@ -16,6 +16,14 @@ Modes:
 - execute_only_if_fusion_confirms: Both must agree (conservative)
 """
 
+import sys
+import os
+from pathlib import Path
+
+# Add project root to path (needed for imports)
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
 import json
 import pandas as pd
 import numpy as np
@@ -25,12 +33,11 @@ import hashlib
 
 # Bull Machine imports
 from engine.io.tradingview_loader import load_tv
-from engine.timeframes.mtf_alignment import MTFAlignmentEngine
 from engine.context.loader import load_macro_data, fetch_macro_snapshot
 from engine.context.macro_engine import analyze_macro, create_default_macro_config
-from engine.fusion.enhanced_v1_4 import EnhancedFusionEngineV1_4
+from engine.fusion.domain_fusion import analyze_fusion
 from bin.live.fast_signals import generate_fast_signal
-from bin.live.live_data_adapter import LiveDataAdapter
+from bin.live.smart_exits import SmartExitPortfolio
 
 
 class HybridRunner:
@@ -51,10 +58,7 @@ class HybridRunner:
         # Validate v1.8 config
         self._validate_config()
 
-        # Initialize components
-        self.adapter = LiveDataAdapter()
-        self.mtf_engine = MTFAlignmentEngine(self.config.get('mtf', {}))
-        self.fusion_engine = EnhancedFusionEngineV1_4(self.config.get('fusion', {}))
+        # No adapter needed - using load_tv directly
 
         # Load macro data
         print("📊 Loading macro context data...")
@@ -90,7 +94,7 @@ class HybridRunner:
                     raise ValueError(f"Missing config key: {section}.{key}")
 
         # Validate mode
-        valid_modes = ['advisory', 'prefilter', 'execute_only_if_fusion_confirms']
+        valid_modes = ['advisory', 'prefilter', 'execute_only_if_fusion_confirms', 'fusion_only']
         if self.config['fast_signals']['mode'] not in valid_modes:
             raise ValueError(f"Invalid mode. Must be one of: {valid_modes}")
 
@@ -103,51 +107,125 @@ class HybridRunner:
         """Execute hybrid paper trading with fast signals + periodic fusion."""
         print("\n💰 Starting Hybrid Paper Trading...")
 
-        # Load data streams
-        stream_1h = self.adapter.stream_csv(self.asset, "1H", self.start_date, self.end_date)
-        stream_4h = self.adapter.stream_csv(self.asset, "4H", self.start_date, self.end_date)
-        stream_1d = self.adapter.stream_csv(self.asset, "1D", self.start_date, self.end_date)
+        # Initialize portfolio for P&L tracking (Smart Exits)
+        self.portfolio = SmartExitPortfolio(initial_balance=10000, config=self.config, macro_data=self.macro_data)
 
-        all_1h = list(stream_1h)
-        all_4h = list(stream_4h)
-        all_1d = list(stream_1d)
+        # Load data using TradingView loader (same as btc_simple_backtest.py)
+        print("📊 Loading data...")
+        df_1h_full = load_tv(f'{self.asset}_1H')
+        df_4h_full = load_tv(f'{self.asset}_4H')
+        df_1d_full = load_tv(f'{self.asset}_1D')
 
-        print(f"📊 Data loaded: {len(all_1h)} 1H bars, {len(all_4h)} 4H bars, {len(all_1d)} 1D bars")
+        # Standardize column names (load_tv returns lowercase)
+        for df in [df_1h_full, df_4h_full, df_1d_full]:
+            df.rename(columns={'open': 'Open', 'high': 'High', 'low': 'Low',
+                              'close': 'Close', 'volume': 'Volume'}, inplace=True)
 
-        # Process each 1H bar
-        for i, tick_1h in enumerate(all_1h):
-            current_time = tick_1h['timestamp']
-            current_price = tick_1h['Close']
+        # Filter to date range
+        if self.start_date:
+            df_1h_full = df_1h_full[df_1h_full.index >= self.start_date]
+            df_4h_full = df_4h_full[df_4h_full.index >= self.start_date]
+            df_1d_full = df_1d_full[df_1d_full.index >= self.start_date]
 
-            # Update data structures
-            self.df_1h = self.adapter.update_ohlcv(self.df_1h, tick_1h, max_bars=500)
-            self._update_higher_timeframes(current_time, all_4h, all_1d)
+        if self.end_date:
+            df_1h_full = df_1h_full[df_1h_full.index <= self.end_date]
+            df_4h_full = df_4h_full[df_4h_full.index <= self.end_date]
+            df_1d_full = df_1d_full[df_1d_full.index <= self.end_date]
 
-            # Need minimum data
-            if len(self.df_1h) < 50 or len(self.df_4h) < 14 or len(self.df_1d) < 50:
-                continue
+        print(f"📊 Data loaded: {len(df_1h_full)} 1H bars, {len(df_4h_full)} 4H bars, {len(df_1d_full)} 1D bars")
 
-            # Align timeframes
-            df_1h_aligned, df_4h_aligned, df_1d_aligned = self.adapter.align_mtf(
-                self.df_1h, self.df_4h, self.df_1d
+        # Reset data containers
+        self.df_1h = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume'])
+        self.df_4h = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume'])
+        self.df_1d = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume'])
+
+        # Process each 1H bar incrementally (simulate live streaming)
+        for i in range(len(df_1h_full)):
+            current_time = df_1h_full.index[i]
+            current_price = df_1h_full['Close'].iloc[i]
+            high = df_1h_full['High'].iloc[i]
+            low = df_1h_full['Low'].iloc[i]
+
+            # Build incremental dataframes (growing window)
+            self.df_1h = df_1h_full.iloc[:i+1].copy()
+
+            # Update higher timeframes to match current time
+            self.df_4h = df_4h_full[df_4h_full.index <= current_time].copy()
+            self.df_1d = df_1d_full[df_1d_full.index <= current_time].copy()
+
+            # Fetch macro snapshot for smart exits
+            timestamp_naive = current_time.replace(tzinfo=None) if hasattr(current_time, 'tzinfo') else current_time
+            macro_snapshot = fetch_macro_snapshot(self.macro_data, timestamp_naive)
+
+            # Update open positions (check stops/targets with smart exits)
+            self.portfolio.update_positions(
+                self.asset, current_time, high, low, current_price,
+                self.df_1h, self.df_4h, macro_snapshot, self.config_hash
             )
 
-            # Generate signal
+            # Need minimum data (relaxed for validation - was 50/14/50)
+            if len(self.df_1h) < 50 or len(self.df_4h) < 14 or len(self.df_1d) < 20:
+                continue
+
+            # Generate signal (dataframes already aligned by time)
             signal_result = self._generate_hybrid_signal(
-                df_1h_aligned, df_4h_aligned, df_1d_aligned, current_time, current_price
+                self.df_1h, self.df_4h, self.df_1d, current_time, current_price
             )
 
             if signal_result:
                 self.signals.append(signal_result)
-
                 # Log signal
                 self._log_signal(signal_result)
 
+                # Open position if tradeable signal
+                if signal_result.get('action') == 'signal' and signal_result.get('side') in ['long', 'short']:
+                    # Log decision before attempting open
+                    decision_log = {
+                        'timestamp': str(current_time),
+                        'asset': self.asset,
+                        'side': signal_result.get('side'),
+                        'fusion_score': signal_result.get('fusion_score', 0.0),
+                        'threshold': self.config.get('fusion', {}).get('entry_threshold_confidence', 0.70),
+                        'mtf_aligned': signal_result.get('mtf_aligned', False),
+                        'macro_veto': signal_result.get('macro_veto', 0.0),
+                        'reasons': signal_result.get('reasons', [])
+                    }
+                    with open('results/decision_log.jsonl', 'a') as f:
+                        f.write(json.dumps(decision_log) + '\n')
+
+                    # Check if we already have a position for this asset
+                    if self.asset in self.portfolio.positions:
+                        # Close opposite position if signal flipped
+                        if self.portfolio.positions[self.asset].side != signal_result.get('side'):
+                            self.portfolio.force_close_position(self.asset, current_price, current_time)
+
+                    # Try to open new position with dynamic risk sizing
+                    self.portfolio.open_position(
+                        asset=self.asset,
+                        side=signal_result.get('side'),
+                        entry_price=current_price,
+                        df_1h=self.df_1h,
+                        timestamp=current_time,
+                        config_hash=self.config_hash,
+                        fusion_score=signal_result.get('fusion_score', 0.5),
+                        df_4h=self.df_4h
+                    )
+
             # Progress
             if i % 100 == 0:
-                print(f"   Progress: {i+1}/{len(all_1h)} | Signals: {len(self.signals)}")
+                print(f"   Progress: {i+1}/{len(df_1h_full)} | Signals: {len(self.signals)}")
 
         print(f"\n✅ Hybrid run complete: {len(self.signals)} signals generated")
+
+        # Close any remaining open positions at final price
+        final_time = df_1h_full.index[-1]
+        final_price = df_1h_full['Close'].iloc[-1]
+        if self.asset in self.portfolio.positions:
+            self.portfolio.force_close_position(self.asset, final_price, final_time, self.config_hash)
+
+        # Print P&L summary
+        self.portfolio.print_summary()
+
         return self.signals
 
     def _generate_hybrid_signal(self, df_1h: pd.DataFrame, df_4h: pd.DataFrame,
@@ -166,10 +244,25 @@ class HybridRunner:
         """
 
         # 1. MACRO VETO (first check)
-        macro_snapshot = fetch_macro_snapshot(self.macro_data, timestamp)
+        # Convert timestamp to timezone-naive for macro data comparison
+        timestamp_naive = timestamp.replace(tzinfo=None) if hasattr(timestamp, 'tzinfo') else timestamp
+        macro_snapshot = fetch_macro_snapshot(self.macro_data, timestamp_naive)
         macro_result = analyze_macro(macro_snapshot, self.macro_config)
 
+        # DEBUG: Log every check
+        import os
+        os.makedirs('results', exist_ok=True)
+        debug_log = {
+            'timestamp': timestamp.isoformat(),
+            'macro_veto_strength': float(macro_result['veto_strength']),
+            'macro_threshold': float(self.macro_config['macro_veto_threshold']),
+            'macro_blocked': bool(macro_result['veto_strength'] >= self.macro_config['macro_veto_threshold'])
+        }
+
         if macro_result['veto_strength'] >= self.macro_config['macro_veto_threshold']:
+            debug_log['reason'] = 'macro_veto'
+            with open('results/signal_blocks.jsonl', 'a') as f:
+                f.write(json.dumps(debug_log) + '\n')
             return {
                 'timestamp': timestamp.isoformat(),
                 'asset': self.asset,
@@ -187,7 +280,11 @@ class HybridRunner:
 
         # ATR throttle
         atr_ok = self._check_atr_throttle(df_1h)
+        debug_log['atr_ok'] = bool(atr_ok) if atr_ok is not None else None
         if not atr_ok:
+            debug_log['reason'] = 'atr_throttle'
+            with open('results/signal_blocks.jsonl', 'a') as f:
+                f.write(json.dumps(debug_log) + '\n')
             return None  # Too quiet or too volatile
 
         # 3. GENERATE FAST SIGNAL
@@ -220,8 +317,19 @@ class HybridRunner:
         # 5. APPLY EXECUTION MODE
         execute_signal = self._apply_execution_mode(fast_signal, fusion_signal, require_fusion)
 
+        debug_log['fast_signal'] = fast_signal is not None
+        debug_log['fusion_signal'] = fusion_signal is not None
+        debug_log['execute_signal'] = execute_signal is not None
+
         if not execute_signal:
+            debug_log['reason'] = 'execution_mode_blocked'
+            with open('results/signal_blocks.jsonl', 'a') as f:
+                f.write(json.dumps(debug_log) + '\n')
             return None
+
+        debug_log['reason'] = 'signal_generated'
+        with open('results/signal_blocks.jsonl', 'a') as f:
+            f.write(json.dumps(debug_log) + '\n')
 
         # 6. RETURN SIGNAL
         return {
@@ -244,11 +352,75 @@ class HybridRunner:
     def _run_full_fusion(self, df_1h: pd.DataFrame, df_4h: pd.DataFrame,
                          df_1d: pd.DataFrame, timestamp: datetime,
                          current_price: float) -> Optional[Dict]:
-        """Run full fusion engine with all domain modules."""
-        # This would call the real domain engines
-        # For now, return None (will implement when real engines are optimized)
-        # TODO: Implement full fusion validation
-        return None
+        """
+        Run REAL fusion validation using all production domain engines.
+
+        Uses:
+        - Wyckoff phase detection (accumulation/distribution)
+        - SMC (BOS/CHOCH/FVG/OB)
+        - HOB/Liquidity (order blocks, volume profile)
+        - Momentum (RSI/MACD divergence)
+        - MTF confluence validation
+
+        Returns:
+            Signal dict with side, confidence, and domain scores, or None
+        """
+        try:
+            # Run real fusion analysis with all domain engines + MTF validation
+            fusion_signal = analyze_fusion(df_1h, df_4h, df_1d, self.config)
+
+            # Log fusion validation
+            self._log_fusion_validation(timestamp, fusion_signal.score, {
+                'wyckoff': fusion_signal.wyckoff_score,
+                'hob': fusion_signal.hob_score,
+                'momentum': fusion_signal.momentum_score,
+                'smc': fusion_signal.smc_score,
+                'mtf_aligned': fusion_signal.mtf_aligned,
+                'mtf_confidence': fusion_signal.mtf_confidence
+            })
+
+            # Check threshold
+            if fusion_signal.score < self.config['fusion']['entry_threshold_confidence']:
+                return None
+
+            # Require MTF alignment if configured
+            if self.config.get('mtf', {}).get('require_alignment', False):
+                if not fusion_signal.mtf_aligned:
+                    return None
+
+            return {
+                'side': fusion_signal.direction,
+                'confidence': fusion_signal.score,
+                'reasons': fusion_signal.reasons,
+                'wyckoff': fusion_signal.wyckoff_score,
+                'hob': fusion_signal.hob_score,
+                'momentum': fusion_signal.momentum_score,
+                'smc': fusion_signal.smc_score,
+                'mtf_aligned': fusion_signal.mtf_aligned,
+                'features': fusion_signal.features
+            }
+
+        except Exception as e:
+            print(f"⚠️  Fusion validation error: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+
+    def _log_fusion_validation(self, timestamp: datetime, fusion_score: float,
+                                components: Dict):
+        """Log fusion validation for analysis."""
+        import os
+        os.makedirs('results', exist_ok=True)
+
+        log_entry = {
+            'timestamp': timestamp.isoformat(),
+            'fusion_score': fusion_score,
+            **components
+        }
+
+        with open('results/fusion_validation.jsonl', 'a') as f:
+            json.dump(log_entry, f)
+            f.write('\n')
 
     def _apply_execution_mode(self, fast_signal: Optional[Dict],
                               fusion_signal: Optional[Dict],
@@ -281,6 +453,13 @@ class HybridRunner:
             if fast_signal['side'] == fusion_signal['side']:
                 return fusion_signal  # Use fusion confidence
             return None
+
+        elif mode == 'fusion_only':
+            # Execute fusion signals only (ignore fast signals)
+            return fusion_signal
+
+        # Default: return None if mode not recognized
+        return None
 
     def _count_consecutive_losses(self) -> int:
         """Count consecutive losses in last 24 hours."""
@@ -327,20 +506,6 @@ class HybridRunner:
         """Get 4H bar ID for tracking fusion validation intervals."""
         return timestamp.hour // 4
 
-    def _update_higher_timeframes(self, current_time: datetime, all_4h: List, all_1d: List):
-        """Update 4H and 1D dataframes when appropriate."""
-        # Find matching 4H bar
-        for tick_4h in all_4h:
-            if tick_4h['timestamp'] <= current_time:
-                if self.df_4h.empty or tick_4h['timestamp'] != self.df_4h.index[-1]:
-                    self.df_4h = self.adapter.update_ohlcv(self.df_4h, tick_4h, max_bars=200)
-
-        # Find matching 1D bar
-        for tick_1d in all_1d:
-            if tick_1d['timestamp'] <= current_time:
-                if self.df_1d.empty or tick_1d['timestamp'] != self.df_1d.index[-1]:
-                    self.df_1d = self.adapter.update_ohlcv(self.df_1d, tick_1d, max_bars=100)
-
     def _log_signal(self, signal: Dict):
         """Log signal to JSONL file."""
         import os
@@ -359,8 +524,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Bull Machine v1.8 Hybrid Runner')
     parser.add_argument('--asset', required=True, help='Asset symbol (BTC, ETH, SOL)')
-    parser.add_argument('--start', required=True, help='Start date (YYYY-MM-DD)')
-    parser.add_argument('--end', required=True, help='End date (YYYY-MM-DD)')
+    parser.add_argument('--start', help='Start date (YYYY-MM-DD), optional for full range')
+    parser.add_argument('--end', help='End date (YYYY-MM-DD), optional for full range')
     parser.add_argument('--config', required=True, help='Path to v1.8 config file')
 
     args = parser.parse_args()
