@@ -264,8 +264,9 @@ class SmartExitPortfolio:
         with open(log_path, 'a') as f:
             f.write(json.dumps(data) + '\n')
 
-    def _compute_qty_and_levels(self, side: str, entry: float, df_1h: pd.DataFrame) -> tuple:
-        """Calculate position size and stop/target levels."""
+    def _compute_qty_and_levels(self, side: str, entry: float, df_1h: pd.DataFrame,
+                                 fusion_score: float = 0.5, df_4h: pd.DataFrame = None) -> tuple:
+        """Calculate position size and stop/target levels with dynamic risk sizing."""
         import math
 
         # Calculate ATR
@@ -310,8 +311,29 @@ class SmartExitPortfolio:
             })
             return None, None, None, None
 
+        # DYNAMIC RISK SIZING: Scale risk based on fusion score and regime
+        min_risk = self.config.get('position_sizing', {}).get('min_risk_per_trade', 0.005)  # 0.5%
+        max_risk = self.config.get('position_sizing', {}).get('max_risk_per_trade', 0.05)   # 5%
+
+        # Base risk from fusion score (0.5% at score=0 to 5% at score=1.0)
+        base_risk_pct = min_risk + (max_risk - min_risk) * fusion_score
+
+        # Regime adjustment using ADX from 4H timeframe
+        regime_multiplier = 1.0
+        if df_4h is not None and len(df_4h) >= 30:
+            adx_4h = calc_adx(df_4h, period=14)
+            if adx_4h < 20:
+                # Choppy market: reduce risk
+                regime_multiplier = 0.5
+            elif adx_4h > 25:
+                # Trending market: increase risk (capped)
+                regime_multiplier = 1.5
+
+        # Final risk percentage (capped at max_risk)
+        dynamic_risk_pct = min(base_risk_pct * regime_multiplier, max_risk)
+
         # Risk-based position sizing
-        risk_dollars = self.balance * self.risk_pct
+        risk_dollars = self.balance * dynamic_risk_pct
         notional = risk_dollars / stop_pct
 
         # Apply leverage to determine margin
@@ -355,25 +377,31 @@ class SmartExitPortfolio:
         tp1_price = entry + (self.scale_out_rr * stop_distance) if side == "long" else entry - (self.scale_out_rr * stop_distance)
         tp2_price = entry + (self.r_mult_target * stop_distance) if side == "long" else entry - (self.r_mult_target * stop_distance)
 
-        # Log success
+        # Log success with dynamic risk info
+        adx_4h = calc_adx(df_4h, period=14) if df_4h is not None and len(df_4h) >= 30 else 20.0
         self._log_debug('open_ok', {
             'entry': entry,
             'side': side,
+            'fusion_score': fusion_score,
             'atr': atr_value,
             'stop_distance': stop_distance,
             'stop_pct': stop_pct,
+            'base_risk_pct': base_risk_pct,
+            'dynamic_risk_pct': dynamic_risk_pct,
+            'regime_mult': regime_multiplier,
+            'adx_4h': adx_4h,
             'qty': qty,
             'notional': notional,
             'margin_needed': margin_needed,
-            'balance': self.balance,
-            'risk_pct': self.risk_pct
+            'balance': self.balance
         })
 
         return qty, stop_price, tp1_price, tp2_price
     
     def open_position(self, asset: str, side: str, entry_price: float, df_1h: pd.DataFrame,
-                     timestamp: datetime, config_hash: str = "default") -> bool:
-        """Open new position with smart exit tracking."""
+                     timestamp: datetime, config_hash: str = "default",
+                     fusion_score: float = 0.5, df_4h: pd.DataFrame = None) -> bool:
+        """Open new position with smart exit tracking and dynamic risk sizing."""
         if asset in self.positions:
             self._log_debug('open_fail', {
                 'reason': 'position_already_exists',
@@ -382,7 +410,9 @@ class SmartExitPortfolio:
             })
             return False
 
-        qty, stop_price, tp1_price, tp2_price = self._compute_qty_and_levels(side, entry_price, df_1h)
+        qty, stop_price, tp1_price, tp2_price = self._compute_qty_and_levels(
+            side, entry_price, df_1h, fusion_score, df_4h
+        )
 
         # Check if sizing failed
         if qty is None:

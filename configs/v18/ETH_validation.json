@@ -79,8 +79,12 @@
     "r_multiple_target": 2.0,
     "fees_bps": 10.0,
     "slippage_bps": 5.0,
-    "max_margin_util": 0.5,
+    "max_margin_util": 0.8,
     "funding_rate_bps": 0.0,
+    "position_sizing": {
+      "min_risk_per_trade": 0.005,
+      "max_risk_per_trade": 0.05
+    },
     "exits": {
       "enable_partial": true,
       "scale_out_rr": 1.0,
