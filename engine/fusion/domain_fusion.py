@@ -81,34 +81,37 @@ def _wyckoff_to_score(wyck_result: Dict, config: Dict) -> tuple:
     try:
         phase = wyck_result.get('phase')
         conf = wyck_result.get('confidence', 0.0)
-        
-        if not phase or conf < 0.3:
+
+        # TUNED: Lower confidence threshold from 0.3 → 0.2
+        if not phase or conf < 0.2:
             return 0.5, 'neutral', []
-        
+
         # Map phases to directional bias
         bullish_phases = ['accumulation', 'spring', 'markup', 'reaccumulation']
         bearish_phases = ['distribution', 'upthrust', 'markdown', 'redistribution']
-        
+
         reasons = []
         if phase in bullish_phases:
-            score = 0.5 + (conf * 0.5)  # 0.5-1.0
+            # TUNED: Amplify score from 0.5x → 0.7x boost
+            score = 0.3 + (conf * 0.7)  # 0.3-1.0 range (was 0.5-1.0)
             direction = 'long'
             reasons.append(f'Wyckoff {phase} (conf={conf:.2f})')
         elif phase in bearish_phases:
-            score = 0.5 - (conf * 0.5)  # 0.0-0.5
+            # TUNED: Amplify bearish score symmetrically
+            score = 0.7 - (conf * 0.7)  # 0.0-0.7 range (was 0.0-0.5)
             direction = 'short'
             reasons.append(f'Wyckoff {phase} (conf={conf:.2f})')
         else:
             score = 0.5
             direction = 'neutral'
-        
-        # CRT bonus
+
+        # TUNED: Increase CRT bonus from 0.05 → 0.10
         if wyck_result.get('crt_active'):
-            score += 0.05 if direction == 'long' else -0.05
+            score += 0.10 if direction == 'long' else -0.10
             reasons.append('CRT active')
-        
+
         return np.clip(score, 0, 1), direction, reasons
-        
+
     except Exception as e:
         logger.error(f"Error converting Wyckoff to score: {e}")
         return 0.5, 'neutral', []
@@ -156,40 +159,42 @@ def _hob_to_score(hob_detector: HOBDetector, df: pd.DataFrame, config: Dict) -> 
         c = df['close'].values
         h = df['high'].values
         l = df['low'].values
-        
+
         # Calculate volume surge in last 10 bars
         vol_mean = np.mean(v[-50:]) if len(v) >= 50 else np.mean(v)
         recent_vol = np.mean(v[-10:])
         vol_surge = recent_vol / max(vol_mean, 1e-9)
-        
+
         # Check for wick presence (institutional absorption)
         last_bar_wick_ratio = (h[-1] - max(c[-1], df['open'].iloc[-1])) / max(h[-1] - l[-1], 1e-9)
-        
+
         reasons = []
         score = 0.5
         direction = 'neutral'
         quality = 'retail'
-        
-        if vol_surge > 1.5:
-            score += 0.15
+
+        # TUNED: Lower volume surge threshold from 1.5 → 1.2 and amplify boost
+        if vol_surge > 1.2:
+            score += 0.20  # was 0.15
             reasons.append(f'Volume surge: {vol_surge:.2f}x')
-            if vol_surge > 2.0:
+            if vol_surge > 1.8:  # was 2.0
                 quality = 'institutional'
-                score += 0.1
-        
-        if last_bar_wick_ratio > 0.4:
-            score += 0.1
+                score += 0.15  # was 0.1
+
+        # TUNED: Lower wick threshold from 0.4 → 0.3 and amplify boost
+        if last_bar_wick_ratio > 0.3:
+            score += 0.15  # was 0.1
             reasons.append(f'Wick absorption: {last_bar_wick_ratio:.2f}')
-        
+
         # Price action bias
         if c[-1] > c[-5]:
             direction = 'long'
         elif c[-1] < c[-5]:
             direction = 'short'
             score = 1.0 - score
-        
+
         return np.clip(score, 0, 1), direction, reasons, quality
-        
+
     except Exception as e:
         logger.error(f"Error converting HOB to score: {e}")
         return 0.5, 'neutral', [], 'invalid'
@@ -201,31 +206,33 @@ def _momentum_to_score(df: pd.DataFrame, config: Dict) -> tuple:
         rsi = calculate_rsi(df, period=config.get('rsi_period', 14))
         macd_n = calculate_macd_norm(df)
         delta = momentum_delta(df, config)
-        
+
         reasons = []
         score = 0.5
         direction = 'neutral'
-        
-        # RSI contribution
+
+        # TUNED: Amplify RSI contribution (was +/-0.15, now +/-0.25)
         if rsi > 70:
-            score -= 0.15
+            score -= 0.25  # was 0.15
             direction = 'short'
             reasons.append(f'RSI overbought: {rsi:.1f}')
         elif rsi < 30:
-            score += 0.15
+            score += 0.25  # was 0.15
             direction = 'long'
             reasons.append(f'RSI oversold: {rsi:.1f}')
         elif rsi > 50:
-            score += (rsi - 50) / 100.0
+            # TUNED: Amplify bullish RSI from /100 → /50
+            score += (rsi - 50) / 50.0  # was /100
             direction = 'long' if rsi > 55 else 'neutral'
         else:
-            score -= (50 - rsi) / 100.0
+            # TUNED: Amplify bearish RSI from /100 → /50
+            score -= (50 - rsi) / 50.0  # was /100
             direction = 'short' if rsi < 45 else 'neutral'
-        
-        # MACD contribution
+
+        # TUNED: Amplify MACD contribution from 0.1 → 0.2
         if abs(macd_n) > 0.001:
             if macd_n > 0:
-                score += 0.1
+                score += 0.2  # was 0.1
                 reasons.append(f'MACD positive: {macd_n:.4f}')
             else:
                 score -= 0.1
@@ -348,7 +355,27 @@ def analyze_fusion(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame
             hob_score * weights['liquidity'] +
             mom_score * weights['momentum']
         )
-        
+
+        # DEBUG: Log domain scores
+        import json
+        from pathlib import Path
+        debug_log = {
+            'timestamp': str(df_1h.index[-1]),
+            'wyck_score': float(wyck_score),
+            'wyck_dir': wyck_dir,
+            'smc_score': float(smc_score),
+            'smc_dir': smc_dir,
+            'hob_score': float(hob_score),
+            'hob_dir': hob_dir,
+            'mom_score': float(mom_score),
+            'mom_dir': mom_dir,
+            'fusion_raw': float(fusion_score),
+            'weights': weights
+        }
+        Path('results').mkdir(exist_ok=True)
+        with open('results/fusion_debug.jsonl', 'a') as f:
+            f.write(json.dumps(debug_log) + '\n')
+
         # MTF alignment check
         mtf_aligned, mtf_conf, mtf_reasons = _check_mtf_alignment(df_1h, df_4h, df_1d, config)
         
@@ -360,13 +387,35 @@ def analyze_fusion(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame
         directions = [wyck_dir, smc_dir, hob_dir, mom_dir]
         long_votes = sum(1 for d in directions if d == 'long')
         short_votes = sum(1 for d in directions if d == 'short')
-        
+
         if long_votes > short_votes:
             final_direction = 'long'
         elif short_votes > long_votes:
             final_direction = 'short'
         else:
-            final_direction = 'neutral'
+            # TIE or ALL NEUTRAL: Use fusion_score to break tie
+            # If fusion_score > 0.5, bias long; if < 0.5, bias short
+            if fusion_score > 0.52:  # Slight bullish bias
+                final_direction = 'long'
+            elif fusion_score < 0.48:  # Slight bearish bias
+                final_direction = 'short'
+            else:
+                # Dead neutral - use highest-weighted domain's direction
+                domain_weights_dirs = [
+                    (wyck_score * weights['wyckoff'], wyck_dir),
+                    (smc_score * weights['smc'], smc_dir),
+                    (hob_score * weights['liquidity'], hob_dir),
+                    (mom_score * weights['momentum'], mom_dir)
+                ]
+                # Sort by weighted score descending
+                domain_weights_dirs.sort(reverse=True, key=lambda x: x[0])
+                # Use direction of highest-weighted domain if not neutral
+                for _, direction in domain_weights_dirs:
+                    if direction != 'neutral':
+                        final_direction = direction
+                        break
+                else:
+                    final_direction = 'neutral'
         
         # Compile all reasons
         all_reasons = wyck_reasons + smc_reasons + hob_reasons + mom_reasons + mtf_reasons

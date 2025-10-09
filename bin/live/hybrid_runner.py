@@ -37,7 +37,7 @@ from engine.context.loader import load_macro_data, fetch_macro_snapshot
 from engine.context.macro_engine import analyze_macro, create_default_macro_config
 from engine.fusion.domain_fusion import analyze_fusion
 from bin.live.fast_signals import generate_fast_signal
-from bin.live.pnl_tracker_v2 import Portfolio
+from bin.live.smart_exits import SmartExitPortfolio
 
 
 class HybridRunner:
@@ -94,7 +94,7 @@ class HybridRunner:
                     raise ValueError(f"Missing config key: {section}.{key}")
 
         # Validate mode
-        valid_modes = ['advisory', 'prefilter', 'execute_only_if_fusion_confirms']
+        valid_modes = ['advisory', 'prefilter', 'execute_only_if_fusion_confirms', 'fusion_only']
         if self.config['fast_signals']['mode'] not in valid_modes:
             raise ValueError(f"Invalid mode. Must be one of: {valid_modes}")
 
@@ -107,8 +107,8 @@ class HybridRunner:
         """Execute hybrid paper trading with fast signals + periodic fusion."""
         print("\n💰 Starting Hybrid Paper Trading...")
 
-        # Initialize portfolio for P&L tracking
-        self.portfolio = Portfolio(initial_balance=10000, config=self.config)
+        # Initialize portfolio for P&L tracking (Smart Exits)
+        self.portfolio = SmartExitPortfolio(initial_balance=10000, config=self.config, macro_data=self.macro_data)
 
         # Load data using TradingView loader (same as btc_simple_backtest.py)
         print("📊 Loading data...")
@@ -153,11 +153,18 @@ class HybridRunner:
             self.df_4h = df_4h_full[df_4h_full.index <= current_time].copy()
             self.df_1d = df_1d_full[df_1d_full.index <= current_time].copy()
 
-            # Update open positions (check stops/targets)
-            self.portfolio.update_positions(self.asset, current_time, high, low, current_price)
+            # Fetch macro snapshot for smart exits
+            timestamp_naive = current_time.replace(tzinfo=None) if hasattr(current_time, 'tzinfo') else current_time
+            macro_snapshot = fetch_macro_snapshot(self.macro_data, timestamp_naive)
 
-            # Need minimum data
-            if len(self.df_1h) < 50 or len(self.df_4h) < 14 or len(self.df_1d) < 50:
+            # Update open positions (check stops/targets with smart exits)
+            self.portfolio.update_positions(
+                self.asset, current_time, high, low, current_price,
+                self.df_1h, self.df_4h, macro_snapshot, self.config_hash
+            )
+
+            # Need minimum data (relaxed for validation - was 50/14/50)
+            if len(self.df_1h) < 50 or len(self.df_4h) < 14 or len(self.df_1d) < 20:
                 continue
 
             # Generate signal (dataframes already aligned by time)
@@ -172,6 +179,20 @@ class HybridRunner:
 
                 # Open position if tradeable signal
                 if signal_result.get('action') == 'signal' and signal_result.get('side') in ['long', 'short']:
+                    # Log decision before attempting open
+                    decision_log = {
+                        'timestamp': str(current_time),
+                        'asset': self.asset,
+                        'side': signal_result.get('side'),
+                        'fusion_score': signal_result.get('fusion_score', 0.0),
+                        'threshold': self.config.get('fusion', {}).get('entry_threshold_confidence', 0.70),
+                        'mtf_aligned': signal_result.get('mtf_aligned', False),
+                        'macro_veto': signal_result.get('macro_veto', 0.0),
+                        'reasons': signal_result.get('reasons', [])
+                    }
+                    with open('results/decision_log.jsonl', 'a') as f:
+                        f.write(json.dumps(decision_log) + '\n')
+
                     # Check if we already have a position for this asset
                     if self.asset in self.portfolio.positions:
                         # Close opposite position if signal flipped
@@ -184,7 +205,8 @@ class HybridRunner:
                         side=signal_result.get('side'),
                         entry_price=current_price,
                         df_1h=self.df_1h,
-                        timestamp=current_time
+                        timestamp=current_time,
+                        config_hash=self.config_hash
                     )
 
             # Progress
@@ -197,7 +219,7 @@ class HybridRunner:
         final_time = df_1h_full.index[-1]
         final_price = df_1h_full['Close'].iloc[-1]
         if self.asset in self.portfolio.positions:
-            self.portfolio.force_close_position(self.asset, final_price, final_time)
+            self.portfolio.force_close_position(self.asset, final_price, final_time, self.config_hash)
 
         # Print P&L summary
         self.portfolio.print_summary()
@@ -225,7 +247,20 @@ class HybridRunner:
         macro_snapshot = fetch_macro_snapshot(self.macro_data, timestamp_naive)
         macro_result = analyze_macro(macro_snapshot, self.macro_config)
 
+        # DEBUG: Log every check
+        import os
+        os.makedirs('results', exist_ok=True)
+        debug_log = {
+            'timestamp': timestamp.isoformat(),
+            'macro_veto_strength': float(macro_result['veto_strength']),
+            'macro_threshold': float(self.macro_config['macro_veto_threshold']),
+            'macro_blocked': bool(macro_result['veto_strength'] >= self.macro_config['macro_veto_threshold'])
+        }
+
         if macro_result['veto_strength'] >= self.macro_config['macro_veto_threshold']:
+            debug_log['reason'] = 'macro_veto'
+            with open('results/signal_blocks.jsonl', 'a') as f:
+                f.write(json.dumps(debug_log) + '\n')
             return {
                 'timestamp': timestamp.isoformat(),
                 'asset': self.asset,
@@ -243,7 +278,11 @@ class HybridRunner:
 
         # ATR throttle
         atr_ok = self._check_atr_throttle(df_1h)
+        debug_log['atr_ok'] = bool(atr_ok) if atr_ok is not None else None
         if not atr_ok:
+            debug_log['reason'] = 'atr_throttle'
+            with open('results/signal_blocks.jsonl', 'a') as f:
+                f.write(json.dumps(debug_log) + '\n')
             return None  # Too quiet or too volatile
 
         # 3. GENERATE FAST SIGNAL
@@ -276,8 +315,19 @@ class HybridRunner:
         # 5. APPLY EXECUTION MODE
         execute_signal = self._apply_execution_mode(fast_signal, fusion_signal, require_fusion)
 
+        debug_log['fast_signal'] = fast_signal is not None
+        debug_log['fusion_signal'] = fusion_signal is not None
+        debug_log['execute_signal'] = execute_signal is not None
+
         if not execute_signal:
+            debug_log['reason'] = 'execution_mode_blocked'
+            with open('results/signal_blocks.jsonl', 'a') as f:
+                f.write(json.dumps(debug_log) + '\n')
             return None
+
+        debug_log['reason'] = 'signal_generated'
+        with open('results/signal_blocks.jsonl', 'a') as f:
+            f.write(json.dumps(debug_log) + '\n')
 
         # 6. RETURN SIGNAL
         return {
@@ -401,6 +451,13 @@ class HybridRunner:
             if fast_signal['side'] == fusion_signal['side']:
                 return fusion_signal  # Use fusion confidence
             return None
+
+        elif mode == 'fusion_only':
+            # Execute fusion signals only (ignore fast signals)
+            return fusion_signal
+
+        # Default: return None if mode not recognized
+        return None
 
     def _count_consecutive_losses(self) -> int:
         """Count consecutive losses in last 24 hours."""
