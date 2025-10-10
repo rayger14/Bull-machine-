@@ -1,11 +1,17 @@
 """
-Domain Fusion Engine - v1.8.1 "True Fusion"
+Domain Fusion Engine - v1.8.5 "Enhanced Fusion"
 
 Integrates all Bull Machine domain engines:
 - Wyckoff (accumulation/distribution phases)
 - SMC (BOS/CHOCH/FVG/OB)
 - HOB/Liquidity (order blocks, liquidity levels)
 - Momentum (RSI/MACD divergence)
+
+v1.8.5 Enhancements:
+- Negative Fibonacci levels for trend confluence
+- Fourier noise filter for signal/noise separation
+- Event-driven analysis (conference tagging, funding/OI)
+- Narrative trap detection (HODL traps, distribution)
 
 Returns unified 0-1 score with MTF confluence validation.
 """
@@ -21,6 +27,12 @@ from engine.wyckoff.wyckoff_engine import detect_wyckoff_phase
 from engine.smc.smc_engine import SMCEngine
 from engine.liquidity.hob import HOBDetector
 from engine.momentum.momentum_engine import calculate_rsi, calculate_macd_norm, momentum_delta
+
+# v1.8.5 imports
+from engine.liquidity.fib_levels import calculate_fib_bonus
+from engine.noise.fourier_filter import apply_fourier_multiplier
+from engine.events.event_engine import tag_events, should_veto_event
+from engine.narrative.trap_detector import should_veto_narrative
 
 logger = logging.getLogger(__name__)
 
@@ -378,11 +390,53 @@ def analyze_fusion(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame
 
         # MTF alignment check
         mtf_aligned, mtf_conf, mtf_reasons = _check_mtf_alignment(df_1h, df_4h, df_1d, config)
-        
+
         # Apply MTF penalty if not aligned
         if not mtf_aligned:
             fusion_score *= 0.8  # 20% penalty
-        
+
+        # ═══════════════════════════════════════════════════════════════
+        # v1.8.5 ENHANCEMENTS
+        # ═══════════════════════════════════════════════════════════════
+
+        # 1. Fibonacci confluence bonus
+        fib_bonus = 0.0
+        if config.get('liquidity', {}).get('negative_fibs_enabled', False):
+            fib_bonus = calculate_fib_bonus(df_1h, config)
+            fusion_score = min(1.0, fusion_score + fib_bonus)
+
+        # 2. Fourier noise filter (apply as multiplier)
+        if config.get('fusion', {}).get('fourier_enabled', False):
+            fusion_score = apply_fourier_multiplier(fusion_score, df_1h, config.get('fusion', {}))
+
+        # 3. Event veto check (conferences, high leverage)
+        event_veto_active = False
+        event_veto_reason = ""
+        if config.get('events', {}).get('calendar_enabled', False):
+            # Need macro data for funding/OI checks (will be provided by caller)
+            macro_data = config.get('_macro_data_cache', {})
+            event_tags = tag_events(df_1h, macro_data, config.get('events', {}))
+            event_veto_active, event_veto_reason = should_veto_event({}, event_tags, config.get('events', {}))
+
+            if event_veto_active:
+                fusion_score = 0.0  # Hard veto
+
+        # 4. Narrative trap veto (HODL trap, distribution)
+        narrative_veto_active = False
+        narrative_veto_reason = ""
+        if config.get('narrative', {}).get('narrative_enabled', False):
+            macro_cache = config.get('_macro_data_cache', {})
+            narrative_veto_active, narrative_veto_reason = should_veto_narrative(
+                df_1h, macro_cache, config.get('narrative', {})
+            )
+
+            if narrative_veto_active:
+                fusion_score *= 0.3  # Heavy penalty (not full veto)
+
+        # ═══════════════════════════════════════════════════════════════
+        # END v1.8.5 ENHANCEMENTS
+        # ═══════════════════════════════════════════════════════════════
+
         # Determine overall direction
         directions = [wyck_dir, smc_dir, hob_dir, mom_dir]
         long_votes = sum(1 for d in directions if d == 'long')
