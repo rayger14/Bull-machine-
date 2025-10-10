@@ -89,8 +89,11 @@ def get_active_events(timestamp: datetime, config: Dict) -> List[Dict]:
         window_start = event['date'] - timedelta(days=window_days)
         window_end = event['date'] + timedelta(days=7)  # 7 days after
 
-        if window_start <= timestamp <= window_end:
-            days_to_event = (event['date'] - timestamp).days
+        # Normalize timestamp to naive datetime for comparison
+        ts_naive = timestamp.replace(tzinfo=None) if hasattr(timestamp, 'tzinfo') and timestamp.tzinfo else timestamp
+
+        if window_start <= ts_naive <= window_end:
+            days_to_event = (event['date'] - ts_naive).days
             phase = 'pre' if days_to_event > 0 else 'post'
 
             active_events.append({
