@@ -1,25 +1,38 @@
 {
+  "version": "1.8.5-alpha",
   "asset": "BTC",
-  "timeframe": "1h",
-  "lookback_days": 90,
-  "initial_capital": 10000,
+  "profile": "conservative",
+
+  "fast_signals": {
+    "enabled": true,
+    "mode": "execute_only_if_fusion_confirms",
+    "min_confidence": 0.66,
+    "adx_threshold": 20,
+    "rsi_overbought": 70,
+    "rsi_oversold": 30,
+    "price_extension_pct": 2.0
+  },
+
+  "fusion": {
+    "entry_threshold_confidence": 0.70,
+    "full_engine_validation_interval_bars": 4,
+    "weights": {
+      "wyckoff": 0.30,
+      "liquidity": 0.25,
+      "momentum": 0.30,
+      "smc": 0.15
+    },
+    "window_size": 50,
+    "low_freq_cutoff": 0.1,
+    "fourier_multiplier": 1.2,
+    "fourier_enabled": true
+  },
 
   "liquidity": {
     "fib_levels": [0.618, 0.786],
     "negative_fibs": [-0.272, -0.618],
     "fib_tolerance": 0.005,
     "negative_fibs_enabled": true
-  },
-
-  "fusion": {
-    "window_size": 50,
-    "low_freq_cutoff": 0.1,
-    "fourier_multiplier": 1.2,
-    "fourier_enabled": true,
-    "min_fusion_score": 0.65,
-    "sentiment_weight": 0.25,
-    "micro_weight": 0.35,
-    "macro_weight": 0.40
   },
 
   "events": {
@@ -34,34 +47,89 @@
     "narrative_enabled": true
   },
 
-  "risk": {
-    "max_position_size": 0.15,
-    "stop_loss_pct": 0.03,
-    "take_profit_pct": 0.06,
-    "max_drawdown_pct": 0.10
+  "safety": {
+    "loss_streak_threshold": 3,
+    "atr_floor_percentile": 0.20,
+    "atr_cap_percentile": 0.95
   },
 
-  "mtf": {
-    "enabled": true,
-    "timeframes": ["15m", "1h", "4h"],
-    "alignment_threshold": 0.6
-  },
-
-  "macro": {
-    "enabled": true,
-    "symbols": ["DXY", "VIX", "TOTAL3", "BTC.D"],
-    "weights": {
-      "dxy": 0.3,
-      "vix": 0.2,
-      "total3": 0.25,
-      "btc_d": 0.25
+  "context": {
+    "macro_veto_threshold": 0.85,
+    "vix_regime_switch_threshold": 22.0,
+    "vix_hysteresis": {
+      "on": 22.0,
+      "off": 18.0
+    },
+    "funding_weight_cap": 0.20,
+    "move_weight_cap": 0.25,
+    "vix_panic_threshold": 30,
+    "move_panic_threshold": 120,
+    "dxy_extreme_threshold": 105,
+    "crisis_fuse": {
+      "enabled": true,
+      "lookback_hours": 24,
+      "allow_one_trade_if_fusion_confidence_ge": 0.80,
+      "requires_mtf_alignment": true
     }
   },
 
-  "batch_sentinel": {
-    "enabled": true,
-    "macro_reversal_threshold": 0.7,
-    "vix_spike_threshold": 30,
-    "dxy_reversal_threshold": 0.02
+  "entries": {
+    "pullback_bars": 5,
+    "pullback_pct": 0.01
+  },
+
+  "exits": {
+    "use_structure_stops": true,
+    "atr_k": 1.0,
+    "tp1_r": 1.0,
+    "tp1_pct": 0.5,
+    "trail_method": "atr",
+    "trail_atr_k": 1.2
+  },
+
+  "risk": {
+    "base_risk_pct": 0.075,
+    "max_position_size_pct": 0.20,
+    "max_portfolio_risk_pct": 0.15
+  },
+
+  "mtf": {
+    "timeframes": ["1H", "4H", "1D"],
+    "require_alignment": true,
+    "nested_threshold": 0.02
+  },
+
+  "pnl_tracker": {
+    "leverage": 5.0,
+    "risk_per_trade": 0.02,
+    "atr_period": 20,
+    "stop_buffer_multiplier": 2.0,
+    "r_multiple_target": 2.0,
+    "fees_bps": 10.0,
+    "slippage_bps": 5.0,
+    "max_margin_util": 0.50,
+    "funding_rate_bps": 0.0,
+    "exits": {
+      "enable_partial": true,
+      "scale_out_rr": 1.0,
+      "scale_out_pct": 0.5,
+      "move_sl_to_be_on_tp1": true,
+      "trail_after_tp1": true,
+      "trail_mode": "atr",
+      "trail_atr_mult": 1.0,
+      "regime_adaptive": true,
+      "adx_period": 14,
+      "adx_trend_hi": 25.0,
+      "adx_range_lo": 20.0,
+      "range_stop_factor": 0.75,
+      "trend_stop_factor": 1.25,
+      "liquidity_trap_protect": true,
+      "liquidity_z_min": 1.3,
+      "liquidity_lookback": 20,
+      "macro_exit_enabled": true,
+      "macro_exit_threshold": 0.8,
+      "vix_exit_level": 30.0,
+      "max_bars_in_trade": 96
+    }
   }
 }
