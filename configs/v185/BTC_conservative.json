@@ -1,0 +1,67 @@
+{
+  "asset": "BTC",
+  "timeframe": "1h",
+  "lookback_days": 90,
+  "initial_capital": 10000,
+
+  "liquidity": {
+    "fib_levels": [0.618, 0.786],
+    "negative_fibs": [-0.272, -0.618],
+    "fib_tolerance": 0.005,
+    "negative_fibs_enabled": true
+  },
+
+  "fusion": {
+    "window_size": 50,
+    "low_freq_cutoff": 0.1,
+    "fourier_multiplier": 1.2,
+    "fourier_enabled": true,
+    "min_fusion_score": 0.65,
+    "sentiment_weight": 0.25,
+    "micro_weight": 0.35,
+    "macro_weight": 0.40
+  },
+
+  "events": {
+    "calendar_enabled": true,
+    "funding_max": 0.01,
+    "oi_spot_max": 0.015
+  },
+
+  "narrative": {
+    "hodl_trap_vol_min": 0.8,
+    "total3_hype_threshold": 1.1,
+    "narrative_enabled": true
+  },
+
+  "risk": {
+    "max_position_size": 0.15,
+    "stop_loss_pct": 0.03,
+    "take_profit_pct": 0.06,
+    "max_drawdown_pct": 0.10
+  },
+
+  "mtf": {
+    "enabled": true,
+    "timeframes": ["15m", "1h", "4h"],
+    "alignment_threshold": 0.6
+  },
+
+  "macro": {
+    "enabled": true,
+    "symbols": ["DXY", "VIX", "TOTAL3", "BTC.D"],
+    "weights": {
+      "dxy": 0.3,
+      "vix": 0.2,
+      "total3": 0.25,
+      "btc_d": 0.25
+    }
+  },
+
+  "batch_sentinel": {
+    "enabled": true,
+    "macro_reversal_threshold": 0.7,
+    "vix_spike_threshold": 30,
+    "dxy_reversal_threshold": 0.02
+  }
+}
