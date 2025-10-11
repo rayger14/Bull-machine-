@@ -225,6 +225,13 @@ def _log_premium(df_1d: pd.DataFrame, macro_cache: Dict, config: Dict) -> float:
     # Days since last halving (April 20, 2024)
     last_halving = pd.Timestamp('2024-04-20')
     current_ts = df_1d.index[-1]
+
+    # Normalize both to naive datetime for comparison
+    if hasattr(current_ts, 'tzinfo') and current_ts.tzinfo is not None:
+        current_ts = current_ts.replace(tzinfo=None)
+    if hasattr(last_halving, 'tzinfo') and last_halving.tzinfo is not None:
+        last_halving = last_halving.replace(tzinfo=None)
+
     days_since_halving = (current_ts - last_halving).days
 
     # Normalize to 4-year cycle
