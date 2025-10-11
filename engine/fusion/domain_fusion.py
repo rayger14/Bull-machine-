@@ -1,5 +1,5 @@
 """
-Domain Fusion Engine - v1.8.5 "Enhanced Fusion"
+Domain Fusion Engine - v1.8.6 "Temporal Intelligence"
 
 Integrates all Bull Machine domain engines:
 - Wyckoff (accumulation/distribution phases)
@@ -12,6 +12,14 @@ v1.8.5 Enhancements:
 - Fourier noise filter for signal/noise separation
 - Event-driven analysis (conference tagging, funding/OI)
 - Narrative trap detection (HODL traps, distribution)
+
+v1.8.6 Temporal Analysis:
+- Gann cycles (30/60/90 day ACF vibrations)
+- Square of 9 proximity scoring
+- Thermo-floor (mining cost floor)
+- Log premium (difficulty-based time multiplier)
+- Logistic bid (institutional re-accumulation)
+- LPPLS blowoff detection
 
 Returns unified 0-1 score with MTF confluence validation.
 """
@@ -33,6 +41,9 @@ from engine.liquidity.fib_levels import calculate_fib_bonus
 from engine.noise.fourier_filter import apply_fourier_multiplier
 from engine.events.event_engine import tag_events, should_veto_event
 from engine.narrative.trap_detector import should_veto_narrative
+
+# v1.8.6 imports
+from engine.temporal import temporal_signal
 
 logger = logging.getLogger(__name__)
 
@@ -435,6 +446,54 @@ def analyze_fusion(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame
 
         # ═══════════════════════════════════════════════════════════════
         # END v1.8.5 ENHANCEMENTS
+        # ═══════════════════════════════════════════════════════════════
+
+        # ═══════════════════════════════════════════════════════════════
+        # v1.8.6 TEMPORAL/GANN ANALYSIS
+        # ═══════════════════════════════════════════════════════════════
+
+        temporal_bonus = 0.0
+        temporal_veto_active = False
+        temporal_veto_reason = ""
+
+        if config.get('temporal', {}).get('enabled', False):
+            # Get macro data cache for thermo-floor/difficulty calculations
+            macro_cache = config.get('_macro_data_cache', {})
+
+            # Calculate temporal signal
+            temporal_result = temporal_signal(
+                df_1h,
+                df_4h,
+                df_1d,
+                config.get('temporal', {}),
+                macro_cache
+            )
+
+            # Check for LPPLS veto first
+            if temporal_result.get('veto', False):
+                temporal_veto_active = True
+                temporal_veto_reason = temporal_result.get('veto_reason', 'LPPLS blowoff detected')
+                fusion_score = 0.0  # Hard veto on blowoff detection
+            else:
+                # Apply bounded bonus based on confluence score
+                confluence = temporal_result.get('confluence_score', 0.0)
+                bonus_cap = config.get('temporal', {}).get('bonus_cap', 0.15)
+
+                # Scale bonus: 0.0-0.5 confluence → negative bonus (caution)
+                #              0.5-1.0 confluence → positive bonus (confluence)
+                if confluence < 0.5:
+                    temporal_bonus = -(0.5 - confluence) * bonus_cap
+                else:
+                    temporal_bonus = (confluence - 0.5) * 2 * bonus_cap
+
+                # Clip to ±bonus_cap
+                temporal_bonus = np.clip(temporal_bonus, -bonus_cap, bonus_cap)
+
+                # Apply bonus
+                fusion_score = np.clip(fusion_score + temporal_bonus, 0.0, 1.0)
+
+        # ═══════════════════════════════════════════════════════════════
+        # END v1.8.6 TEMPORAL ANALYSIS
         # ═══════════════════════════════════════════════════════════════
 
         # Determine overall direction
