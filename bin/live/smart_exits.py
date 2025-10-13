@@ -27,13 +27,20 @@ logger = logging.getLogger(__name__)
 # Real speedup comes from domain engine optimization
 NUMBA_AVAILABLE = False
 
+# Stub functions for when Numba is available (currently disabled)
+def calc_atr_fast(df: pd.DataFrame, period: int):
+    """Placeholder for Numba-accelerated ATR (not implemented)."""
+    raise NotImplementedError("Numba ATR not available")
+
+def get_adx_scalar(df: pd.DataFrame, period: int):
+    """Placeholder for Numba-accelerated ADX (not implemented)."""
+    raise NotImplementedError("Numba ADX not available")
+
 
 def atr(df: pd.DataFrame, period: int = 14, method: str = "ema") -> float:
     """Calculate ATR using True Range + EMA smoothing."""
-    # PHASE 2 PERFORMANCE: Use Numba when available (for SMA method)
-    if NUMBA_AVAILABLE and method != "ema":
-        atr_series = calc_atr_fast(df, period)
-        return float(atr_series.iloc[-1]) if not pd.isna(atr_series.iloc[-1]) else 0.0
+    # PHASE 2 PERFORMANCE: Numba disabled (not the bottleneck)
+    # Use pandas implementation which is fast enough
 
     # Fallback to pandas (for EMA or when Numba unavailable)
     high = df['High'] if 'High' in df.columns else df['high']
@@ -54,14 +61,8 @@ def atr(df: pd.DataFrame, period: int = 14, method: str = "ema") -> float:
 
 def calc_adx(df: pd.DataFrame, period: int = 14) -> float:
     """Calculate ADX (Average Directional Index)."""
-    # PHASE 2 PERFORMANCE: Use Numba when available
-    if NUMBA_AVAILABLE:
-        try:
-            return get_adx_scalar(df, period)
-        except Exception:
-            pass  # Fall through to pandas implementation
-
-    # Fallback to pandas
+    # PHASE 2 PERFORMANCE: Numba disabled (not the bottleneck)
+    # Use pandas implementation which is fast enough
     high = df['High'] if 'High' in df.columns else df['high']
     low = df['Low'] if 'Low' in df.columns else df['low']
     close = df['Close'] if 'Close' in df.columns else df['close']
