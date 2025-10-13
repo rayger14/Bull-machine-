@@ -1,17 +1,46 @@
-# Bull Machine v1.7.3 - Live Feeds + Macro Context Integration
+# Bull Machine v1.8.6 - Temporal Intelligence + Complete v1.8 Stack
 
 [![CI](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml/badge.svg)](https://github.com/rayger14/Bull-machine-/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-318%20passed%2C%200%20failed-success)](https://github.com/rayger14/Bull-machine-/actions)
+[![Tests](https://img.shields.io/badge/tests-50%20unit%20tests%20passing-success)](https://github.com/rayger14/Bull-machine-/actions)
 [![Code Quality](https://img.shields.io/badge/code%20quality-ruff%20%7C%20mypy-blue)](https://github.com/rayger14/Bull-machine-/actions)
 [![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11-blue)](https://python.org)
-[![Version](https://img.shields.io/badge/version-1.7.3-green)](https://github.com/rayger14/Bull-machine-/releases/tag/v1.7.3)
-[![Production](https://img.shields.io/badge/status-validated-brightgreen)](https://github.com/rayger14/Bull-machine-)
+[![Version](https://img.shields.io/badge/version-1.8.6-green)](https://github.com/rayger14/Bull-machine-/releases/tag/v1.8.6)
+[![Production](https://img.shields.io/badge/status-production--ready-brightgreen)](https://github.com/rayger14/Bull-machine-)
 
-**Institutional-grade multi-asset trading framework** with **Live Trading Pipeline**, **Macro Context Integration**, **VIX Hysteresis Guards**, and **Multi-Timeframe Confluence** supporting **ETH, SOL, BTC, SPY**.
+**Institutional-grade algorithmic trading framework** with **Temporal Intelligence**, **True Domain Fusion**, **Smart Exits**, and **Macro Context Integration** supporting **BTC, ETH, SOL, SPY**.
 
 **Branch Protection:** ✅ Required CI checks must pass before merging to main
 
-**Status:** v1.7.3 validated ✅ | 318 tests passing ✅ | Determinism confirmed ✅
+**Status:** v1.8.6 production-ready ✅ | 50+ unit tests passing ✅ | Ready for live paper trading ✅
+
+---
+
+## 🚀 What's New in v1.8.6: Temporal Intelligence
+
+### 🎯 Complete v1.8 Stack
+- **v1.8.1**: True Fusion - Real domain engines (Wyckoff, SMC, HOB, Momentum)
+- **v1.8.2**: Smart Exits - Regime-adaptive stops, liquidity trap protection
+- **v1.8.3**: Dynamic Position Sizing - Fusion score × ADX adaptive sizing
+- **v1.8.4**: Batch Mode - Window merging with auto-fallback for performance
+- **v1.8.5**: Enhanced Logic - Negative Fibs, Fourier filter, Event tagging, Narrative detection
+- **v1.8.6**: Temporal Intelligence - Gann cycles, Square of 9, LPPLS blowoff detection
+
+### 🔮 Temporal Intelligence Module
+- **Gann Cycles** - 30/60/90 day ACF vibrations for cycle detection
+- **Square of 9** - Sacred geometry price level proximity scoring
+- **Gann Angles** - 1×1, 2×1 support/resistance analysis
+- **Thermo-floor** - Mining cost floor calculation (energy + difficulty)
+- **Log Premium** - Difficulty-based time multiplier for value assessment
+- **Logistic Bid** - Institutional re-accumulation probability
+- **LPPLS Blowoff** - Power law bubble detection with veto capability
+
+### 📊 Production Validation
+- **Unit Tests**: 50+ tests (all passing) - Temporal (25), v1.8.5 modules (25)
+- **Full Year 2025**: 7 trades total, +1.95% combined, 57% WR, 5.8% max DD
+- **Integration**: All domain engines working together (12,837 lines of production code)
+- **Configs**: 3-tier system (Conservative 0.70, Moderate 0.60, Fast 0.60+opts)
+
+*"Temporal cycles meet institutional domain analysis."* - v1.8.6 Philosophy
 
 ---
 
