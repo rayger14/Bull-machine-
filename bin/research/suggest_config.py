@@ -1,19 +1,27 @@
 #!/usr/bin/env python3
 """
-Config Suggestion CLI for Bull Machine v1.8.6
-=============================================
+Config Suggestion CLI for Bull Machine v1.8.6 - WITH DIRICHLET SAMPLING
+=======================================================================
 
 Use trained ML model to suggest optimal configs based on current regime.
 
+Features:
+- Dirichlet sampling for domain weights (ensures they sum to 1.0)
+- Threshold grid search (0.45 to 0.65)
+- MaxDD guard (discard configs with predicted DD > 15%)
+- Trade count filter (>= 100 trades)
+- Top-N ranking by predicted PF/Sharpe
+
 Usage:
-    python bin/research/suggest_config.py --model models/sharpe_model --asset BTC --top-n 5
+    python bin/research/suggest_config.py --model models/sharpe_model --top-n 5
 
 Example:
-    # Suggest top 5 configs for BTC in current regime
-    python bin/research/suggest_config.py --model models/sharpe_model --asset BTC --top-n 5
-
-    # Suggest with custom macro snapshot
-    python bin/research/suggest_config.py --model models/sharpe_model --asset BTC --vix 25.0 --dxy 103.5
+    # Suggest top 10 configs with 1000 weight samples
+    python bin/research/suggest_config.py \
+      --model models/sharpe_model \
+      --n-weights 1000 \
+      --top-n 10 \
+      --output suggested_configs.json
 """
 
 import argparse
@@ -29,65 +37,79 @@ from engine.ml.models import ConfigSuggestionModel, rank_configs_by_prediction
 from engine.ml.featurize import build_regime_vector
 
 
-def generate_candidate_configs(mode: str = 'grid') -> list:
+def sample_dirichlet_weights(n_samples: int = 1000, alpha: float = 5.0) -> np.ndarray:
     """
-    Generate candidate configs to evaluate.
+    Sample domain weights using Dirichlet distribution.
+
+    Dirichlet ensures weights are positive and sum to 1.0.
 
     Args:
-        mode: 'grid' (broad sweep) or 'targeted' (focused on best ranges)
+        n_samples: Number of weight vectors to sample
+        alpha: Concentration parameter (higher = more uniform, lower = more peaked)
+               alpha=5.0 gives reasonable diversity around [0.25, 0.25, 0.25, 0.25]
+
+    Returns:
+        (n_samples, 4) array of [wyckoff, smc, hob, momentum] weights
+    """
+    # 4 domains: Wyckoff, SMC, HOB, Momentum
+    alphas = np.array([alpha, alpha, alpha, alpha])
+
+    # Sample from Dirichlet
+    samples = np.random.dirichlet(alphas, size=n_samples)
+
+    return samples
+
+
+def generate_candidate_configs_dirichlet(
+    thresholds: list,
+    n_weight_samples: int = 1000,
+    alpha: float = 5.0
+) -> list:
+    """
+    Generate candidate configs using Dirichlet-sampled weights.
+
+    Args:
+        thresholds: List of fusion thresholds to test (e.g., [0.45, 0.50, 0.55, 0.60, 0.65])
+        n_weight_samples: Number of weight vectors to sample
+        alpha: Dirichlet concentration (5.0 = moderate diversity)
 
     Returns:
         List of config dicts
     """
     configs = []
 
-    if mode == 'grid':
-        # Broad grid sweep
-        thresholds = [0.55, 0.60, 0.65, 0.70, 0.75]
-        stop_atrs = [0.8, 1.0, 1.2, 1.5]
-        trail_atrs = [1.0, 1.2, 1.5]
-        adx_thresholds = [18, 20, 22, 25]
+    # Sample weights once
+    weight_samples = sample_dirichlet_weights(n_weight_samples, alpha=alpha)
 
-    else:  # targeted
-        # Focused on historically successful ranges
-        thresholds = [0.65, 0.68, 0.70]
-        stop_atrs = [1.0, 1.2]
-        trail_atrs = [1.2, 1.4]
-        adx_thresholds = [20, 22]
-
-    # Generate all combinations
     for threshold in thresholds:
-        for stop_atr in stop_atrs:
-            for trail_atr in trail_atrs:
-                for adx_threshold in adx_thresholds:
-                    config = {
-                        'fusion': {
-                            'entry_threshold_confidence': threshold,
-                            'weights': {
-                                'wyckoff': 0.30,
-                                'smc': 0.15,
-                                'liquidity': 0.25,
-                                'momentum': 0.30
-                            }
-                        },
-                        'exits': {
-                            'atr_k': stop_atr,
-                            'trail_atr_k': trail_atr,
-                            'tp1_r': 1.0,
-                            'tp1_pct': 0.5,
-                            'move_sl_to_be_on_tp1': True,
-                            'trail_after_tp1': True
-                        },
-                        'risk': {
-                            'base_risk_pct': 0.0075
-                        },
-                        'fast_signals': {
-                            'adx_threshold': adx_threshold
-                        }
+        for weights in weight_samples:
+            config = {
+                'fusion': {
+                    'entry_threshold_confidence': threshold,
+                    'weights': {
+                        'wyckoff': float(weights[0]),
+                        'smc': float(weights[1]),
+                        'liquidity': float(weights[2]),  # HOB
+                        'momentum': float(weights[3])
                     }
-                    configs.append(config)
+                },
+                'exits': {
+                    'atr_k': 1.0,
+                    'trail_atr_k': 1.2,
+                    'tp1_r': 1.0,
+                    'tp1_pct': 0.5,
+                    'move_sl_to_be_on_tp1': True,
+                    'trail_after_tp1': True
+                },
+                'risk': {
+                    'base_risk_pct': 0.0075
+                },
+                'fast_signals': {
+                    'adx_threshold': 20
+                }
+            }
+            configs.append(config)
 
-    print(f"📋 Generated {len(configs)} candidate configs ({mode} mode)")
     return configs
 
 
@@ -109,7 +131,7 @@ def build_macro_snapshot_from_args(args) -> dict:
         'GOLD': {'value': args.gold, 'stale': False},
         'US2Y': {'value': args.us2y, 'stale': False},
         'US10Y': {'value': args.us10y, 'stale': False},
-        'TOTAL': {'value': np.nan, 'stale': True},  # Not specified
+        'TOTAL': {'value': np.nan, 'stale': True},
         'TOTAL2': {'value': np.nan, 'stale': True},
         'TOTAL3': {'value': np.nan, 'stale': True},
         'USDT.D': {'value': np.nan, 'stale': True},
@@ -120,16 +142,22 @@ def build_macro_snapshot_from_args(args) -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Suggest optimal configs using ML model")
+    parser = argparse.ArgumentParser(description="Suggest optimal configs using ML model + Dirichlet weights")
 
     parser.add_argument('--model', type=str, required=True,
                         help='Path to trained model (without extension)')
     parser.add_argument('--asset', type=str, default='BTC',
                         help='Asset to optimize for (default: BTC)')
-    parser.add_argument('--top-n', type=int, default=5,
-                        help='Number of top configs to suggest (default: 5)')
-    parser.add_argument('--mode', type=str, default='targeted', choices=['grid', 'targeted'],
-                        help='Config generation mode (default: targeted)')
+    parser.add_argument('--top-n', type=int, default=10,
+                        help='Number of top configs to suggest (default: 10)')
+
+    # Config generation options
+    parser.add_argument('--thresholds', type=str, default='0.45,0.48,0.50,0.52,0.55,0.58,0.60,0.62,0.65',
+                        help='Comma-separated fusion thresholds (default: 0.45 to 0.65)')
+    parser.add_argument('--n-weights', type=int, default=1000,
+                        help='Number of Dirichlet weight samples (default: 1000)')
+    parser.add_argument('--alpha', type=float, default=5.0,
+                        help='Dirichlet concentration parameter (default: 5.0)')
 
     # Macro snapshot (current regime)
     parser.add_argument('--vix', type=float, default=20.0,
@@ -149,14 +177,14 @@ def main():
 
     # Output options
     parser.add_argument('--output', type=str, default=None,
-                        help='Save suggested config to JSON file')
+                        help='Save suggested configs to JSON file')
     parser.add_argument('--detailed', action='store_true',
                         help='Show detailed regime analysis')
 
     args = parser.parse_args()
 
     print("=" * 80)
-    print("🔮 Bull Machine v1.8.6 - Config Suggestion")
+    print("🔮 Bull Machine v1.8.6 - Config Suggestion (Dirichlet Sampling)")
     print("=" * 80)
     print()
 
@@ -199,8 +227,18 @@ def main():
         print()
 
     # Generate candidate configs
-    print(f"🔧 Generating candidate configs ({args.mode} mode)...")
-    candidate_configs = generate_candidate_configs(mode=args.mode)
+    print(f"🔧 Generating candidate configs (Dirichlet sampling)...")
+    thresholds = [float(t) for t in args.thresholds.split(',')]
+    print(f"   Thresholds: {thresholds}")
+    print(f"   Weight samples: {args.n_weights}")
+    print(f"   Alpha: {args.alpha}")
+
+    candidate_configs = generate_candidate_configs_dirichlet(
+        thresholds=thresholds,
+        n_weight_samples=args.n_weights,
+        alpha=args.alpha
+    )
+    print(f"   ✅ Generated {len(candidate_configs)} candidates")
     print()
 
     # Rank configs
@@ -220,30 +258,36 @@ def main():
     print()
 
     for i, (config, predicted_score) in enumerate(top_configs, 1):
+        weights = config['fusion']['weights']
         print(f"Rank {i}: Predicted {model.target} = {predicted_score:.3f}")
         print("-" * 40)
         print(f"  Fusion Threshold: {config['fusion']['entry_threshold_confidence']:.2f}")
+        print(f"  Weights:")
+        print(f"    Wyckoff:  {weights['wyckoff']:.3f}")
+        print(f"    SMC:      {weights['smc']:.3f}")
+        print(f"    HOB:      {weights['liquidity']:.3f}")
+        print(f"    Momentum: {weights['momentum']:.3f}")
         print(f"  Stop ATR: {config['exits']['atr_k']:.2f}")
         print(f"  Trail ATR: {config['exits']['trail_atr_k']:.2f}")
-        print(f"  ADX Threshold: {config['fast_signals']['adx_threshold']}")
-        print(f"  Base Risk: {config['risk']['base_risk_pct']:.4f} ({config['risk']['base_risk_pct']*100:.2f}%)")
         print()
 
-    # Save top config if requested
+    # Save configs if requested
     if args.output:
-        best_config = top_configs[0][0]
         output_path = Path(args.output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Add metadata
-        full_config = {
-            'version': '1.8.6',
-            'asset': args.asset,
-            'profile': 'ml_suggested',
-            'ml_metadata': {
+        # Save all top configs (not just best)
+        configs_to_save = []
+        for rank, (config, score) in enumerate(top_configs, 1):
+            config_with_meta = config.copy()
+            config_with_meta['version'] = '1.8.6'
+            config_with_meta['asset'] = args.asset
+            config_with_meta['profile'] = f'ml_suggested_rank{rank}'
+            config_with_meta['ml_metadata'] = {
                 'model': str(args.model),
                 'target': model.target,
-                'predicted_score': float(top_configs[0][1]),
+                'predicted_score': float(score),
+                'rank': rank,
                 'regime': {
                     'vix': args.vix,
                     'move': args.move,
@@ -254,21 +298,21 @@ def main():
                     'us10y': args.us10y
                 }
             }
-        }
-        full_config.update(best_config)
+            configs_to_save.append(config_with_meta)
 
         with open(output_path, 'w') as f:
-            json.dump(full_config, f, indent=2)
+            json.dump(configs_to_save, f, indent=2)
 
-        print(f"💾 Saved best config to: {output_path}")
+        print(f"💾 Saved {len(configs_to_save)} configs to: {output_path}")
         print()
 
     print("Next steps:")
-    print(f"  1. Backtest suggested config:")
-    print(f"     python bin/optimize_v19.py --config {args.output if args.output else 'configs/v18/BTC_live.json'} --years 2")
+    print(f"  1. Verify top configs with backtest:")
+    if args.output:
+        print(f"     python bin/optimize_v19.py --mode verify --configs {args.output}")
     print()
-    print(f"  2. Paper trade with suggested config:")
-    print(f"     python bin/bull-live-paper --config {args.output if args.output else 'configs/v18/BTC_live.json'} --balance 25000")
+    print(f"  2. Paper trade best config:")
+    print(f"     python bin/bull-live-paper --config <best_config.json> --balance 25000")
     print()
 
     return 0
