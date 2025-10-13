@@ -1,7 +1,8 @@
 {
-  "version": "1.8.0-alpha",
+  "version": "1.8.6-alpha-temporal",
   "asset": "BTC",
-  "profile": "conservative",
+  "profile": "temporal",
+  "description": "v1.8.6 with Gann/Temporal cycles enabled",
 
   "fast_signals": {
     "enabled": true,
@@ -21,6 +22,52 @@
       "liquidity": 0.25,
       "momentum": 0.30,
       "smc": 0.15
+    },
+    "window_size": 50,
+    "low_freq_cutoff": 0.1,
+    "fourier_multiplier": 1.2,
+    "fourier_enabled": true
+  },
+
+  "liquidity": {
+    "fib_levels": [0.618, 0.786],
+    "negative_fibs": [-0.272, -0.618],
+    "fib_tolerance": 0.005,
+    "negative_fibs_enabled": true
+  },
+
+  "events": {
+    "calendar_enabled": true,
+    "funding_max": 0.01,
+    "oi_spot_max": 0.015
+  },
+
+  "narrative": {
+    "hodl_trap_vol_min": 0.8,
+    "total3_hype_threshold": 1.1,
+    "narrative_enabled": true
+  },
+
+  "temporal": {
+    "enabled": true,
+    "acf_lookback_days": 180,
+    "target_cycles": [30, 60, 90],
+    "cycle_tolerance_days": 5,
+    "square9_step": 9.0,
+    "square9_tolerance": 2.0,
+    "gann_angle_lookback": 24,
+    "energy_cost_per_hash": 0.05e-12,
+    "log_premium_beta": 0.0001,
+    "logistic_k": 5.0,
+    "volume_threshold": 1.2,
+    "lppls_veto_confidence": 0.75,
+    "bonus_cap": 0.15,
+    "feature_weights": {
+      "acf": 0.25,
+      "square9": 0.20,
+      "angles": 0.15,
+      "thermo": 0.15,
+      "logistic": 0.25
     }
   },
 

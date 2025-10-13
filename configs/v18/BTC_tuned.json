@@ -14,7 +14,7 @@
   },
 
   "fusion": {
-    "entry_threshold_confidence": 0.70,
+    "entry_threshold_confidence": 0.45,
     "full_engine_validation_interval_bars": 4,
     "weights": {
       "wyckoff": 0.30,
@@ -72,7 +72,7 @@
 
   "mtf": {
     "timeframes": ["1H", "4H", "1D"],
-    "require_alignment": true,
+    "require_alignment": false,
     "nested_threshold": 0.02
   },
 

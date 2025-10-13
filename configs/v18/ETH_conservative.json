@@ -2,7 +2,6 @@
   "version": "1.8.0-alpha",
   "asset": "BTC",
   "profile": "conservative",
-
   "fast_signals": {
     "enabled": true,
     "mode": "execute_only_if_fusion_confirms",
@@ -12,24 +11,21 @@
     "rsi_oversold": 30,
     "price_extension_pct": 2.0
   },
-
   "fusion": {
-    "entry_threshold_confidence": 0.70,
+    "entry_threshold_confidence": 0.7,
     "full_engine_validation_interval_bars": 4,
     "weights": {
-      "wyckoff": 0.30,
+      "wyckoff": 0.3,
       "liquidity": 0.25,
-      "momentum": 0.30,
+      "momentum": 0.3,
       "smc": 0.15
     }
   },
-
   "safety": {
     "loss_streak_threshold": 3,
-    "atr_floor_percentile": 0.20,
+    "atr_floor_percentile": 0.2,
     "atr_cap_percentile": 0.95
   },
-
   "context": {
     "macro_veto_threshold": 0.85,
     "vix_regime_switch_threshold": 22.0,
@@ -37,7 +33,7 @@
       "on": 22.0,
       "off": 18.0
     },
-    "funding_weight_cap": 0.20,
+    "funding_weight_cap": 0.2,
     "move_weight_cap": 0.25,
     "vix_panic_threshold": 30,
     "move_panic_threshold": 120,
@@ -45,16 +41,14 @@
     "crisis_fuse": {
       "enabled": true,
       "lookback_hours": 24,
-      "allow_one_trade_if_fusion_confidence_ge": 0.80,
+      "allow_one_trade_if_fusion_confidence_ge": 0.8,
       "requires_mtf_alignment": true
     }
   },
-
   "entries": {
     "pullback_bars": 5,
     "pullback_pct": 0.01
   },
-
   "exits": {
     "use_structure_stops": true,
     "atr_k": 1.0,
@@ -63,19 +57,20 @@
     "trail_method": "atr",
     "trail_atr_k": 1.2
   },
-
   "risk": {
     "base_risk_pct": 0.075,
-    "max_position_size_pct": 0.20,
+    "max_position_size_pct": 0.2,
     "max_portfolio_risk_pct": 0.15
   },
-
   "mtf": {
-    "timeframes": ["1H", "4H", "1D"],
+    "timeframes": [
+      "1H",
+      "4H",
+      "1D"
+    ],
     "require_alignment": true,
     "nested_threshold": 0.02
   },
-
   "pnl_tracker": {
     "leverage": 5.0,
     "risk_per_trade": 0.02,
@@ -84,7 +79,7 @@
     "r_multiple_target": 2.0,
     "fees_bps": 10.0,
     "slippage_bps": 5.0,
-    "max_margin_util": 0.50,
+    "max_margin_util": 0.5,
     "funding_rate_bps": 0.0,
     "exits": {
       "enable_partial": true,

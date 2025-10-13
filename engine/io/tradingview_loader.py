@@ -41,6 +41,10 @@ SYMBOL_MAP = {
     "USDTD_1D": ("CRYPTOCAP_USDT.D", "1D"),
     "TOTAL_1D": ("CRYPTOCAP_TOTAL", "1D"),
     "TOTAL3_1D": ("CRYPTOCAP_TOTAL3", "1D"),
+    # Stock market data
+    "SPY_1H": ("BATS_SPY", "60"),
+    "SPY_4H": ("BATS_SPY", "240"),
+    "SPY_1D": ("BATS_SPY", "1D"),
 }
 
 class RealDataRequiredError(Exception):
