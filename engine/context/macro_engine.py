@@ -1,10 +1,18 @@
 """
-Extended Macro Engine for Bull Machine v1.7.3
+Extended Macro Engine for Bull Machine v1.8.6
 Implements traders' macro logic: Wyckoff Insider, Moneytaur, ZeroIKA
+Now with 8-factor macro fusion composite score
 """
 import numpy as np
 from typing import Dict, List, Optional
 import logging
+
+# Import new macro fusion helpers
+try:
+    from engine.context.macro_signals import build_macro_composite
+    MACRO_FUSION_AVAILABLE = True
+except ImportError:
+    MACRO_FUSION_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -212,6 +220,36 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
                              if not v.get('stale', True) and v.get('value') is not None)
     }
 
+    # 7. MACRO FUSION COMPOSITE (v1.8.6+)
+    # ===================================
+    fusion_composite = None
+    fusion_enabled = config.get('macro_fusion', {}).get('enabled', False)
+
+    if fusion_enabled and MACRO_FUSION_AVAILABLE:
+        try:
+            # Build 8-factor composite score using new macro_signals module
+            fusion_thresholds = config.get('macro_fusion', {}).get('thresholds', {})
+            fusion_weights = config.get('macro_fusion', {}).get('weights', {})
+
+            fusion_result = build_macro_composite(
+                snapshot=macro_snapshot,
+                thresholds=fusion_thresholds,
+                weights=fusion_weights
+            )
+
+            fusion_composite = fusion_result['composite']  # -0.10 to +0.10
+            notes.append(f"Macro fusion composite: {fusion_composite:+.3f}")
+
+            # Log individual state detections for debugging
+            for factor, state in fusion_result['states'].items():
+                if state != 'neutral':
+                    adj = fusion_result['adjustments'][factor]
+                    notes.append(f"  {factor}: {state} ({adj:+.3f})")
+
+        except Exception as e:
+            logger.warning(f"Macro fusion composite failed: {e}")
+            fusion_composite = None
+
     return {
         'veto_strength': veto_strength,
         'greenlight_score': greenlight_score,  # New: positive macro signals
@@ -220,7 +258,8 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
         'regime': regime,
         'notes': notes,
         'asset_type': asset_type,
-        'macro_delta': _calculate_macro_delta(signals, config)
+        'macro_delta': _calculate_macro_delta(signals, config),
+        'fusion_composite': fusion_composite  # New: 8-factor composite (v1.8.6+)
     }
 
 def _calculate_macro_delta(signals: Dict, config: Dict) -> float:
