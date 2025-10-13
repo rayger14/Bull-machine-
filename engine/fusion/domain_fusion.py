@@ -496,6 +496,28 @@ def analyze_fusion(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame
         # END v1.8.6 TEMPORAL ANALYSIS
         # ═══════════════════════════════════════════════════════════════
 
+        # ═══════════════════════════════════════════════════════════════
+        # v1.8.6 MACRO FUSION COMPOSITE
+        # ═══════════════════════════════════════════════════════════════
+
+        macro_fusion_adjustment = 0.0
+        macro_fusion_enabled = config.get('macro_fusion', {}).get('enabled', False)
+
+        if macro_fusion_enabled:
+            # Get macro analysis result from config cache (populated by runner)
+            macro_analysis = config.get('_macro_analysis_cache', {})
+            fusion_composite = macro_analysis.get('fusion_composite')
+
+            if fusion_composite is not None:
+                # Apply fusion composite adjustment (already capped at ±0.10)
+                macro_fusion_adjustment = fusion_composite
+                fusion_score = np.clip(fusion_score + macro_fusion_adjustment, 0.0, 1.0)
+                logger.debug(f"Macro fusion composite: {fusion_composite:+.3f} → new score: {fusion_score:.3f}")
+
+        # ═══════════════════════════════════════════════════════════════
+        # END v1.8.6 MACRO FUSION COMPOSITE
+        # ═══════════════════════════════════════════════════════════════
+
         # Determine overall direction
         directions = [wyck_dir, smc_dir, hob_dir, mom_dir]
         long_votes = sum(1 for d in directions if d == 'long')
