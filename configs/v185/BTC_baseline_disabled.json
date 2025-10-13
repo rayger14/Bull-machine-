@@ -1,7 +1,8 @@
 {
-  "version": "1.8.0-alpha",
+  "version": "1.8.5-alpha-baseline",
   "asset": "BTC",
   "profile": "conservative",
+  "description": "Baseline config with all v1.8.5 features DISABLED for A/B comparison",
 
   "fast_signals": {
     "enabled": true,
@@ -21,7 +22,30 @@
       "liquidity": 0.25,
       "momentum": 0.30,
       "smc": 0.15
-    }
+    },
+    "window_size": 50,
+    "low_freq_cutoff": 0.1,
+    "fourier_multiplier": 1.2,
+    "fourier_enabled": false
+  },
+
+  "liquidity": {
+    "fib_levels": [0.618, 0.786],
+    "negative_fibs": [-0.272, -0.618],
+    "fib_tolerance": 0.005,
+    "negative_fibs_enabled": false
+  },
+
+  "events": {
+    "calendar_enabled": false,
+    "funding_max": 0.01,
+    "oi_spot_max": 0.015
+  },
+
+  "narrative": {
+    "hodl_trap_vol_min": 0.8,
+    "total3_hype_threshold": 1.1,
+    "narrative_enabled": false
   },
 
   "safety": {
