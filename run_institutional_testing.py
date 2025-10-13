@@ -1,1 +1,0 @@
-bin/run_institutional_testing.py
