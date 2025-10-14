@@ -1,0 +1,46 @@
+{
+  "config": {
+    "fusion": {
+      "entry_threshold_confidence": 0.65,
+      "weights": {
+        "wyckoff": 0.3,
+        "smc": 0.15,
+        "liquidity": 0.25,
+        "momentum": 0.3
+      }
+    },
+    "exits": {
+      "atr_k": 1.0,
+      "trail_atr_k": 1.0,
+      "tp1_r": 1.0
+    },
+    "risk": {
+      "base_risk_pct": 0.0075
+    }
+  },
+  "parameters": {
+    "asset": "BTC",
+    "start_date": "2024-07-01",
+    "end_date": "2024-09-30",
+    "starting_balance": 10000
+  },
+  "results": {
+    "trades": 16,
+    "win_rate": 81.25,
+    "total_return": 0.32743910103032303,
+    "sharpe_ratio": 13.593535952353237,
+    "profit_factor": 3.2775894480023875,
+    "max_drawdown": 0.05884942109014413,
+    "avg_r": 0.49364890911071374,
+    "winners_avg": 0.03624651841856677,
+    "losers_avg": -0.04792187947034835,
+    "avg_bars_held": 5.8125,
+    "tp1_hit_rate": 81.25,
+    "fusion_threshold": 0.65,
+    "wyckoff_weight": 0.3,
+    "smc_weight": 0.15,
+    "hob_weight": 0.25,
+    "momentum_weight": 0.3,
+    "backtest_seconds": 0.0012180805206298828
+  }
+}
