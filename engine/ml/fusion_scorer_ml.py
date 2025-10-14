@@ -311,7 +311,7 @@ class FusionScorerML:
             domain_scores, macro_features, market_features, timestamp
         )
 
-        should_enter = fusion_score >= self.threshold
+        should_enter = bool(fusion_score >= self.threshold)
 
         return should_enter, fusion_score
 
