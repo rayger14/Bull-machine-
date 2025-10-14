@@ -153,28 +153,94 @@ def generate_entry_indices(
     return np.flatnonzero(filtered)
 
 
-def backtest_config(features: Dict[str, np.ndarray], config: Dict) -> Dict:
+def backtest_config(
+    features: Dict[str, np.ndarray],
+    config: Dict,
+    regime_classifier=None,
+    regime_policy=None
+) -> Dict:
     """
     Run backtest for single configuration
 
     Args:
         features: Pre-loaded feature store
         config: Configuration dict with weights, threshold, exits
+        regime_classifier: Optional RegimeClassifier for Phase 2
+        regime_policy: Optional RegimePolicy for Phase 2
 
     Returns:
         Performance metrics dict
     """
     start_time = time.time()
 
-    # Extract config
+    # Phase 2: Apply regime adaptation if enabled
+    adjusted_config = config.copy()
+    regime_label = None
+    regime_confidence = None
+
+    if regime_classifier is not None and regime_policy is not None:
+        # Build macro snapshot at start of backtest window
+        macro_snapshot = build_macro_snapshot(features, start_idx=0)
+
+        # Extract values for regime classification (flatten nested dict)
+        macro_row = {k: v['value'] if isinstance(v, dict) else v
+                     for k, v in macro_snapshot.items()}
+
+        # Classify regime
+        result = regime_classifier.classify(macro_row)
+        regime_label = result['regime']
+        regime_confidence = result['proba'][regime_label]
+
+        # Apply policy adjustments
+        adjustment = regime_policy.apply(config, result)
+
+        # Apply threshold adjustment
+        adjusted_config['fusion_threshold'] = np.clip(
+            config['fusion_threshold'] + adjustment['enter_threshold_delta'],
+            0.45,  # Min threshold
+            0.80   # Max threshold
+        )
+
+        # Apply weight nudges
+        weight_nudges = adjustment.get('weight_nudges', {})
+        adjusted_config['wyckoff_weight'] = np.clip(
+            config['wyckoff_weight'] + weight_nudges.get('wyckoff', 0.0),
+            0.15, 0.45
+        )
+        adjusted_config['smc_weight'] = np.clip(
+            config['smc_weight'] + weight_nudges.get('smc', 0.0),
+            0.10, 0.30
+        )
+        adjusted_config['hob_weight'] = np.clip(
+            config['hob_weight'] + weight_nudges.get('liquidity', 0.0),
+            0.15, 0.40
+        )
+        adjusted_config['momentum_weight'] = np.clip(
+            config['momentum_weight'] + weight_nudges.get('momentum', 0.0),
+            0.20, 0.40
+        )
+
+        # Renormalize weights to sum to 1.0
+        total = (adjusted_config['wyckoff_weight'] + adjusted_config['smc_weight'] +
+                 adjusted_config['hob_weight'] + adjusted_config['momentum_weight'])
+        adjusted_config['wyckoff_weight'] /= total
+        adjusted_config['smc_weight'] /= total
+        adjusted_config['hob_weight'] /= total
+        adjusted_config['momentum_weight'] /= total
+
+        # Apply risk multiplier
+        base_risk = config.get('base_risk_pct', 0.0075)
+        adjusted_config['base_risk_pct'] = base_risk * adjustment['risk_multiplier']
+
+    # Extract config (use adjusted if regime applied)
     weights = {
-        'wyckoff': config['wyckoff_weight'],
-        'smc': config['smc_weight'],
-        'hob': config['hob_weight'],
-        'momentum': config['momentum_weight'],
+        'wyckoff': adjusted_config['wyckoff_weight'],
+        'smc': adjusted_config['smc_weight'],
+        'hob': adjusted_config['hob_weight'],
+        'momentum': adjusted_config['momentum_weight'],
         'temporal': 0.0  # Placeholder
     }
-    threshold = config['fusion_threshold']
+    threshold = adjusted_config['fusion_threshold']
 
     # Compute fusion scores (vectorized - fast!)
     fusion_scores = compute_fusion_scores(features, weights)
@@ -183,7 +249,7 @@ def backtest_config(features: Dict[str, np.ndarray], config: Dict) -> Dict:
     entry_indices = generate_entry_indices(features, fusion_scores, threshold)
 
     if len(entry_indices) == 0:
-        return {
+        result = {
             **config,
             'trades': 0,
             'win_rate': 0.0,
@@ -194,6 +260,11 @@ def backtest_config(features: Dict[str, np.ndarray], config: Dict) -> Dict:
             'avg_r': 0.0,
             'backtest_seconds': time.time() - start_time
         }
+        # Add regime tracking if enabled
+        if regime_label is not None:
+            result['regime_label'] = regime_label
+            result['regime_confidence'] = regime_confidence
+        return result
 
     # Get fusion scores at entry points
     entry_fusion_scores = fusion_scores[entry_indices]
@@ -231,6 +302,11 @@ def backtest_config(features: Dict[str, np.ndarray], config: Dict) -> Dict:
     metrics.update(config)
     metrics['backtest_seconds'] = time.time() - start_time
 
+    # Add regime tracking if enabled
+    if regime_label is not None:
+        metrics['regime_label'] = regime_label
+        metrics['regime_confidence'] = regime_confidence
+
     return metrics
 
 
@@ -245,23 +321,24 @@ def build_macro_snapshot(features: Dict[str, np.ndarray], start_idx: int = 0) ->
         start_idx: Index to sample (default: 0 = start of window)
 
     Returns:
-        Macro snapshot dict ready for build_regime_vector()
+        Macro snapshot dict ready for regime classification
     """
-    # For now, use synthetic default values
-    # TODO: Wire actual macro data from feature store when available
+    # Use synthetic default values (feature names match RegimeClassifier feature_order)
+    # Feature order: VIX, DXY, MOVE, YIELD_2Y, YIELD_10Y, USDT.D, BTC.D, TOTAL, TOTAL2, funding, oi, rv_20d, rv_60d
     snapshot = {
         'VIX': {'value': 20.0, 'stale': True},
-        'MOVE': {'value': 80.0, 'stale': True},
         'DXY': {'value': 100.0, 'stale': True},
-        'WTI': {'value': 70.0, 'stale': True},
-        'GOLD': {'value': 2500.0, 'stale': True},
-        'US2Y': {'value': 4.0, 'stale': True},
-        'US10Y': {'value': 4.0, 'stale': True},
+        'MOVE': {'value': 80.0, 'stale': True},
+        'YIELD_2Y': {'value': 4.0, 'stale': True},
+        'YIELD_10Y': {'value': 4.0, 'stale': True},
+        'USDT.D': {'value': np.nan, 'stale': True},
+        'BTC.D': {'value': 0.55, 'stale': True},
         'TOTAL': {'value': np.nan, 'stale': True},
         'TOTAL2': {'value': np.nan, 'stale': True},
-        'TOTAL3': {'value': np.nan, 'stale': True},
-        'USDT.D': {'value': np.nan, 'stale': True},
-        'BTC.D': {'value': 0.55, 'stale': True}
+        'funding': {'value': np.nan, 'stale': True},
+        'oi': {'value': np.nan, 'stale': True},
+        'rv_20d': {'value': np.nan, 'stale': True},
+        'rv_60d': {'value': np.nan, 'stale': True}
     }
 
     # Compute realized volatility from feature store as proxy for VIX
@@ -435,7 +512,12 @@ def main():
     start_time = time.time()
 
     with mp.Pool(processes=args.workers) as pool:
-        backtest_fn = partial(backtest_config, features)
+        backtest_fn = partial(
+            backtest_config,
+            features,
+            regime_classifier=regime_classifier,
+            regime_policy=regime_policy
+        )
         results = pool.map(backtest_fn, configs)
 
     elapsed = time.time() - start_time
