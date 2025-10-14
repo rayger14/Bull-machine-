@@ -69,6 +69,26 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
             signals['vix_calm'] = True
             notes.append(f"VIX calm {vix:.1f} - low volatility environment")
 
+    # DXY: USD strength (>105 = veto, <100 = greenlight for crypto)
+    dxy = get_value('DXY', 100.0)
+    if dxy is not None:
+        if dxy > config.get('dxy_breakout_threshold', 105.0):
+            veto_strength += 0.3
+            signals['dxy_breakout'] = True
+            notes.append(f"DXY breakout {dxy:.1f} - liquidity drain")
+        elif dxy < config.get('dxy_bullish_threshold', 100.0):
+            greenlight_score += 0.2
+            signals['dxy_weak'] = True
+            notes.append(f"DXY weak {dxy:.1f} - USD weakness favorable")
+
+    # ENHANCED: DXY + VIX synergy trap (Wyckoff Insider post:42)
+    # Double veto if DXY >105 AND VIX >30 (liquidity crisis + panic)
+    if vix is not None and dxy is not None:
+        if vix > 30.0 and dxy > 105.0:
+            veto_strength += 0.5  # Severe combined veto
+            signals['dxy_vix_trap'] = True
+            notes.append(f"DXY+VIX trap {dxy:.1f}/{vix:.1f} - crisis mode")
+
     # MOVE: Bond volatility (>80 = credit stress, Wyckoff: crisis detection)
     move = get_value('MOVE', 80.0)
     if move is not None and move > config.get('move_threshold', 80.0):
@@ -102,18 +122,7 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
 
     # 2. MONEYTAUR LOGIC
     # ==================
-
-    # DXY: USD strength (>105 = veto, <100 = greenlight for crypto)
-    dxy = get_value('DXY', 100.0)
-    if dxy is not None:
-        if dxy > config.get('dxy_breakout_threshold', 105.0):
-            veto_strength += 0.3
-            signals['dxy_breakout'] = True
-            notes.append(f"DXY breakout {dxy:.1f} - liquidity drain")
-        elif dxy < config.get('dxy_bullish_threshold', 100.0):
-            greenlight_score += 0.2
-            signals['dxy_weak'] = True
-            notes.append(f"DXY weak {dxy:.1f} - USD weakness favorable")
+    # (DXY already handled in Wyckoff section above)
 
     # WTI: Oil/energy (stagflation combo with DXY)
     wti = get_value('WTI', 70.0)
@@ -131,11 +140,18 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
     us10y = get_value('US10Y', 4.0)
     us2y = get_value('US2Y', 4.2)
     if us10y is not None and us2y is not None:
-        yield_spread = us10y - us2y
-        if yield_spread < -config.get('yield_inversion_threshold', 0.2):
-            veto_strength += 0.2
-            signals['yield_inversion'] = True
-            notes.append(f"Yield inversion {yield_spread:.2f} - recession risk")
+        yield_spread = us2y - us10y  # 2Y - 10Y (normal is negative)
+
+        # ENHANCED: Hard veto on inversion (Wyckoff Insider post:42)
+        # Inversion = 2Y > 10Y (spread > 0%) signals recession
+        if yield_spread > 0.0:  # Any inversion
+            veto_strength += 0.3  # Stronger veto for hard inversion
+            signals['yield_inversion_hard'] = True
+            notes.append(f"Yield curve inverted {yield_spread:.2f}bps - recession signal")
+        elif yield_spread > -config.get('yield_inversion_threshold', 0.2):
+            veto_strength += 0.15  # Softer veto for flattening
+            signals['yield_curve_flat'] = True
+            notes.append(f"Yield curve flattening {yield_spread:.2f} - risk caution")
 
     # Funding Rates: Leverage stress (Moneytaur: supply/demand)
     funding = get_value('FUNDING', 0.01)
@@ -143,6 +159,16 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
         veto_strength += 0.3
         signals['funding_stress'] = True
         notes.append(f"Funding stress {funding:.3f} - leverage unwinding")
+
+    # ENHANCED: Funding + OI combined trap (ZeroIKA post:58)
+    # Double-veto if BOTH funding >0.01 AND OI >0.015 (leverage bomb)
+    oi_premium = get_value('OI', 0.015)
+    if (funding is not None and oi_premium is not None and
+        funding > config.get('funding_max', 0.01) and
+        oi_premium > config.get('oi_spot_max', 0.015)):
+        veto_strength += 0.4  # Additional severe veto
+        signals['funding_oi_trap'] = True
+        notes.append(f"Funding+OI trap {funding:.3f}/{oi_premium:.3f} - leverage bomb")
 
     # 3. ZEROIKA LOGIC
     # ================
@@ -155,7 +181,9 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
         notes.append(f"EUR/USD strength {eurusd:.3f} - USD weakness")
 
     # Open Interest: Leverage stress (ZeroIKA: OI spikes >2% = crisis block)
-    oi_premium = get_value('OI', 0.015)
+    # Note: oi_premium already retrieved above for funding+OI trap check
+    if oi_premium is None:
+        oi_premium = get_value('OI', 0.015)
     if oi_premium is not None and oi_premium > config.get('oi_spot_max', 0.015):
         veto_strength += 0.3
         signals['oi_stress'] = True
@@ -167,11 +195,22 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
         # TOTAL3: Alt market cap (lag = alt weakness, ZeroIKA: structural shifts)
         total3 = get_value('TOTAL3', 1.0)
         total2 = get_value('TOTAL2', 1.0)
+        total = get_value('TOTAL', 1.0)
+
         if total3 is not None and total2 is not None:
             if total3 / total2 < config.get('total3_lag_threshold', 0.9):
                 veto_strength += 0.2
                 signals['alt_bleed'] = True
                 notes.append(f"TOTAL3 lagging - alt sector bleed")
+
+        # ENHANCED: TOTAL2/TOTAL divergence + BTC.D drop = altseason (Wyckoff Insider post:35)
+        # Greenlight if TOTAL2/TOTAL >0.405 AND BTC.D is dropping
+        if total2 is not None and total is not None and btc_d is not None:
+            total2_ratio = total2 / total
+            if total2_ratio > config.get('total2_total_threshold', 0.405) and btc_d < 54.0:
+                greenlight_score += 0.15
+                signals['altseason_divergence'] = True
+                notes.append(f"TOTAL2/TOTAL {total2_ratio:.3f} + BTC.D low - altseason signal")
 
     elif asset_type == "stock":
         # SPY/QQQ: Large-cap tech dominance (risk-off = SPY leadership)

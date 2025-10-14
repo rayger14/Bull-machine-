@@ -42,6 +42,7 @@ from bin.live.smart_exits import SmartExitPortfolio
 from bull_machine.utils.merge_windows import (
     merge_windows, calculate_coverage, calculate_density, should_fallback_to_full
 )
+from utils.config_compat import normalize_config_for_hybrid
 
 
 def load_candidates(candidates_path: str, window_bars: int = 48,
@@ -154,6 +155,9 @@ class HybridRunner:
         # Load configuration
         with open(config_path, 'r') as f:
             self.config = json.load(f)
+
+        # Apply config compatibility layer (hob↔liquidity aliases)
+        self.config = normalize_config_for_hybrid(self.config)
 
         # Validate v1.8 config
         self._validate_config()

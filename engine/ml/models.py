@@ -126,6 +126,10 @@ class ConfigSuggestionModel:
         X_train_np = X_train.values if isinstance(X_train, pd.DataFrame) else X_train
         y_train_np = y_train.values if isinstance(y_train, pd.Series) else y_train
 
+        # Fill NaN with 0 (neutral value for missing features like TOTAL/USDT.D)
+        X_train_np = np.nan_to_num(X_train_np, nan=0.0, posinf=0.0, neginf=0.0)
+        y_train_np = np.nan_to_num(y_train_np, nan=0.0, posinf=0.0, neginf=0.0)
+
         if self.model_type == 'lightgbm' and LIGHTGBM_AVAILABLE:
             train_data = lgb.Dataset(X_train_np, label=y_train_np, feature_name=self.feature_names)
 
@@ -135,6 +139,9 @@ class ConfigSuggestionModel:
             if X_val is not None and y_val is not None:
                 X_val_np = X_val.values if isinstance(X_val, pd.DataFrame) else X_val
                 y_val_np = y_val.values if isinstance(y_val, pd.Series) else y_val
+                # Fill NaN in validation data too
+                X_val_np = np.nan_to_num(X_val_np, nan=0.0, posinf=0.0, neginf=0.0)
+                y_val_np = np.nan_to_num(y_val_np, nan=0.0, posinf=0.0, neginf=0.0)
                 val_data = lgb.Dataset(X_val_np, label=y_val_np, reference=train_data, feature_name=self.feature_names)
                 valid_sets.append(val_data)
                 valid_names.append('val')
@@ -164,6 +171,9 @@ class ConfigSuggestionModel:
             if X_val is not None and y_val is not None:
                 X_val_np = X_val.values if isinstance(X_val, pd.DataFrame) else X_val
                 y_val_np = y_val.values if isinstance(y_val, pd.Series) else y_val
+                # Fill NaN in validation data too
+                X_val_np = np.nan_to_num(X_val_np, nan=0.0, posinf=0.0, neginf=0.0)
+                y_val_np = np.nan_to_num(y_val_np, nan=0.0, posinf=0.0, neginf=0.0)
                 dval = xgb.DMatrix(X_val_np, label=y_val_np, feature_names=self.feature_names)
                 evals.append((dval, 'val'))
 
@@ -213,6 +223,10 @@ class ConfigSuggestionModel:
         # Evaluate on val set
         if X_val is not None and y_val is not None:
             y_val_pred = self.predict(X_val)
+            # Ensure y_val_np is defined (fill NaN if needed)
+            if 'y_val_np' not in locals():
+                y_val_np = y_val.values if isinstance(y_val, pd.Series) else y_val
+                y_val_np = np.nan_to_num(y_val_np, nan=0.0, posinf=0.0, neginf=0.0)
             val_rmse = np.sqrt(np.mean((y_val_np - y_val_pred) ** 2))
             val_mae = np.mean(np.abs(y_val_np - y_val_pred))
             val_r2 = 1 - (np.sum((y_val_np - y_val_pred) ** 2) / np.sum((y_val_np - np.mean(y_val_np)) ** 2))
@@ -244,6 +258,9 @@ class ConfigSuggestionModel:
             raise ValueError("Model not trained yet")
 
         X_np = X.values if isinstance(X, pd.DataFrame) else X
+
+        # Fill NaN with 0 (same as training)
+        X_np = np.nan_to_num(X_np, nan=0.0, posinf=0.0, neginf=0.0)
 
         if self.model_type == 'lightgbm' and LIGHTGBM_AVAILABLE:
             return self.model.predict(X_np)
