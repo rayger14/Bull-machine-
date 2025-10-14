@@ -105,13 +105,13 @@ When regime adaptation is fully wired, compare against these baseline metrics:
 ## 🚦 Next Steps
 
 ### Immediate (Ready Now)
-1. ☐ Wire regime adjustments into backtest_config() function
-   - Classify regime using macro features at backtest start
-   - Apply policy adjustments to config before optimization
-   - Track regime state in results
-2. ☐ Re-run Q3 2024 with --regime true
-3. ☐ Compare baseline vs regime metrics
-4. ☐ Validate acceptance gates
+1. ✅ Wire regime adjustments into backtest_config() function
+   - ✅ Classify regime using macro features at backtest start
+   - ✅ Apply policy adjustments to config before optimization
+   - ✅ Track regime state in results
+2. ✅ Re-run Q3 2024 with --regime true
+3. ⏳ Compare baseline vs regime metrics (neutral fallback, results identical)
+4. ⏳ Wire actual macro features to enable non-neutral classifications
 
 ### Short Term (If Gates Pass)
 5. ☐ Run full-year 2024 validation (more market conditions)
@@ -151,12 +151,13 @@ python3 bin/optimize_v19.py --asset BTC --mode quick --regime true \
   --start 2024-07-01 --end 2024-09-30
 ```
 
-### What's Not Yet Wired
-- Regime classification per-config before backtest
-- Policy adjustment application to config parameters
-- Regime tracking in result outputs
+### What's Now Wired ✅
+- ✅ Regime classification per-config before backtest
+- ✅ Policy adjustment application to config parameters
+- ✅ Regime tracking in result outputs (regime_label, regime_confidence)
+- ✅ Full integration with multiprocessing workflow
 
-**Estimated effort**: 30-60 min to wire regime application
+**Status**: Regime application COMPLETE (commit a103df0)
 
 ---
 
@@ -184,7 +185,7 @@ python3 bin/optimize_v19.py --asset BTC --mode quick --regime true \
 | **Date Filtering** | ✅ Working | Timezone-aware |
 | **BTC Baseline** | ✅ Complete | Strong Q3 performance |
 | **ETH Baseline** | ⚠️ No trades | Quiet Q3 period |
-| **Regime Application** | ⏳ Pending | Needs wiring in backtest_config() |
+| **Regime Application** | ✅ Complete | Wired in backtest_config() (commit a103df0) |
 | **Comparison Report** | ⏳ Pending | Waiting for regime run |
 
 ---
@@ -207,7 +208,7 @@ python3 bin/optimize_v19.py --asset BTC --mode quick --regime true \
 
 ---
 
-**Status**: Baseline established ✅
-**Next**: Wire regime application and compare
-**ETA**: 1-2 hours for full validation
+**Status**: Regime wiring complete ✅
+**Next**: Wire macro features for non-neutral regime classifications
+**Blocker**: Missing 7/13 macro features (funding, oi, rv_20d, rv_60d, TOTAL, TOTAL2, USDT.D)
 
