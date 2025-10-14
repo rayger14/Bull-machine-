@@ -32,6 +32,10 @@ from functools import partial
 
 from smart_exits_sim import simulate_trades_batch, calculate_metrics
 
+# Phase 2: Regime adaptation
+from engine.context.regime_classifier import RegimeClassifier
+from engine.context.regime_policy import RegimePolicy
+
 # ML dataset logging
 try:
     from engine.ml.dataset import OptimizationDataset
@@ -344,6 +348,12 @@ def main():
     parser.add_argument('--workers', type=int, default=mp.cpu_count() - 1, help='Parallel workers')
     parser.add_argument('--output', default='optimization_results_v19.json', help='Output file')
 
+    # Phase 2: Regime adaptation
+    parser.add_argument('--regime', type=str, choices=['true', 'false'], default='false',
+                        help='Enable Phase 2 regime adaptation (default: false)')
+    parser.add_argument('--start', type=str, help='Start date filter (YYYY-MM-DD, optional)')
+    parser.add_argument('--end', type=str, help='End date filter (YYYY-MM-DD, optional)')
+
     args = parser.parse_args()
 
     print("🎯 Bull Machine v1.9 Optimizer (Production-Faithful)")
@@ -361,6 +371,54 @@ def main():
     print(f"\n📊 Loading feature store: {feature_path}")
     features = load_feature_store(feature_path)
     print(f"   ✅ Loaded {len(features['close'])} bars × {len(features)} features")
+
+    # Phase 2: Date filtering
+    if args.start or args.end:
+        print(f"\n📅 Applying date filter...")
+        if 'timestamp' in features:
+            timestamps = features['timestamp']
+            mask = np.ones(len(timestamps), dtype=bool)
+
+            if args.start:
+                start_ts = pd.Timestamp(args.start)
+                mask &= (timestamps >= start_ts)
+                print(f"   Start: {args.start}")
+
+            if args.end:
+                end_ts = pd.Timestamp(args.end)
+                mask &= (timestamps <= end_ts)
+                print(f"   End: {args.end}")
+
+            # Apply filter to all features
+            for key in features:
+                features[key] = features[key][mask]
+
+            print(f"   ✅ Filtered to {len(features['close'])} bars")
+        else:
+            print(f"   ⚠️  No timestamp column in feature store, skipping date filter")
+
+    # Phase 2: Load regime components
+    regime_enabled = (args.regime == 'true')
+    regime_classifier = None
+    regime_policy = None
+
+    if regime_enabled:
+        print(f"\n🧠 Loading Phase 2 regime components...")
+        feature_order = [
+            "VIX", "DXY", "MOVE", "YIELD_2Y", "YIELD_10Y",
+            "USDT.D", "BTC.D", "TOTAL", "TOTAL2",
+            "funding", "oi", "rv_20d", "rv_60d"
+        ]
+        try:
+            regime_classifier = RegimeClassifier.load("models/regime_classifier_gmm.pkl", feature_order)
+            regime_policy = RegimePolicy.load("configs/v19/regime_policy.json")
+            print(f"   ✅ Regime adaptation ENABLED")
+        except Exception as e:
+            print(f"   ⚠️  Regime classifier load failed: {e}")
+            print(f"   Falling back to baseline (regime disabled)")
+            regime_enabled = False
+    else:
+        print(f"\n📊 Regime adaptation: DISABLED (baseline mode)")
 
     # Generate configs
     configs = generate_configs(args.mode)
