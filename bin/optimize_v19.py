@@ -381,11 +381,17 @@ def main():
 
             if args.start:
                 start_ts = pd.Timestamp(args.start)
+                # Handle tz-aware vs tz-naive
+                if hasattr(timestamps[0], 'tz') and timestamps[0].tz is not None:
+                    start_ts = start_ts.tz_localize('UTC')
                 mask &= (timestamps >= start_ts)
                 print(f"   Start: {args.start}")
 
             if args.end:
                 end_ts = pd.Timestamp(args.end)
+                # Handle tz-aware vs tz-naive
+                if hasattr(timestamps[0], 'tz') and timestamps[0].tz is not None:
+                    end_ts = end_ts.tz_localize('UTC')
                 mask &= (timestamps <= end_ts)
                 print(f"   End: {args.end}")
 
