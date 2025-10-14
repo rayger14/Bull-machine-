@@ -157,7 +157,8 @@ def backtest_config(
     features: Dict[str, np.ndarray],
     config: Dict,
     regime_classifier=None,
-    regime_policy=None
+    regime_policy=None,
+    asset: str = "BTC"
 ) -> Dict:
     """
     Run backtest for single configuration
@@ -180,7 +181,7 @@ def backtest_config(
 
     if regime_classifier is not None and regime_policy is not None:
         # Build macro snapshot at start of backtest window
-        macro_snapshot = build_macro_snapshot(features, start_idx=0)
+        macro_snapshot = build_macro_snapshot(features, start_idx=0, asset=asset)
 
         # Extract values for regime classification (flatten nested dict)
         macro_row = {k: v['value'] if isinstance(v, dict) else v
@@ -310,58 +311,93 @@ def backtest_config(
     return metrics
 
 
-def build_macro_snapshot(features: Dict[str, np.ndarray], start_idx: int = 0) -> Dict:
+# Global macro data cache
+_MACRO_CACHE = {}
+
+
+def load_macro_data(asset: str) -> pd.DataFrame:
     """
-    Build macro snapshot from feature store at given index.
+    Load macro feature dataset from parquet (cached)
+
+    Args:
+        asset: BTC or ETH
+
+    Returns:
+        DataFrame with macro features
+    """
+    if asset in _MACRO_CACHE:
+        return _MACRO_CACHE[asset]
+
+    macro_path = f"data/macro/{asset}_macro_features.parquet"
+
+    try:
+        macro_df = pd.read_parquet(macro_path)
+        _MACRO_CACHE[asset] = macro_df
+        return macro_df
+    except Exception as e:
+        print(f"⚠️  Failed to load macro data from {macro_path}: {e}")
+        return None
+
+
+def build_macro_snapshot(features: Dict[str, np.ndarray], start_idx: int = 0, asset: str = "BTC") -> Dict:
+    """
+    Build macro snapshot from macro dataset at given timestamp.
 
     This captures the regime at the START of the backtest window.
 
     Args:
-        features: Feature store dict
+        features: Feature store dict (must contain 'timestamp')
         start_idx: Index to sample (default: 0 = start of window)
+        asset: BTC or ETH (for loading macro data)
 
     Returns:
         Macro snapshot dict ready for regime classification
     """
-    # Use synthetic default values (feature names match RegimeClassifier feature_order)
-    # Feature order: VIX, DXY, MOVE, YIELD_2Y, YIELD_10Y, USDT.D, BTC.D, TOTAL, TOTAL2, funding, oi, rv_20d, rv_60d
+    # Load macro data
+    macro_df = load_macro_data(asset)
+
+    if macro_df is None or 'timestamp' not in features:
+        # Fallback to synthetic defaults
+        return {
+            'VIX': {'value': 20.0, 'stale': True},
+            'DXY': {'value': 104.0, 'stale': True},
+            'MOVE': {'value': 80.0, 'stale': True},
+            'YIELD_2Y': {'value': 4.5, 'stale': True},
+            'YIELD_10Y': {'value': 4.3, 'stale': True},
+            'USDT.D': {'value': 4.5, 'stale': True},
+            'BTC.D': {'value': 55.0, 'stale': True},
+            'TOTAL': {'value': np.nan, 'stale': True},
+            'TOTAL2': {'value': np.nan, 'stale': True},
+            'funding': {'value': 0.01, 'stale': True},
+            'oi': {'value': np.nan, 'stale': True},
+            'rv_20d': {'value': 40.0, 'stale': True},
+            'rv_60d': {'value': 45.0, 'stale': True}
+        }
+
+    # Get timestamp at start_idx
+    target_ts = features['timestamp'][start_idx]
+
+    # Find closest macro record
+    macro_df['ts_diff'] = abs((macro_df['timestamp'] - target_ts).dt.total_seconds())
+    closest_idx = macro_df['ts_diff'].idxmin()
+    macro_row = macro_df.loc[closest_idx]
+
+    # Build snapshot from macro data
     snapshot = {
-        'VIX': {'value': 20.0, 'stale': True},
-        'DXY': {'value': 100.0, 'stale': True},
-        'MOVE': {'value': 80.0, 'stale': True},
-        'YIELD_2Y': {'value': 4.0, 'stale': True},
-        'YIELD_10Y': {'value': 4.0, 'stale': True},
-        'USDT.D': {'value': np.nan, 'stale': True},
-        'BTC.D': {'value': 0.55, 'stale': True},
-        'TOTAL': {'value': np.nan, 'stale': True},
-        'TOTAL2': {'value': np.nan, 'stale': True},
-        'funding': {'value': np.nan, 'stale': True},
-        'oi': {'value': np.nan, 'stale': True},
-        'rv_20d': {'value': np.nan, 'stale': True},
-        'rv_60d': {'value': np.nan, 'stale': True}
+        'VIX': {'value': float(macro_row['VIX']), 'stale': False},
+        'DXY': {'value': float(macro_row['DXY']), 'stale': False},
+        'MOVE': {'value': float(macro_row['MOVE']), 'stale': False},
+        'YIELD_2Y': {'value': float(macro_row['YIELD_2Y']), 'stale': False},
+        'YIELD_10Y': {'value': float(macro_row['YIELD_10Y']), 'stale': False},
+        'USDT.D': {'value': float(macro_row['USDT.D']), 'stale': False},
+        'BTC.D': {'value': float(macro_row['BTC.D']), 'stale': False},
+        'TOTAL': {'value': float(macro_row['TOTAL']) if not pd.isna(macro_row['TOTAL']) else np.nan, 'stale': pd.isna(macro_row['TOTAL'])},
+        'TOTAL2': {'value': float(macro_row['TOTAL2']) if not pd.isna(macro_row['TOTAL2']) else np.nan, 'stale': pd.isna(macro_row['TOTAL2'])},
+        'funding': {'value': float(macro_row['funding']), 'stale': False},
+        'oi': {'value': float(macro_row['oi']), 'stale': False},
+        'rv_20d': {'value': float(macro_row['rv_20d']) if not pd.isna(macro_row['rv_20d']) else 40.0, 'stale': pd.isna(macro_row['rv_20d'])},
+        'rv_60d': {'value': float(macro_row['rv_60d']) if not pd.isna(macro_row['rv_60d']) else 45.0, 'stale': pd.isna(macro_row['rv_60d'])}
     }
-
-    # Compute realized volatility from feature store as proxy for VIX
-    if len(features['close']) > 20:
-        # Sample recent bars around start_idx
-        sample_start = max(0, start_idx - 20)
-        sample_end = min(len(features['close']), start_idx + 20)
-
-        returns = np.diff(np.log(features['close'][sample_start:sample_end]))
-        realized_vol = np.std(returns) * np.sqrt(365 * 24) * 100  # Annualized %
-
-        # Map to VIX-like scale (BTC vol is ~4-8x equity vol)
-        snapshot['VIX']['value'] = realized_vol / 4.0  # Rough calibration
-        snapshot['VIX']['stale'] = False
-
-    # Use ADX as regime strength proxy
-    if 'adx_14' in features and start_idx < len(features['adx_14']):
-        adx = features['adx_14'][start_idx]
-        if not np.isnan(adx):
-            # High ADX = trending = lower perceived stress
-            # Low ADX = ranging = higher uncertainty
-            snapshot['MOVE']['value'] = 120 - adx  # Inverse relationship
-            snapshot['MOVE']['stale'] = False
 
     return snapshot
 
@@ -516,7 +552,8 @@ def main():
             backtest_config,
             features,
             regime_classifier=regime_classifier,
-            regime_policy=regime_policy
+            regime_policy=regime_policy,
+            asset=args.asset
         )
         results = pool.map(backtest_fn, configs)
 
@@ -544,7 +581,7 @@ def main():
             print(f"\n📊 Logging {len(valid_results)} results to ML dataset...")
 
             # Build macro snapshot (regime at start of window)
-            macro_snapshot = build_macro_snapshot(features, start_idx=0)
+            macro_snapshot = build_macro_snapshot(features, start_idx=0, asset=args.asset)
 
             # Build regime vector
             regime_vector = build_regime_vector(macro_snapshot, lookback_window=None)
