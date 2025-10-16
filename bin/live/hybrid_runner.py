@@ -205,6 +205,11 @@ class HybridRunner:
         self.log_buffer_decision = []
         self.log_flush_interval = LOG_FLUSH_INTERVAL
 
+        # Configurable output directory (from config or default)
+        self.output_dir = Path(self.config.get('output_dir', DEFAULT_OUTPUT_DIR))
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Output directory: {self.output_dir}")
+
     def _validate_config(self):
         """Validate v1.8 hybrid configuration."""
         required = {
@@ -365,7 +370,7 @@ class HybridRunner:
                         'macro_veto': signal_result.get('macro_veto', 0.0),
                         'reasons': signal_result.get('reasons', [])
                     }
-                    with open('results/decision_log.jsonl', 'a') as f:
+                    with open(self.output_dir / 'decision_log.jsonl', 'a') as f:
                         f.write(json.dumps(decision_log) + '\n')
 
                     # Check if we already have a position for this asset
@@ -591,17 +596,16 @@ class HybridRunner:
 
     def _flush_log_buffers(self):
         """PHASE 1 PERFORMANCE: Flush buffered logs to disk."""
-        import os
-        os.makedirs('results', exist_ok=True)
+        # Output directory already created in __init__
 
         if self.log_buffer_signal_blocks:
-            with open('results/signal_blocks.jsonl', 'a') as f:
+            with open(self.output_dir / 'signal_blocks.jsonl', 'a') as f:
                 for entry in self.log_buffer_signal_blocks:
                     f.write(json.dumps(entry) + '\n')
             self.log_buffer_signal_blocks = []
 
         if self.log_buffer_fusion:
-            with open('results/fusion_validation.jsonl', 'a') as f:
+            with open(self.output_dir / 'fusion_validation.jsonl', 'a') as f:
                 for entry in self.log_buffer_fusion:
                     json.dump(entry, f)
                     f.write('\n')
@@ -704,11 +708,10 @@ class HybridRunner:
 
     def _log_signal(self, signal: Dict):
         """Log signal to JSONL file."""
-        import os
-        os.makedirs('results', exist_ok=True)
+        # Output directory already created in __init__
 
         date_str = datetime.now().strftime('%Y%m%d_%H%M%S')
-        log_file = f'results/hybrid_signals_{self.asset}_{date_str}.jsonl'
+        log_file = self.output_dir / f'hybrid_signals_{self.asset}_{date_str}.jsonl'
 
         with open(log_file, 'a') as f:
             json.dump(signal, f)

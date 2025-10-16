@@ -123,7 +123,7 @@ MTF_TREND_DEVIATION = 0.01  # 1% deviation for trend classification (was 1.01/0.
 # Default output directory for results
 DEFAULT_OUTPUT_DIR = "results"
 
-# Specific log file names
+# Specific log file names (used in various modules)
 FUSION_DEBUG_LOG = "fusion_debug.jsonl"
 SIGNAL_BLOCKS_LOG = "signal_blocks.jsonl"
 FUSION_VALIDATION_LOG = "fusion_validation.jsonl"
@@ -133,3 +133,4 @@ DECISION_LOG = "decision_log.jsonl"
 # - Centralized so easy to change (e.g., for Docker deployments)
 # - Can be overridden via config for multi-instance setups
 # - Keeps logs organized in one location
+# - Config key: "output_dir" in JSON config (e.g., "output_dir": "/custom/path")
