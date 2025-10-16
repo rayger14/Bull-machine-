@@ -1,0 +1,25 @@
+FILES TO REMOVE (temporary/duplicate):
+- btc_*.json (optimization result files)
+- sweep_results_*.json (sweep output files)
+- q3_2024_validation_results.txt
+- monitor_output.log
+- config_patch_ml.json
+
+FILES TO KEEP BUT ORGANIZE:
+- sweep_*.py → bin/experiments/
+- analyze_threshold_sensitivity.py → bin/experiments/
+- test_optimization.py → tests/
+
+SCRIPTS TO CONSOLIDATE:
+- tools/get_*_klines.py (multiple exchange fetchers)
+- tools/fetch_macro_*.py (multiple macro fetchers)
+- bin/download_*.sh (download scripts)
+
+.gitignore ADDITIONS:
+- *.json (result files)
+- logs/
+- data/raw/
+- data/features/
+- data/macro/
+- optimization_results_*.json
+- sweep_results_*.json

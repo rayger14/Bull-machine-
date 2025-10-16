@@ -100,7 +100,27 @@ def _standardize_df(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _wyckoff_to_score(wyck_result: Dict, config: Dict) -> tuple:
-    """Convert Wyckoff result to normalized 0-1 score"""
+    """
+    Convert Wyckoff phase detection result to normalized 0-1 score.
+
+    Maps Wyckoff accumulation/distribution phases to directional bias with confidence.
+    Bullish phases (accumulation, spring, markup) increase score; bearish phases decrease it.
+
+    Args:
+        wyck_result: Dictionary containing 'phase' and 'confidence' from Wyckoff detector
+        config: Configuration dictionary (unused but kept for consistency)
+
+    Returns:
+        tuple: (score: float 0-1, direction: str 'long'/'short'/'neutral', reasons: list)
+
+    Example:
+        >>> wyck_result = {'phase': 'accumulation', 'confidence': 0.8, 'crt_active': True}
+        >>> score, direction, reasons = _wyckoff_to_score(wyck_result, {})
+        >>> score  # 0.3 + (0.8 * 0.7) + 0.10 = 0.96
+        0.96
+        >>> direction
+        'long'
+    """
     try:
         phase = wyck_result.get('phase')
         conf = wyck_result.get('confidence', 0.0)
@@ -141,7 +161,25 @@ def _wyckoff_to_score(wyck_result: Dict, config: Dict) -> tuple:
 
 
 def _smc_to_score(smc_engine: SMCEngine, df: pd.DataFrame, config: Dict) -> tuple:
-    """Convert SMC signal to normalized 0-1 score"""
+    """
+    Convert Smart Money Concepts (SMC) analysis to normalized 0-1 score.
+
+    Analyzes institutional order flow patterns: BOS (Break of Structure), CHOCH (Change of Character),
+    FVG (Fair Value Gaps), and Order Blocks to determine smart money positioning.
+
+    Args:
+        smc_engine: SMCEngine instance with config
+        df: OHLCV DataFrame (1H recommended)
+        config: Configuration dictionary
+
+    Returns:
+        tuple: (score: float 0-1, direction: str, reasons: list, institutional_bias: str)
+
+    Notes:
+        - Score 0.5-1.0 indicates long bias (smart money buying)
+        - Score 0.0-0.5 indicates short bias (smart money selling)
+        - Hit counters track structure breaks and liquidity sweeps
+    """
     try:
         signal = smc_engine.analyze(df)
         
@@ -268,13 +306,37 @@ def _momentum_to_score(df: pd.DataFrame, config: Dict) -> tuple:
         return 0.5, 'neutral', [], 50.0
 
 
-def _check_mtf_alignment(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame, 
+def _check_mtf_alignment(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame,
                         config: Dict) -> tuple:
     """
-    Check multi-timeframe alignment.
-    
+    Check multi-timeframe (MTF) trend alignment across 1H, 4H, and 1D timeframes.
+
+    Validates that lower timeframes align with higher timeframe trends, ensuring trades
+    are taken in the direction of the larger trend. Supports nested structures where
+    1H pullbacks within 4H trends are considered healthy alignment.
+
+    Args:
+        df_1h: 1H OHLCV DataFrame
+        df_4h: 4H OHLCV DataFrame
+        df_1d: 1D OHLCV DataFrame
+        config: Configuration dictionary with optional 'mtf' section
+
     Returns:
-        (aligned: bool, confidence: float, reasons: list)
+        tuple: (aligned: bool, confidence: float 0-1, reasons: list)
+
+    Alignment Logic:
+        - 4H-1D alignment: Both timeframes in same trend direction
+        - 1H-4H alignment: Lower timeframe confirms higher timeframe
+        - Nested structure: 1H pullback within 2% of 4H SMA20 (healthy retracement)
+        - Confidence ≥ 0.5 required for alignment=True
+
+    Example:
+        >>> # All timeframes in uptrend
+        >>> aligned, conf, reasons = _check_mtf_alignment(df_1h, df_4h, df_1d, {})
+        >>> aligned
+        True
+        >>> conf
+        1.0  # Perfect alignment
     """
     try:
         reasons = []
