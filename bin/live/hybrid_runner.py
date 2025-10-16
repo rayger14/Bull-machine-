@@ -45,6 +45,14 @@ from bull_machine.utils.merge_windows import (
 )
 from utils.config_compat import normalize_config_for_hybrid
 from utils.datetime_utils import to_timezone_naive
+from bin.live.constants import (
+    MIN_BARS_1H, MIN_BARS_4H, MIN_BARS_1D,
+    GC_INTERVAL_BARS,
+    LOG_FLUSH_INTERVAL, PROGRESS_REPORT_INTERVAL,
+    ATR_MIN_BARS, ATR_PERIOD, ATR_PERCENTILE_WINDOW,
+    MAX_TRADES_FOR_LOSS_STREAK,
+    DEFAULT_OUTPUT_DIR
+)
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -191,11 +199,11 @@ class HybridRunner:
         self.cache_macro_snapshot = None
         self.cache_macro_timestamp = None
 
-        # PHASE 1 PERFORMANCE: Buffered logging (flush every 100 bars)
+        # PHASE 1 PERFORMANCE: Buffered logging
         self.log_buffer_signal_blocks = []
         self.log_buffer_fusion = []
         self.log_buffer_decision = []
-        self.log_flush_interval = 100
+        self.log_flush_interval = LOG_FLUSH_INTERVAL
 
     def _validate_config(self):
         """Validate v1.8 hybrid configuration."""
@@ -294,7 +302,6 @@ class HybridRunner:
         # Process each 1H bar incrementally (simulate live streaming)
         bars_processed = 0
         bars_skipped = 0
-        gc_interval = 500  # Trigger GC every 500 bars (backtest only)
         is_backtest = self.start_date is not None  # Detect backtest mode
 
         for i in range(len(df_1h_full)):
@@ -311,7 +318,7 @@ class HybridRunner:
             bars_processed += 1
 
             # Periodic GC for backtest mode (avoid memory creep in long runs)
-            if is_backtest and bars_processed % gc_interval == 0:
+            if is_backtest and bars_processed % GC_INTERVAL_BARS == 0:
                 gc.collect()
 
             # Build incremental dataframes (growing window)
@@ -331,8 +338,8 @@ class HybridRunner:
                 self.df_1h, self.df_4h, macro_snapshot, self.config_hash
             )
 
-            # Need minimum data (relaxed for validation - was 50/14/50)
-            if len(self.df_1h) < 50 or len(self.df_4h) < 14 or len(self.df_1d) < 20:
+            # Need minimum data for indicator calculations
+            if len(self.df_1h) < MIN_BARS_1H or len(self.df_4h) < MIN_BARS_4H or len(self.df_1d) < MIN_BARS_1D:
                 continue
 
             # Generate signal (dataframes already aligned by time)
@@ -379,8 +386,8 @@ class HybridRunner:
                         df_4h=self.df_4h
                     )
 
-            # PHASE 1 PERFORMANCE: Flush buffered logs every 100 bars
-            if i % 100 == 0:
+            # PHASE 1 PERFORMANCE: Flush buffered logs periodically
+            if i % PROGRESS_REPORT_INTERVAL == 0:
                 if batch_mode:
                     print(f"   Progress: {i+1}/{len(df_1h_full)} | Processed: {bars_processed} | Skipped: {bars_skipped} | Signals: {len(self.signals)}")
                 else:
@@ -651,12 +658,12 @@ class HybridRunner:
         return None
 
     def _count_consecutive_losses(self) -> int:
-        """Count consecutive losses in last 24 hours."""
+        """Count consecutive losses in recent trades."""
         if not self.recent_trades:
             return 0
 
         count = 0
-        for trade in reversed(self.recent_trades[-10:]):  # Check last 10 trades
+        for trade in reversed(self.recent_trades[-MAX_TRADES_FOR_LOSS_STREAK:]):
             if trade.get('pnl', 0) < 0:
                 count += 1
             else:
@@ -665,7 +672,7 @@ class HybridRunner:
 
     def _check_atr_throttle(self, df_1h: pd.DataFrame) -> bool:
         """Check if ATR is within acceptable range."""
-        if len(df_1h) < 100:
+        if len(df_1h) < ATR_MIN_BARS:
             return True  # Not enough data, allow
 
         # Calculate ATR
@@ -679,11 +686,11 @@ class HybridRunner:
             (low - close.shift()).abs()
         ], axis=1).max(axis=1)
 
-        atr = tr.rolling(14).mean()
+        atr = tr.rolling(ATR_PERIOD).mean()
         current_atr = atr.iloc[-1]
 
         # Calculate percentile
-        atr_window = atr.tail(100)
+        atr_window = atr.tail(ATR_PERCENTILE_WINDOW)
         percentile = (atr_window < current_atr).sum() / len(atr_window)
 
         floor = self.config['safety']['atr_floor_percentile']
