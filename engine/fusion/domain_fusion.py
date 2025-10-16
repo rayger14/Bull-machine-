@@ -379,25 +379,12 @@ def analyze_fusion(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame
             mom_score * weights['momentum']
         )
 
-        # DEBUG: Log domain scores
-        import json
-        from pathlib import Path
-        debug_log = {
-            'timestamp': str(df_1h.index[-1]),
-            'wyck_score': float(wyck_score),
-            'wyck_dir': wyck_dir,
-            'smc_score': float(smc_score),
-            'smc_dir': smc_dir,
-            'hob_score': float(hob_score),
-            'hob_dir': hob_dir,
-            'mom_score': float(mom_score),
-            'mom_dir': mom_dir,
-            'fusion_raw': float(fusion_score),
-            'weights': weights
-        }
-        Path('results').mkdir(exist_ok=True)
-        with open('results/fusion_debug.jsonl', 'a') as f:
-            f.write(json.dumps(debug_log) + '\n')
+        # Log domain scores at debug level
+        logger.debug(
+            f"Fusion domain scores: wyck={wyck_score:.3f}/{wyck_dir}, "
+            f"smc={smc_score:.3f}/{smc_dir}, hob={hob_score:.3f}/{hob_dir}, "
+            f"mom={mom_score:.3f}/{mom_dir}, fusion={fusion_score:.3f}"
+        )
 
         # MTF alignment check
         mtf_aligned, mtf_conf, mtf_reasons = _check_mtf_alignment(df_1h, df_4h, df_1d, config)
@@ -496,6 +483,28 @@ def analyze_fusion(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame
         # END v1.8.6 TEMPORAL ANALYSIS
         # ═══════════════════════════════════════════════════════════════
 
+        # ═══════════════════════════════════════════════════════════════
+        # v1.8.6 MACRO FUSION COMPOSITE
+        # ═══════════════════════════════════════════════════════════════
+
+        macro_fusion_adjustment = 0.0
+        macro_fusion_enabled = config.get('macro_fusion', {}).get('enabled', False)
+
+        if macro_fusion_enabled:
+            # Get macro analysis result from config cache (populated by runner)
+            macro_analysis = config.get('_macro_analysis_cache', {})
+            fusion_composite = macro_analysis.get('fusion_composite')
+
+            if fusion_composite is not None:
+                # Apply fusion composite adjustment (already capped at ±0.10)
+                macro_fusion_adjustment = fusion_composite
+                fusion_score = np.clip(fusion_score + macro_fusion_adjustment, 0.0, 1.0)
+                logger.debug(f"Macro fusion composite: {fusion_composite:+.3f} → new score: {fusion_score:.3f}")
+
+        # ═══════════════════════════════════════════════════════════════
+        # END v1.8.6 MACRO FUSION COMPOSITE
+        # ═══════════════════════════════════════════════════════════════
+
         # Determine overall direction
         directions = [wyck_dir, smc_dir, hob_dir, mom_dir]
         long_votes = sum(1 for d in directions if d == 'long')
@@ -561,8 +570,25 @@ def analyze_fusion(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame
         )
         
     except Exception as e:
-        logger.error(f"Error in fusion analysis: {e}", exc_info=True)
-        # Return neutral signal on error
+        # Log detailed error context for debugging
+        error_context = {
+            'error_type': type(e).__name__,
+            'error_message': str(e),
+            'df_1h_shape': df_1h.shape if df_1h is not None else None,
+            'df_4h_shape': df_4h.shape if df_4h is not None else None,
+            'df_1d_shape': df_1d.shape if df_1d is not None else None,
+            'config_keys': list(config.keys()) if config else None
+        }
+        logger.error(
+            f"CRITICAL: Fusion analysis failed - {type(e).__name__}: {str(e)}\n"
+            f"Context: {error_context}",
+            exc_info=True,
+            extra={'error_context': error_context}
+        )
+
+        # Return neutral signal on error (defensive fallback)
+        # NOTE: This prevents trading on corrupted data, but masks bugs
+        # Consider fail-fast mode for development/testing
         return FusionSignal(
             score=0.5,
             direction='neutral',
@@ -577,6 +603,6 @@ def analyze_fusion(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame
             smc_bias='neutral',
             hob_quality='invalid',
             momentum_bias='neutral',
-            features={},
-            reasons=[f'Fusion error: {str(e)}']
+            features={'error': str(e), 'error_type': type(e).__name__},
+            reasons=[f'FUSION ERROR: {type(e).__name__} - {str(e)[:100]}']
         )

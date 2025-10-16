@@ -1,0 +1,173 @@
+{
+  "version": "1.8.6-macro-fusion",
+  "description": "Default macro fusion configuration for v1.8.6",
+
+  "macro_fusion": {
+    "enabled": false,
+    "description": "Feature flag - set to true to enable macro fusion boost/penalty",
+
+    "weights": {
+      "dxy_weight": 0.15,
+      "oil_weight": 0.10,
+      "gold_weight": 0.05,
+      "yield_weight": 0.10,
+      "curve_weight": 0.05,
+      "breadth_weight": 0.05,
+      "usdt_d_weight": 0.05
+    },
+
+    "thresholds": {
+      "dxy_breakout_z": 1.5,
+      "dxy_breakdown_z": -1.5,
+
+      "oil_hot_z": 1.5,
+      "oil_roc_threshold": 15.0,
+
+      "gold_flight_z": 1.5,
+      "gold_roc_threshold": 10.0,
+
+      "yield_spike_roc": 10.0,
+
+      "curve_steep_threshold": 0.30,
+
+      "breadth_dominance_low": 0.50,
+      "breadth_dominance_high": 0.60,
+
+      "usdt_d_breakout_z": 1.5
+    },
+
+    "indicators": {
+      "dxy_ema_fast": 10,
+      "dxy_ema_slow": 50,
+      "dxy_zscore_lookback": 60,
+
+      "oil_roc_period": 10,
+      "oil_zscore_lookback": 60,
+
+      "gold_roc_period": 10,
+      "gold_zscore_lookback": 60,
+
+      "us10y_roc_period": 5,
+      "spread_ema_period": 20,
+
+      "usdt_d_ema_period": 20,
+      "usdt_d_zscore_lookback": 60
+    },
+
+    "caps": {
+      "max_boost": 0.10,
+      "max_penalty": -0.10,
+      "description": "Total fusion adjustment capped at ±0.10"
+    }
+  },
+
+  "macro_veto": {
+    "enabled": true,
+    "description": "Existing macro veto system (VIX/MOVE/DXY panic thresholds)",
+
+    "thresholds": {
+      "vix_panic_threshold": 30,
+      "move_panic_threshold": 120,
+      "dxy_extreme_threshold": 105,
+      "macro_veto_threshold": 0.85
+    },
+
+    "weights": {
+      "funding_weight_cap": 0.20,
+      "move_weight_cap": 0.25
+    },
+
+    "vix_hysteresis": {
+      "on": 22.0,
+      "off": 18.0
+    },
+
+    "crisis_fuse": {
+      "enabled": true,
+      "lookback_hours": 24,
+      "allow_one_trade_if_fusion_confidence_ge": 0.80,
+      "requires_mtf_alignment": true
+    }
+  },
+
+  "data_sources": {
+    "vix": {
+      "symbol": "VIX",
+      "required": true,
+      "description": "CBOE Volatility Index"
+    },
+    "move": {
+      "symbol": "MOVE",
+      "required": true,
+      "description": "Bond market volatility"
+    },
+    "dxy": {
+      "symbol": "DXY",
+      "required": true,
+      "description": "US Dollar Index"
+    },
+    "oil": {
+      "symbol": "WTI",
+      "required": false,
+      "description": "West Texas Intermediate crude oil",
+      "fallback": "Use last known value or neutral state"
+    },
+    "gold": {
+      "symbol": "XAUUSD",
+      "required": false,
+      "description": "Gold spot price",
+      "fallback": "Use last known value or neutral state"
+    },
+    "us2y": {
+      "symbol": "US2Y",
+      "required": false,
+      "description": "2-year Treasury yield",
+      "fallback": "Use last known value or neutral state"
+    },
+    "us10y": {
+      "symbol": "US10Y",
+      "required": false,
+      "description": "10-year Treasury yield",
+      "fallback": "Use last known value or neutral state"
+    },
+    "total_mc": {
+      "symbol": "TOTAL",
+      "required": false,
+      "description": "Total crypto market cap",
+      "fallback": "Use last known value or neutral state"
+    },
+    "total2_mc": {
+      "symbol": "TOTAL2",
+      "required": false,
+      "description": "Total crypto market cap excluding BTC",
+      "fallback": "Use last known value or neutral state"
+    },
+    "total3_mc": {
+      "symbol": "TOTAL3",
+      "required": false,
+      "description": "Total crypto market cap excluding BTC+ETH",
+      "fallback": "Use last known value or neutral state"
+    },
+    "usdt_d": {
+      "symbol": "USDT.D",
+      "required": false,
+      "description": "USDT dominance",
+      "fallback": "Use last known value or neutral state"
+    },
+    "btc_d": {
+      "symbol": "BTC.D",
+      "required": false,
+      "description": "Bitcoin dominance",
+      "fallback": "Use last known value or neutral state"
+    }
+  },
+
+  "rollout": {
+    "phase": "alpha",
+    "description": "Safe rollout phases: alpha (dev only) -> beta (paper trading) -> prod (live)",
+    "a_b_test_window": "3 months",
+    "require_backtest_validation": true,
+    "min_sharpe_to_enable": 1.5,
+    "max_drawdown_threshold": 0.15
+  }
+}

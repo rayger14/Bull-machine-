@@ -1,0 +1,46 @@
+🎯 Bull Machine v1.9 Optimizer (Production-Faithful)
+Asset: BTC
+Mode: quick
+======================================================================
+
+📊 Loading feature store: data/features/v18/BTC_1H.parquet
+   ✅ Loaded 15550 bars × 16 features
+
+📅 Applying date filter...
+   Start: 2024-07-01
+   End: 2024-09-30
+   ✅ Filtered to 2185 bars
+
+📊 Regime adaptation: DISABLED (baseline mode)
+
+📋 Generated 12 configurations (quick mode)
+
+🚀 Starting parallel optimization with 11 workers...
+
+✅ Optimization complete in 1.6s (7.5 configs/sec)
+   Valid results: 9/12
+
+📊 Logging 9 results to ML dataset...
+📊 Loaded 2372 existing optimization results
+💾 Saved dataset to data/ml/optimization_results.parquet
+✅ Appended 9 results → Total: 2381
+   ✅ ML dataset updated (9 rows appended)
+
+======================================================================
+🏆 TOP 10 CONFIGURATIONS (by Sharpe Ratio)
+======================================================================
+ fusion_threshold  wyckoff_weight  momentum_weight  trades  win_rate  total_return  sharpe_ratio  profit_factor    avg_r
+             0.65            0.30              0.3      16 81.250000      0.327439     13.593536       3.277589 0.493649
+             0.65            0.35              0.3      16 81.250000      0.325554     13.578258       3.275603 0.493649
+             0.65            0.25              0.3      18 77.777778      0.314596     10.445711       2.645717 0.424609
+             0.60            0.35              0.3      44 68.181818      0.305022      2.408842       1.437801 0.193115
+             0.60            0.30              0.3      45 66.666667      0.260369      1.965747       1.348880 0.166602
+             0.55            0.35              0.3      75 68.000000      0.519536      1.752622       1.415528 0.199185
+             0.55            0.30              0.3      74 67.567568      0.476163      1.641408       1.381770 0.186475
+             0.55            0.25              0.3      75 65.333333      0.369785      1.231762       1.275702 0.150655
+             0.60            0.25              0.3      48 64.583333      0.179911      1.228924       1.213750 0.125543
+
+💾 Full results (9 configs) saved to: reports/v19/BTC_q3_baseline.json
+
+Next steps:
+  python bin/analyze_optimization.py reports/v19/BTC_q3_baseline.json
