@@ -21,7 +21,16 @@ SYMBOL_MAP = {
     "ETH_4H": ("COINBASE_ETHUSD", "240"),
     "BTC_1H": ("COINBASE_BTCUSD", "60"),
     "BTC_4H": ("COINBASE_BTCUSD", "240"),
-    "SOL_4H": ("COINBASE_SOLUSD", "720"),  # Use 12H instead of 4H
+    "SOL_1H": ("COINBASE_SOLUSD", "60"),
+    "SOL_4H": ("COINBASE_SOLUSD", "240"),
+    "VIX_1H": ("TVC_VIX", "60"),
+    "DXY_1H": ("TVC_DXY", "60"),
+    "MOVE_1H": ("TVC_MOVE", "60"),
+    "US02Y_1H": ("TVC_US02Y", "60"),
+    "US10Y_1H": ("TVC_US10Y", "60"),
+    "US02Y_4H": ("TVC_US02Y", "240"),
+    "US10Y_4H": ("TVC_US10Y", "240"),
+    "WTI_1H": ("CFI_WTI", "60"),
     "DXY_1D": ("TVC_DXY", "1D"),
     "US2Y_1D": ("TVC_US02", "1W"),  # Use weekly data (daily not available)
     "US10Y_1D": ("TVC_US10", "1W"),  # Use weekly data (daily not available)
@@ -40,6 +49,7 @@ SYMBOL_MAP = {
     "SOL_12H": ("COINBASE_SOLUSD", "720"),
     "USDTD_1D": ("CRYPTOCAP_USDT.D", "1D"),
     "TOTAL_1D": ("CRYPTOCAP_TOTAL", "1D"),
+    "TOTAL2_1D": ("CRYPTOCAP_TOTAL2", "1D"),
     "TOTAL3_1D": ("CRYPTOCAP_TOTAL3", "1D"),
     # Stock market data
     "SPY_1H": ("BATS_SPY", "60"),

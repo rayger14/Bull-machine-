@@ -525,10 +525,12 @@ class HybridRunner:
             'action': 'signal',
             'side': execute_signal['side'],
             'confidence': execute_signal['confidence'],
+            'fusion_score': execute_signal['confidence'],  # FIX: Add fusion_score key for position sizing
             'reasons': execute_signal.get('reasons', []),
             'fast_signal': fast_signal is not None,
             'fusion_signal': fusion_signal is not None,
             'fusion_validated': fusion_signal is not None and current_4h_bar != self.last_4h_bar,
+            'mtf_aligned': execute_signal.get('mtf_aligned', False),  # FIX: Add MTF alignment for decision logging
             'mode': self.config['fast_signals']['mode'],
             'loss_streak_override': require_fusion,
             'macro_vetoed': False,
