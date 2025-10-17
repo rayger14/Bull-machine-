@@ -6,10 +6,10 @@ When traditional finance assets (DXY, Oil, Yields) move in specific patterns,
 crypto typically "echoes" with predictable responses.
 
 Key Correlations:
-- DXY ‘ + Yields ‘ = Risk-off (crypto “)
-- DXY “ + Oil ‘ = Risk-on (crypto ‘)
-- Yields spike (>10% weekly) = Flight to safety (crypto “)
-- VIX > 30 = Fear regime (crypto volatile “)
+- DXY UP + Yields UP = Risk-off (crypto DOWN)
+- DXY DOWN + Oil UP = Risk-on (crypto UP)
+- Yields spike (>10% weekly) = Flight to safety (crypto DOWN)
+- VIX > 30 = Fear regime (crypto volatile DOWN)
 
 Author: Bull Machine v2.0
 """
@@ -292,7 +292,7 @@ def apply_macro_echo_adjustment(fusion_score: float, macro_signal: MacroEchoSign
         - Risk-on regime: +0.05
         - Risk-off regime: -0.10
         - Crisis regime: -0.20 (strong warning)
-        - Correlation score: ±0.10 scaled adjustment
+        - Correlation score: +/-0.10 scaled adjustment
     """
     config = config or {}
     adjustment = 0.0
@@ -309,7 +309,7 @@ def apply_macro_echo_adjustment(fusion_score: float, macro_signal: MacroEchoSign
         adjustment += 0.05
         reasons.append(f"Macro risk-on (DXY={macro_signal.dxy_trend}, Oil={macro_signal.oil_trend})")
 
-    # Correlation score adjustment (scaled to ±0.10)
+    # Correlation score adjustment (scaled to +/-0.10)
     corr_adjustment = macro_signal.correlation_score * 0.10
     adjustment += corr_adjustment
 
