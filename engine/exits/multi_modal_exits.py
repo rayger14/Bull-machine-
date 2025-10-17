@@ -19,6 +19,16 @@ from typing import Dict, Optional, List, Tuple
 from dataclasses import dataclass
 
 
+# Constants for magic numbers
+CHOCH_THRESHOLD_LONG = 0.99  # Break below 1% of swing low triggers bearish CHOCH
+CHOCH_THRESHOLD_SHORT = 1.01  # Break above 1% of swing high triggers bullish CHOCH
+HVN_THRESHOLD_LONG = 0.99  # HVN within 1% above price = resistance for longs
+HVN_THRESHOLD_SHORT = 1.01  # HVN within 1% below price = support for shorts
+HIGH_URGENCY_THRESHOLD = 0.8  # Urgency >= 0.8 triggers immediate exit
+MEDIUM_URGENCY_THRESHOLD = 0.5  # Urgency >= 0.5 with 1 mode triggers exit
+MINIMUM_VOTING_MODES = 2  # 2+ active modes trigger exit
+
+
 @dataclass
 class ExitSignal:
     """
@@ -136,12 +146,12 @@ def check_structural_exit(df: pd.DataFrame, direction: str,
 
     if direction == 'long':
         # Check for bearish CHOCH (break below recent low)
-        if current_close < swing_low * 0.99:
+        if current_close < swing_low * CHOCH_THRESHOLD_LONG:
             return True, "Structural: Bearish CHOCH"
 
     elif direction == 'short':
         # Check for bullish CHOCH (break above recent high)
-        if current_close > swing_high * 1.01:
+        if current_close > swing_high * CHOCH_THRESHOLD_SHORT:
             return True, "Structural: Bullish CHOCH"
 
     return False, ""
@@ -176,10 +186,10 @@ def check_liquidity_exit(current_price: float, frvp_hvn_levels: List[float],
 
         if distance_pct < tolerance:
             # Near HVN
-            if direction == 'long' and hvn_level > current_price * 0.99:
+            if direction == 'long' and hvn_level > current_price * HVN_THRESHOLD_LONG:
                 # HVN above = resistance for longs
                 return True, f"Liquidity: Near HVN resistance ({hvn_level:.2f})"
-            elif direction == 'short' and hvn_level < current_price * 1.01:
+            elif direction == 'short' and hvn_level < current_price * HVN_THRESHOLD_SHORT:
                 # HVN below = support for shorts
                 return True, f"Liquidity: Near HVN support ({hvn_level:.2f})"
 
@@ -256,6 +266,65 @@ def calculate_exit_urgency(r_multiple: float, structural_exit: bool,
     return float(urgency)
 
 
+def _apply_voting_logic(exit_modes: List[str], urgency: float, partial_pct: float) -> Tuple[bool, float]:
+    """
+    Apply voting logic to determine final exit decision.
+
+    Args:
+        exit_modes: List of active exit modes
+        urgency: Exit urgency score (0-1)
+        partial_pct: Partial exit percentage from R-ladder
+
+    Returns:
+        (should_exit, final_partial_pct)
+
+    Logic:
+        - Urgency >= 0.8: Immediate full exit
+        - 2+ modes active: Full exit (majority vote)
+        - 1 mode + urgency >= 0.5: Full exit
+        - Otherwise: No exit
+    """
+    should_exit = False
+    final_partial_pct = partial_pct
+
+    if urgency >= HIGH_URGENCY_THRESHOLD:
+        # High urgency: immediate exit
+        should_exit = True
+        final_partial_pct = 100.0
+    elif len(exit_modes) >= MINIMUM_VOTING_MODES:
+        # 2+ modes active: majority vote
+        should_exit = True
+        final_partial_pct = 100.0 if partial_pct == 0 else partial_pct
+    elif len(exit_modes) == 1 and urgency >= MEDIUM_URGENCY_THRESHOLD:
+        # 1 mode + medium urgency
+        should_exit = True
+        final_partial_pct = 100.0 if partial_pct == 0 else partial_pct
+
+    return should_exit, final_partial_pct
+
+
+def _calculate_r_multiple(entry_price: float, current_price: float,
+                          stop_loss: float, direction: str) -> float:
+    """
+    Calculate R-multiple (profit/risk ratio).
+
+    Args:
+        entry_price: Entry price
+        current_price: Current price
+        stop_loss: Stop loss level
+        direction: Position direction ('long' or 'short')
+
+    Returns:
+        R-multiple (profit / risk)
+    """
+    risk = abs(entry_price - stop_loss)
+    if direction == 'long':
+        profit = current_price - entry_price
+    else:
+        profit = entry_price - current_price
+    return profit / risk if risk > 0 else 0
+
+
 def evaluate_multi_modal_exit(
     entry_price: float,
     stop_loss: float,
@@ -304,12 +373,7 @@ def evaluate_multi_modal_exit(
     bars_in_trade = current_idx - entry_idx
 
     # Calculate R-multiple
-    risk = abs(entry_price - stop_loss)
-    if direction == 'long':
-        profit = current_price - entry_price
-    else:
-        profit = entry_price - current_price
-    r_multiple = profit / risk if risk > 0 else 0
+    r_multiple = _calculate_r_multiple(entry_price, current_price, stop_loss, direction)
 
     # Check all exit modes
     exit_modes = []
@@ -358,21 +422,8 @@ def evaluate_multi_modal_exit(
         r_multiple, struct_exit, bars_in_trade, config
     )
 
-    # Voting logic
-    should_exit = False
-
-    if urgency >= 0.8:
-        # High urgency: immediate exit
-        should_exit = True
-        partial_pct = 100.0
-    elif len(exit_modes) >= 2:
-        # 2+ modes active: majority vote
-        should_exit = True
-        partial_pct = 100.0 if partial_pct == 0 else partial_pct
-    elif len(exit_modes) == 1 and urgency >= 0.5:
-        # 1 mode + medium urgency
-        should_exit = True
-        partial_pct = 100.0 if partial_pct == 0 else partial_pct
+    # Apply voting logic
+    should_exit, partial_pct = _apply_voting_logic(exit_modes, urgency, partial_pct)
 
     # If no primary reason set, use first mode
     if not primary_reason and exit_modes:
