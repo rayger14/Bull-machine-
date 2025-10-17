@@ -1,0 +1,49 @@
+{
+  "asset": "ETH",
+  "timeframe": "1H",
+  "start_date": "2024-07-01",
+  "end_date": "2024-09-30",
+
+  "knowledge_v2": {
+    "enabled": true,
+    "shadow_mode": false,
+    "hooks": {
+      "internal_external": true,
+      "boms": true,
+      "squiggle": true,
+      "range_outcomes": true,
+      "pti": true,
+      "fakeout_intensity": true,
+      "frvp": true,
+      "macro_echo": true
+    }
+  },
+
+  "fusion": {
+    "threshold": 0.65,
+    "weights": {
+      "wyckoff": 0.30,
+      "smc": 0.15,
+      "liquidity": 0.25,
+      "momentum": 0.30
+    }
+  },
+
+  "risk": {
+    "base_risk_pct": 2.0,
+    "max_trades": 3,
+    "stop_loss_atr_mult": 1.5
+  },
+
+  "safety": {
+    "max_threshold_delta": 0.10,
+    "max_score_delta": 0.30,
+    "risk_multiplier_range": [0.5, 1.5]
+  },
+
+  "logging": {
+    "verbose": true,
+    "log_decisions": true,
+    "log_hook_deltas": true
+  }
+}
