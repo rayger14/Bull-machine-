@@ -467,6 +467,120 @@ def apply_macro_echo(feats: Dict, config: Optional[Dict] = None) -> FusionDelta:
     return delta
 
 
+def _apply_structure_hooks(feats: Dict, config: Dict, fakeout_applied: bool) -> Tuple[float, float, float, List[str], bool]:
+    """
+    Apply all structure hooks (Internal/External, BOMS, Range, Squiggle).
+
+    Args:
+        feats: Feature dictionary
+        config: Configuration
+        fakeout_applied: Tracker for fakeout conflict guard
+
+    Returns:
+        (threshold_delta, score_delta, risk_multiplier, reasons, fakeout_applied_updated)
+    """
+    threshold_delta = 0.0
+    score_delta = 0.0
+    risk_multiplier = 1.0
+    reasons = []
+
+    # Internal vs External
+    d = apply_internal_external_delta(feats, config)
+    if d.fired:
+        threshold_delta += d.threshold_delta
+        score_delta += d.score_delta
+        reasons.extend(d.reasons)
+
+    # BOMS
+    d = apply_boms_boost(feats, config)
+    if d.fired:
+        score_delta += d.score_delta
+        risk_multiplier *= d.risk_multiplier
+        reasons.extend(d.reasons)
+
+    # Range Outcomes
+    d = apply_range_outcome(feats, config)
+    if d.fired:
+        threshold_delta += d.threshold_delta
+        score_delta += d.score_delta
+        risk_multiplier *= d.risk_multiplier
+        reasons.extend(d.reasons)
+
+        # Track if fakeout was applied
+        if feats.get('range_outcome') == 'fakeout':
+            fakeout_applied = True
+
+    # Squiggle (unless range breakout just fired)
+    if feats.get('range_outcome') != 'breakout':
+        d = apply_squiggle_window(feats, config)
+        if d.fired:
+            threshold_delta += d.threshold_delta
+            reasons.extend(d.reasons)
+
+    return threshold_delta, score_delta, risk_multiplier, reasons, fakeout_applied
+
+
+def _apply_psychology_volume_hooks(feats: Dict, current_price: float, config: Dict,
+                                   hob_bonus_applied: bool, fakeout_applied: bool) -> Tuple[float, float, float, List[str]]:
+    """
+    Apply all psychology/volume hooks (PTI, Fakeout, FRVP).
+
+    Args:
+        feats: Feature dictionary
+        current_price: Current price
+        config: Configuration
+        hob_bonus_applied: True if HOB already gave liquidity bonus
+        fakeout_applied: True if fakeout already applied
+
+    Returns:
+        (threshold_delta, score_delta, risk_multiplier, reasons)
+    """
+    threshold_delta = 0.0
+    score_delta = 0.0
+    risk_multiplier = 1.0
+    reasons = []
+
+    # Fakeout Intensity
+    d = apply_fakeout_intensity(feats, config)
+    if d.fired:
+        threshold_delta += d.threshold_delta
+        score_delta += d.score_delta
+        risk_multiplier *= d.risk_multiplier
+        reasons.extend(d.reasons)
+
+    # PTI (with fakeout conflict guard)
+    d = apply_pti(feats, fakeout_applied or d.fired, config)
+    if d.fired:
+        threshold_delta += d.threshold_delta
+        score_delta += d.score_delta
+        reasons.extend(d.reasons)
+
+    # FRVP (with HOB conflict guard)
+    d = apply_frvp(feats, current_price, hob_bonus_applied, config)
+    if d.fired:
+        score_delta += d.score_delta
+        reasons.extend(d.reasons)
+
+    return threshold_delta, score_delta, risk_multiplier, reasons
+
+
+def _apply_macro_hooks(feats: Dict, config: Dict) -> Tuple[float, float, List[str]]:
+    """
+    Apply macro echo hooks.
+
+    Args:
+        feats: Feature dictionary
+        config: Configuration
+
+    Returns:
+        (score_delta, risk_multiplier, reasons)
+    """
+    d = apply_macro_echo(feats, config)
+    if d.fired:
+        return d.score_delta, d.risk_multiplier, d.reasons
+    return 0.0, 1.0, []
+
+
 def apply_knowledge_hooks(
     fusion_score: float,
     feats: Dict,
@@ -501,6 +615,7 @@ def apply_knowledge_hooks(
     if not config.get('knowledge_v2', {}).get('enabled', False):
         return fusion_score, 0.0, 1.0, []
 
+    # Initialize accumulators
     total_threshold_delta = 0.0
     total_score_delta = 0.0
     total_risk_multiplier = 1.0
@@ -511,70 +626,28 @@ def apply_knowledge_hooks(
     fakeout_applied = False
 
     # 1. Structure hooks
-
-    # Internal vs External
-    d = apply_internal_external_delta(feats, config)
-    if d.fired:
-        total_threshold_delta += d.threshold_delta
-        total_score_delta += d.score_delta
-        all_reasons.extend(d.reasons)
-
-    # BOMS
-    d = apply_boms_boost(feats, config)
-    if d.fired:
-        total_score_delta += d.score_delta
-        total_risk_multiplier *= d.risk_multiplier
-        all_reasons.extend(d.reasons)
-
-    # Range Outcomes
-    d = apply_range_outcome(feats, config)
-    if d.fired:
-        total_threshold_delta += d.threshold_delta
-        total_score_delta += d.score_delta
-        total_risk_multiplier *= d.risk_multiplier
-        all_reasons.extend(d.reasons)
-
-        # Track if fakeout was applied
-        if feats.get('range_outcome') == 'fakeout':
-            fakeout_applied = True
-
-    # Squiggle (unless range breakout just fired)
-    if feats.get('range_outcome') != 'breakout':
-        d = apply_squiggle_window(feats, config)
-        if d.fired:
-            total_threshold_delta += d.threshold_delta
-            all_reasons.extend(d.reasons)
+    thresh_d, score_d, risk_m, reasons, fakeout_applied = _apply_structure_hooks(
+        feats, config, fakeout_applied
+    )
+    total_threshold_delta += thresh_d
+    total_score_delta += score_d
+    total_risk_multiplier *= risk_m
+    all_reasons.extend(reasons)
 
     # 2. Psychology/Volume hooks
-
-    # Fakeout Intensity
-    d = apply_fakeout_intensity(feats, config)
-    if d.fired:
-        total_threshold_delta += d.threshold_delta
-        total_score_delta += d.score_delta
-        total_risk_multiplier *= d.risk_multiplier
-        all_reasons.extend(d.reasons)
-        fakeout_applied = True
-
-    # PTI (with fakeout conflict guard)
-    d = apply_pti(feats, fakeout_applied, config)
-    if d.fired:
-        total_threshold_delta += d.threshold_delta
-        total_score_delta += d.score_delta
-        all_reasons.extend(d.reasons)
-
-    # FRVP (with HOB conflict guard)
-    d = apply_frvp(feats, current_price, hob_bonus_applied, config)
-    if d.fired:
-        total_score_delta += d.score_delta
-        all_reasons.extend(d.reasons)
+    thresh_d, score_d, risk_m, reasons = _apply_psychology_volume_hooks(
+        feats, current_price, config, hob_bonus_applied, fakeout_applied
+    )
+    total_threshold_delta += thresh_d
+    total_score_delta += score_d
+    total_risk_multiplier *= risk_m
+    all_reasons.extend(reasons)
 
     # 3. Macro Echo (soft tilt)
-    d = apply_macro_echo(feats, config)
-    if d.fired:
-        total_score_delta += d.score_delta
-        total_risk_multiplier *= d.risk_multiplier
-        all_reasons.extend(d.reasons)
+    score_d, risk_m, reasons = _apply_macro_hooks(feats, config)
+    total_score_delta += score_d
+    total_risk_multiplier *= risk_m
+    all_reasons.extend(reasons)
 
     # Apply safety bounds
     total_threshold_delta = np.clip(total_threshold_delta, -0.10, 0.10)
