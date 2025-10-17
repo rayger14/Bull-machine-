@@ -76,15 +76,22 @@ def find_swing_points(df: pd.DataFrame, window: int = 20) -> Dict:
     swing_high = df['high'].rolling(window).max().iloc[-window:-1].max()
     swing_low = df['low'].rolling(window).min().iloc[-window:-1].min()
 
-    # Find indices
-    swing_high_idx = df['high'].rolling(window).apply(lambda x: x.idxmax(), raw=False).iloc[-1]
-    swing_low_idx = df['low'].rolling(window).apply(lambda x: x.idxmin(), raw=False).iloc[-1]
+    # Find indices - use iloc position instead of idxmax/idxmin
+    high_window = df['high'].iloc[-window:-1]
+    low_window = df['low'].iloc[-window:-1]
+
+    swing_high_idx = high_window.idxmax()
+    swing_low_idx = low_window.idxmin()
+
+    # Convert to integer position
+    swing_high_pos = df.index.get_loc(swing_high_idx) if swing_high_idx in df.index else -1
+    swing_low_pos = df.index.get_loc(swing_low_idx) if swing_low_idx in df.index else -1
 
     return {
         'swing_high': swing_high,
         'swing_low': swing_low,
-        'swing_high_idx': int(swing_high_idx) if not pd.isna(swing_high_idx) else -1,
-        'swing_low_idx': int(swing_low_idx) if not pd.isna(swing_low_idx) else -1
+        'swing_high_idx': int(swing_high_pos),
+        'swing_low_idx': int(swing_low_pos)
     }
 
 
