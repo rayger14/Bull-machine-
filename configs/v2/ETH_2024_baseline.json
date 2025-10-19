@@ -1,0 +1,198 @@
+{
+  "asset": "ETH",
+  "period": "2024-01-01 to 2024-12-31",
+  "n_trials": 200,
+  "timestamp": "2025-10-19T03:45:13.313825",
+  "top_10_configs": [
+    {
+      "rank": 1,
+      "score": 120.2152045955596,
+      "params": {
+        "wyckoff_weight": 0.30823653145805113,
+        "liquidity_weight": 0.2677585186239719,
+        "momentum_weight": 0.2298863169292233,
+        "threshold": 0.34307427479974095,
+        "fakeout_penalty": 0.14027063933830863,
+        "exit_aggressiveness": 0.5278086160486853
+      },
+      "metrics": {
+        "total_pnl": 69.40628073393228,
+        "total_trades": 3,
+        "profit_factor": 69.40628073393228,
+        "sharpe_ratio": 8.693643230884216,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 2,
+      "score": 120.2152045955596,
+      "params": {
+        "wyckoff_weight": 0.30980317395070484,
+        "liquidity_weight": 0.28423638792865236,
+        "momentum_weight": 0.21828151686851452,
+        "threshold": 0.3344305069706994,
+        "fakeout_penalty": 0.14519941346277399,
+        "exit_aggressiveness": 0.5268470948706442
+      },
+      "metrics": {
+        "total_pnl": 69.40628073393228,
+        "total_trades": 3,
+        "profit_factor": 69.40628073393228,
+        "sharpe_ratio": 8.693643230884216,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 3,
+      "score": 120.2152045955596,
+      "params": {
+        "wyckoff_weight": 0.30974754366195417,
+        "liquidity_weight": 0.2804018153897611,
+        "momentum_weight": 0.21620026240543877,
+        "threshold": 0.33339239305220775,
+        "fakeout_penalty": 0.14779812554952718,
+        "exit_aggressiveness": 0.5364148241495815
+      },
+      "metrics": {
+        "total_pnl": 69.40628073393228,
+        "total_trades": 3,
+        "profit_factor": 69.40628073393228,
+        "sharpe_ratio": 8.693643230884216,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 4,
+      "score": 120.2152045955596,
+      "params": {
+        "wyckoff_weight": 0.3206867285631287,
+        "liquidity_weight": 0.2556943406165522,
+        "momentum_weight": 0.21690271391826138,
+        "threshold": 0.3395464836171216,
+        "fakeout_penalty": 0.15221293618384601,
+        "exit_aggressiveness": 0.5788453677809767
+      },
+      "metrics": {
+        "total_pnl": 69.40628073393228,
+        "total_trades": 3,
+        "profit_factor": 69.40628073393228,
+        "sharpe_ratio": 8.693643230884216,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 5,
+      "score": 120.2152045955596,
+      "params": {
+        "wyckoff_weight": 0.31567542517769476,
+        "liquidity_weight": 0.2639190099527346,
+        "momentum_weight": 0.21566865835610888,
+        "threshold": 0.33713733203313856,
+        "fakeout_penalty": 0.16085586475143368,
+        "exit_aggressiveness": 0.6081269239270163
+      },
+      "metrics": {
+        "total_pnl": 69.40628073393228,
+        "total_trades": 3,
+        "profit_factor": 69.40628073393228,
+        "sharpe_ratio": 8.693643230884216,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 6,
+      "score": 120.2152045955596,
+      "params": {
+        "wyckoff_weight": 0.31751978441222395,
+        "liquidity_weight": 0.26468804415413394,
+        "momentum_weight": 0.21392000785120296,
+        "threshold": 0.3363159664385557,
+        "fakeout_penalty": 0.16118206454218423,
+        "exit_aggressiveness": 0.5926742394467992
+      },
+      "metrics": {
+        "total_pnl": 69.40628073393228,
+        "total_trades": 3,
+        "profit_factor": 69.40628073393228,
+        "sharpe_ratio": 8.693643230884216,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 7,
+      "score": 120.2152045955596,
+      "params": {
+        "wyckoff_weight": 0.3176219237733705,
+        "liquidity_weight": 0.265837956961229,
+        "momentum_weight": 0.2185707682292513,
+        "threshold": 0.3402838778250765,
+        "fakeout_penalty": 0.14948222876237507,
+        "exit_aggressiveness": 0.5846856574608069
+      },
+      "metrics": {
+        "total_pnl": 69.40628073393228,
+        "total_trades": 3,
+        "profit_factor": 69.40628073393228,
+        "sharpe_ratio": 8.693643230884216,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 8,
+      "score": 119.55011659552869,
+      "params": {
+        "wyckoff_weight": 0.31428072594877193,
+        "liquidity_weight": 0.2771402922367035,
+        "momentum_weight": 0.22948046887985124,
+        "threshold": 0.34010139815533696,
+        "fakeout_penalty": 0.13742987395947412,
+        "exit_aggressiveness": 0.5186591368128445
+      },
+      "metrics": {
+        "total_pnl": 169.61278264343008,
+        "total_trades": 4,
+        "profit_factor": 59.775058297764346,
+        "sharpe_ratio": 8.325929126480386,
+        "max_drawdown": 0.00028573612888825405
+      }
+    },
+    {
+      "rank": 9,
+      "score": 119.55011659552869,
+      "params": {
+        "wyckoff_weight": 0.31656468423617506,
+        "liquidity_weight": 0.27772282442056867,
+        "momentum_weight": 0.22898622041513492,
+        "threshold": 0.3408372098384407,
+        "fakeout_penalty": 0.13918400097799782,
+        "exit_aggressiveness": 0.5465779818167253
+      },
+      "metrics": {
+        "total_pnl": 169.61278264343008,
+        "total_trades": 4,
+        "profit_factor": 59.775058297764346,
+        "sharpe_ratio": 8.325929126480386,
+        "max_drawdown": 0.00028573612888825405
+      }
+    },
+    {
+      "rank": 10,
+      "score": 119.55011659552869,
+      "params": {
+        "wyckoff_weight": 0.3201519676696441,
+        "liquidity_weight": 0.256352456020166,
+        "momentum_weight": 0.222409603209839,
+        "threshold": 0.33743568131841906,
+        "fakeout_penalty": 0.1654520253575736,
+        "exit_aggressiveness": 0.5954090779380834
+      },
+      "metrics": {
+        "total_pnl": 169.61278264343008,
+        "total_trades": 4,
+        "profit_factor": 59.775058297764346,
+        "sharpe_ratio": 8.325929126480386,
+        "max_drawdown": 0.00028573612888825405
+      }
+    }
+  ]
+}
