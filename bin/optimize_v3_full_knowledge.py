@@ -96,7 +96,7 @@ def objective(trial: optuna.Trial, df: pd.DataFrame) -> float:
     # Sample exit parameters
     atr_stop_mult = trial.suggest_float('atr_stop_mult', 1.5, 3.5)
     trailing_atr_mult = trial.suggest_float('trailing_atr_mult', 1.5, 3.0)
-    max_hold_bars = trial.suggest_int('max_hold_bars', 48, 336)  # 2 days to 2 weeks
+    max_hold_bars = trial.suggest_int('max_hold_bars', 72, 336, step=24)  # 3-14 days in 24h increments
 
     # Sample position sizing
     max_risk_pct = trial.suggest_float('max_risk_pct', 0.01, 0.03)
