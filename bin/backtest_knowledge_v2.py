@@ -62,6 +62,7 @@ class KnowledgeParams:
     trailing_atr_mult: float = 2.0            # Trail stop 2× ATR from peak
     breakeven_after_tp1: bool = True          # Move stop to breakeven after TP1
     max_hold_bars: int = 168                  # Max 168 hours (7 days)
+    adaptive_max_hold: bool = False           # Adjust max_hold based on regime/phase
 
     # Position sizing
     max_risk_pct: float = 0.02                # Max 2% risk per trade
@@ -342,6 +343,60 @@ class KnowledgeAwareBacktest:
 
         return None
 
+    def _compute_adaptive_max_hold(self, context: Dict, row: pd.Series, trade: Trade) -> float:
+        """
+        Compute adaptive max_hold cap based on market regime and Wyckoff phase.
+
+        Logic:
+        - Extend cap in markup/markdown phases (strong trends)
+        - Shorten cap in accumulation/distribution (choppy/topping)
+        - Shorten cap in high volatility (VIX extreme)
+        - Shorten cap near FRVP resistance zones (POC/HVN)
+        - Shorten cap in crisis macro regime
+
+        Returns:
+            Adjusted max_hold in hours
+        """
+        base_max_hold = self.params.max_hold_bars
+        multiplier = 1.0
+
+        # 1. Wyckoff Phase adjustment
+        wyckoff_phase = context.get('wyckoff_phase', '').lower()
+        if 'markup' in wyckoff_phase or 'markdown' in wyckoff_phase:
+            multiplier *= 1.5  # Extend 50% in strong trends
+        elif 'accumulation' in wyckoff_phase or 'distribution' in wyckoff_phase:
+            multiplier *= 0.7  # Shorten 30% in choppy/topping
+
+        # 2. Macro regime adjustment
+        macro_regime = context.get('macro_regime', '').lower()
+        if macro_regime == 'risk_on':
+            multiplier *= 1.2  # Extend 20% in favorable macro
+        elif macro_regime == 'crisis':
+            multiplier *= 0.5  # Shorten 50% in crisis (exit quickly)
+
+        # 3. Volatility adjustment
+        vix_level = row.get('VIX_level', 'normal')
+        if vix_level == 'extreme':
+            multiplier *= 0.6  # Shorten 40% in high vol
+        elif vix_level == 'elevated':
+            multiplier *= 0.8  # Shorten 20% in elevated vol
+
+        # 4. FRVP positioning (near resistance)
+        frvp_position = context.get('frvp_poc_position', 'neutral')
+        if trade.direction > 0:  # Long position
+            if 'above_hvn' in frvp_position or 'above_poc' in frvp_position:
+                multiplier *= 0.75  # Shorten 25% near overhead resistance
+        else:  # Short position
+            if 'below_lvn' in frvp_position or 'below_poc' in frvp_position:
+                multiplier *= 0.75  # Shorten 25% near support
+
+        # Apply multiplier with floor/ceiling constraints
+        adjusted = base_max_hold * multiplier
+        min_hold = base_max_hold * 0.5   # Never below 50% of base
+        max_hold = base_max_hold * 2.0   # Never above 200% of base
+
+        return max(min_hold, min(max_hold, adjusted))
+
     def check_exit_conditions(self, row: pd.Series, trade: Trade) -> Optional[Tuple[str, float]]:
         """
         Check if exit conditions are met using smart exit logic.
@@ -398,9 +453,17 @@ class KnowledgeAwareBacktest:
         if context.get('macro_regime') == 'crisis':
             return ("macro_crisis", current_price)
 
-        # 7. Max holding period
+        # 7. Max holding period (adaptive or fixed)
         bars_held = (row.name - trade.entry_time).total_seconds() / 3600  # Hours
-        if bars_held >= self.params.max_hold_bars:
+
+        if self.params.adaptive_max_hold:
+            # Adaptive max_hold based on market context
+            max_hold_adjusted = self._compute_adaptive_max_hold(context, row, trade)
+        else:
+            # Fixed max_hold
+            max_hold_adjusted = self.params.max_hold_bars
+
+        if bars_held >= max_hold_adjusted:
             return ("max_hold", current_price)
 
         # 8. MTF conflict
