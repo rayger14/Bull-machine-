@@ -231,9 +231,14 @@ def compute_tf1d_features(df_1d: pd.DataFrame, df_4h: pd.DataFrame,
         # PTI on 1D (major reversal signals)
         rsi_div = detect_rsi_divergence(window_1d, lookback=10)
         vol_exh = detect_volume_exhaustion(window_1d, lookback=5)
+
+        # DEBUG: Sample 1% of bars to diagnose PTI wiring
+        if np.random.rand() < 0.01:
+            print(f"[PTI_1D_DEBUG] {timestamp} | rsi_div={rsi_div} | vol_exh={vol_exh} | window_len={len(window_1d)}")
+
         features['tf1d_pti_score'] = (
-            rsi_div.get('divergence_strength', 0.0) * 0.5 +
-            vol_exh.get('exhaustion_score', 0.0) * 0.5
+            rsi_div.get('strength', 0.0) * 0.5 +
+            vol_exh.get('strength', 0.0) * 0.5
         )
         features['tf1d_pti_reversal'] = features['tf1d_pti_score'] > 0.7
 
@@ -244,7 +249,7 @@ def compute_tf1d_features(df_1d: pd.DataFrame, df_4h: pd.DataFrame,
         lookback_start = timestamp - pd.Timedelta(days=7)
 
         def extract_macro_series(symbol: str, lookback_start_ts, end_ts) -> pd.Series:
-            """Extract macro series for lookback window."""
+            """Extract macro series for lookback window (daily bars for trend calculation)."""
             if symbol not in macro_data or macro_data[symbol].empty:
                 # Return default single-value series
                 defaults = {'DXY': 100.0, 'US10Y': 4.0, 'WTI': 75.0, 'VIX': 18.0}
@@ -253,28 +258,44 @@ def compute_tf1d_features(df_1d: pd.DataFrame, df_4h: pd.DataFrame,
             df = macro_data[symbol]
 
             # Convert timestamps to tz-naive for comparison (macro data is tz-naive)
-            lookback_naive = lookback_start_ts.replace(tzinfo=None) if hasattr(lookback_start_ts, 'tzinfo') else lookback_start_ts
             end_naive = end_ts.replace(tzinfo=None) if hasattr(end_ts, 'tzinfo') else end_ts
 
-            # Filter to lookback window
-            window = df[(df['timestamp'] >= lookback_naive) & (df['timestamp'] <= end_naive)]
+            # FIX: Macro data is daily granularity. To get 7-day trend, we need last 7 DAILY bars,
+            # not bars within 7-day timestamp window (which gives 0-1 bars when building hourly features).
+            # Floor end timestamp to day, then grab last 7 daily bars.
+            end_date = pd.Timestamp(end_naive).normalize()  # Floor to day
 
-            if window.empty:
-                # Fallback to most recent value
-                recent = df[df['timestamp'] <= end_naive]
-                if not recent.empty:
-                    return pd.Series([recent.iloc[-1]['value']])
+            # Filter to bars up to end date
+            available = df[df['timestamp'] <= end_date]
+
+            if available.empty:
                 defaults = {'DXY': 100.0, 'US10Y': 4.0, 'WTI': 75.0, 'VIX': 18.0}
                 return pd.Series([defaults.get(symbol, 50.0)])
 
-            return window['value'].reset_index(drop=True)
+            # Grab last 7 daily bars (or however many are available)
+            last_n_bars = available.tail(7)
+
+            return last_n_bars['value'].reset_index(drop=True)
+
+        dxy_series = extract_macro_series('DXY', lookback_start, timestamp)
+        yields_series = extract_macro_series('US10Y', lookback_start, timestamp)
+        oil_series = extract_macro_series('WTI', lookback_start, timestamp)
+        vix_series = extract_macro_series('VIX', lookback_start, timestamp)
+
+        # DEBUG: Sample 1% of bars to diagnose macro trends
+        if np.random.rand() < 0.01:
+            print(f"[MACRO_DEBUG] {timestamp} | DXY_len={len(dxy_series)} vals={list(dxy_series) if len(dxy_series)<=7 else [dxy_series.iloc[0], '...', dxy_series.iloc[-1]]} | YIELDS_len={len(yields_series)} | OIL_len={len(oil_series)} | VIX_len={len(vix_series)}")
 
         macro_echo = analyze_macro_echo({
-            'DXY': extract_macro_series('DXY', lookback_start, timestamp),
-            'YIELDS_10Y': extract_macro_series('US10Y', lookback_start, timestamp),
-            'OIL': extract_macro_series('WTI', lookback_start, timestamp),
-            'VIX': extract_macro_series('VIX', lookback_start, timestamp)
+            'DXY': dxy_series,
+            'YIELDS_10Y': yields_series,
+            'OIL': oil_series,
+            'VIX': vix_series
         }, lookback=7, config=config)
+
+        # DEBUG: Log computed trends (sample 1%)
+        if np.random.rand() < 0.01:
+            print(f"[MACRO_TRENDS_DEBUG] {timestamp} | dxy_trend={macro_echo.dxy_trend} | yields_trend={macro_echo.yields_trend} | oil_trend={macro_echo.oil_trend} | vix_level={macro_echo.vix_level} | regime={macro_echo.regime}")
 
         features['macro_regime'] = macro_echo.regime
         features['macro_dxy_trend'] = macro_echo.dxy_trend
@@ -426,11 +447,15 @@ def compute_tf1h_features(df_1h: pd.DataFrame, timestamp: pd.Timestamp,
         failed_bo = detect_failed_breakout(window_1h, lookback=20)
 
         pti_score = (
-            rsi_div.get('divergence_strength', 0.0) * 0.30 +
-            vol_exh.get('exhaustion_score', 0.0) * 0.25 +
-            wick_trap.get('trap_strength', 0.0) * 0.25 +
-            failed_bo.get('failure_score', 0.0) * 0.20
+            rsi_div.get('strength', 0.0) * 0.30 +
+            vol_exh.get('strength', 0.0) * 0.25 +
+            wick_trap.get('strength', 0.0) * 0.25 +
+            failed_bo.get('strength', 0.0) * 0.20
         )
+
+        # DEBUG: Sample 1% of bars to diagnose PTI wiring
+        if np.random.rand() < 0.01:
+            print(f"[PTI_1H_DEBUG] {timestamp} | rsi_div={rsi_div} | vol_exh={vol_exh} | wick_trap={wick_trap} | failed_bo={failed_bo} | pti_score={pti_score:.3f} | window_len={len(window_1h)}")
 
         features['tf1h_pti_score'] = pti_score
         features['tf1h_pti_trap_type'] = 'bullish_trap' if pti_score > 0.6 else 'none'
