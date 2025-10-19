@@ -232,10 +232,6 @@ def compute_tf1d_features(df_1d: pd.DataFrame, df_4h: pd.DataFrame,
         rsi_div = detect_rsi_divergence(window_1d, lookback=10)
         vol_exh = detect_volume_exhaustion(window_1d, lookback=5)
 
-        # DEBUG: Sample 1% of bars to diagnose PTI wiring
-        if np.random.rand() < 0.01:
-            print(f"[PTI_1D_DEBUG] {timestamp} | rsi_div={rsi_div} | vol_exh={vol_exh} | window_len={len(window_1d)}")
-
         features['tf1d_pti_score'] = (
             rsi_div.get('strength', 0.0) * 0.5 +
             vol_exh.get('strength', 0.0) * 0.5
@@ -282,20 +278,12 @@ def compute_tf1d_features(df_1d: pd.DataFrame, df_4h: pd.DataFrame,
         oil_series = extract_macro_series('WTI', lookback_start, timestamp)
         vix_series = extract_macro_series('VIX', lookback_start, timestamp)
 
-        # DEBUG: Sample 1% of bars to diagnose macro trends
-        if np.random.rand() < 0.01:
-            print(f"[MACRO_DEBUG] {timestamp} | DXY_len={len(dxy_series)} vals={list(dxy_series) if len(dxy_series)<=7 else [dxy_series.iloc[0], '...', dxy_series.iloc[-1]]} | YIELDS_len={len(yields_series)} | OIL_len={len(oil_series)} | VIX_len={len(vix_series)}")
-
         macro_echo = analyze_macro_echo({
             'DXY': dxy_series,
             'YIELDS_10Y': yields_series,
             'OIL': oil_series,
             'VIX': vix_series
         }, lookback=7, config=config)
-
-        # DEBUG: Log computed trends (sample 1%)
-        if np.random.rand() < 0.01:
-            print(f"[MACRO_TRENDS_DEBUG] {timestamp} | dxy_trend={macro_echo.dxy_trend} | yields_trend={macro_echo.yields_trend} | oil_trend={macro_echo.oil_trend} | vix_level={macro_echo.vix_level} | regime={macro_echo.regime}")
 
         features['macro_regime'] = macro_echo.regime
         features['macro_dxy_trend'] = macro_echo.dxy_trend
@@ -452,10 +440,6 @@ def compute_tf1h_features(df_1h: pd.DataFrame, timestamp: pd.Timestamp,
             wick_trap.get('strength', 0.0) * 0.25 +
             failed_bo.get('strength', 0.0) * 0.20
         )
-
-        # DEBUG: Sample 1% of bars to diagnose PTI wiring
-        if np.random.rand() < 0.01:
-            print(f"[PTI_1H_DEBUG] {timestamp} | rsi_div={rsi_div} | vol_exh={vol_exh} | wick_trap={wick_trap} | failed_bo={failed_bo} | pti_score={pti_score:.3f} | window_len={len(window_1h)}")
 
         features['tf1h_pti_score'] = pti_score
         features['tf1h_pti_trap_type'] = 'bullish_trap' if pti_score > 0.6 else 'none'
