@@ -37,6 +37,17 @@ from engine.context.loader import load_macro_data, fetch_macro_snapshot
 from engine.context.macro_engine import analyze_macro, create_default_macro_config
 from engine.fusion.domain_fusion import analyze_fusion
 
+# Wyckoff (for precompute)
+from engine.wyckoff.wyckoff_engine import detect_wyckoff_phase
+
+# Advanced Wyckoff M1/M2 (with spring/markup detection)
+try:
+    from bull_machine.strategy.wyckoff_m1m2 import compute_m1m2_scores
+    HAS_M1M2 = True
+except ImportError:
+    HAS_M1M2 = False
+    print("⚠️  Advanced Wyckoff M1/M2 module not available, using basic detector only")
+
 # Week 1: Structure
 from engine.structure.internal_external import detect_structure_state
 from engine.structure.boms_detector import detect_boms
@@ -157,9 +168,14 @@ def calculate_rsi(df: pd.DataFrame, period: int = 14) -> pd.Series:
 
 def compute_tf1d_features(df_1d: pd.DataFrame, df_4h: pd.DataFrame,
                          df_1h: pd.DataFrame, macro_data: dict,
-                         timestamp: pd.Timestamp, config: dict) -> dict:
+                         timestamp: pd.Timestamp, config: dict,
+                         precomputed: pd.DataFrame = None) -> dict:
     """
     Compute 1D pack: Wyckoff, BOMS, Range, FRVP, PTI, Macro Echo
+
+    Args:
+        precomputed: Optional DataFrame with precomputed full-series detector results
+                     (Wyckoff, BOMS). If provided, use instead of re-running detectors.
 
     Returns dict with tf1d_* prefixed columns.
     """
@@ -174,20 +190,30 @@ def compute_tf1d_features(df_1d: pd.DataFrame, df_4h: pd.DataFrame,
         if len(window_1d) < 20:
             return get_default_tf1d_features()
 
-        # Wyckoff phase (from fusion)
-        fusion_result = analyze_fusion(
-            window_1h, window_4h, window_1d,
-            config={'fusion': {'weights': {'wyckoff': 0.30, 'smc': 0.15, 'liquidity': 0.25, 'momentum': 0.30}}}
-        )
+        # Use precomputed Wyckoff if available (MUCH faster + better context)
+        if precomputed is not None and timestamp in precomputed.index:
+            # Use precomputed Wyckoff
+            features['tf1d_wyckoff_score'] = precomputed.loc[timestamp, 'tf1d_wyckoff_score']
+            features['tf1d_wyckoff_phase'] = precomputed.loc[timestamp, 'tf1d_wyckoff_phase']
 
-        features['tf1d_wyckoff_score'] = fusion_result.wyckoff_score
-        features['tf1d_wyckoff_phase'] = fusion_result.wyckoff_phase
+            # Still need to compute BOMS (not precomputed yet)
+            boms_1d = detect_boms(window_1d, timeframe='1D', config=config)
+            features['tf1d_boms_detected'] = boms_1d.boms_detected
+            features['tf1d_boms_strength'] = boms_1d.displacement if boms_1d.boms_detected else 0.0
+            features['tf1d_boms_direction'] = boms_1d.direction if boms_1d.boms_detected else 'none'
+        else:
+            # Fallback: Run detectors on window (will return neutral for early timestamps)
+            fusion_result = analyze_fusion(
+                window_1h, window_4h, window_1d,
+                config={'fusion': {'weights': {'wyckoff': 0.30, 'smc': 0.15, 'liquidity': 0.25, 'momentum': 0.30}}}
+            )
+            features['tf1d_wyckoff_score'] = fusion_result.wyckoff_score
+            features['tf1d_wyckoff_phase'] = fusion_result.wyckoff_phase
 
-        # BOMS on 1D
-        boms_1d = detect_boms(window_1d, timeframe='1D', config=config)
-        features['tf1d_boms_detected'] = boms_1d.detected
-        features['tf1d_boms_strength'] = boms_1d.displacement if boms_1d.detected else 0.0
-        features['tf1d_boms_direction'] = boms_1d.direction if boms_1d.detected else 'none'
+            boms_1d = detect_boms(window_1d, timeframe='1D', config=config)
+            features['tf1d_boms_detected'] = boms_1d.boms_detected
+            features['tf1d_boms_strength'] = boms_1d.displacement if boms_1d.boms_detected else 0.0
+            features['tf1d_boms_direction'] = boms_1d.direction if boms_1d.boms_detected else 'none'
 
         # Range outcome classification
         range_outcome = classify_range_outcome(window_1d, timeframe='1D', config=config)
@@ -211,14 +237,43 @@ def compute_tf1d_features(df_1d: pd.DataFrame, df_4h: pd.DataFrame,
         )
         features['tf1d_pti_reversal'] = features['tf1d_pti_score'] > 0.7
 
-        # Macro Echo
+        # Macro Echo - Extract historical series for trend analysis
         ts_naive = timestamp.replace(tzinfo=None) if hasattr(timestamp, 'tzinfo') else timestamp
-        snapshot = fetch_macro_snapshot(macro_data, ts_naive)
+
+        # Build Series for each macro indicator (7-day lookback for trends)
+        lookback_start = timestamp - pd.Timedelta(days=7)
+
+        def extract_macro_series(symbol: str, lookback_start_ts, end_ts) -> pd.Series:
+            """Extract macro series for lookback window."""
+            if symbol not in macro_data or macro_data[symbol].empty:
+                # Return default single-value series
+                defaults = {'DXY': 100.0, 'US10Y': 4.0, 'WTI': 75.0, 'VIX': 18.0}
+                return pd.Series([defaults.get(symbol, 50.0)])
+
+            df = macro_data[symbol]
+
+            # Convert timestamps to tz-naive for comparison (macro data is tz-naive)
+            lookback_naive = lookback_start_ts.replace(tzinfo=None) if hasattr(lookback_start_ts, 'tzinfo') else lookback_start_ts
+            end_naive = end_ts.replace(tzinfo=None) if hasattr(end_ts, 'tzinfo') else end_ts
+
+            # Filter to lookback window
+            window = df[(df['timestamp'] >= lookback_naive) & (df['timestamp'] <= end_naive)]
+
+            if window.empty:
+                # Fallback to most recent value
+                recent = df[df['timestamp'] <= end_naive]
+                if not recent.empty:
+                    return pd.Series([recent.iloc[-1]['value']])
+                defaults = {'DXY': 100.0, 'US10Y': 4.0, 'WTI': 75.0, 'VIX': 18.0}
+                return pd.Series([defaults.get(symbol, 50.0)])
+
+            return window['value'].reset_index(drop=True)
+
         macro_echo = analyze_macro_echo({
-            'DXY': snapshot.get('dxy_series', pd.Series([100.0])),
-            'YIELDS_10Y': snapshot.get('yields_series', pd.Series([4.0])),
-            'OIL': snapshot.get('oil_series', pd.Series([75.0])),
-            'VIX': snapshot.get('vix_series', pd.Series([18.0]))
+            'DXY': extract_macro_series('DXY', lookback_start, timestamp),
+            'YIELDS_10Y': extract_macro_series('US10Y', lookback_start, timestamp),
+            'OIL': extract_macro_series('WTI', lookback_start, timestamp),
+            'VIX': extract_macro_series('VIX', lookback_start, timestamp)
         }, lookback=7, config=config)
 
         features['macro_regime'] = macro_echo.regime
@@ -230,6 +285,9 @@ def compute_tf1d_features(df_1d: pd.DataFrame, df_4h: pd.DataFrame,
         features['macro_exit_recommended'] = macro_echo.exit_recommended
 
     except Exception as e:
+        print(f"WARNING: Exception in compute_tf1d_features at {timestamp}: {e}")
+        import traceback
+        traceback.print_exc()
         features = get_default_tf1d_features()
 
     return features
@@ -302,10 +360,10 @@ def compute_tf4h_features(df_4h: pd.DataFrame, df_1h: pd.DataFrame,
 
         # BOMS on 4H (CHOCH detection)
         boms_4h = detect_boms(window_4h, timeframe='4H', config=config)
-        features['tf4h_choch_flag'] = boms_4h.detected
-        features['tf4h_boms_direction'] = boms_4h.direction if boms_4h.detected else 'none'
-        features['tf4h_boms_displacement'] = boms_4h.displacement if boms_4h.detected else 0.0
-        features['tf4h_fvg_present'] = boms_4h.fvg_present if boms_4h.detected else False
+        features['tf4h_choch_flag'] = boms_4h.boms_detected  # FIXED: was .detected
+        features['tf4h_boms_direction'] = boms_4h.direction if boms_4h.boms_detected else 'none'
+        features['tf4h_boms_displacement'] = boms_4h.displacement if boms_4h.boms_detected else 0.0
+        features['tf4h_fvg_present'] = boms_4h.fvg_present if boms_4h.boms_detected else False
 
         # Range outcome on 4H
         range_4h = classify_range_outcome(window_4h, timeframe='4H', config=config)
@@ -313,6 +371,9 @@ def compute_tf4h_features(df_4h: pd.DataFrame, df_1h: pd.DataFrame,
         features['tf4h_range_breakout_strength'] = range_4h.breakout_strength if range_4h.outcome != 'none' else 0.0
 
     except Exception as e:
+        print(f"WARNING: Exception in compute_tf4h_features at {timestamp}: {e}")
+        import traceback
+        traceback.print_exc()
         features = get_default_tf4h_features()
 
     return features
@@ -382,11 +443,13 @@ def compute_tf1h_features(df_1h: pd.DataFrame, timestamp: pd.Timestamp,
         features['tf1h_frvp_va_high'] = frvp_1h.va_high
         features['tf1h_frvp_va_low'] = frvp_1h.va_low
         features['tf1h_frvp_position'] = frvp_1h.current_position
-        features['tf1h_frvp_distance_to_poc'] = frvp_1h.distance_to_poc
+        # FIXED: Calculate distance_to_poc manually
+        current_price = window_1h['close'].iloc[-1]
+        features['tf1h_frvp_distance_to_poc'] = abs(current_price - frvp_1h.poc) / current_price if frvp_1h.poc > 0 else 0.0
 
         # Fakeout Intensity
         fakeout = detect_fakeout_intensity(window_1h, lookback=30, config=config)
-        features['tf1h_fakeout_detected'] = fakeout.detected
+        features['tf1h_fakeout_detected'] = fakeout.fakeout_detected  # FIXED: was .detected
         features['tf1h_fakeout_intensity'] = fakeout.intensity
         features['tf1h_fakeout_direction'] = fakeout.direction
 
@@ -400,6 +463,9 @@ def compute_tf1h_features(df_1h: pd.DataFrame, timestamp: pd.Timestamp,
         features['tf1h_kelly_hint'] = 'reduce' if features['tf1h_kelly_volatility_ratio'] > 1.5 else 'normal'
 
     except Exception as e:
+        print(f"WARNING: Exception in compute_tf1h_features at {timestamp}: {e}")
+        import traceback
+        traceback.print_exc()
         features = get_default_tf1h_features()
 
     return features
@@ -543,25 +609,157 @@ def build_mtf_feature_store(asset: str, start_date: str, end_date: str):
     df_4h = filter_rth_only(df_4h_raw, asset)
     df_1d = filter_rth_only(df_1d_raw, asset)
 
-    # Filter to date range
+    # CRITICAL FIX: Load extra history BEFORE start_date for Wyckoff warm-up
+    # Wyckoff needs 150-300 days of context, so prepend 1 year before start_date
     start_ts = pd.Timestamp(start_date, tz='UTC')
     end_ts = pd.Timestamp(end_date, tz='UTC')
-    df_1h = df_1h[(df_1h.index >= start_ts) & (df_1h.index <= end_ts)].copy()
-    df_4h = df_4h[(df_4h.index >= start_ts) & (df_4h.index <= end_ts)].copy()
-    df_1d = df_1d[(df_1d.index >= start_ts) & (df_1d.index <= end_ts)].copy()
 
-    # Standardize columns
-    for df in [df_1h, df_4h, df_1d]:
+    WARMUP_DAYS = 360  # 1 year of historical context for Wyckoff
+    warmup_start = start_ts - pd.Timedelta(days=WARMUP_DAYS)
+
+    print(f"\n🔥 Loading warm-up history from {warmup_start.date()} (Wyckoff needs 300+ days)")
+
+    # Load full history including warm-up period
+    df_1h_full = df_1h[df_1h.index >= warmup_start].copy()
+    df_4h_full = df_4h[df_4h.index >= warmup_start].copy()
+    df_1d_full = df_1d[df_1d.index >= warmup_start].copy()
+
+    # Standardize columns on full datasets
+    for df in [df_1h_full, df_4h_full, df_1d_full]:
         df.columns = [c.lower() for c in df.columns]
 
-    print(f"   1H: {len(df_1h)} bars")
-    print(f"   4H: {len(df_4h)} bars")
-    print(f"   1D: {len(df_1d)} bars")
+    print(f"   1D: {len(df_1d_full)} bars (includes {WARMUP_DAYS}-day warm-up)")
+    print(f"   4H: {len(df_4h_full)} bars")
+    print(f"   1H: {len(df_1h_full)} bars")
+
+    # Store output range indices (what we'll actually save to parquet)
+    output_1h_index = df_1h_full[(df_1h_full.index >= start_ts) & (df_1h_full.index <= end_ts)].index
+    output_4h_index = df_4h_full[(df_4h_full.index >= start_ts) & (df_4h_full.index <= end_ts)].index
+    output_1d_index = df_1d_full[(df_1d_full.index >= start_ts) & (df_1d_full.index <= end_ts)].index
+
+    # Use full series for all detector calls
+    df_1h = df_1h_full
+    df_4h = df_4h_full
+    df_1d = df_1d_full
 
     # Load macro data
     print("\n📈 Loading macro data...")
     macro_data = load_macro_data()
     config = {}  # Default config for all modules
+
+    # ========================================================================
+    # PRECOMPUTE: Run full-series detectors ONCE for long-horizon signals
+    # ========================================================================
+    print("\n🔮 Precomputing full-series detectors (Wyckoff, BOMS, Structure)...")
+
+    # Wyckoff on full 1D series (needs 200-400 bars of context)
+    # Call detector in rolling manner with FULL historical context per timestamp
+    print("   Running Wyckoff detector with full historical context...")
+    if HAS_M1M2:
+        print("      Using ADVANCED M1/M2 Wyckoff implementation")
+    else:
+        print("      Using basic Wyckoff implementation")
+
+    wyckoff_results = []
+
+    for i, timestamp in enumerate(df_1d.index):
+        # Use ALL history up to this timestamp (not just tail(50))
+        historical_window = df_1d[df_1d.index <= timestamp]
+
+        if len(historical_window) >= 50:  # Min history requirement
+            # Basic Wyckoff phases
+            wyck_dict = detect_wyckoff_phase(historical_window, config, usdt_stag_strength=0.5)
+            phase = wyck_dict.get('phase', 'transition')
+            confidence = wyck_dict.get('confidence', 0.0)
+            direction = wyck_dict.get('direction', 'neutral')
+
+            # Advanced M1/M2 scores (if available)
+            m1_score = 0.0
+            m2_score = 0.0
+            m1m2_side = 'neutral'
+
+            if HAS_M1M2 and len(historical_window) >= 20:
+                try:
+                    m1m2_result = compute_m1m2_scores(
+                        df_ltf=historical_window,
+                        tf='1D',
+                        df_htf=None,  # Using 1D as highest timeframe
+                        fib_scores=None
+                    )
+                    m1_score = m1m2_result.get('m1', 0.0)
+                    m2_score = m1m2_result.get('m2', 0.0)
+                    m1m2_side = m1m2_result.get('side', 'neutral')
+
+                    # Override basic phase if M1/M2 has strong signal
+                    if m1_score > 0.6:
+                        phase = 'spring'
+                        confidence = max(confidence, m1_score)
+                        direction = 'long'
+                    elif m2_score > 0.5:
+                        phase = 'markup'
+                        confidence = max(confidence, m2_score)
+                        direction = 'long'
+                except Exception as e:
+                    # Fall back to basic detector on error
+                    pass
+        else:
+            phase = 'transition'
+            confidence = 0.0
+            direction = 'neutral'
+            m1_score = 0.0
+            m2_score = 0.0
+            m1m2_side = 'neutral'
+
+        wyckoff_results.append({
+            'timestamp': timestamp,
+            'tf1d_wyckoff_phase': phase,
+            'tf1d_wyckoff_direction': direction,
+            'tf1d_wyckoff_confidence': confidence,
+            'tf1d_wyckoff_m1': m1_score,
+            'tf1d_wyckoff_m2': m2_score,
+            'tf1d_wyckoff_m1m2_side': m1m2_side
+        })
+
+    # Create precomputed 1D features dataframe
+    precomputed_1d = pd.DataFrame(wyckoff_results).set_index('timestamp')
+
+    # Convert Wyckoff phase to score (from domain_fusion.py logic)
+    wyckoff_score_map = {
+        'accumulation': 0.7,
+        'markup': 0.9,
+        'distribution': 0.3,
+        'markdown': 0.1,
+        'transition': 0.5,
+        'reaccumulation': 0.6,
+        'redistribution': 0.4,
+        'B': 0.6,  # Phase B = reaccumulation
+        'spring': 0.8,  # Spring = strong buy (M1 pattern)
+        'upthrust': 0.2,  # Upthrust = strong sell
+        None: 0.5  # Handle None phase
+    }
+    precomputed_1d['tf1d_wyckoff_score'] = precomputed_1d['tf1d_wyckoff_phase'].map(wyckoff_score_map).fillna(0.5)
+
+    # Enhance score with M1/M2 signals if available
+    if HAS_M1M2 and 'tf1d_wyckoff_m1' in precomputed_1d.columns:
+        # M1 (spring) boosts long bias
+        m1_boost = (precomputed_1d['tf1d_wyckoff_m1'] - 0.5) * 0.3  # ±0.15 max
+        # M2 (markup) boosts long bias
+        m2_boost = (precomputed_1d['tf1d_wyckoff_m2'] - 0.5) * 0.2  # ±0.10 max
+        precomputed_1d['tf1d_wyckoff_score'] = (precomputed_1d['tf1d_wyckoff_score'] + m1_boost + m2_boost).clip(0.0, 1.0)
+
+    print(f"   ✅ Wyckoff: {len(precomputed_1d)} bars, score range [{precomputed_1d['tf1d_wyckoff_score'].min():.2f}, {precomputed_1d['tf1d_wyckoff_score'].max():.2f}]")
+    print(f"      Unique phases: {precomputed_1d['tf1d_wyckoff_phase'].unique().tolist()}")
+
+    if HAS_M1M2 and 'tf1d_wyckoff_m1' in precomputed_1d.columns:
+        m1_bars = (precomputed_1d['tf1d_wyckoff_m1'] > 0.5).sum()
+        m2_bars = (precomputed_1d['tf1d_wyckoff_m2'] > 0.5).sum()
+        print(f"      M1 (spring) signals: {m1_bars} bars, M2 (markup) signals: {m2_bars} bars")
+        print(f"      M1 score range: [{precomputed_1d['tf1d_wyckoff_m1'].min():.2f}, {precomputed_1d['tf1d_wyckoff_m1'].max():.2f}]")
+        print(f"      M2 score range: [{precomputed_1d['tf1d_wyckoff_m2'].min():.2f}, {precomputed_1d['tf1d_wyckoff_m2'].max():.2f}]")
+
+    # BOMS on 1D series - also returns single signal, skip precompute for now
+    # TODO: Implement rolling BOMS detection similar to Wyckoff
+    print("   Skipping BOMS precompute (will use per-timestamp detection)...")
 
     # Initialize feature dataframe (1H resolution)
     print("\n🏗️  Building feature store...")
@@ -593,7 +791,8 @@ def build_mtf_feature_store(asset: str, start_date: str, end_date: str):
             print(f"   Processing 1D bar {i+1}/{len(df_1d)}...")
 
         tf1d_feats = compute_tf1d_features(
-            df_1d, df_4h, df_1h, macro_data, timestamp, config
+            df_1d, df_4h, df_1h, macro_data, timestamp, config,
+            precomputed=precomputed_1d  # Pass precomputed Wyckoff + BOMS
         )
         tf1d_features_list.append({'timestamp': timestamp, **tf1d_feats})
 
@@ -652,6 +851,12 @@ def build_mtf_feature_store(asset: str, start_date: str, end_date: str):
     features['k2_threshold_delta'] = 0.0
     features['k2_score_delta'] = 0.0
     features['k2_fusion_score'] = 0.5
+
+    # Filter to requested output range (exclude warm-up period)
+    print(f"\n✂️  Filtering to output range: {start_date} → {end_date}")
+    print(f"   Before filter: {len(features)} bars (includes warm-up)")
+    features = features.loc[output_1h_index]
+    print(f"   After filter:  {len(features)} bars (output only)")
 
     # Drop initial NaN rows
     features = features.dropna(subset=['atr_20', 'sma_20'])

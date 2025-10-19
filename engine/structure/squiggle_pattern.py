@@ -132,6 +132,7 @@ def check_retest_zone(df: pd.DataFrame, bos_info: Dict) -> Optional[Dict]:
 
     # Check if current price is in retest zone
     current_price = df['close'].iloc[-1]
+    current_close = current_price  # Alias for compatibility
     current_high = df['high'].iloc[-1]
     current_low = df['low'].iloc[-1]
 

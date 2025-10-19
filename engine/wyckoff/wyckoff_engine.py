@@ -148,19 +148,45 @@ def _basic_phase_logic(df: pd.DataFrame, cfg: Dict) -> Tuple[Optional[str], floa
         # Price position in recent range
         range_position = (current_price - recent_data['low'].min()) / max(1e-9, price_range)
 
-        # Very basic phase classification
+        # Enhanced phase classification with trend detection
+
+        # Add trend analysis (SMA crossovers for markup/markdown)
+        if len(df) >= 50:
+            sma_20 = df['close'].rolling(20).mean().iloc[-1]
+            sma_50 = df['close'].rolling(50).mean().iloc[-1]
+
+            # Strong uptrend = markup
+            if sma_20 > sma_50 * 1.02 and current_price > sma_20:
+                return "markup", 0.7
+            # Strong downtrend = markdown
+            elif sma_20 < sma_50 * 0.98 and current_price < sma_20:
+                return "markdown", 0.7
+
+        # High volume phases
         if vol_ratio > 1.5 and range_position < 0.3:
             return "accumulation", 0.6
         elif vol_ratio > 1.5 and range_position > 0.7:
             return "distribution", 0.6
+
+        # Springs and upthrusts
         elif range_position < 0.2 and vol_ratio < 0.8:
             return "spring", 0.5
         elif range_position > 0.8 and vol_ratio < 0.8:
             return "upthrust", 0.5
+
+        # Consolidation/reaccumulation
         elif 0.4 <= range_position <= 0.6:
-            return "B", 0.4  # Consolidation phase
+            return "B", 0.4
+
+        # Weaker accumulation/distribution signals
+        elif range_position < 0.4 and vol_ratio > 1.0:
+            return "accumulation", 0.4
+        elif range_position > 0.6 and vol_ratio > 1.0:
+            return "distribution", 0.4
+
+        # Default: transition (but with low confidence, not None)
         else:
-            return None, 0.0
+            return "transition", 0.3
 
     except Exception as e:
         logger.error(f"Error in basic phase logic: {e}")

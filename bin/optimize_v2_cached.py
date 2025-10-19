@@ -76,20 +76,34 @@ def load_feature_store(asset: str, start_date: str, end_date: str) -> pd.DataFra
 
 def compute_fusion_score(row: pd.Series, params: Dict) -> float:
     """
-    Compute fusion score using weighted domain scores.
+    Compute fusion score using weighted domain scores from MTF features.
 
     Args:
-        row: Feature row with domain scores
+        row: Feature row with MTF domain scores
         params: Parameter dict with weights
 
     Returns:
         Fusion score [0.0, 1.0]
     """
-    # Extract domain scores (from v1 feature store)
-    wyckoff = row.get('wyckoff', 0.5)
-    smc = row.get('smc', 0.5)
-    hob = row.get('hob', 0.5)  # Hidden Order Blocks (liquidity)
-    momentum = row.get('momentum', 0.5)
+    # Extract domain scores from MTF schema (normalize to [0, 1])
+    # Wyckoff: tf1d_wyckoff_score is already [0, 1]
+    wyckoff = row.get('tf1d_wyckoff_score', 0.5)
+
+    # SMC (Structure): Use 4H structure alignment + squiggle confidence
+    smc_structure = row.get('tf4h_structure_alignment', 0.5)
+    smc_confidence = row.get('tf4h_squiggle_confidence', 0.5)
+    smc = (smc_structure + smc_confidence) / 2.0
+
+    # HOB (Hidden Order Blocks / Liquidity): Use BOMS strength + FVG presence
+    hob_boms = row.get('tf1d_boms_strength', 0.5)
+    hob_fvg = 1.0 if row.get('tf4h_fvg_present', False) else 0.0
+    hob = (hob_boms + hob_fvg) / 2.0
+
+    # Momentum: Use ADX + RSI positioning
+    adx = row.get('adx_14', 20.0) / 100.0  # Normalize ADX to [0, 1]
+    rsi = row.get('rsi_14', 50.0)
+    rsi_momentum = abs(rsi - 50.0) / 50.0  # Distance from 50 = momentum strength
+    momentum = (adx + rsi_momentum) / 2.0
 
     # Weighted combination
     fusion = (
@@ -127,10 +141,22 @@ def simulate_backtest(df: pd.DataFrame, params: Dict) -> Dict:
     # Compute fusion scores
     df['fusion_score'] = df.apply(lambda row: compute_fusion_score(row, params), axis=1)
 
+    # Fill NaN values (early bars without ADX/indicators) with 0.0
+    df['fusion_score'] = df['fusion_score'].fillna(0.0)
+
+    # DEBUG: Log fusion score distribution
+    if len(df) > 0:
+        print(f"   Fusion scores: min={df['fusion_score'].min():.4f}, max={df['fusion_score'].max():.4f}, mean={df['fusion_score'].mean():.4f}")
+
     # Generate signals (threshold-based)
     df['signal'] = 0
     df.loc[df['fusion_score'] > params['threshold'], 'signal'] = 1  # Long
-    df.loc[df['fusion_score'] < (1.0 - params['threshold']), 'signal'] = -1  # Short (if enabled)
+    # Disable shorts for now (fusion scores don't go high enough for inverted logic)
+    # df.loc[df['fusion_score'] < (1.0 - params['threshold']), 'signal'] = -1  # Short
+
+    # DEBUG: Log signal distribution
+    long_signals = (df['signal'] == 1).sum()
+    print(f"   Long signals: {long_signals} bars (threshold={params['threshold']:.4f})")
 
     # Track positions
     position = 0
@@ -140,20 +166,28 @@ def simulate_backtest(df: pd.DataFrame, params: Dict) -> Dict:
     peak = equity
     max_dd = 0.0
 
+    entries_attempted = 0
+    signals_seen = 0
+
     for idx, row in df.iterrows():
         current_price = row['close']
         signal = row['signal']
 
+        if signal != 0:
+            signals_seen += 1
+
         # Entry logic
         if position == 0 and signal != 0:
+            entries_attempted += 1
             position = signal
             entry_price = current_price
 
         # Exit logic (simplified)
         elif position != 0:
-            # Exit on opposite signal or MTF conflict
+            # Exit on opposite signal, signal returns to 0, MTF conflict, or at end of period
             should_exit = (
                 signal == -position or
+                signal == 0 or  # Exit when signal neutralizes
                 row.get('mtf_conflict_score', 0.0) > 0.7 or
                 (params['exit_aggressiveness'] > 0.6 and row.get('tf1h_pti_reversal_likely', False))
             )
@@ -183,6 +217,9 @@ def simulate_backtest(df: pd.DataFrame, params: Dict) -> Dict:
                     max_dd = dd
 
                 position = 0
+
+    # DEBUG: Log entry attempts
+    print(f"   Signals seen: {signals_seen}, Entries attempted: {entries_attempted}, Trades closed: {len(trades)}")
 
     # Calculate metrics
     if not trades:
@@ -236,11 +273,13 @@ def objective(trial: optuna.Trial, df: pd.DataFrame) -> float:
         Objective score (to maximize)
     """
     # Sample parameters from search space
+    # ADJUSTED: Threshold range lowered from [0.55, 0.75] → [0.20, 0.50]
+    # to match actual fusion score distribution (max observed ~0.31)
     params = {
         'wyckoff_weight': trial.suggest_float('wyckoff_weight', 0.25, 0.45),
         'liquidity_weight': trial.suggest_float('liquidity_weight', 0.25, 0.45),
         'momentum_weight': trial.suggest_float('momentum_weight', 0.1, 0.25),
-        'threshold': trial.suggest_float('threshold', 0.55, 0.75),
+        'threshold': trial.suggest_float('threshold', 0.20, 0.50),
         'fakeout_penalty': trial.suggest_float('fakeout_penalty', 0.05, 0.25),
         'exit_aggressiveness': trial.suggest_float('exit_aggressiveness', 0.4, 0.8),
     }
