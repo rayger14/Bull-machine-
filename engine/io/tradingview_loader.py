@@ -55,6 +55,9 @@ SYMBOL_MAP = {
     "SPY_1H": ("BATS_SPY", "60"),
     "SPY_4H": ("BATS_SPY", "240"),
     "SPY_1D": ("BATS_SPY", "1D"),
+    "TSLA_1H": ("NASDAQ_TSLA", "60"),
+    "TSLA_4H": ("NASDAQ_TSLA", "240"),
+    "TSLA_1D": ("NASDAQ_TSLA", "1D"),
 }
 
 class RealDataRequiredError(Exception):
