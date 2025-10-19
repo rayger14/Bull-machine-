@@ -1,0 +1,89 @@
+{
+  "asset": "BTC",
+  "description": "BTC Knowledge v2.0 Baseline - All Week 1-4 features enabled",
+  "schema_version": "2.0",
+
+  "knowledge_v2": {
+    "enabled": true,
+    "shadow_mode": false,
+    "log_decisions": true
+  },
+
+  "fusion": {
+    "weights": {
+      "wyckoff": 0.30,
+      "smc": 0.25,
+      "hob": 0.25,
+      "momentum": 0.20
+    },
+    "entry_threshold": 0.68,
+    "confidence_floor": 0.50
+  },
+
+  "regime": {
+    "enabled": true,
+    "policy": "balanced",
+    "bounded_delta": 0.10
+  },
+
+  "macro": {
+    "veto_enabled": true,
+    "echo_enabled": true,
+    "dxy_weight": 0.30,
+    "yields_weight": 0.20,
+    "oil_weight": 0.25,
+    "vix_weight": 0.25
+  },
+
+  "structure": {
+    "internal_external_enabled": true,
+    "boms_enabled": true,
+    "squiggle_enabled": true,
+    "range_outcomes_enabled": true
+  },
+
+  "psychology": {
+    "pti_enabled": true,
+    "fakeout_intensity_enabled": true,
+    "pti_threshold": 0.4,
+    "fakeout_threshold": 0.5
+  },
+
+  "volume": {
+    "frvp_enabled": true,
+    "poc_weight": 0.03,
+    "va_weight": 0.05
+  },
+
+  "exits": {
+    "multi_modal_enabled": false,
+    "r_ladder": {
+      "r1_threshold": 1.0,
+      "r1_exit_pct": 33.0,
+      "r2_threshold": 2.0,
+      "r2_exit_pct": 50.0,
+      "r3_threshold": 3.0
+    },
+    "time_exit_bars": 72,
+    "voting_threshold": 2
+  },
+
+  "risk": {
+    "base_risk_pct": 2.0,
+    "max_risk_pct": 3.0,
+    "kelly_lite": true,
+    "position_sizing": "dynamic"
+  },
+
+  "temporal": {
+    "gann_enabled": true,
+    "lppls_veto": true,
+    "thermo_floor_enabled": true
+  },
+
+  "safety": {
+    "max_threshold_delta": 0.10,
+    "max_score_delta": 0.30,
+    "risk_multiplier_range": [0.5, 1.5]
+  }
+}

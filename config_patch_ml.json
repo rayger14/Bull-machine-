@@ -1,0 +1,18 @@
+{
+  "version": "1.8.6-ml-optimized",
+  "optimization_date": "2025-10-14T01:24:37.742410",
+  "regime": "neutral",
+  "confidence": 0.3,
+  "reason": "ML predicted PF improvement: 1.051 \u2192 1.051",
+  "fusion": {
+    "weights": {
+      "wyckoff": 0.25,
+      "smc": 0.15,
+      "hob": 0.15,
+      "momentum": 0.31,
+      "temporal": 0.14
+    }
+  },
+  "validation_required": true,
+  "walk_forward_test_required": true
+}

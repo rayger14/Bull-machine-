@@ -1,0 +1,23 @@
+🎯 Bull Machine v1.9 Optimizer (Production-Faithful)
+Asset: ETH
+Mode: aggressive
+======================================================================
+
+📊 Loading feature store: data/features/v18/ETH_1H.parquet
+   ✅ Loaded 33067 bars × 16 features
+
+📅 Applying date filter...
+   Start: 2024-07-01
+   End: 2024-09-30
+   ✅ Filtered to 2185 bars
+
+📊 Regime adaptation: DISABLED (baseline mode)
+
+📋 Generated 12 configurations (aggressive mode)
+
+🚀 Starting parallel optimization with 11 workers...
+
+✅ Optimization complete in 1.6s (7.4 configs/sec)
+   Valid results: 0/12
+
+⚠️  No valid results (no trades generated)
