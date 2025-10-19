@@ -21,8 +21,26 @@ from pathlib import Path
 
 
 def load_trades(path: Path) -> pd.DataFrame:
-    """Load trades CSV and validate required columns."""
-    df = pd.read_csv(path, parse_dates=["entry_time", "exit_time"])
+    """
+    Load trades CSV and validate required columns.
+
+    Args:
+        path: Path to trades CSV file
+
+    Returns:
+        DataFrame with validated trade data
+
+    Raises:
+        FileNotFoundError: If CSV file doesn't exist
+        ValueError: If required columns are missing
+    """
+    if not path.exists():
+        raise FileNotFoundError(f"Trades CSV not found: {path}")
+
+    try:
+        df = pd.read_csv(path, parse_dates=["entry_time", "exit_time"])
+    except Exception as e:
+        raise ValueError(f"Failed to parse trades CSV: {e}")
 
     needed = {"entry_time", "exit_time", "direction", "entry_price",
               "exit_price", "exit_reason", "position_size"}
@@ -35,8 +53,26 @@ def load_trades(path: Path) -> pd.DataFrame:
 
 
 def load_prices(path: Path) -> pd.DataFrame:
-    """Load price parquet and ensure datetime index."""
-    df = pd.read_parquet(path)
+    """
+    Load price parquet and ensure datetime index.
+
+    Args:
+        path: Path to price parquet file
+
+    Returns:
+        DataFrame with datetime index and 'close' column
+
+    Raises:
+        FileNotFoundError: If parquet file doesn't exist
+        ValueError: If required columns are missing or index is invalid
+    """
+    if not path.exists():
+        raise FileNotFoundError(f"Price parquet not found: {path}")
+
+    try:
+        df = pd.read_parquet(path)
+    except Exception as e:
+        raise ValueError(f"Failed to read price parquet: {e}")
 
     if "close" not in df.columns:
         raise ValueError("Price parquet must contain a 'close' column.")
@@ -52,7 +88,22 @@ def load_prices(path: Path) -> pd.DataFrame:
 
 
 def pnl(direction: str, entry_price: float, exit_price: float, size_dollars: float) -> float:
-    """Calculate PNL for a trade."""
+    """
+    Calculate PNL for a trade.
+
+    Args:
+        direction: Trade direction ('long' or 'short')
+        entry_price: Entry price
+        exit_price: Exit price
+        size_dollars: Position size in dollars
+
+    Returns:
+        Profit/loss in dollars
+
+    Example:
+        >>> pnl('long', 100.0, 110.0, 1000.0)
+        100.0  # 10% gain on $1000 = $100
+    """
     ret = (exit_price - entry_price) / entry_price if direction == "long" \
           else (entry_price - exit_price) / entry_price
     return ret * size_dollars
