@@ -65,6 +65,9 @@ from engine.psychology.fakeout_intensity import detect_fakeout_intensity
 # Week 4: Macro Echo
 from engine.exits.macro_echo import analyze_macro_echo
 
+# SMC Structure Levels (for Phase 1 exit invalidation)
+from engine.smc.smc_engine import SMCEngine
+
 # Contract validation
 from engine.fusion.knowledge_hooks import assert_feature_contract
 
@@ -199,7 +202,15 @@ def compute_tf1d_features(df_1d: pd.DataFrame, df_4h: pd.DataFrame,
             # Still need to compute BOMS (not precomputed yet)
             boms_1d = detect_boms(window_1d, timeframe='1D', config=config)
             features['tf1d_boms_detected'] = boms_1d.boms_detected
-            features['tf1d_boms_strength'] = boms_1d.displacement if boms_1d.boms_detected else 0.0
+
+            # Normalize BOMS strength: displacement / (2.0 × ATR), capped at 1.0
+            # Rationale: 2× ATR displacement = very strong, > 2× ATR = maximum strength
+            atr_1d = window_1d['close'].pct_change().abs().rolling(14).mean().iloc[-1] * window_1d['close'].iloc[-1]
+            if atr_1d > 0 and boms_1d.displacement > 0:
+                features['tf1d_boms_strength'] = min(boms_1d.displacement / (2.0 * atr_1d), 1.0)
+            else:
+                features['tf1d_boms_strength'] = 0.0
+
             features['tf1d_boms_direction'] = boms_1d.direction if boms_1d.boms_detected else 'none'
         else:
             # Fallback: Run detectors on window (will return neutral for early timestamps)
@@ -212,7 +223,14 @@ def compute_tf1d_features(df_1d: pd.DataFrame, df_4h: pd.DataFrame,
 
             boms_1d = detect_boms(window_1d, timeframe='1D', config=config)
             features['tf1d_boms_detected'] = boms_1d.boms_detected
-            features['tf1d_boms_strength'] = boms_1d.displacement if boms_1d.boms_detected else 0.0
+
+            # Normalize BOMS strength: displacement / (2.0 × ATR), capped at 1.0
+            atr_1d = window_1d['close'].pct_change().abs().rolling(14).mean().iloc[-1] * window_1d['close'].iloc[-1]
+            if atr_1d > 0 and boms_1d.displacement > 0:
+                features['tf1d_boms_strength'] = min(boms_1d.displacement / (2.0 * atr_1d), 1.0)
+            else:
+                features['tf1d_boms_strength'] = 0.0
+
             features['tf1d_boms_direction'] = boms_1d.direction if boms_1d.boms_detected else 'none'
 
         # Range outcome classification
@@ -442,7 +460,36 @@ def compute_tf1h_features(df_1h: pd.DataFrame, timestamp: pd.Timestamp,
         )
 
         features['tf1h_pti_score'] = pti_score
-        features['tf1h_pti_trap_type'] = 'bullish_trap' if pti_score > 0.6 else 'none'
+
+        # Classify trap type based on PTI components
+        trap_type = 'none'
+        if pti_score > 0.6:
+            # Analyze which PTI component triggered
+            if rsi_div.get('strength', 0.0) > 0.6:
+                # Check if bearish or bullish divergence based on RSI trend vs price
+                rsi_trend = rsi_div.get('type', 'none')
+                if rsi_trend == 'bearish':
+                    trap_type = 'bull_trap'  # Price made high but RSI diverged down
+                elif rsi_trend == 'bullish':
+                    trap_type = 'bear_trap'  # Price made low but RSI diverged up
+            elif vol_exh.get('strength', 0.0) > 0.6:
+                # Volume exhaustion suggests end of move - classify as spring or UTAD
+                price_direction = window_1h['close'].iloc[-1] > window_1h['close'].iloc[-5]
+                if price_direction:
+                    trap_type = 'utad'  # Upthrust after distribution
+                else:
+                    trap_type = 'spring'  # Spring after accumulation
+            elif wick_trap.get('strength', 0.0) > 0.5:
+                # Wick rejection - check direction
+                last_bar = window_1h.iloc[-1]
+                upper_wick = last_bar['high'] - max(last_bar['open'], last_bar['close'])
+                lower_wick = min(last_bar['open'], last_bar['close']) - last_bar['low']
+                if upper_wick > lower_wick * 2:
+                    trap_type = 'bull_trap'  # Upper wick rejection
+                else:
+                    trap_type = 'bear_trap'  # Lower wick rejection
+
+        features['tf1h_pti_trap_type'] = trap_type
         features['tf1h_pti_confidence'] = pti_score
         features['tf1h_pti_reversal_likely'] = pti_score > 0.7
 
@@ -471,6 +518,87 @@ def compute_tf1h_features(df_1h: pd.DataFrame, timestamp: pd.Timestamp,
         features['tf1h_kelly_volatility_ratio'] = atr_14 / atr_20 if atr_20 > 0 else 1.0
         features['tf1h_kelly_hint'] = 'reduce' if features['tf1h_kelly_volatility_ratio'] > 1.5 else 'normal'
 
+        # SMC Structure Levels (Phase 1: Structure Invalidation Exits)
+        # Extract nearest OB/FVG levels and BOS flags for exit invalidation checks
+        try:
+            # Initialize SMC engine with default config
+            smc_config = config.get('smc', {})
+            smc_engine = SMCEngine(smc_config)
+
+            # Run SMC analysis on 1H window
+            smc_signal = smc_engine.analyze_smc(window_1h)
+
+            # Extract nearest Order Block levels (bullish = support, bearish = resistance)
+            # Get the closest OB to current price for each side
+            bullish_obs = [ob for ob in smc_signal.order_blocks if ob.ob_type.value == 'bullish' and ob.active]
+            bearish_obs = [ob for ob in smc_signal.order_blocks if ob.ob_type.value == 'bearish' and ob.active]
+
+            # Sort by distance to current price
+            current_price = window_1h['close'].iloc[-1]
+            if bullish_obs:
+                nearest_bullish_ob = min(bullish_obs, key=lambda ob: abs(current_price - ob.low))
+                features['tf1h_ob_low'] = nearest_bullish_ob.low
+            else:
+                features['tf1h_ob_low'] = None
+
+            if bearish_obs:
+                nearest_bearish_ob = min(bearish_obs, key=lambda ob: abs(current_price - ob.high))
+                features['tf1h_ob_high'] = nearest_bearish_ob.high
+            else:
+                features['tf1h_ob_high'] = None
+
+            # Extract nearest FVG levels
+            bullish_fvgs = [fvg for fvg in smc_signal.fair_value_gaps if fvg.fvg_type.value == 'bullish']
+            bearish_fvgs = [fvg for fvg in smc_signal.fair_value_gaps if fvg.fvg_type.value == 'bearish']
+
+            if bullish_fvgs:
+                nearest_bullish_fvg = min(bullish_fvgs, key=lambda fvg: abs(current_price - fvg.low))
+                features['tf1h_fvg_low'] = nearest_bullish_fvg.low
+                features['tf1h_fvg_present'] = True
+            else:
+                features['tf1h_fvg_low'] = None
+                features['tf1h_fvg_present'] = False
+
+            if bearish_fvgs:
+                nearest_bearish_fvg = min(bearish_fvgs, key=lambda fvg: abs(current_price - fvg.high))
+                features['tf1h_fvg_high'] = nearest_bearish_fvg.high
+                features['tf1h_fvg_present'] = features['tf1h_fvg_present'] or True
+            else:
+                features['tf1h_fvg_high'] = None
+
+            # Extract BOS (Break of Structure) flags
+            # Recent BOS events (last 3 bars) indicate structure breaks
+            if smc_signal.structure_breaks:
+                recent_bos = smc_signal.structure_breaks[-3:]  # Last 3 BOS events
+
+                # Check for bearish BOS (structure break to downside)
+                bearish_bos_recent = any(bos.bos_type.value == 'bearish' for bos in recent_bos)
+                # Check for bullish BOS (structure break to upside)
+                bullish_bos_recent = any(bos.bos_type.value == 'bullish' for bos in recent_bos)
+
+                features['tf1h_bos_bearish'] = bearish_bos_recent
+                features['tf1h_bos_bullish'] = bullish_bos_recent
+            else:
+                features['tf1h_bos_bearish'] = False
+                features['tf1h_bos_bullish'] = False
+
+            # Breaker Block (BB) levels - Use strongest OB as BB proxy
+            # (True BB detection would require mitigation tracking, using OB for now)
+            features['tf1h_bb_low'] = features['tf1h_ob_low']  # Proxy: strongest bullish OB
+            features['tf1h_bb_high'] = features['tf1h_ob_high']  # Proxy: strongest bearish OB
+
+        except Exception as smc_error:
+            # Fallback to None if SMC analysis fails
+            features['tf1h_ob_low'] = None
+            features['tf1h_ob_high'] = None
+            features['tf1h_bb_low'] = None
+            features['tf1h_bb_high'] = None
+            features['tf1h_fvg_low'] = None
+            features['tf1h_fvg_high'] = None
+            features['tf1h_fvg_present'] = False
+            features['tf1h_bos_bearish'] = False
+            features['tf1h_bos_bullish'] = False
+
     except Exception as e:
         print(f"WARNING: Exception in compute_tf1h_features at {timestamp}: {e}")
         import traceback
@@ -498,6 +626,16 @@ def get_default_tf1h_features() -> dict:
         'tf1h_kelly_atr_pct': 0.0,
         'tf1h_kelly_volatility_ratio': 1.0,
         'tf1h_kelly_hint': 'normal',
+        # SMC Structure Levels (Phase 1)
+        'tf1h_ob_low': None,
+        'tf1h_ob_high': None,
+        'tf1h_bb_low': None,
+        'tf1h_bb_high': None,
+        'tf1h_fvg_low': None,
+        'tf1h_fvg_high': None,
+        'tf1h_fvg_present': False,
+        'tf1h_bos_bearish': False,
+        'tf1h_bos_bullish': False,
     }
 
 
@@ -855,6 +993,51 @@ def build_mtf_feature_store(asset: str, start_date: str, end_date: str):
 
     alignment_df = pd.DataFrame(mtf_alignment_list, index=features.index)
     features = features.join(alignment_df)
+    print(f"DEBUG: After MTF alignment, features has {len(features.columns)} columns")
+
+    # Phase 4 Re-Entry: Add tf4h_fusion_score and volume_zscore
+    print("\n🎯 Computing Phase 4 re-entry features...")
+    print(f"DEBUG: Starting Phase 4 feature computation...")
+
+    # tf4h_fusion_score: Calculate from available 4H features (structure alignment + squiggle + CHOCH)
+    # Use structure alignment + squiggle confidence + CHOCH as proxies for 4H fusion
+    tf4h_fusion = 0.0
+
+    # Check each component and add to fusion score
+    if 'tf4h_structure_alignment' in features.columns:
+        # Internal/external aligned (30% weight)
+        features['tf4h_fusion_score'] = features['tf4h_structure_alignment'].astype(float) * 0.30
+        tf4h_fusion = features['tf4h_fusion_score'].copy()
+    else:
+        features['tf4h_fusion_score'] = 0.0
+        tf4h_fusion = features['tf4h_fusion_score'].copy()
+
+    if 'tf4h_squiggle_entry_window' in features.columns:
+        # Squiggle 1-2-3 entry window (20% weight)
+        tf4h_fusion += features['tf4h_squiggle_entry_window'].astype(float) * 0.20
+
+        # Squiggle confidence (20% weight)
+        if 'tf4h_squiggle_confidence' in features.columns:
+            tf4h_fusion += features['tf4h_squiggle_confidence'] * 0.20
+
+    if 'tf4h_choch_flag' in features.columns:
+        # CHOCH detected (30% weight)
+        tf4h_fusion += features['tf4h_choch_flag'].astype(float) * 0.30
+
+    # Cap at 1.0 and update features
+    features['tf4h_fusion_score'] = tf4h_fusion.clip(upper=1.0)
+
+    # Smooth with 4-bar rolling mean to reduce noise
+    features['tf4h_fusion_score'] = features['tf4h_fusion_score'].rolling(4, min_periods=1).mean()
+
+    # volume_zscore: Z-score of volume with 20-bar lookback
+    features['volume_zscore'] = (
+        (features['volume'] - features['volume'].rolling(20, min_periods=1).mean()) /
+        features['volume'].rolling(20, min_periods=1).std()
+    ).fillna(0.0)
+
+    print(f"   ✅ Added tf4h_fusion_score (range: {features['tf4h_fusion_score'].min():.3f} to {features['tf4h_fusion_score'].max():.3f})")
+    print(f"   ✅ Added volume_zscore (range: {features['volume_zscore'].min():.2f} to {features['volume_zscore'].max():.2f})")
 
     # Add placeholders for K2 fusion outputs (for future use)
     features['k2_threshold_delta'] = 0.0

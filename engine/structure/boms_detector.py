@@ -179,6 +179,10 @@ def detect_boms(df: pd.DataFrame, timeframe: str = '4H',
     3. FVG left behind (imbalance trailing the move)
     4. No immediate reversal (confirmed follow-through)
 
+    IMPORTANT: displacement field is ALWAYS calculated when price breaks structure,
+    regardless of FVG/reversal confirmation. This allows archetype entry system
+    to use displacement thresholds without requiring full BOMS confirmation.
+
     Args:
         df: OHLCV DataFrame
         timeframe: '1H', '4H', or '1D'
@@ -192,6 +196,9 @@ def detect_boms(df: pd.DataFrame, timeframe: str = '4H',
         >>> if boms.boms_detected and boms.direction == 'bullish':
         >>>     # Strong HTF confirmation for longs
         >>>     fusion_score += 0.10
+        >>> # Or use displacement without full confirmation:
+        >>> if boms.displacement > 0.015:  # 1.5% displacement
+        >>>     # Displacement-based entry (archetype system)
     """
     config = config or {}
 
@@ -228,6 +235,10 @@ def detect_boms(df: pd.DataFrame, timeframe: str = '4H',
     swing_high = swings['swing_high']
     swing_low = swings['swing_low']
 
+    # Track best displacement even if full BOMS not confirmed
+    best_bullish_displacement = 0.0
+    best_bearish_displacement = 0.0
+
     # Check recent bars for BOMS (last 5 bars)
     for i in range(len(df) - 5, len(df)):
         if i < 0:
@@ -245,13 +256,17 @@ def detect_boms(df: pd.DataFrame, timeframe: str = '4H',
 
         # Check for bullish BOMS
         if close > swing_high and volume_surge > volume_threshold:
+            # ALWAYS calculate displacement in ABSOLUTE price terms (for archetype system)
+            # Archetype system compares displacement to ATR multiples, not percentages
+            displacement = close - swing_high  # Absolute price difference
+            best_bullish_displacement = max(best_bullish_displacement, displacement)
+
             # Check for FVG trail
             fvg_present = detect_fvg_trail(df, i - 3, 'bullish')
 
             if fvg_present:
                 # Confirm no immediate reversal
                 if check_no_immediate_reversal(df, i, 'bullish', bars=3):
-                    displacement = (close - swing_high) / swing_high
                     confirmation_bars = len(df) - i - 1
 
                     return BOMSSignal(
@@ -266,13 +281,16 @@ def detect_boms(df: pd.DataFrame, timeframe: str = '4H',
 
         # Check for bearish BOMS
         elif close < swing_low and volume_surge > volume_threshold:
+            # ALWAYS calculate displacement in ABSOLUTE price terms (for archetype system)
+            displacement = swing_low - close  # Absolute price difference
+            best_bearish_displacement = max(best_bearish_displacement, displacement)
+
             # Check for FVG trail
             fvg_present = detect_fvg_trail(df, i - 3, 'bearish')
 
             if fvg_present:
                 # Confirm no immediate reversal
                 if check_no_immediate_reversal(df, i, 'bearish', bars=3):
-                    displacement = (swing_low - close) / swing_low
                     confirmation_bars = len(df) - i - 1
 
                     return BOMSSignal(
@@ -285,7 +303,30 @@ def detect_boms(df: pd.DataFrame, timeframe: str = '4H',
                         displacement=float(displacement)
                     )
 
-    # No BOMS detected
+    # No full BOMS detected, but return best displacement if structure was broken
+    # This allows archetype system to use displacement without requiring FVG/reversal confirmation
+    if best_bullish_displacement > 0.0:
+        return BOMSSignal(
+            boms_detected=False,
+            direction='none',
+            volume_surge=0.0,
+            fvg_present=False,
+            confirmation_bars=0,
+            break_level=float(swing_high),
+            displacement=float(best_bullish_displacement)
+        )
+    elif best_bearish_displacement > 0.0:
+        return BOMSSignal(
+            boms_detected=False,
+            direction='none',
+            volume_surge=0.0,
+            fvg_present=False,
+            confirmation_bars=0,
+            break_level=float(swing_low),
+            displacement=float(best_bearish_displacement)
+        )
+
+    # No structure break at all
     return BOMSSignal(
         boms_detected=False,
         direction='none',
