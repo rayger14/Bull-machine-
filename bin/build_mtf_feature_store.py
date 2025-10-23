@@ -71,6 +71,14 @@ from engine.smc.smc_engine import SMCEngine
 # Contract validation
 from engine.fusion.knowledge_hooks import assert_feature_contract
 
+# PR#3: Feature Calculators (pure functions for P0 columns)
+from engine.calculators import (
+    calc_boms_displacement,
+    calc_boms_strength,
+    calc_tf4h_fusion,
+)
+from engine.utils_align import validate_alignment
+
 
 # ============================================================================
 # RTH Filtering for Equities
@@ -203,9 +211,17 @@ def compute_tf1d_features(df_1d: pd.DataFrame, df_4h: pd.DataFrame,
             boms_1d = detect_boms(window_1d, timeframe='1D', config=config)
             features['tf1d_boms_detected'] = boms_1d.boms_detected
 
+            # PR#3 FIX: Proper ATR calculation using True Range
             # Normalize BOMS strength: displacement / (2.0 × ATR), capped at 1.0
             # Rationale: 2× ATR displacement = very strong, > 2× ATR = maximum strength
-            atr_1d = window_1d['close'].pct_change().abs().rolling(14).mean().iloc[-1] * window_1d['close'].iloc[-1]
+            tr = np.maximum(
+                window_1d['high'] - window_1d['low'],
+                np.maximum(
+                    abs(window_1d['high'] - window_1d['close'].shift(1)),
+                    abs(window_1d['low'] - window_1d['close'].shift(1))
+                )
+            )
+            atr_1d = tr.rolling(14).mean().iloc[-1]
             if atr_1d > 0 and boms_1d.displacement > 0:
                 features['tf1d_boms_strength'] = min(boms_1d.displacement / (2.0 * atr_1d), 1.0)
             else:
@@ -224,8 +240,16 @@ def compute_tf1d_features(df_1d: pd.DataFrame, df_4h: pd.DataFrame,
             boms_1d = detect_boms(window_1d, timeframe='1D', config=config)
             features['tf1d_boms_detected'] = boms_1d.boms_detected
 
+            # PR#3 FIX: Proper ATR calculation using True Range (same as precomputed path)
             # Normalize BOMS strength: displacement / (2.0 × ATR), capped at 1.0
-            atr_1d = window_1d['close'].pct_change().abs().rolling(14).mean().iloc[-1] * window_1d['close'].iloc[-1]
+            tr = np.maximum(
+                window_1d['high'] - window_1d['low'],
+                np.maximum(
+                    abs(window_1d['high'] - window_1d['close'].shift(1)),
+                    abs(window_1d['low'] - window_1d['close'].shift(1))
+                )
+            )
+            atr_1d = tr.rolling(14).mean().iloc[-1]
             if atr_1d > 0 and boms_1d.displacement > 0:
                 features['tf1d_boms_strength'] = min(boms_1d.displacement / (2.0 * atr_1d), 1.0)
             else:
@@ -389,7 +413,9 @@ def compute_tf4h_features(df_4h: pd.DataFrame, df_1h: pd.DataFrame,
         boms_4h = detect_boms(window_4h, timeframe='4H', config=config)
         features['tf4h_choch_flag'] = boms_4h.boms_detected  # FIXED: was .detected
         features['tf4h_boms_direction'] = boms_4h.direction if boms_4h.boms_detected else 'none'
-        features['tf4h_boms_displacement'] = boms_4h.displacement if boms_4h.boms_detected else 0.0
+        # PR#3 FIX: Return displacement unconditionally (not just when BOMS detected)
+        # This ensures proper non-zero rates for health monitoring and archetype entry system
+        features['tf4h_boms_displacement'] = boms_4h.displacement  # Always return displacement
         features['tf4h_fvg_present'] = boms_4h.fvg_present if boms_4h.boms_detected else False
 
         # Range outcome on 4H
