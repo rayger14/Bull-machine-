@@ -27,6 +27,9 @@ import json
 import logging
 import os
 
+# PR#4: Runtime liquidity scoring
+from engine.liquidity.score import compute_liquidity_score, compute_liquidity_telemetry
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -133,7 +136,7 @@ class KnowledgeAwareBacktest:
     Full knowledge backtest engine using all 69 MTF features.
     """
 
-    def __init__(self, df: pd.DataFrame, params: KnowledgeParams, starting_capital: float = 10000.0, asset: str = 'BTC'):
+    def __init__(self, df: pd.DataFrame, params: KnowledgeParams, starting_capital: float = 10000.0, asset: str = 'BTC', runtime_config: Optional[Dict] = None):
         """
         Initialize backtest with feature store and parameters.
 
@@ -141,6 +144,8 @@ class KnowledgeAwareBacktest:
             df: MTF feature store (69 features)
             params: Knowledge-aware parameters
             starting_capital: Starting equity
+            asset: Asset symbol (e.g., 'BTC', 'ETH')
+            runtime_config: PR#4 runtime intelligence config (optional)
         """
         self.df = df.copy()
         self.params = params
@@ -148,6 +153,11 @@ class KnowledgeAwareBacktest:
         self.equity = starting_capital
         self.peak_equity = starting_capital
         self.asset = asset  # Phase 4: Store asset for re-entry window logic
+
+        # PR#4: Runtime intelligence configuration
+        self.runtime_config = runtime_config or {}
+        self.liquidity_enabled = self.runtime_config.get('runtime', {}).get('runtime_liquidity_enabled', False)
+        self.liquidity_scores: List[float] = []  # Track scores for telemetry
 
         self.trades: List[Trade] = []
         self.current_position: Optional[Trade] = None
@@ -1363,6 +1373,22 @@ class KnowledgeAwareBacktest:
 
             # Compute fusion score
             fusion_score, context = self.compute_advanced_fusion_score(row)
+
+            # PR#4: Compute runtime liquidity score (if enabled)
+            if self.liquidity_enabled:
+                side = "long"  # TODO: Support short detection based on signal
+                liquidity_score = compute_liquidity_score(context, side)
+                context['liquidity_score'] = liquidity_score
+                self.liquidity_scores.append(liquidity_score)
+
+                # Log telemetry every 500 bars
+                if len(self.liquidity_scores) % 500 == 0:
+                    telemetry = compute_liquidity_telemetry(self.liquidity_scores)
+                    logger.info(f"PR#4 Liquidity Telemetry (n={len(self.liquidity_scores)}): "
+                              f"median={telemetry['p50']:.3f}, p75={telemetry['p75']:.3f}, "
+                              f"p90={telemetry['p90']:.3f}, nonzero={telemetry['nonzero_pct']:.1f}%")
+            else:
+                context['liquidity_score'] = 0.0
 
             # Check for open position
             if self.current_position is not None:
