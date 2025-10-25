@@ -30,6 +30,9 @@ import os
 # PR#4: Runtime liquidity scoring
 from engine.liquidity.score import compute_liquidity_score, compute_liquidity_telemetry
 
+# PR#6A: Archetype expansion (using package import for adapter support)
+from engine.archetypes import ArchetypeLogic, ArchetypeTelemetry
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -175,11 +178,20 @@ class KnowledgeAwareBacktest:
         self._last_exit_size: Optional[float] = None
         self._reentry_count = 0
 
-        # Archetype Entry Tracking (3-archetype system)
-        self._archetype_checks = 0
-        self._archetype_a_matches = 0  # Trap Reversal
-        self._archetype_b_matches = 0  # OB Retest
-        self._archetype_c_matches = 0  # FVG Continuation
+        # PR#6A: Archetype system (11-archetype expansion)
+        archetype_config = self.runtime_config.get('archetypes', {})
+        if archetype_config.get('use_archetypes', False):
+            self.archetype_logic = ArchetypeLogic(archetype_config)
+            self.archetype_telemetry = ArchetypeTelemetry()
+            logger.info("PR#6A: 11-archetype system ENABLED")
+        else:
+            self.archetype_logic = None
+            self.archetype_telemetry = None
+            # Fallback: Old 3-archetype tracking (deprecated)
+            self._archetype_checks = 0
+            self._archetype_a_matches = 0  # Trap Reversal
+            self._archetype_b_matches = 0  # OB Retest
+            self._archetype_c_matches = 0  # FVG Continuation
 
         # ML Optimization: Exit Strategy Parameters (read from env or use defaults)
         # Phase 2: Pattern Exit Parameters
@@ -330,16 +342,60 @@ class KnowledgeAwareBacktest:
 
     def classify_entry_archetype(self, row: pd.Series, context: Dict) -> Optional[Tuple[str, float, float]]:
         """
-        Classify entry opportunity into one of 3 archetypes (Wyckoff/ZeroIka/Moneytaur).
+        PR#6A: Classify entry opportunity into archetypes.
+
+        - When use_archetypes=true: Uses 11-archetype system (A-H + K,L,M)
+        - When use_archetypes=false: Uses legacy 3-archetype system (A, B, C)
 
         Returns:
             (archetype_name, threshold, size_multiplier) or None if no archetype matches
-
-        Archetypes:
-            A. Trap Reversal: PTI trap + displacement + flip-close (threshold 0.33, size 0.75x)
-            B. OB/pHOB Retest: BOS + liquidity sweep + Wyckoff agreement (threshold 0.37, size 1.0x)
-            C. FVG/Breaker Continuation: FVG + displacement + momentum (threshold 0.42, size 1.0-1.25x)
         """
+        # PR#6A: Use new 11-archetype system if enabled
+        if self.archetype_logic and self.archetype_telemetry:
+            self.archetype_telemetry.check()
+
+            # Get dataframe and current index for context-aware detection
+            prev_row = None  # TODO: Could pass previous row if needed
+            current_idx = context.get('current_index', 0)
+
+            # Call archetype detection
+            archetype_name, fusion_score, liquidity_score = self.archetype_logic.check_archetype(
+                row=row,
+                prev_row=prev_row,
+                df=self.df,
+                index=current_idx
+            )
+
+            # Track telemetry
+            if archetype_name:
+                self.archetype_telemetry.count(archetype_name)
+                logger.info(f"PR#6A: Archetype {archetype_name.upper()} detected (fusion={fusion_score:.3f}, liq={liquidity_score:.3f})")
+
+                # Map archetype to threshold and size multiplier
+                # Size multipliers adjusted based on PR#6A validation results:
+                # - trap_within_trend (H): 0.90 → 0.60 (dominated in untuned, lower quality)
+                # - wick_trap (K): 1.0 → 1.25 (higher win rate in validation)
+                # - volume_exhaustion (L): 0.90 → 1.30 (strong setup, rare but high quality)
+                archetype_map = {
+                    'trap_reversal': (0.33, 0.75),
+                    'order_block_retest': (0.37, 1.0),
+                    'fvg_continuation': (0.42, 1.25),
+                    'failed_continuation': (0.42, 0.85),
+                    'liquidity_compression': (0.35, 1.0),
+                    'expansion_exhaustion': (0.38, 0.80),
+                    'reaccumulation': (0.40, 1.15),
+                    'trap_within_trend': (0.35, 0.60),        # Reduced from 0.90
+                    'wick_trap': (0.36, 1.25),                # Increased from 1.0
+                    'volume_exhaustion': (0.38, 1.30),        # Increased from 0.90
+                    'ratio_coil_break': (0.35, 1.10)
+                }
+
+                threshold, size_mult = archetype_map.get(archetype_name, (0.40, 1.0))
+                return (archetype_name, threshold, size_mult)
+
+            return None
+
+        # Fallback: Legacy 3-archetype system (deprecated)
         self._archetype_checks += 1
 
         # Get required features
@@ -361,56 +417,26 @@ class KnowledgeAwareBacktest:
         mom_score = context.get('momentum_score', 0.0)
         frvp_pos = context.get('frvp_poc_position', 'middle')
 
-        # DEBUG: Log feature values every 100 archetype checks
-        if self._archetype_checks % 100 == 0:
-            logger.info(f"ARCHETYPE DEBUG [check #{self._archetype_checks}]:")
-            logger.info(f"  PTI: trap={pti_trap}, score={pti_score:.3f}")
-            logger.info(f"  BOMS: disp={boms_disp:.2f}, atr={atr:.2f}, strength={boms_strength:.3f}")
-            logger.info(f"  BOS: bull={bos_bull}, bear={bos_bear}")
-            logger.info(f"  FVG: 1h={fvg_1h}, 4h={fvg_4h}, tf4h_fusion={tf4h_fusion:.3f}")
-            logger.info(f"  Scores: liq={liq_score:.3f}, wyc={wyc_score:.3f}, mom={mom_score:.3f}")
-            logger.info(f"  FRVP: pos={frvp_pos}")
-
-        # Archetype A: Trap Reversal (Bojan-style)
-        # Conditions: PTI trap detected + strong displacement + flip-close
-        # ADJUSTED THRESHOLDS (data-driven):
-        # - pti_score: 0.65 → 0.40 (95th percentile is 0.328, max is 0.648)
-        # - boms_disp: 1.25×ATR → 0.80×ATR (only 2.23% of bars have >= 1.25×ATR)
+        # Archetype A: Trap Reversal
         if pti_trap is not None and pti_score >= 0.40 and boms_disp >= (0.80 * atr):
-            # Check for flip-close (price returned to range via FRVP position)
             if frvp_pos in ['at_poc', 'middle']:
                 self._archetype_a_matches += 1
-                logger.info(f"ARCHETYPE A MATCHED: trap_reversal (check #{self._archetype_checks})")
-                return ("trap_reversal", 0.33, 0.75)  # Low threshold, reduced size
+                return ("trap_reversal", 0.33, 0.75)
 
-        # Archetype B: OB/pHOB Retest (ZeroIka refinement)
-        # Conditions: BOS + strong liquidity + Wyckoff agreement
-        # ADJUSTED THRESHOLDS (data-driven):
-        # - boms_strength: 0.68 → 0.30 (only 1.37% of bars have >= 0.68)
-        # - liq_score: 0.68 → 0.25 (max is 0.667, 95th percentile is 0.088)
-        # - wyc_score: 0.50 → 0.35 (keep relatively strict for quality)
+        # Archetype B: OB/pHOB Retest
         if (bos_bull or bos_bear) and boms_strength >= 0.30:
             if liq_score >= 0.25 and wyc_score >= 0.35:
                 self._archetype_b_matches += 1
-                logger.info(f"ARCHETYPE B MATCHED: ob_retest (check #{self._archetype_checks})")
-                return ("ob_retest", 0.37, 1.0)  # Mid threshold, normal size
+                return ("ob_retest", 0.37, 1.0)
 
-        # Archetype C: FVG/Breaker Continuation (Moneytaur)
-        # Conditions: FVG present + strong displacement + momentum
-        # ADJUSTED THRESHOLDS (data-driven):
-        # - boms_disp: 1.5×ATR → 1.0×ATR (only 1.75% of bars have >= 1.5×ATR)
-        # - liq_score: 0.72 → 0.30 (max is 0.667, impossible to reach 0.72)
-        # - mom_score: 0.55 → 0.45 (moderately strict)
-        # - tf4h_fusion: 0.62 → 0.25 (for Plus-One sizing, max is 0.301)
+        # Archetype C: FVG/Breaker Continuation
         if (fvg_1h or fvg_4h) and boms_disp >= (1.0 * atr):
             if liq_score >= 0.30 and mom_score >= 0.45:
-                # Check for Plus-One sizing (tf4h_fusion >= 0.25 enables 1.25x)
                 size_mult = 1.25 if tf4h_fusion >= 0.25 else 1.0
                 self._archetype_c_matches += 1
-                logger.info(f"ARCHETYPE C MATCHED: fvg_continuation (check #{self._archetype_checks}) | size_mult={size_mult:.2f}")
-                return ("fvg_continuation", 0.42, size_mult)  # High threshold, variable size
+                return ("fvg_continuation", 0.42, size_mult)
 
-        return None  # No archetype matched
+        return None
 
     def calculate_position_size(self, row: pd.Series, fusion_score: float, context: Dict = None) -> float:
         """
@@ -475,6 +501,13 @@ class KnowledgeAwareBacktest:
 
             # Check if fusion score meets archetype-specific threshold
             if fusion_score >= threshold:
+                # PR#6A Quality Gate: Add final fusion threshold for quality control
+                # This prevents low-quality trades even if archetype-specific threshold is met
+                final_fusion_gate = 0.374
+                if fusion_score < final_fusion_gate:
+                    logger.info(f"ARCHETYPE REJECTED: {archetype_name} | fusion={fusion_score:.3f} < {final_fusion_gate} (final gate)")
+                    return None
+
                 # Store archetype info for position sizing later
                 context['entry_archetype'] = archetype_name
                 context['archetype_size_mult'] = size_mult
@@ -483,7 +516,7 @@ class KnowledgeAwareBacktest:
                 if context.get('macro_regime') == 'crisis':
                     return None
 
-                logger.info(f"ARCHETYPE ENTRY: {archetype_name} | fusion={fusion_score:.3f} >= {threshold:.3f} | size_mult={size_mult:.2f}x")
+                logger.info(f"ARCHETYPE ENTRY: {archetype_name} | fusion={fusion_score:.3f} >= {final_fusion_gate} | size_mult={size_mult:.2f}x")
                 return (f"archetype_{archetype_name}", row['close'])
 
         # PHASE 2: Fallback to legacy tiered system (safety net)
@@ -1632,15 +1665,16 @@ if __name__ == '__main__':
     print(f"Loaded {len(df)} bars from {df.index[0]} to {df.index[-1]}")
 
     # Load params from config or use defaults
+    runtime_config = None
     if args.config:
         with open(args.config) as f:
-            param_dict = json.load(f)
-        params = KnowledgeParams(**param_dict)
+            runtime_config = json.load(f)
+        params = KnowledgeParams()  # Use defaults for now
     else:
         params = KnowledgeParams()
 
     # Run backtest
-    backtest = KnowledgeAwareBacktest(df, params, asset=args.asset)
+    backtest = KnowledgeAwareBacktest(df, params, asset=args.asset, runtime_config=runtime_config)
     results = backtest.run()
 
     # Print results
@@ -1659,17 +1693,22 @@ if __name__ == '__main__':
     print(f"Avg Win: ${results['avg_win']:.2f}")
     print(f"Avg Loss: ${results['avg_loss']:.2f}")
 
-    # Print archetype statistics
+    # PR#6A: Print archetype statistics
     print("\n" + "=" * 80)
-    print("Archetype Entry Statistics (3-Archetype System)")
-    print("=" * 80)
-    print(f"Total archetype checks: {backtest._archetype_checks}")
-    print(f"Archetype A matches (Trap Reversal): {backtest._archetype_a_matches}")
-    print(f"Archetype B matches (OB Retest): {backtest._archetype_b_matches}")
-    print(f"Archetype C matches (FVG Continuation): {backtest._archetype_c_matches}")
-    total_matches = backtest._archetype_a_matches + backtest._archetype_b_matches + backtest._archetype_c_matches
-    if backtest._archetype_checks > 0:
-        print(f"Total matches: {total_matches} ({100*total_matches/backtest._archetype_checks:.2f}% of checks)")
+    if backtest.archetype_telemetry:
+        print("PR#6A: Archetype Entry Statistics (11-Archetype System)")
+        print("=" * 80)
+        backtest.archetype_telemetry.dump(logger=None)  # Print to stdout
+    else:
+        print("Archetype Entry Statistics (Legacy 3-Archetype System)")
+        print("=" * 80)
+        print(f"Total archetype checks: {backtest._archetype_checks}")
+        print(f"Archetype A matches (Trap Reversal): {backtest._archetype_a_matches}")
+        print(f"Archetype B matches (OB Retest): {backtest._archetype_b_matches}")
+        print(f"Archetype C matches (FVG Continuation): {backtest._archetype_c_matches}")
+        total_matches = backtest._archetype_a_matches + backtest._archetype_b_matches + backtest._archetype_c_matches
+        if backtest._archetype_checks > 0:
+            print(f"Total matches: {total_matches} ({100*total_matches/backtest._archetype_checks:.2f}% of checks)")
 
     print("\n" + "=" * 80)
     print("Trade Log")
