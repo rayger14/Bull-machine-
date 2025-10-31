@@ -26,12 +26,25 @@ from datetime import datetime
 import json
 import logging
 import os
+import traceback
+import joblib  # ML model loading
 
 # PR#4: Runtime liquidity scoring
 from engine.liquidity.score import compute_liquidity_score, compute_liquidity_telemetry
 
 # PR#6A: Archetype expansion (using package import for adapter support)
 from engine.archetypes import ArchetypeLogic, ArchetypeTelemetry
+
+# PR#6B: Adaptive Fusion (regime-aware parameter morphing)
+try:
+    # Use GMM classifier trained on real macro data
+    from engine.context.regime_classifier import RegimeClassifier
+    from engine.fusion.adaptive import AdaptiveFusion
+    from engine.runtime.context import RuntimeContext
+    from engine.archetypes.threshold_policy import ThresholdPolicy
+    ADAPTIVE_FUSION_AVAILABLE = True
+except ImportError:
+    ADAPTIVE_FUSION_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -115,6 +128,7 @@ class Trade:
     pti_score_1d: float
     pti_score_1h: float
     frvp_poc_position: str
+    entry_archetype: Optional[str] = None  # Track B: archetype that triggered entry
 
     # Exit tracking
     exit_time: Optional[pd.Timestamp] = None
@@ -132,6 +146,9 @@ class Trade:
     initial_stop: float = 0.0
     peak_profit: float = 0.0
     max_adverse_excursion: float = 0.0
+
+    # ML Export: Store full entry context for feature extraction
+    entry_context: Optional[Dict] = None
 
 
 class KnowledgeAwareBacktest:
@@ -162,6 +179,61 @@ class KnowledgeAwareBacktest:
         self.liquidity_enabled = self.runtime_config.get('runtime', {}).get('runtime_liquidity_enabled', False)
         self.liquidity_scores: List[float] = []  # Track scores for telemetry
 
+        # ML Filter initialization
+        self.ml_model = None
+        self.ml_feature_names = None
+        self.ml_threshold = 0.707
+        ml_config = self.runtime_config.get('ml_filter', {})
+        if ml_config.get('enabled'):
+            try:
+                model_path = ml_config['model_path']
+                model_data = joblib.load(model_path)
+                self.ml_model = model_data['model']
+                self.ml_feature_names = model_data['feature_names']
+                self.ml_threshold = float(ml_config.get('threshold', model_data.get('threshold', 0.707)))
+                logger.info(f"ML Filter: loaded {model_path} (threshold={self.ml_threshold:.3f}, {len(self.ml_feature_names)} features)")
+            except Exception as e:
+                logger.warning(f"ML Filter: failed to load - {e}")
+                self.ml_model = None
+
+        # PR#6B: Adaptive Fusion initialization
+        self.regime_classifier = None
+        self.adaptive_fusion = None
+        adaptive_config = self.runtime_config.get('fusion_adapt', {})
+        regime_config = self.runtime_config.get('regime_classifier', {})
+
+        if ADAPTIVE_FUSION_AVAILABLE and adaptive_config.get('enable'):
+            try:
+                # Load regime classifier
+                model_path = regime_config.get('model_path', 'models/regime_classifier_gmm.pkl')
+                feature_order = regime_config.get('feature_order', [])
+                self.regime_classifier = RegimeClassifier.load(model_path, feature_order)
+
+                # Initialize adaptive fusion coordinator
+                self.adaptive_fusion = AdaptiveFusion(self.runtime_config)
+
+                # PR#6B: Initialize ThresholdPolicy for regime-aware threshold management
+                self.threshold_policy = ThresholdPolicy(
+                    base_cfg=self.runtime_config,
+                    regime_profiles=self.runtime_config.get('gates_regime_profiles'),
+                    archetype_overrides=self.runtime_config.get('archetype_overrides'),
+                    global_clamps=self.runtime_config.get('global_clamps')
+                )
+
+                logger.info(f"Adaptive Fusion: ENABLED (ema_alpha={adaptive_config.get('ema_alpha', 0.2)})")
+                logger.info(f"ThresholdPolicy: ENABLED (regime-aware archetype thresholds)")
+            except Exception as e:
+                logger.warning(f"Adaptive Fusion: failed to initialize - {e}")
+                self.regime_classifier = None
+                self.adaptive_fusion = None
+                self.threshold_policy = None
+        else:
+            if not ADAPTIVE_FUSION_AVAILABLE:
+                logger.info("Adaptive Fusion: DISABLED (modules not available)")
+            else:
+                logger.info("Adaptive Fusion: DISABLED (enable=false in config)")
+            self.threshold_policy = None
+
         self.trades: List[Trade] = []
         self.current_position: Optional[Trade] = None
 
@@ -180,18 +252,32 @@ class KnowledgeAwareBacktest:
 
         # PR#6A: Archetype system (11-archetype expansion)
         archetype_config = self.runtime_config.get('archetypes', {})
-        if archetype_config.get('use_archetypes', False):
+        use_archetypes = archetype_config.get('use_archetypes', False)
+        logger.info(f"DIAGNOSTIC: use_archetypes={use_archetypes}, archetype_config_keys={list(archetype_config.keys())}")
+        if use_archetypes:
             self.archetype_logic = ArchetypeLogic(archetype_config)
             self.archetype_telemetry = ArchetypeTelemetry()
             logger.info("PR#6A: 11-archetype system ENABLED")
         else:
             self.archetype_logic = None
             self.archetype_telemetry = None
+            logger.info("DIAGNOSTIC: 11-archetype system DISABLED - falling back to legacy 3-archetype")
             # Fallback: Old 3-archetype tracking (deprecated)
             self._archetype_checks = 0
             self._archetype_a_matches = 0  # Trap Reversal
             self._archetype_b_matches = 0  # OB Retest
             self._archetype_c_matches = 0  # FVG Continuation
+
+        # Diagnostic: Track veto reasons
+        self._veto_metrics = {
+            'pre_archetype_candidates': 0,
+            'archetype_hits': 0,
+            'archetype_no_match': 0,
+            'veto_final_fusion_gate': 0,
+            'veto_crisis_regime': 0,
+            'veto_risk_off_regime': 0,
+            'veto_ml_filter': 0
+        }
 
         # ML Optimization: Exit Strategy Parameters (read from env or use defaults)
         # Phase 2: Pattern Exit Parameters
@@ -232,14 +318,23 @@ class KnowledgeAwareBacktest:
 
             self.df['atr_14'] = tr.ewm(span=14, adjust=False).mean()
 
-    def compute_advanced_fusion_score(self, row: pd.Series) -> Tuple[float, Dict]:
+    def compute_advanced_fusion_score(self, row: pd.Series, adapted_params: Optional[Dict] = None) -> Tuple[float, Dict]:
         """
         Compute advanced fusion score using ALL 69 features.
+
+        Args:
+            row: Feature store row
+            adapted_params: Optional adaptive fusion parameters (from AdaptiveFusion.update())
 
         Returns:
             (fusion_score, context_dict)
         """
         context = {}
+
+        # PR#6B: Store regime info in context if adaptive fusion is enabled
+        if adapted_params:
+            context['regime'] = adapted_params.get('regime', 'neutral')
+            context['regime_probs_ema'] = adapted_params.get('regime_probs_ema', {})
 
         # 1. Wyckoff Governor (1D) - Include M1/M2 signals
         wyckoff_base = row.get('tf1d_wyckoff_score', 0.5)
@@ -313,18 +408,35 @@ class KnowledgeAwareBacktest:
         context['frvp_score'] = frvp_score
         context['frvp_poc_position'] = frvp_poc_pos
 
-        # Weighted fusion score
-        fusion = (
-            self.params.wyckoff_weight * wyckoff +
-            self.params.liquidity_weight * liquidity +
-            self.params.momentum_weight * momentum +
-            self.params.macro_weight * macro +
-            (1.0 - self.params.wyckoff_weight - self.params.liquidity_weight -
-             self.params.momentum_weight - self.params.macro_weight) * frvp_score
-        )
+        # PR#6B: Weighted fusion score (adaptive or static)
+        if adapted_params and adapted_params.get('fusion_weights'):
+            # Use adaptive weights (regime-aware blending)
+            fusion_weights = adapted_params['fusion_weights']
 
-        # Apply PTI penalty (subtract PTI weight × PTI score)
-        fusion -= self.params.pti_weight * pti_penalty
+            # Adaptive fusion uses 4 components: wyckoff, liquidity, momentum, temporal
+            # Note: temporal is not computed in this method yet, so default to 0
+            temporal_score = context.get('temporal_score', 0.0)
+
+            fusion = (
+                fusion_weights.get('wyckoff', 0.0) * wyckoff +
+                fusion_weights.get('liquidity', 0.0) * liquidity +
+                fusion_weights.get('momentum', 0.0) * momentum +
+                fusion_weights.get('temporal', 0.0) * temporal_score
+            )
+            # Note: Adaptive mode doesn't use PTI penalty - it's regime-aware instead
+        else:
+            # Fallback to static weights (original logic)
+            fusion = (
+                self.params.wyckoff_weight * wyckoff +
+                self.params.liquidity_weight * liquidity +
+                self.params.momentum_weight * momentum +
+                self.params.macro_weight * macro +
+                (1.0 - self.params.wyckoff_weight - self.params.liquidity_weight -
+                 self.params.momentum_weight - self.params.macro_weight) * frvp_score
+            )
+
+            # Apply PTI penalty (subtract PTI weight × PTI score)
+            fusion -= self.params.pti_weight * pti_penalty
 
         # Apply fakeout penalty
         if row.get('tf1h_fakeout_detected', False):
@@ -354,17 +466,47 @@ class KnowledgeAwareBacktest:
         if self.archetype_logic and self.archetype_telemetry:
             self.archetype_telemetry.check()
 
-            # Get dataframe and current index for context-aware detection
-            prev_row = None  # TODO: Could pass previous row if needed
-            current_idx = context.get('current_index', 0)
+            # BUGFIX: Inject runtime scores into row for archetype detection
+            # The archetype logic looks for liquidity_score in the row, but runtime
+            # scores are only stored in context. Copy them over.
+            row_with_runtime = row.copy()
+            if 'liquidity_score' in context:
+                row_with_runtime['liquidity_score'] = context['liquidity_score']
+            if 'fusion_score' in context:
+                row_with_runtime['fusion_score'] = context['fusion_score']
 
-            # Call archetype detection
-            archetype_name, fusion_score, liquidity_score = self.archetype_logic.check_archetype(
-                row=row,
-                prev_row=prev_row,
-                df=self.df,
-                index=current_idx
-            )
+            # PR#6B: Build RuntimeContext with regime-aware thresholds
+            if self.threshold_policy and 'adapted_params' in context and context['adapted_params']:
+                adapted_params = context['adapted_params']
+                # BUGFIX: AdaptiveFusion returns 'regime_probs_ema', not 'regime_probs'
+                regime_probs = adapted_params.get('regime_probs_ema', {'neutral': 1.0})
+                regime_label = adapted_params.get('regime', 'neutral')
+
+                # Resolve thresholds using ThresholdPolicy
+                thresholds = self.threshold_policy.resolve(regime_probs, regime_label)
+
+                # Build RuntimeContext
+                runtime_ctx = RuntimeContext(
+                    ts=row.name if hasattr(row, 'name') else context.get('current_index', 0),
+                    row=row_with_runtime,
+                    regime_probs=regime_probs,
+                    regime_label=regime_label,
+                    adapted_params=adapted_params,
+                    thresholds=thresholds
+                )
+
+                # Call new detect() method with RuntimeContext
+                archetype_name, fusion_score, liquidity_score = self.archetype_logic.detect(runtime_ctx)
+            else:
+                # Fallback to old API if ThresholdPolicy not available
+                prev_row = None
+                current_idx = context.get('current_index', 0)
+                archetype_name, fusion_score, liquidity_score = self.archetype_logic.check_archetype(
+                    row=row_with_runtime,
+                    prev_row=prev_row,
+                    df=self.df,
+                    index=current_idx
+                )
 
             # Track telemetry
             if archetype_name:
@@ -466,10 +608,30 @@ class KnowledgeAwareBacktest:
             vix_scaling = {'low': 1.0, 'medium': 0.8, 'high': 0.5, 'extreme': 0.25}
             position_size *= vix_scaling.get(vix_level, 0.8)
 
-        # Confidence scaling (higher fusion = larger size)
-        # Scale from 50% to 100% allocation based on fusion score
-        confidence_mult = 0.5 + (fusion_score * 0.5)
-        position_size *= confidence_mult
+        # DYNAMIC SIZING PHASE 1: Fusion-based weight (recentered to observed distribution)
+        # Get sizing params from config (with sensible defaults)
+        fusion_center = self.runtime_config.get('decision_gates', {}).get('fusion_center', 0.475)
+        fusion_gain = self.runtime_config.get('decision_gates', {}).get('fusion_gain', 1.6)
+        size_min = self.runtime_config.get('decision_gates', {}).get('size_min', 0.75)
+        size_max = self.runtime_config.get('decision_gates', {}).get('size_max', 1.35)
+
+        # Linear recentered formula: weight = 1.0 + gain × (fusion - center)
+        fusion_weight = 1.0 + fusion_gain * (fusion_score - fusion_center)
+        fusion_weight = max(size_min, min(size_max, fusion_weight))
+        position_size *= fusion_weight
+        logger.info(f"DYNAMIC SIZING: fusion={fusion_score:.3f} (center={fusion_center:.3f}) → weight={fusion_weight:.2f}x")
+
+        # DYNAMIC SIZING PHASE 2: Regime multipliers
+        regime = context.get('macro_regime', 'neutral') if context else 'neutral'
+        regime_multipliers = {
+            'risk_on': 1.2,
+            'neutral': 1.0,
+            'risk_off': 0.8,
+            'crisis': 0.5
+        }
+        regime_mult = regime_multipliers.get(regime, 1.0)
+        position_size *= regime_mult
+        logger.info(f"REGIME MULT: {regime} → {regime_mult:.2f}x")
 
         # ARCHETYPE SIZING MULTIPLIER (NEW - Phase 3-archetype system)
         if context and 'archetype_size_mult' in context:
@@ -478,10 +640,94 @@ class KnowledgeAwareBacktest:
             archetype_name = context.get('entry_archetype', 'unknown')
             logger.info(f"ARCHETYPE SIZING: {archetype_name} × {arch_mult:.2f} → ${position_size:,.0f}")
 
+        # ML SIZING MULTIPLIER (Phase 4: ML-based confidence sizing)
+        if context and 'ml_size_mult' in context:
+            ml_mult = context['ml_size_mult']
+            position_size *= ml_mult
+            ml_score = context.get('ml_entry_score', 0.0)
+            logger.info(f"ML SIZING: score={ml_score:.3f} × {ml_mult:.2f} → ${position_size:,.0f}")
+
         # Cap at 95% of equity
         position_size = min(position_size, self.equity * 0.95)
 
         return position_size
+
+    def _extract_ml_features(self, row: pd.Series, context: Dict) -> np.ndarray:
+        """Extract 44 features matching training schema"""
+        if not self.ml_feature_names:
+            return None
+
+        features = {}
+
+        # Archetype one-hot (match export schema)
+        archetype = context.get('entry_archetype', 'unknown')
+        for arch_key in ['trap', 'retest', 'continuation', 'failed_continuation',
+                         'compression', 'exhaustion', 'reaccumulation', 'trap_within_trend',
+                         'wick_trap', 'volume_exhaustion', 'ratio_coil_break', 'false_break_reversal']:
+            features[f'archetype_{arch_key}'] = 1 if archetype == arch_key else 0
+
+        # Core scores
+        features['entry_fusion_score'] = float(context.get('fusion_score', 0.5))
+        features['entry_liquidity_score'] = float(context.get('liquidity_score', 0.0))
+
+        # Macro regime one-hot (match training: macro_regime_risk_on, etc.)
+        regime = context.get('macro_regime', 'neutral')
+        for r in ['risk_on', 'neutral', 'risk_off', 'crisis']:
+            features[f'macro_regime_{r}'] = 1 if regime == r else 0
+
+        # Technicals from row (safe access with defaults)
+        def safe_get(col, default=0.0):
+            val = row.get(col, default)
+            try:
+                return float(val) if val is not None and not np.isnan(val) else float(default)
+            except:
+                return float(default)
+
+        features['vix_z_score'] = safe_get('vix_z_score', 0.0)
+        features['btc_volatility_percentile'] = safe_get('btc_volatility_percentile', 0.5)
+        features['volume_zscore'] = safe_get('volume_zscore', 0.0)
+        features['atr_percentile'] = safe_get('atr_percentile', 0.5)
+        features['adx_14'] = safe_get('adx', 0.0)
+        features['rsi_14'] = safe_get('rsi', 50.0)
+        features['macd_histogram'] = safe_get('macd_histogram', 0.0)
+
+        # MTF fusion
+        features['tf1h_fusion'] = safe_get('tf1h_fusion_score', features['entry_fusion_score'])
+        features['tf4h_fusion'] = safe_get('tf4h_fusion_score', 0.0)
+        features['tf1d_fusion'] = safe_get('tf1d_fusion_score', 0.0)
+        features['tf4h_trend_aligned'] = safe_get('tf4h_trend_aligned', 0.0)
+        features['tf1d_trend_aligned'] = safe_get('tf1d_trend_aligned', 0.0)
+        features['nested_structure_quality'] = safe_get('nested_structure_quality', 0.0)
+
+        # Microstructure
+        features['boms_strength'] = safe_get('boms_strength', 0.0)
+        features['fvg_quality'] = safe_get('fvg_quality', 0.0)
+        features['wyckoff_phase_score'] = safe_get('wyckoff_phase_score', 0.0)
+        features['poc_distance'] = safe_get('frvp_poc_distance', 0.5)
+        features['lvn_trap_risk'] = safe_get('lvn_trap_risk', 0.0)
+        features['liquidity_sweep_strength'] = safe_get('liquidity_sweep_strength', 0.0)
+
+        # Recent performance (defaults if not tracked)
+        features['last_3_trades_wr'] = float(context.get('last_3_trades_wr', 0.5))
+        features['bars_since_last_trade'] = float(context.get('bars_since_last_trade', 48))
+        features['recent_dd_pct'] = float(context.get('recent_dd_pct', 0.0))
+        features['streak_length'] = float(context.get('streak_length', 0.0))
+
+        # Timing
+        ts = row.name if hasattr(row, 'name') else context.get('timestamp')
+        if hasattr(ts, 'hour'):
+            hour = int(ts.hour)
+            dow = int(ts.weekday())
+            doy = int(ts.dayofyear) if hasattr(ts, 'dayofyear') else 1
+        else:
+            hour, dow, doy = 0, 0, 1
+
+        features['hour_of_day'] = float(hour)
+        features['day_of_week'] = float(dow)
+        features['days_into_quarter'] = float(doy % 90)
+
+        # Return ordered array matching training
+        return np.array([features.get(name, 0.0) for name in self.ml_feature_names])
 
     def check_entry_conditions(self, row: pd.Series, fusion_score: float, context: Dict) -> Optional[Tuple[str, float]]:
         """
@@ -494,17 +740,24 @@ class KnowledgeAwareBacktest:
             (entry_type, entry_price) or None
         """
         # PHASE 1: Try archetype classification first
+        self._veto_metrics['pre_archetype_candidates'] += 1
         archetype_result = self.classify_entry_archetype(row, context)
 
         if archetype_result:
+            self._veto_metrics['archetype_hits'] += 1
             archetype_name, threshold, size_mult = archetype_result
 
             # Check if fusion score meets archetype-specific threshold
             if fusion_score >= threshold:
-                # PR#6A Quality Gate: Add final fusion threshold for quality control
-                # This prevents low-quality trades even if archetype-specific threshold is met
-                final_fusion_gate = 0.374
+                # PR#6B: Use regime-adapted final fusion gate (expands in risk_on, tightens in crisis)
+                # Get adapted gate from context if available, otherwise use static fallback
+                if 'adapted_params' in context and context['adapted_params'] and context['adapted_params'].get('gates'):
+                    final_fusion_gate = context['adapted_params']['gates'].get('final_fusion_floor', 0.374)
+                else:
+                    final_fusion_gate = 0.374  # Fallback to static threshold
+
                 if fusion_score < final_fusion_gate:
+                    self._veto_metrics['veto_final_fusion_gate'] += 1
                     logger.info(f"ARCHETYPE REJECTED: {archetype_name} | fusion={fusion_score:.3f} < {final_fusion_gate} (final gate)")
                     return None
 
@@ -514,10 +767,52 @@ class KnowledgeAwareBacktest:
 
                 # Check macro filter (crisis veto applies to all archetypes)
                 if context.get('macro_regime') == 'crisis':
+                    self._veto_metrics['veto_crisis_regime'] += 1
+                    logger.info(f"REGIME FILTER: crisis → entry blocked")
                     return None
 
-                logger.info(f"ARCHETYPE ENTRY: {archetype_name} | fusion={fusion_score:.3f} >= {final_fusion_gate} | size_mult={size_mult:.2f}x")
+                # REGIME FILTER: risk_off requires higher fusion threshold
+                regime = context.get('macro_regime', 'neutral')
+                if regime == 'risk_off':
+                    risk_off_fusion_gate = 0.45  # Stricter than normal
+                    if fusion_score < risk_off_fusion_gate:
+                        self._veto_metrics['veto_risk_off_regime'] += 1
+                        logger.info(f"REGIME FILTER: risk_off → fusion={fusion_score:.3f} < {risk_off_fusion_gate} (heightened gate)")
+                        return None
+
+                # ML META-FILTER: Veto low-quality trades
+                if self.ml_model is not None:
+                    try:
+                        features = self._extract_ml_features(row, context)
+                        if features is not None:
+                            ml_proba = float(self.ml_model.predict_proba(features.reshape(1, -1))[0][1])
+                            context['ml_entry_score'] = ml_proba
+
+                            if ml_proba < self.ml_threshold:
+                                self._veto_metrics['veto_ml_filter'] += 1
+                                logger.info(f"ML VETO: {archetype_name} | score={ml_proba:.3f} < {self.ml_threshold:.3f}")
+                                return None
+
+                            # Optional: ML-based position sizing multiplier
+                            if ml_proba >= 0.80:
+                                context['ml_size_mult'] = 1.20
+                            elif ml_proba >= 0.65:
+                                context['ml_size_mult'] = 1.00
+                            else:
+                                context['ml_size_mult'] = 0.80
+
+                            logger.info(f"ML PASS: {archetype_name} | score={ml_proba:.3f} | size_mult={context.get('ml_size_mult', 1.0):.2f}x")
+                    except Exception as e:
+                        logger.warning(f"ML filter error (allowing trade): {e}")
+                        context['ml_size_mult'] = 1.0
+                else:
+                    context['ml_size_mult'] = 1.0
+
+                logger.info(f"ARCHETYPE ENTRY: {archetype_name} | fusion={fusion_score:.3f} >= {final_fusion_gate} | size_mult={size_mult:.2f}x | regime={regime}")
                 return (f"archetype_{archetype_name}", row['close'])
+        else:
+            # archetype_result is None - no archetype matched
+            self._veto_metrics['archetype_no_match'] += 1
 
         # PHASE 2: Fallback to legacy tiered system (safety net)
         # Only trigger if fusion score is exceptionally high (> 0.45)
@@ -1089,6 +1384,15 @@ class KnowledgeAwareBacktest:
                 if fvg_proximity < 2.0:  # Within 2 ATR of FVG resistance
                     structure_factor = 1.2
 
+            # Track B: Look up archetype-specific exit parameters
+            archetype_base_trail = None
+            if trade.entry_archetype:
+                archetype_exits = self.runtime_config.get('archetypes', {}).get('exits', {})
+                archetype_params = archetype_exits.get(trade.entry_archetype, archetype_exits.get('_default', {}))
+                if 'trail_atr' in archetype_params:
+                    archetype_base_trail = archetype_params['trail_atr']
+                    logger.info(f"Track B: Using archetype-specific trail_atr={archetype_base_trail} for {trade.entry_archetype}")
+
             # Determine base ATR multiplier with adaptive logic
             if hasattr(trade, 'tightened_trailing_mult'):
                 # Use tightened multiplier from TP2 (Phase 2.1)
@@ -1096,17 +1400,17 @@ class KnowledgeAwareBacktest:
                 reason = "TP2-tightened"
             elif adx > 25 and kama_rising:
                 # Strong uptrend: Loosen (let it run)
-                base_mult = self.params.trailing_atr_mult
+                base_mult = archetype_base_trail or self.params.trailing_atr_mult
                 regime_factor = min(regime_factor, 0.8)  # Override: looser in trends
                 reason = "strong-trend"
             elif adx < 20 or vix > 25:
                 # Weak trend or high VIX: Tighten
-                base_mult = max(1.5, self.params.trailing_atr_mult - 0.5)
+                base_mult = max(1.5, (archetype_base_trail or self.params.trailing_atr_mult) - 0.5)
                 regime_factor = max(regime_factor, 1.5)  # Override: tighter in chop/vol
                 reason = "weak-trend-or-high-vix"
             else:
                 # Normal conditions: Use standard trailing
-                base_mult = self.params.trailing_atr_mult
+                base_mult = archetype_base_trail or self.params.trailing_atr_mult
                 reason = "standard"
 
             # Apply Phase 3 regime and structure factors
@@ -1373,12 +1677,21 @@ class KnowledgeAwareBacktest:
         # 7. Max holding period (adaptive or fixed)
         bars_held = (row.name - trade.entry_time).total_seconds() / 3600  # Hours
 
+        # Track B: Look up archetype-specific max_bars
+        archetype_max_bars = None
+        if trade.entry_archetype:
+            archetype_exits = self.runtime_config.get('archetypes', {}).get('exits', {})
+            archetype_params = archetype_exits.get(trade.entry_archetype, archetype_exits.get('_default', {}))
+            if 'max_bars' in archetype_params:
+                archetype_max_bars = archetype_params['max_bars']
+                logger.info(f"Track B: Using archetype-specific max_bars={archetype_max_bars} for {trade.entry_archetype}")
+
         if self.params.adaptive_max_hold:
             # Adaptive max_hold based on market context
             max_hold_adjusted = self._compute_adaptive_max_hold(context, row, trade)
         else:
-            # Fixed max_hold
-            max_hold_adjusted = self.params.max_hold_bars
+            # Fixed max_hold (use archetype-specific if available)
+            max_hold_adjusted = archetype_max_bars or self.params.max_hold_bars
 
         if bars_held >= max_hold_adjusted:
             return ("max_hold", current_price)
@@ -1404,8 +1717,29 @@ class KnowledgeAwareBacktest:
             if pd.isna(row.get('atr_14')):
                 continue
 
-            # Compute fusion score
-            fusion_score, context = self.compute_advanced_fusion_score(row)
+            # PR#6B: Adaptive Fusion - Classify regime and get adapted parameters
+            adapted_params = None
+            if self.adaptive_fusion and self.regime_classifier:
+                try:
+                    # Extract macro features for regime classification
+                    macro_row = {feat: row.get(feat, np.nan)
+                                for feat in self.runtime_config['regime_classifier']['feature_order']}
+                    regime_info = self.regime_classifier.classify(macro_row)
+                    adapted_params = self.adaptive_fusion.update(regime_info)
+
+                    # Override ML threshold if adaptive
+                    if adapted_params.get('ml_threshold') is not None:
+                        self.ml_threshold = adapted_params['ml_threshold']
+                except Exception as e:
+                    if bar_idx % 1000 == 0:  # Log errors only every 1000 bars to avoid spam
+                        logger.warning(f"Adaptive fusion failed at bar {bar_idx}: {e}")
+                    adapted_params = None
+
+            # Compute fusion score (with adapted parameters if available)
+            fusion_score, context = self.compute_advanced_fusion_score(row, adapted_params)
+
+            # Store adapted_params in context for archetype detection
+            context['adapted_params'] = adapted_params
 
             # PR#4: Compute runtime liquidity score (if enabled)
             if self.liquidity_enabled:
@@ -1464,6 +1798,14 @@ class KnowledgeAwareBacktest:
             last_row = self.df.iloc[-1]
             self._close_trade(last_row, last_row['close'], "end_of_period")
 
+        # DIAGNOSTIC: Print veto metrics summary
+        logger.info("=" * 60)
+        logger.info("DIAGNOSTIC: ENTRY PIPELINE METRICS")
+        logger.info("=" * 60)
+        for key, value in self._veto_metrics.items():
+            logger.info(f"  {key}: {value}")
+        logger.info("=" * 60)
+
         # Calculate metrics
         return self._calculate_metrics()
 
@@ -1496,8 +1838,10 @@ class KnowledgeAwareBacktest:
             pti_score_1d=context.get('pti_1d', 0.0),
             pti_score_1h=context.get('pti_1h', 0.0),
             frvp_poc_position=context.get('frvp_poc_position', 'middle'),
+            entry_archetype=context.get('entry_archetype'),  # Track B: store triggering archetype
             atr_at_entry=atr,
-            initial_stop=initial_stop
+            initial_stop=initial_stop,
+            entry_context=context.copy()  # ML Export: Store full context for feature extraction
         )
 
         self.current_position = trade
@@ -1630,6 +1974,231 @@ class KnowledgeAwareBacktest:
             'trades': self.trades
         }
 
+    def _nearest_row(self, ts: pd.Timestamp):
+        """Find nearest row in dataframe using asof/searchsorted logic"""
+        # Normalize timezone
+        if ts.tzinfo is not None:
+            ts = ts.tz_convert("UTC").tz_localize(None)
+
+        # Use searchsorted for fast lookup
+        idx = self.df.index.searchsorted(ts, side="right") - 1
+        if idx < 0:
+            return None
+        return self.df.iloc[idx]
+
+    def export_trades_with_ml_features(self, output_path: str):
+        """
+        Export trades with full ML feature set for XGBoost training.
+
+        Extracts 50+ features per trade including:
+        - Archetype one-hot encoding
+        - Entry fusion/liquidity scores
+        - Market state (regime, VIX, volatility)
+        - MTF alignment indicators
+        - Microstructure features
+        - Recent performance metrics
+        - Timing features
+        - Trade outcome (r_multiple, win/loss)
+        """
+        print("[ML] Feature Export starting...", flush=True)
+
+        # Early sanity checks
+        if not hasattr(self, "trades"):
+            print("[ML] ERROR: No trades attribute on backtester", flush=True)
+            return
+
+        if not self.trades:
+            print("[ML] No trades to export (0 trades)", flush=True)
+            return
+
+        if not isinstance(self.df.index, pd.DatetimeIndex):
+            print(f"[ML] ERROR: df.index must be DatetimeIndex, got {type(self.df.index)}", flush=True)
+            return
+
+        print(f"[ML] Exporting {len(self.trades)} trades...", flush=True)
+
+        # Normalize df timezone to naive UTC
+        if self.df.index.tz is not None:
+            self.df = self.df.tz_convert("UTC").tz_localize(None)
+
+        records = []
+        errors = 0
+
+        for trade_idx, trade in enumerate(self.trades):
+            try:
+                # Get entry row using safe nearest lookup
+                entry_row = self._nearest_row(trade.entry_time)
+                if entry_row is None:
+                    errors += 1
+                    print(f"[ML] WARN: no row found for entry_time={trade.entry_time}", flush=True)
+                    continue
+
+                ctx = trade.entry_context or {}
+
+                # Calculate R-multiple (trade outcome)
+                r_multiple = trade.net_pnl / (trade.position_size * 0.02) if trade.position_size > 0 else 0.0
+
+                # Calculate archetype one-hot encoding
+                archetype_map = {
+                    'trap': 'archetype_trap',
+                    'order_block_retest': 'archetype_retest',
+                    'fvg_continuation': 'archetype_continuation',
+                    'failed_continuation': 'archetype_failed_continuation',
+                    'compression_coil': 'archetype_compression',
+                    'exhaustion_spike': 'archetype_exhaustion',
+                    'reaccumulation': 'archetype_reaccumulation',
+                    'trap_within_trend': 'archetype_trap_within_trend',
+                    'wick_trap': 'archetype_wick_trap',
+                    'volume_exhaustion': 'archetype_volume_exhaustion',
+                    'ratio_coil_break': 'archetype_ratio_coil_break',
+                    'false_break_reversal': 'archetype_false_break_reversal'
+                }
+
+                record = {
+                    # Trade identification
+                    'entry_time': trade.entry_time,
+                    'exit_time': trade.exit_time,
+                    'r_multiple': r_multiple,
+                    'trade_won': 1 if r_multiple > 0 else 0,
+
+                    # Archetype one-hot (12 features)
+                    **{name: 1 if trade.entry_archetype == key else 0
+                       for key, name in archetype_map.items()},
+
+                    # Fusion & Liquidity (2 features)
+                    'entry_fusion_score': trade.entry_fusion_score,
+                    'entry_liquidity_score': ctx.get('liquidity_score', 0.0),
+
+                    # Market State (15 features)
+                    'macro_regime_risk_on': 1 if trade.macro_regime == 'risk_on' else 0,
+                    'macro_regime_neutral': 1 if trade.macro_regime == 'neutral' else 0,
+                    'macro_regime_risk_off': 1 if trade.macro_regime == 'risk_off' else 0,
+                    'macro_regime_crisis': 1 if trade.macro_regime == 'crisis' else 0,
+                    'vix_z_score': ctx.get('vix_z_score', 0.0),
+                    'btc_volatility_percentile': ctx.get('btc_volatility_percentile', 0.5),
+                    'volume_zscore': float(entry_row.get('volume_zscore', 0.0)) if isinstance(entry_row, pd.Series) else 0.0,
+                    'atr_percentile': ctx.get('atr_percentile', 0.5),
+                    'adx_14': float(entry_row.get('adx', 0.0)) if isinstance(entry_row, pd.Series) else 0.0,
+                    'rsi_14': float(entry_row.get('rsi', 50.0)) if isinstance(entry_row, pd.Series) else 50.0,
+                    'macd_histogram': float(entry_row.get('macd_histogram', 0.0)) if isinstance(entry_row, pd.Series) else 0.0,
+
+                    # MTF Alignment (12 features)
+                    'tf1h_fusion': float(entry_row.get('tf1h_fusion_score', 0.0)) if isinstance(entry_row, pd.Series) else 0.0,
+                    'tf4h_fusion': float(entry_row.get('tf4h_fusion_score', 0.0)) if isinstance(entry_row, pd.Series) else 0.0,
+                    'tf1d_fusion': float(entry_row.get('tf1d_fusion_score', 0.0)) if isinstance(entry_row, pd.Series) else 0.0,
+                    'tf4h_trend_aligned': ctx.get('tf4h_trend_aligned', 0),
+                    'tf1d_trend_aligned': ctx.get('tf1d_trend_aligned', 0),
+                    'nested_structure_quality': ctx.get('nested_structure_quality', 0.0),
+
+                    # Microstructure (10 features)
+                    'boms_strength': float(entry_row.get('boms_strength', 0.0)) if isinstance(entry_row, pd.Series) else 0.0,
+                    'fvg_quality': float(entry_row.get('fvg_quality', 0.0)) if isinstance(entry_row, pd.Series) else 0.0,
+                    'wyckoff_phase_score': ctx.get('wyckoff_phase_score', 0.0),
+                    'poc_distance': float(entry_row.get('poc_distance', 0.0)) if isinstance(entry_row, pd.Series) else 0.0,
+                    'lvn_trap_risk': ctx.get('lvn_trap_risk', 0.0),
+                    'liquidity_sweep_strength': ctx.get('liquidity_sweep_strength', 0.0),
+
+                    # Recent Performance (8 features) - Calculate from previous trades
+                    'last_3_trades_wr': self._calculate_recent_wr(trade_idx, window=3),
+                    'bars_since_last_trade': self._calculate_bars_since_last(trade_idx),
+                    'recent_dd_pct': self._calculate_recent_dd(trade_idx),
+                    'streak_length': self._calculate_streak_length(trade_idx),
+
+                    # Timing (4 features)
+                    'hour_of_day': trade.entry_time.hour,
+                    'day_of_week': trade.entry_time.dayofweek,
+                    'days_into_quarter': (trade.entry_time.dayofyear - 1) % 90,
+                }
+
+                records.append(record)
+
+            except Exception as e:
+                errors += 1
+                print(f"[ML] ERROR exporting trade #{trade_idx}: {e}", flush=True)
+                traceback.print_exc(file=sys.stdout)
+
+        # Check if we have any records to export
+        if not records:
+            print(f"[ML] No rows exported (errors={errors}). Aborting write.", flush=True)
+            return
+
+        # Create DataFrame and export atomically
+        df_export = pd.DataFrame(records)
+        out_path = Path(output_path).expanduser()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Write to temp file first, then rename (atomic operation)
+        tmp_path = out_path.with_suffix(".tmp.csv")
+        df_export.to_csv(tmp_path, index=False)
+        tmp_path.replace(out_path)
+
+        print(f"[ML] Exported {len(records)} rows → {out_path}", flush=True)
+        print(f"[ML] Features: {len(df_export.columns)} columns", flush=True)
+        print(f"[ML] Win rate: {df_export['trade_won'].mean()*100:.1f}%", flush=True)
+
+    def _calculate_recent_wr(self, current_idx: int, window: int = 3) -> float:
+        """Calculate win rate of last N trades before current trade"""
+        if current_idx == 0:
+            return 0.0
+
+        start_idx = max(0, current_idx - window)
+        recent_trades = self.trades[start_idx:current_idx]
+
+        if not recent_trades:
+            return 0.0
+
+        wins = sum(1 for t in recent_trades if t.net_pnl > 0)
+        return wins / len(recent_trades)
+
+    def _calculate_bars_since_last(self, current_idx: int) -> int:
+        """Calculate bars since previous trade entry"""
+        if current_idx == 0:
+            return 999  # Large number for first trade
+
+        prev_trade = self.trades[current_idx - 1]
+        current_trade = self.trades[current_idx]
+
+        # Calculate time difference in hours (assuming 1H bars)
+        time_diff = (current_trade.entry_time - prev_trade.entry_time).total_seconds() / 3600
+        return int(time_diff)
+
+    def _calculate_recent_dd(self, current_idx: int) -> float:
+        """Calculate recent drawdown percentage before current trade"""
+        if current_idx == 0:
+            return 0.0
+
+        # Calculate equity before this trade
+        equity_before = self.starting_capital + sum(t.net_pnl for t in self.trades[:current_idx])
+
+        # Find peak equity in last 10 trades
+        lookback = min(10, current_idx)
+        equity_curve = [self.starting_capital]
+        for i in range(current_idx - lookback, current_idx):
+            equity_curve.append(equity_curve[-1] + self.trades[i].net_pnl)
+
+        peak = max(equity_curve)
+        dd_pct = (peak - equity_before) / peak if peak > 0 else 0.0
+
+        return dd_pct
+
+    def _calculate_streak_length(self, current_idx: int) -> int:
+        """Calculate current win/loss streak length (positive=wins, negative=losses)"""
+        if current_idx == 0:
+            return 0
+
+        # Look backward from previous trade
+        streak = 0
+        last_outcome = self.trades[current_idx - 1].net_pnl > 0
+
+        for i in range(current_idx - 1, -1, -1):
+            if (self.trades[i].net_pnl > 0) == last_outcome:
+                streak += 1
+            else:
+                break
+
+        # Make negative if losing streak
+        return streak if last_outcome else -streak
+
 
 # CLI interface
 if __name__ == '__main__':
@@ -1640,6 +2209,7 @@ if __name__ == '__main__':
     parser.add_argument('--start', default='2024-01-01', help='Start date')
     parser.add_argument('--end', default='2024-12-31', help='End date')
     parser.add_argument('--config', help='JSON config file with KnowledgeParams')
+    parser.add_argument('--export-trades', help='Export trades with ML features to CSV file')
 
     args = parser.parse_args()
 
@@ -1656,6 +2226,10 @@ if __name__ == '__main__':
     print(f"Loading feature store: {feature_path}")
 
     df = pd.read_parquet(feature_path)
+
+    # PR#6A: Alias k2_fusion_score to fusion_score for archetype logic compatibility
+    if 'k2_fusion_score' in df.columns and 'fusion_score' not in df.columns:
+        df['fusion_score'] = df['k2_fusion_score']
 
     # Filter to date range
     start_ts = pd.Timestamp(args.start, tz='UTC')
@@ -1721,3 +2295,10 @@ if __name__ == '__main__':
         print(f"  Wyckoff: {trade.wyckoff_phase} (M1={trade.wyckoff_m1_signal}, M2={trade.wyckoff_m2_signal})")
         print(f"  Macro: {trade.macro_regime}, PTI: {trade.pti_score_1d:.3f}/{trade.pti_score_1h:.3f}")
         print(f"  FRVP: {trade.frvp_poc_position}, Fusion: {trade.entry_fusion_score:.3f}")
+
+    # ML Export: Export trades with features if requested
+    if args.export_trades:
+        print("\n" + "=" * 80)
+        print("ML Feature Export")
+        print("=" * 80)
+        backtest.export_trades_with_ml_features(args.export_trades)

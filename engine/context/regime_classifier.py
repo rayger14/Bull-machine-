@@ -102,13 +102,15 @@ class RegimeClassifier:
             label_int = int(np.argmax(proba))
             regime = self.label_map[label_int]
 
-            # Build probability dict
+            # Build probability dict (sum probabilities for regimes with multiple clusters)
             proba_dict = {}
             for cluster_id, regime_name in self.label_map.items():
                 if cluster_id < len(proba):
-                    proba_dict[regime_name] = float(proba[cluster_id])
+                    # Add to existing probability (multiple clusters may map to same regime)
+                    proba_dict[regime_name] = proba_dict.get(regime_name, 0.0) + float(proba[cluster_id])
                 else:
-                    proba_dict[regime_name] = 0.0
+                    # Ensure regime exists in dict even if cluster ID is out of bounds
+                    proba_dict[regime_name] = proba_dict.get(regime_name, 0.0)
 
             return {
                 "regime": regime,
