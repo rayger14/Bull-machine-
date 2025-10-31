@@ -1,14 +1,14 @@
 {
-  "version": "2.1.0-adaptive-fusion-pf20-recovery",
-  "profile": "v8_adaptive_fusion_bull_pinned",
-  "description": "v8 adaptive with PF-20 bull winner pinned to risk_on regime (fusion weights, gates, exits, ML threshold). Maintains full adaptive morphing for neutral/risk_off/crisis.",
+  "version": "2.1.0-adaptive-fusion",
+  "profile": "v8_adaptive_fusion",
+  "description": "v8 bull winner (PF 20.96) with adaptive regime-aware parameter morphing. Smooth blending across risk_on/neutral/risk_off/crisis regimes.",
 
   "fusion_regime_profiles": {
     "risk_on": {
-      "wyckoff": 0.44264547891403994,
-      "liquidity": 0.22676230782353124,
-      "momentum": 0.3305922132624289,
-      "temporal": 0.0
+      "wyckoff": 0.46,
+      "liquidity": 0.26,
+      "momentum": 0.22,
+      "temporal": 0.06
     },
     "neutral": {
       "wyckoff": 0.42,
@@ -32,8 +32,8 @@
 
   "gates_regime_profiles": {
     "risk_on": {
-      "min_liquidity": 0.18,
-      "final_fusion_floor": 0.36
+      "min_liquidity": 0.20,
+      "final_fusion_floor": 0.52
     },
     "neutral": {
       "min_liquidity": 0.16,
@@ -68,8 +68,8 @@
 
   "exit_regime_profiles": {
     "risk_on": {
-      "trail_atr": 1.13,
-      "max_bars": 86
+      "trail_atr": 1.8,
+      "max_bars": 180
     },
     "neutral": {
       "trail_atr": 1.3,
@@ -98,7 +98,7 @@
   },
 
   "ml_thresholds_by_regime": {
-    "risk_on": 0.283,
+    "risk_on": 0.25,
     "neutral": 0.35,
     "risk_off": 0.48,
     "crisis": 0.60
