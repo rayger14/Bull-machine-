@@ -213,11 +213,14 @@ class KnowledgeAwareBacktest:
                 self.adaptive_fusion = AdaptiveFusion(self.runtime_config)
 
                 # PR#6B: Initialize ThresholdPolicy for regime-aware threshold management
+                # PR-A: Support locked_regime for parity testing
+                locked_regime = self.runtime_config.get('locked_regime')  # 'static', 'risk_on', etc.
                 self.threshold_policy = ThresholdPolicy(
                     base_cfg=self.runtime_config,
                     regime_profiles=self.runtime_config.get('gates_regime_profiles'),
                     archetype_overrides=self.runtime_config.get('archetype_overrides'),
-                    global_clamps=self.runtime_config.get('global_clamps')
+                    global_clamps=self.runtime_config.get('global_clamps'),
+                    locked_regime=locked_regime
                 )
 
                 logger.info(f"Adaptive Fusion: ENABLED (ema_alpha={adaptive_config.get('ema_alpha', 0.2)})")

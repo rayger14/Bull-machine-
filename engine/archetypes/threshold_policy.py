@@ -45,7 +45,8 @@ class ThresholdPolicy:
         base_cfg: Dict[str, Any],
         regime_profiles: Optional[Dict[str, Dict[str, float]]] = None,
         archetype_overrides: Optional[Dict[str, Dict[str, Dict[str, float]]]] = None,
-        global_clamps: Optional[Dict[str, tuple]] = None
+        global_clamps: Optional[Dict[str, tuple]] = None,
+        locked_regime: Optional[str] = None
     ):
         """
         Initialize threshold policy.
@@ -55,6 +56,8 @@ class ThresholdPolicy:
             regime_profiles: gates_regime_profiles from config
             archetype_overrides: Per-archetype delta adjustments per regime
             global_clamps: Global min/max bounds for params
+            locked_regime: If set, bypass blending and force this regime's profile.
+                          Used for parity testing (e.g., locked_regime='static' to match legacy).
         """
         self.base = base_cfg
         self.regime_profiles = regime_profiles or {}
@@ -64,11 +67,15 @@ class ThresholdPolicy:
             'liquidity': (0.08, 0.35),
             'min_liquidity': (0.08, 0.30)
         }
+        self.locked_regime = locked_regime
 
         # Extract base archetype thresholds
         self.base_arch_thresholds = self.base.get('archetypes', {}).get('thresholds', {})
 
-        logger.info(f"ThresholdPolicy initialized with {len(self.base_arch_thresholds)} archetype configs")
+        if self.locked_regime:
+            logger.info(f"ThresholdPolicy initialized in LOCKED mode (regime={locked_regime})")
+        else:
+            logger.info(f"ThresholdPolicy initialized with {len(self.base_arch_thresholds)} archetype configs")
 
     def resolve(
         self,
@@ -86,6 +93,15 @@ class ThresholdPolicy:
             Dict mapping archetype_name -> {param: threshold}
             Example: {'order_block_retest': {'fusion': 0.33, 'liquidity': 0.14}, ...}
         """
+        # LOCKED MODE: Return static base thresholds only (parity testing)
+        if self.locked_regime == 'static':
+            return self._build_base_map()
+
+        # LOCKED MODE: Force specific regime (parity testing)
+        if self.locked_regime and self.locked_regime in self.regime_profiles:
+            return self._resolve_locked(self.locked_regime)
+
+        # NORMAL MODE: Full 5-step pipeline
         # 1) Start from base thresholds
         final = self._build_base_map()
 
@@ -217,3 +233,33 @@ class ThresholdPolicy:
                 if param in self.clamps:
                     min_val, max_val = self.clamps[param]
                     thresholds[param] = max(min_val, min(max_val, value))
+
+    def _resolve_locked(self, locked_regime: str) -> Dict[str, Dict[str, float]]:
+        """
+        Resolve thresholds in locked mode - force specific regime profile.
+
+        Used for parity testing to ensure RuntimeContext path matches legacy
+        when locked to a specific regime.
+
+        Args:
+            locked_regime: Regime to lock to (e.g., 'risk_on')
+
+        Returns:
+            Thresholds with forced regime profile applied
+        """
+        # Start with base thresholds
+        final = self._build_base_map()
+
+        # Apply regime floors from locked regime only (100% weight)
+        if locked_regime in self.regime_profiles:
+            locked_gates = self.regime_profiles[locked_regime]
+            self._apply_regime_floors(final, locked_gates)
+
+        # Apply overrides for locked regime
+        self._apply_archetype_overrides(final, locked_regime)
+
+        # Clamp to guardrails
+        self._clamp(final)
+
+        logger.debug(f"Locked mode: Resolved thresholds for regime={locked_regime}")
+        return final
