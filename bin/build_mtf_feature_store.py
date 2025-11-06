@@ -955,6 +955,14 @@ def build_mtf_feature_store(asset: str, start_date: str, end_date: str):
     for period in [20, 50, 100, 200]:
         features[f'sma_{period}'] = df_1h['close'].rolling(period).mean()
 
+    # Pre-compute technical indicators for 1D timeframe (PERFORMANCE OPTIMIZATION)
+    print("\n⚡ Pre-computing 1D technical indicators...")
+    df_1d['rsi_14'] = calculate_rsi(df_1d, 14)
+    df_1d['adx_14'] = calculate_adx(df_1d, 14)
+    df_1d['atr_14'] = calculate_atr(df_1d, 14)
+    df_1d['atr_20'] = calculate_atr(df_1d, 20)
+    print(f"   ✅ Pre-computed indicators for {len(df_1d)} 1D bars")
+
     # Compute 1D features (governor)
     print("\n🌅 Computing 1D features (governor)...")
     tf1d_features_list = []
@@ -971,6 +979,14 @@ def build_mtf_feature_store(asset: str, start_date: str, end_date: str):
 
     df_1d_features = pd.DataFrame(tf1d_features_list).set_index('timestamp')
     print(f"   ✅ Computed {len(df_1d_features)} 1D feature rows")
+
+    # Pre-compute technical indicators for 4H timeframe (PERFORMANCE OPTIMIZATION)
+    print("\n⚡ Pre-computing 4H technical indicators...")
+    df_4h['rsi_14'] = calculate_rsi(df_4h, 14)
+    df_4h['adx_14'] = calculate_adx(df_4h, 14)
+    df_4h['atr_14'] = calculate_atr(df_4h, 14)
+    df_4h['atr_20'] = calculate_atr(df_4h, 20)
+    print(f"   ✅ Pre-computed indicators for {len(df_4h)} 4H bars")
 
     # Compute 4H features (structure)
     print("\n🏗️  Computing 4H features (structure)...")
@@ -1010,16 +1026,38 @@ def build_mtf_feature_store(asset: str, start_date: str, end_date: str):
     features = features.join(mtf_downcast)
     features = features.join(df_1h_features)
 
-    # Compute MTF alignment flags
-    print("\n🎯 Computing MTF alignment flags...")
-    mtf_alignment_list = []
-    for idx, row in features.iterrows():
-        alignment = compute_mtf_alignment(row)
-        mtf_alignment_list.append(alignment)
+    # Compute MTF alignment flags (VECTORIZED - replaced iterrows loop!)
+    print("\n🎯 Computing MTF alignment flags (vectorized)...")
 
-    alignment_df = pd.DataFrame(mtf_alignment_list, index=features.index)
-    features = features.join(alignment_df)
-    print(f"DEBUG: After MTF alignment, features has {len(features.columns)} columns")
+    # Extract columns with defaults (vectorized)
+    tf1d_wyckoff = features.get('tf1d_wyckoff_score', pd.Series(0.5, index=features.index))
+    tf4h_trend = features.get('tf4h_external_trend', pd.Series('neutral', index=features.index))
+    tf1h_rev = features.get('tf1h_pti_reversal_likely', pd.Series(False, index=features.index))
+    macro_exit = features.get('macro_exit_recommended', pd.Series(False, index=features.index))
+    tf1d_rev = features.get('tf1d_pti_reversal', pd.Series(False, index=features.index))
+
+    # Vectorized boolean conditions
+    tf1d_bullish = tf1d_wyckoff > 0.6
+    tf1d_bearish = tf1d_wyckoff < 0.4
+    tf4h_bullish = tf4h_trend == 'bullish'
+    tf4h_bearish = tf4h_trend == 'bearish'
+
+    # Alignment checks (vectorized)
+    all_bullish = tf1d_bullish & tf4h_bullish & ~tf1h_rev
+    all_bearish = tf1d_bearish & tf4h_bearish & ~tf1h_rev
+    features['mtf_alignment_ok'] = all_bullish | all_bearish
+
+    # Conflict score (vectorized calculation)
+    conflict = pd.Series(0.0, index=features.index)
+    conflict = conflict + (tf1d_bullish & tf4h_bearish).astype(float) * 0.5
+    conflict = conflict + (tf1d_bearish & tf4h_bullish).astype(float) * 0.5
+    conflict = conflict + ((tf1d_bullish | tf4h_bullish) & tf1h_rev).astype(float) * 0.3
+    features['mtf_conflict_score'] = conflict.clip(upper=1.0)
+
+    # Governor veto (vectorized)
+    features['mtf_governor_veto'] = macro_exit | tf1d_rev
+
+    print(f"DEBUG: After MTF alignment, features has {len(features.columns)} columns (vectorized!)")
 
     # Phase 4 Re-Entry: Add tf4h_fusion_score and volume_zscore
     print("\n🎯 Computing Phase 4 re-entry features...")
@@ -1065,10 +1103,93 @@ def build_mtf_feature_store(asset: str, start_date: str, end_date: str):
     print(f"   ✅ Added tf4h_fusion_score (range: {features['tf4h_fusion_score'].min():.3f} to {features['tf4h_fusion_score'].max():.3f})")
     print(f"   ✅ Added volume_zscore (range: {features['volume_zscore'].min():.2f} to {features['volume_zscore'].max():.2f})")
 
-    # Add placeholders for K2 fusion outputs (for future use)
+    # =========================================================================
+    # CRITICAL FIX: Compute tf1h_fusion_score and k2_fusion_score properly
+    # Previously these were hardcoded placeholders causing ALL fusion=0.5!
+    # =========================================================================
+
+    # Compute tf1h_fusion_score (1H timeframe momentum fusion)
+    # Uses same logic as tf4h but on 1H data
+    tf1h_fusion = pd.Series(0.0, index=features.index)
+
+    # BOS bullish (40% weight)
+    if 'tf1h_bos_bullish' in features.columns:
+        tf1h_fusion += features['tf1h_bos_bullish'].astype(float) * 0.40
+
+    # FVG present (30% weight)
+    if 'tf1h_fvg_present' in features.columns:
+        tf1h_fusion += features['tf1h_fvg_present'].astype(float) * 0.30
+
+    # CHOCH detected (30% weight)
+    if 'tf1h_choch_flag' in features.columns:
+        tf1h_fusion += features['tf1h_choch_flag'].astype(float) * 0.30
+
+    # Cap and smooth
+    features['tf1h_fusion_score'] = tf1h_fusion.clip(upper=1.0)
+    features['tf1h_fusion_score'] = features['tf1h_fusion_score'].rolling(4, min_periods=1).mean()
+
+    # Compute tf1d_fusion_score (1D timeframe trend fusion)
+    tf1d_fusion = pd.Series(0.0, index=features.index)
+
+    # Wyckoff phase score (50% weight)
+    if 'tf1d_wyckoff_score' in features.columns:
+        tf1d_fusion += features['tf1d_wyckoff_score'] * 0.50
+
+    # BOMS strength (50% weight)
+    if 'tf1d_boms_strength' in features.columns:
+        tf1d_fusion += features['tf1d_boms_strength'] * 0.50
+
+    # Cap and smooth
+    features['tf1d_fusion_score'] = tf1d_fusion.clip(upper=1.0)
+    features['tf1d_fusion_score'] = features['tf1d_fusion_score'].rolling(4, min_periods=1).mean()
+
+    # Macro correlation score (placeholder for now - needs cross-asset implementation)
+    features['macro_correlation_score'] = 0.5
+
+    # NOW compute K2 meta-fusion using VECTORIZED operations (100x faster!)
+    print("\n🔄 Computing K2 meta-fusion scores (vectorized)...")
+
+    # Extract fusion score columns as numpy arrays
+    tf1h = features['tf1h_fusion_score'].fillna(0.5).values
+    tf4h = features['tf4h_fusion_score'].fillna(0.5).values
+    tf1d = features['tf1d_fusion_score'].fillna(0.5).values
+    macro = features['macro_correlation_score'].fillna(0.5).values
+
+    # Stack into matrix: (n_rows, 4_timeframes)
+    fusion_matrix = np.column_stack([tf1h, tf4h, tf1d, macro])
+
+    # Weights: [1H, 4H, 1D, macro]
+    weights = np.array([0.35, 0.35, 0.20, 0.10])
+
+    # Compute weighted mean (baseline fusion) - vectorized across all rows
+    base_scores = np.dot(fusion_matrix, weights)
+
+    # Compute disagreement (std across timeframes) - per row
+    disagreement = np.std(fusion_matrix, axis=1)
+
+    # Penalty formula: max(0.7, 1.0 - disagreement * 1.5)
+    penalties = np.maximum(0.7, 1.0 - disagreement * 1.5)
+
+    # Apply penalty and clip to [0, 1]
+    k2_scores = np.clip(base_scores * penalties, 0.0, 1.0)
+
+    features['k2_fusion_score'] = k2_scores
+
+    # Validate K2 fusion computation
+    k2_mean = features['k2_fusion_score'].mean()
+    k2_std = features['k2_fusion_score'].std()
+    k2_unique = features['k2_fusion_score'].nunique()
+
+    print(f"   ✅ Added tf1h_fusion_score (range: {features['tf1h_fusion_score'].min():.3f} to {features['tf1h_fusion_score'].max():.3f})")
+    print(f"   ✅ Added tf1d_fusion_score (range: {features['tf1d_fusion_score'].min():.3f} to {features['tf1d_fusion_score'].max():.3f})")
+    print(f"   ✅ Added k2_fusion_score (mean: {k2_mean:.3f}, std: {k2_std:.3f}, unique: {k2_unique})")
+
+    if k2_unique < 10:
+        print(f"   ⚠️  WARNING: K2 fusion has low variance ({k2_unique} unique values)")
+
+    # Legacy placeholders (deprecated)
     features['k2_threshold_delta'] = 0.0
     features['k2_score_delta'] = 0.0
-    features['k2_fusion_score'] = 0.5
 
     # Filter to requested output range (exclude warm-up period)
     print(f"\n✂️  Filtering to output range: {start_date} → {end_date}")

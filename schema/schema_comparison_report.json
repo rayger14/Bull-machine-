@@ -1,0 +1,27 @@
+{
+  "common_columns": 98,
+  "total_columns": {
+    "schema1": 101,
+    "schema2": 110
+  },
+  "only_in_schema1": [
+    "oi_change_24h",
+    "oi_change_pct_24h",
+    "oi_z"
+  ],
+  "only_in_schema2": [
+    "BTC.D",
+    "DXY",
+    "MOVE",
+    "TOTAL",
+    "TOTAL2",
+    "USDT.D",
+    "VIX",
+    "YIELD_10Y",
+    "YIELD_2Y",
+    "funding",
+    "rv_20d",
+    "rv_60d"
+  ],
+  "column_agreement": 0.8909090909090909
+}

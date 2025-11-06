@@ -76,11 +76,15 @@ class ArchetypeLogic:
 
         # Fusion weights (from config or defaults)
         self.fusion_weights = {
-            'wyckoff': 0.331,
-            'liquidity': 0.392,
-            'momentum': 0.205
+            'wyckoff': 0.265,
+            'liquidity': 0.313,
+            'momentum': 0.164,
+            'smc': 0.258  # PATCH: Added SMC weight for fusion calculation
         }
         self.fakeout_penalty = 0.075
+
+        # Rolling window for ATR percentile computation
+        self.atr_percentile_window = 500
 
     def _get_liquidity_score(self, row: pd.Series) -> float:
         """
@@ -154,11 +158,103 @@ class ArchetypeLogic:
         smc = 0.60 * bos_score + 0.40 * fvg_score
         return max(0.0, min(smc, 1.0))
 
+    def _compute_atr_percentile(self, row: pd.Series, df: pd.DataFrame, index: int) -> float:
+        """
+        PATCH: Compute ATR percentile from rolling window.
+
+        Not available as pre-computed column, so calculate on-the-fly.
+        """
+        if 'atr_percentile' in row.index:
+            return row.get('atr_percentile', 0.5)
+
+        # Get current ATR
+        current_atr = row.get('atr_20', 0.0)
+
+        # Get historical ATR values for percentile calculation
+        lookback = min(self.atr_percentile_window, index + 1)
+        if lookback < 20:  # Not enough history
+            return 0.5  # Default to median
+
+        historical_atrs = df.iloc[max(0, index-lookback):index+1]['atr_20'].values
+
+        # Calculate percentile rank
+        if len(historical_atrs) == 0:
+            return 0.5
+
+        percentile = (historical_atrs < current_atr).sum() / len(historical_atrs)
+        return max(0.0, min(percentile, 1.0))
+
+    def _get_bos_flag(self, row: pd.Series) -> int:
+        """
+        PATCH: Synthesize BOS flag from tf1h_bos_bullish and tf1h_bos_bearish.
+
+        Returns: 1 for bullish BOS, -1 for bearish BOS, 0 for no BOS
+        """
+        if 'tf1h_bos_flag' in row.index:
+            return int(row.get('tf1h_bos_flag', 0))
+
+        bullish = row.get('tf1h_bos_bullish', False)
+        bearish = row.get('tf1h_bos_bearish', False)
+
+        if bullish and not bearish:
+            return 1
+        elif bearish and not bullish:
+            return -1
+        elif bullish and bearish:
+            return 1  # Prefer bullish if both (shouldn't happen but handle edge case)
+        else:
+            return 0
+
+    def _get_wick_anomaly(self, row: pd.Series) -> bool:
+        """
+        PATCH: Detect wick anomaly from OHLC data.
+
+        Wick anomaly = wick length > 2× body length
+        """
+        if 'wick_anomaly' in row.index:
+            return bool(row.get('wick_anomaly', False))
+
+        close = row.get('close', 0.0)
+        open_price = row.get('open', close)
+        high = row.get('high', close)
+        low = row.get('low', close)
+
+        body = abs(close - open_price)
+        upper_wick = high - max(close, open_price)
+        lower_wick = min(close, open_price) - low
+
+        # Anomaly if either wick > 2× body
+        return (upper_wick > 2 * body) or (lower_wick > 2 * body)
+
+    def _get_fakeout_score(self, row: pd.Series) -> float:
+        """
+        PATCH: Map to tf1h_fakeout_intensity column.
+        """
+        if 'fakeout_score' in row.index:
+            return row.get('fakeout_score', 0.0)
+
+        # Use fakeout intensity as proxy for fakeout score
+        return row.get('tf1h_fakeout_intensity', 0.0)
+
+    def _get_wyckoff_phase(self, row: pd.Series) -> str:
+        """
+        PATCH: Map tf1d_wyckoff_phase to wyckoff_phase.
+
+        Feature store has: tf1d_wyckoff_phase
+        Archetype logic expects: wyckoff_phase
+        """
+        if 'wyckoff_phase' in row.index:
+            return row.get('wyckoff_phase', 'transition')
+
+        # Map from daily wyckoff phase
+        return row.get('tf1d_wyckoff_phase', 'transition')
+
     def calculate_fusion_score(self, row: pd.Series) -> float:
         """
         Calculate fusion score from component scores.
 
-        PATCHED: Now uses helper methods to map to actual feature names.
+        CRITICAL FIX: Feature store already has pre-computed fusion scores!
+        Use tf1h_fusion_score directly instead of recomputing from components.
 
         Args:
             row: DataFrame row with score columns
@@ -166,17 +262,26 @@ class ArchetypeLogic:
         Returns:
             Fusion score in [0, 1]
         """
+        # CRITICAL FIX: Use pre-computed fusion score from feature store
+        if 'tf1h_fusion_score' in row.index:
+            return row.get('tf1h_fusion_score', 0.0)
+
+        # Fallback to k2_fusion_score if tf1h not available
+        if 'k2_fusion_score' in row.index:
+            return row.get('k2_fusion_score', 0.0)
+
+        # Last resort: compute from components (legacy path - should rarely execute)
         wyckoff_score = self._get_wyckoff_score(row)
         liquidity_score = self._get_liquidity_score(row)
         momentum_score = self._get_momentum_score(row)
-        smc_score = self._get_smc_score(row)  # PATCH: Added missing SMC score
-        fakeout_score = row.get('fakeout_score', 0.0)
+        smc_score = self._get_smc_score(row)
+        fakeout_score = self._get_fakeout_score(row)
 
         fusion = (
             self.fusion_weights['wyckoff'] * wyckoff_score +
             self.fusion_weights['liquidity'] * liquidity_score +
             self.fusion_weights['momentum'] * momentum_score +
-            self.fusion_weights['smc'] * smc_score -  # PATCH: Added SMC component
+            self.fusion_weights['smc'] * smc_score -
             self.fakeout_penalty * fakeout_score
         )
 
@@ -327,7 +432,13 @@ class ArchetypeLogic:
         lookback = min(20, index)
         if lookback > 0:
             recent = df.iloc[index-lookback:index]
-            bos_flags = recent.get('tf1h_bos_flag', pd.Series([0]*lookback))
+            # Use synthesized BOS flags from helper method
+            bos_bullish = recent.get('tf1h_bos_bullish', pd.Series([False]*lookback))
+            bos_bearish = recent.get('tf1h_bos_bearish', pd.Series([False]*lookback))
+            # Create synthetic bos_flag column: 1 for bullish, -1 for bearish
+            bos_flags = pd.Series([0]*len(recent), index=recent.index)
+            bos_flags[bos_bullish & ~bos_bearish] = 1
+            bos_flags[bos_bearish & ~bos_bullish] = -1
 
             # Check if any recent BOS zone is within 1× ATR
             near_bos = False
@@ -449,9 +560,9 @@ class ArchetypeLogic:
         - liquidity_score in [0.45, 0.60]
         - fusion_score >= 0.35
 
-        PATCHED: Uses helper method for liquidity_score
+        PATCHED: Uses helper methods for liquidity_score and atr_percentile
         """
-        atr_pctile = row.get('atr_percentile', 0.5)
+        atr_pctile = self._compute_atr_percentile(row, df, index)  # PATCH: Use helper method
         if atr_pctile >= self.thresh_E.get('atr_pctile', 0.25):
             return False
 
@@ -488,7 +599,7 @@ class ArchetypeLogic:
         if not (rsi > rsi_ext or rsi < (100 - rsi_ext)):
             return False
 
-        atr_pctile = row.get('atr_percentile', 0.5)
+        atr_pctile = self._compute_atr_percentile(row, df, index)  # PATCH: Use helper method
         if atr_pctile <= self.thresh_F.get('atr_pctile', 0.90):
             return False
 
@@ -551,7 +662,7 @@ class ArchetypeLogic:
             return False
 
         # ATR stabilizing check
-        atr_pctile = row.get('atr_percentile', 0.5)
+        atr_pctile = self._compute_atr_percentile(row, df, index)  # PATCH: Use helper method
         if not (0.25 <= atr_pctile <= 0.75):
             return False
 
@@ -603,7 +714,7 @@ class ArchetypeLogic:
             return False
 
         # Check BOS flag alignment
-        bos_flag = row.get('tf1h_bos_flag', 0)
+        bos_flag = self._get_bos_flag(row)  # PATCH: Use helper method
         if bos_flag == 0:
             return False
 
@@ -623,7 +734,7 @@ class ArchetypeLogic:
         - tf1h_bos_flag != 0
         - fusion_score >= 0.36
         """
-        wick_anomaly = row.get('wick_anomaly', False)
+        wick_anomaly = self._get_wick_anomaly(row)  # PATCH: Use helper method
         if not wick_anomaly:
             return False
 
@@ -636,7 +747,7 @@ class ArchetypeLogic:
         if liquidity < self.thresh_K.get('liq', 0.30):
             return False
 
-        bos_flag = row.get('tf1h_bos_flag', 0)
+        bos_flag = self._get_bos_flag(row)  # PATCH: Use helper method
         if bos_flag == 0:
             return False
 
@@ -699,7 +810,7 @@ class ArchetypeLogic:
 
         PATCHED: Maps to actual tf1h_frvp_distance_to_poc and tf1d_boms_strength columns
         """
-        atr_pctile = row.get('atr_percentile', 0.5)
+        atr_pctile = self._compute_atr_percentile(row, df, index)  # PATCH: Use helper method
         if atr_pctile >= self.thresh_M.get('atr_pctile', 0.30):
             return False
 

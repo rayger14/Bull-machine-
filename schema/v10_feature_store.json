@@ -1,0 +1,114 @@
+{
+  "version": "10.0.0",
+  "description": "Knowledge v10 Multi-Timeframe Feature Store Schema",
+  "file_format": "parquet",
+  "index": {
+    "name": "timestamp",
+    "dtype": "datetime64[ns]",
+    "description": "Hour-level timestamp index"
+  },
+  "required_columns": {
+    "ohlcv": {
+      "open": {"dtype": "float64", "nullable": false, "description": "Opening price"},
+      "high": {"dtype": "float64", "nullable": false, "description": "Highest price"},
+      "low": {"dtype": "float64", "nullable": false, "description": "Lowest price"},
+      "close": {"dtype": "float64", "nullable": false, "description": "Closing price"},
+      "volume": {"dtype": "float64", "nullable": false, "description": "Trading volume"}
+    },
+    "fusion_scores": {
+      "k2_fusion_score": {
+        "dtype": "float64",
+        "nullable": false,
+        "range": [0.0, 1.0],
+        "min_unique_values": 100,
+        "description": "Knowledge v2.0 meta-fusion score combining all timeframes"
+      },
+      "tf1h_fusion_score": {
+        "dtype": "float64",
+        "nullable": false,
+        "range": [0.0, 1.0],
+        "min_unique_values": 50,
+        "description": "1H timeframe momentum fusion (BOS + FVG + CHOCH)"
+      },
+      "tf1d_fusion_score": {
+        "dtype": "float64",
+        "nullable": false,
+        "range": [0.0, 1.0],
+        "min_unique_values": 20,
+        "description": "1D timeframe trend fusion (Wyckoff + BOMS)"
+      }
+    }
+  },
+  "optional_columns": {
+    "tf4h_fusion_score": {
+      "dtype": "float64",
+      "nullable": true,
+      "description": "4H timeframe fusion score (may have wider range)"
+    },
+    "macro_correlation_score": {
+      "dtype": "float64",
+      "nullable": true,
+      "range": [0.0, 1.0],
+      "description": "Macro environment correlation score"
+    }
+  },
+  "feature_prefixes": {
+    "tf1h_": "1-hour timeframe features (execution layer)",
+    "tf4h_": "4-hour timeframe features (structure layer)",
+    "tf1d_": "1-day timeframe features (trend layer)"
+  },
+  "lookback_requirements": {
+    "1h_indicators": {
+      "bars": 200,
+      "hours": 200,
+      "description": "Minimum bars needed for 1H indicators (EMA, RSI, etc.)"
+    },
+    "4h_structure": {
+      "bars": 100,
+      "hours": 400,
+      "description": "Minimum bars needed for 4H structure detection"
+    },
+    "1d_wyckoff": {
+      "bars": 50,
+      "hours": 1200,
+      "description": "Minimum bars needed for daily Wyckoff analysis"
+    }
+  },
+  "warmup_policy": {
+    "enabled": true,
+    "strategy": "fetch_extra_history",
+    "warmup_hours": 1200,
+    "flag_column": "is_warmup",
+    "description": "Fetch extra history for indicator warmup; flag rows in warmup period"
+  },
+  "validation_rules": {
+    "no_nan_in_ohlcv": true,
+    "max_nan_pct_fusion": 5.0,
+    "max_nan_pct_indicators": 10.0,
+    "check_fusion_variance": true,
+    "check_date_continuity": true
+  },
+  "k2_fusion_formula": {
+    "description": "K2 meta-fusion combines multiple timeframe fusion scores with disagreement penalty",
+    "inputs": ["tf1h_fusion_score", "tf4h_fusion_score", "tf1d_fusion_score", "macro_correlation_score"],
+    "weights": [0.35, 0.35, 0.20, 0.10],
+    "formula": "k2 = clip((weighted_mean * disagreement_penalty), 0, 1)",
+    "disagreement_penalty": "max(0.7, 1.0 - std(timeframes) * 1.5)"
+  },
+  "expected_row_count": {
+    "one_year": 8760,
+    "two_years": 17520,
+    "description": "Expected rows for 1-hour bars (365 * 24)"
+  },
+  "build_performance_targets": {
+    "one_year_build_time_seconds": 600,
+    "two_year_build_time_seconds": 1200,
+    "description": "Target build times with vectorized implementation"
+  },
+  "notes": [
+    "All fusion scores MUST have variance - hardcoded values indicate builder bug",
+    "K2 fusion is the primary score used for trading decisions",
+    "Feature store must be validated after build using validate_feature_store_v10.py",
+    "Timeframe alignment uses forward-fill for slower timeframes onto 1H bars"
+  ]
+}

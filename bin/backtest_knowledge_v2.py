@@ -479,13 +479,22 @@ class KnowledgeAwareBacktest:
                 row_with_runtime['fusion_score'] = context['fusion_score']
 
             # PR#6B: Build RuntimeContext with regime-aware thresholds
-            if self.threshold_policy and 'adapted_params' in context and context['adapted_params']:
-                adapted_params = context['adapted_params']
-                # BUGFIX: AdaptiveFusion returns 'regime_probs_ema', not 'regime_probs'
-                regime_probs = adapted_params.get('regime_probs_ema', {'neutral': 1.0})
-                regime_label = adapted_params.get('regime', 'neutral')
+            # PR-A PARITY FIX: If ThresholdPolicy exists, ALWAYS use RuntimeContext path
+            # This ensures locked mode configs don't fall back to legacy path
+            if self.threshold_policy:
+                # Get adapted_params from context, or use fallback for locked/static mode
+                adapted_params = context.get('adapted_params', {})
 
-                # Resolve thresholds using ThresholdPolicy
+                # BUGFIX: AdaptiveFusion returns 'regime_probs_ema', not 'regime_probs'
+                # Default to neutral if no regime info available (locked mode)
+                if adapted_params:
+                    regime_probs = adapted_params.get('regime_probs_ema', {'neutral': 1.0})
+                    regime_label = adapted_params.get('regime', 'neutral')
+                else:
+                    regime_probs = {'neutral': 1.0}
+                    regime_label = 'neutral'
+
+                # Resolve thresholds using ThresholdPolicy (will use locked mode if configured)
                 thresholds = self.threshold_policy.resolve(regime_probs, regime_label)
 
                 # Build RuntimeContext
@@ -501,7 +510,7 @@ class KnowledgeAwareBacktest:
                 # Call new detect() method with RuntimeContext
                 archetype_name, fusion_score, liquidity_score = self.archetype_logic.detect(runtime_ctx)
             else:
-                # Fallback to old API if ThresholdPolicy not available
+                # Fallback to old API if ThresholdPolicy not available (truly legacy configs)
                 prev_row = None
                 current_idx = context.get('current_index', 0)
                 archetype_name, fusion_score, liquidity_score = self.archetype_logic.check_archetype(
@@ -2225,10 +2234,39 @@ if __name__ == '__main__':
         print(f"ERROR: No feature store found for {args.asset}")
         sys.exit(1)
 
-    feature_path = sorted(files)[-1]
-    print(f"Loading feature store: {feature_path}")
+    # Select feature store that covers the requested date range
+    start_ts = pd.Timestamp(args.start, tz='UTC')
+    end_ts = pd.Timestamp(args.end, tz='UTC')
+
+    feature_path = None
+    for fpath in sorted(files):
+        # Parse date range from filename (e.g., BTC_1H_2022-01-01_to_2023-12-31.parquet)
+        fname = fpath.stem  # Remove .parquet
+        parts = fname.split('_')
+        if len(parts) >= 5 and parts[-2] == 'to':
+            try:
+                store_start = pd.Timestamp(parts[-3], tz='UTC')
+                store_end = pd.Timestamp(parts[-1], tz='UTC')
+
+                # Check if this feature store covers our requested range
+                if store_start <= start_ts and store_end >= end_ts:
+                    feature_path = fpath
+                    break
+            except:
+                continue
+
+    # Fallback to most recent if no exact match
+    if feature_path is None:
+        feature_path = sorted(files)[-1]
+        print(f"⚠️  No feature store covering {args.start} to {args.end}, using: {feature_path}")
+    else:
+        print(f"Loading feature store: {feature_path}")
 
     df = pd.read_parquet(feature_path)
+
+    # PR#6A: Set timestamp as index if it's a column
+    if 'timestamp' in df.columns and df.index.name != 'timestamp':
+        df = df.set_index('timestamp')
 
     # PR#6A: Alias k2_fusion_score to fusion_score for archetype logic compatibility
     if 'k2_fusion_score' in df.columns and 'fusion_score' not in df.columns:

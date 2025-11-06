@@ -1,0 +1,91 @@
+{
+  "version": "bear_v10_baseline",
+  "profile": "bear_defensive",
+  "description": "Conservative baseline for bear markets (2022-2023) - Capital preservation focus",
+
+  "runtime": {
+    "runtime_liquidity_enabled": false,
+    "runtime_liquidity_weights": {
+      "S": 0.35,
+      "C": 0.30,
+      "L": 0.20,
+      "P": 0.15
+    },
+    "runtime_liquidity_boost": 0.05,
+    "liquidity_telemetry_window": 500
+  },
+
+  "fast_signals": {
+    "enabled": false,
+    "mode": "execute_only_if_fusion_confirms",
+    "min_confidence": 0.75,
+    "adx_threshold": 25,
+    "rsi_overbought": 65,
+    "rsi_oversold": 35,
+    "price_extension_pct": 1.5
+  },
+
+  "fusion": {
+    "entry_threshold_confidence": 0.75,
+    "full_engine_validation_interval_bars": 3,
+    "weights": {
+      "wyckoff": 0.25,
+      "liquidity": 0.30,
+      "momentum": 0.25,
+      "smc": 0.20
+    }
+  },
+
+  "safety": {
+    "loss_streak_threshold": 2,
+    "atr_floor_percentile": 0.30,
+    "atr_cap_percentile": 0.90
+  },
+
+  "context": {
+    "macro_veto_threshold": 0.80,
+    "vix_regime_switch_threshold": 25.0,
+    "vix_hysteresis": {
+      "on": 25.0,
+      "off": 20.0
+    }
+  },
+
+  "position_sizing": {
+    "mode": "dynamic_kelly_archetype",
+    "base_risk_per_trade_pct": 0.8,
+    "max_risk_per_trade_pct": 1.5,
+    "kelly_fraction": 0.20,
+    "confidence_scaling": true,
+    "archetype_quality_weight": 0.30
+  },
+
+  "stops": {
+    "trailing_atr_multiplier": 2.0,
+    "initial_stop_atr_multiplier": 2.5,
+    "breakeven_profit_threshold_atr": 1.5,
+    "profit_lock_interval_atr": 0.8
+  },
+
+  "targets": {
+    "primary_target_rr": 2.5,
+    "secondary_target_rr": 4.0,
+    "partial_exit_at_primary_pct": 50
+  },
+
+  "archetype_gates": {
+    "enabled": true,
+    "use_optimized_thresholds": true,
+    "strict_mode": true,
+    "min_structural_quality": 0.65,
+    "min_timing_quality": 0.60,
+    "min_context_quality": 0.55
+  },
+
+  "archetype_fusion": {
+    "enabled": true,
+    "quality_boost_threshold": 0.75,
+    "quality_boost_multiplier": 1.20,
+    "position_size_scaling": true
+  }
+}

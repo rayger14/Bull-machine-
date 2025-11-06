@@ -1,0 +1,84 @@
+{
+  "asset": "BTC",
+  "period": "2022-01-01 to 2024-12-31",
+  "performance": {
+    "total_pnl": 1140.1784224637781,
+    "final_equity": 11140.178422463778,
+    "return_pct": 11.401784224637781,
+    "total_trades": 125,
+    "win_rate": 0.504,
+    "profit_factor": 1.423963669308299,
+    "sharpe_ratio": 1.9660502544361165,
+    "max_drawdown": 0.10057447422333181,
+    "gross_profit": 3829.508912323885,
+    "gross_loss": 2689.330489860108
+  },
+  "yearly_breakdown": {
+    "2022": {
+      "trades": 32,
+      "pnl": -965.6380840387869,
+      "win_rate": 0.25,
+      "avg_pnl": -30.17619012621209
+    },
+    "2023": {
+      "trades": 38,
+      "pnl": 743.841851938314,
+      "win_rate": 0.5526315789473685,
+      "avg_pnl": 19.574785577324054
+    },
+    "2024": {
+      "trades": 55,
+      "pnl": 1361.9746545642506,
+      "win_rate": 0.6181818181818182,
+      "avg_pnl": 24.76317553753183
+    }
+  },
+  "archetype_performance": {
+    "archetype_order_block_retest": {
+      "trades": 10,
+      "total_pnl": 1517.59,
+      "avg_pnl": 151.76,
+      "win_rate": 0.9
+    },
+    "archetype_volume_exhaustion": {
+      "trades": 6,
+      "total_pnl": 306.15,
+      "avg_pnl": 51.03,
+      "win_rate": 0.6666666666666666
+    },
+    "archetype_failed_continuation": {
+      "trades": 1,
+      "total_pnl": -94.33,
+      "avg_pnl": -94.33,
+      "win_rate": 0.0
+    },
+    "tier1_market": {
+      "trades": 4,
+      "total_pnl": -236.28,
+      "avg_pnl": -59.07,
+      "win_rate": 0.5
+    },
+    "archetype_trap_within_trend": {
+      "trades": 104,
+      "total_pnl": -352.95,
+      "avg_pnl": -3.39,
+      "win_rate": 0.46153846153846156
+    }
+  },
+  "router": {
+    "config_switches": 1295,
+    "regime_switches": 1115
+  },
+  "component_results": {
+    "2022-2023": {
+      "pnl": -221.796232100473,
+      "trades": 70,
+      "win_rate": 0.4142857142857143
+    },
+    "2024": {
+      "pnl": 1361.974654564251,
+      "trades": 55,
+      "win_rate": 0.6181818181818182
+    }
+  }
+}

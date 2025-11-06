@@ -93,9 +93,11 @@ class ThresholdPolicy:
             Dict mapping archetype_name -> {param: threshold}
             Example: {'order_block_retest': {'fusion': 0.33, 'liquidity': 0.14}, ...}
         """
-        # LOCKED MODE: Return static base thresholds only (parity testing)
+        # PR-A PARITY FIX: Return empty dict for 'static' mode to match legacy behavior
+        # Legacy path uses thresholds={}, causing get_threshold() to return hardcoded defaults
         if self.locked_regime == 'static':
-            return self._build_base_map()
+            logger.info("[PR-A PARITY] ThresholdPolicy.resolve() returning EMPTY dict for locked_regime='static'")
+            return {}
 
         # LOCKED MODE: Force specific regime (parity testing)
         if self.locked_regime and self.locked_regime in self.regime_profiles:
@@ -242,11 +244,18 @@ class ThresholdPolicy:
         when locked to a specific regime.
 
         Args:
-            locked_regime: Regime to lock to (e.g., 'risk_on')
+            locked_regime: Regime to lock to (e.g., 'risk_on', 'static')
 
         Returns:
-            Thresholds with forced regime profile applied
+            Thresholds with forced regime profile applied, OR empty dict for 'static'
         """
+        # PR-A PARITY FIX: 'static' mode returns empty dict to match legacy behavior
+        # Legacy path uses thresholds={}, which causes get_threshold() to return
+        # hardcoded defaults. This ensures perfect parity.
+        if locked_regime == 'static':
+            logger.info("Locked mode 'static': Returning empty thresholds (use hardcoded defaults)")
+            return {}
+
         # Start with base thresholds
         final = self._build_base_map()
 

@@ -8,6 +8,12 @@ Contains regime state, adapted parameters, and computed thresholds.
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
 import pandas as pd
+import logging
+
+# PR-A DEBUG: Track threshold logging
+_threshold_log_count = 0
+_MAX_THRESHOLD_LOGS = 10
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -44,7 +50,21 @@ class RuntimeContext:
         Returns:
             Threshold value
         """
-        return self.thresholds.get(archetype, {}).get(param, default)
+        global _threshold_log_count
+        value = self.thresholds.get(archetype, {}).get(param, default)
+
+        # PR-A DEBUG: Log threshold resolution for first few calls
+        if _threshold_log_count < _MAX_THRESHOLD_LOGS:
+            threshold_keys = list(self.thresholds.keys()) if self.thresholds else []
+            arch_data = self.thresholds.get(archetype, {}) if self.thresholds else {}
+            logger.info(
+                f"[PR-A THRESHOLD DEBUG] get_threshold('{archetype}', '{param}', default={default}) "
+                f"→ {value} | thresholds={'EMPTY' if not self.thresholds else f'{len(threshold_keys)} archetypes'} "
+                f"| arch_data={arch_data if arch_data else 'NOT_FOUND'}"
+            )
+            _threshold_log_count += 1
+
+        return value
 
     def get_adapted_param(self, key: str, default: Any = None) -> Any:
         """
