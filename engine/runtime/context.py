@@ -46,6 +46,8 @@ class RuntimeContext:
         (fusion_threshold, pti_score_threshold) parameter names to support
         legacy configs during migration.
 
+        **PERFORMANCE**: Logging only occurs on cache misses and errors to reduce I/O overhead.
+
         Args:
             archetype: Archetype name (e.g., 'order_block_retest')
             param: Parameter name (short or long form)
@@ -85,6 +87,7 @@ class RuntimeContext:
         if not found:
             value = default
 
+        # PERFORMANCE: Only log errors/warnings, not successful lookups
         # PHASE 1 FIX: Always warn on critical failures (not just first N calls)
         if not self.thresholds:
             logger.warning(
@@ -104,14 +107,9 @@ class RuntimeContext:
                 f"Available params: {list(self.thresholds[archetype].keys())} "
                 f"Using default={default}"
             )
-        else:
-            # SUCCESS: Found param via alias resolution
-            logger.info(
-                f"[ParamEcho] {archetype}.{canonical} → {value} "
-                f"(requested='{param}', matched in config)"
-            )
+        # REMOVED: Success logging - was 215k INFO calls causing 383s of I/O overhead
 
-        # PR-A DEBUG: Log threshold resolution for first few calls
+        # PR-A DEBUG: Log threshold resolution for first few calls only
         if _threshold_log_count < _MAX_THRESHOLD_LOGS:
             threshold_keys = list(self.thresholds.keys()) if self.thresholds else []
             logger.info(

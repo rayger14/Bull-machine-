@@ -279,7 +279,7 @@ class ArchetypeLogic:
     # Main Archetype Detection Logic
     # =======================================================================
 
-    def detect(self, ctx: RuntimeContext) -> Tuple[Optional[str], float, float]:
+    def detect(self, context: RuntimeContext) -> Tuple[Optional[str], float, float]:
         """
         Detect which archetype (if any) matches the current context.
 
@@ -292,7 +292,7 @@ class ArchetypeLogic:
         marginal signals to compete (critical for choppy 2022 conditions).
 
         Args:
-            ctx: RuntimeContext with row, regime state, and resolved thresholds
+            context: RuntimeContext with row, regime state, and resolved thresholds
 
         Returns:
             (archetype_name_or_None, fusion_score, liquidity_score)
@@ -303,8 +303,8 @@ class ArchetypeLogic:
             return None, 0.0, 0.0
 
         # Global precheck: liquidity >= min_threshold
-        liquidity_score = self._liquidity_score(ctx.row)
-        fusion_score = self._fusion(ctx.row)
+        liquidity_score = self._liquidity_score(context.row)
+        fusion_score = self._fusion(context.row)
 
         # SOFT FILTER #1: Liquidity penalty (30%) instead of hard veto
         if features.SOFT_LIQUIDITY_FILTER:
@@ -320,7 +320,7 @@ class ArchetypeLogic:
 
         # SOFT FILTER #2: Regime penalty during crisis/risk_off (20%)
         if features.SOFT_REGIME_FILTER:
-            regime = ctx.regime_label if ctx else 'neutral'
+            regime = context.regime_label if context else 'neutral'
             regime_penalty = 1.0
             if regime in ['crisis', 'risk_off']:
                 regime_penalty = 0.8  # 20% penalty during macro stress
@@ -329,7 +329,7 @@ class ArchetypeLogic:
 
         # SOFT FILTER #3: Session penalty for low-volume periods (15%)
         if features.SOFT_SESSION_FILTER:
-            hour = ctx.row.name.hour if hasattr(ctx.row.name, 'hour') else 12
+            hour = context.row.name.hour if hasattr(context.row.name, 'hour') else 12
             session_penalty = 1.0
             # Asian session (22:00-08:00 UTC) gets slight penalty
             if hour >= 22 or hour < 8:
@@ -339,11 +339,11 @@ class ArchetypeLogic:
 
         # Route to evaluate-all or legacy dispatcher based on feature flag
         if features.EVALUATE_ALL_ARCHETYPES:
-            return self._detect_all_archetypes(ctx, fusion_score, liquidity_score)
+            return self._detect_all_archetypes(context, fusion_score, liquidity_score)
         else:
-            return self._detect_legacy_priority(ctx, fusion_score, liquidity_score)
+            return self._detect_legacy_priority(context, fusion_score, liquidity_score)
 
-    def _detect_all_archetypes(self, ctx: RuntimeContext, global_fusion_score: float, liquidity_score: float) -> Tuple[Optional[str], float, float]:
+    def _detect_all_archetypes(self, context: RuntimeContext, global_fusion_score: float, liquidity_score: float) -> Tuple[Optional[str], float, float]:
         """
         Evaluate ALL enabled archetypes and pick best by archetype-specific score.
 
@@ -382,7 +382,7 @@ class ArchetypeLogic:
             if not self.enabled[letter]:
                 continue
 
-            result = check_func(ctx)
+            result = check_func(context)
 
             # Handle both new (tuple) and legacy (bool) return types
             if isinstance(result, tuple):
@@ -402,9 +402,9 @@ class ArchetypeLogic:
 
         # STEP 2: Apply regime-specific routing weights
         # Use RuntimeContext regime (respects forced regime override)
-        regime = ctx.regime_label
+        regime = context.regime_label
         if len(candidates) > 1:
-            logger.info(f"[ROUTING DEBUG] ctx.regime_label={regime}, candidates={[(n, f'{s:.3f}') for n,s,_,_ in candidates]}")
+            logger.info(f"[ROUTING DEBUG] context.regime_label={regime}, candidates={[(n, f'{s:.3f}') for n,s,_,_ in candidates]}")
         # FIX: routing is at self.config['routing'], NOT self.config['archetypes']['routing']
         # (archetype_config already IS the archetypes section)
         routing_config = self.config.get('routing', {})
@@ -435,7 +435,7 @@ class ArchetypeLogic:
 
         return best[0], best[1], liquidity_score
 
-    def _detect_legacy_priority(self, ctx: RuntimeContext, fusion_score: float, liquidity_score: float) -> Tuple[Optional[str], float, float]:
+    def _detect_legacy_priority(self, context: RuntimeContext, fusion_score: float, liquidity_score: float) -> Tuple[Optional[str], float, float]:
         """
         Legacy dispatcher with early returns (causes archetype starvation).
 
@@ -452,37 +452,37 @@ class ArchetypeLogic:
             return result  # Boolean return
 
         # Check archetypes in priority order: A, B, C, K, H, L, F, D, G, E, M
-        if self.enabled['A'] and _is_match(self._check_A(ctx)):
+        if self.enabled['A'] and _is_match(self._check_A(context)):
             return 'trap_reversal', fusion_score, liquidity_score
 
-        if self.enabled['B'] and _is_match(self._check_B(ctx)):
+        if self.enabled['B'] and _is_match(self._check_B(context)):
             return 'order_block_retest', fusion_score, liquidity_score
 
-        if self.enabled['C'] and _is_match(self._check_C(ctx)):
+        if self.enabled['C'] and _is_match(self._check_C(context)):
             return 'fvg_continuation', fusion_score, liquidity_score
 
-        if self.enabled['K'] and _is_match(self._check_K(ctx)):
+        if self.enabled['K'] and _is_match(self._check_K(context)):
             return 'wick_trap', fusion_score, liquidity_score
 
-        if self.enabled['H'] and _is_match(self._check_H(ctx)):
+        if self.enabled['H'] and _is_match(self._check_H(context)):
             return 'trap_within_trend', fusion_score, liquidity_score
 
-        if self.enabled['L'] and _is_match(self._check_L(ctx)):
+        if self.enabled['L'] and _is_match(self._check_L(context)):
             return 'volume_exhaustion', fusion_score, liquidity_score
 
-        if self.enabled['F'] and _is_match(self._check_F(ctx)):
+        if self.enabled['F'] and _is_match(self._check_F(context)):
             return 'expansion_exhaustion', fusion_score, liquidity_score
 
-        if self.enabled['D'] and _is_match(self._check_D(ctx)):
+        if self.enabled['D'] and _is_match(self._check_D(context)):
             return 'failed_continuation', fusion_score, liquidity_score
 
-        if self.enabled['G'] and _is_match(self._check_G(ctx)):
+        if self.enabled['G'] and _is_match(self._check_G(context)):
             return 're_accumulate', fusion_score, liquidity_score
 
-        if self.enabled['E'] and _is_match(self._check_E(ctx)):
+        if self.enabled['E'] and _is_match(self._check_E(context)):
             return 'liquidity_compression', fusion_score, liquidity_score
 
-        if self.enabled['M'] and _is_match(self._check_M(ctx)):
+        if self.enabled['M'] and _is_match(self._check_M(context)):
             return 'ratio_coil_break', fusion_score, liquidity_score
 
         # No match
@@ -585,33 +585,33 @@ class ArchetypeLogic:
     # Individual Archetype Checks (Using Safe Getters)
     # =======================================================================
 
-    def _check_A(self, ctx: RuntimeContext) -> bool:
+    def _check_A(self, context: RuntimeContext) -> bool:
         """
         Archetype A: Trap Reversal (PTI spring/UTAD + displacement).
 
         **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
         """
         # PR#6A: Read ALL thresholds from context (not hardcoded!)
-        fusion_th = ctx.get_threshold('spring', 'fusion_threshold', 0.33)
-        pti_score_th = ctx.get_threshold('spring', 'pti_score_threshold', 0.40)
-        disp_multiplier = ctx.get_threshold('spring', 'disp_atr_multiplier', 0.80)
+        fusion_th = context.get_threshold('spring', 'fusion_threshold', 0.33)
+        pti_score_th = context.get_threshold('spring', 'pti_score_threshold', 0.40)
+        disp_multiplier = context.get_threshold('spring', 'disp_atr_multiplier', 0.80)
 
         # Get features from context
-        pti_trap = self.g(ctx.row, "pti_trap_type", '')
+        pti_trap = self.g(context.row, "pti_trap_type", '')
         if not pti_trap or pti_trap not in ['spring', 'utad']:
             return False
 
-        pti_score = self.g(ctx.row, "pti_score", 0.0)
-        disp = self.g(ctx.row, "boms_disp", 0.0)
-        atr = max(self.g(ctx.row, "atr", 0.0), 1e-9)
-        fusion = ctx.row.get('fusion_score', 0.0)
+        pti_score = self.g(context.row, "pti_score", 0.0)
+        disp = self.g(context.row, "boms_disp", 0.0)
+        atr = max(self.g(context.row, "atr", 0.0), 1e-9)
+        fusion = context.row.get('fusion_score', 0.0)
 
         # Now use DYNAMIC thresholds instead of hardcoded!
         return (pti_score >= pti_score_th and
                 disp >= disp_multiplier * atr and
                 fusion >= fusion_th)
 
-    def _check_B(self, ctx: RuntimeContext) -> tuple:
+    def _check_B(self, context: RuntimeContext) -> tuple:
         """
         Archetype B: Order Block Retest (BOS + BOMS + Wyckoff).
 
@@ -622,23 +622,23 @@ class ArchetypeLogic:
             (matched: bool, score: float, meta: dict)
         """
         # Gates (pass/fail thresholds, with state-aware adjustment)
-        boms_str_th = ctx.get_threshold('order_block_retest', 'boms_strength_min', 0.30)
-        wyckoff_th = ctx.get_threshold('order_block_retest', 'wyckoff_min', 0.35)
-        base_fusion_th = ctx.get_threshold('order_block_retest', 'fusion_threshold', 0.374)
+        boms_str_th = context.get_threshold('order_block_retest', 'boms_strength_min', 0.30)
+        wyckoff_th = context.get_threshold('order_block_retest', 'wyckoff_min', 0.35)
+        base_fusion_th = context.get_threshold('order_block_retest', 'fusion_threshold', 0.374)
 
         # Apply state-aware gate adjustment (Bull Machine v2)
         fusion_th = apply_state_aware_gate(
             'order_block_retest',
             base_fusion_th,
-            ctx,
+            context,
             self.state_gate_module,
             log_components=False
         ) if STATE_GATES_AVAILABLE else base_fusion_th
 
         # Get features from context
-        bos_bullish = self.g(ctx.row, "bos_bullish", 0)
-        boms_str = self.g(ctx.row, "boms_strength", 0.0)
-        wyckoff = self.g(ctx.row, "wyckoff_score", 0.0)
+        bos_bullish = self.g(context.row, "bos_bullish", 0)
+        boms_str = self.g(context.row, "boms_strength", 0.0)
+        wyckoff = self.g(context.row, "wyckoff_score", 0.0)
 
         # Gate checks
         if not bos_bullish:
@@ -650,15 +650,15 @@ class ArchetypeLogic:
 
         # Archetype-specific scoring (not global fusion!)
         components = {
-            "fusion": self._fusion(ctx.row),
-            "liquidity": self._liquidity_score(ctx.row),
-            "momentum": self._momentum_score(ctx.row),
+            "fusion": self._fusion(context.row),
+            "liquidity": self._liquidity_score(context.row),
+            "momentum": self._momentum_score(context.row),
             "wyckoff": wyckoff,
             "boms": boms_str
         }
 
         # Archetype-specific weights (configurable)
-        weights = ctx.get_threshold('order_block_retest', 'weights', {
+        weights = context.get_threshold('order_block_retest', 'weights', {
             "fusion": 0.35,
             "liquidity": 0.20,
             "momentum": 0.15,
@@ -674,7 +674,7 @@ class ArchetypeLogic:
         # (These are applied globally in detect(), but we track them here for logging)
 
         # Archetype bias knob (allows fine-tuning without changing weights)
-        archetype_weight = ctx.get_threshold('order_block_retest', 'archetype_weight', 1.0)
+        archetype_weight = context.get_threshold('order_block_retest', 'archetype_weight', 1.0)
 
         # Final score
         score = max(0.0, min(1.0, base_score * archetype_weight))
@@ -693,28 +693,28 @@ class ArchetypeLogic:
 
         return True, score, meta
 
-    def _check_C(self, ctx: RuntimeContext) -> bool:
+    def _check_C(self, context: RuntimeContext) -> bool:
         """
         Archetype C: FVG Continuation (displacement + momentum).
 
         **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
         """
         # PR#6A: Read ALL thresholds from context (not hardcoded!)
-        fusion_th = ctx.get_threshold('wick_trap', 'fusion_threshold', 0.42)
-        disp_multiplier = ctx.get_threshold('wick_trap', 'disp_atr_multiplier', 1.00)
-        momentum_th = ctx.get_threshold('wick_trap', 'momentum_min', 0.45)
-        tf4h_fusion_th = ctx.get_threshold('wick_trap', 'tf4h_fusion_min', 0.25)
+        fusion_th = context.get_threshold('wick_trap', 'fusion_threshold', 0.42)
+        disp_multiplier = context.get_threshold('wick_trap', 'disp_atr_multiplier', 1.00)
+        momentum_th = context.get_threshold('wick_trap', 'momentum_min', 0.45)
+        tf4h_fusion_th = context.get_threshold('wick_trap', 'tf4h_fusion_min', 0.25)
 
         # Get features from context
-        fvg_4h = self.g(ctx.row, "fvg_present_4h", 0)
+        fvg_4h = self.g(context.row, "fvg_present_4h", 0)
         if not fvg_4h:
             return False
 
-        disp = self.g(ctx.row, "boms_disp", 0.0)
-        atr = max(self.g(ctx.row, "atr", 0.0), 1e-9)
-        momentum = self._momentum_score(ctx.row)
-        tf4h_fusion = self.g(ctx.row, "fusion_score", 0.0)
-        fusion = ctx.row.get('fusion_score', 0.0)
+        disp = self.g(context.row, "boms_disp", 0.0)
+        atr = max(self.g(context.row, "atr", 0.0), 1e-9)
+        momentum = self._momentum_score(context.row)
+        tf4h_fusion = self.g(context.row, "fusion_score", 0.0)
+        fusion = context.row.get('fusion_score', 0.0)
 
         # Now use DYNAMIC thresholds instead of hardcoded!
         return (disp >= disp_multiplier * atr and
@@ -722,54 +722,54 @@ class ArchetypeLogic:
                 tf4h_fusion >= tf4h_fusion_th and
                 fusion >= fusion_th)
 
-    def _check_D(self, ctx: RuntimeContext) -> bool:
+    def _check_D(self, context: RuntimeContext) -> bool:
         """
         Archetype D: Failed Continuation (FVG + weak RSI).
 
         **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
         """
         # PR#6A: Read ALL thresholds from context (not hardcoded!)
-        fusion_th = ctx.get_threshold('failed_continuation', 'fusion_threshold', 0.42)
-        rsi_max = ctx.get_threshold('failed_continuation', 'rsi_max', 50.0)
+        fusion_th = context.get_threshold('failed_continuation', 'fusion_threshold', 0.42)
+        rsi_max = context.get_threshold('failed_continuation', 'rsi_max', 50.0)
 
         # Get features from context
-        fvg_1h = self.g(ctx.row, "fvg_present_1h", 0)
+        fvg_1h = self.g(context.row, "fvg_present_1h", 0)
         if not fvg_1h:
             return False
 
-        rsi = self.g(ctx.row, "rsi", 50.0)
-        fusion = ctx.row.get('fusion_score', 0.0)
+        rsi = self.g(context.row, "rsi", 50.0)
+        fusion = context.row.get('fusion_score', 0.0)
 
         # Now use DYNAMIC thresholds instead of hardcoded!
         return (rsi <= rsi_max and
                 fusion >= fusion_th)
 
-    def _check_E(self, ctx: RuntimeContext) -> bool:
+    def _check_E(self, context: RuntimeContext) -> bool:
         """
         Archetype E: Liquidity Compression (low ATR + volume cluster).
 
         **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
         """
         # PR#6A: Read ALL thresholds from context (with state-aware adjustment)
-        base_fusion_th = ctx.get_threshold('volume_exhaustion', 'fusion_threshold', 0.35)
-        atr_pct_max = ctx.get_threshold('volume_exhaustion', 'atr_percentile_max', 0.25)
-        vol_z_min = ctx.get_threshold('volume_exhaustion', 'vol_z_min', 0.5)
-        vol_z_max = ctx.get_threshold('volume_exhaustion', 'vol_z_max', 1.5)
-        vol_cluster_min = ctx.get_threshold('volume_exhaustion', 'vol_cluster_min', 0.70)
+        base_fusion_th = context.get_threshold('volume_exhaustion', 'fusion_threshold', 0.35)
+        atr_pct_max = context.get_threshold('volume_exhaustion', 'atr_percentile_max', 0.25)
+        vol_z_min = context.get_threshold('volume_exhaustion', 'vol_z_min', 0.5)
+        vol_z_max = context.get_threshold('volume_exhaustion', 'vol_z_max', 1.5)
+        vol_cluster_min = context.get_threshold('volume_exhaustion', 'vol_cluster_min', 0.70)
 
         # Apply state-aware gate adjustment (Bull Machine v2)
         fusion_th = apply_state_aware_gate(
             'volume_exhaustion',
             base_fusion_th,
-            ctx,
+            context,
             self.state_gate_module,
             log_components=False
         ) if STATE_GATES_AVAILABLE else base_fusion_th
 
         # Get features from context
-        atr_pct = self.g(ctx.row, "atr_percentile", 0.5)
-        vol_z = self.g(ctx.row, "vol_z", 0.0)
-        fusion = ctx.row.get('fusion_score', 0.0)
+        atr_pct = self.g(context.row, "atr_percentile", 0.5)
+        vol_z = self.g(context.row, "vol_z", 0.0)
+        fusion = context.row.get('fusion_score', 0.0)
 
         # Volume clustering: check if vol_z is moderate (dynamic thresholds)
         vol_cluster = 1.0 if vol_z_min <= vol_z <= vol_z_max else 0.0
@@ -779,23 +779,23 @@ class ArchetypeLogic:
                 vol_cluster >= vol_cluster_min and
                 fusion >= fusion_th)
 
-    def _check_F(self, ctx: RuntimeContext) -> bool:
+    def _check_F(self, context: RuntimeContext) -> bool:
         """
         Archetype F: Expansion Exhaustion (extreme RSI + high ATR + vol spike).
 
         **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
         """
         # PR#6A: Read ALL thresholds from context (not hardcoded!)
-        fusion_th = ctx.get_threshold('exhaustion_reversal', 'fusion_threshold', 0.38)
-        rsi_min = ctx.get_threshold('exhaustion_reversal', 'rsi_min', 78.0)
-        atr_pct_min = ctx.get_threshold('exhaustion_reversal', 'atr_percentile_min', 0.90)
-        vol_z_min = ctx.get_threshold('exhaustion_reversal', 'vol_z_min', 1.0)
+        fusion_th = context.get_threshold('exhaustion_reversal', 'fusion_threshold', 0.38)
+        rsi_min = context.get_threshold('exhaustion_reversal', 'rsi_min', 78.0)
+        atr_pct_min = context.get_threshold('exhaustion_reversal', 'atr_percentile_min', 0.90)
+        vol_z_min = context.get_threshold('exhaustion_reversal', 'vol_z_min', 1.0)
 
         # Get features from context
-        rsi = self.g(ctx.row, "rsi", 50.0)
-        atr_pct = self.g(ctx.row, "atr_percentile", 0.5)
-        vol_z = self.g(ctx.row, "vol_z", 0.0)
-        fusion = ctx.row.get('fusion_score', 0.0)
+        rsi = self.g(context.row, "rsi", 50.0)
+        atr_pct = self.g(context.row, "atr_percentile", 0.5)
+        vol_z = self.g(context.row, "vol_z", 0.0)
+        fusion = context.row.get('fusion_score', 0.0)
 
         # Now use DYNAMIC thresholds instead of hardcoded!
         return (rsi >= rsi_min and
@@ -803,28 +803,28 @@ class ArchetypeLogic:
                 vol_z >= vol_z_min and
                 fusion >= fusion_th)
 
-    def _check_G(self, ctx: RuntimeContext) -> bool:
+    def _check_G(self, context: RuntimeContext) -> bool:
         """
         Archetype G: Re-Accumulate Base (BOMS strength + high liquidity).
 
         **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
         """
         # PR#6A: Read ALL thresholds from context (not hardcoded!)
-        fusion_th = ctx.get_threshold('liquidity_sweep', 'fusion_threshold', 0.40)
-        boms_str_min = ctx.get_threshold('liquidity_sweep', 'boms_strength_min', 0.40)
-        liq_min = ctx.get_threshold('liquidity_sweep', 'liquidity_min', 0.40)
+        fusion_th = context.get_threshold('liquidity_sweep', 'fusion_threshold', 0.40)
+        boms_str_min = context.get_threshold('liquidity_sweep', 'boms_strength_min', 0.40)
+        liq_min = context.get_threshold('liquidity_sweep', 'liquidity_min', 0.40)
 
         # Get features from context
-        boms_str = self.g(ctx.row, "boms_strength", 0.0)
-        liq = self._liquidity_score(ctx.row)
-        fusion = ctx.row.get('fusion_score', 0.0)
+        boms_str = self.g(context.row, "boms_strength", 0.0)
+        liq = self._liquidity_score(context.row)
+        fusion = context.row.get('fusion_score', 0.0)
 
         # Now use DYNAMIC thresholds instead of hardcoded!
         return (boms_str >= boms_str_min and
                 liq >= liq_min and
                 fusion >= fusion_th)
 
-    def _check_H(self, ctx: RuntimeContext) -> tuple:
+    def _check_H(self, context: RuntimeContext) -> tuple:
         """
         Archetype H: Trap Within Trend (ADX trend + liquidity drop).
 
@@ -835,22 +835,22 @@ class ArchetypeLogic:
             (matched: bool, score: float, meta: dict)
         """
         # Gates (with state-aware adjustment)
-        base_fusion_th = ctx.get_threshold('trap_within_trend', 'fusion_threshold', 0.35)
-        adx_th = ctx.get_threshold('trap_within_trend', 'adx_threshold', 25.0)
-        liq_th = ctx.get_threshold('trap_within_trend', 'liquidity_threshold', 0.30)
+        base_fusion_th = context.get_threshold('trap_within_trend', 'fusion_threshold', 0.35)
+        adx_th = context.get_threshold('trap_within_trend', 'adx_threshold', 25.0)
+        liq_th = context.get_threshold('trap_within_trend', 'liquidity_threshold', 0.30)
 
         # Apply state-aware gate adjustment (Bull Machine v2)
         fusion_th = apply_state_aware_gate(
             'trap_within_trend',
             base_fusion_th,
-            ctx,
+            context,
             self.state_gate_module,
             log_components=False
         ) if STATE_GATES_AVAILABLE else base_fusion_th
 
         # Get features
-        adx = self.g(ctx.row, "adx", 0.0)
-        liq = self._liquidity_score(ctx.row)
+        adx = self.g(context.row, "adx", 0.0)
+        liq = self._liquidity_score(context.row)
 
         # Gate checks
         if adx < adx_th:
@@ -860,14 +860,14 @@ class ArchetypeLogic:
 
         # Archetype-specific scoring
         components = {
-            "fusion": self._fusion(ctx.row),
-            "momentum": self._momentum_score(ctx.row),
+            "fusion": self._fusion(context.row),
+            "momentum": self._momentum_score(context.row),
             "adx": min(adx / 50.0, 1.0),  # Normalize ADX to 0-1
             "liquidity_inverse": max(0.0, 1.0 - liq),  # Inverse liquidity (lower is better for traps)
         }
 
         # Trap within trend weights (emphasizes momentum + low liquidity)
-        weights = ctx.get_threshold('trap_within_trend', 'weights', {
+        weights = context.get_threshold('trap_within_trend', 'weights', {
             "fusion": 0.40,
             "momentum": 0.30,
             "adx": 0.20,
@@ -875,7 +875,7 @@ class ArchetypeLogic:
         })
 
         base_score = sum(components.get(k, 0.0) * weights.get(k, 0.0) for k in components)
-        archetype_weight = ctx.get_threshold('trap_within_trend', 'archetype_weight', 0.95)  # Slightly disfavor to reduce dominance
+        archetype_weight = context.get_threshold('trap_within_trend', 'archetype_weight', 0.95)  # Slightly disfavor to reduce dominance
 
         score = max(0.0, min(1.0, base_score * archetype_weight))
 
@@ -891,7 +891,7 @@ class ArchetypeLogic:
 
         return True, score, meta
 
-    def _check_K(self, ctx: RuntimeContext) -> bool:
+    def _check_K(self, context: RuntimeContext) -> bool:
         """
         Archetype K: Wick Trap / Moneytaur (ADX + liquidity + wicks).
 
@@ -899,21 +899,21 @@ class ArchetypeLogic:
         This was causing zero-variance because ADX and liquidity were hardcoded.
         """
         # PR#6A: Read ALL thresholds from context (not hardcoded!)
-        fusion_th = ctx.get_threshold('wick_trap_moneytaur', 'fusion_threshold', 0.36)
-        adx_th = ctx.get_threshold('wick_trap_moneytaur', 'adx_threshold', 25.0)
-        liq_th = ctx.get_threshold('wick_trap_moneytaur', 'liquidity_threshold', 0.30)
+        fusion_th = context.get_threshold('wick_trap_moneytaur', 'fusion_threshold', 0.36)
+        adx_th = context.get_threshold('wick_trap_moneytaur', 'adx_threshold', 25.0)
+        liq_th = context.get_threshold('wick_trap_moneytaur', 'liquidity_threshold', 0.30)
 
         # Get features from context
-        adx = self.g(ctx.row, "adx", 0.0)
-        liq = self._liquidity_score(ctx.row)
-        fusion = ctx.row.get('fusion_score', 0.0)
+        adx = self.g(context.row, "adx", 0.0)
+        liq = self._liquidity_score(context.row)
+        fusion = context.row.get('fusion_score', 0.0)
 
         # Now use DYNAMIC thresholds instead of hardcoded!
         return (adx >= adx_th and
                 liq >= liq_th and
                 fusion >= fusion_th)
 
-    def _check_L(self, ctx: RuntimeContext) -> tuple:
+    def _check_L(self, context: RuntimeContext) -> tuple:
         """
         Archetype L: Volume Exhaustion / Zeroika (vol spike + extreme RSI).
 
@@ -924,13 +924,13 @@ class ArchetypeLogic:
             (matched: bool, score: float, meta: dict)
         """
         # Gates
-        fusion_th = ctx.get_threshold('volume_exhaustion', 'fusion_threshold', 0.38)
-        vol_z_min = ctx.get_threshold('volume_exhaustion', 'vol_z_min', 1.0)
-        rsi_min = ctx.get_threshold('volume_exhaustion', 'rsi_min', 70.0)
+        fusion_th = context.get_threshold('volume_exhaustion', 'fusion_threshold', 0.38)
+        vol_z_min = context.get_threshold('volume_exhaustion', 'vol_z_min', 1.0)
+        rsi_min = context.get_threshold('volume_exhaustion', 'rsi_min', 70.0)
 
         # Get features
-        vol_z = self.g(ctx.row, "vol_z", 0.0)
-        rsi = self.g(ctx.row, "rsi", 50.0)
+        vol_z = self.g(context.row, "vol_z", 0.0)
+        rsi = self.g(context.row, "rsi", 50.0)
 
         # Gate checks
         if vol_z < vol_z_min:
@@ -940,15 +940,15 @@ class ArchetypeLogic:
 
         # Archetype-specific scoring
         components = {
-            "fusion": self._fusion(ctx.row),
-            "liquidity": self._liquidity_score(ctx.row),
+            "fusion": self._fusion(context.row),
+            "liquidity": self._liquidity_score(context.row),
             "vol_z": min(vol_z / 3.0, 1.0),  # Normalize vol_z to 0-1 (3+ sigma = max)
             "rsi": min((rsi - 50.0) / 50.0, 1.0),  # Normalize RSI above 50 to 0-1
-            "momentum": self._momentum_score(ctx.row)
+            "momentum": self._momentum_score(context.row)
         }
 
         # Volume exhaustion weights (emphasizes vol spike + RSI extremes)
-        weights = ctx.get_threshold('volume_exhaustion', 'weights', {
+        weights = context.get_threshold('volume_exhaustion', 'weights', {
             "fusion": 0.30,
             "liquidity": 0.20,
             "vol_z": 0.25,
@@ -957,7 +957,7 @@ class ArchetypeLogic:
         })
 
         base_score = sum(components.get(k, 0.0) * weights.get(k, 0.0) for k in components)
-        archetype_weight = ctx.get_threshold('volume_exhaustion', 'archetype_weight', 1.05)  # Slightly favor (high quality archetype)
+        archetype_weight = context.get_threshold('volume_exhaustion', 'archetype_weight', 1.05)  # Slightly favor (high quality archetype)
 
         score = max(0.0, min(1.0, base_score * archetype_weight))
 
@@ -973,23 +973,23 @@ class ArchetypeLogic:
 
         return True, score, meta
 
-    def _check_M(self, ctx: RuntimeContext) -> bool:
+    def _check_M(self, context: RuntimeContext) -> bool:
         """
         Archetype M: Ratio Coil Break / Wyckoff Insider (low ATR + near POC + BOMS).
 
         **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
         """
         # PR#6A: Read ALL thresholds from context (not hardcoded!)
-        fusion_th = ctx.get_threshold('confluence_breakout', 'fusion_threshold', 0.35)
-        atr_pct_max = ctx.get_threshold('confluence_breakout', 'atr_percentile_max', 0.30)
-        poc_dist_max = ctx.get_threshold('confluence_breakout', 'poc_dist_max', 0.50)
-        boms_str_min = ctx.get_threshold('confluence_breakout', 'boms_strength_min', 0.40)
+        fusion_th = context.get_threshold('confluence_breakout', 'fusion_threshold', 0.35)
+        atr_pct_max = context.get_threshold('confluence_breakout', 'atr_percentile_max', 0.30)
+        poc_dist_max = context.get_threshold('confluence_breakout', 'poc_dist_max', 0.50)
+        boms_str_min = context.get_threshold('confluence_breakout', 'boms_strength_min', 0.40)
 
         # Get features from context
-        atr_pct = self.g(ctx.row, "atr_percentile", 0.5)
-        poc_dist = self.g(ctx.row, "poc_dist", 1.0)
-        boms_str = self.g(ctx.row, "boms_strength", 0.0)
-        fusion = ctx.row.get('fusion_score', 0.0)
+        atr_pct = self.g(context.row, "atr_percentile", 0.5)
+        poc_dist = self.g(context.row, "poc_dist", 1.0)
+        boms_str = self.g(context.row, "boms_strength", 0.0)
+        fusion = context.row.get('fusion_score', 0.0)
 
         # Now use DYNAMIC thresholds instead of hardcoded!
         return (atr_pct <= atr_pct_max and
@@ -1001,7 +1001,7 @@ class ArchetypeLogic:
     # Bear Archetype Check Methods (Short-Biased)
     # =======================================================================
 
-    def _check_S1(self, ctx: RuntimeContext) -> bool:
+    def _check_S1(self, context: RuntimeContext) -> bool:
         """
         S1 - Breakdown: Support break with volume confirmation.
 
@@ -1011,21 +1011,21 @@ class ArchetypeLogic:
         - Fusion score threshold
         """
         # Read thresholds from config
-        fusion_th = ctx.get_threshold('breakdown', 'fusion', 0.38)
-        liq_max = ctx.get_threshold('breakdown', 'liq_max', 0.22)
-        vol_z_min = ctx.get_threshold('breakdown', 'vol_z', 1.2)
+        fusion_th = context.get_threshold('breakdown', 'fusion', 0.38)
+        liq_max = context.get_threshold('breakdown', 'liq_max', 0.22)
+        vol_z_min = context.get_threshold('breakdown', 'vol_z', 1.2)
 
         # Get features
-        liq = self._liquidity_score(ctx.row)
-        vol_z = self.g(ctx.row, "vol_z", 0.0)
-        fusion = ctx.row.get('fusion_score', 0.0)
+        liq = self._liquidity_score(context.row)
+        vol_z = self.g(context.row, "vol_z", 0.0)
+        fusion = context.row.get('fusion_score', 0.0)
 
         # Check conditions
         return (liq < liq_max and
                 vol_z > vol_z_min and
                 fusion >= fusion_th)
 
-    def _check_S2(self, ctx: RuntimeContext) -> bool:
+    def _check_S2(self, context: RuntimeContext) -> bool:
         """
         S2 - Rejection: Resistance test with divergence (fade highs).
 
@@ -1036,16 +1036,16 @@ class ArchetypeLogic:
         - Fusion score threshold
         """
         # Read thresholds from config
-        fusion_th = ctx.get_threshold('rejection', 'fusion', 0.36)
-        liq_max = ctx.get_threshold('rejection', 'liq_max', 0.35)
-        rsi_min = ctx.get_threshold('rejection', 'rsi_min', 70.0)
-        vol_max = ctx.get_threshold('rejection', 'vol_max', 0.5)
+        fusion_th = context.get_threshold('rejection', 'fusion', 0.36)
+        liq_max = context.get_threshold('rejection', 'liq_max', 0.35)
+        rsi_min = context.get_threshold('rejection', 'rsi_min', 70.0)
+        vol_max = context.get_threshold('rejection', 'vol_max', 0.5)
 
         # Get features
-        liq = self._liquidity_score(ctx.row)
-        rsi = self.g(ctx.row, "rsi", 50.0)
-        vol_z = self.g(ctx.row, "vol_z", 0.0)
-        fusion = ctx.row.get('fusion_score', 0.0)
+        liq = self._liquidity_score(context.row)
+        rsi = self.g(context.row, "rsi", 50.0)
+        vol_z = self.g(context.row, "vol_z", 0.0)
+        fusion = context.row.get('fusion_score', 0.0)
 
         # Check conditions
         return (liq < liq_max and
@@ -1053,7 +1053,7 @@ class ArchetypeLogic:
                 vol_z <= vol_max and
                 fusion >= fusion_th)
 
-    def _check_S3(self, ctx: RuntimeContext) -> bool:
+    def _check_S3(self, context: RuntimeContext) -> bool:
         """
         S3 - Whipsaw: False break + reversal (upthrust rejection).
 
@@ -1065,21 +1065,21 @@ class ArchetypeLogic:
         Note: Simplified from wick_ratio check (field may not exist)
         """
         # Read thresholds from config (use friendly name, ThresholdPolicy maps letter codes)
-        fusion_th = ctx.get_threshold('whipsaw', 'fusion', 0.35)
-        rsi_min = ctx.get_threshold('whipsaw', 'rsi_extreme', 70.0)
-        vol_max = ctx.get_threshold('whipsaw', 'vol_max', 0.5)
+        fusion_th = context.get_threshold('whipsaw', 'fusion', 0.35)
+        rsi_min = context.get_threshold('whipsaw', 'rsi_extreme', 70.0)
+        vol_max = context.get_threshold('whipsaw', 'vol_max', 0.5)
 
         # Get features
-        rsi = self.g(ctx.row, "rsi", 50.0)
-        vol_z = self.g(ctx.row, "vol_z", 0.0)
-        fusion = ctx.row.get('fusion_score', 0.0)
+        rsi = self.g(context.row, "rsi", 50.0)
+        vol_z = self.g(context.row, "vol_z", 0.0)
+        fusion = context.row.get('fusion_score', 0.0)
 
         # Check conditions
         return (rsi >= rsi_min and
                 vol_z <= vol_max and
                 fusion >= fusion_th)
 
-    def _check_S4(self, ctx: RuntimeContext) -> bool:
+    def _check_S4(self, context: RuntimeContext) -> bool:
         """
         S4 - Distribution: High volume + no follow (exhaustion climax).
 
@@ -1089,21 +1089,21 @@ class ArchetypeLogic:
         - Fusion score threshold
         """
         # Read thresholds from config
-        fusion_th = ctx.get_threshold('distribution', 'fusion', 0.37)
-        vol_climax = ctx.get_threshold('distribution', 'vol_climax', 1.5)
-        liq_max = ctx.get_threshold('distribution', 'liq_max', 0.3)
+        fusion_th = context.get_threshold('distribution', 'fusion', 0.37)
+        vol_climax = context.get_threshold('distribution', 'vol_climax', 1.5)
+        liq_max = context.get_threshold('distribution', 'liq_max', 0.3)
 
         # Get features
-        vol_z = self.g(ctx.row, "vol_z", 0.0)
-        liq = self._liquidity_score(ctx.row)
-        fusion = ctx.row.get('fusion_score', 0.0)
+        vol_z = self.g(context.row, "vol_z", 0.0)
+        liq = self._liquidity_score(context.row)
+        fusion = context.row.get('fusion_score', 0.0)
 
         # Check conditions
         return (vol_z >= vol_climax and
                 liq < liq_max and
                 fusion >= fusion_th)
 
-    def _check_S5(self, ctx: RuntimeContext) -> bool:
+    def _check_S5(self, context: RuntimeContext) -> bool:
         """
         S5 - Short Squeeze Setup: Negative funding + OI spike (bearish fuel).
 
@@ -1111,7 +1111,7 @@ class ArchetypeLogic:
         """
         return False
 
-    def _check_S6(self, ctx: RuntimeContext) -> bool:
+    def _check_S6(self, context: RuntimeContext) -> bool:
         """
         S6 - Alt Rotation Down: Altcoin underperformance (TOTAL3 < BTC).
 
@@ -1119,7 +1119,7 @@ class ArchetypeLogic:
         """
         return False
 
-    def _check_S7(self, ctx: RuntimeContext) -> bool:
+    def _check_S7(self, context: RuntimeContext) -> bool:
         """
         S7 - Curve Inversion Breakdown: Yield curve inversion + support break.
 
@@ -1127,7 +1127,7 @@ class ArchetypeLogic:
         """
         return False
 
-    def _check_S8(self, ctx: RuntimeContext) -> bool:
+    def _check_S8(self, context: RuntimeContext) -> bool:
         """
         S8 - Volume Fade in Chop: Low volume drift + failure (chop filter).
 
@@ -1138,16 +1138,16 @@ class ArchetypeLogic:
         - Fusion score threshold
         """
         # Read thresholds from config
-        fusion_th = ctx.get_threshold('volume_fade_chop', 'fusion', 0.34)
-        vol_max = ctx.get_threshold('volume_fade_chop', 'vol_max', 0.5)
-        rsi_extreme = ctx.get_threshold('volume_fade_chop', 'rsi_extreme', 70.0)
-        adx_max = ctx.get_threshold('volume_fade_chop', 'adx_max', 25.0)
+        fusion_th = context.get_threshold('volume_fade_chop', 'fusion', 0.34)
+        vol_max = context.get_threshold('volume_fade_chop', 'vol_max', 0.5)
+        rsi_extreme = context.get_threshold('volume_fade_chop', 'rsi_extreme', 70.0)
+        adx_max = context.get_threshold('volume_fade_chop', 'adx_max', 25.0)
 
         # Get features
-        vol_z = self.g(ctx.row, "vol_z", 0.0)
-        rsi = self.g(ctx.row, "rsi", 50.0)
-        adx = self.g(ctx.row, "adx", 0.0)
-        fusion = ctx.row.get('fusion_score', 0.0)
+        vol_z = self.g(context.row, "vol_z", 0.0)
+        rsi = self.g(context.row, "rsi", 50.0)
+        adx = self.g(context.row, "adx", 0.0)
+        fusion = context.row.get('fusion_score', 0.0)
 
         # Check conditions
         return (vol_z <= vol_max and

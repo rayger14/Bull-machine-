@@ -154,18 +154,74 @@ class Trade:
 class KnowledgeAwareBacktest:
     """
     Full knowledge backtest engine using all 69 MTF features.
+
+    This is the main execution engine for Bull Machine v2. It orchestrates:
+    - Feature store loading and validation (89 technical + 19 macro indicators)
+    - Regime classification using GMM v3.2 (5 clusters → 4 regimes)
+    - Archetype pattern detection (19 rule-based patterns)
+    - Regime-aware routing and threshold adjustments
+    - State-aware gate surfaces (ADX, ATR, funding)
+    - Position sizing and exit management
+    - Trade execution and PNL tracking
+
+    The engine supports both legacy (3-archetype) and expanded (19-archetype) modes,
+    with optional adaptive fusion for regime-aware parameter morphing.
+
+    Attributes:
+        df: Feature store DataFrame with 89 columns
+        params: KnowledgeParams with domain weights and thresholds
+        runtime_config: Optional config for adaptive fusion, ML filter, regime classifier
+        archetype_logic: ArchetypeLogic instance for pattern detection
+        regime_classifier: RegimeClassifier for GMM-based regime detection
+        threshold_policy: ThresholdPolicy for centralized threshold management
+        trades: List of completed Trade objects
+        current_position: Active position (or None)
+
+    Example:
+        ```python
+        # Load feature store
+        df = pd.read_parquet('data/btc_features_2022_2024.parquet')
+
+        # Configure parameters
+        params = KnowledgeParams(
+            wyckoff_weight=0.33,
+            liquidity_weight=0.39,
+            momentum_weight=0.21,
+            tier3_threshold=0.374
+        )
+
+        # Initialize backtest
+        bt = KnowledgeAwareBacktest(df, params, runtime_config=config)
+
+        # Run backtest
+        results = bt.run()
+        print(f"PNL: ${results['net_pnl']:.2f}")
+        print(f"PF: {results['profit_factor']:.2f}")
+        ```
     """
 
     def __init__(self, df: pd.DataFrame, params: KnowledgeParams, starting_capital: float = 10000.0, asset: str = 'BTC', runtime_config: Optional[Dict] = None):
         """
         Initialize backtest with feature store and parameters.
 
+        Sets up the complete signal pipeline including regime classifier,
+        archetype detection, threshold policy, and optional ML filter.
+
         Args:
-            df: MTF feature store (69 features)
-            params: Knowledge-aware parameters
-            starting_capital: Starting equity
-            asset: Asset symbol (e.g., 'BTC', 'ETH')
-            runtime_config: PR#4 runtime intelligence config (optional)
+            df: MTF feature store with 89 columns (69 technical + 20 macro)
+            params: Knowledge-aware parameters (domain weights, thresholds, sizing)
+            starting_capital: Starting equity in USD (default: $10,000)
+            asset: Asset symbol for telemetry (e.g., 'BTC', 'ETH')
+            runtime_config: Optional dict with:
+                - 'fusion_adapt': Enable adaptive fusion (default: False)
+                - 'regime_classifier': GMM model config
+                - 'archetypes': Archetype enable flags and thresholds
+                - 'ml_filter': Optional ML filter config
+                - 'locked_regime': Force specific regime for testing (e.g., 'static')
+
+        Raises:
+            FileNotFoundError: If GMM model file not found
+            ValueError: If feature columns missing from df
         """
         self.df = df.copy()
         self.params = params
@@ -1869,8 +1925,46 @@ class KnowledgeAwareBacktest:
         """
         Run the full knowledge-aware backtest.
 
+        Main execution loop that processes each bar in the feature store:
+        1. Classify market regime (risk_on/neutral/risk_off/crisis)
+        2. Adapt fusion parameters based on regime
+        3. Compute fusion score from domain signals (Wyckoff, liquidity, momentum)
+        4. Detect archetype patterns (19 rule-based patterns)
+        5. Apply regime-aware routing and state-aware gates
+        6. Execute position entry if thresholds met
+        7. Manage exits (trailing stops, partial exits, max hold)
+        8. Track PNL and performance metrics
+
+        The loop maintains deterministic execution when PYTHONHASHSEED=0,
+        ensuring reproducible results for regression testing.
+
         Returns:
-            Results dict with trades, metrics, and feature importance.
+            Dict containing:
+                - 'trades': List of Trade objects
+                - 'net_pnl': Total realized PNL in USD
+                - 'profit_factor': Gross wins / gross losses
+                - 'win_rate': Percentage of winning trades
+                - 'sharpe_ratio': Risk-adjusted return metric
+                - 'max_drawdown': Maximum equity drawdown
+                - 'trade_count': Total number of trades
+                - 'archetype_stats': Per-archetype performance breakdown
+                - 'regime_distribution': Time spent in each regime
+                - 'feature_importance': If ML filter enabled
+
+        Example:
+            ```python
+            bt = KnowledgeAwareBacktest(df, params, runtime_config=config)
+            results = bt.run()
+
+            print(f"Trades: {results['trade_count']}")
+            print(f"PNL: ${results['net_pnl']:.2f}")
+            print(f"PF: {results['profit_factor']:.2f}")
+            print(f"Win Rate: {results['win_rate']:.1%}")
+
+            # Export trades for analysis
+            trades_df = pd.DataFrame([asdict(t) for t in results['trades']])
+            trades_df.to_csv('results/trades.csv', index=False)
+            ```
         """
         logger.info(f"Starting knowledge-aware backtest on {len(self.df)} bars...")
 
