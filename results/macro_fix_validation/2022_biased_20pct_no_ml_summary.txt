@@ -1,0 +1,21 @@
+INFO:__main__:ARCHETYPE ENTRY: volume_exhaustion | fusion=0.420 >= 0.374 | size_mult=1.30x | regime=neutral
+INFO:__main__:DYNAMIC SIZING: fusion=0.682 (center=0.475) → weight=1.19x
+INFO:__main__:REGIME MULT: neutral → 1.00x
+INFO:__main__:ARCHETYPE SIZING: volume_exhaustion × 1.30 → $13,878
+--
+Total PNL: $-1017.62
+Total Trades: 37
+Win Rate: 32.4%
+Profit Factor: 0.25
+Sharpe Ratio: -1.46
+Max Drawdown: 10.7%
+Final Equity: $8982.38
+--
+Total Checks: 8599
+Total Matches: 3534
+Match Rate: 41.1%
+
+Archetype Distribution:
+------------------------------------------------------------
+  trap_within_trend        : 3361 ( 95.1%)
+  volume_exhaustion        :  172 (  4.9%)

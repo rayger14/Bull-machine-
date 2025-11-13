@@ -207,7 +207,9 @@ class KnowledgeAwareBacktest:
                 # Load regime classifier
                 model_path = regime_config.get('model_path', 'models/regime_classifier_gmm.pkl')
                 feature_order = regime_config.get('feature_order', [])
-                self.regime_classifier = RegimeClassifier.load(model_path, feature_order)
+                zero_fill_missing = regime_config.get('zero_fill_missing', False)
+                regime_override = regime_config.get('regime_override', None)  # Optional date-based overrides
+                self.regime_classifier = RegimeClassifier.load(model_path, feature_order, zero_fill_missing, regime_override)
 
                 # Initialize adaptive fusion coordinator
                 self.adaptive_fusion = AdaptiveFusion(self.runtime_config)
@@ -226,6 +228,9 @@ class KnowledgeAwareBacktest:
                 logger.info(f"Adaptive Fusion: ENABLED (ema_alpha={adaptive_config.get('ema_alpha', 0.2)})")
                 logger.info(f"ThresholdPolicy: ENABLED (regime-aware archetype thresholds)")
             except Exception as e:
+                print(f"🔴 ADAPTIVE FUSION INIT FAILED: {e}")
+                print(f"🔴 Traceback:")
+                traceback.print_exc()
                 logger.warning(f"Adaptive Fusion: failed to initialize - {e}")
                 self.regime_classifier = None
                 self.adaptive_fusion = None
@@ -235,7 +240,18 @@ class KnowledgeAwareBacktest:
                 logger.info("Adaptive Fusion: DISABLED (modules not available)")
             else:
                 logger.info("Adaptive Fusion: DISABLED (enable=false in config)")
-            self.threshold_policy = None
+
+            # Still initialize ThresholdPolicy for archetype threshold management
+            # even without AdaptiveFusion (will use force_regime or neutral)
+            locked_regime = self.runtime_config.get('locked_regime', 'static')
+            self.threshold_policy = ThresholdPolicy(
+                base_cfg=self.runtime_config,
+                regime_profiles=self.runtime_config.get('gates_regime_profiles'),
+                archetype_overrides=self.runtime_config.get('archetype_overrides'),
+                global_clamps=self.runtime_config.get('global_clamps'),
+                locked_regime=locked_regime
+            )
+            logger.info(f"ThresholdPolicy: ENABLED (static mode, locked_regime={locked_regime})")
 
         self.trades: List[Trade] = []
         self.current_position: Optional[Trade] = None
@@ -258,7 +274,14 @@ class KnowledgeAwareBacktest:
         use_archetypes = archetype_config.get('use_archetypes', False)
         logger.info(f"DIAGNOSTIC: use_archetypes={use_archetypes}, archetype_config_keys={list(archetype_config.keys())}")
         if use_archetypes:
-            self.archetype_logic = ArchetypeLogic(archetype_config)
+            # Bull Machine v2: Merge top-level config keys needed by ArchetypeLogic
+            # (fusion weights, state_aware_gates) into archetype_config
+            full_archetype_config = {
+                **archetype_config,
+                'fusion': self.runtime_config.get('fusion', {}),
+                'state_aware_gates': self.runtime_config.get('state_aware_gates', {})
+            }
+            self.archetype_logic = ArchetypeLogic(full_archetype_config)
             self.archetype_telemetry = ArchetypeTelemetry()
             logger.info("PR#6A: 11-archetype system ENABLED")
         else:
@@ -279,8 +302,21 @@ class KnowledgeAwareBacktest:
             'veto_final_fusion_gate': 0,
             'veto_crisis_regime': 0,
             'veto_risk_off_regime': 0,
-            'veto_ml_filter': 0
+            'veto_ml_filter': 0,
+            'veto_archetype_cooldown': 0,
+            'veto_max_trades_per_day': 0,
+            'veto_monthly_share_cap': 0
         }
+
+        # Step 1 Stabilization: Archetype cooldown and daily trade limits
+        self._archetype_last_entry_bar = {}  # Track last entry bar per archetype
+        self._trades_today = 0
+        self._current_day = None
+
+        # Step 2: Monthly share cap tracking
+        self._monthly_archetype_counts = {}  # {(year, month): {archetype: count}}
+        self._current_month = None
+        self._monthly_total_trades = 0
 
         # ML Optimization: Exit Strategy Parameters (read from env or use defaults)
         # Phase 2: Pattern Exit Parameters
@@ -485,9 +521,16 @@ class KnowledgeAwareBacktest:
                 # Get adapted_params from context, or use fallback for locked/static mode
                 adapted_params = context.get('adapted_params', {})
 
+                # BEAR ARCHETYPE TESTING: Check for forced regime override
+                force_regime = self.runtime_config.get('archetypes', {}).get('force_regime', None)
+                if force_regime:
+                    regime_probs = {force_regime: 1.0}
+                    regime_label = force_regime
+                    print(f"🔴 [FORCE REGIME] Overriding regime to: {force_regime}")
+                    logger.info(f"[FORCE REGIME] Overriding regime to: {force_regime}")
                 # BUGFIX: AdaptiveFusion returns 'regime_probs_ema', not 'regime_probs'
                 # Default to neutral if no regime info available (locked mode)
-                if adapted_params:
+                elif adapted_params:
                     regime_probs = adapted_params.get('regime_probs_ema', {'neutral': 1.0})
                     regime_label = adapted_params.get('regime', 'neutral')
                 else:
@@ -497,6 +540,10 @@ class KnowledgeAwareBacktest:
                 # Resolve thresholds using ThresholdPolicy (will use locked mode if configured)
                 thresholds = self.threshold_policy.resolve(regime_probs, regime_label)
 
+                # BEAR ARCHETYPE FIX: Prepare metadata for archetypes that need historical context
+                current_idx = context.get('current_index', 0)
+                prev_row = self.df.iloc[current_idx - 1] if current_idx > 0 else None
+
                 # Build RuntimeContext
                 runtime_ctx = RuntimeContext(
                     ts=row.name if hasattr(row, 'name') else context.get('current_index', 0),
@@ -504,7 +551,12 @@ class KnowledgeAwareBacktest:
                     regime_probs=regime_probs,
                     regime_label=regime_label,
                     adapted_params=adapted_params,
-                    thresholds=thresholds
+                    thresholds=thresholds,
+                    metadata={
+                        'prev_row': prev_row,
+                        'df': self.df,
+                        'index': current_idx
+                    }
                 )
 
                 # Call new detect() method with RuntimeContext
@@ -519,6 +571,14 @@ class KnowledgeAwareBacktest:
                     df=self.df,
                     index=current_idx
                 )
+
+            # SCORE PROPAGATION FIX: Update context with archetype-specific score
+            # This ensures ML filter, position sizing, and all downstream gates use the
+            # archetype-specific score instead of the global fusion_score
+            if archetype_name:
+                context['fusion_score'] = fusion_score  # Overwrite global fusion with archetype-specific score
+                context['liquidity_score'] = liquidity_score
+                logger.debug(f"[SCORE PROPAGATION] Updated context: fusion={fusion_score:.3f} (archetype-specific)")
 
             # Track telemetry
             if archetype_name:
@@ -759,19 +819,109 @@ class KnowledgeAwareBacktest:
             self._veto_metrics['archetype_hits'] += 1
             archetype_name, threshold, size_mult = archetype_result
 
-            # Check if fusion score meets archetype-specific threshold
-            if fusion_score >= threshold:
-                # PR#6B: Use regime-adapted final fusion gate (expands in risk_on, tightens in crisis)
-                # Get adapted gate from context if available, otherwise use static fallback
-                if 'adapted_params' in context and context['adapted_params'] and context['adapted_params'].get('gates'):
-                    final_fusion_gate = context['adapted_params']['gates'].get('final_fusion_floor', 0.374)
-                else:
-                    final_fusion_gate = 0.374  # Fallback to static threshold
+            # CRITICAL FIX: Use archetype-specific score from context, not global parameter!
+            # The dispatcher calculated archetype-specific scores and stored in context.
+            # Using the global fusion_score parameter causes false rejections for VE/OB.
+            archetype_fusion = context.get('fusion_score', fusion_score)
 
-                if fusion_score < final_fusion_gate:
+            # Add veto tracking for threshold failures (previously silent)
+            if archetype_fusion < threshold:
+                if 'veto_archetype_threshold' not in self._veto_metrics:
+                    self._veto_metrics['veto_archetype_threshold'] = 0
+                self._veto_metrics['veto_archetype_threshold'] += 1
+                logger.debug(f"[THRESHOLD VETO] {archetype_name} | archetype_score={archetype_fusion:.3f} < threshold={threshold:.3f}")
+                # Fall through to PHASE 2 fallback
+
+            # Check if archetype-specific fusion score meets archetype-specific threshold
+            elif archetype_fusion >= threshold:
+                # ARCHETYPE-SPECIFIC FUSION GATE: Check config for per-archetype gates first
+                # This allows VE to have lower gate (0.32) vs trap (0.374)
+                archetype_config = self.runtime_config.get('archetypes', {})
+
+                # Try archetype-specific gate (canonical name from classify_entry_archetype)
+                archetype_gate = None
+                if archetype_name in archetype_config:
+                    archetype_gate = archetype_config[archetype_name].get('final_fusion_gate')
+
+                # Fallback to regime-adapted or static gate
+                if archetype_gate is None:
+                    if 'adapted_params' in context and context['adapted_params'] and context['adapted_params'].get('gates'):
+                        final_fusion_gate = context['adapted_params']['gates'].get('final_fusion_floor', 0.374)
+                    else:
+                        final_fusion_gate = 0.374  # Global fallback
+                else:
+                    final_fusion_gate = archetype_gate
+                    logger.debug(f"[ARCHETYPE GATE] Using {archetype_name}-specific gate: {final_fusion_gate:.3f}")
+
+                # STEP 2: Apply regime-specific gate delta
+                regime = context.get('macro_regime', 'neutral')
+                routing_config = archetype_config.get('routing', {})
+                regime_routing = routing_config.get(regime, {})
+                gate_delta = regime_routing.get('final_gate_delta', 0.0)
+
+                if gate_delta != 0.0:
+                    original_gate = final_fusion_gate
+                    final_fusion_gate += gate_delta
+                    logger.debug(f"[REGIME GATE] {regime}: {original_gate:.3f} + {gate_delta:.3f} = {final_fusion_gate:.3f}")
+
+                if archetype_fusion < final_fusion_gate:
                     self._veto_metrics['veto_final_fusion_gate'] += 1
-                    logger.info(f"ARCHETYPE REJECTED: {archetype_name} | fusion={fusion_score:.3f} < {final_fusion_gate} (final gate)")
+                    logger.info(f"ARCHETYPE REJECTED: {archetype_name} | fusion={archetype_fusion:.3f} < {final_fusion_gate} (final gate)")
                     return None
+
+                # STEP 1 STABILIZATION: Archetype cooldown check
+                # Use bar_idx from context (passed from main loop)
+                current_bar_idx = context.get('_current_bar_idx', 0)
+                # Strip "archetype_" prefix to match config keys (e.g., "archetype_trap_within_trend" → "trap_within_trend")
+                config_key = archetype_name.replace('archetype_', '') if archetype_name.startswith('archetype_') else archetype_name
+                archetype_specific_config = archetype_config.get(config_key, {})
+                cooldown_bars = archetype_specific_config.get('cooldown_bars', 0)
+
+                if cooldown_bars > 0 and archetype_name in self._archetype_last_entry_bar:
+                    bars_since_last = current_bar_idx - self._archetype_last_entry_bar[archetype_name]
+                    if bars_since_last < cooldown_bars:
+                        self._veto_metrics['veto_archetype_cooldown'] += 1
+                        logger.debug(f"[COOLDOWN VETO] {archetype_name} | {bars_since_last} bars < {cooldown_bars} required")
+                        return None
+
+                # STEP 1 STABILIZATION: Max trades per day check
+                max_trades_per_day = archetype_config.get('max_trades_per_day', 999)
+                current_day = row['timestamp'].date() if 'timestamp' in row else None
+
+                if current_day is not None:
+                    # Reset daily counter if new day
+                    if self._current_day != current_day:
+                        self._current_day = current_day
+                        self._trades_today = 0
+
+                    # Check if we've hit the daily limit
+                    if self._trades_today >= max_trades_per_day:
+                        self._veto_metrics['veto_max_trades_per_day'] += 1
+                        logger.debug(f"[DAILY LIMIT] {self._trades_today} trades today >= {max_trades_per_day} limit")
+                        return None
+
+                # STEP 2: Monthly share cap check
+                share_caps = archetype_config.get('monthly_share_cap', {})
+                if share_caps and 'timestamp' in row:
+                    current_month = (row['timestamp'].year, row['timestamp'].month)
+
+                    # Reset monthly counter if new month
+                    if self._current_month != current_month:
+                        self._current_month = current_month
+                        self._monthly_total_trades = 0
+                        self._monthly_archetype_counts[current_month] = {}
+
+                    # Check if this archetype has exceeded its monthly share cap
+                    archetype_cap = share_caps.get(archetype_name)
+                    if archetype_cap is not None and self._monthly_total_trades > 0:
+                        monthly_counts = self._monthly_archetype_counts[current_month]
+                        archetype_count = monthly_counts.get(archetype_name, 0)
+                        current_share = archetype_count / self._monthly_total_trades
+
+                        if current_share >= archetype_cap:
+                            self._veto_metrics['veto_monthly_share_cap'] += 1
+                            logger.debug(f"[MONTHLY CAP] {archetype_name} share {current_share:.1%} >= cap {archetype_cap:.1%}")
+                            return None
 
                 # Store archetype info for position sizing later
                 context['entry_archetype'] = archetype_name
@@ -787,9 +937,9 @@ class KnowledgeAwareBacktest:
                 regime = context.get('macro_regime', 'neutral')
                 if regime == 'risk_off':
                     risk_off_fusion_gate = 0.45  # Stricter than normal
-                    if fusion_score < risk_off_fusion_gate:
+                    if archetype_fusion < risk_off_fusion_gate:
                         self._veto_metrics['veto_risk_off_regime'] += 1
-                        logger.info(f"REGIME FILTER: risk_off → fusion={fusion_score:.3f} < {risk_off_fusion_gate} (heightened gate)")
+                        logger.info(f"REGIME FILTER: risk_off → fusion={archetype_fusion:.3f} < {risk_off_fusion_gate} (heightened gate)")
                         return None
 
                 # ML META-FILTER: Veto low-quality trades
@@ -820,7 +970,7 @@ class KnowledgeAwareBacktest:
                 else:
                     context['ml_size_mult'] = 1.0
 
-                logger.info(f"ARCHETYPE ENTRY: {archetype_name} | fusion={fusion_score:.3f} >= {final_fusion_gate} | size_mult={size_mult:.2f}x | regime={regime}")
+                logger.info(f"ARCHETYPE ENTRY: {archetype_name} | fusion={archetype_fusion:.3f} >= {final_fusion_gate} | size_mult={size_mult:.2f}x | regime={regime}")
                 return (f"archetype_{archetype_name}", row['close'])
         else:
             # archetype_result is None - no archetype matched
@@ -1736,7 +1886,7 @@ class KnowledgeAwareBacktest:
                     # Extract macro features for regime classification
                     macro_row = {feat: row.get(feat, np.nan)
                                 for feat in self.runtime_config['regime_classifier']['feature_order']}
-                    regime_info = self.regime_classifier.classify(macro_row)
+                    regime_info = self.regime_classifier.classify(macro_row, timestamp=row.name)
                     adapted_params = self.adaptive_fusion.update(regime_info)
 
                     # Override ML threshold if adaptive
@@ -1795,15 +1945,21 @@ class KnowledgeAwareBacktest:
 
                 if reentry_result:
                     entry_type, entry_price, reentry_size_mult = reentry_result
-                    self._open_trade(row, entry_price, entry_type, fusion_score, context, bar_idx, reentry_size_mult=reentry_size_mult)
+                    # SCORE PROPAGATION: Use archetype-specific score from context if available
+                    archetype_fusion_score = context.get('fusion_score', fusion_score)
+                    self._open_trade(row, entry_price, entry_type, archetype_fusion_score, context, bar_idx, reentry_size_mult=reentry_size_mult)
                     self._reentry_count += 1
                 else:
                     # Check regular entry conditions
+                    # STEP 1 STABILIZATION: Pass bar_idx for cooldown tracking
+                    context['_current_bar_idx'] = bar_idx
                     entry_result = self.check_entry_conditions(row, fusion_score, context)
 
                     if entry_result:
                         entry_type, entry_price = entry_result
-                        self._open_trade(row, entry_price, entry_type, fusion_score, context, bar_idx)
+                        # SCORE PROPAGATION: Use archetype-specific score from context (updated by classify_entry_archetype)
+                        archetype_fusion_score = context.get('fusion_score', fusion_score)
+                        self._open_trade(row, entry_price, entry_type, archetype_fusion_score, context, bar_idx)
 
         # Close any remaining position at end
         if self.current_position is not None:
@@ -1871,6 +2027,20 @@ class KnowledgeAwareBacktest:
             logger.info(f"Phase 4 re-entry: trailing stop tightened to 1.5× ATR (vs normal {self.params.trailing_atr_mult:.1f}×)")
 
         logger.info(f"ENTRY {entry_type}: {row.name} @ ${entry_price:.2f}, size=${position_size:.2f}, fusion={fusion_score:.3f}")
+
+        # STEP 1 STABILIZATION: Update tracking for cooldown and daily limits
+        archetype_name = context.get('entry_archetype')
+        if archetype_name:
+            self._archetype_last_entry_bar[archetype_name] = current_bar_index
+        self._trades_today += 1
+
+        # STEP 2: Update monthly archetype tracking
+        if self._current_month and archetype_name:
+            if self._current_month not in self._monthly_archetype_counts:
+                self._monthly_archetype_counts[self._current_month] = {}
+            monthly_counts = self._monthly_archetype_counts[self._current_month]
+            monthly_counts[archetype_name] = monthly_counts.get(archetype_name, 0) + 1
+            self._monthly_total_trades += 1
 
     def _close_trade(self, row: pd.Series, exit_price: float, exit_reason: str, bar_idx: Optional[int] = None):
         """Close the current trade."""

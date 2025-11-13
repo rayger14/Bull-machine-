@@ -1,0 +1,42 @@
+{
+  "version": "2.1.0-bull-v10-base",
+  "profile": "bull_v10_base",
+  "description": "Bull market baseline - Tight around PF-20 for 2024 optimization",
+
+  "fusion": {
+    "entry_threshold_confidence": 0.34,
+    "weights": {
+      "wyckoff": 0.44,
+      "liquidity": 0.23,
+      "momentum": 0.33,
+      "smc": 0.0
+    }
+  },
+
+  "archetypes": {
+    "thresholds": {
+      "min_liquidity": 0.17
+    }
+  },
+
+  "pnl_tracker": {
+    "exits": {
+      "trail_atr_mult": 1.15,
+      "max_bars_in_trade": 86
+    }
+  },
+
+  "decision_gates": {
+    "size_min": 0.70,
+    "size_max": 1.19
+  },
+
+  "ml_filter": {
+    "enabled": true,
+    "threshold": 0.28
+  },
+
+  "risk": {
+    "base_risk_pct": 0.075
+  }
+}

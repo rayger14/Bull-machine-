@@ -1,0 +1,25 @@
+Frontier: dd30
+Best trial: 7
+Best value: 1.145
+
+Best parameters:
+  trap_final_fusion_gate: 0.4173178786058795
+  trap_archetype_weight: 0.6625916610133735
+  trap_cooldown_bars: 13
+  ve_final_fusion_gate: 0.36375574713552133
+  ve_archetype_weight: 1.4436063712881633
+  ve_cooldown_bars: 9
+  ve_trail_atr_mult: 0.8837159721568112
+  ve_max_bars: 69
+  ob_final_fusion_gate: 0.35607850486168974
+  ob_archetype_weight: 1.4245108790277985
+  ob_cooldown_bars: 9
+  max_trades_per_day: 9
+
+Best attributes:
+  full_dd: 0.2
+  full_pf: 1.11
+  full_trades: 570
+  median_pf: 1.145
+  min_pf: 0.8
+  pfs: [0.8, 1.18, 1.29, 1.11]

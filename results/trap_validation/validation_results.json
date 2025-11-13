@@ -1,0 +1,142 @@
+{
+  "2022_H1": {
+    "baseline": {
+      "total_pnl": -477.4343340057376,
+      "total_trades": 21,
+      "win_rate": 0.38095238095238093,
+      "profit_factor": 0.3486425592011943,
+      "max_drawdown_pct": 0.0,
+      "trap_trades": 0,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    },
+    "optimized": {
+      "total_pnl": -1089.9181826379395,
+      "total_trades": 21,
+      "win_rate": 0.38095238095238093,
+      "profit_factor": 0.29473710481093046,
+      "max_drawdown_pct": 0.0,
+      "trap_trades": 0,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    },
+    "delta": {
+      "pnl": -612.4838486322019,
+      "wr": 0.0,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    }
+  },
+  "2022_H2": {
+    "baseline": {
+      "total_pnl": -653.7229446852037,
+      "total_trades": 16,
+      "win_rate": 0.125,
+      "profit_factor": 0.06568690919891847,
+      "max_drawdown_pct": 0.0,
+      "trap_trades": 0,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    },
+    "optimized": {
+      "total_pnl": -1183.3510298543183,
+      "total_trades": 16,
+      "win_rate": 0.125,
+      "profit_factor": 0.04434877650533442,
+      "max_drawdown_pct": 0.0,
+      "trap_trades": 0,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    },
+    "delta": {
+      "pnl": -529.6280851691146,
+      "wr": 0.0,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    }
+  },
+  "2023": {
+    "baseline": {
+      "total_pnl": 877.0933643670431,
+      "total_trades": 45,
+      "win_rate": 0.5333333333333333,
+      "profit_factor": 2.00841832661688,
+      "max_drawdown_pct": 0.0,
+      "trap_trades": 0,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    },
+    "optimized": {
+      "total_pnl": 847.5849929777801,
+      "total_trades": 46,
+      "win_rate": 0.5434782608695652,
+      "profit_factor": 1.5469555129993862,
+      "max_drawdown_pct": 0.0,
+      "trap_trades": 0,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    },
+    "delta": {
+      "pnl": -29.50837138926306,
+      "wr": 0.010144927536231862,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    }
+  },
+  "2024": {
+    "baseline": {
+      "total_pnl": 1744.9542301811478,
+      "total_trades": 64,
+      "win_rate": 0.640625,
+      "profit_factor": 3.1327611688863373,
+      "max_drawdown_pct": 0.0,
+      "trap_trades": 0,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    },
+    "optimized": {
+      "total_pnl": 2345.600421538269,
+      "total_trades": 64,
+      "win_rate": 0.640625,
+      "profit_factor": 2.597359883217873,
+      "max_drawdown_pct": 0.0,
+      "trap_trades": 0,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    },
+    "delta": {
+      "pnl": 600.6461913571213,
+      "wr": 0.0,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    }
+  },
+  "full": {
+    "baseline": {
+      "total_pnl": 1369.9043724702435,
+      "total_trades": 146,
+      "win_rate": 0.5136986301369864,
+      "profit_factor": 1.4619623236575843,
+      "max_drawdown_pct": 0.0,
+      "trap_trades": 0,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    },
+    "optimized": {
+      "total_pnl": 520.3580291904516,
+      "total_trades": 147,
+      "win_rate": 0.5170068027210885,
+      "profit_factor": 1.10168428351591,
+      "max_drawdown_pct": 0.0,
+      "trap_trades": 0,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    },
+    "delta": {
+      "pnl": -849.5463432797919,
+      "wr": 0.003308172584102098,
+      "trap_pnl": 0.0,
+      "trap_wr": 0.0
+    }
+  }
+}

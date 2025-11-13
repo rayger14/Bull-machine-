@@ -12,8 +12,34 @@ from copy import deepcopy
 logger = logging.getLogger(__name__)
 
 
-# Archetype name mapping (internal names → config keys)
-ARCHETYPE_MAP = {
+# Archetype names - no more letter code translation needed
+# All configs now use descriptive names directly
+ARCHETYPE_NAMES = [
+    'spring',
+    'order_block_retest',
+    'wick_trap',
+    'failed_continuation',
+    'volume_exhaustion',
+    'exhaustion_reversal',
+    'liquidity_sweep',
+    'momentum_continuation',
+    'trap_within_trend',
+    'retest_cluster',
+    'confluence_breakout',
+    # Bear-biased archetypes (short-biased)
+    'breakdown',
+    'rejection',
+    'whipsaw',
+    'distribution',
+    'short_squeeze',
+    'alt_rotation_down',
+    'curve_inversion',
+    'volume_fade_chop'
+]
+
+# Legacy letter code mapping for backward compatibility during migration
+# TODO: Remove after all configs migrated to descriptive names
+LEGACY_ARCHETYPE_MAP = {
     'order_block_retest': 'B',
     'wick_trap': 'C',
     'spring': 'A',
@@ -24,7 +50,16 @@ ARCHETYPE_MAP = {
     'momentum_continuation': 'H',
     'trap_within_trend': 'K',
     'retest_cluster': 'L',
-    'confluence_breakout': 'M'
+    'confluence_breakout': 'M',
+    # Bear-biased archetypes (short-biased)
+    'breakdown': 'S1',
+    'rejection': 'S2',
+    'whipsaw': 'S3',
+    'distribution': 'S4',
+    'short_squeeze': 'S5',
+    'alt_rotation_down': 'S6',
+    'curve_inversion': 'S7',
+    'volume_fade_chop': 'S8'
 }
 
 
@@ -93,11 +128,11 @@ class ThresholdPolicy:
             Dict mapping archetype_name -> {param: threshold}
             Example: {'order_block_retest': {'fusion': 0.33, 'liquidity': 0.14}, ...}
         """
-        # PR-A PARITY FIX: Return empty dict for 'static' mode to match legacy behavior
-        # Legacy path uses thresholds={}, causing get_threshold() to return hardcoded defaults
+        # PR#6A FIX: Even in 'static' mode, read base archetype params from config
+        # This allows optimizer-written parameters to be used
         if self.locked_regime == 'static':
-            logger.info("[PR-A PARITY] ThresholdPolicy.resolve() returning EMPTY dict for locked_regime='static'")
-            return {}
+            logger.info("[PR#6A] ThresholdPolicy.resolve() in static mode - returning base archetype params")
+            return self._build_base_map()
 
         # LOCKED MODE: Force specific regime (parity testing)
         if self.locked_regime and self.locked_regime in self.regime_profiles:
@@ -122,16 +157,58 @@ class ThresholdPolicy:
         return final
 
     def _build_base_map(self) -> Dict[str, Dict[str, float]]:
-        """Build base threshold map from config."""
-        base_map = {}
+        """
+        Build base threshold map from config.
 
-        for arch_name, cfg_key in ARCHETYPE_MAP.items():
-            if cfg_key in self.base_arch_thresholds:
-                # Copy thresholds for this archetype
-                base_map[arch_name] = deepcopy(self.base_arch_thresholds[cfg_key])
+        **PR#6A FIX**: Reads from BOTH top-level archetype configs AND thresholds subdirectory.
+        Priority: top-level archetype > thresholds subdirectory (descriptive name) > thresholds subdirectory (letter code) > empty dict
+
+        This allows optimizer-written params at config['archetypes']['trap_within_trend']
+        to be read, instead of only checking config['archetypes']['thresholds']['trap_within_trend'].
+        """
+        base_map = {}
+        archetypes = self.base.get('archetypes', {})
+
+        for arch_name in ARCHETYPE_NAMES:
+            # PR#6A: Try top-level archetype config FIRST (where optimizer writes)
+            if arch_name in archetypes and isinstance(archetypes[arch_name], dict):
+                # Skip metadata keys that aren't actual archetype configs
+                if arch_name not in ('use_archetypes', 'thresholds', 'exits'):
+                    base_map[arch_name] = deepcopy(archetypes[arch_name])
+                    logger.debug(f"[PR#6A] Loaded {arch_name} from top-level config")
+                    continue
+
+            # Try descriptive name in thresholds subdirectory (LEGACY)
+            if arch_name in self.base_arch_thresholds:
+                base_map[arch_name] = deepcopy(self.base_arch_thresholds[arch_name])
+                logger.debug(f"[LEGACY] Loaded {arch_name} from thresholds/{arch_name}")
+            # Fallback to letter code in thresholds subdirectory (LEGACY)
+            elif arch_name in LEGACY_ARCHETYPE_MAP:
+                letter_code = LEGACY_ARCHETYPE_MAP[arch_name]
+                if letter_code in self.base_arch_thresholds:
+                    base_map[arch_name] = deepcopy(self.base_arch_thresholds[letter_code])
+                    logger.debug(f"[LEGACY] Loaded {arch_name} from thresholds/{letter_code}")
+                else:
+                    base_map[arch_name] = {}
             else:
-                # Fallback empty dict
+                # No config found, use empty dict
                 base_map[arch_name] = {}
+
+        # PHASE 1 FIX: Comprehensive logging to verify parameter loading
+        loaded_count = sum(1 for v in base_map.values() if v)
+        empty_count = sum(1 for v in base_map.values() if not v)
+
+        logger.info(f"[PHASE1] ThresholdPolicy loaded {loaded_count} archetypes with params, {empty_count} empty")
+
+        # Log key archetypes for optimization debugging
+        for key_arch in ['trap_within_trend', 'wick_trap_moneytaur', 'wyckoff_spring_utad']:
+            if key_arch in base_map:
+                params = base_map[key_arch]
+                if params:
+                    param_summary = ', '.join(f"{k}={v}" for k, v in list(params.items())[:3])
+                    logger.info(f"[PHASE1] {key_arch}: {len(params)} params ({param_summary}...)")
+                else:
+                    logger.warning(f"[PHASE1] {key_arch}: EMPTY (optimizer params may not be reaching context!)")
 
         return base_map
 

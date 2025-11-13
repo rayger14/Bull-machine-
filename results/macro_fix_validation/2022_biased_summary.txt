@@ -1,0 +1,20 @@
+Total PNL: $-678.31
+Total Trades: 34
+Win Rate: 29.4%
+Profit Factor: 0.24
+Sharpe Ratio: -1.56
+Max Drawdown: 7.2%
+Final Equity: $9321.69
+Gross Profit: $219.74
+Gross Loss: $898.05
+--
+Total Checks: 8605
+Total Matches: 4568
+Match Rate: 53.1%
+
+Archetype Distribution:
+------------------------------------------------------------
+  trap_within_trend        : 4482 ( 98.1%)
+  volume_exhaustion        :   86 (  1.9%)
+============================================================
+

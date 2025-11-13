@@ -27,13 +27,13 @@
   },
 
   "fusion": {
-    "entry_threshold_confidence": 0.70,
+    "entry_threshold_confidence": 0.35,
     "full_engine_validation_interval_bars": 4,
     "weights": {
-      "wyckoff": 0.30,
-      "liquidity": 0.25,
-      "momentum": 0.30,
-      "smc": 0.15
+      "wyckoff": 0.38,
+      "liquidity": 0.19,
+      "momentum": 0.43,
+      "smc": 0.0
     }
   },
 
@@ -87,6 +87,11 @@
     "timeframes": ["1H", "4H", "1D"],
     "require_alignment": true,
     "nested_threshold": 0.02
+  },
+
+  "archetypes": {
+    "use_archetypes": false,
+    "thresholds": {}
   },
 
   "pnl_tracker": {

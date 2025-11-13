@@ -1,0 +1,63 @@
+{
+  "best_params": {
+    "trap_quality_threshold": 0.14,
+    "trap_liquidity_threshold": 0.2,
+    "trap_adx_threshold": 14.0,
+    "trap_fusion_threshold": 0.22,
+    "trap_wick_multiplier": 2.5
+  },
+  "best_value": 0.8607748809382716,
+  "best_trial_number": 6,
+  "user_attrs": {
+    "window_0_score": -1.8489859841473724,
+    "window_0_pnl": -1183.3510298543183,
+    "window_0_trades": 16,
+    "window_0_wr": 0.125,
+    "window_1_score": 0.7810599335761165,
+    "window_1_pnl": 847.5849929777801,
+    "window_1_trades": 46,
+    "window_1_wr": 0.5434782608695652,
+    "window_2_score": 0.9404898283004267,
+    "window_2_pnl": 638.4256658190754,
+    "window_2_trades": 18,
+    "window_2_wr": 0.5555555555555556,
+    "window_3_score": 1.8325003293267728,
+    "window_3_pnl": 2345.600421538269,
+    "window_3_trades": 64,
+    "window_3_wr": 0.640625,
+    "worst_window_score": -1.8489859841473724,
+    "best_window_score": 1.8325003293267728,
+    "score_std": 1.3733691657050946
+  },
+  "optimization_config": {
+    "n_trials": 20,
+    "windows": [
+      [
+        "2022-01-01",
+        "2022-06-30",
+        "2022-07-01",
+        "2022-12-31"
+      ],
+      [
+        "2022-01-01",
+        "2022-12-31",
+        "2023-01-01",
+        "2023-12-31"
+      ],
+      [
+        "2022-01-01",
+        "2023-06-30",
+        "2023-07-01",
+        "2023-12-31"
+      ],
+      [
+        "2022-01-01",
+        "2023-12-31",
+        "2024-01-01",
+        "2024-12-31"
+      ]
+    ],
+    "sizing": "fixed_0.8pct",
+    "objective": "expectancy_based"
+  }
+}

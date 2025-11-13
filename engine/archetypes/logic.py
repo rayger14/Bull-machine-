@@ -59,6 +59,16 @@ class ArchetypeLogic:
         self.thresh_L = thresholds.get('L', {})
         self.thresh_M = thresholds.get('M', {})
 
+        # Bear archetype thresholds
+        self.thresh_S1 = thresholds.get('S1', {})  # Breakdown
+        self.thresh_S2 = thresholds.get('S2', {})  # Rejection
+        self.thresh_S3 = thresholds.get('S3', {})  # Whipsaw
+        self.thresh_S4 = thresholds.get('S4', {})  # Distribution
+        self.thresh_S5 = thresholds.get('S5', {})  # Short Squeeze
+        self.thresh_S6 = thresholds.get('S6', {})  # Alt Rotation Down
+        self.thresh_S7 = thresholds.get('S7', {})  # Curve Inversion
+        self.thresh_S8 = thresholds.get('S8', {})  # Volume Fade Chop
+
         # Enable flags
         self.enabled = {
             'A': config.get('enable_A', True),
@@ -72,6 +82,15 @@ class ArchetypeLogic:
             'K': config.get('enable_K', True),
             'L': config.get('enable_L', True),
             'M': config.get('enable_M', True),
+            # Bear archetypes
+            'S1': config.get('enable_S1', False),  # Disabled by default
+            'S2': config.get('enable_S2', False),
+            'S3': config.get('enable_S3', False),
+            'S4': config.get('enable_S4', False),
+            'S5': config.get('enable_S5', False),
+            'S6': config.get('enable_S6', False),
+            'S7': config.get('enable_S7', False),
+            'S8': config.get('enable_S8', False),
         }
 
         # Fusion weights (from config or defaults)
@@ -295,7 +314,10 @@ class ArchetypeLogic:
         index: int
     ) -> Tuple[Optional[str], float, float]:
         """
-        Check all archetypes in priority order.
+        **PR#6A: Fixed dispatch - evaluate ALL archetypes, pick best.**
+
+        OLD BEHAVIOR (broken): Return first match → K starves H
+        NEW BEHAVIOR (fixed): Evaluate all enabled → pick best by score
 
         Args:
             row: Current bar
@@ -306,17 +328,126 @@ class ArchetypeLogic:
         Returns:
             (archetype_name_or_None, fusion_score, liquidity_score)
         """
+        from engine import feature_flags as features
+
         if not self.use_archetypes:
             return None, 0.0, 0.0
 
         # Global precheck: liquidity >= min_threshold
-        # PATCHED: Use helper method to get actual liquidity score
         liquidity_score = self._get_liquidity_score(row)
-        if liquidity_score < self.min_liquidity:
-            return None, 0.0, liquidity_score
+
+        # PR#6A Phase 4: Soft filter (penalty) instead of hard reject
+        if features.SOFT_LIQUIDITY_FILTER:
+            liquidity_penalty = 1.0
+            if liquidity_score < self.min_liquidity:
+                liquidity_penalty = 0.7  # 30% penalty for low liquidity
+        else:
+            # Legacy hard filter
+            if liquidity_score < self.min_liquidity:
+                return None, 0.0, liquidity_score
 
         fusion_score = self.calculate_fusion_score(row)
 
+        # Apply soft filter penalty
+        if features.SOFT_LIQUIDITY_FILTER and liquidity_penalty < 1.0:
+            fusion_score *= liquidity_penalty
+
+        # PR#6A Phase 3: Evaluate ALL enabled archetypes
+        if features.EVALUATE_ALL_ARCHETYPES:
+            return self._check_all_archetypes(row, prev_row, df, index, fusion_score, liquidity_score)
+        else:
+            # LEGACY: Priority order with early returns (causes the leak)
+            return self._check_legacy_priority(row, prev_row, df, index, fusion_score, liquidity_score)
+
+    def _check_all_archetypes(
+        self,
+        row: pd.Series,
+        prev_row: Optional[pd.Series],
+        df: pd.DataFrame,
+        index: int,
+        fusion_score: float,
+        liquidity_score: float
+    ) -> Tuple[Optional[str], float, float]:
+        """
+        **PR#6A New Dispatch**: Evaluate all enabled archetypes, pick best by fusion score.
+
+        No early returns → no starvation → K and H can both be scored.
+        """
+        from engine.archetypes.registry import get_archetype_meta
+        from engine.observability import get_gate_tracer
+
+        matches = []  # (slug, fusion_score, priority)
+        tracer = get_gate_tracer()
+
+        # Archetype checks mapping: letter -> (slug, check_method)
+        checks = [
+            ('A', 'wyckoff_spring_utad', self._check_A, 'trap_reversal'),
+            ('B', 'order_block_retest', self._check_B, 'order_block_retest'),
+            ('C', 'bos_choch_reversal', self._check_C, 'fvg_continuation'),
+            ('K', 'wick_trap_moneytaur', self._check_K, 'wick_trap'),
+            ('H', 'trap_within_trend', self._check_H, 'trap_within_trend'),
+            ('L', 'fakeout_real_move', self._check_L, 'volume_exhaustion'),
+            ('F', 'expansion_exhaustion', self._check_F, 'expansion_exhaustion'),
+            ('D', 'failed_continuation', self._check_D, 'failed_continuation'),
+            ('G', 'boms_phase_shift', self._check_G, 'reaccumulation'),
+            ('E', 'liquidity_compression', self._check_E, 'liquidity_compression'),
+            ('M', 'ratio_coil_break', self._check_M, 'ratio_coil_break'),
+        ]
+
+        # Evaluate ALL enabled archetypes (no early returns!)
+        for letter, slug, check_fn, return_name in checks:
+            if not self.enabled.get(letter, False):
+                continue
+
+            try:
+                matched = check_fn(row, prev_row, df, index, fusion_score)
+
+                # Gate tracing
+                tracer.trace(slug, 'archetype_check', matched)
+
+                if matched:
+                    # Get priority from registry
+                    try:
+                        priority = get_archetype_meta(slug)['priority']
+                    except (KeyError, TypeError):
+                        priority = 99  # Default low priority
+
+                    matches.append((slug, return_name, fusion_score, priority))
+
+                    # Record match
+                    tracer.record_match(slug)
+            except Exception as e:
+                import logging
+                logging.error(f"Error checking archetype {slug}: {e}")
+                continue
+
+        # No matches
+        if not matches:
+            tracer.increment_bars()
+            return None, fusion_score, liquidity_score
+
+        # Select best match: highest fusion score, ties broken by priority
+        best = max(matches, key=lambda x: (x[2], -x[3]))  # max fusion, min priority
+        best_slug, best_return_name, best_fusion, best_priority = best
+
+        tracer.increment_bars()
+
+        return best_return_name, best_fusion, liquidity_score
+
+    def _check_legacy_priority(
+        self,
+        row: pd.Series,
+        prev_row: Optional[pd.Series],
+        df: pd.DataFrame,
+        index: int,
+        fusion_score: float,
+        liquidity_score: float
+    ) -> Tuple[Optional[str], float, float]:
+        """
+        LEGACY dispatch: First match wins (early returns cause starvation).
+
+        Kept for backward compatibility. Feature flag controls which path is used.
+        """
         # Check archetypes in priority order
         # Priority: A, B, C, K, H, L, F, D, G, E, M
 
@@ -675,50 +806,61 @@ class ArchetypeLogic:
         """
         H - Trap Within Trend: HTF trend + liquidity drop + wick against trend.
 
-        Criteria:
-        - tf4h_fusion_score > 0.5 (HTF trend)
-        - liquidity_score < 0.30 with wick against trend
-        - ADX > 25
-        - tf1h_bos_flag agrees with signal direction
-        - fusion_score >= 0.35
+        **PR#6A WIRED**: Uses get_param() with canonical slug 'trap_within_trend'.
+
+        Configurable parameters:
+        - quality_threshold: HTF fusion minimum (default: 0.55)
+        - liquidity_threshold: Max liquidity score (default: 0.30)
+        - adx_threshold: Minimum ADX (default: 25.0)
+        - fusion_threshold: Minimum fusion score (default: 0.35)
+        - wick_multiplier: Wick size vs body (default: 2.0)
         """
+        from engine.archetypes.param_accessor import get_param
+
+        # PR#6A: Read from canonical location with migration-safe fallback
+        quality_th = get_param(self, 'trap_within_trend', 'quality_threshold', 0.55)
+        liquidity_th = get_param(self, 'trap_within_trend', 'liquidity_threshold', 0.30)
+        adx_th = get_param(self, 'trap_within_trend', 'adx_threshold', 25.0)
+        fusion_th = get_param(self, 'trap_within_trend', 'fusion_threshold', 0.35)
+        wick_mult = get_param(self, 'trap_within_trend', 'wick_multiplier', 2.0)
+
+        # Check HTF trend (NOW CONFIGURABLE)
         tf4h_fusion = row.get('tf4h_fusion_score', 0.0)
-        if tf4h_fusion <= 0.5:
+        if tf4h_fusion <= quality_th:  # ← WAS HARDCODED 0.5
             return False
 
-        # PATCH: Use helper method for liquidity_score
+        # Check liquidity (NOW READS FROM CONFIG)
         liquidity = self._get_liquidity_score(row)
-        if liquidity >= self.thresh_H.get('liq_drop', 0.30):
+        if liquidity >= liquidity_th:  # ← WAS self.thresh_H.get(...)
             return False
 
+        # Check ADX (NOW READS FROM CONFIG)
         adx = row.get('adx_14', 0.0)
-        if adx <= self.thresh_H.get('adx', 25.0):
+        if adx <= adx_th:  # ← WAS self.thresh_H.get(...)
             return False
 
         # Check for wick against trend
-        # Determine trend from tf4h_fusion and check wick
         close = row.get('close', 0.0)
         open_price = row.get('open', close)
         high = row.get('high', close)
         low = row.get('low', close)
 
-        # Assume bullish HTF if tf4h_fusion > 0.5
         body = abs(close - open_price)
         upper_wick = high - max(close, open_price)
         lower_wick = min(close, open_price) - low
 
-        # For bullish trend, look for lower wick > 2× body (trap down)
-        # For simplicity, check if either wick is significant
-        wick_against_trend = (lower_wick > 2 * body) or (upper_wick > 2 * body)
+        # Check wick significance (NOW CONFIGURABLE MULTIPLIER)
+        wick_against_trend = (lower_wick > wick_mult * body) or (upper_wick > wick_mult * body)
         if not wick_against_trend:
             return False
 
         # Check BOS flag alignment
-        bos_flag = self._get_bos_flag(row)  # PATCH: Use helper method
+        bos_flag = self._get_bos_flag(row)
         if bos_flag == 0:
             return False
 
-        if fusion_score < self.thresh_H.get('fusion', 0.35):
+        # Check fusion score (NOW READS FROM CONFIG)
+        if fusion_score < fusion_th:  # ← WAS self.thresh_H.get(...)
             return False
 
         return True
@@ -727,31 +869,38 @@ class ArchetypeLogic:
         """
         K - Wick Trap (Moneytaur): Wick anomaly + ADX > 25 + BOS context.
 
-        Criteria:
-        - wick_anomaly == True (column present and True)
-        - ADX > 25
-        - liquidity_score >= 0.30
-        - tf1h_bos_flag != 0
-        - fusion_score >= 0.36
+        **PR#6A WIRED**: Uses get_param() with canonical slug 'wick_trap_moneytaur'.
+
+        Configurable parameters:
+        - adx_threshold: Minimum ADX (default: 25.0)
+        - liquidity_threshold: Minimum liquidity (default: 0.30)
+        - fusion_threshold: Minimum fusion score (default: 0.36)
         """
+        from engine.archetypes.param_accessor import get_param
+
+        # PR#6A: Read from canonical location with migration-safe fallback
+        adx_th = get_param(self, 'wick_trap_moneytaur', 'adx_threshold', 25.0)
+        liquidity_th = get_param(self, 'wick_trap_moneytaur', 'liquidity_threshold', 0.30)
+        fusion_th = get_param(self, 'wick_trap_moneytaur', 'fusion_threshold', 0.36)
+
         wick_anomaly = self._get_wick_anomaly(row)  # PATCH: Use helper method
         if not wick_anomaly:
             return False
 
         adx = row.get('adx_14', 0.0)
-        if adx <= self.thresh_K.get('adx', 25.0):
+        if adx <= adx_th:  # PR#6A: Now reads from config!
             return False
 
         # PATCH: Use helper method for liquidity_score
         liquidity = self._get_liquidity_score(row)
-        if liquidity < self.thresh_K.get('liq', 0.30):
+        if liquidity < liquidity_th:  # PR#6A: Now reads from config!
             return False
 
         bos_flag = self._get_bos_flag(row)  # PATCH: Use helper method
         if bos_flag == 0:
             return False
 
-        if fusion_score < self.thresh_K.get('fusion', 0.36):
+        if fusion_score < fusion_th:  # PR#6A: Now reads from config!
             return False
 
         return True
@@ -825,6 +974,316 @@ class ArchetypeLogic:
             return False
 
         if fusion_score < self.thresh_M.get('fusion', 0.35):
+            return False
+
+        return True
+
+    def _check_S1(self, row, prev_row, df, index, fusion_score) -> bool:
+        """
+        S1 - Breakdown: Support break with volume confirmation (cascade).
+
+        Criteria (short-biased):
+        - Liquidity score < 0.22 (breakdown below support)
+        - Volume spike > 1.2x average (confirmation)
+        - BOS bearish (tf1h_bos_bearish == True or bos_flag < 0)
+        - Fusion score >= 0.38 (regime-tuned in risk_off)
+        - Optional: Chain of 2+ BOS for cascade (Moneytaur)
+
+        Regime tuning (applied in dispatcher):
+        - Risk_off: Fusion floor 0.38, trail_atr 0.85
+        - Crisis: Size 0.3x
+        """
+        liquidity = self._get_liquidity_score(row)
+        if liquidity >= self.thresh_S1.get('liq_max', 0.22):
+            return False
+
+        vol_z = row.get('volume_zscore', 0.0)
+        if vol_z <= self.thresh_S1.get('vol_z', 1.2):
+            return False
+
+        # Check for bearish BOS
+        bos_bearish = row.get('tf1h_bos_bearish', False)
+        bos_flag = row.get('tf1h_bos_flag', 0)
+        if not (bos_bearish or bos_flag < 0):
+            return False
+
+        if fusion_score < self.thresh_S1.get('fusion', 0.38):
+            return False
+
+        # Optional cascade check: Look for 2+ recent bearish BOS
+        if self.thresh_S1.get('require_cascade', False):
+            lookback = min(10, index)
+            if lookback >= 2:
+                recent = df.iloc[index-lookback:index]
+                bos_bearish_recent = recent.get('tf1h_bos_bearish', pd.Series([False]*lookback))
+                if bos_bearish_recent.sum() < 2:
+                    return False
+            else:
+                return False
+
+        return True
+
+    def _check_S2(self, row, prev_row, df, index, fusion_score) -> bool:
+        """
+        S2 - Rejection: Resistance test with divergence (fade highs).
+
+        Criteria (short-biased):
+        - Liquidity score 0.25-0.35 (near resistance)
+        - RSI > 70 (overbought)
+        - Volume fade < 0.5 (no follow-through)
+        - Fusion score >= 0.36
+        - Optional: RSI divergence (price higher, RSI lower)
+
+        Regime tuning:
+        - Risk_off: RSI threshold 72, max_bars 48
+        - Neutral: Veto if VIX low
+        """
+        liquidity = self._get_liquidity_score(row)
+        if not (0.25 <= liquidity <= self.thresh_S2.get('liq_max', 0.35)):
+            return False
+
+        rsi = row.get('rsi_14', 50.0)
+        if rsi < self.thresh_S2.get('rsi_min', 70.0):
+            return False
+
+        vol_z = row.get('volume_zscore', 0.0)
+        if vol_z >= self.thresh_S2.get('vol_max', 0.5):
+            return False
+
+        if fusion_score < self.thresh_S2.get('fusion', 0.36):
+            return False
+
+        # Optional divergence check
+        if self.thresh_S2.get('require_divergence', False) and prev_row is not None:
+            lookback = min(5, index)
+            if lookback >= 2:
+                recent = df.iloc[index-lookback:index]
+                recent_rsi = recent.get('rsi_14', pd.Series([50.0]*lookback))
+                recent_close = recent.get('close', pd.Series([0.0]*lookback))
+                # Bearish divergence: price rising, RSI falling
+                price_rising = recent_close.iloc[-1] > recent_close.iloc[0]
+                rsi_falling = recent_rsi.iloc[-1] < recent_rsi.iloc[0]
+                if not (price_rising and rsi_falling):
+                    return False
+
+        return True
+
+    def _check_S3(self, row, prev_row, df, index, fusion_score) -> bool:
+        """
+        S3 - Whipsaw: False break + reversal (upthrust rejection).
+
+        Criteria (short-biased):
+        - Wick anomaly > 2x body (false break above resistance)
+        - Volume low < 0.5 (no conviction)
+        - MTF trend down (tf4h_bos_bearish or trend indicator)
+        - Fusion score >= 0.35
+
+        Regime tuning:
+        - Risk_off: Wick multiplier 2.5, trail_atr 0.9
+        - Crisis: Veto (too risky)
+        """
+        # Wick anomaly: upper wick much larger than body
+        close = row.get('close', 0.0)
+        open_price = row.get('open', close)
+        high = row.get('high', close)
+        low = row.get('low', close)
+
+        body = abs(close - open_price)
+        upper_wick = high - max(close, open_price)
+        lower_wick = min(close, open_price) - low
+
+        if body == 0:
+            return False
+
+        wick_ratio = upper_wick / body
+        if wick_ratio < self.thresh_S3.get('wick_ratio', 2.0):
+            return False
+
+        vol_z = row.get('volume_zscore', 0.0)
+        if vol_z >= self.thresh_S3.get('vol_max', 0.5):
+            return False
+
+        # Check MTF downtrend
+        tf4h_bos_bearish = row.get('tf4h_bos_bearish', False)
+        if not tf4h_bos_bearish:
+            # Fallback: Check if tf4h fusion is negative
+            tf4h_fusion = row.get('tf4h_fusion_score', 0.5)
+            if tf4h_fusion >= 0.5:  # Neutral or bullish
+                return False
+
+        if fusion_score < self.thresh_S3.get('fusion', 0.35):
+            return False
+
+        return True
+
+    def _check_S4(self, row, prev_row, df, index, fusion_score) -> bool:
+        """
+        S4 - Distribution: High volume + no follow (exhaustion climax).
+
+        Criteria (short-biased):
+        - Volume climax > 1.5x (exhaustion spike)
+        - Momentum fading (current < prev shift)
+        - Liquidity < 0.3 (distribution phase)
+        - Fusion score >= 0.37
+
+        Regime tuning:
+        - Risk_off: Volume threshold 1.6, max_bars 36
+        - Neutral: Require VIX high
+        """
+        vol_z = row.get('volume_zscore', 0.0)
+        if vol_z <= self.thresh_S4.get('vol_climax', 1.5):
+            return False
+
+        # Check momentum fade
+        if prev_row is not None:
+            momentum = self._get_momentum_score(row)
+            prev_momentum = self._get_momentum_score(prev_row)
+            if momentum >= prev_momentum:  # Not fading
+                return False
+        else:
+            return False
+
+        liquidity = self._get_liquidity_score(row)
+        if liquidity >= self.thresh_S4.get('liq_max', 0.3):
+            return False
+
+        if fusion_score < self.thresh_S4.get('fusion', 0.37):
+            return False
+
+        return True
+
+    def _check_S5(self, row, prev_row, df, index, fusion_score) -> bool:
+        """
+        S5 - Short Squeeze Setup: Funding positive + OI spike (inverse squeeze).
+
+        NOTE: This is SHORT-biased, so we look for NEGATIVE funding (longs pay shorts)
+        indicating bearish pressure.
+
+        Criteria (short-biased):
+        - Funding rate < -0.05% (longs paying shorts = bearish fuel)
+        - OI change > +10% (position building)
+        - Volume > 1.0x (activity)
+        - Fusion score >= 0.35
+
+        Regime tuning:
+        - Crisis: Size 0.4x, trail_atr 0.8
+        - Risk_off: Require DXY up
+        """
+        # Check for funding rate (if available)
+        funding = row.get('funding_rate', 0.0)
+        if funding >= self.thresh_S5.get('funding_max', -0.0005):  # Negative funding
+            return False
+
+        # Check OI spike
+        oi_change = row.get('oi_change_pct', 0.0)
+        if oi_change <= self.thresh_S5.get('oi_min', 0.10):  # 10% increase
+            return False
+
+        vol_z = row.get('volume_zscore', 0.0)
+        if vol_z <= self.thresh_S5.get('vol_min', 1.0):
+            return False
+
+        if fusion_score < self.thresh_S5.get('fusion', 0.35):
+            return False
+
+        return True
+
+    def _check_S6(self, row, prev_row, df, index, fusion_score) -> bool:
+        """
+        S6 - Alt Rotation Down: Altcoin underperformance (TOTAL3 < BTC).
+
+        Criteria (short-biased):
+        - Alt rotation < 0 (alts underperforming BTC)
+        - Liquidity < 0.22 (risk-off rotation)
+        - DXY up (dollar strength)
+        - Fusion score >= 0.34
+
+        Regime tuning:
+        - Risk_off: Alt_rotation threshold -0.05, max_bars 48
+        - Neutral: Veto if VIX low
+        """
+        # Check alt rotation (if available)
+        alt_rotation = row.get('alt_rotation', 0.0)
+        if alt_rotation >= self.thresh_S6.get('alt_rot_max', 0.0):
+            return False
+
+        liquidity = self._get_liquidity_score(row)
+        if liquidity >= self.thresh_S6.get('liq_max', 0.22):
+            return False
+
+        # Check DXY (if available)
+        dxy = row.get('dxy', 100.0)
+        dxy_prev = prev_row.get('dxy', 100.0) if prev_row is not None else 100.0
+        if dxy <= dxy_prev:  # DXY not rising
+            return False
+
+        if fusion_score < self.thresh_S6.get('fusion', 0.34):
+            return False
+
+        return True
+
+    def _check_S7(self, row, prev_row, df, index, fusion_score) -> bool:
+        """
+        S7 - Curve Inversion Breakdown: Yield curve inversion + support break.
+
+        Criteria (short-biased):
+        - Yield curve spread < 0 (10Y-2Y inversion)
+        - BOS bearish (support break)
+        - Volume > 1.0x (confirmation)
+        - Fusion score >= 0.36
+
+        Regime tuning:
+        - Risk_off: Spread threshold -0.02, trail_atr 0.85
+        - Crisis: Size 0.3x
+        """
+        # Check yield curve spread (if available)
+        yield_spread = row.get('yield_curve_spread', 0.5)  # Default positive
+        if yield_spread >= self.thresh_S7.get('spread_max', 0.0):
+            return False
+
+        # Check for bearish BOS
+        bos_bearish = row.get('tf1h_bos_bearish', False)
+        bos_flag = row.get('tf1h_bos_flag', 0)
+        if not (bos_bearish or bos_flag < 0):
+            return False
+
+        vol_z = row.get('volume_zscore', 0.0)
+        if vol_z <= self.thresh_S7.get('vol_min', 1.0):
+            return False
+
+        if fusion_score < self.thresh_S7.get('fusion', 0.36):
+            return False
+
+        return True
+
+    def _check_S8(self, row, prev_row, df, index, fusion_score) -> bool:
+        """
+        S8 - Volume Fade in Chop: Low volume drift + failure (chop filter).
+
+        Criteria (short-biased):
+        - Volume < 0.5x (low conviction)
+        - RSI extreme > 70 or < 30 (overbought/oversold)
+        - ADX < 25 (no trend)
+        - Fusion score >= 0.34
+
+        Regime tuning:
+        - Neutral: Veto if regime neutral
+        - Risk_off: Require volume fade
+        """
+        vol_z = row.get('volume_zscore', 0.0)
+        if vol_z >= self.thresh_S8.get('vol_max', 0.5):
+            return False
+
+        rsi = row.get('rsi_14', 50.0)
+        rsi_threshold = self.thresh_S8.get('rsi_extreme', 70.0)
+        if not (rsi > rsi_threshold or rsi < (100 - rsi_threshold)):
+            return False
+
+        adx = row.get('adx_14', 0.0)
+        if adx >= self.thresh_S8.get('adx_max', 25.0):
+            return False
+
+        if fusion_score < self.thresh_S8.get('fusion', 0.34):
             return False
 
         return True

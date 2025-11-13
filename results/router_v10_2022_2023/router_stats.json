@@ -1,0 +1,33 @@
+{
+  "asset": "BTC",
+  "start_date": "2022-01-01",
+  "end_date": "2023-12-31",
+  "data_start": "2022-01-01",
+  "regime_stats": {
+    "total_bars": 17475,
+    "regime_distribution": {
+      "risk_on": 10116,
+      "risk_off": 4280,
+      "neutral": 2327,
+      "crisis": 752
+    },
+    "confidence_mean": 0.9843272789503389,
+    "confidence_median": 0.9999999999992042,
+    "low_confidence_pct": 0.7267525035765379
+  },
+  "router_stats": {
+    "total_decisions": 17475,
+    "action_distribution": {
+      "BULL": 60.497854077253216,
+      "BEAR": 24.76680972818312,
+      "CASH": 14.735336194563663
+    },
+    "regime_switches": 858,
+    "confidence_stats": {
+      "mean": 0.9843272789503417,
+      "median": 0.9999999999992042,
+      "min": 0.4904666881289898,
+      "max": 1.0
+    }
+  }
+}

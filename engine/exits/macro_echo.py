@@ -70,8 +70,17 @@ def calculate_trend(series: pd.Series, lookback: int = 7) -> str:
         return 'flat'
 
     recent = series.tail(lookback)
+
+    # FIX: Handle NaN values - default to 'flat' when data missing
+    if recent.isna().all():
+        return 'flat'  # All data is NaN
+
     start_val = recent.iloc[0]
     end_val = recent.iloc[-1]
+
+    # FIX: Check if start_val or end_val is NaN
+    if pd.isna(start_val) or pd.isna(end_val):
+        return 'flat'
 
     change_pct = (end_val - start_val) / start_val if start_val > 0 else 0
 
@@ -93,6 +102,10 @@ def classify_vix_level(vix_value: float) -> str:
     Returns:
         'low' | 'medium' | 'high' | 'extreme'
     """
+    # FIX: Handle NaN values - default to 'medium' when VIX unavailable
+    if pd.isna(vix_value):
+        return 'medium'  # Neutral when data missing
+
     if vix_value < 15:
         return 'low'  # Complacency
     elif vix_value < 25:

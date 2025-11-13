@@ -1,0 +1,42 @@
+{
+  "asset": "BTC",
+  "start_date": "2022-01-01",
+  "end_date": "2023-12-31",
+  "bull_config": "configs/baseline_btc_bull_pf20.json",
+  "bear_config": "configs/baseline_btc_bear_defensive.json",
+  "starting_capital": 10000.0,
+  "performance": {
+    "total_pnl": 0.0,
+    "final_equity": 10000.0,
+    "return_pct": 0.0,
+    "total_trades": 0,
+    "win_rate": 0.0,
+    "profit_factor": 0.0,
+    "sharpe_ratio": 0.0,
+    "max_drawdown": 0.0,
+    "winners": 0,
+    "losers": 0
+  },
+  "regime_stats": {
+    "risk_on": 10116,
+    "risk_off": 4280,
+    "neutral": 2327,
+    "crisis": 752,
+    "low_confidence": 127,
+    "event_suppression": 2451
+  },
+  "config_stats": {
+    "BULL": 10572,
+    "BEAR": 4328,
+    "CASH": 2575
+  },
+  "router_stats": {
+    "total_decisions": 17475,
+    "action_distribution": {
+      "BULL": 60.497854077253216,
+      "BEAR": 24.76680972818312,
+      "CASH": 14.735336194563663
+    },
+    "regime_switches": 858
+  }
+}

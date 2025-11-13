@@ -1,11 +1,12 @@
 """
 Multi-Modal Exit System
 
-Combines 4 exit strategies for optimal trade management:
+Combines 5 exit strategies for optimal trade management:
 1. R-Ladder: Profit-taking at 1R, 2R, 3R milestones
 2. Structural: Exit on CHOCH, bearish BOMS, squiggle breakdown
 3. Liquidity: Exit near HVN (liquidity cluster resistance)
 4. Time: Exit if no movement after N bars
+5. Macro Regime: Exit on risk_off/crisis regime flips (ARCHITECTURE FIX #3)
 
 Each mode provides exit signals independently, and the final decision
 is made by voting (any 2+ modes trigger = exit).
@@ -15,8 +16,11 @@ Author: Bull Machine v2.0
 
 import pandas as pd
 import numpy as np
+import logging
 from typing import Dict, Optional, List, Tuple
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 # Constants for magic numbers
@@ -223,6 +227,58 @@ def check_time_exit(entry_idx: int, current_idx: int,
     return False, ""
 
 
+def check_macro_regime_exit(current_row: pd.Series, entry_row: pd.Series,
+                             direction: str, config: Optional[Dict] = None) -> Tuple[bool, str, float]:
+    """
+    Check macro regime flip exit (ARCHITECTURE FIX #3).
+
+    **KEY INSIGHT FROM 2022 FAILURE ANALYSIS**:
+    - 2022 had 0 regime exits despite 6.5% crisis+risk_off bars
+    - 2023-2024 captured $549 from 5 regime exits
+    - Macro regime changes are HIGH PRIORITY exit signals
+
+    Args:
+        current_row: Current bar data (must have macro_regime column)
+        entry_row: Entry bar data (must have macro_regime column)
+        direction: Position direction ('long' only for now, shorts exit on risk_on)
+        config: Optional config
+
+    Returns:
+        (should_exit, reason, urgency_boost)
+
+    Logic:
+        - Long positions: Exit on neutral→risk_off or neutral→crisis flip
+        - Urgency boost: 0.9 for crisis, 0.7 for risk_off (high priority)
+        - Ignore risk_on→neutral flips (favorable for longs)
+    """
+    config = config or {}
+
+    # Get macro regime from current and entry rows
+    current_regime = current_row.get('macro_regime', 'neutral')
+    entry_regime = entry_row.get('macro_regime', 'neutral')
+
+    # FIX #3: HIGH PRIORITY for regime deterioration
+    if direction == 'long':
+        # Crisis entry → exit immediately (shouldn't happen, but safety check)
+        if current_regime == 'crisis':
+            return True, f"Macro: Crisis regime (VIX extreme)", 0.9
+
+        # Risk-off entry → consider exit if persists
+        if current_regime == 'risk_off' and entry_regime in ['neutral', 'risk_on']:
+            return True, f"Macro: Regime flip {entry_regime}→risk_off", 0.7
+
+        # Regime improved or neutral → hold
+        return False, "", 0.0
+
+    # For shorts, inverse logic (exit on risk_on)
+    elif direction == 'short':
+        if current_regime == 'risk_on' and entry_regime in ['neutral', 'risk_off']:
+            return True, f"Macro: Regime flip {entry_regime}→risk_on", 0.7
+        return False, "", 0.0
+
+    return False, "", 0.0
+
+
 def calculate_exit_urgency(r_multiple: float, structural_exit: bool,
                            bars_in_trade: int, config: Optional[Dict] = None) -> float:
     """
@@ -333,7 +389,8 @@ def evaluate_multi_modal_exit(
     df: pd.DataFrame,
     entry_idx: int,
     frvp_hvn_levels: Optional[List[float]] = None,
-    config: Optional[Dict] = None
+    config: Optional[Dict] = None,
+    entry_row: Optional[pd.Series] = None
 ) -> ExitSignal:
     """
     Evaluate multi-modal exit system.
@@ -347,21 +404,24 @@ def evaluate_multi_modal_exit(
         entry_idx: Entry bar index
         frvp_hvn_levels: Optional HVN levels from FRVP
         config: Optional configuration
+        entry_row: Optional entry bar data for macro regime comparison (ARCHITECTURE FIX #3)
 
     Returns:
         ExitSignal with exit decision
 
     Voting Logic:
-        - Any 1 mode at max urgency (R3, stop hit): Immediate exit
+        - Any 1 mode at max urgency (R3, stop hit, macro crisis): Immediate exit
         - Any 2+ modes active: Exit (majority vote)
         - 1 mode + high urgency: Exit
+        - Macro regime flips add urgency boost (0.7-0.9) for priority exit
         - Otherwise: Hold
 
     Example:
         >>> exit_signal = evaluate_multi_modal_exit(
         ...     entry_price=40000, stop_loss=39500,
         ...     current_price=41000, direction='long',
-        ...     df=df_1h, entry_idx=100, frvp_hvn_levels=[41050]
+        ...     df=df_1h, entry_idx=100, frvp_hvn_levels=[41050],
+        ...     entry_row=df_1h.iloc[100]  # For macro regime tracking
         ... )
         >>> if exit_signal.should_exit:
         ...     print(f"Exit: {exit_signal.exit_reason}")
@@ -417,10 +477,26 @@ def evaluate_multi_modal_exit(
         if not primary_reason:
             primary_reason = time_reason
 
-    # Calculate urgency
+    # 5. Macro Regime (ARCHITECTURE FIX #3 - HIGH PRIORITY)
+    macro_urgency_boost = 0.0
+    if entry_row is not None:
+        current_row = df.iloc[-1]
+        macro_exit, macro_reason, macro_urgency_boost = check_macro_regime_exit(
+            current_row, entry_row, direction, config
+        )
+        if macro_exit:
+            exit_modes.append('macro_regime')
+            if not primary_reason:
+                primary_reason = macro_reason
+            # Macro exits get priority - boost urgency significantly
+            logger.info(f"[MACRO EXIT] {macro_reason} (urgency boost: {macro_urgency_boost:.2f})")
+
+    # Calculate urgency (with macro boost if applicable)
     urgency = calculate_exit_urgency(
         r_multiple, struct_exit, bars_in_trade, config
     )
+    # Apply macro urgency boost (additive, can push urgency > 0.8 for immediate exit)
+    urgency = min(1.0, urgency + macro_urgency_boost)
 
     # Apply voting logic
     should_exit, partial_pct = _apply_voting_logic(exit_modes, urgency, partial_pct)

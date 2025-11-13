@@ -79,8 +79,17 @@ def main():
     print(f"\n3. Filtered macro to {start_dt.date()} - {end_dt.date()}")
     print(f"   Rows: {len(macro_filtered)}")
 
-    # 4. Merge with feature store (asof merge for forward-fill behavior)
-    print(f"\n4. Merging macro features...")
+    # 4. Drop existing macro columns if they exist (to avoid _x/_y suffix issues)
+    print(f"\n4. Checking for existing macro columns...")
+    existing_macro = [col for col in REGIME_FEATURES if col in features.columns]
+    if existing_macro:
+        print(f"   Dropping {len(existing_macro)} existing macro columns: {existing_macro}")
+        features = features.drop(columns=existing_macro)
+    else:
+        print(f"   No existing macro columns found")
+
+    # 5. Merge with feature store (asof merge for forward-fill behavior)
+    print(f"\n5. Merging macro features...")
 
     # Ensure both are sorted by timestamp
     features = features.sort_values('timestamp').reset_index(drop=True)
@@ -104,19 +113,21 @@ def main():
             if count > 0:
                 print(f"   {feat}: {count} missing ({count/len(merged)*100:.1f}%)")
 
-    print(f"\n5. Merged shape: {merged.shape}")
+    print(f"\n6. Merged shape: {merged.shape}")
     print(f"   Added {len(REGIME_FEATURES)} macro features")
 
-    # 5. Backup original
+    # 6. Backup original
     backup_path = feature_store_path.with_suffix('.parquet.bak_pre_macro')
     if not backup_path.exists():
-        print(f"\n6. Creating backup: {backup_path.name}")
-        features.to_parquet(backup_path, compression='snappy')
+        print(f"\n7. Creating backup: {backup_path.name}")
+        # Read the original file for backup (before modifications)
+        original = pd.read_parquet(feature_store_path)
+        original.to_parquet(backup_path, compression='snappy')
     else:
-        print(f"\n6. Backup already exists: {backup_path.name}")
+        print(f"\n7. Backup already exists: {backup_path.name}")
 
-    # 6. Save updated feature store
-    print(f"\n7. Saving updated feature store...")
+    # 7. Save updated feature store
+    print(f"\n8. Saving updated feature store...")
     # Set timestamp back as index to match original format (named 'time')
     merged_indexed = merged.set_index('timestamp')
     merged_indexed.index.name = 'time'  # Original index was named 'time', not 'timestamp'

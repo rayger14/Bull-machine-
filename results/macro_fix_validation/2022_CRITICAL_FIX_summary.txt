@@ -1,0 +1,1189 @@
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-01-04 14:00:00+00:00 @ $47338.27, size=$9550.38, fusion=0.539
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 68, price=$46900.00, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-01-04 15:00:00+00:00 @ $46900.00, PNL=$-91.28, equity=$9961.74
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-01-12 13:00:00+00:00 @ $43955.49, size=$9731.37, fusion=0.689
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 259, price=$43888.59, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-01-12 14:00:00+00:00 @ $43888.59, PNL=$-17.73, equity=$10225.82
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-01-12 14:00:00+00:00 @ $43888.59, size=$9714.53, fusion=0.564
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 260, price=$43572.42, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-01-12 15:00:00+00:00 @ $43572.42, PNL=$-72.90, equity=$10152.92
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-01-20 14:00:00+00:00 @ $42990.93, size=$9596.69, fusion=0.625
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 452, price=$43307.24, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-01-20 15:00:00+00:00 @ $43307.24, PNL=$67.73, equity=$10169.50
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-01-20 15:00:00+00:00 @ $43307.24, size=$9568.46, fusion=0.653
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 453, price=$43285.36, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-01-20 16:00:00+00:00 @ $43285.36, PNL=$-7.70, equity=$10161.80
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-01-25 20:00:00+00:00 @ $36885.35, size=$3434.83, fusion=0.474
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 578, price=$36568.12, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-01-25 21:00:00+00:00 @ $36568.12, PNL=$-30.57, equity=$9808.35
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-01-26 14:00:00+00:00 @ $38265.51, size=$4682.04, fusion=0.543
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 596, price=$38009.35, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-01-26 15:00:00+00:00 @ $38009.35, PNL=$-32.75, equity=$9776.48
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-01-31 15:00:00+00:00 @ $37741.00, size=$9285.06, fusion=0.475
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 717, price=$38360.00, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-01-31 16:00:00+00:00 @ $38360.00, PNL=$149.50, equity=$9923.25
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-01-31 16:00:00+00:00 @ $38360.00, size=$9427.09, fusion=0.519
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 718, price=$38507.45, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-01-31 17:00:00+00:00 @ $38507.45, PNL=$33.41, equity=$9956.66
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-01-31 17:00:00+00:00 @ $38507.45, size=$9245.86, fusion=0.499
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 719, price=$38499.60, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-01-31 18:00:00+00:00 @ $38499.60, PNL=$-4.66, equity=$9952.00
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-01-31 21:00:00+00:00 @ $38439.81, size=$9154.25, fusion=0.544
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 723, price=$38438.43, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-01-31 22:00:00+00:00 @ $38438.43, PNL=$-3.07, equity=$9940.07
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-04 15:00:00+00:00 @ $39505.13, size=$7967.36, fusion=0.657
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 813, price=$40299.37, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-04 16:00:00+00:00 @ $40299.37, PNL=$157.79, equity=$10184.64
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-04 16:00:00+00:00 @ $40299.37, size=$7347.95, fusion=0.631
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 814, price=$40548.23, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-04 17:00:00+00:00 @ $40548.23, PNL=$43.17, equity=$10227.82
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-07 14:00:00+00:00 @ $43458.45, size=$9745.33, fusion=0.583
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 884, price=$43885.21, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-07 15:00:00+00:00 @ $43885.21, PNL=$92.78, equity=$10351.02
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-07 15:00:00+00:00 @ $43885.21, size=$9833.47, fusion=0.616
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 885, price=$43832.38, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-07 16:00:00+00:00 @ $43832.38, PNL=$-14.79, equity=$10336.23
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-07 16:00:00+00:00 @ $43832.38, size=$9819.42, fusion=0.529
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 886, price=$44244.76, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-07 17:00:00+00:00 @ $44244.76, PNL=$89.44, equity=$10425.67
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-14 15:00:00+00:00 @ $42598.78, size=$7332.22, fusion=0.540
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1053, price=$42672.95, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-14 16:00:00+00:00 @ $42672.95, PNL=$10.57, equity=$10396.31
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-14 16:00:00+00:00 @ $42672.95, size=$5772.24, fusion=0.397
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1054, price=$42595.92, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-14 17:00:00+00:00 @ $42595.92, PNL=$-12.15, equity=$10384.16
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-15 01:00:00+00:00 @ $43485.77, size=$4917.63, fusion=0.414
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1063, price=$43592.01, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-15 02:00:00+00:00 @ $43592.01, PNL=$10.54, equity=$10394.70
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-15 14:00:00+00:00 @ $44280.65, size=$7071.43, fusion=0.508
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1076, price=$44236.88, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-15 15:00:00+00:00 @ $44236.88, PNL=$-9.11, equity=$10381.60
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-23 16:00:00+00:00 @ $38662.83, size=$6971.42, fusion=0.560
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1270, price=$38093.82, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-23 17:00:00+00:00 @ $38093.82, PNL=$-104.69, equity=$10276.45
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-24 20:00:00+00:00 @ $38419.70, size=$2925.70, fusion=0.607
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1298, price=$38430.64, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-24 21:00:00+00:00 @ $38430.64, PNL=$-0.04, equity=$10254.92
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-28 14:00:00+00:00 @ $39851.59, size=$4426.37, fusion=0.594
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1388, price=$40858.12, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-28 15:00:00+00:00 @ $40858.12, PNL=$110.47, equity=$10372.29
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-28 15:00:00+00:00 @ $40858.12, size=$4302.92, fusion=0.650
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1389, price=$41030.00, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-28 16:00:00+00:00 @ $41030.00, PNL=$16.81, equity=$10389.10
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-02-28 16:00:00+00:00 @ $41030.00, size=$3681.61, fusion=0.489
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1390, price=$41445.54, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-02-28 17:00:00+00:00 @ $41445.54, PNL=$36.18, equity=$10425.28
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-09 03:00:00+00:00 @ $41217.70, size=$4332.69, fusion=0.577
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1593, price=$41646.66, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-09 04:00:00+00:00 @ $41646.66, PNL=$43.79, equity=$10464.46
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-09 04:00:00+00:00 @ $41646.66, size=$3352.75, fusion=0.406
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1594, price=$41524.73, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-09 05:00:00+00:00 @ $41524.73, PNL=$-10.82, equity=$10453.64
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-14 13:00:00+00:00 @ $38885.03, size=$5390.85, fusion=0.420
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1723, price=$39136.73, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-14 14:00:00+00:00 @ $39136.73, PNL=$33.28, equity=$10362.94
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-14 14:00:00+00:00 @ $39136.73, size=$5413.23, fusion=0.428
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1724, price=$38961.73, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-14 15:00:00+00:00 @ $38961.73, PNL=$-25.83, equity=$10337.11
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-15 19:00:00+00:00 @ $39750.00, size=$5581.87, fusion=0.447
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1753, price=$39443.51, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-15 20:00:00+00:00 @ $39443.51, PNL=$-44.71, equity=$10292.40
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-16 02:00:00+00:00 @ $40872.15, size=$4787.74, fusion=0.646
+INFO:__main__:EXIT stop_loss: 2022-03-16 03:00:00+00:00 @ $39509.51, PNL=$-161.06, equity=$10176.08
+INFO:__main__:PHASE 4 CHECK: bar 1760, bars_since_exit=1/7, fusion=0.178, exit_reason=signal_neutralized
+INFO:__main__:PHASE 4 GATE 3 PASS: Pullback to FVG support at 39167.71 (current=39170.38, dist=0.00 ATR)
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-18 16:00:00+00:00 @ $41444.26, size=$9787.34, fusion=0.657
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1822, price=$41713.40, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-18 17:00:00+00:00 @ $41713.40, PNL=$60.62, equity=$10363.09
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-18 17:00:00+00:00 @ $41713.40, size=$9844.93, fusion=0.575
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1823, price=$41735.29, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-18 18:00:00+00:00 @ $41735.29, PNL=$2.21, equity=$10365.30
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-22 04:00:00+00:00 @ $43001.23, size=$8510.49, fusion=0.452
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1906, price=$42850.34, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-22 05:00:00+00:00 @ $42850.34, PNL=$-32.42, equity=$10207.03
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-25 13:00:00+00:00 @ $45025.45, size=$9780.94, fusion=0.547
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1987, price=$44902.07, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-25 14:00:00+00:00 @ $44902.07, PNL=$-29.74, equity=$10265.99
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-25 14:00:00+00:00 @ $44902.07, size=$9752.69, fusion=0.471
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 1988, price=$44343.85, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-25 15:00:00+00:00 @ $44343.85, PNL=$-124.17, equity=$10141.82
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-27 20:00:00+00:00 @ $46138.97, size=$9616.42, fusion=0.653
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2042, price=$46583.94, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-27 21:00:00+00:00 @ $46583.94, PNL=$89.86, equity=$10212.41
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-27 21:00:00+00:00 @ $46583.94, size=$9701.79, fusion=0.597
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2043, price=$46620.33, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-27 22:00:00+00:00 @ $46620.33, PNL=$4.67, equity=$10217.08
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-27 22:00:00+00:00 @ $46620.33, size=$9706.22, fusion=0.552
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2044, price=$46850.01, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-27 23:00:00+00:00 @ $46850.01, PNL=$44.91, equity=$10261.98
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-03-28 00:00:00+00:00 @ $46940.37, size=$9230.55, fusion=0.533
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2046, price=$46821.78, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-03-28 01:00:00+00:00 @ $46821.78, PNL=$-26.09, equity=$10242.65
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-04-13 15:00:00+00:00 @ $41167.91, size=$9040.74, fusion=0.519
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2445, price=$41019.48, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-04-13 16:00:00+00:00 @ $41019.48, PNL=$-35.31, equity=$9594.85
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-04-18 18:00:00+00:00 @ $40647.57, size=$9006.23, fusion=0.592
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2568, price=$40683.33, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-04-18 19:00:00+00:00 @ $40683.33, PNL=$5.22, equity=$9485.47
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-04-20 10:00:00+00:00 @ $41843.28, size=$8985.67, fusion=0.497
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2608, price=$42111.71, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-04-20 11:00:00+00:00 @ $42111.71, PNL=$54.95, equity=$9513.55
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-04-20 11:00:00+00:00 @ $42111.71, size=$9037.87, fusion=0.668
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2609, price=$42121.74, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-04-20 12:00:00+00:00 @ $42121.74, PNL=$-0.56, equity=$9512.99
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-04-21 10:00:00+00:00 @ $42272.93, size=$8969.03, fusion=0.464
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2632, price=$42449.33, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-04-21 11:00:00+00:00 @ $42449.33, PNL=$34.74, equity=$9475.82
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-04-21 13:00:00+00:00 @ $42696.56, size=$9025.11, fusion=0.638
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2635, price=$42509.42, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-04-21 14:00:00+00:00 @ $42509.42, PNL=$-42.26, equity=$9457.85
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-04-23 16:00:00+00:00 @ $39868.65, size=$8730.53, fusion=0.435
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2686, price=$39832.62, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-04-23 17:00:00+00:00 @ $39832.62, PNL=$-10.51, equity=$9179.52
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-04-27 13:00:00+00:00 @ $39351.49, size=$4642.12, fusion=0.490
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2779, price=$38672.64, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-04-27 14:00:00+00:00 @ $38672.64, PNL=$-81.47, equity=$8920.65
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-04 16:00:00+00:00 @ $39184.92, size=$6768.32, fusion=0.553
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2950, price=$38970.21, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-04 17:00:00+00:00 @ $38970.21, PNL=$-39.12, equity=$8890.18
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-04 17:00:00+00:00 @ $38970.21, size=$6442.81, fusion=0.575
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2951, price=$39617.06, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-04 18:00:00+00:00 @ $39617.06, PNL=$105.01, equity=$8995.19
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-04 18:00:00+00:00 @ $39617.06, size=$5505.46, fusion=0.678
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2952, price=$39848.76, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-04 19:00:00+00:00 @ $39848.76, PNL=$30.55, equity=$9025.74
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-04 19:00:00+00:00 @ $39848.76, size=$5228.09, fusion=0.616
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 2953, price=$39782.46, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-04 20:00:00+00:00 @ $39782.46, PNL=$-10.27, equity=$9015.47
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-15 21:00:00+00:00 @ $31040.87, size=$3213.66, fusion=0.415
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3219, price=$31049.86, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-15 22:00:00+00:00 @ $31049.86, PNL=$-0.03, equity=$8673.47
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-15 22:00:00+00:00 @ $31049.86, size=$3317.24, fusion=0.442
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3220, price=$31290.05, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-15 23:00:00+00:00 @ $31290.05, PNL=$24.67, equity=$8698.13
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-19 14:00:00+00:00 @ $29841.29, size=$3883.90, fusion=0.449
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3308, price=$30353.24, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-19 15:00:00+00:00 @ $30353.24, PNL=$65.47, equity=$8741.09
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-19 15:00:00+00:00 @ $30353.24, size=$4459.36, fusion=0.580
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3309, price=$30110.45, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-19 16:00:00+00:00 @ $30110.45, PNL=$-37.01, equity=$8704.08
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-22 09:00:00+00:00 @ $30092.41, size=$8241.11, fusion=0.568
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3375, price=$30140.53, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-22 10:00:00+00:00 @ $30140.53, PNL=$10.71, equity=$8685.56
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-22 10:00:00+00:00 @ $30140.53, size=$8251.29, fusion=0.507
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3376, price=$29854.86, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-22 11:00:00+00:00 @ $29854.86, PNL=$-80.68, equity=$8604.88
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-29 12:00:00+00:00 @ $29349.67, size=$8293.73, fusion=0.535
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3546, price=$29304.06, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-29 13:00:00+00:00 @ $29304.06, PNL=$-15.38, equity=$8714.86
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-30 02:00:00+00:00 @ $30195.48, size=$8234.87, fusion=0.614
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3560, price=$30332.16, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-30 03:00:00+00:00 @ $30332.16, PNL=$34.80, equity=$8786.10
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-30 06:00:00+00:00 @ $30683.87, size=$7045.16, fusion=0.635
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3564, price=$30626.71, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-30 07:00:00+00:00 @ $30626.71, PNL=$-15.24, equity=$8802.98
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-30 07:00:00+00:00 @ $30626.71, size=$6372.37, fusion=0.533
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3565, price=$30724.07, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-30 08:00:00+00:00 @ $30724.07, PNL=$18.35, equity=$8821.33
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-30 12:00:00+00:00 @ $30513.77, size=$5420.67, fusion=0.512
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3570, price=$30497.37, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-30 13:00:00+00:00 @ $30497.37, PNL=$-4.54, equity=$8796.83
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-05-30 21:00:00+00:00 @ $31787.15, size=$4899.66, fusion=0.561
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3579, price=$31757.96, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-05-30 22:00:00+00:00 @ $31757.96, PNL=$-5.97, equity=$8836.52
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-06 00:00:00+00:00 @ $30277.54, size=$7398.98, fusion=0.569
+INFO:__main__:PARTIAL EXIT TP1 (+1.01R): 1/3 position closed @ $30822.13, stop → BE-$21.63 ($30255.91)
+INFO:__main__:Track B: Using archetype-specific trail_atr=1.2 for volume_exhaustion
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3726, price=$30822.13, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-06 01:00:00+00:00 @ $30822.13, PNL=$87.24, equity=$8918.65
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-06 01:00:00+00:00 @ $30822.13, size=$6798.39, fusion=0.606
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3727, price=$30899.08, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-06 02:00:00+00:00 @ $30899.08, PNL=$14.93, equity=$8933.58
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-06 02:00:00+00:00 @ $30899.08, size=$5339.95, fusion=0.460
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3728, price=$31222.50, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-06 03:00:00+00:00 @ $31222.50, PNL=$54.29, equity=$8987.88
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-06 03:00:00+00:00 @ $31222.50, size=$4851.38, fusion=0.429
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3729, price=$31194.94, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-06 04:00:00+00:00 @ $31194.94, PNL=$-5.74, equity=$8982.14
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-06 11:00:00+00:00 @ $31377.50, size=$5141.11, fusion=0.490
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3737, price=$31384.01, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-06 12:00:00+00:00 @ $31384.01, PNL=$-0.48, equity=$8990.73
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-06 13:00:00+00:00 @ $31416.19, size=$5160.29, fusion=0.499
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3739, price=$31478.12, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-06 14:00:00+00:00 @ $31478.12, PNL=$8.62, equity=$9000.95
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-06 14:00:00+00:00 @ $31478.12, size=$5460.62, fusion=0.508
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3740, price=$31518.71, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-06 15:00:00+00:00 @ $31518.71, PNL=$5.40, equity=$9006.36
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-06 15:00:00+00:00 @ $31518.71, size=$6054.14, fusion=0.539
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3741, price=$31291.31, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-06 16:00:00+00:00 @ $31291.31, PNL=$-45.50, equity=$8960.86
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-07 19:00:00+00:00 @ $31036.72, size=$8601.41, fusion=0.529
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3769, price=$31324.64, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-07 20:00:00+00:00 @ $31324.64, PNL=$77.21, equity=$9131.33
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-07 20:00:00+00:00 @ $31324.64, size=$8192.20, fusion=0.542
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3770, price=$31369.37, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-07 21:00:00+00:00 @ $31369.37, PNL=$9.24, equity=$9140.57
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-07 22:00:00+00:00 @ $31239.52, size=$6224.73, fusion=0.521
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 3772, price=$31106.90, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-07 23:00:00+00:00 @ $31106.90, PNL=$-28.29, equity=$9098.57
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-19 19:00:00+00:00 @ $20103.41, size=$1826.51, fusion=0.511
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4057, price=$20620.49, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-19 20:00:00+00:00 @ $20620.49, PNL=$46.43, equity=$8906.42
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-19 20:00:00+00:00 @ $20620.49, size=$1876.57, fusion=0.530
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4058, price=$20372.31, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-19 21:00:00+00:00 @ $20372.31, PNL=$-23.15, equity=$8883.27
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-06-21 13:00:00+00:00 @ $21608.66, size=$2679.81, fusion=0.551
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4099, price=$21589.03, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-06-21 14:00:00+00:00 @ $21589.03, PNL=$-3.24, equity=$8857.78
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-03 19:00:00+00:00 @ $19475.69, size=$6215.87, fusion=0.479
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4393, price=$19418.04, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-03 20:00:00+00:00 @ $19418.04, PNL=$-20.26, equity=$8843.13
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-04 11:00:00+00:00 @ $19785.18, size=$6103.49, fusion=0.460
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4409, price=$19690.86, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-04 12:00:00+00:00 @ $19690.86, PNL=$-30.93, equity=$8792.48
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-04 17:00:00+00:00 @ $19876.54, size=$4051.06, fusion=0.415
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4415, price=$19907.60, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-04 18:00:00+00:00 @ $19907.60, PNL=$5.12, equity=$8797.59
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-07 16:00:00+00:00 @ $21085.79, size=$4618.71, fusion=0.524
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4486, price=$20898.13, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-07 17:00:00+00:00 @ $20898.13, PNL=$-42.49, equity=$8803.85
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-07 18:00:00+00:00 @ $21366.96, size=$4114.76, fusion=0.637
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4488, price=$21830.61, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-07 19:00:00+00:00 @ $21830.61, PNL=$88.05, equity=$8891.91
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-07 19:00:00+00:00 @ $21830.61, size=$3859.39, fusion=0.679
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4489, price=$21614.04, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-07 20:00:00+00:00 @ $21614.04, PNL=$-39.44, equity=$8852.46
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-16 16:00:00+00:00 @ $21461.34, size=$8410.59, fusion=0.641
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4702, price=$21237.12, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-16 17:00:00+00:00 @ $21237.12, PNL=$-90.39, equity=$8762.86
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-18 06:00:00+00:00 @ $22192.66, size=$4408.23, fusion=0.602
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4740, price=$22245.50, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-18 07:00:00+00:00 @ $22245.50, PNL=$9.17, equity=$8820.49
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-18 07:00:00+00:00 @ $22245.50, size=$4093.80, fusion=0.497
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4741, price=$22291.82, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-18 08:00:00+00:00 @ $22291.82, PNL=$7.30, equity=$8827.78
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-18 08:00:00+00:00 @ $22291.82, size=$3869.84, fusion=0.487
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4742, price=$22239.86, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-18 09:00:00+00:00 @ $22239.86, PNL=$-10.18, equity=$8817.60
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-19 15:00:00+00:00 @ $23139.21, size=$5719.05, fusion=0.590
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4773, price=$23236.55, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-19 16:00:00+00:00 @ $23236.55, PNL=$22.34, equity=$8805.33
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-19 16:00:00+00:00 @ $23236.55, size=$4569.92, fusion=0.466
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4774, price=$23466.51, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-19 17:00:00+00:00 @ $23466.51, PNL=$43.86, equity=$8849.18
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-20 14:00:00+00:00 @ $24207.51, size=$5991.05, fusion=0.531
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4796, price=$24177.17, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-20 15:00:00+00:00 @ $24177.17, PNL=$-9.31, equity=$8802.43
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-20 15:00:00+00:00 @ $24177.17, size=$5210.37, fusion=0.423
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4797, price=$23693.53, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-20 16:00:00+00:00 @ $23693.53, PNL=$-105.79, equity=$8696.64
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-27 15:00:00+00:00 @ $21542.03, size=$8256.56, fusion=0.487
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4965, price=$21539.49, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-27 16:00:00+00:00 @ $21539.49, PNL=$-3.45, equity=$8687.66
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-27 17:00:00+00:00 @ $21629.38, size=$8269.42, fusion=0.515
+INFO:__main__:PARTIAL EXIT TP1 (+2.29R): 1/3 position closed @ $22566.00, stop → BE-$16.39 ($21612.99)
+INFO:__main__:PARTIAL EXIT TP2 (+2.29R): 1/3 position closed @ $22566.00, trail tightened 2.0× → 1.5×ATR
+INFO:__main__:Track B: Using archetype-specific trail_atr=1.2 for volume_exhaustion
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4967, price=$22566.00, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-27 18:00:00+00:00 @ $22566.00, PNL=$118.54, equity=$8823.19
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-27 18:00:00+00:00 @ $22566.00, size=$8355.47, fusion=0.669
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4968, price=$22773.22, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-27 19:00:00+00:00 @ $22773.22, PNL=$74.22, equity=$8897.41
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-27 19:00:00+00:00 @ $22773.22, size=$7292.29, fusion=0.557
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 4969, price=$22786.33, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-27 20:00:00+00:00 @ $22786.33, PNL=$2.01, equity=$8899.42
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-07-30 13:00:00+00:00 @ $24505.10, size=$8507.88, fusion=0.661
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5035, price=$24363.13, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-07-30 14:00:00+00:00 @ $24363.13, PNL=$-51.84, equity=$8903.82
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-03 14:00:00+00:00 @ $23309.87, size=$8287.58, fusion=0.462
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5132, price=$23360.94, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-03 15:00:00+00:00 @ $23360.94, PNL=$15.67, equity=$8739.44
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-05 11:00:00+00:00 @ $23411.58, size=$8271.14, fusion=0.642
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5177, price=$23016.16, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-05 12:00:00+00:00 @ $23016.16, PNL=$-142.18, equity=$8564.28
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-08 05:00:00+00:00 @ $23438.48, size=$8132.94, fusion=0.476
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5243, price=$23737.07, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-08 06:00:00+00:00 @ $23737.07, PNL=$101.17, equity=$8662.15
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-08 06:00:00+00:00 @ $23737.07, size=$8229.04, fusion=0.690
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5244, price=$23816.74, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-08 07:00:00+00:00 @ $23816.74, PNL=$25.15, equity=$8687.30
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-08 07:00:00+00:00 @ $23816.74, size=$8252.94, fusion=0.618
+INFO:__main__:Track B: Using archetype-specific max_bars=78 for volume_exhaustion
+INFO:__main__:Track B: Using archetype-specific max_bars=78 for volume_exhaustion
+INFO:__main__:Track B: Using archetype-specific max_bars=78 for volume_exhaustion
+INFO:__main__:Track B: Using archetype-specific max_bars=78 for volume_exhaustion
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5249, price=$24127.26, direction=LONG
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-08 12:00:00+00:00 @ $24127.26, size=$8352.81, fusion=0.526
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5250, price=$24168.51, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-08 13:00:00+00:00 @ $24168.51, PNL=$11.77, equity=$8804.20
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-08 13:00:00+00:00 @ $24168.51, size=$8363.99, fusion=0.653
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5251, price=$24150.98, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-08 14:00:00+00:00 @ $24150.98, PNL=$-8.58, equity=$8795.63
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-08 14:00:00+00:00 @ $24150.98, size=$8355.85, fusion=0.546
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5252, price=$23996.85, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-08 15:00:00+00:00 @ $23996.85, PNL=$-55.83, equity=$8739.79
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-10 12:00:00+00:00 @ $24010.23, size=$8149.33, fusion=0.648
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5298, price=$24028.66, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-10 13:00:00+00:00 @ $24028.66, PNL=$3.81, equity=$8582.06
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-10 13:00:00+00:00 @ $24028.66, size=$8152.95, fusion=0.576
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5299, price=$24012.22, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-10 14:00:00+00:00 @ $24012.22, PNL=$-8.02, equity=$8574.03
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-11 12:00:00+00:00 @ $24877.58, size=$8222.82, fusion=0.698
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5322, price=$24742.98, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-11 13:00:00+00:00 @ $24742.98, PNL=$-46.96, equity=$8608.64
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-11 13:00:00+00:00 @ $24742.98, size=$8178.21, fusion=0.578
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5323, price=$24576.80, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-11 14:00:00+00:00 @ $24576.80, PNL=$-57.38, equity=$8551.26
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-13 03:00:00+00:00 @ $24811.87, size=$8070.80, fusion=0.596
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5361, price=$24743.58, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-13 04:00:00+00:00 @ $24743.58, PNL=$-24.63, equity=$8470.94
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-21 20:00:00+00:00 @ $21471.40, size=$7566.16, fusion=0.466
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5570, price=$21537.62, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-21 21:00:00+00:00 @ $21537.62, PNL=$21.06, equity=$8344.90
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-24 16:00:00+00:00 @ $21716.45, size=$7927.66, fusion=0.626
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5638, price=$21632.45, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-24 17:00:00+00:00 @ $21632.45, PNL=$-33.04, equity=$8311.86
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-29 13:00:00+00:00 @ $20084.59, size=$5727.13, fusion=0.472
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5755, price=$20167.79, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-29 14:00:00+00:00 @ $20167.79, PNL=$22.01, equity=$8115.01
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-29 14:00:00+00:00 @ $20167.79, size=$5648.74, fusion=0.487
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5756, price=$20263.46, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-29 15:00:00+00:00 @ $20263.46, PNL=$25.10, equity=$8140.11
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-08-31 13:00:00+00:00 @ $20303.41, size=$5518.75, fusion=0.613
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5803, price=$20103.78, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-08-31 14:00:00+00:00 @ $20103.78, PNL=$-55.92, equity=$8006.80
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-09-02 14:00:00+00:00 @ $20368.80, size=$5848.44, fusion=0.462
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 5852, price=$20363.34, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-09-02 15:00:00+00:00 @ $20363.34, PNL=$-3.32, equity=$8023.50
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-09-06 00:00:00+00:00 @ $20101.61, size=$7571.33, fusion=0.666
+INFO:__main__:EXIT stop_loss: 2022-09-06 01:00:00+00:00 @ $19787.55, PNL=$-120.56, equity=$7849.25
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.disp_atr_multiplier → 0.8 (requested='disp_atr_multiplier', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-09-09 03:00:00+00:00 @ $19951.24, size=$7412.51, fusion=0.435
+INFO:__main__:PARTIAL EXIT TP1 (+1.09R): 1/3 position closed @ $20363.66, stop → BE-$15.17 ($19936.07)
+INFO:__main__:Track B: Using archetype-specific trail_atr=1.2 for volume_exhaustion
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6009, price=$20363.66, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-09-09 04:00:00+00:00 @ $20363.66, PNL=$100.67, equity=$7903.31
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-09-09 04:00:00+00:00 @ $20363.66, size=$7508.15, fusion=0.650
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6010, price=$20537.94, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-09-09 05:00:00+00:00 @ $20537.94, PNL=$62.01, equity=$7965.32
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-09-09 05:00:00+00:00 @ $20537.94, size=$7567.05, fusion=0.637
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6011, price=$20697.66, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-09-09 06:00:00+00:00 @ $20697.66, PNL=$56.58, equity=$8021.90
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-09-09 15:00:00+00:00 @ $21274.30, size=$4998.05, fusion=0.506
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6021, price=$21304.11, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-09-09 16:00:00+00:00 @ $21304.11, PNL=$5.50, equity=$8090.69
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-09-21 13:00:00+00:00 @ $19275.75, size=$6190.75, fusion=0.559
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6307, price=$19257.63, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-09-21 14:00:00+00:00 @ $19257.63, PNL=$-7.68, equity=$8017.65
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-09-21 17:00:00+00:00 @ $19828.89, size=$4669.43, fusion=0.610
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6311, price=$19643.91, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-09-21 18:00:00+00:00 @ $19643.91, PNL=$-44.96, equity=$7972.69
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-09-21 18:00:00+00:00 @ $19643.91, size=$3259.56, fusion=0.647
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6312, price=$19001.52, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-09-21 19:00:00+00:00 @ $19001.52, PNL=$-107.57, equity=$7865.12
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-09-22 19:00:00+00:00 @ $19309.64, size=$2850.41, fusion=0.394
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6337, price=$19246.00, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-09-22 20:00:00+00:00 @ $19246.00, PNL=$-10.25, equity=$7854.87
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-04 13:00:00+00:00 @ $20103.56, size=$6239.66, fusion=0.540
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6619, price=$20121.19, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-04 14:00:00+00:00 @ $20121.19, PNL=$3.60, equity=$7903.19
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-04 14:00:00+00:00 @ $20121.19, size=$6221.24, fusion=0.544
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6620, price=$20106.10, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-04 15:00:00+00:00 @ $20106.10, PNL=$-6.53, equity=$7896.66
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-16 19:00:00+00:00 @ $19379.60, size=$7427.79, fusion=0.616
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6913, price=$19333.56, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-16 20:00:00+00:00 @ $19333.56, PNL=$-19.87, equity=$7798.85
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-16 20:00:00+00:00 @ $19333.56, size=$7408.91, fusion=0.564
+INFO:__main__:EXIT stop_loss: 2022-10-16 21:00:00+00:00 @ $19171.31, PNL=$-64.40, equity=$7734.45
+INFO:__main__:PHASE 4 CHECK: bar 6914, bars_since_exit=1/7, fusion=0.157, exit_reason=signal_neutralized
+INFO:__main__:PHASE 4 GATE 3 PASS: Pullback to FVG support at 19151.82 (current=19149.44, dist=0.03 ATR)
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-17 11:00:00+00:00 @ $19458.88, size=$7347.73, fusion=0.532
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6929, price=$19519.73, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-17 12:00:00+00:00 @ $19519.73, PNL=$20.77, equity=$7755.22
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-17 13:00:00+00:00 @ $19588.98, size=$7367.46, fusion=0.582
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6931, price=$19474.51, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-17 14:00:00+00:00 @ $19474.51, PNL=$-45.26, equity=$7709.96
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-17 15:00:00+00:00 @ $19536.73, size=$6577.10, fusion=0.427
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 6933, price=$19512.69, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-17 16:00:00+00:00 @ $19512.69, PNL=$-10.07, equity=$7708.49
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-20 14:00:00+00:00 @ $19326.49, size=$7332.11, fusion=0.477
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7004, price=$19254.61, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-20 15:00:00+00:00 @ $19254.61, PNL=$-29.47, equity=$7688.54
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-23 17:00:00+00:00 @ $19473.26, size=$7337.36, fusion=0.631
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7079, price=$19440.33, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-23 18:00:00+00:00 @ $19440.33, PNL=$-14.61, equity=$7708.93
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-23 18:00:00+00:00 @ $19440.33, size=$7323.48, fusion=0.537
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7080, price=$19502.16, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-23 19:00:00+00:00 @ $19502.16, PNL=$21.10, equity=$7730.02
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-23 22:00:00+00:00 @ $19593.57, size=$7359.47, fusion=0.672
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7084, price=$19572.44, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-23 23:00:00+00:00 @ $19572.44, PNL=$-10.14, equity=$7736.67
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-25 13:00:00+00:00 @ $19483.51, size=$7286.99, fusion=0.569
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7123, price=$19495.39, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-25 14:00:00+00:00 @ $19495.39, PNL=$2.26, equity=$7672.77
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-25 14:00:00+00:00 @ $19495.39, size=$7289.13, fusion=0.507
+INFO:__main__:PARTIAL EXIT TP1 (+1.51R): 1/3 position closed @ $19756.05, stop → BE-$6.90 ($19488.49)
+INFO:__main__:Track B: Using archetype-specific trail_atr=1.2 for volume_exhaustion
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7124, price=$19756.05, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-25 15:00:00+00:00 @ $19756.05, PNL=$63.51, equity=$7736.28
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-25 15:00:00+00:00 @ $19756.05, size=$7349.47, fusion=0.644
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7125, price=$19817.96, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-25 16:00:00+00:00 @ $19817.96, PNL=$20.83, equity=$7757.11
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-25 16:00:00+00:00 @ $19817.96, size=$7369.25, fusion=0.590
+INFO:__main__:PARTIAL EXIT TP1 (+1.31R): 1/3 position closed @ $20123.70, stop → BE-$9.34 ($19808.62)
+INFO:__main__:Track B: Using archetype-specific trail_atr=1.2 for volume_exhaustion
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7126, price=$20123.70, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-25 17:00:00+00:00 @ $20123.70, PNL=$74.32, equity=$7831.43
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-25 17:00:00+00:00 @ $20123.70, size=$7439.86, fusion=0.704
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7127, price=$20273.98, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-25 18:00:00+00:00 @ $20273.98, PNL=$53.33, equity=$7884.76
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-25 18:00:00+00:00 @ $20273.98, size=$7199.96, fusion=0.641
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7128, price=$20281.65, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-25 19:00:00+00:00 @ $20281.65, PNL=$0.56, equity=$7885.32
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-25 20:00:00+00:00 @ $20194.17, size=$5433.31, fusion=0.531
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7130, price=$20241.21, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-25 21:00:00+00:00 @ $20241.21, PNL=$11.03, equity=$7884.75
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-10-26 14:00:00+00:00 @ $20840.21, size=$5045.31, fusion=0.584
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7148, price=$20850.44, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-10-26 15:00:00+00:00 @ $20850.44, PNL=$0.96, equity=$7902.21
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-11-04 12:00:00+00:00 @ $20755.53, size=$7492.67, fusion=0.637
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7362, price=$20761.65, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-11-04 13:00:00+00:00 @ $20761.65, PNL=$-0.04, equity=$7886.98
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-11-04 13:00:00+00:00 @ $20761.65, size=$7492.63, fusion=0.636
+INFO:__main__:PARTIAL EXIT TP1 (+1.37R): 1/3 position closed @ $21217.49, stop → BE-$13.36 ($20748.29)
+INFO:__main__:Track B: Using archetype-specific trail_atr=1.2 for volume_exhaustion
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7363, price=$21217.49, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-11-04 14:00:00+00:00 @ $21217.49, PNL=$108.17, equity=$7995.15
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-11-04 14:00:00+00:00 @ $21217.49, size=$7595.39, fusion=0.658
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7364, price=$20838.81, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-11-04 15:00:00+00:00 @ $20838.81, PNL=$-137.84, equity=$7857.31
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-11-18 00:00:00+00:00 @ $16935.04, size=$7089.56, fusion=0.568
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7686, price=$16877.50, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-11-18 01:00:00+00:00 @ $16877.50, PNL=$-26.21, equity=$7436.48
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-11-30 01:00:00+00:00 @ $16875.24, size=$6858.64, fusion=0.488
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7975, price=$16952.53, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-11-30 02:00:00+00:00 @ $16952.53, PNL=$29.36, equity=$7248.98
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-11-30 02:00:00+00:00 @ $16952.53, size=$6886.53, fusion=0.562
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 7976, price=$16837.98, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-11-30 03:00:00+00:00 @ $16837.98, PNL=$-48.60, equity=$7200.38
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-05 00:00:00+00:00 @ $17217.37, size=$6900.04, fusion=0.538
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8094, price=$17272.35, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-05 01:00:00+00:00 @ $17272.35, PNL=$19.96, equity=$7283.17
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-06 23:00:00+00:00 @ $17089.05, size=$6850.53, fusion=0.439
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8141, price=$17065.65, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-07 00:00:00+00:00 @ $17065.65, PNL=$-11.44, equity=$7199.65
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-08 18:00:00+00:00 @ $17252.84, size=$6830.32, fusion=0.650
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8184, price=$17255.38, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-08 19:00:00+00:00 @ $17255.38, PNL=$-1.04, equity=$7188.76
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-08 19:00:00+00:00 @ $17255.38, size=$6829.33, fusion=0.493
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8185, price=$17202.54, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-08 20:00:00+00:00 @ $17202.54, PNL=$-22.96, equity=$7165.80
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-12 21:00:00+00:00 @ $17177.23, size=$6786.80, fusion=0.604
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8283, price=$17159.81, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-12 22:00:00+00:00 @ $17159.81, PNL=$-8.92, equity=$7135.08
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-12 23:00:00+00:00 @ $17211.66, size=$6791.24, fusion=0.459
+INFO:__main__:REGIME FLIP DETECTED (long): transition → distribution, fusion=0.12
+INFO:__main__:EXIT signal_neutralized_regime_flip: 2022-12-13 00:00:00+00:00 @ $17159.51, PNL=$-22.61, equity=$7126.05
+INFO:__main__:PHASE 4 CHECK: bar 8285, bars_since_exit=1/7, fusion=0.115, exit_reason=signal_neutralized
+INFO:__main__:PHASE 4 GATE 3 FAIL: No pullback to structure (closest=4.70 ATR, need < 0.5)
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-13 09:00:00+00:00 @ $17432.98, size=$6821.40, fusion=0.564
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8295, price=$17394.66, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-13 10:00:00+00:00 @ $17394.66, PNL=$-17.04, equity=$7163.38
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-13 10:00:00+00:00 @ $17394.66, size=$6805.21, fusion=0.618
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8296, price=$17446.35, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-13 11:00:00+00:00 @ $17446.35, PNL=$18.18, equity=$7181.56
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-13 13:00:00+00:00 @ $17902.03, size=$6863.30, fusion=0.692
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8299, price=$17875.56, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-13 14:00:00+00:00 @ $17875.56, PNL=$-12.21, equity=$7212.32
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-14 14:00:00+00:00 @ $18060.91, size=$6844.62, fusion=0.626
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8324, price=$18067.13, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-14 15:00:00+00:00 @ $18067.13, PNL=$0.30, equity=$7205.16
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-14 15:00:00+00:00 @ $18067.13, size=$6844.90, fusion=0.543
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8325, price=$18103.70, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-14 16:00:00+00:00 @ $18103.70, PNL=$11.80, equity=$7216.96
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-14 16:00:00+00:00 @ $18103.70, size=$6856.12, fusion=0.573
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8326, price=$18096.36, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-14 17:00:00+00:00 @ $18096.36, PNL=$-4.84, equity=$7212.13
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-14 18:00:00+00:00 @ $18236.54, size=$6894.65, fusion=0.668
+INFO:__main__:EXIT stop_loss: 2022-12-14 19:00:00+00:00 @ $17971.56, PNL=$-102.25, equity=$7155.27
+INFO:__main__:PHASE 4 CHECK: bar 8328, bars_since_exit=1/7, fusion=0.067, exit_reason=signal_neutralized
+INFO:__main__:PHASE 4 GATE 3 FAIL: No pullback to structure (closest=1.11 ATR, need < 0.5)
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-20 14:00:00+00:00 @ $16898.43, size=$6657.66, fusion=0.594
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8468, price=$16919.12, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-20 15:00:00+00:00 @ $16919.12, PNL=$6.15, equity=$7014.22
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-20 15:00:00+00:00 @ $16919.12, size=$6663.51, fusion=0.659
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8469, price=$16834.36, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-20 16:00:00+00:00 @ $16834.36, PNL=$-35.38, equity=$6978.84
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:ENTRY archetype_volume_exhaustion: 2022-12-29 16:00:00+00:00 @ $16624.90, size=$6580.68, fusion=0.412
+INFO:__main__:PHASE 4 EXIT TRACKED: signal_neutralized at bar 8686, price=$16611.92, direction=LONG
+INFO:__main__:EXIT signal_neutralized: 2022-12-29 17:00:00+00:00 @ $16611.92, PNL=$-7.11, equity=$6919.92
+INFO:engine.archetypes.logic_v2_adapter:[PHASE1] Built thresholds from config: 11 archetypes with params
+INFO:engine.runtime.context:[ParamEcho] spring.fusion_threshold → 0.33 (requested='fusion_threshold', matched in config)
+INFO:engine.runtime.context:[ParamEcho] spring.pti_score_threshold → 0.4 (requested='pti_score_threshold', matched in config)
+--
+INFO:__main__:DIAGNOSTIC: ENTRY PIPELINE METRICS
+INFO:__main__:============================================================
+INFO:__main__:  pre_archetype_candidates: 8582
+INFO:__main__:  archetype_hits: 3517
+INFO:__main__:  archetype_no_match: 5065
+INFO:__main__:  veto_final_fusion_gate: 639
+--
+Total PNL: $-3072.98
+Total Trades: 2730
+Win Rate: 47.9%
+Profit Factor: 0.85
+Sharpe Ratio: -0.02
+Max Drawdown: 34.3%
+Final Equity: $6927.02
+Gross Profit: $17499.73
+Gross Loss: $20572.70
+--
+Total Checks: 8582
+Total Matches: 3517
+Match Rate: 41.0%
+
+Archetype Distribution:
+------------------------------------------------------------
+  trap_within_trend        : 3346 ( 95.1%)
+  volume_exhaustion        :  171 (  4.9%)
+============================================================
+

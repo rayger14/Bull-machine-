@@ -1,0 +1,23 @@
+{
+  "asset": "BTC",
+  "period": "2022-01-01 to 2023-12-31",
+  "performance": {
+    "total_pnl": -221.796232100473,
+    "final_equity": 9778.203767899524,
+    "return_pct": -2.2179623210047628,
+    "total_trades": 70,
+    "win_rate": 0.4142857142857143,
+    "profit_factor": 0.8808703529692257,
+    "sharpe_ratio": -0.08974212753220488,
+    "max_drawdown": 0.025289776571283798
+  },
+  "router": {
+    "config_switches": 990,
+    "regime_switches": 858,
+    "action_distribution": {
+      "BULL": 60.497854077253216,
+      "BEAR": 24.76680972818312,
+      "CASH": 14.735336194563663
+    }
+  }
+}
