@@ -440,39 +440,49 @@ class ArchetypeLogic:
         Legacy dispatcher with early returns (causes archetype starvation).
 
         Kept for A/B testing only.
+
+        **BUGFIX**: Handle both bool and tuple returns from archetype checks.
+        Some archetypes (B, H, L) return (matched, score, meta) tuples,
+        while others return booleans. Must extract matched flag from tuples.
         """
+        # Helper to handle both return types
+        def _is_match(result):
+            if isinstance(result, tuple):
+                return result[0]  # Extract matched flag from (matched, score, meta)
+            return result  # Boolean return
+
         # Check archetypes in priority order: A, B, C, K, H, L, F, D, G, E, M
-        if self.enabled['A'] and self._check_A(ctx):
+        if self.enabled['A'] and _is_match(self._check_A(ctx)):
             return 'trap_reversal', fusion_score, liquidity_score
 
-        if self.enabled['B'] and self._check_B(ctx):
+        if self.enabled['B'] and _is_match(self._check_B(ctx)):
             return 'order_block_retest', fusion_score, liquidity_score
 
-        if self.enabled['C'] and self._check_C(ctx):
+        if self.enabled['C'] and _is_match(self._check_C(ctx)):
             return 'fvg_continuation', fusion_score, liquidity_score
 
-        if self.enabled['K'] and self._check_K(ctx):
+        if self.enabled['K'] and _is_match(self._check_K(ctx)):
             return 'wick_trap', fusion_score, liquidity_score
 
-        if self.enabled['H'] and self._check_H(ctx):
+        if self.enabled['H'] and _is_match(self._check_H(ctx)):
             return 'trap_within_trend', fusion_score, liquidity_score
 
-        if self.enabled['L'] and self._check_L(ctx):
+        if self.enabled['L'] and _is_match(self._check_L(ctx)):
             return 'volume_exhaustion', fusion_score, liquidity_score
 
-        if self.enabled['F'] and self._check_F(ctx):
+        if self.enabled['F'] and _is_match(self._check_F(ctx)):
             return 'expansion_exhaustion', fusion_score, liquidity_score
 
-        if self.enabled['D'] and self._check_D(ctx):
+        if self.enabled['D'] and _is_match(self._check_D(ctx)):
             return 'failed_continuation', fusion_score, liquidity_score
 
-        if self.enabled['G'] and self._check_G(ctx):
+        if self.enabled['G'] and _is_match(self._check_G(ctx)):
             return 're_accumulate', fusion_score, liquidity_score
 
-        if self.enabled['E'] and self._check_E(ctx):
+        if self.enabled['E'] and _is_match(self._check_E(ctx)):
             return 'liquidity_compression', fusion_score, liquidity_score
 
-        if self.enabled['M'] and self._check_M(ctx):
+        if self.enabled['M'] and _is_match(self._check_M(ctx)):
             return 'ratio_coil_break', fusion_score, liquidity_score
 
         # No match
