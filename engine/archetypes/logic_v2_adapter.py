@@ -585,11 +585,15 @@ class ArchetypeLogic:
     # Individual Archetype Checks (Using Safe Getters)
     # =======================================================================
 
-    def _check_A(self, context: RuntimeContext) -> bool:
+    def _check_A(self, context: RuntimeContext) -> tuple:
         """
         Archetype A: Trap Reversal (PTI spring/UTAD + displacement).
 
         **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
+        **REFACTOR #2**: Standardized to return (matched, score, meta) tuple.
+
+        Returns:
+            (matched: bool, score: float, meta: dict)
         """
         # PR#6A: Read ALL thresholds from context (not hardcoded!)
         fusion_th = context.get_threshold('spring', 'fusion_threshold', 0.33)
@@ -599,17 +603,49 @@ class ArchetypeLogic:
         # Get features from context
         pti_trap = self.g(context.row, "pti_trap_type", '')
         if not pti_trap or pti_trap not in ['spring', 'utad']:
-            return False
+            return False, 0.0, {"reason": "no_pti_trap", "pti_trap": pti_trap}
 
         pti_score = self.g(context.row, "pti_score", 0.0)
         disp = self.g(context.row, "boms_disp", 0.0)
         atr = max(self.g(context.row, "atr", 0.0), 1e-9)
         fusion = context.row.get('fusion_score', 0.0)
 
-        # Now use DYNAMIC thresholds instead of hardcoded!
-        return (pti_score >= pti_score_th and
-                disp >= disp_multiplier * atr and
-                fusion >= fusion_th)
+        # Gate checks
+        if pti_score < pti_score_th:
+            return False, 0.0, {"reason": "pti_score_low", "value": pti_score, "threshold": pti_score_th}
+
+        if disp < disp_multiplier * atr:
+            return False, 0.0, {"reason": "disp_insufficient", "value": disp, "threshold": disp_multiplier * atr}
+
+        # Archetype-specific scoring
+        components = {
+            "fusion": self._fusion(context.row),
+            "pti_score": pti_score,
+            "displacement": min(disp / (disp_multiplier * atr), 1.0)  # Normalize
+        }
+
+        weights = context.get_threshold('spring', 'weights', {
+            "fusion": 0.5,
+            "pti_score": 0.3,
+            "displacement": 0.2
+        })
+
+        base_score = sum(components.get(k, 0.0) * weights.get(k, 0.0) for k in components)
+        archetype_weight = context.get_threshold('spring', 'archetype_weight', 1.0)
+        score = max(0.0, min(1.0, base_score * archetype_weight))
+
+        if score < fusion_th:
+            return False, score, {"reason": "score_below_threshold", "score": score, "threshold": fusion_th}
+
+        meta = {
+            "components": components,
+            "weights": weights,
+            "base_score": base_score,
+            "archetype_weight": archetype_weight,
+            "pti_trap_type": pti_trap
+        }
+
+        return True, score, meta
 
     def _check_B(self, context: RuntimeContext) -> tuple:
         """
