@@ -31,16 +31,17 @@ PYTHONHASHSEED=0 python3 bin/backtest_knowledge_v2.py --asset BTC --start 2024-0
 
 ---
 
-### Refactor #2: [PENDING] Standardize Archetype Return Types
-**Date:** TBD
+### Refactor #2: 🟡 Standardize Archetype Return Types (In Progress)
+**Date:** 2025-11-12
 **Files:** `engine/archetypes/logic_v2_adapter.py`
 **Goal:** Make ALL archetype detectors return `(matched: bool, score: float, meta: dict)`
-- Current: A,C,D,E,F,G,K,M,S1-S8 return `bool`, B,H,L return `tuple`
+- Current: B,H,L return `tuple` ✅, A returns `tuple` ✅
+- Remaining: C,D,E,F,G,K,M,S1-S8 return `bool` ⏳
 - Target: Uniform tuple return prevents dispatch bugs
 
-**Status:** Not started
-**Validation:** Pending
-**Commit SHA:** N/A
+**Status:** 🟡 IN PROGRESS (1/12 bool archetypes converted)
+**Validation:** ✅ PASSED - 17 trades, PF 6.17, Win Rate 76.5%
+**Commit SHA:** `e5e475a` (partial - _check_A only)
 
 ---
 
