@@ -130,7 +130,7 @@ except ImportError:
 ```python
     def compute_advanced_fusion_score(self, row: pd.Series) -> Tuple[float, Dict]:
         """
-        Compute advanced fusion score using ALL 69 features.
+        Compute advanced fusion score using ALL 114 features.
 
         Returns:
             (fusion_score, context_dict)
@@ -142,7 +142,7 @@ except ImportError:
 ```python
     def compute_advanced_fusion_score(self, row: pd.Series, adapted_params: Optional[Dict] = None) -> Tuple[float, Dict]:
         """
-        Compute advanced fusion score using ALL 69 features.
+        Compute advanced fusion score using ALL 114 features.
 
         Args:
             row: Feature store row

@@ -30,10 +30,11 @@ Bull Machine v2 implements a sophisticated regime-aware trading system with 19 a
 │                   (bin/backtest_knowledge_v2.py)                     │
 └───────────────┬──────────────────────────────────────────────────────┘
                 │
-                ├─► Load Feature Store (69 features)
+                ├─► Load Feature Store (114 features)
                 │   - TF-prefixed columns (tf1h_*, tf4h_*, tf1d_*)
                 │   - OHLCV baseline
                 │   - Technical indicators (RSI, ADX, ATR, etc.)
+                │   - Macro features (VIX, DXY, yields, funding, etc.)
                 │
                 ├─► Initialize Components
                 │   ├─► RegimeClassifier (GMM v3.2)

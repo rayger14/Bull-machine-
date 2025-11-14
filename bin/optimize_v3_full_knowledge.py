@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Knowledge-Aware Optimizer v3.0 - Full 69-Feature Engine
+Knowledge-Aware Optimizer v3.0 - Full 114-Feature Engine
 
 Uses Bayesian optimization (Optuna) to find optimal parameters for the
-knowledge-aware backtest engine that leverages ALL 69 MTF features.
+knowledge-aware backtest engine that leverages ALL 114 MTF features.
 
 This replaces the simplified optimizer (v2) which only used ~10 features.
 
@@ -295,14 +295,14 @@ def main():
             'n_trials': args.trials,
             'timestamp': datetime.now().isoformat(),
             'optimizer_version': 'v3_full_knowledge',
-            'features_used': 'ALL 69 MTF features',
+            'features_used': 'ALL 114 MTF features',
             'top_10_configs': results
         }, f, indent=2)
 
     print(f"\n✅ Results saved to: {output_path}")
     print(f"\nComparison with v2 simplified baseline:")
     print(f"  v2 (10 features): Check reports/optuna_results/{args.asset}_best_configs.json")
-    print(f"  v3 (69 features): {output_path}")
+    print(f"  v3 (114 features): {output_path}")
 
 
 if __name__ == '__main__':

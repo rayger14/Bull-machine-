@@ -2,13 +2,17 @@
 """
 Knowledge-Aware Backtest Engine v2.0
 
-Uses ALL 69 features from the MTF feature store intelligently:
+Uses ALL 114 features from the MTF feature store intelligently:
 - Advanced fusion scoring with PTI, Macro, Wyckoff M1/M2, FRVP
 - Smart entry logic (tiered entries, pullback waiting, limit orders)
 - Smart exit integration (partial exits, trailing stops, breakeven)
 - ATR-based position sizing (1-2% risk per trade)
 - Macro regime filtering
 - Full knowledge hooks integration
+
+Feature Store: 119 total columns = 114 features + 5 metadata (OHLCV)
+- 94 technical indicators (price, trend, momentum, volatility, volume, microstructure)
+- 20 macro features (VIX, DXY, yields, crypto dominance, funding, etc.)
 
 This is the COMPLETE backtest engine that replaces the simplified
 optimizer placeholder (bin/optimize_v2_cached.py).
@@ -415,7 +419,7 @@ class KnowledgeAwareBacktest:
 
     def compute_advanced_fusion_score(self, row: pd.Series, adapted_params: Optional[Dict] = None) -> Tuple[float, Dict]:
         """
-        Compute advanced fusion score using ALL 69 features.
+        Compute advanced fusion score using ALL 114 features.
 
         Args:
             row: Feature store row

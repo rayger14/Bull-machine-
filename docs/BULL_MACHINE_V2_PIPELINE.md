@@ -22,11 +22,11 @@
 
 ## Overview
 
-Bull Machine v2 is a regime-aware algorithmic trading system that combines macro analysis, market microstructure, and technical patterns to identify high-conviction entry points. The system processes 89 features across 4 domains (Wyckoff, Liquidity, Momentum, PTI) to generate fusion scores, then applies archetype-specific filters to execute trades.
+Bull Machine v2 is a regime-aware algorithmic trading system that combines macro analysis, market microstructure, and technical patterns to identify high-conviction entry points. The system processes 114 features across 4 domains (Wyckoff, Liquidity, Momentum, PTI) to generate fusion scores, then applies archetype-specific filters to execute trades.
 
 ### Signal Flow (High-Level)
 ```
-Feature Store (89 features)
+Feature Store (114 features)
     ↓
 Regime Classification (GMM v3.2)
     ↓
@@ -55,9 +55,9 @@ Exit Management (trailing stops)
 
 ### Feature Store Overview
 
-The engine consumes a consolidated feature store with 89 columns:
+The engine consumes a consolidated feature store with 114 columns (excluding metadata):
 
-**Technical Indicators (69 columns):**
+**Technical Indicators (94 columns):**
 - Price action: OHLC, HL2, HLC3, OHLC4
 - Trend: SMA (20, 50, 200), EMA (9, 21), ADX, DMI
 - Momentum: RSI (14), MACD (12, 26, 9), Stochastic
@@ -69,6 +69,7 @@ The engine consumes a consolidated feature store with 89 columns:
 - PTI: Power Trend Index (1D, 1H timeframes)
 
 **Macro Features (20 columns):**
+*Note: Total features = 114 (94 technical + 20 macro). Total columns = 119 (114 features + 5 metadata: open, high, low, close, volume).*
 - Volatility: VIX, MOVE (bond vol)
 - Currencies: DXY (dollar), EUR/USD
 - Rates: US 2Y, 10Y yields, yield curve slope
@@ -775,7 +776,7 @@ print(arch_stats)
 ┌─────────────────────────────────────────────────────────────┐
 │                     Feature Store Loader                     │
 │  (engine/context/loader.py)                                 │
-│  • Load 89 features from parquet                            │
+│  • Load 114 features from parquet (119 cols total)          │
 │  • Validate required columns                                │
 │  • Zero-fill missing macro features                         │
 └─────────────────┬───────────────────────────────────────────┘
@@ -1064,9 +1065,9 @@ def detect_custom_pattern(self, row, ctx) -> Tuple[Optional[str], float, float]:
 
 ## Summary
 
-Bull Machine v2's signal pipeline transforms 89 raw features into actionable trading signals through a sophisticated multi-stage process:
+Bull Machine v2's signal pipeline transforms 114 raw features into actionable trading signals through a sophisticated multi-stage process:
 
-1. **Input Stage:** Feature store with 69 technical + 20 macro indicators
+1. **Input Stage:** Feature store with 94 technical + 20 macro indicators (114 total features, 119 columns including metadata)
 2. **Regime Detection:** GMM-based classification (4 regimes)
 3. **Fusion Scoring:** Weighted combination of 4 domains
 4. **Archetype Detection:** 19 rule-based pattern matchers
