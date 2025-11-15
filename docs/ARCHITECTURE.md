@@ -37,8 +37,8 @@ Bull-machine-/
 │   ├── raw/               # Raw market data
 │   └── archive/           # Historical data archives
 ├── tests/                 # Test suite (REORGANIZED)
-│   ├── unit/              # Unit tests (26 files)
-│   ├── integration/       # Integration tests (8 files)
+│   ├── unit/              # Unit tests (42 files)
+│   ├── integration/       # Integration tests (13 files)
 │   ├── smoke/             # Smoke tests
 │   └── robustness/        # Robustness tests
 ├── docs/                  # Documentation
@@ -169,14 +169,14 @@ configs/
 - Feature engineering tests
 - Indicator validation
 - Component isolation tests
-- 26 test modules
+- 42 test modules
 
 ### Integration Tests (`tests/integration/`)
 - Full backtest validation
 - Multi-asset reproducibility
 - Determinism verification
 - Performance benchmarks
-- 8 test modules
+- 13 test modules
 
 ### Test Execution
 
