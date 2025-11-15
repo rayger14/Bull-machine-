@@ -126,9 +126,14 @@ logs/paper_trading/**/*
 # ----------------------------------------------------------------------------
 # Reports (Optuna trials, optimization outputs)
 # ----------------------------------------------------------------------------
+# Root /reports directory removed - all reports now in docs/reports/
 reports/**/*
 !reports/.gitkeep
 !reports/README.md
+
+# Archive experimental reports (only curated reports tracked)
+docs/reports/archive/**/*
+!docs/reports/archive/README.md
 
 # ----------------------------------------------------------------------------
 # Models (ML Artifacts)
