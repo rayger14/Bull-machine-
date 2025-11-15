@@ -1,9 +1,20 @@
+# ============================================================================
+# Bull Machine .gitignore
+# Enhanced version - 2025-11-14
+# ============================================================================
+
+# ----------------------------------------------------------------------------
 # Python
+# ----------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+
+# ----------------------------------------------------------------------------
+# Build & Distribution
+# ----------------------------------------------------------------------------
 build/
 develop-eggs/
 dist/
@@ -16,12 +27,16 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
 
-# Virtual environments
+# ----------------------------------------------------------------------------
+# Virtual Environments
+# ----------------------------------------------------------------------------
 .env
 .venv
 env/
@@ -30,14 +45,21 @@ ENV/
 env.bak/
 venv.bak/
 
-# IDEs
+# ----------------------------------------------------------------------------
+# IDEs & Editors
+# ----------------------------------------------------------------------------
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.pydevproject
+.settings/
 
-# OS
+# ----------------------------------------------------------------------------
+# OS Files
+# ----------------------------------------------------------------------------
 .DS_Store
 .DS_Store?
 ._*
@@ -45,25 +67,187 @@ venv.bak/
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Bull Machine specific
+# ----------------------------------------------------------------------------
+# Cache Directories
+# ----------------------------------------------------------------------------
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.cache/
+.dmypy.json
+dmypy.json
+
+# ----------------------------------------------------------------------------
+# Bull Machine Specific - State
+# ----------------------------------------------------------------------------
 .bm_state.json
-*.log
 
-# Results & reports (don't commit large backtest artifacts)
-reports/**/*
+# ----------------------------------------------------------------------------
+# Data Directories (Feature Stores, Cached Data)
+# ----------------------------------------------------------------------------
 data/**/*
+!data/.gitkeep
+!data/README.md
+
+# Telemetry (large JSON masks)
+telemetry/**/*
+!telemetry/.gitkeep
+!telemetry/README.md
+
+# ----------------------------------------------------------------------------
+# Results & Experiments (All experimental outputs gitignored)
+# ----------------------------------------------------------------------------
+results/**/*
+!results/.gitkeep
+!results/README.md
+!results/bench_v2/
+results/bench_v2/**/*
+
+# Allow specific production benchmarks if needed
+# !results/production/
+
+# ----------------------------------------------------------------------------
+# Logs (All logs gitignored except structure)
+# ----------------------------------------------------------------------------
+logs/**/*
+!logs/.gitkeep
+!logs/README.md
+!logs/paper_trading/
+logs/paper_trading/**/*
+
+# ----------------------------------------------------------------------------
+# Reports (Optuna trials, optimization outputs)
+# ----------------------------------------------------------------------------
+reports/**/*
+!reports/.gitkeep
+!reports/README.md
+
+# ----------------------------------------------------------------------------
+# Models (ML Artifacts)
+# ----------------------------------------------------------------------------
+models/**/*
+!models/.gitkeep
+!models/README.md
+
+# ----------------------------------------------------------------------------
+# Profiles
+# ----------------------------------------------------------------------------
+profiles/**/*
+*.prof
+*_profile.txt
+
+# ----------------------------------------------------------------------------
+# Root-Level Experimental Outputs (Prevent future accumulation)
+# ----------------------------------------------------------------------------
+
+# Backtest Results
+/*_backtest_results*.json
+/*_results*.json
+/*_validation*.json
+/*_optimization*.json
+/*_fine_grid*.json
+/*_comparison*.csv
+/*_training*.json
+/*_candidates*.jsonl
+
+# Signal & Decision Logs
+/hybrid_signals_*.jsonl
+/decision_log*.jsonl
+/fusion_*.jsonl
+/signal_blocks*.jsonl
+/open_fail*.jsonl
+/open_ok*.jsonl
+
+# Health & Portfolio Summaries
+/health_summary_*.json
+/portfolio_summary_*.json
+
+# Sweep Results
+/sweep_results_*.json
+/sweep_parameters*.json
+/threshold_sensitivity_sweep*.csv
+
+# ----------------------------------------------------------------------------
+# Root-Level Scripts (Prevent experimental scripts in root)
+# ----------------------------------------------------------------------------
+/test_*.py
+/sweep_*.py
+/analyze_*.py
+/download_*.py
+/check_*.py
+/diagnose_*.py
+/debug_*.py
+/monitor_*.sh
+/optimize_all.sh
+/WATCH_*.sh
+
+# ----------------------------------------------------------------------------
+# Root-Level Temporary Files
+# ----------------------------------------------------------------------------
+/*.log
+/q3_2024*.log
+/monitor_output.log
+/full_year_test_output.log
+
+# Config patches
+/config_patch_*.json
+/exit_cfg_applied.json
+/*_cfg_applied.json
+
+# Temporary utilities
+/engine_factory.py
+/bull_machine_config.py
+/institutional_testing_results.json
+
+# ----------------------------------------------------------------------------
+# Archive (Optional - uncomment if you want to gitignore)
+# ----------------------------------------------------------------------------
+# archive/
+
+# ----------------------------------------------------------------------------
+# Data Formats (Large binary/serialized data)
+# ----------------------------------------------------------------------------
 *.parquet
 *.jsonl
 *.csv
 *.feather
 *.pickle
+*.pkl
+*.h5
+*.hdf5
+
+# ----------------------------------------------------------------------------
+# Media Files
+# ----------------------------------------------------------------------------
 *.png
+*.jpg
+*.jpeg
+*.gif
 *.pdf
-*.xlsx
+*.svg
+
+# ----------------------------------------------------------------------------
+# Archives
+# ----------------------------------------------------------------------------
 *.zip
 *.tar.gz
-.cache/
+*.tar.bz2
+*.tar.xz
+*.rar
+*.7z
+
+# ----------------------------------------------------------------------------
+# Spreadsheets
+# ----------------------------------------------------------------------------
+*.xlsx
+*.xls
+*.ods
+
+# ----------------------------------------------------------------------------
+# Pattern-Based Exclusions
+# ----------------------------------------------------------------------------
 **/*_results_*/
 **/final_*_results*/
 **/acceptance_matrix*/
@@ -74,28 +258,85 @@ data/**/*
 **/*equity*.csv
 **/*trades*.csv
 
-# Notebooks & scratch
+# Optuna experiment folders
+**/optuna_*/
+**/bench_v2_*/
+**/frontier_*/
+**/macro_fix_*/
+**/router_v10_*/
+**/tiered_tests/
+**/trap_validation/
+
+# ----------------------------------------------------------------------------
+# Notebooks & Scratch
+# ----------------------------------------------------------------------------
 notebooks/.ipynb_checkpoints/
 scratch/
+*.ipynb_checkpoints/
 
-# Archive folder (temporary storage for old files)
-archive/
-# Test artifacts and results
-results/health_summary_*.json
-results/portfolio_summary_*.json
-results/live_signals_*.jsonl
-results/live_trades_*.jsonl
-*_backtest_results_*.json
-eth_production_backtest_results.json
-btc_backtest_results_*.json
+# ----------------------------------------------------------------------------
+# Test Artifacts
+# ----------------------------------------------------------------------------
+test_checkpoints/
+.coverage
+htmlcov/
+.tox/
+.nox/
 
-# Temporary analysis files
-analyze_trade_details.py
-branch_system_check.md
-mtf_confluence_analysis.py
-run_eth_macro_backtest.py
-run_full_system_backtest.py
-test_macro_impact.py
-btc_year_backtest.py
-configs/test_no_macro.json
-exit_cfg_applied.json
+# ----------------------------------------------------------------------------
+# Documentation Build Outputs
+# ----------------------------------------------------------------------------
+docs/_build/
+docs/.doctrees/
+site/
+
+# ----------------------------------------------------------------------------
+# Temporary Project-Specific Files
+# ----------------------------------------------------------------------------
+/shasum
+/rev-parse
+/git
+/HEAD
+
+# ----------------------------------------------------------------------------
+# Keep These Files (Explicit Exceptions)
+# ----------------------------------------------------------------------------
+# README files
+!README.md
+!**/README.md
+
+# Gitkeep files
+!.gitkeep
+!**/.gitkeep
+
+# Configuration schema
+!configs/schema/
+
+# Test fixtures (if needed)
+# !tests/fixtures/
+
+# ----------------------------------------------------------------------------
+# Environment-Specific
+# ----------------------------------------------------------------------------
+.envrc
+.env.local
+.env.*.local
+
+# ----------------------------------------------------------------------------
+# CI/CD
+# ----------------------------------------------------------------------------
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# ----------------------------------------------------------------------------
+# Package Manager
+# ----------------------------------------------------------------------------
+package-lock.json
+yarn.lock
+poetry.lock
+
+# ----------------------------------------------------------------------------
+# End of .gitignore
+# ----------------------------------------------------------------------------

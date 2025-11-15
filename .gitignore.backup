@@ -1,0 +1,101 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Bull Machine specific
+.bm_state.json
+*.log
+
+# Results & reports (don't commit large backtest artifacts)
+reports/**/*
+data/**/*
+*.parquet
+*.jsonl
+*.csv
+*.feather
+*.pickle
+*.png
+*.pdf
+*.xlsx
+*.zip
+*.tar.gz
+.cache/
+**/*_results_*/
+**/final_*_results*/
+**/acceptance_matrix*/
+**/exits_*.json
+**/telemetry/*.json
+**/summary.json
+**/*backtest*.csv
+**/*equity*.csv
+**/*trades*.csv
+
+# Notebooks & scratch
+notebooks/.ipynb_checkpoints/
+scratch/
+
+# Archive folder (temporary storage for old files)
+archive/
+# Test artifacts and results
+results/health_summary_*.json
+results/portfolio_summary_*.json
+results/live_signals_*.jsonl
+results/live_trades_*.jsonl
+*_backtest_results_*.json
+eth_production_backtest_results.json
+btc_backtest_results_*.json
+
+# Temporary analysis files
+analyze_trade_details.py
+branch_system_check.md
+mtf_confluence_analysis.py
+run_eth_macro_backtest.py
+run_full_system_backtest.py
+test_macro_impact.py
+btc_year_backtest.py
+configs/test_no_macro.json
+exit_cfg_applied.json

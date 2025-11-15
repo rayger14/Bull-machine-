@@ -365,7 +365,8 @@ class KnowledgeAwareBacktest:
             'veto_ml_filter': 0,
             'veto_archetype_cooldown': 0,
             'veto_max_trades_per_day': 0,
-            'veto_monthly_share_cap': 0
+            'veto_monthly_share_cap': 0,
+            'veto_direction_mismatch': 0
         }
 
         # Step 1 Stabilization: Archetype cooldown and daily trade limits
@@ -661,8 +662,21 @@ class KnowledgeAwareBacktest:
                     'trap_within_trend': (0.35, 0.60),        # Reduced from 0.90
                     'wick_trap': (0.36, 1.25),                # Increased from 1.0
                     'volume_exhaustion': (0.38, 1.30),        # Increased from 0.90
-                    'ratio_coil_break': (0.35, 1.10)
+                    'ratio_coil_break': (0.35, 1.10),
+                    'failed_rally': (0.36, 0.85),             # S2: Bear archetype (SHORT)
+                    'long_squeeze': (0.35, 0.90)              # S5: Bear archetype (SHORT)
                 }
+
+                # Read direction from archetype config (no hardcoded list)
+                archetype_config = self.runtime_config.get('archetypes', {}).get('thresholds', {})
+                archetype_params = archetype_config.get(archetype_name, {})
+                direction_str = archetype_params.get('direction', 'long')
+
+                # Store in context for later use in _open_trade
+                context['archetype_direction'] = -1 if direction_str == 'short' else 1
+
+                if direction_str == 'short':
+                    logger.info(f"[SHORT ARCHETYPE] {archetype_name} detected (score={fusion_score:.3f})")
 
                 threshold, size_mult = archetype_map.get(archetype_name, (0.40, 1.0))
                 return (archetype_name, threshold, size_mult)
@@ -2086,15 +2100,35 @@ class KnowledgeAwareBacktest:
 
         atr = row.get('atr_14', entry_price * 0.02)
 
-        # Calculate initial stop
-        stop_distance = atr * self.params.atr_stop_mult
-        initial_stop = entry_price - stop_distance  # For long (flip for short)
+        # Determine direction from archetype config
+        archetype_name = context.get('entry_archetype', None)
+        direction = 1  # Default to long
+        atr_stop_mult = self.params.atr_stop_mult  # Default stop multiplier
+
+        if archetype_name:
+            # Read direction and stop multiplier from archetype config
+            archetype_config = self.runtime_config.get('archetypes', {}).get('thresholds', {})
+            archetype_params = archetype_config.get(archetype_name, {})
+            direction_str = archetype_params.get('direction', 'long')
+            direction = -1 if direction_str == 'short' else 1
+
+            # Use archetype-specific stop multiplier if available
+            atr_stop_mult = archetype_params.get('atr_stop_mult', self.params.atr_stop_mult)
+
+            logger.info(f"[DIRECTION] {archetype_name}: {direction_str} (direction={direction}, stop_mult={atr_stop_mult})")
+
+        # Calculate initial stop (direction-aware)
+        stop_distance = atr * atr_stop_mult
+        if direction == 1:  # Long
+            initial_stop = entry_price - stop_distance
+        else:  # Short
+            initial_stop = entry_price + stop_distance
 
         trade = Trade(
             entry_time=row.name,
             entry_price=entry_price,
             position_size=position_size,
-            direction=1,  # Only long for now
+            direction=direction,  # Dynamic from config
             entry_fusion_score=fusion_score,
             entry_reason=entry_type,
             wyckoff_phase=context.get('wyckoff_phase', 'unknown'),

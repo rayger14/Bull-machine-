@@ -28,10 +28,10 @@ ARCHETYPE_NAMES = [
     'confluence_breakout',
     # Bear-biased archetypes (short-biased)
     'breakdown',
-    'rejection',
+    'failed_rally',      # S2: Failed Rally Rejection (APPROVED)
     'whipsaw',
     'distribution',
-    'short_squeeze',
+    'long_squeeze',      # S5: Long Squeeze Cascade (APPROVED with fix)
     'alt_rotation_down',
     'curve_inversion',
     'volume_fade_chop'
@@ -53,10 +53,10 @@ LEGACY_ARCHETYPE_MAP = {
     'confluence_breakout': 'M',
     # Bear-biased archetypes (short-biased)
     'breakdown': 'S1',
-    'rejection': 'S2',
+    'failed_rally': 'S2',      # Failed Rally Rejection (APPROVED)
     'whipsaw': 'S3',
     'distribution': 'S4',
-    'short_squeeze': 'S5',
+    'long_squeeze': 'S5',      # Long Squeeze Cascade (APPROVED with fix)
     'alt_rotation_down': 'S6',
     'curve_inversion': 'S7',
     'volume_fade_chop': 'S8'
