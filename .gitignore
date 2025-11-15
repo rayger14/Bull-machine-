@@ -1,6 +1,14 @@
 # ============================================================================
 # Bull Machine .gitignore
 # Enhanced version - 2025-11-14
+# Repository restructuring - 2025-11-14
+#
+# Structure:
+# - configs/{frozen,mvp,experiments,regime,bear}/
+# - data/{processed,raw,archive}/
+# - engine/strategies/archetypes/{bull,bear}/
+# - tests/{unit,integration}/
+# - docs/{technical,backtests,analysis,reports}/
 # ============================================================================
 
 # ----------------------------------------------------------------------------
