@@ -1199,6 +1199,9 @@ class ArchetypeLogic:
         score_before_domain = score
         score = score * domain_boost
 
+        # Cap score at valid range [0.0, 5.0]
+        score = max(0.0, min(5.0, score))
+
         # ============================================================================
         # FUSION THRESHOLD GATE (applied AFTER domain engines)
         # ============================================================================
@@ -1458,6 +1461,9 @@ class ArchetypeLogic:
         # Apply domain boost to final score
         score_before_domain = score
         score = score * domain_boost
+
+        # Cap score at valid range [0.0, 5.0]
+        score = max(0.0, min(5.0, score))
 
         # ============================================================================
         # FUSION THRESHOLD GATE (applied AFTER domain engines)
@@ -1919,6 +1925,9 @@ class ArchetypeLogic:
         score_before_domain = score
         score = score * domain_boost
 
+        # Cap score at valid range [0.0, 5.0]
+        score = max(0.0, min(5.0, score))
+
         # ============================================================================
         # FUSION THRESHOLD GATE (applied AFTER domain engines)
         # ============================================================================
@@ -1994,14 +2003,28 @@ class ArchetypeLogic:
         # Check for recent trap + reversal BOS
         if self.g(r, 'tf1h_bos_bullish', False):
             # Check if previous bars had bearish BOS (trap)
-            prev_idx = context.metadata.get('index', 0) - 1
-            if prev_idx >= 0:
-                df = context.metadata.get('df')
-                if df is not None and prev_idx < len(df):
-                    prev_row = df.iloc[prev_idx]
-                    if self.g(prev_row, 'tf1h_bos_bearish', False):
-                        score = 0.48
-                        return True, score, ["L", "fakeout_real_move", "LONG"]
+            df = context.metadata.get('df')
+            current_idx = context.metadata.get('index', 0)
+
+            # Handle both timestamp and integer index
+            if df is not None:
+                try:
+                    # If index is a timestamp, convert to integer position
+                    if isinstance(current_idx, pd.Timestamp):
+                        current_pos = df.index.get_loc(current_idx)
+                    else:
+                        current_pos = current_idx
+
+                    prev_pos = current_pos - 1
+
+                    if prev_pos >= 0 and prev_pos < len(df):
+                        prev_row = df.iloc[prev_pos]
+                        if self.g(prev_row, 'tf1h_bos_bearish', False):
+                            score = 0.48
+                            return True, score, ["L", "fakeout_real_move", "LONG"]
+                except (KeyError, ValueError):
+                    # Index not found in df, skip this check
+                    pass
         return None
 
     def _check_L(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:

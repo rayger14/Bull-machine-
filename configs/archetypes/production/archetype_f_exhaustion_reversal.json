@@ -1,0 +1,147 @@
+{
+  "version": "archetype_f_production_v1",
+  "profile": "Archetype F - Exhaustion Reversal (Production)",
+  "description": "Bull market archetype - Momentum exhaustion reversals to the upside",
+  "_comment_overview": "============ ARCHETYPE F - EXHAUSTION REVERSAL ============",
+  "_comment_strategy": "Identifies bearish momentum exhaustion followed by strong bullish reversal",
+  "adaptive_fusion": false,
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX", "DXY", "MOVE", "YIELD_2Y", "YIELD_10Y",
+      "USDT.D", "BTC.D", "TOTAL", "TOTAL2",
+      "funding", "oi", "rv_20d", "rv_60d"
+    ],
+    "zero_fill_missing": false,
+    "regime_override": {}
+  },
+  "ml_filter": {
+    "enabled": false,
+    "_comment": "ML filter disabled for initial production"
+  },
+  "fusion": {
+    "entry_threshold_confidence": 0.99,
+    "weights": {
+      "wyckoff": 0.25,
+      "liquidity": 0.25,
+      "momentum": 0.35,
+      "smc": 0.15
+    }
+  },
+  "risk": {
+    "base_risk_pct": 0.02,
+    "max_position_size_pct": 0.2,
+    "max_portfolio_risk_pct": 0.1
+  },
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 3,
+    "enable_A": false, "enable_B": false, "enable_C": false, "enable_D": false, "enable_E": false,
+    "enable_F": true, "enable_G": false, "enable_H": false, "enable_K": false, "enable_L": false,
+    "enable_M": false, "enable_S1": false, "enable_S2": false, "enable_S3": false, "enable_S4": false,
+    "enable_S5": false, "enable_S6": false, "enable_S7": false, "enable_S8": false,
+    "thresholds": {
+      "min_liquidity": 0.1,
+      "exhaustion_reversal": {
+        "direction": "long",
+        "archetype_weight": 1.8,
+        "fusion_threshold": 0.35,
+        "min_confidence": 0.4,
+        "rsi_oversold_max": 30,
+        "momentum_deceleration_min": 0.6,
+        "divergence_required": true,
+        "reversal_candle_strength_min": 1.5,
+        "volume_confirmation_min": 1.3,
+        "max_risk_pct": 0.02,
+        "atr_stop_mult": 2.3,
+        "cooldown_bars": 10
+      }
+    },
+    "exits": {
+      "exhaustion_reversal": {
+        "trail_atr": 1.8,
+        "time_limit_hours": 48
+      }
+    },
+    "routing": {
+      "risk_on": {
+        "weights": { "exhaustion_reversal": 0.7 },
+        "final_gate_delta": 0.0
+      },
+      "neutral": {
+        "weights": { "exhaustion_reversal": 1.0 },
+        "final_gate_delta": 0.0
+      },
+      "risk_off": {
+        "weights": { "exhaustion_reversal": 1.5 },
+        "final_gate_delta": 0.0
+      },
+      "crisis": {
+        "weights": { "exhaustion_reversal": 2.0 },
+        "final_gate_delta": 0.0
+      }
+    }
+  },
+  "_production_metadata": {
+    "created": "2025-12-15",
+    "archetype_code": "F",
+    "archetype_name": "Exhaustion Reversal",
+    "market_regime": "bull",
+    "direction": "long",
+    "enabled_domain_engines": ["wyckoff", "smc", "temporal", "hob", "fusion", "macro"],
+    "expected_behavior": "Medium frequency reversal trades at momentum exhaustion"
+  },
+  "feature_flags": {
+    "enable_wyckoff": true,
+    "enable_smc": true,
+    "enable_temporal": true,
+    "enable_hob": true,
+    "enable_fusion": true,
+    "enable_macro": true,
+    "use_temporal_confluence": true,
+    "use_fusion_layer": true,
+    "use_macro_regime": true,
+    "_comment": "All 6 engines enabled - production setup"
+  },
+  "temporal_fusion": {
+    "enabled": true,
+    "use_confluence": true,
+    "min_confluence_score": 0.5,
+    "time_window_hours": 24,
+    "weights": {
+      "fib_time_cluster": 0.30,
+      "volume_time_confluence": 0.25,
+      "regime_time_alignment": 0.25,
+      "wyckoff_pti_confluence": 0.20
+    },
+    "min_multiplier": 0.85,
+    "max_multiplier": 1.25
+  },
+  "wyckoff_events": {
+    "enabled": true,
+    "min_confidence": 0.65,
+    "log_events": true,
+    "avoid_longs_if": ["BC", "UTAD"],
+    "boost_longs_if": {
+      "LPS": 1.15,
+      "Spring-A": 1.20,
+      "SOS": 1.15,
+      "PTI_confluence": 1.25
+    },
+    "reduce_position_size_if": ["LPSY", "UT"]
+  },
+  "smc_engine": {
+    "enabled": true,
+    "min_score": 0.5,
+    "detect_bos": true,
+    "detect_choch": true,
+    "detect_liquidity_sweeps": true,
+    "boost_threshold": 0.6
+  },
+  "hob_engine": {
+    "enabled": true,
+    "use_demand_zones": true,
+    "use_supply_zones": true,
+    "min_zone_strength": 0.5
+  }
+}
