@@ -71,7 +71,7 @@ def fetch_okx_historical_oi(
 
     # OKX API configuration
     base_url = "https://www.okx.com"
-    endpoint = "/api/v5/public/open-interest-history"
+    endpoint = "/api/v5/rubik/stat/contracts/open-interest-history"
 
     # Convert dates to timestamps (milliseconds)
     start_ts = int(datetime.strptime(start_date, '%Y-%m-%d').replace(tzinfo=timezone.utc).timestamp() * 1000)
@@ -119,21 +119,22 @@ def fetch_okx_historical_oi(
                 print(f"\n  No more records (total fetched: {len(all_data)})")
                 break
 
+            # OKX Rubik endpoint returns data as lists: [timestamp, oi, oiCcy]
             # Filter by date range
-            filtered = [r for r in records if start_ts <= int(r['ts']) <= end_ts]
+            filtered = [r for r in records if start_ts <= int(r[0]) <= end_ts]
             all_data.extend(filtered)
 
             fetch_count += 1
-            last_ts = datetime.fromtimestamp(int(records[-1]['ts']) / 1000, tz=timezone.utc)
+            last_ts = datetime.fromtimestamp(int(records[-1][0]) / 1000, tz=timezone.utc)
             print(f"  Batch {fetch_count}: {len(all_data)} total records (last: {last_ts})", end='\r')
 
             # Check if we've reached the start date
-            if int(records[-1]['ts']) < start_ts:
+            if int(records[-1][0]) < start_ts:
                 print(f"\n  Reached start date")
                 break
 
             # Pagination cursor
-            current_after = records[-1]['ts']
+            current_after = records[-1][0]
             time.sleep(0.3)  # Rate limit (200ms between requests)
 
         except requests.exceptions.RequestException as e:
@@ -147,16 +148,14 @@ def fetch_okx_historical_oi(
     if not all_data:
         raise ValueError("No OI data fetched from OKX API")
 
-    # Convert to DataFrame
-    df = pd.DataFrame(all_data)
+    # Convert to DataFrame (OKX Rubik endpoint returns: [timestamp, oi, oiCcy])
+    df = pd.DataFrame(all_data, columns=['ts', 'oi', 'oiCcy'])
     df['timestamp'] = pd.to_datetime(df['ts'].astype(int), unit='ms', utc=True)
     df['oi'] = df['oi'].astype(float)  # Open interest in contracts
     df['oiCcy'] = df['oiCcy'].astype(float)  # Open interest in BTC
 
-    # Use USD notional (oi * contract_size) if available, else BTC notional
-    # OKX BTC-USDT-SWAP: 1 contract = 0.01 BTC
-    # For simplicity, use oiCcy (BTC) * price estimate
-    # Better: use raw OI field which should be in USD
+    # Use oi field (should be in contracts or USD notional)
+    # For BTC-USDT-SWAP, oi field represents contracts
     df = df[['timestamp', 'oi']].copy()
     df.sort_values('timestamp', inplace=True)
     df.reset_index(drop=True, inplace=True)
