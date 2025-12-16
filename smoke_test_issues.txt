@@ -1,0 +1,42 @@
+SMOKE TEST ISSUES
+================================================================================
+
+⚠️ S1: Low domain boost detection (0.0%) - boosts may not be working
+❌ S1: ZERO signals detected - archetype may be broken or thresholds too strict
+⚠️ S5: Low domain boost detection (0.0%) - boosts may not be working
+❌ S5: ZERO signals detected - archetype may be broken or thresholds too strict
+⚠️ A: Low domain boost detection (0.0%) - boosts may not be working
+❌ A: ZERO signals detected - archetype may be broken or thresholds too strict
+⚠️ C: Low domain boost detection (0.0%) - boosts may not be working
+❌ C: ZERO signals detected - archetype may be broken or thresholds too strict
+⚠️ D: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ E: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ F: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ G: Low domain boost detection (0.0%) - boosts may not be working
+❌ H: Confidence scores out of valid range [0.0-5.0]: [0.35, 5.52]
+⚠️ K: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ L: Low domain boost detection (0.0%) - boosts may not be working
+❌ L: ZERO signals detected - archetype may be broken or thresholds too strict
+⚠️ M: Low domain boost detection (0.0%) - boosts may not be working
+❌ M: ZERO signals detected - archetype may be broken or thresholds too strict
+⚠️ S3: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ S3: Very low signal count (1) - check thresholds
+⚠️ S8: Low domain boost detection (0.0%) - boosts may not be working
+❌ S8: ZERO signals detected - archetype may be broken or thresholds too strict
+
+
+ERROR DETAILS
+--------------------------------------------------------------------------------
+
+L (1586 errors):
+  1. Error at 2023-01-02 03:00:00+00:00: Addition/subtraction of integers and integer-arrays with Timestamp is no longer supported.  Instead of adding/subtracting `n`, use `n * obj.freq`
+  2. Error at 2023-01-02 04:00:00+00:00: Addition/subtraction of integers and integer-arrays with Timestamp is no longer supported.  Instead of adding/subtracting `n`, use `n * obj.freq`
+  3. Error at 2023-01-02 05:00:00+00:00: Addition/subtraction of integers and integer-arrays with Timestamp is no longer supported.  Instead of adding/subtracting `n`, use `n * obj.freq`
+  4. Error at 2023-01-02 06:00:00+00:00: Addition/subtraction of integers and integer-arrays with Timestamp is no longer supported.  Instead of adding/subtracting `n`, use `n * obj.freq`
+  5. Error at 2023-01-02 07:00:00+00:00: Addition/subtraction of integers and integer-arrays with Timestamp is no longer supported.  Instead of adding/subtracting `n`, use `n * obj.freq`
+  6. Error at 2023-01-02 08:00:00+00:00: Addition/subtraction of integers and integer-arrays with Timestamp is no longer supported.  Instead of adding/subtracting `n`, use `n * obj.freq`
+  7. Error at 2023-01-02 09:00:00+00:00: Addition/subtraction of integers and integer-arrays with Timestamp is no longer supported.  Instead of adding/subtracting `n`, use `n * obj.freq`
+  8. Error at 2023-01-02 10:00:00+00:00: Addition/subtraction of integers and integer-arrays with Timestamp is no longer supported.  Instead of adding/subtracting `n`, use `n * obj.freq`
+  9. Error at 2023-01-02 11:00:00+00:00: Addition/subtraction of integers and integer-arrays with Timestamp is no longer supported.  Instead of adding/subtracting `n`, use `n * obj.freq`
+  10. Error at 2023-01-02 12:00:00+00:00: Addition/subtraction of integers and integer-arrays with Timestamp is no longer supported.  Instead of adding/subtracting `n`, use `n * obj.freq`
+  ... and 1576 more
