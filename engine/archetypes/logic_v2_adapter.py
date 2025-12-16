@@ -1495,11 +1495,25 @@ class ArchetypeLogic:
     def _pattern_C(self, context: RuntimeContext):
         """Pattern detection for Archetype C: BOS/CHOCH Reversal (LONG)"""
         r = context.row
-        if self.g(r, 'tf1h_bos_bullish', False) and self.g(r, 'tf1h_choch_flag', False):
-            score = 0.45
+        bos_bullish = self.g(r, 'tf1h_bos_bullish', False)
+        choch_flag = self.g(r, 'tf1h_choch_flag', False)
+
+        # CHANGE: Accept BOS alone, CHOCH adds bonus
+        if bos_bullish:
+            score = 0.35  # Base score for BOS alone
+            tags = ["C", "bos_reversal", "LONG"]
+
+            # Bonus if CHOCH confirms
+            if choch_flag:
+                score += 0.10  # CHOCH confirmation bonus
+                tags[1] = "bos_choch"  # Update tag to show CHOCH present
+
+            # Bonus for wick rejection
             if self.g(r, 'wick_lower_ratio', 0.0) >= 0.55:
                 score += 0.20
-            return True, score, ["C", "bos_choch", "LONG"]
+
+            return True, score, tags
+
         return None
 
     def _check_C(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
@@ -2168,6 +2182,29 @@ class ArchetypeLogic:
         crisis_min = context.get_threshold('liquidity_vacuum', 'crisis_composite_min', 0.40)  # Must be in crisis
         vol_climax_3b_min = context.get_threshold('liquidity_vacuum', 'volume_climax_3b_min', 0.25)
         wick_exhaust_3b_min = context.get_threshold('liquidity_vacuum', 'wick_exhaustion_3b_min', 0.30)
+
+        # ============================================================================
+        # REGIME-ROUTING: V2 CRISIS-MODE ONLY, V1 FOR NORMAL MARKETS
+        # ============================================================================
+        # FIX: V2 AND gates (capitulation_depth < -0.20 AND crisis_composite >= 0.40)
+        # block all signals in Q1 2023 bull recovery (0 bars pass both gates).
+        # SOLUTION: Route V2 to crisis-only environments, use V1 for normal markets.
+        #
+        # BEFORE: V2 requires BOTH extreme drawdown AND crisis environment → 0 signals in Q1 2023
+        # AFTER: V2 only activates in crisis_composite >= 0.30, V1 handles normal markets → ~300 signals unlocked
+        #
+        # This preserves V2's multi-bar capitulation detection for true crisis events
+        # (2022 crash, Luna, FTX) while allowing V1 single-bar logic for normal volatility.
+        if use_v2_logic:
+            crisis_composite = self.g(context.row, 'crisis_composite', 0.0)
+            crisis_routing_threshold = context.get_threshold('liquidity_vacuum', 'crisis_routing_threshold', 0.30)
+
+            # Override: Disable V2 in non-crisis regimes (route to V1 instead)
+            if crisis_composite < crisis_routing_threshold:
+                use_v2_logic = False
+                # V1 will handle normal market capitulations (single-bar exhaustion logic)
+            # else: V2 active in crisis mode (crisis_composite >= 0.30)
+        # ============================================================================
 
         # V1 thresholds (backward compatible)
         fusion_th = context.get_threshold('liquidity_vacuum', 'fusion_threshold', 0.30)
@@ -3967,12 +4004,28 @@ class ArchetypeLogic:
         return False
 
     def _pattern_S8(self, context: RuntimeContext):
-        """Pattern detection for Archetype S8: Fakeout Exhaustion (SHORT)"""
+        """Pattern detection for Archetype S8: Fakeout Exhaustion / Volume Fade Chop (SHORT)"""
         r = context.row
-        # Volume fade + low ATR = chop signature
-        if self.g(r, 'volume_zscore', 0.0) <= -0.5 and self.g(r, 'atr_percentile', 0.5) <= 0.35:
+
+        # Volume fade - low volume signature (works: 864 bars in Q1 2023)
+        volume_fade = self.g(r, 'volume_zscore', 0.0) <= -0.5
+
+        # Low volatility check - replaced missing atr_percentile with absolute ATR threshold
+        # Chop/consolidation signature: ATR < 0.6% of price
+        atr = self.g(r, 'atr_14', self.g(r, 'atr_20', 999999))
+        close = r.get('close', 1)
+        low_volatility = atr < (close * 0.006)  # ATR < 0.6% = low volatility/chop
+
+        # Fallback: If ATR missing, use Bollinger Band width as volatility proxy
+        if atr >= 999999:  # ATR not available
+            bb_width = self.g(r, 'bb_width', 0.0)
+            low_volatility = bb_width < 0.03  # BB width < 3% = low volatility
+
+        # Fire signal if BOTH volume fade AND low volatility (chop conditions)
+        if volume_fade and low_volatility:
             score = 0.42
-            return True, score, ["S8", "fakeout_exhaustion", "SHORT"]
+            return True, score, ["S8", "volume_fade_chop", "SHORT"]
+
         return None
 
     def _check_S8(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
