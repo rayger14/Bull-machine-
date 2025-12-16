@@ -3,6 +3,8 @@ Wyckoff Phase Detection Engine
 
 Implements safer Wyckoff phase detection with volume guards and USDT stagnation integration.
 Rejects fake SC/AR if relative volume is too low vs rolling mean.
+
+Enhanced with institutional-grade event detection (18 Wyckoff events) and PTI integration.
 """
 
 import pandas as pd
@@ -13,6 +15,17 @@ from enum import Enum
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Import Wyckoff event detection system
+try:
+    from engine.wyckoff.events import (
+        detect_all_wyckoff_events,
+        integrate_wyckoff_with_pti
+    )
+    WYCKOFF_EVENTS_AVAILABLE = True
+except ImportError:
+    logger.warning("Wyckoff events module not available. Using basic phase detection only.")
+    WYCKOFF_EVENTS_AVAILABLE = False
 
 class WyckoffPhase(Enum):
     """Wyckoff market phases"""
@@ -198,6 +211,12 @@ class WyckoffEngine:
 
     Detects market phases according to Wyckoff methodology with enhanced
     volume validation and macro context integration.
+
+    Enhanced Features:
+        - Basic phase detection (accumulation/distribution/markup/markdown)
+        - Institutional-grade event detection (18 Wyckoff events)
+        - PTI integration for psychological trap detection
+        - Sequence tracking (position within Wyckoff cycle)
     """
 
     def __init__(self, config: Dict[str, Any]):
@@ -205,6 +224,11 @@ class WyckoffEngine:
         self.volume_threshold = config.get('sc_ar_vol_min', 0.8)
         self.crt_vol_threshold = config.get('crt_vol_std_max', 0.005)
         self.crt_usdt_threshold = config.get('crt_usdt_stag_min', 0.7)
+
+        # Wyckoff events configuration
+        self.wyckoff_events_config = config.get('wyckoff_events', {})
+        self.enable_events = self.wyckoff_events_config.get('enabled', False)
+        self.enable_pti_integration = self.wyckoff_events_config.get('pti_integration', True)
 
     def analyze(self, data: pd.DataFrame, usdt_stagnation: float = 0.0) -> Optional[WyckoffSignal]:
         """
@@ -293,3 +317,207 @@ class WyckoffEngine:
         except Exception as e:
             logger.error(f"Error analyzing price structure: {e}")
             return {}
+
+    def detect_wyckoff_events(
+        self,
+        data: pd.DataFrame,
+        pti_scores: Optional[pd.Series] = None
+    ) -> pd.DataFrame:
+        """
+        Detect all Wyckoff events and add to dataframe.
+
+        This is the main entry point for institutional-grade Wyckoff event detection.
+        It wraps the events.py module and integrates with PTI if available.
+
+        Args:
+            data: OHLCV dataframe with technical indicators
+            pti_scores: Optional PTI scores for integration
+
+        Returns:
+            DataFrame with Wyckoff event columns added
+
+        New Columns Added:
+            - wyckoff_sc, wyckoff_sc_confidence (Selling Climax)
+            - wyckoff_bc, wyckoff_bc_confidence (Buying Climax)
+            - wyckoff_ar, wyckoff_ar_confidence (Automatic Rally)
+            - wyckoff_as, wyckoff_as_confidence (Automatic Reaction)
+            - wyckoff_st, wyckoff_st_confidence (Secondary Test)
+            - wyckoff_sos, wyckoff_sos_confidence (Sign of Strength)
+            - wyckoff_sow, wyckoff_sow_confidence (Sign of Weakness)
+            - wyckoff_lps, wyckoff_lps_confidence (Last Point of Support)
+            - wyckoff_lpsy, wyckoff_lpsy_confidence (Last Point of Supply)
+            - wyckoff_spring_a, wyckoff_spring_a_confidence (Spring Type A)
+            - wyckoff_spring_b, wyckoff_spring_b_confidence (Spring Type B)
+            - wyckoff_ut, wyckoff_ut_confidence (Upthrust)
+            - wyckoff_utad, wyckoff_utad_confidence (UTAD)
+            - wyckoff_phase_abc (Phase: A/B/C/D/E/neutral)
+            - wyckoff_sequence_position (Position: 1-10)
+            - wyckoff_pti_confluence (PTI + Wyckoff trap confluence)
+            - wyckoff_pti_score (Composite trap score)
+
+        Example:
+            >>> engine = WyckoffEngine(config)
+            >>> df = engine.detect_wyckoff_events(df_1h)
+            >>> df[df['wyckoff_sc']].iloc[-5:]  # Last 5 Selling Climax events
+        """
+        if not self.enable_events:
+            logger.info("Wyckoff events disabled in config")
+            return data
+
+        if not WYCKOFF_EVENTS_AVAILABLE:
+            logger.error("Wyckoff events module not available")
+            return data
+
+        try:
+            logger.info(f"Detecting Wyckoff events on {len(data)} bars")
+
+            # Detect all events
+            data = detect_all_wyckoff_events(data, self.wyckoff_events_config)
+
+            # Integrate with PTI if enabled
+            if self.enable_pti_integration and pti_scores is not None:
+                data = integrate_wyckoff_with_pti(data, pti_scores)
+            elif self.enable_pti_integration and 'pti_score' in data.columns:
+                data = integrate_wyckoff_with_pti(data)
+
+            logger.info("Wyckoff event detection complete")
+            return data
+
+        except Exception as e:
+            logger.error(f"Error in Wyckoff event detection: {e}")
+            import traceback
+            traceback.print_exc()
+            return data
+
+    def get_wyckoff_sequence_context(self, data: pd.DataFrame, current_idx: int) -> Dict[str, Any]:
+        """
+        Get context about current position in Wyckoff sequence.
+
+        This helps understand where we are in the accumulation/distribution cycle
+        and what events to expect next.
+
+        Args:
+            data: DataFrame with Wyckoff event columns
+            current_idx: Current bar index
+
+        Returns:
+            Dict with:
+                - current_phase: Current Wyckoff phase (A/B/C/D/E)
+                - sequence_position: Position in sequence (1-10)
+                - recent_events: List of recent events (last 20 bars)
+                - next_expected: List of likely next events
+                - cycle_progress: Estimated progress through cycle (0-1)
+
+        Example:
+            >>> context = engine.get_wyckoff_sequence_context(df, -1)
+            >>> print(f"Phase: {context['current_phase']}")
+            >>> print(f"Recent events: {context['recent_events']}")
+        """
+        if current_idx < 0:
+            current_idx = len(data) + current_idx
+
+        if 'wyckoff_phase_abc' not in data.columns:
+            return {
+                'current_phase': 'neutral',
+                'sequence_position': 0,
+                'recent_events': [],
+                'next_expected': [],
+                'cycle_progress': 0.0
+            }
+
+        # Get current phase and position
+        current_phase = data['wyckoff_phase_abc'].iloc[current_idx]
+        sequence_pos = int(data['wyckoff_sequence_position'].iloc[current_idx])
+
+        # Find recent events (last 20 bars)
+        lookback = min(20, current_idx + 1)
+        recent_data = data.iloc[current_idx - lookback + 1:current_idx + 1]
+
+        recent_events = []
+        event_cols = [
+            ('SC', 'wyckoff_sc'),
+            ('BC', 'wyckoff_bc'),
+            ('AR', 'wyckoff_ar'),
+            ('AS', 'wyckoff_as'),
+            ('ST', 'wyckoff_st'),
+            ('SOS', 'wyckoff_sos'),
+            ('SOW', 'wyckoff_sow'),
+            ('Spring_A', 'wyckoff_spring_a'),
+            ('Spring_B', 'wyckoff_spring_b'),
+            ('UT', 'wyckoff_ut'),
+            ('UTAD', 'wyckoff_utad'),
+            ('LPS', 'wyckoff_lps'),
+            ('LPSY', 'wyckoff_lpsy'),
+        ]
+
+        for event_name, event_col in event_cols:
+            if event_col in recent_data.columns:
+                event_indices = recent_data[recent_data[event_col]].index
+                for idx in event_indices:
+                    bars_ago = current_idx - data.index.get_loc(idx)
+                    recent_events.append({
+                        'event': event_name,
+                        'bars_ago': bars_ago,
+                        'confidence': recent_data.loc[idx, f"{event_col}_confidence"]
+                    })
+
+        # Determine next expected events based on phase
+        next_expected = self._get_expected_next_events(current_phase, recent_events)
+
+        # Estimate cycle progress
+        cycle_progress = sequence_pos / 10.0
+
+        return {
+            'current_phase': current_phase,
+            'sequence_position': sequence_pos,
+            'recent_events': sorted(recent_events, key=lambda x: x['bars_ago']),
+            'next_expected': next_expected,
+            'cycle_progress': cycle_progress
+        }
+
+    def _get_expected_next_events(self, current_phase: str, recent_events: List[Dict]) -> List[str]:
+        """
+        Determine expected next events based on current phase and recent history.
+
+        Args:
+            current_phase: Current Wyckoff phase
+            recent_events: List of recent event dicts
+
+        Returns:
+            List of expected event names
+        """
+        # Phase A → expect AR after SC, or ST after AR
+        if current_phase == 'A':
+            has_sc = any(e['event'] == 'SC' for e in recent_events)
+            has_ar = any(e['event'] == 'AR' for e in recent_events)
+
+            if has_sc and not has_ar:
+                return ['AR']
+            elif has_ar:
+                return ['ST', 'SOS']
+            else:
+                return ['SC', 'BC']
+
+        # Phase B → expect SOS/SOW, then consolidation
+        elif current_phase == 'B':
+            has_sos = any(e['event'] == 'SOS' for e in recent_events)
+            has_sow = any(e['event'] == 'SOW' for e in recent_events)
+
+            if not (has_sos or has_sow):
+                return ['SOS', 'SOW']
+            else:
+                return ['Spring_A', 'Spring_B', 'UT']
+
+        # Phase C → expect Springs/UTs before LPS/LPSY
+        elif current_phase == 'C':
+            return ['LPS', 'LPSY']
+
+        # Phase D → expect trend beginning
+        elif current_phase == 'D':
+            return ['Markup', 'Markdown']
+
+        # Phase E → trend continuation
+        elif current_phase == 'E':
+            return ['Continuation', 'Reversal_Warning']
+
+        return []

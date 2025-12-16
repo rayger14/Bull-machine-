@@ -1,20 +1,33 @@
 """
 Bull market archetype detectors.
 
-This module will contain specialized detectors for bull market patterns:
-- Trap Reversal (A)
-- Order Block Retest (B)
-- FVG Continuation (C)
-- Wick Trap (K)
-- Trap Within Trend (H)
-- Volume Exhaustion (L)
-- Expansion Exhaustion (F)
-- Failed Continuation (D)
-- Re-Accumulate (G)
-- Liquidity Compression (E)
-- Ratio Coil Break (M)
+This module contains specialized detectors for bull market patterns (long-biased):
+- Spring/UTAD (A): Wyckoff spring accumulation reversals
+- Order Block Retest (B): SMC demand zone retests
+- BOS/CHOCH Reversal (C): Break of structure / change of character
+- Liquidity Sweep (G): Stop hunt reversals
+- Trap Within Trend (H): False breakdown continuations
 
-Currently empty - future refactoring target.
+MVP Status: 5 archetypes implemented (2025-12-12)
 """
 
-__all__ = []
+from .spring_utad import SpringUTADArchetype, detect_spring_utad_signal
+from .order_block_retest import OrderBlockRetestArchetype, detect_order_block_retest_signal
+from .bos_choch_reversal import BOSCHOCHReversalArchetype, detect_bos_choch_reversal_signal
+from .liquidity_sweep import LiquiditySweepArchetype, detect_liquidity_sweep_signal
+from .trap_within_trend import TrapWithinTrendArchetype, detect_trap_within_trend_signal
+
+__all__ = [
+    # Archetype classes
+    'SpringUTADArchetype',
+    'OrderBlockRetestArchetype',
+    'BOSCHOCHReversalArchetype',
+    'LiquiditySweepArchetype',
+    'TrapWithinTrendArchetype',
+    # Detection helpers
+    'detect_spring_utad_signal',
+    'detect_order_block_retest_signal',
+    'detect_bos_choch_reversal_signal',
+    'detect_liquidity_sweep_signal',
+    'detect_trap_within_trend_signal',
+]

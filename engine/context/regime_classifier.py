@@ -2,7 +2,9 @@
 Regime Classifier for Bull Machine v1.9
 
 Lightweight model that reads macro feature vectors and labels current regime
-(risk_on / neutral / risk_off / crisis) using Gaussian Mixture Model.
+(risk_on / neutral / risk_off / crisis) using Gaussian Mixture Model or HMM.
+
+V2 Enhancement: Supports both GMM (legacy) and HMM (rolling 21-day classifier).
 
 Returns small, bounded deltas for fusion threshold, weights, and risk sizing.
 """
@@ -11,7 +13,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,29 +21,44 @@ logger = logging.getLogger(__name__)
 
 class RegimeClassifier:
     """
-    GMM-based regime classifier
+    Regime classifier supporting both GMM and HMM models.
+
+    V2 Enhancement: Can use either:
+    - GMM (Gaussian Mixture Model) - legacy, static clustering
+    - HMM (Hidden Markov Model) - rolling 21-day regime detection
 
     Uses macro features (VIX, MOVE, DXY, etc.) to classify market regime.
     Returns regime label + probability distribution.
     """
 
-    def __init__(self, model, label_map: Dict[int, str], feature_order: list, zero_fill_missing: bool = False, regime_override: Dict[str, str] = None):
+    def __init__(
+        self,
+        model,
+        label_map: Dict[int, str],
+        feature_order: list,
+        model_type: str = 'gmm',
+        zero_fill_missing: bool = False,
+        regime_override: Optional[Dict[str, str]] = None
+    ):
         """
         Initialize regime classifier
 
         Args:
-            model: Trained GMM model (sklearn.mixture.GaussianMixture)
+            model: Trained model (GaussianMixture for GMM, HMMRegimeModel for HMM)
             label_map: Mapping from cluster ID to regime label
             feature_order: Ordered list of feature names
+            model_type: 'gmm' or 'hmm_v2'
             zero_fill_missing: If True, fill missing features with 0 instead of falling back to neutral
             regime_override: Optional dict mapping date ranges to forced regimes (e.g., {"2022": "risk_off"})
         """
         self.model = model
         self.label_map = label_map
         self.feature_order = feature_order
+        self.model_type = model_type
         self.zero_fill_missing = zero_fill_missing
         self.regime_override = regime_override or {}
-        logger.info(f"Regime classifier initialized with {len(self.feature_order)} features")
+        logger.info(f"Regime classifier initialized: model_type={model_type}")
+        logger.info(f"Features: {len(self.feature_order)}")
         logger.info(f"Label map: {self.label_map}")
         if zero_fill_missing:
             logger.info("Zero-fill mode enabled for missing features")
@@ -49,13 +66,21 @@ class RegimeClassifier:
             logger.info(f"Regime overrides active: {self.regime_override}")
 
     @classmethod
-    def load(cls, model_path: str, feature_order: list, zero_fill_missing: bool = False, regime_override: Dict[str, str] = None):
+    def load(
+        cls,
+        model_path: str,
+        feature_order: list,
+        model_type: str = 'gmm',
+        zero_fill_missing: bool = False,
+        regime_override: Optional[Dict[str, str]] = None
+    ):
         """
         Load trained regime classifier from pickle
 
         Args:
             model_path: Path to pickled model
             feature_order: Expected feature order
+            model_type: 'gmm' or 'hmm_v2'
             zero_fill_missing: If True, fill missing features with 0 instead of falling back to neutral
             regime_override: Optional dict mapping date ranges to forced regimes
 
@@ -67,6 +92,17 @@ class RegimeClassifier:
 
         obj = pickle.loads(Path(model_path).read_bytes())
 
+        # Detect model type from file if not specified
+        if 'hmm' in str(model_path).lower() or obj.get('model_type') == 'hmm':
+            detected_type = 'hmm_v2'
+        else:
+            detected_type = 'gmm'
+
+        # Use detected type if model_type is default
+        if model_type == 'gmm' and detected_type == 'hmm_v2':
+            model_type = detected_type
+            logger.info(f"Auto-detected model type: {model_type}")
+
         # Support both 'model' and 'gmm' keys for backward compatibility
         model_obj = obj.get("model") or obj.get("gmm")
         if model_obj is None or "label_map" not in obj:
@@ -76,6 +112,7 @@ class RegimeClassifier:
             model=model_obj,
             label_map=obj["label_map"],
             feature_order=feature_order,
+            model_type=model_type,
             zero_fill_missing=zero_fill_missing,
             regime_override=regime_override
         )

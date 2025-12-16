@@ -31,7 +31,8 @@ STRICT_SLUG_VALIDATION = False  # Raise on unknown keys (vs. fallback)
 
 # Bull Archetypes (A, B, C, D, E, F, G, H, K, L, M) - Preserve gold standard
 # Gold Standard: 17 trades, PF 6.17 (BTC 2024-01-01 to 2024-09-30)
-BULL_EVALUATE_ALL = False        # Legacy priority dispatch (A→H→B→K→L→C→...)
+# CRITICAL FIX: Changed to True to prevent K from starving H/L via early return
+BULL_EVALUATE_ALL = True         # Evaluate all archetypes, pick best (prevents K dominance)
 BULL_SOFT_LIQUIDITY = False      # Hard filter at min_liquidity threshold (0.30)
 
 # Bear Archetypes (S1, S2, S3, S4, S5, S6, S7, S8) - Enable flexibility
@@ -61,6 +62,19 @@ BEAR_SOFT_SESSION = False        # 15% penalty during Asian session (disabled fo
 # Backward compatibility (DEPRECATED)
 SOFT_REGIME_FILTER = BULL_SOFT_REGIME    # Default: False (hard filter)
 SOFT_SESSION_FILTER = BULL_SOFT_SESSION  # Default: False (hard filter)
+
+# =============================================================================
+# PHASE 5: Domain Engine Integration Flags
+# =============================================================================
+
+# Domain engine feature flags (control wiring in archetype check functions)
+# These can be overridden per-config via metadata.feature_flags
+ENABLE_WYCKOFF = False        # Wyckoff structural events (springs, UTAD, phases)
+ENABLE_SMC = False            # Smart Money Concepts (BOS, liquidity sweeps, supply/demand)
+ENABLE_TEMPORAL = False       # Temporal Fusion (Fibonacci time clusters, PTI confluence)
+ENABLE_HOB = False            # Higher Order Blocks (demand/supply zones) - PLACEHOLDER
+ENABLE_MACRO = False          # Macro filters (extreme risk-off penalties)
+ENABLE_FUSION = False         # Meta-fusion layer - PLACEHOLDER
 
 # Observability output paths
 ARTIFACTS_BASE = "artifacts"  # Base path for run artifacts

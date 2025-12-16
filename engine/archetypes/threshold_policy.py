@@ -6,7 +6,7 @@ No hardcoded thresholds in archetype logic - everything flows through this polic
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from copy import deepcopy
 
 logger = logging.getLogger(__name__)
@@ -27,10 +27,12 @@ ARCHETYPE_NAMES = [
     'retest_cluster',
     'confluence_breakout',
     # Bear-biased archetypes (short-biased)
-    'breakdown',
-    'failed_rally',      # S2: Failed Rally Rejection (APPROVED)
+    'breakdown',         # S1 OLD: Breakdown (DEPRECATED - replaced by liquidity_vacuum)
+    'liquidity_vacuum',  # S1: Liquidity Vacuum Reversal (Capitulation reversal) - ACTIVE
+    'failed_rally',      # S2: Failed Rally Rejection (DEPRECATED for BTC)
     'whipsaw',
-    'distribution',
+    'distribution',      # S4 OLD: Distribution (DEPRECATED - replaced by funding_divergence)
+    'funding_divergence',  # S4: Funding Divergence (Short Squeeze) - ACTIVE
     'long_squeeze',      # S5: Long Squeeze Cascade (APPROVED with fix)
     'alt_rotation_down',
     'curve_inversion',
@@ -52,11 +54,13 @@ LEGACY_ARCHETYPE_MAP = {
     'retest_cluster': 'L',
     'confluence_breakout': 'M',
     # Bear-biased archetypes (short-biased)
-    'breakdown': 'S1',
-    'failed_rally': 'S2',      # Failed Rally Rejection (APPROVED)
+    'breakdown': 'S1',           # OLD - deprecated
+    'liquidity_vacuum': 'S1',    # NEW - replaces breakdown
+    'failed_rally': 'S2',        # Failed Rally Rejection (DEPRECATED for BTC)
     'whipsaw': 'S3',
-    'distribution': 'S4',
-    'long_squeeze': 'S5',      # Long Squeeze Cascade (APPROVED with fix)
+    'distribution': 'S4',        # OLD - deprecated
+    'funding_divergence': 'S4',  # NEW - replaces distribution
+    'long_squeeze': 'S5',        # Long Squeeze Cascade (APPROVED with fix)
     'alt_rotation_down': 'S6',
     'curve_inversion': 'S7',
     'volume_fade_chop': 'S8'
@@ -349,3 +353,112 @@ class ThresholdPolicy:
 
         logger.debug(f"Locked mode: Resolved thresholds for regime={locked_regime}")
         return final
+
+    def get_regime_threshold(
+        self,
+        archetype: str,
+        param: str,
+        regime: str,
+        default=None
+    ) -> float:
+        """
+        Get regime-specific threshold for a single parameter.
+
+        Hierarchy:
+        1. regime_thresholds[regime][param]  (most specific)
+        2. thresholds[archetype][param]      (fallback)
+        3. default                            (last resort)
+
+        Args:
+            archetype: Archetype name (e.g., 'liquidity_vacuum')
+            param: Parameter name (e.g., 'crisis_composite_min')
+            regime: Regime label (e.g., 'risk_off', 'crisis')
+            default: Default value if not found
+
+        Returns:
+            Threshold value
+
+        Example:
+            >>> policy.get_regime_threshold('liquidity_vacuum', 'crisis_composite_min', 'crisis')
+            0.40  # Crisis-specific threshold (higher than base 0.35)
+        """
+        arch_config = self.base_arch_thresholds.get(archetype, {})
+
+        # Try regime-specific first
+        regime_thresholds = arch_config.get('regime_thresholds', {})
+        if regime in regime_thresholds and param in regime_thresholds[regime]:
+            value = regime_thresholds[regime][param]
+            logger.debug(f"[RegimeThreshold] {archetype}.{param} @ {regime}: {value} (regime-specific)")
+            return value
+
+        # Fallback to base threshold
+        if param in arch_config:
+            value = arch_config[param]
+            logger.debug(f"[RegimeThreshold] {archetype}.{param} @ {regime}: {value} (base)")
+            return value
+
+        # Default
+        logger.debug(f"[RegimeThreshold] {archetype}.{param} @ {regime}: {default} (default)")
+        return default
+
+    def get_regime_thresholds(
+        self,
+        archetype: str,
+        regime: str
+    ) -> Dict[str, float]:
+        """
+        Get all thresholds for an archetype in a specific regime.
+
+        Args:
+            archetype: Archetype name
+            regime: Regime label
+
+        Returns:
+            Dict of parameter -> threshold mappings
+
+        Example:
+            >>> policy.get_regime_thresholds('liquidity_vacuum', 'crisis')
+            {
+                'crisis_composite_min': 0.40,  # Higher than base 0.35
+                'confluence_threshold': 0.60,   # Lower than base 0.65
+                'capitulation_depth_max': -0.15 # Less deep than base -0.20
+            }
+        """
+        arch_config = self.base_arch_thresholds.get(archetype, {})
+
+        # Start with base thresholds
+        thresholds = {}
+        for param, value in arch_config.items():
+            # Skip metadata keys
+            if param in ('regime_thresholds', 'allowed_regimes', 'direction', '_comment'):
+                continue
+            thresholds[param] = value
+
+        # Override with regime-specific thresholds
+        regime_thresholds = arch_config.get('regime_thresholds', {})
+        if regime in regime_thresholds:
+            for param, value in regime_thresholds[regime].items():
+                thresholds[param] = value
+                logger.debug(f"[RegimeThreshold] {archetype}.{param} overridden for {regime}: {value}")
+
+        return thresholds
+
+    def get_allowed_regimes(self, archetype: str) -> List[str]:
+        """
+        Get allowed regimes for an archetype.
+
+        Args:
+            archetype: Archetype name
+
+        Returns:
+            List of allowed regime labels, or ['all'] if not specified
+
+        Example:
+            >>> policy.get_allowed_regimes('liquidity_vacuum')
+            ['risk_off', 'crisis']
+            >>> policy.get_allowed_regimes('bos_choch')
+            ['risk_on', 'neutral']
+        """
+        arch_config = self.base_arch_thresholds.get(archetype, {})
+        allowed = arch_config.get('allowed_regimes', ['all'])
+        return allowed
