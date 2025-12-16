@@ -1,0 +1,712 @@
+{
+  "version": "1.0",
+  "description": "Parameter ranges and constraints for archetype-specific threshold optimization",
+  "created": "2025-11-17",
+  "optimization_budget": {
+    "total_trials": 1280,
+    "estimated_runtime_hours": 14,
+    "parallel_workers": 8
+  },
+  "archetypes": {
+    "trap_within_trend": {
+      "codes": ["A", "G", "K"],
+      "family": "Trap Family",
+      "direction": "long",
+      "priority": "CRITICAL",
+      "trials": {
+        "coarse": 150,
+        "fine": 100,
+        "total": 250
+      },
+      "estimated_runtime_hours": 8,
+      "parameters": {
+        "fusion_threshold": {
+          "type": "float",
+          "range": [0.40, 0.55],
+          "step": 0.01,
+          "default": 0.47
+        },
+        "min_liquidity": {
+          "type": "float",
+          "range": [0.12, 0.20],
+          "step": 0.01,
+          "default": 0.15
+        },
+        "adx_min": {
+          "type": "int",
+          "range": [25, 35],
+          "step": 1,
+          "default": 28
+        },
+        "wick_against_trend": {
+          "type": "float",
+          "range": [0.30, 0.50],
+          "step": 0.02,
+          "default": 0.38
+        },
+        "archetype_weight": {
+          "type": "float",
+          "range": [2.0, 4.0],
+          "step": 0.1,
+          "default": 3.2
+        }
+      },
+      "targets": {
+        "profit_factor": [2.5, 4.0],
+        "max_drawdown": 0.15,
+        "min_trades_per_year": 120,
+        "win_rate": [0.52, 0.62]
+      },
+      "regime_routing": {
+        "risk_on": 1.2,
+        "neutral": 1.0,
+        "risk_off": 0.3,
+        "crisis": 0.0
+      },
+      "muting_rules": [
+        "MUTE if DXY_zscore > 1.2",
+        "MUTE if VIX > 28",
+        "MUTE if yield_curve_inverted > 30 days"
+      ],
+      "feature_dependencies": [
+        "fusion_score",
+        "liquidity_score",
+        "adx_14",
+        "atr_20",
+        "tf1h_external_trend"
+      ]
+    },
+    "order_block_retest": {
+      "codes": ["B", "H", "L"],
+      "family": "Order Block Family",
+      "direction": "long",
+      "priority": "HIGH",
+      "trials": {
+        "coarse": 120,
+        "fine": 80,
+        "total": 200
+      },
+      "estimated_runtime_hours": 6,
+      "parameters": {
+        "fusion_threshold": {
+          "type": "float",
+          "range": [0.30, 0.45],
+          "step": 0.01,
+          "default": 0.32
+        },
+        "min_liquidity": {
+          "type": "float",
+          "range": [0.15, 0.25],
+          "step": 0.01,
+          "default": 0.18
+        },
+        "boms_strength_min": {
+          "type": "float",
+          "range": [0.30, 0.50],
+          "step": 0.02,
+          "default": 0.38
+        },
+        "wyckoff_score_min": {
+          "type": "float",
+          "range": [0.30, 0.50],
+          "step": 0.02,
+          "default": 0.35
+        },
+        "archetype_weight": {
+          "type": "float",
+          "range": [1.5, 3.0],
+          "step": 0.1,
+          "default": 2.2
+        }
+      },
+      "targets": {
+        "profit_factor": [2.2, 3.8],
+        "max_drawdown": 0.18,
+        "min_trades_per_year": 80,
+        "win_rate": [0.50, 0.60]
+      },
+      "regime_routing": {
+        "risk_on": 1.1,
+        "neutral": 1.0,
+        "risk_off": 0.5,
+        "crisis": 0.2
+      },
+      "muting_rules": [
+        "REDUCE 50% in risk_off",
+        "MUTE 80% of time in crisis"
+      ],
+      "feature_dependencies": [
+        "fusion_score",
+        "liquidity_score",
+        "tf1d_boms_strength",
+        "tf1d_wyckoff_score",
+        "tf1h_ob_high"
+      ]
+    },
+    "bos_choch_reversal": {
+      "codes": ["C"],
+      "family": "Momentum",
+      "direction": "long",
+      "priority": "HIGH",
+      "trials": {
+        "coarse": 100,
+        "fine": 60,
+        "total": 160
+      },
+      "estimated_runtime_hours": 5,
+      "parameters": {
+        "fusion_threshold": {
+          "type": "float",
+          "range": [0.40, 0.55],
+          "step": 0.01,
+          "default": 0.46
+        },
+        "min_liquidity": {
+          "type": "float",
+          "range": [0.10, 0.20],
+          "step": 0.01,
+          "default": 0.14
+        },
+        "disp_atr_min": {
+          "type": "float",
+          "range": [0.80, 1.50],
+          "step": 0.05,
+          "default": 1.0
+        },
+        "momentum_score_min": {
+          "type": "float",
+          "range": [0.40, 0.60],
+          "step": 0.02,
+          "default": 0.48
+        },
+        "archetype_weight": {
+          "type": "float",
+          "range": [1.8, 3.5],
+          "step": 0.1,
+          "default": 2.5
+        }
+      },
+      "targets": {
+        "profit_factor": [2.0, 3.5],
+        "max_drawdown": 0.20,
+        "min_trades_per_year": 60,
+        "win_rate": [0.48, 0.58]
+      },
+      "regime_routing": {
+        "risk_on": 1.3,
+        "neutral": 1.0,
+        "risk_off": 0.4,
+        "crisis": 0.1
+      },
+      "muting_rules": [
+        "REDUCE 60% in risk_off",
+        "MUTE 90% of time in crisis"
+      ],
+      "feature_dependencies": [
+        "fusion_score",
+        "liquidity_score",
+        "rsi_14",
+        "atr_20",
+        "tf4h_external_trend"
+      ]
+    },
+    "long_squeeze": {
+      "codes": ["S5"],
+      "family": "Bear Patterns",
+      "direction": "short",
+      "priority": "HIGH",
+      "trials": {
+        "coarse": 100,
+        "fine": 60,
+        "total": 160
+      },
+      "estimated_runtime_hours": 5,
+      "parameters": {
+        "fusion_threshold": {
+          "type": "float",
+          "range": [0.34, 0.46],
+          "step": 0.01,
+          "default": 0.38
+        },
+        "min_liquidity": {
+          "type": "float",
+          "range": [0.08, 0.18],
+          "step": 0.01,
+          "default": 0.12
+        },
+        "funding_z_min": {
+          "type": "float",
+          "range": [1.2, 2.0],
+          "step": 0.1,
+          "default": 1.5,
+          "critical_note": "Positive funding = LONG squeeze DOWN (corrected logic)"
+        },
+        "rsi_min": {
+          "type": "int",
+          "range": [68, 78],
+          "step": 1,
+          "default": 72
+        },
+        "oi_change_min": {
+          "type": "float",
+          "range": [0.05, 0.15],
+          "step": 0.01,
+          "default": 0.08
+        },
+        "archetype_weight": {
+          "type": "float",
+          "range": [2.0, 3.5],
+          "step": 0.1,
+          "default": 2.8
+        }
+      },
+      "targets": {
+        "profit_factor": [2.0, 3.0],
+        "max_drawdown": 0.22,
+        "min_trades_per_year": 40,
+        "win_rate": [0.55, 0.65]
+      },
+      "regime_routing": {
+        "risk_on": 0.3,
+        "neutral": 0.8,
+        "risk_off": 2.0,
+        "crisis": 2.5
+      },
+      "muting_rules": [
+        "ONLY ACTIVE if funding_z > 1.5 AND regime in {risk_off, crisis}",
+        "MUTE in sustained risk_on (>10 days)"
+      ],
+      "feature_dependencies": [
+        "fusion_score",
+        "liquidity_score",
+        "funding_Z",
+        "oi_change_24h",
+        "rsi_14"
+      ]
+    },
+    "expansion_exhaustion": {
+      "codes": ["F"],
+      "family": "Exhaustion",
+      "direction": "long",
+      "priority": "MEDIUM",
+      "trials": {
+        "coarse": 80,
+        "fine": 40,
+        "total": 120
+      },
+      "estimated_runtime_hours": 4,
+      "parameters": {
+        "fusion_threshold": {
+          "type": "float",
+          "range": [0.35, 0.48],
+          "step": 0.01,
+          "default": 0.40
+        },
+        "min_liquidity": {
+          "type": "float",
+          "range": [0.08, 0.15],
+          "step": 0.01,
+          "default": 0.11
+        },
+        "rsi_extreme_min": {
+          "type": "int",
+          "range": [75, 82],
+          "step": 1,
+          "default": 78
+        },
+        "atr_percentile_min": {
+          "type": "float",
+          "range": [0.85, 0.95],
+          "step": 0.01,
+          "default": 0.90
+        },
+        "vol_z_min": {
+          "type": "float",
+          "range": [0.8, 1.5],
+          "step": 0.1,
+          "default": 1.0
+        },
+        "archetype_weight": {
+          "type": "float",
+          "range": [1.5, 3.0],
+          "step": 0.1,
+          "default": 2.2
+        }
+      },
+      "targets": {
+        "profit_factor": [1.8, 3.0],
+        "max_drawdown": 0.22,
+        "min_trades_per_year": 40,
+        "win_rate": [0.48, 0.58]
+      },
+      "regime_routing": {
+        "risk_on": 1.2,
+        "neutral": 1.0,
+        "risk_off": 0.5,
+        "crisis": 0.2
+      },
+      "feature_dependencies": [
+        "fusion_score",
+        "liquidity_score",
+        "rsi_14",
+        "atr_20",
+        "volume_zscore"
+      ]
+    },
+    "re_accumulate_base": {
+      "codes": ["M"],
+      "family": "Wyckoff",
+      "direction": "long",
+      "priority": "MEDIUM",
+      "trials": {
+        "coarse": 80,
+        "fine": 40,
+        "total": 120
+      },
+      "estimated_runtime_hours": 4,
+      "parameters": {
+        "fusion_threshold": {
+          "type": "float",
+          "range": [0.32, 0.45],
+          "step": 0.01,
+          "default": 0.38
+        },
+        "min_liquidity": {
+          "type": "float",
+          "range": [0.15, 0.25],
+          "step": 0.01,
+          "default": 0.19
+        },
+        "atr_percentile_max": {
+          "type": "float",
+          "range": [0.25, 0.40],
+          "step": 0.01,
+          "default": 0.32
+        },
+        "poc_dist_max": {
+          "type": "float",
+          "range": [0.40, 0.70],
+          "step": 0.02,
+          "default": 0.55
+        },
+        "boms_strength_min": {
+          "type": "float",
+          "range": [0.35, 0.55],
+          "step": 0.02,
+          "default": 0.45
+        },
+        "archetype_weight": {
+          "type": "float",
+          "range": [1.5, 2.8],
+          "step": 0.1,
+          "default": 2.1
+        }
+      },
+      "targets": {
+        "profit_factor": [1.8, 2.8],
+        "max_drawdown": 0.18,
+        "min_trades_per_year": 50,
+        "win_rate": [0.50, 0.60]
+      },
+      "regime_routing": {
+        "risk_on": 1.1,
+        "neutral": 1.0,
+        "risk_off": 0.8,
+        "crisis": 0.5
+      },
+      "feature_dependencies": [
+        "fusion_score",
+        "liquidity_score",
+        "atr_20",
+        "tf1d_boms_strength"
+      ]
+    },
+    "failed_continuation": {
+      "codes": ["D"],
+      "family": "Failed Break",
+      "direction": "long",
+      "priority": "LOW",
+      "trials": {
+        "coarse": 60,
+        "fine": 30,
+        "total": 90
+      },
+      "estimated_runtime_hours": 3,
+      "parameters": {
+        "fusion_threshold": {
+          "type": "float",
+          "range": [0.38, 0.50],
+          "step": 0.01,
+          "default": 0.43
+        },
+        "min_liquidity": {
+          "type": "float",
+          "range": [0.10, 0.18],
+          "step": 0.01,
+          "default": 0.14
+        },
+        "rsi_max": {
+          "type": "int",
+          "range": [45, 55],
+          "step": 1,
+          "default": 50
+        },
+        "archetype_weight": {
+          "type": "float",
+          "range": [1.2, 2.5],
+          "step": 0.1,
+          "default": 1.8
+        }
+      },
+      "targets": {
+        "profit_factor": [1.5, 2.5],
+        "max_drawdown": 0.20,
+        "min_trades_per_year": 30,
+        "win_rate": [0.45, 0.55]
+      },
+      "regime_routing": {
+        "risk_on": 0.9,
+        "neutral": 1.0,
+        "risk_off": 0.6,
+        "crisis": 0.3
+      },
+      "feature_dependencies": [
+        "fusion_score",
+        "liquidity_score",
+        "rsi_14"
+      ]
+    },
+    "distribution_climax": {
+      "codes": ["S4"],
+      "family": "Bear Patterns",
+      "direction": "short",
+      "priority": "LOW",
+      "status": "PHASE_2",
+      "trials": {
+        "coarse": 60,
+        "fine": 30,
+        "total": 90
+      },
+      "estimated_runtime_hours": 3,
+      "parameters": {
+        "fusion_threshold": {
+          "type": "float",
+          "range": [0.35, 0.47],
+          "step": 0.01,
+          "default": 0.40
+        },
+        "min_liquidity": {
+          "type": "float",
+          "range": [0.12, 0.22],
+          "step": 0.01,
+          "default": 0.17
+        },
+        "vol_z_min": {
+          "type": "float",
+          "range": [1.5, 2.2],
+          "step": 0.1,
+          "default": 1.8
+        },
+        "rsi_min": {
+          "type": "int",
+          "range": [58, 68],
+          "step": 1,
+          "default": 63
+        },
+        "archetype_weight": {
+          "type": "float",
+          "range": [1.5, 2.5],
+          "step": 0.1,
+          "default": 2.0
+        }
+      },
+      "targets": {
+        "profit_factor": [1.5, 2.2],
+        "max_drawdown": 0.20,
+        "min_trades_per_year": 60,
+        "win_rate": [0.52, 0.62]
+      },
+      "regime_routing": {
+        "risk_on": 0.4,
+        "neutral": 1.0,
+        "risk_off": 1.8,
+        "crisis": 2.0
+      },
+      "feature_dependencies": [
+        "fusion_score",
+        "liquidity_score",
+        "volume_zscore",
+        "rsi_14",
+        "tf4h_external_trend"
+      ]
+    },
+    "breakdown": {
+      "codes": ["S1"],
+      "family": "Bear Patterns",
+      "direction": "short",
+      "priority": "LOW",
+      "status": "BLOCKED",
+      "blocker": "liquidity_score feature missing - requires backfill",
+      "trials": {
+        "coarse": 60,
+        "fine": 30,
+        "total": 90
+      },
+      "estimated_runtime_hours": 3,
+      "parameters": {
+        "fusion_threshold": {
+          "type": "float",
+          "range": [0.36, 0.48],
+          "step": 0.01,
+          "default": 0.42
+        },
+        "min_liquidity": {
+          "type": "float",
+          "range": [0.08, 0.18],
+          "step": 0.01,
+          "default": 0.13
+        },
+        "liquidity_score_max": {
+          "type": "float",
+          "range": [0.18, 0.28],
+          "step": 0.01,
+          "default": 0.23
+        },
+        "vol_z_min": {
+          "type": "float",
+          "range": [0.8, 1.5],
+          "step": 0.1,
+          "default": 1.1
+        },
+        "archetype_weight": {
+          "type": "float",
+          "range": [2.0, 3.2],
+          "step": 0.1,
+          "default": 2.6
+        }
+      },
+      "targets": {
+        "profit_factor": [1.8, 2.8],
+        "max_drawdown": 0.22,
+        "min_trades_per_year": 50,
+        "win_rate": [0.53, 0.63]
+      },
+      "regime_routing": {
+        "risk_on": 0.2,
+        "neutral": 0.7,
+        "risk_off": 1.8,
+        "crisis": 2.5
+      },
+      "feature_dependencies": [
+        "fusion_score",
+        "liquidity_score",
+        "volume_zscore",
+        "tf4h_external_trend"
+      ]
+    },
+    "failed_rally": {
+      "codes": ["S2"],
+      "family": "Bear Patterns",
+      "direction": "short",
+      "priority": "DISABLED",
+      "status": "PERMANENTLY_DISABLED",
+      "reason": "157 optimization attempts achieved PF 0.48 - fundamental negative edge",
+      "historical_performance": {
+        "attempts": 157,
+        "best_pf": 0.48,
+        "best_win_rate": 0.45,
+        "forward_returns_24h": -0.0068,
+        "statistical_significance": "p=0.18 (insufficient)"
+      },
+      "action": "Remove from all configurations. Do not attempt further optimization."
+    }
+  },
+  "global_constraints": {
+    "production_deployment_criteria": {
+      "minimum_oos_pf": 1.5,
+      "maximum_oos_dd": 0.20,
+      "maximum_pf_degradation": 0.30,
+      "minimum_oos_trades": 20,
+      "maximum_consecutive_losses": 5
+    },
+    "bull_archetype_additional_criteria": {
+      "risk_on_minimum_pf": 2.0,
+      "crisis_expected_behavior": "PF < 1.0 OR trades < 5"
+    },
+    "bear_archetype_additional_criteria": {
+      "risk_off_minimum_pf": 1.8,
+      "risk_on_expected_behavior": "PF < 1.2 OR trades < 5"
+    }
+  },
+  "optimization_configuration": {
+    "sampler": "TPESampler",
+    "sampler_config": {
+      "seed": 42,
+      "multivariate": true,
+      "n_startup_trials": 20
+    },
+    "pruner": "HyperbandPruner",
+    "pruner_config": {
+      "min_resource": 1,
+      "max_resource": 9,
+      "reduction_factor": 3
+    },
+    "multi_fidelity_levels": {
+      "L1_1month": {
+        "period": "2024-09-01 to 2024-09-30",
+        "prune_if": "PF < 1.0",
+        "keep_fraction": 0.50
+      },
+      "L2_3month": {
+        "period": "2024-07-01 to 2024-09-30",
+        "prune_if": "PF < 1.3 OR trades < 10",
+        "keep_fraction": 0.20
+      },
+      "L3_9month": {
+        "period": "2024-01-01 to 2024-09-30",
+        "prune_if": "full scoring function",
+        "keep_top_n": 5
+      },
+      "L4_oos": {
+        "period": "2024-10-01 to 2024-12-31",
+        "prune_if": "degradation > 30%",
+        "keep_top_n": 1
+      }
+    }
+  },
+  "scoring_function": {
+    "formula": "score = (pf_score * 0.40 + sharpe_score * 0.25 + regime_score * 0.15) - (dd_penalty * 0.12 + trade_penalty * 0.08)",
+    "components": {
+      "pf_score": {
+        "formula": "(pf / target_pf) ** 1.5",
+        "weight": 0.40,
+        "note": "Exponential reward for exceeding target"
+      },
+      "sharpe_score": {
+        "formula": "max(0, sharpe / 1.5)",
+        "weight": 0.25,
+        "note": "Linear scaling, target Sharpe = 1.5"
+      },
+      "regime_score": {
+        "formula": "regime_multipliers[current_regime]",
+        "weight": 0.15,
+        "note": "Bull archetypes boosted in risk_on, bear in risk_off"
+      },
+      "dd_penalty": {
+        "formula": "((dd - dd_threshold) / dd_threshold) ** 2 if dd > threshold else 0",
+        "weight": 0.12,
+        "note": "Quadratic penalty for exceeding DD threshold"
+      },
+      "trade_penalty": {
+        "formula": "((trades - threshold) / threshold) ** 2 if outside [min, max] else 0",
+        "weight": 0.08,
+        "note": "Quadratic penalty for too few/many trades"
+      }
+    },
+    "hard_constraints": {
+      "negative_pf": -1000,
+      "catastrophic_dd": -1000,
+      "insufficient_trades": -1000
+    }
+  }
+}

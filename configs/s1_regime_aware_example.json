@@ -1,0 +1,82 @@
+{
+  "version": "s1_regime_aware_example_v1",
+  "profile": "S1 Liquidity Vacuum - Regime-Aware Example",
+  "description": "Example config demonstrating per-regime threshold optimization for S1",
+
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX", "DXY", "MOVE", "YIELD_2Y", "YIELD_10Y",
+      "USDT.D", "BTC.D", "TOTAL", "TOTAL2",
+      "funding", "oi", "rv_20d", "rv_60d"
+    ],
+    "zero_fill_missing": false
+  },
+
+  "archetypes": {
+    "use_archetypes": true,
+    "enable_S1": true,
+    "_comment": "All other archetypes disabled for S1-only testing",
+
+    "thresholds": {
+      "liquidity_vacuum": {
+        "_comment": "S1 Liquidity Vacuum - regime-aware thresholds",
+        "_optimization_date": "2025-11-25",
+        "_training_data": "2022-01-01 to 2022-12-31",
+        "_validation_data": "2023-01-01 to 2023-06-30",
+
+        "allowed_regimes": ["risk_off", "crisis"],
+
+        "_comment_base": "Base thresholds (fallback when regime unavailable)",
+        "fusion_threshold": 0.45,
+        "liquidity_max": 0.15,
+        "volume_z_min": 2.0,
+        "wick_lower_min": 0.30,
+        "cooldown_bars": 12,
+        "atr_stop_mult": 2.5,
+
+        "_comment_regime": "Per-regime optimized thresholds",
+        "regime_thresholds": {
+          "risk_off": {
+            "_comment": "Risk-off: Steady bear markets, moderate stress",
+            "_optimization_metrics": {
+              "profit_factor": 2.45,
+              "win_rate": 55.2,
+              "event_recall": 66.7,
+              "trades_per_year": 12.3,
+              "sharpe_ratio": 1.82
+            },
+            "fusion_threshold": 0.48,
+            "liquidity_max": 0.18,
+            "volume_z_min": 1.8,
+            "wick_lower_min": 0.28,
+            "cooldown_bars": 14,
+            "atr_stop_mult": 2.8
+          },
+          "crisis": {
+            "_comment": "Crisis: Extreme capitulation, LUNA/FTX events",
+            "_optimization_metrics": {
+              "profit_factor": 3.12,
+              "win_rate": 62.5,
+              "event_recall": 100.0,
+              "trades_per_year": 8.7,
+              "sharpe_ratio": 2.41
+            },
+            "fusion_threshold": 0.42,
+            "liquidity_max": 0.12,
+            "volume_z_min": 2.2,
+            "wick_lower_min": 0.32,
+            "cooldown_bars": 10,
+            "atr_stop_mult": 2.2
+          }
+        },
+
+        "_ground_truth_events": [
+          "2022-05-12 (LUNA death spiral)",
+          "2022-06-18 (Market capitulation)",
+          "2022-11-09 (FTX collapse)"
+        ]
+      }
+    }
+  }
+}

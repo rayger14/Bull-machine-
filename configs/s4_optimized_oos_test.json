@@ -1,0 +1,146 @@
+{
+  "version": "s4_optimized_v1",
+  "profile": "S4 OOS Validation (2023 H1)",
+  "description": "S4 (Funding Divergence) optimized config - OOS validation on 2023 bull market recovery",
+  "adaptive_fusion": false,
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX",
+      "DXY",
+      "MOVE",
+      "YIELD_2Y",
+      "YIELD_10Y",
+      "USDT.D",
+      "BTC.D",
+      "TOTAL",
+      "TOTAL2",
+      "funding",
+      "oi",
+      "rv_20d",
+      "rv_60d"
+    ],
+    "zero_fill_missing": false,
+    "regime_override": {}
+  },
+  "ml_filter": {
+    "enabled": false
+  },
+  "fusion": {
+    "entry_threshold_confidence": 0.99,
+    "weights": {
+      "wyckoff": 0.35,
+      "liquidity": 0.3,
+      "momentum": 0.35,
+      "smc": 0.0
+    }
+  },
+  "risk": {
+    "base_risk_pct": 0.015,
+    "max_position_size_pct": 0.15,
+    "max_portfolio_risk_pct": 0.08
+  },
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 8,
+    "enable_A": false,
+    "enable_B": false,
+    "enable_C": false,
+    "enable_D": false,
+    "enable_E": false,
+    "enable_F": false,
+    "enable_G": false,
+    "enable_H": false,
+    "enable_K": false,
+    "enable_L": false,
+    "enable_M": false,
+    "enable_S1": false,
+    "enable_S2": false,
+    "enable_S3": false,
+    "enable_S4": true,
+    "enable_S5": false,
+    "enable_S6": false,
+    "enable_S7": false,
+    "enable_S8": false,
+    "thresholds": {
+      "min_liquidity": 0.1,
+      "funding_divergence": {
+        "direction": "long",
+        "archetype_weight": 2.5,
+        "fusion_threshold": 0.7558503304267093,
+        "final_fusion_gate": 0.7824,
+        "funding_z_max": -1.6438455427997871,
+        "resilience_min": 0.5685995899486069,
+        "liquidity_max": 0.3464841962897778,
+        "cooldown_bars": 12.0,
+        "max_risk_pct": 0.02,
+        "atr_stop_mult": 2.543459498483168,
+        "use_runtime_features": true,
+        "funding_lookback": 24,
+        "price_lookback": 12,
+        "weights": {
+          "funding_negative": 0.4,
+          "price_resilience": 0.3,
+          "volume_quiet": 0.15,
+          "liquidity_thin": 0.15
+        },
+        "_calibration_metadata": {
+          "applied_date": "2025-12-08",
+          "optuna_db": "results/s4_calibration/optuna_s4_calibration.db",
+          "study_name": "s4_calibration",
+          "trial_id": 25,
+          "trial_number": 24,
+          "best_pf": 10.0,
+          "parameter_count": 6,
+          "tool": "bin/apply_optimized_calibrations.py (manual)"
+        }
+      }
+    },
+    "routing": {
+      "risk_on": {
+        "weights": {
+          "funding_divergence": 0.5
+        }
+      },
+      "neutral": {
+        "weights": {
+          "funding_divergence": 1.0
+        }
+      },
+      "risk_off": {
+        "weights": {
+          "funding_divergence": 1.0
+        }
+      },
+      "crisis": {
+        "weights": {
+          "funding_divergence": 1.5
+        }
+      }
+    }
+  },
+  "feature_flags": {
+    "enable_wyckoff": true,
+    "enable_smc": true,
+    "enable_temporal": true,
+    "enable_hob": true,
+    "enable_fusion": true,
+    "enable_macro": true,
+    "use_temporal_confluence": true,
+    "use_fusion_layer": true,
+    "use_macro_regime": true
+  },
+  "_domain_engine_metadata": {
+    "enabled_date": "2025-12-08T15:49:52.122823",
+    "enabled_engines": [
+      "enable_wyckoff",
+      "enable_smc",
+      "enable_temporal",
+      "enable_hob",
+      "enable_fusion",
+      "enable_macro"
+    ],
+    "tool": "bin/enable_domain_engines.py",
+    "reason": "Fix archetype feature coverage from 20% to 100%"
+  }
+}

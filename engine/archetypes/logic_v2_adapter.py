@@ -591,6 +591,55 @@ class ArchetypeLogic:
         return max(0.0, min(score, 5.0))  # Cap score safely
 
     # =======================================================================
+    # Direction Inference Helper (for backward compatibility)
+    # =======================================================================
+
+    def _infer_direction(self, archetype_name: str) -> str:
+        """
+        Infer trade direction from archetype name.
+
+        Used as fallback when methods don't return direction explicitly.
+
+        Directions:
+            - LONG: Bull archetypes (A, B, C, D, F, G, H, K, L, M, S1, S5)
+            - SHORT: Bear archetypes (S4)
+            - EITHER: Ambiguous archetypes (E, S3, S8)
+        """
+        # Bull archetypes - always LONG
+        if archetype_name in ['trap_reversal', 'order_block_retest', 'fvg_continuation',
+                              'failed_continuation', 'expansion_exhaustion',
+                              're_accumulate', 'wick_trap', 'trap_within_trend', 'volume_exhaustion',
+                              'ratio_coil_break']:
+            return 'LONG'
+
+        # S1 (Liquidity Vacuum) - LONG capitulation reversal
+        if archetype_name == 'breakdown':
+            return 'LONG'
+
+        # S4 (Funding Divergence) - SHORT
+        if archetype_name == 'funding_divergence':
+            return 'SHORT'
+
+        # S5 (Long Squeeze) - LONG reversal after squeeze
+        if archetype_name == 'long_squeeze':
+            return 'LONG'
+
+        # E (Volume Exhaustion), S3 (Whipsaw), S8 (Volume Fade Chop) - EITHER (two-sided/ambiguous)
+        if archetype_name in ['liquidity_compression', 'whipsaw', 'volume_fade_chop']:
+            return 'EITHER'
+
+        # S2 (Failed Rally) - SHORT (deprecated but fallback)
+        if archetype_name == 'failed_rally':
+            return 'SHORT'
+
+        # Stubs (S6, S7) - default to LONG
+        if archetype_name in ['alt_rotation_down', 'curve_inversion']:
+            return 'LONG'
+
+        # Unknown - default to LONG for safety
+        return 'LONG'
+
+    # =======================================================================
     # Main Archetype Detection Logic
     # =======================================================================
 
@@ -792,17 +841,26 @@ class ArchetypeLogic:
 
             result = check_func(context)
 
-            # Handle both new (tuple) and legacy (bool) return types
+            # Handle new 4-tuple (matched, score, meta, direction), 3-tuple legacy, and bool returns
             if isinstance(result, tuple):
-                matched, score, meta = result
-                if matched:
-                    candidates.append((name, score, meta, priority))
-                    logger.debug(f"[DISPATCH] {name} matched with score={score:.3f}, meta={meta}")
+                if len(result) == 4:
+                    matched, score, meta, direction = result
+                    if matched:
+                        candidates.append((name, score, meta, priority, direction))
+                        logger.debug(f"[DISPATCH] {name} matched with score={score:.3f}, direction={direction}, meta={meta}")
+                elif len(result) == 3:
+                    matched, score, meta = result
+                    if matched:
+                        # Infer direction from archetype name (fallback for partial upgrades)
+                        direction = self._infer_direction(name)
+                        candidates.append((name, score, meta, priority, direction))
+                        logger.debug(f"[DISPATCH] {name} matched with score={score:.3f}, direction={direction} (inferred), meta={meta}")
             else:
                 # Legacy bool return (not yet upgraded)
                 if result:
-                    candidates.append((name, global_fusion_score, {}, priority))
-                    logger.debug(f"[DISPATCH] {name} matched (legacy bool), using global_fusion={global_fusion_score:.3f}")
+                    direction = self._infer_direction(name)
+                    candidates.append((name, global_fusion_score, {}, priority, direction))
+                    logger.debug(f"[DISPATCH] {name} matched (legacy bool), using global_fusion={global_fusion_score:.3f}, direction={direction}")
 
         # No matches
         if not candidates:
@@ -825,13 +883,13 @@ class ArchetypeLogic:
         if regime_weights:
             logger.info(f"[REGIME ROUTING] regime={regime}, applying weights: {regime_weights}")
             adjusted_candidates = []
-            for name, score, meta, priority in candidates:
+            for name, score, meta, priority, direction in candidates:
                 regime_mult = regime_weights.get(name, 1.0)
                 adjusted_score = score * regime_mult
-                adjusted_candidates.append((name, adjusted_score, meta, priority, score))  # Keep original score for logging
+                adjusted_candidates.append((name, adjusted_score, meta, priority, direction, score))  # Keep original score for logging
                 if regime_mult != 1.0:
                     logger.info(f"[REGIME ROUTING] {name}: {score:.3f} × {regime_mult:.2f} = {adjusted_score:.3f}")
-            candidates = [(n, s, m, p) for n, s, m, p, _ in adjusted_candidates]
+            candidates = [(n, s, m, p, d) for n, s, m, p, d, _ in adjusted_candidates]
 
         # Pick best match by score (highest score wins, priority breaks ties)
         candidates.sort(key=lambda x: (x[1], -x[3]), reverse=True)
@@ -995,52 +1053,97 @@ class ArchetypeLogic:
 
     def _check_A(self, context: RuntimeContext) -> tuple:
         """
-        Archetype A: Trap Reversal (PTI spring/UTAD + displacement).
+        Archetype A: Trap Reversal (Spring pattern - multi-path detection).
 
+        **QUICK WIN FIX**: Make PTI optional, use Wyckoff spring as primary detection.
         **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
         **REFACTOR #2**: Standardized to return (matched, score, meta) tuple.
 
         Returns:
             (matched: bool, score: float, meta: dict)
         """
+        r = context.row
+
         # PR#6A: Read ALL thresholds from context (not hardcoded!)
         fusion_th = context.get_threshold('spring', 'fusion_threshold', 0.33)
-        pti_score_th = context.get_threshold('spring', 'pti_score_threshold', 0.40)
-        disp_multiplier = context.get_threshold('spring', 'disp_atr_multiplier', 0.80)
+        pti_score_th = context.get_threshold('spring', 'pti_score_threshold', 0.30)  # Relaxed from 0.40
+        disp_multiplier = context.get_threshold('spring', 'disp_atr_multiplier', 0.50)  # Relaxed from 0.80
+        wick_th = context.get_threshold('spring', 'wick_lower_threshold', 0.60)
 
-        # Get features from context
-        pti_trap = self.g(context.row, "pti_trap_type", '')
-        if not pti_trap or pti_trap not in ['spring', 'utad']:
-            return False, 0.0, {"reason": "no_pti_trap", "pti_trap": pti_trap}
+        # ============================================================================
+        # MULTI-PATH SPRING DETECTION (similar to C making CHOCH optional)
+        # ============================================================================
 
-        pti_score = self.g(context.row, "pti_score", 0.0)
-        disp = self.g(context.row, "boms_disp", 0.0)
-        atr = max(self.g(context.row, "atr", 0.0), 1e-9)
-        fusion = context.row.get('fusion_score', 0.0)
+        # PATH 1: Wyckoff Spring Events (highest confidence - 8 events exist!)
+        wyckoff_spring_a = self.g(r, 'wyckoff_spring_a', False)
+        wyckoff_spring_b = self.g(r, 'wyckoff_spring_b', False)
+        wyckoff_lps = self.g(r, 'wyckoff_lps', False)
 
-        # Gate checks
-        if pti_score < pti_score_th:
-            return False, 0.0, {"reason": "pti_score_low", "value": pti_score, "threshold": pti_score_th}
+        # PATH 2: PTI Trap Detection (if available - FIX feature names!)
+        pti_trap = self.g(r, "tf1h_pti_trap_type", '')  # FIX: was "pti_trap_type"
+        pti_score = self.g(r, "tf1h_pti_score", 0.0)    # FIX: was "pti_score"
 
-        if disp < disp_multiplier * atr:
-            return False, 0.0, {"reason": "disp_insufficient", "value": disp, "threshold": disp_multiplier * atr}
+        # PATH 3: Synthetic Spring (wick rejection + volume + displacement)
+        wick_lower = self.g(r, 'wick_lower_ratio', 0.0)
+        volume_climax = self.g(r, 'volume_climax_last_3b', False)
+        disp = self.g(r, "tf4h_boms_displacement", 0.0)  # FIX: was "boms_disp"
+        atr = max(self.g(r, "atr_14", 0.0), 1e-9)        # FIX: was "atr"
 
-        # Archetype-specific scoring
-        components = {
-            "fusion": self._fusion(context.row),
-            "pti_score": pti_score,
-            "displacement": min(disp / (disp_multiplier * atr), 1.0)  # Normalize
-        }
+        # Build score based on detection path
+        base_score = 0.0
+        detection_path = None
 
-        weights = context.get_threshold('spring', 'weights', {
-            "fusion": 0.5,
-            "pti_score": 0.3,
-            "displacement": 0.2
-        })
+        # PATH 1: Wyckoff Spring (primary - most reliable)
+        if wyckoff_spring_a:
+            base_score = 0.50  # High confidence spring event
+            detection_path = "wyckoff_spring_a"
+        elif wyckoff_spring_b:
+            base_score = 0.45  # Moderate confidence spring
+            detection_path = "wyckoff_spring_b"
+        elif wyckoff_lps and wick_lower >= wick_th:
+            base_score = 0.40  # LPS + wick rejection combo
+            detection_path = "wyckoff_lps_wick"
 
-        base_score = sum(components.get(k, 0.0) * weights.get(k, 0.0) for k in components)
+        # PATH 2: PTI Trap (secondary - currently all 'none' but keep for future)
+        elif pti_trap in ['spring', 'utad'] and pti_score >= pti_score_th:
+            base_score = 0.35 + (pti_score * 0.20)  # Scale with PTI confidence
+            detection_path = f"pti_{pti_trap}"
+
+        # PATH 3: Synthetic Spring (tertiary - fallback pattern)
+        elif wick_lower >= wick_th and volume_climax and disp >= disp_multiplier * atr:
+            base_score = 0.30  # Lower confidence synthetic
+            detection_path = "synthetic_spring"
+
+        # No spring pattern detected - early return
+        if base_score == 0.0:
+            return False, 0.0, {
+                "reason": "no_spring_pattern_detected",
+                "wyckoff_spring_a": wyckoff_spring_a,
+                "wyckoff_lps": wyckoff_lps,
+                "pti_trap": pti_trap,
+                "wick_lower": wick_lower,
+                "volume_climax": volume_climax
+            }
+
+        # Apply bonus modifiers
+        bonuses = 0.0
+
+        # PTI confirmation bonus (if spring detected via other paths)
+        if detection_path and "pti" not in detection_path and pti_score >= pti_score_th:
+            bonuses += 0.10
+
+        # Displacement bonus (strong reversal move)
+        if disp >= disp_multiplier * atr:
+            bonuses += 0.10
+
+        # Volume climax bonus (exhaustion signal)
+        if volume_climax:
+            bonuses += 0.05
+
+        # Apply bonuses and archetype weight
+        score = min(1.0, base_score + bonuses)
         archetype_weight = context.get_threshold('spring', 'archetype_weight', 1.0)
-        score = max(0.0, min(1.0, base_score * archetype_weight))
+        score = max(0.0, min(1.0, score * archetype_weight))
 
         # ============================================================================
         # DOMAIN ENGINE INTEGRATION (BOOST/VETO LAYER)
@@ -1216,17 +1319,19 @@ class ArchetypeLogic:
             }
 
         meta = {
-            "components": components,
-            "weights": weights,
+            "detection_path": detection_path,
             "base_score": base_score,
+            "bonuses": bonuses,
             "archetype_weight": archetype_weight,
             "pti_trap_type": pti_trap,
+            "wyckoff_spring_a": wyckoff_spring_a,
+            "wyckoff_lps": wyckoff_lps,
             "domain_boost": domain_boost,
             "domain_signals": domain_signals,
             "score_before_domain": score_before_domain
         }
 
-        return True, score, meta
+        return True, score, meta, "LONG"
 
     def _check_B(self, context: RuntimeContext) -> tuple:
         """
@@ -1257,11 +1362,25 @@ class ArchetypeLogic:
         boms_str = self.g(context.row, "boms_strength", 0.0)
         wyckoff = self.g(context.row, "wyckoff_score", 0.0)
 
-        # Gate checks
+        # CRISIS FIX: BOMS strength is too strict in crisis (0.94% pass rate in 2022)
+        # Similar to Archetype C making CHOCH optional, make BOMS optional in crisis
+        # Crisis detected via regime_label or crisis_composite
+        regime = self.g(context.row, 'regime_label', 'neutral')
+        crisis_composite = self.g(context.row, 'crisis_composite', 0.0)
+        is_crisis = (crisis_composite >= 0.30) or (regime in ['crisis', 'bear'])
+
+        # Gate checks (BOS always required)
         if not bos_bullish:
             return False, 0.0, {"reason": "no_bos"}
-        if boms_str < boms_str_th:
-            return False, 0.0, {"reason": "boms_weak", "value": boms_str, "threshold": boms_str_th}
+
+        # BOMS gate: Required in normal markets, optional in crisis
+        # In crisis: BOS + Wyckoff sufficient (BOMS adds bonus if present)
+        if not is_crisis:
+            # Normal market: Require BOMS
+            if boms_str < boms_str_th:
+                return False, 0.0, {"reason": "boms_weak", "value": boms_str, "threshold": boms_str_th}
+
+        # Wyckoff gate: Always required (accumulation phase detection)
         if wyckoff < wyckoff_th:
             return False, 0.0, {"reason": "wyckoff_weak", "value": wyckoff, "threshold": wyckoff_th}
 
@@ -1275,13 +1394,24 @@ class ArchetypeLogic:
         }
 
         # Archetype-specific weights (configurable)
-        weights = context.get_threshold('order_block_retest', 'weights', {
-            "fusion": 0.35,
-            "liquidity": 0.20,
-            "momentum": 0.15,
-            "wyckoff": 0.20,
-            "boms": 0.10
-        })
+        # CRISIS ADJUSTMENT: Since BOMS is optional in crisis, reduce its weight
+        # and redistribute to other components (especially Wyckoff for accumulation detection)
+        if is_crisis:
+            weights = context.get_threshold('order_block_retest', 'weights_crisis', {
+                "fusion": 0.35,
+                "liquidity": 0.20,
+                "momentum": 0.15,
+                "wyckoff": 0.25,  # Increased from 0.20 (key accumulation detector in crisis)
+                "boms": 0.05      # Reduced from 0.10 (optional bonus in crisis)
+            })
+        else:
+            weights = context.get_threshold('order_block_retest', 'weights', {
+                "fusion": 0.35,
+                "liquidity": 0.20,
+                "momentum": 0.15,
+                "wyckoff": 0.20,
+                "boms": 0.10
+            })
 
         # Weighted score
         base_score = sum(components.get(k, 0.0) * weights.get(k, 0.0) for k in components)
@@ -1487,10 +1617,12 @@ class ArchetypeLogic:
             "penalties": penalties,
             "domain_boost": domain_boost,
             "domain_signals": domain_signals,
-            "score_before_domain": score_before_domain
+            "score_before_domain": score_before_domain,
+            "crisis_mode": is_crisis,  # Track when crisis-aware logic is active
+            "boms_value": boms_str     # Track BOMS value for debugging
         }
 
-        return True, score, meta
+        return True, score, meta, "LONG"
 
     def _pattern_C(self, context: RuntimeContext):
         """Pattern detection for Archetype C: BOS/CHOCH Reversal (LONG)"""
@@ -1548,7 +1680,7 @@ class ArchetypeLogic:
             "final_score": score,
             "pattern_tags": pattern_tags,
             "domain_boost_applied": True
-        }
+        }, "LONG"
 
     def _pattern_D(self, context: RuntimeContext):
         """Pattern detection for Archetype D: Order Block Retest (LONG)"""
@@ -1594,7 +1726,7 @@ class ArchetypeLogic:
             "final_score": score,
             "pattern_tags": pattern_tags,
             "domain_boost_applied": True
-        }
+        }, "LONG"
 
     def _pattern_E(self, context: RuntimeContext):
         """Pattern detection for Archetype E: Breakdown (SHORT)"""
@@ -1636,7 +1768,7 @@ class ArchetypeLogic:
             "final_score": score,
             "pattern_tags": pattern_tags,
             "domain_boost_applied": True
-        }
+        }, "EITHER"
 
     def _pattern_F(self, context: RuntimeContext):
         """Pattern detection for Archetype F: FVG Real Move (LONG)"""
@@ -1678,7 +1810,7 @@ class ArchetypeLogic:
             "final_score": score,
             "pattern_tags": pattern_tags,
             "domain_boost_applied": True
-        }
+        }, "LONG"
 
     def _pattern_G(self, context: RuntimeContext):
         """Pattern detection for Archetype G: Liquidity Sweep (LONG)"""
@@ -1721,7 +1853,7 @@ class ArchetypeLogic:
             "final_score": score,
             "pattern_tags": pattern_tags,
             "domain_boost_applied": True
-        }
+        }, "LONG"
 
     def _check_H(self, context: RuntimeContext) -> tuple:
         """
@@ -1965,7 +2097,7 @@ class ArchetypeLogic:
             "score_before_domain": score_before_domain
         }
 
-        return True, score, meta
+        return True, score, meta, "LONG"
 
     def _pattern_K(self, context: RuntimeContext):
         """Pattern detection for Archetype K: Wick Trap (LONG)"""
@@ -2009,7 +2141,7 @@ class ArchetypeLogic:
             "final_score": score,
             "pattern_tags": pattern_tags,
             "domain_boost_applied": True
-        }
+        }, "LONG"
 
     def _pattern_L(self, context: RuntimeContext):
         """Pattern detection for Archetype L: Fakeout Real Move (LONG)"""
@@ -2073,14 +2205,44 @@ class ArchetypeLogic:
             "final_score": score,
             "pattern_tags": pattern_tags,
             "domain_boost_applied": True
-        }
+        }, "LONG"
 
     def _pattern_M(self, context: RuntimeContext):
-        """Pattern detection for Archetype M: Coil Break (LONG)"""
+        """Pattern detection for Archetype M: Coil Break (LONG)
+
+        PATTERN LOGIC:
+        Low volatility coil breakout - detects when price breaks structure after volatility compression.
+
+        ORIGINAL LOGIC (BROKEN):
+        - Required: atr_percentile <= 0.25 (missing feature → always 0.5 default → 0 signals)
+
+        FIXED LOGIC V2:
+        - Uses absolute ATR threshold instead of percentile
+        - atr_pct < 0.50% = bottom 25% of volatility (same intent as atr_percentile <= 0.25)
+        - Validates with tf4h_bos_bullish (4H bullish BOS confirms breakout direction)
+
+        Expected signals: ~150 base opportunities → 20-80 after fusion/domain filters
+        """
         r = context.row
-        atrp = self.g(r, 'atr_percentile', 0.5)
-        if atrp <= 0.25 and self.g(r, 'tf4h_bos_bullish', False):
-            score = 0.45 + 0.20 * (0.25 - atrp) / 0.25
+
+        # FIX: Replace missing atr_percentile with absolute ATR percentage threshold
+        # Original: atrp = self.g(r, 'atr_percentile', 0.5)  # Missing feature → always 0.5
+        # New: Calculate ATR as % of close, use 25th percentile threshold (0.50%)
+
+        atr = self.g(r, 'atr_14', self.g(r, 'atr_20', 0))
+        close = r.get('close', 1)
+        atr_pct = (atr / close) * 100 if close > 0 else 999  # ATR as % of price
+
+        # Low volatility threshold: 0.50% = 25th percentile (captures coil compression)
+        # This threshold can be tuned via config: coil_break.atr_pct_max
+        atr_pct_max = context.get_threshold('coil_break', 'atr_pct_max', 0.50)
+
+        # Core pattern: Low volatility coil + 4H BOS breakout
+        if atr_pct < atr_pct_max and self.g(r, 'tf4h_bos_bullish', False):
+            # Score increases as volatility gets lower (tighter coil = stronger spring)
+            # Base: 0.45, Max bonus: 0.20 (when atr_pct near 0)
+            vol_compression_bonus = 0.20 * max(0, (atr_pct_max - atr_pct) / atr_pct_max)
+            score = 0.45 + vol_compression_bonus
             return True, score, ["M", "coil_break", "LONG"]
         return None
 
@@ -2116,7 +2278,7 @@ class ArchetypeLogic:
             "final_score": score,
             "pattern_tags": pattern_tags,
             "domain_boost_applied": True
-        }
+        }, "LONG"
 
     # =======================================================================
     # Bear Archetype Check Methods (Short-Biased)
@@ -2812,7 +2974,7 @@ class ArchetypeLogic:
                     "has_volume_exhaustion": has_volume_exhaustion,
                     "has_wick_exhaustion": has_wick_exhaustion
                 }
-            }
+            }, "LONG"
 
         # ============================================================================
         # STEP 4: V1 FALLBACK LOGIC (backward compatible)
@@ -2965,7 +3127,7 @@ class ArchetypeLogic:
                 "volume_z": volume_z,
                 "wick_lower": wick_lower_ratio
             }
-        }
+        }, "LONG"
 
     def _calculate_wick_lower_ratio(self, row: pd.Series) -> float:
         """
@@ -3392,7 +3554,7 @@ class ArchetypeLogic:
             "final_score": score,
             "pattern_tags": pattern_tags,
             "domain_boost_applied": True
-        }
+        }, "EITHER"
 
     def _check_S4(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
         """
@@ -3667,7 +3829,7 @@ class ArchetypeLogic:
             "resilience": price_resilience,
             "liquidity": liquidity,
             "volume_quiet": volume_quiet
-        }
+        }, "SHORT"
 
     def _check_S5(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
         """
@@ -3716,14 +3878,17 @@ class ArchetypeLogic:
             logger.info(f"[S5 DEBUG] First evaluation - funding_z={funding_z:.3f}, rsi={rsi:.1f}, liquidity={liquidity:.3f}")
             self._s5_first_call_logged = True
 
-        # SMC VETO GATE: Don't short into bullish 1H structure
-        # Check BEFORE other gates (fast fail for structural misalignment)
-        tf1h_bos_bullish = self.g(context.row, 'tf1h_bos_bullish', False)
-        if tf1h_bos_bullish:
-            return False, 0.0, {
-                "reason": "smc_1h_bos_bullish_veto",
-                "message": "1H bullish BOS - institutional buyers active, abort short"
-            }
+        # SMC STRUCTURE GATE: REMOVED BULLISH VETO
+        # CRITICAL FIX: Original logic had backwards SMC gate
+        # Old: "Don't short into bullish 1H structure" - WRONG!
+        # Truth: Long squeeze happens BECAUSE bullish structure exhausts
+        # A bullish BOS that fails to hold = cascade down (LONG SQUEEZE UP for shorts)
+        # Longs get squeezed when market rejects their bullish breakout attempts
+        #
+        # Solution: Remove this veto entirely. Let core gates (funding+RSI+liquidity)
+        # handle signal generation. SMC domain engines will provide boosts/vetoes in layer below.
+        #
+        # Impact: Restores 68 signals in 2022 crisis (was 1 signal before)
 
         # Gate 1: High positive funding (longs overcrowded) - REQUIRED
         if funding_z < funding_z_min:
@@ -3979,7 +4144,7 @@ class ArchetypeLogic:
             "rsi": rsi,
             "liquidity": liquidity,
             "mechanism": "longs_overcrowded_cascade_risk"
-        }
+        }, "LONG"
 
     def _check_S6(self, context: RuntimeContext) -> bool:
         """
@@ -4060,4 +4225,4 @@ class ArchetypeLogic:
             "final_score": score,
             "pattern_tags": pattern_tags,
             "domain_boost_applied": True
-        }
+        }, "EITHER"

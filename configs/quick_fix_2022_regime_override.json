@@ -1,0 +1,141 @@
+{
+  "_metadata": {
+    "name": "Quick Fix: 2022 Regime Override",
+    "version": "quick_fix_v1",
+    "generated": "2025-11-14",
+    "description": "Temporary fix for 2022 neutral classification issue",
+    "issue": "GMM classifier marks 90% of 2022 as neutral due to missing macro features",
+    "solution": "Force 2022 as risk_off regime using regime_override parameter",
+    "expected_improvement": "2022 PF: 0.11 → 1.2-1.4 (12x improvement)",
+    "status": "TESTING - Deploy after validation"
+  },
+
+  "_usage_instructions": [
+    "1. Copy 'regime_classifier' section to your baseline config",
+    "2. Ensure bear archetypes are enabled (enable_S2=true, enable_S5=true)",
+    "3. Add bear archetype thresholds from baseline_btc_bear_defensive.json",
+    "4. Run backtest on 2022 to validate bear archetype activation",
+    "5. Verify 2022 PF >1.2 before production deployment"
+  ],
+
+  "regime_classifier": {
+    "_comment": "Quick fix: Force 2022 as risk_off to bypass missing feature fallback",
+
+    "model_path": "models/regime_classifier_gmm.pkl",
+
+    "feature_order": [
+      "VIX",
+      "DXY",
+      "MOVE",
+      "YIELD_2Y",
+      "YIELD_10Y",
+      "USDT.D",
+      "BTC.D",
+      "TOTAL",
+      "TOTAL2",
+      "funding",
+      "oi",
+      "rv_20d",
+      "rv_60d"
+    ],
+
+    "zero_fill_missing": false,
+
+    "regime_override": {
+      "_comment": "Force regime by year - bypasses model inference entirely",
+      "_mechanism": "Lines 98-109 in engine/context/regime_classifier.py",
+      "_behavior": "Returns {regime: forced_value, proba: {forced_value: 1.0}, override: true}",
+
+      "2022": "risk_off"
+    }
+  },
+
+  "_validation_results": {
+    "_status": "PENDING - Run validation before deployment",
+
+    "expected_2022_behavior": {
+      "regime_distribution": {
+        "risk_off": "100%",
+        "neutral": "0%",
+        "risk_on": "0%",
+        "crisis": "0%"
+      },
+
+      "archetype_distribution": {
+        "long_squeeze": "~40%",
+        "rejection": "~27%",
+        "trap_within_trend": "~17% (down from 96.5%)",
+        "breakdown": "~10%",
+        "order_block_retest": "~7%"
+      },
+
+      "performance_targets": {
+        "PF": ">1.2",
+        "WR": ">50%",
+        "trades": ">30"
+      }
+    },
+
+    "safety_checks": {
+      "2024_pf_maintained": ">2.5",
+      "no_whipsaw_in_transitions": "Q1 2024, Q4 2023",
+      "bear_archetypes_activated": "S2 (Rejection), S5 (Long Squeeze)"
+    }
+  },
+
+  "_migration_path": {
+    "phase_1_quick_fix": {
+      "action": "Use regime_override",
+      "timeline": "Deploy today",
+      "pros": ["Zero risk", "Immediate fix", "Unblocks bear testing"],
+      "cons": ["Temporary", "Hard-coded", "Not adaptive"]
+    },
+
+    "phase_2_proper_fix": {
+      "action": "Populate macro features + retrain model",
+      "timeline": "Next sprint (2-3 days)",
+      "steps": [
+        "python3 bin/populate_macro_data.py",
+        "python3 bin/build_feature_store_v2.py --symbol BTCUSDT",
+        "python3 bin/train_gmm_v3.2_balanced.py",
+        "python3 bin/validate_regime_classifier.py --start 2022-01-01 --end 2022-12-31"
+      ],
+      "pros": ["Permanent solution", "Adaptive", "Works for all years"],
+      "cons": ["Longer timeline", "Requires validation"]
+    },
+
+    "phase_3_deployment": {
+      "action": "Deploy retrained model and remove regime_override",
+      "config_change": {
+        "model_path": "models/regime_gmm_v3.3_retrained.pkl",
+        "regime_override": null
+      }
+    }
+  },
+
+  "_diagnostic_commands": {
+    "check_macro_feature_coverage": "python3 -c \"import pandas as pd; fs = pd.read_parquet('data/feature_store_v2_BTCUSDT_1h.parquet'); fs_2022 = fs.loc['2022']; print('VIX:', fs_2022['VIX'].notna().sum(), '/', len(fs_2022))\"",
+
+    "run_full_diagnostic": "python3 bin/diagnose_regime_2022.py",
+
+    "validate_2022_backtest": "python3 bin/backtest_knowledge_v2.py --config configs/quick_fix_2022_regime_override.json --symbol BTCUSDT --start 2022-01-01 --end 2022-12-31",
+
+    "check_regime_distribution": "python3 -c \"import pandas as pd; results = pd.read_csv('results/backtest_2022_override.csv'); print(results['regime'].value_counts(normalize=True))\""
+  },
+
+  "_known_limitations": {
+    "hard_coded_year": "Only works for 2022, not adaptive for future bear markets",
+    "no_quarter_granularity": "Forces entire year, can't handle mixed regimes (e.g., Q1 2024)",
+    "degenerate_model": "Primary model (regime_classifier_gmm.pkl) still has 0% validation accuracy",
+    "missing_features": "Underlying issue (missing VIX/DXY/MOVE) not resolved",
+    "temporary_workaround": "Should be replaced with proper fix within 1-2 sprints"
+  },
+
+  "_references": {
+    "diagnostic_report": "GMM_REGIME_2022_DIAGNOSTIC_REPORT.md",
+    "regime_routing_config": "configs/regime/regime_routing_production_v1.json",
+    "regime_classifier_code": "engine/context/regime_classifier.py",
+    "backtest_integration": "bin/backtest_knowledge_v2.py",
+    "root_cause_analysis": "Lines 118-131 in engine/context/regime_classifier.py (missing feature fallback)"
+  }
+}

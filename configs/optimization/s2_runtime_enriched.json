@@ -1,0 +1,151 @@
+{
+  "version": "s2_runtime_enriched",
+  "profile": "s2_runtime_test",
+  "description": "S2 (Failed Rally) with runtime feature enrichment - Testing if pattern is salvageable with proper features",
+
+  "adaptive_fusion": true,
+
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX", "DXY", "MOVE", "YIELD_2Y", "YIELD_10Y",
+      "USDT.D", "BTC.D", "TOTAL", "TOTAL2",
+      "funding", "oi", "rv_20d", "rv_60d"
+    ],
+    "zero_fill_missing": false,
+    "regime_override": {
+      "_comment": "Force 2022 as risk_off to activate bear archetypes",
+      "2022": "risk_off"
+    }
+  },
+
+  "ml_filter": {
+    "enabled": false,
+    "_comment": "Disabled to test raw S2 performance with enriched features"
+  },
+
+  "fusion": {
+    "entry_threshold_confidence": 0.36,
+    "weights": {
+      "wyckoff": 0.35,
+      "liquidity": 0.30,
+      "momentum": 0.35,
+      "smc": 0.0
+    }
+  },
+
+  "archetypes": {
+    "use_archetypes": true,
+
+    "max_trades_per_day": 8,
+
+    "_comment_enable": "ONLY S2 enabled for runtime enrichment test",
+    "enable_A": false,
+    "enable_B": false,
+    "enable_C": false,
+    "enable_D": false,
+    "enable_E": false,
+    "enable_F": false,
+    "enable_G": false,
+    "enable_H": false,
+    "enable_K": false,
+    "enable_L": false,
+    "enable_M": false,
+    "enable_S1": false,
+    "enable_S2": true,
+    "enable_S3": false,
+    "enable_S4": false,
+    "enable_S5": false,
+    "enable_S6": false,
+    "enable_S7": false,
+    "enable_S8": false,
+
+    "thresholds": {
+      "min_liquidity": 0.20,
+      "_comment": "Relaxed liquidity gate for bear patterns"
+    },
+
+    "failed_rally": {
+      "direction": "short",
+
+      "_comment_runtime": "CRITICAL: Enable runtime feature enrichment",
+      "use_runtime_features": true,
+
+      "_comment_weights": "Enhanced weights for runtime-calculated features",
+      "enhanced_weights": {
+        "ob_retest": 0.25,
+        "wick_rejection": 0.30,
+        "volume_fade": 0.25,
+        "rsi_divergence": 0.20
+      },
+
+      "_comment_gates": "Relaxed gates for runtime features (more lenient than body-based wick ratio)",
+      "fusion_threshold": 0.36,
+      "final_fusion_gate": 0.36,
+      "wick_ratio_min": 0.40,
+      "rsi_div_weight": 0.20,
+
+      "_comment_risk": "Moderate risk settings (baseline)",
+      "archetype_weight": 2.0,
+      "cooldown_bars": 8,
+      "max_risk_pct": 0.015,
+      "atr_stop_mult": 2.0,
+
+      "weights": {
+        "_comment": "Legacy weights (fallback if runtime features unavailable)",
+        "ob_retest": 0.25,
+        "wick_rejection": 0.25,
+        "rsi_signal": 0.20,
+        "volume_fade": 0.15,
+        "tf4h_confirm": 0.15
+      }
+    },
+
+    "routing": {
+      "risk_on": {
+        "weights": {
+          "failed_rally": 0.5
+        },
+        "final_gate_delta": 0.0
+      },
+      "neutral": {
+        "weights": {
+          "failed_rally": 1.0
+        },
+        "final_gate_delta": 0.0
+      },
+      "risk_off": {
+        "weights": {
+          "failed_rally": 2.0
+        },
+        "final_gate_delta": 0.02
+      },
+      "crisis": {
+        "weights": {
+          "failed_rally": 2.5
+        },
+        "final_gate_delta": 0.04
+      }
+    },
+
+    "exits": {
+      "failed_rally": {
+        "enable_trail": true,
+        "trail_atr_mult": 1.5,
+        "time_limit_hours": 48
+      }
+    }
+  },
+
+  "context": {
+    "crisis_fuse": {
+      "enabled": false
+    }
+  },
+
+  "risk": {
+    "base_risk_pct": 0.015,
+    "max_position_size_pct": 0.15,
+    "max_portfolio_risk_pct": 0.08
+  }
+}

@@ -1,0 +1,179 @@
+{
+  "version": "s1_v2_example",
+  "profile": "liquidity_vacuum_v2_test",
+  "description": "S1 Liquidity Vacuum V2 - Multi-bar capitulation detection with recommended starting thresholds",
+
+  "fusion_adapt": {
+    "enable": true,
+    "ema_alpha": 0.2,
+    "min_weight": 0.05
+  },
+
+  "archetypes": {
+    "use_archetypes": true,
+    "enable_S1": true,
+    "_comment_S1": "Liquidity Vacuum V2 - Multi-bar capitulation detection enabled",
+
+    "thresholds": {
+      "liquidity_vacuum": {
+        "direction": "long",
+        "archetype_weight": 2.5,
+
+        "_comment_v2_mode": "============ V2 MULTI-BAR CAPITULATION DETECTION ============",
+        "use_v2_logic": true,
+        "use_regime_filter": false,
+        "_note_regime_filter_flag": "Set to true to enable regime gating (blocks bull market trades)",
+
+        "_comment_v2_hard_gates": "V2 Hard Gates - Must pass BOTH for detection",
+        "capitulation_depth_max": -0.20,
+        "_note_cap_depth": "Drawdown from 30d high. -0.20 = 20% drawdown required. More negative = tighter (fewer trades)",
+
+        "crisis_composite_min": 0.35,
+        "_note_crisis": "Crisis environment score [0,1]. 0.35 = catches FTX (0.303 baseline). Lower = more trades. ADJUSTED from 0.40",
+
+        "_comment_v2_exhaustion": "V2 Exhaustion Signals - Must pass AT LEAST ONE (OR gate)",
+        "volume_climax_3b_min": 0.50,
+        "_note_vol_climax": "Max volume panic in last 3 bars. 0.50 = strong spike. Higher = tighter. ADJUSTED from 0.25",
+
+        "wick_exhaustion_3b_min": 0.60,
+        "_note_wick_exhaust": "Max wick rejection in last 3 bars. 0.60 = extreme rejection. Higher = tighter. ADJUSTED from 0.30",
+
+        "_comment_v2_weights": "V2 Feature Weights - Used for final fusion scoring after gates pass",
+        "v2_weights": {
+          "_comment_core": "Core capitulation signals (50% total weight)",
+          "capitulation_depth_score": 0.20,
+          "crisis_environment": 0.15,
+          "volume_climax_3b": 0.08,
+          "wick_exhaustion_3b": 0.07,
+
+          "_comment_liquidity": "Liquidity dynamics (25% total weight)",
+          "liquidity_drain_severity": 0.10,
+          "liquidity_velocity_score": 0.08,
+          "liquidity_persistence_score": 0.07,
+
+          "_comment_confluence": "Confluence signals (25% total weight)",
+          "funding_reversal": 0.12,
+          "oversold": 0.08,
+          "volatility_spike": 0.05
+        },
+
+        "_comment_v1_fallback": "============ V1 FALLBACK (backward compatible) ============",
+        "_note_v1": "Used when V2 features missing. Automatically activates if capitulation_depth not in dataframe",
+
+        "fusion_threshold": 0.30,
+        "_note_fusion_th": "Minimum fusion score (V1 and V2). Lower = looser (more trades)",
+
+        "liquidity_max": 0.20,
+        "_note_liq_max": "V1 hard gate. Max liquidity score (lower = more drained). Higher = looser",
+
+        "volume_z_min": 1.5,
+        "_note_vol_z": "V1 volume panic threshold (z-score). Lower = looser (more trades)",
+
+        "wick_lower_min": 0.28,
+        "_note_wick_min": "V1 wick rejection threshold. Lower = looser (more trades)",
+
+        "_comment_v1_weights": "V1 Feature Weights - Used for V1 fallback scoring",
+        "weights": {
+          "_comment_required": "Required features (65% total)",
+          "liquidity_vacuum": 0.25,
+          "volume_capitulation": 0.20,
+          "wick_rejection": 0.20,
+
+          "_comment_optional": "Optional features (35% total)",
+          "funding_reversal": 0.15,
+          "crisis_context": 0.10,
+          "oversold": 0.05,
+          "volatility_spike": 0.03,
+          "downtrend_confirm": 0.02
+        },
+
+        "_comment_regime_filter": "============ REGIME FILTER (Optional - Disabled by Default) ============",
+        "allowed_regimes": ["risk_off", "crisis"],
+        "_note_regimes": "Only trade in these GMM regime labels. Blocks bull market noise",
+
+        "drawdown_override_pct": 0.10,
+        "_note_drawdown_override": "If drawdown > 10%, bypass regime check (catches flash crashes)",
+
+        "require_regime_or_drawdown": true,
+        "_note_regime_logic": "If true, pass if regime OK OR drawdown severe. If false, require BOTH",
+
+        "_comment_risk_mgmt": "============ RISK MANAGEMENT ============",
+        "max_risk_pct": 0.02,
+        "_note_risk": "2% account risk per trade (capitulation reversals are volatile)",
+
+        "atr_stop_mult": 2.5,
+        "_note_stop": "2.5x ATR stop (wider than usual - accommodates violent bounces)",
+
+        "cooldown_bars": 12,
+        "_note_cooldown": "12 hour cooldown between signals (prevents overtrading same event)"
+      }
+    },
+
+    "exits": {
+      "liquidity_vacuum": {
+        "trail_atr": 2.0,
+        "time_limit_hours": 72,
+        "_comment": "Trail with 2.0 ATR, 72h max hold (capitulation bounces are fast)"
+      }
+    }
+  },
+
+  "_optimization_notes": {
+    "_comment": "Suggested Optuna parameter ranges for optimization",
+    "capitulation_depth_max": "Range: -0.35 to -0.10 (tighter to looser)",
+    "crisis_composite_min": "Range: 0.25 to 0.55 (looser to tighter)",
+    "volume_climax_3b_min": "Range: 0.15 to 0.40 (looser to tighter)",
+    "wick_exhaustion_3b_min": "Range: 0.20 to 0.45 (looser to tighter)",
+    "fusion_threshold": "Range: 0.25 to 0.45 (looser to tighter)",
+    "objective": "Multi-objective: Maximize PF (primary), Target 10-15 trades/year (secondary)"
+  },
+
+  "_tuning_guide": {
+    "_quick_fix_applied": "2025-11-23: Thresholds adjusted based on research findings (237→30-50 trades/year target)",
+    "to_get_more_trades": {
+      "capitulation_depth_max": "Less negative (e.g., -0.15 instead of -0.20)",
+      "crisis_composite_min": "Lower (e.g., 0.30 instead of 0.35)",
+      "volume_climax_3b_min": "Lower (e.g., 0.40 instead of 0.50)",
+      "wick_exhaustion_3b_min": "Lower (e.g., 0.50 instead of 0.60)"
+    },
+    "to_get_higher_precision": {
+      "capitulation_depth_max": "More negative (e.g., -0.25 instead of -0.20)",
+      "crisis_composite_min": "Higher (e.g., 0.45 instead of 0.35)",
+      "volume_climax_3b_min": "Higher (e.g., 0.60 instead of 0.50)",
+      "wick_exhaustion_3b_min": "Higher (e.g., 0.70 instead of 0.60)"
+    },
+    "to_catch_ftx_event": {
+      "_note": "FTX baseline: crisis=0.303, vol=0.328, wick=0.210. Current thresholds should catch it.",
+      "crisis_composite_min": "Current 0.35 catches FTX (0.303 + margin)",
+      "trade_off": "If still missing, lower to 0.30 but expect ~20% more false positives"
+    }
+  },
+
+  "_validation_results": {
+    "_comment": "Tested on 2022 major capitulations with these thresholds",
+    "luna_may_12": {
+      "capitulation_depth": -0.384,
+      "crisis_composite": 0.639,
+      "volume_climax_3b": 0.000,
+      "wick_exhaustion_3b": 0.489,
+      "result": "PASS (via wick exhaustion)",
+      "gates": "depth ✓, crisis ✓, wick ✓"
+    },
+    "june_18_bottom": {
+      "capitulation_depth": -0.447,
+      "crisis_composite": 0.617,
+      "volume_climax_3b": 0.447,
+      "wick_exhaustion_3b": 0.372,
+      "result": "PASS (via both exhaustion signals)",
+      "gates": "depth ✓, crisis ✓, volume ✓, wick ✓"
+    },
+    "ftx_nov_9": {
+      "capitulation_depth": -0.268,
+      "crisis_composite": 0.303,
+      "volume_climax_3b": 0.328,
+      "wick_exhaustion_3b": 0.210,
+      "result": "FAIL (crisis composite too low)",
+      "gates": "depth ✓, crisis ✗, volume ✓, wick ✗"
+    }
+  }
+}

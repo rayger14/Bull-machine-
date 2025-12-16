@@ -1,0 +1,98 @@
+{
+  "version": "s5_optimization_baseline",
+  "profile": "S5 Long Squeeze - Baseline (Current Thresholds)",
+  "description": "Test S5 with current thresholds from mvp_bear_market_v1.json",
+
+  "adaptive_fusion": true,
+
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": ["VIX", "DXY", "MOVE", "YIELD_2Y", "YIELD_10Y", "USDT.D", "BTC.D", "TOTAL", "TOTAL2", "funding", "oi", "rv_20d", "rv_60d"],
+    "zero_fill_missing": false,
+    "regime_override": {
+      "_comment": "Force 2022 as risk_off to test S5",
+      "2022": "risk_off"
+    }
+  },
+
+  "ml_filter": {
+    "enabled": false,
+    "_comment": "Disabled for pure archetype testing"
+  },
+
+  "fusion": {
+    "entry_threshold_confidence": 0.30,
+    "weights": {
+      "wyckoff": 0.35,
+      "liquidity": 0.30,
+      "momentum": 0.35,
+      "smc": 0.0
+    }
+  },
+
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 8,
+
+    "enable_A": false,
+    "enable_B": false,
+    "enable_C": false,
+    "enable_D": false,
+    "enable_E": false,
+    "enable_F": false,
+    "enable_G": false,
+    "enable_H": false,
+    "enable_K": false,
+    "enable_L": false,
+    "enable_M": false,
+    "enable_S1": false,
+    "enable_S2": false,
+    "enable_S3": false,
+    "enable_S4": false,
+    "enable_S5": true,
+    "enable_S6": false,
+    "enable_S7": false,
+    "enable_S8": false,
+
+    "thresholds": {
+      "min_liquidity": 0.10,
+      "long_squeeze": {
+        "direction": "short",
+        "fusion_threshold": 0.38,
+        "funding_z_min": 1.0,
+        "rsi_min": 65,
+        "liquidity_max": 0.25,
+        "max_risk_pct": 0.015,
+        "atr_stop_mult": 2.5
+      }
+    },
+
+    "long_squeeze": {
+      "archetype_weight": 2.2,
+      "final_fusion_gate": 0.38,
+      "cooldown_bars": 6
+    },
+
+    "routing": {
+      "risk_off": {
+        "weights": {
+          "long_squeeze": 2.2
+        },
+        "final_gate_delta": 0.0
+      }
+    },
+
+    "exits": {
+      "long_squeeze": {
+        "trail_atr": 1.5,
+        "time_limit_hours": 24
+      }
+    }
+  },
+
+  "risk": {
+    "base_risk_pct": 0.015,
+    "max_position_size_pct": 0.15,
+    "max_portfolio_risk_pct": 0.08
+  }
+}

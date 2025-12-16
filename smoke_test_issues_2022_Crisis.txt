@@ -1,0 +1,21 @@
+SMOKE TEST ISSUES
+================================================================================
+
+⚠️ S5: Very low signal count (1) - check thresholds
+⚠️ B: Low domain boost detection (0.0%) - boosts may not be working
+❌ B: ZERO signals detected - archetype may be broken or thresholds too strict
+⚠️ C: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ D: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ E: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ F: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ G: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ K: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ L: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ M: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ S3: Low domain boost detection (0.0%) - boosts may not be working
+⚠️ S3: Very low signal count (2) - check thresholds
+⚠️ S8: Low domain boost detection (0.0%) - boosts may not be working
+
+
+ERROR DETAILS
+--------------------------------------------------------------------------------

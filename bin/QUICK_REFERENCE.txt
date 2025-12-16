@@ -1,0 +1,136 @@
+================================================================================
+PARALLEL ARCHETYPE OPTIMIZATION - QUICK REFERENCE
+================================================================================
+
+SMOKE TEST (20-30 min)
+----------------------
+python bin/quick_archetype_test.py
+
+FULL OPTIMIZATION (6-8 hours)
+------------------------------
+python bin/optuna_parallel_archetypes.py \
+  --trials 100 \
+  --base-config configs/profile_production.json
+
+RESUME FROM CHECKPOINT
+----------------------
+python bin/optuna_parallel_archetypes.py --resume --trials 200
+
+ANALYZE RESULTS
+---------------
+python bin/analyze_archetype_optimization.py --storage optuna_archetypes.db
+
+EXPORT DATA
+-----------
+python bin/analyze_archetype_optimization.py \
+  --storage optuna_archetypes.db \
+  --export-json results/best_params.json \
+  --export-csv results/trials/
+
+VALIDATE CONFIG
+---------------
+python bin/validate_optimized_config.py \
+  --config configs/optimized_archetypes.json
+
+================================================================================
+ARCHETYPE GROUPS
+================================================================================
+
+1. trap_within_trend (A, G, K) - Momentum reversals
+2. order_block_retest (B, H, L) - Structure retests
+3. bos_choch (C) - Continuation patterns
+4. long_squeeze (S5) - Funding cascades
+
+================================================================================
+KEY PARAMETERS
+================================================================================
+
+GLOBAL:
+- global_min_liquidity: 0.10-0.35
+- global_fusion_floor: 0.30-0.45
+- w_wyckoff, w_liquidity, w_momentum: Fusion weights (sum=1.0)
+
+PER-ARCHETYPE:
+- fusion_threshold: Entry threshold
+- archetype_weight: Bias multiplier (0.85-1.15)
+- Pattern-specific: adx, rsi, boms_strength, etc.
+
+================================================================================
+EXPECTED PERFORMANCE
+================================================================================
+
+SCORE RANGES:
+- < 10: Poor
+- 10-15: Acceptable
+- 15-25: Good
+- 25-35: Excellent
+- > 35: Outstanding
+
+VALIDATION TARGETS (Out-of-Sample):
+- Profit Factor: >= 2.0
+- Win Rate: >= 60%
+- Sharpe: >= 1.0
+
+================================================================================
+RUNTIME ESTIMATES
+================================================================================
+
+Smoke Test: 20-30 minutes (5 trials/group)
+Fast Run: 2-3 hours (25 trials/group)
+Standard Run: 6-8 hours (100 trials/group)
+Extended Run: 12-15 hours (200 trials/group)
+
+PARALLELISM:
+- 4 workers (one per archetype group)
+- Linear speedup with CPU cores
+- Typical speedup: 5-6x vs sequential
+
+================================================================================
+FILES
+================================================================================
+
+/bin/optuna_parallel_archetypes.py - Main optimization
+/bin/analyze_archetype_optimization.py - Results analysis
+/bin/validate_optimized_config.py - Validation suite
+/bin/quick_archetype_test.py - Smoke test
+/bin/OPTUNA_PARALLEL_README.md - Complete guide
+/docs/PARALLEL_OPTUNA_GUIDE.md - Technical docs
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+DATABASE LOCKED:
+  Use separate storage per run: --storage results/optuna_$(date +%s).db
+
+TIMEOUT ERRORS:
+  Increase timeout in run_backtest(): timeout=300
+
+MEMORY ISSUES:
+  Reduce workers in script: mp.Pool(processes=2)
+
+PROGRESS STUCK:
+  Check workers: ps aux | grep optuna_parallel_archetypes.py
+  Should see 5 processes (1 main + 4 workers)
+
+IMPORT ERRORS:
+  pip install optuna pandas numpy joblib
+
+================================================================================
+WORKFLOW
+================================================================================
+
+1. Test: python bin/quick_archetype_test.py
+2. Optimize: python bin/optuna_parallel_archetypes.py --trials 100
+3. Analyze: python bin/analyze_archetype_optimization.py
+4. Validate: python bin/validate_optimized_config.py --config [optimized]
+5. Deploy: cp configs/optimized_*.json configs/production_active.json
+
+================================================================================
+CONTACT
+================================================================================
+
+Documentation: /docs/PARALLEL_OPTUNA_GUIDE.md
+Architecture: /engine/archetypes/logic_v2_adapter.py
+Created: 2025-11-16
+Status: Production Ready

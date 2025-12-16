@@ -1,0 +1,1022 @@
+✓ Selected feature store: BTC_1H_2022-01-01_to_2024-12-31.parquet (1095 days, modified 2025-12-11 21:36)
+Loaded 8718 bars from 2022-01-01 19:00:00+00:00 to 2022-12-31 00:00:00+00:00
+[S4] Applying runtime feature enrichment...
+[S4] ✓ Enriched 8718 bars with runtime features
+
+================================================================================
+Knowledge-Aware Backtest Results - BTC
+================================================================================
+Total PNL: $-3540.37
+Total Trades: 122
+Win Rate: 34.4%
+Profit Factor: 0.36
+Sharpe Ratio: -0.59
+Max Drawdown: 36.8%
+Final Equity: $6459.63
+Gross Profit: $2010.78
+Gross Loss: $5551.15
+Avg Win: $47.88
+Avg Loss: $-69.39
+
+================================================================================
+PR#6A: Archetype Entry Statistics (11-Archetype System)
+================================================================================
+============================================================
+ARCHETYPE TELEMETRY
+============================================================
+Total Checks: 7331
+Total Matches: 16
+Match Rate: 0.2%
+
+Archetype Distribution:
+------------------------------------------------------------
+============================================================
+
+================================================================================
+Trade Log
+================================================================================
+
+Trade 1: tier1_market
+  Entry: 2022-01-10 13:00:00+00:00 @ $40774.99
+  Exit:  2022-01-10 16:00:00+00:00 @ $41921.09 (signal_neutralized)
+  PNL: $150.12 (2.78%)
+  Wyckoff: transition (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.459
+
+Trade 2: tier1_market
+  Entry: 2022-01-12 15:00:00+00:00 @ $43572.42
+  Exit:  2022-01-12 16:00:00+00:00 @ $43631.40 (signal_neutralized)
+  PNL: $8.34 (0.11%)
+  Wyckoff: transition (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.242
+  FRVP: middle, Fusion: 0.483
+
+Trade 3: tier1_market
+  Entry: 2022-01-13 01:00:00+00:00 @ $43563.02
+  Exit:  2022-01-13 02:00:00+00:00 @ $43603.38 (signal_neutralized)
+  PNL: $4.42 (0.06%)
+  Wyckoff: transition (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.466
+
+Trade 4: tier1_market
+  Entry: 2022-01-13 03:00:00+00:00 @ $43528.18
+  Exit:  2022-01-13 04:00:00+00:00 @ $43647.44 (signal_neutralized)
+  PNL: $20.95 (0.24%)
+  Wyckoff: transition (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.199
+  FRVP: middle, Fusion: 0.467
+
+Trade 5: tier1_market
+  Entry: 2022-01-14 04:00:00+00:00 @ $42703.07
+  Exit:  2022-01-14 14:00:00+00:00 @ $43005.13 (signal_neutralized)
+  PNL: $42.15 (0.68%)
+  Wyckoff: transition (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.453
+
+Trade 6: tier1_market
+  Entry: 2022-01-17 04:00:00+00:00 @ $42631.27
+  Exit:  2022-01-17 17:00:00+00:00 @ $42128.30 (structure_invalidated)
+  PNL: $-117.53 (-1.21%)
+  Wyckoff: transition (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.450
+
+Trade 7: tier1_market
+  Entry: 2022-01-17 17:00:00+00:00 @ $42128.30
+  Exit:  2022-01-19 07:00:00+00:00 @ $41446.62 (stop_loss)
+  PNL: $-158.27 (-1.65%)
+  Wyckoff: transition (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.325
+  FRVP: middle, Fusion: 0.457
+
+Trade 8: archetype_funding_divergence
+  Entry: 2022-01-26 01:00:00+00:00 @ $36871.89
+  Exit:  2022-01-26 02:00:00+00:00 @ $36841.11 (signal_neutralized)
+  PNL: $-4.28 (-0.11%)
+  Wyckoff: transition (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.812
+
+Trade 9: archetype_funding_divergence
+  Entry: 2022-01-26 02:00:00+00:00 @ $36841.11
+  Exit:  2022-01-26 03:00:00+00:00 @ $37422.61 (signal_neutralized)
+  PNL: $60.83 (1.55%)
+  Wyckoff: transition (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.785
+
+Trade 10: tier1_market
+  Entry: 2022-02-21 01:00:00+00:00 @ $39157.28
+  Exit:  2022-02-21 11:00:00+00:00 @ $38231.13 (stop_loss)
+  PNL: $-109.22 (-2.40%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.275/0.213
+  FRVP: middle, Fusion: 0.524
+
+Trade 11: tier1_market
+  Entry: 2022-02-21 14:00:00+00:00 @ $38706.79
+  Exit:  2022-02-21 21:00:00+00:00 @ $37372.51 (stop_loss)
+  PNL: $-99.55 (-3.48%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.275/0.369
+  FRVP: middle, Fusion: 0.473
+
+Trade 12: tier1_market
+  Entry: 2022-02-21 22:00:00+00:00 @ $37559.80
+  Exit:  2022-02-22 00:00:00+00:00 @ $37231.51 (signal_neutralized)
+  PNL: $-18.99 (-0.90%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.275/0.000
+  FRVP: middle, Fusion: 0.532
+
+Trade 13: tier1_market
+  Entry: 2022-02-23 00:00:00+00:00 @ $38159.40
+  Exit:  2022-02-24 00:00:00+00:00 @ $36943.56 (stop_loss)
+  PNL: $-105.17 (-3.22%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.516
+
+Trade 14: tier1_market
+  Entry: 2022-02-24 15:00:00+00:00 @ $35939.00
+  Exit:  2022-02-24 19:00:00+00:00 @ $37336.85 (signal_neutralized)
+  PNL: $68.54 (3.86%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.455
+
+Trade 15: tier1_market
+  Entry: 2022-02-24 20:00:00+00:00 @ $38419.70
+  Exit:  2022-02-25 01:00:00+00:00 @ $38582.63 (signal_neutralized)
+  PNL: $7.13 (0.39%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.478
+
+Trade 16: tier1_market
+  Entry: 2022-03-24 00:00:00+00:00 @ $43051.22
+  Exit:  2022-03-25 00:00:00+00:00 @ $44000.35 (signal_neutralized_regime_flip)
+  PNL: $106.94 (2.17%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.238
+  FRVP: middle, Fusion: 0.508
+
+Trade 17: archetype_funding_divergence
+  Entry: 2022-03-25 10:00:00+00:00 @ $44258.56
+  Exit:  2022-03-25 11:00:00+00:00 @ $44622.73 (signal_neutralized)
+  PNL: $74.24 (0.79%)
+  Wyckoff: distribution (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.191
+  FRVP: middle, Fusion: 0.803
+
+Trade 18: tier1_market
+  Entry: 2022-03-30 00:00:00+00:00 @ $47265.96
+  Exit:  2022-03-31 14:00:00+00:00 @ $46703.47 (structure_invalidated)
+  PNL: $-85.93 (-1.22%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.457
+
+Trade 19: tier1_market
+  Entry: 2022-04-01 00:00:00+00:00 @ $45552.88
+  Exit:  2022-04-01 02:00:00+00:00 @ $44467.84 (stop_loss)
+  PNL: $-159.39 (-2.41%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.475
+
+Trade 20: tier1_market
+  Entry: 2022-04-01 03:00:00+00:00 @ $44614.99
+  Exit:  2022-04-01 15:00:00+00:00 @ $46545.39 (structure_invalidated)
+  PNL: $172.82 (4.30%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.488
+
+Trade 21: tier1_market
+  Entry: 2022-04-01 15:00:00+00:00 @ $46545.39
+  Exit:  2022-04-04 17:00:00+00:00 @ $45526.42 (stop_loss)
+  PNL: $-167.87 (-2.22%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.506
+
+Trade 22: tier1_market
+  Entry: 2022-04-04 17:00:00+00:00 @ $45389.29
+  Exit:  2022-04-06 00:00:00+00:00 @ $45356.80 (stop_loss)
+  PNL: $-5.71 (-0.10%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.420/0.000
+  FRVP: middle, Fusion: 0.459
+
+Trade 23: tier1_market
+  Entry: 2022-04-06 12:00:00+00:00 @ $44751.77
+  Exit:  2022-04-06 14:00:00+00:00 @ $44253.94 (signal_neutralized)
+  PNL: $-89.96 (-1.14%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.484
+
+Trade 24: tier1_market
+  Entry: 2022-04-11 00:00:00+00:00 @ $42311.95
+  Exit:  2022-04-11 09:00:00+00:00 @ $41445.09 (stop_loss)
+  PNL: $-159.02 (-2.08%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.264/0.250
+  FRVP: middle, Fusion: 0.488
+
+Trade 25: tier1_market
+  Entry: 2022-04-11 09:00:00+00:00 @ $41438.56
+  Exit:  2022-04-11 19:00:00+00:00 @ $40450.05 (stop_loss)
+  PNL: $-148.65 (-2.42%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.264/0.388
+  FRVP: middle, Fusion: 0.458
+
+Trade 26: tier1_market
+  Entry: 2022-04-11 19:00:00+00:00 @ $39982.27
+  Exit:  2022-04-12 05:00:00+00:00 @ $40110.16 (signal_neutralized)
+  PNL: $15.82 (0.29%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.264/0.250
+  FRVP: middle, Fusion: 0.509
+
+Trade 27: archetype_funding_divergence
+  Entry: 2022-04-13 08:00:00+00:00 @ $40159.93
+  Exit:  2022-04-13 09:00:00+00:00 @ $40081.23 (signal_neutralized)
+  PNL: $-19.97 (-0.23%)
+  Wyckoff: transition (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.235
+  FRVP: middle, Fusion: 0.860
+
+Trade 28: archetype_funding_divergence
+  Entry: 2022-04-13 09:00:00+00:00 @ $40081.23
+  Exit:  2022-04-13 10:00:00+00:00 @ $39819.35 (signal_neutralized)
+  PNL: $-60.26 (-0.68%)
+  Wyckoff: transition (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.235
+  FRVP: middle, Fusion: 0.815
+
+Trade 29: tier1_market
+  Entry: 2022-04-14 02:00:00+00:00 @ $41422.32
+  Exit:  2022-04-14 05:00:00+00:00 @ $41319.24 (signal_neutralized)
+  PNL: $-15.85 (-0.28%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.453
+
+Trade 30: tier1_market
+  Entry: 2022-04-14 15:00:00+00:00 @ $39971.31
+  Exit:  2022-04-18 00:00:00+00:00 @ $39740.59 (structure_invalidated)
+  PNL: $-53.11 (-0.61%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.567
+
+Trade 31: tier1_market
+  Entry: 2022-04-18 13:00:00+00:00 @ $39340.07
+  Exit:  2022-04-19 01:00:00+00:00 @ $40759.53 (signal_neutralized)
+  PNL: $87.88 (3.58%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.233
+  FRVP: middle, Fusion: 0.467
+
+Trade 32: tier1_market
+  Entry: 2022-04-21 13:00:00+00:00 @ $42696.56
+  Exit:  2022-04-21 16:00:00+00:00 @ $41861.49 (stop_loss)
+  PNL: $-146.63 (-1.99%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.460
+
+Trade 33: tier1_market
+  Entry: 2022-04-22 13:00:00+00:00 @ $40244.94
+  Exit:  2022-04-22 15:00:00+00:00 @ $39493.73 (stop_loss)
+  PNL: $-89.22 (-1.90%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.453
+
+Trade 34: tier1_market
+  Entry: 2022-04-22 15:00:00+00:00 @ $39427.36
+  Exit:  2022-04-25 00:00:00+00:00 @ $38871.22 (signal_neutralized_regime_flip)
+  PNL: $-59.44 (-1.44%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.478
+
+Trade 35: tier1_market
+  Entry: 2022-04-26 00:00:00+00:00 @ $40563.75
+  Exit:  2022-04-26 14:00:00+00:00 @ $39296.15 (stop_loss)
+  PNL: $-99.04 (-3.15%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.417/0.500
+  FRVP: middle, Fusion: 0.535
+
+Trade 36: tier1_market
+  Entry: 2022-04-26 14:00:00+00:00 @ $39270.80
+  Exit:  2022-04-26 17:00:00+00:00 @ $38557.43 (stop_loss)
+  PNL: $-104.14 (-1.85%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.417/0.250
+  FRVP: middle, Fusion: 0.574
+
+Trade 37: tier1_market
+  Entry: 2022-05-03 00:00:00+00:00 @ $38389.09
+  Exit:  2022-05-03 18:00:00+00:00 @ $37753.96 (structure_invalidated)
+  PNL: $-58.83 (-1.68%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.502
+
+Trade 38: tier1_market
+  Entry: 2022-05-03 18:00:00+00:00 @ $37753.96
+  Exit:  2022-05-04 06:00:00+00:00 @ $38387.83 (signal_neutralized)
+  PNL: $70.29 (1.65%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.569
+
+Trade 39: tier1_market
+  Entry: 2022-05-04 09:00:00+00:00 @ $38871.60
+  Exit:  2022-05-05 00:00:00+00:00 @ $39647.16 (signal_neutralized_regime_flip)
+  PNL: $69.26 (1.97%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.472
+
+Trade 40: tier1_market
+  Entry: 2022-05-06 00:00:00+00:00 @ $36352.58
+  Exit:  2022-05-06 19:00:00+00:00 @ $35996.13 (signal_neutralized)
+  PNL: $-22.80 (-1.01%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.460
+
+Trade 41: tier1_market
+  Entry: 2022-05-07 23:00:00+00:00 @ $35458.00
+  Exit:  2022-05-08 01:00:00+00:00 @ $34829.61 (stop_loss)
+  PNL: $-91.95 (-1.80%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.492
+
+Trade 42: tier1_market
+  Entry: 2022-05-08 01:00:00+00:00 @ $34813.30
+  Exit:  2022-05-08 17:00:00+00:00 @ $34064.91 (stop_loss)
+  PNL: $-86.77 (-2.18%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.464
+
+Trade 43: tier1_market
+  Entry: 2022-05-09 00:00:00+00:00 @ $34131.55
+  Exit:  2022-05-09 10:00:00+00:00 @ $33222.16 (stop_loss)
+  PNL: $-89.28 (-2.69%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.490
+
+Trade 44: tier1_market
+  Entry: 2022-05-09 10:00:00+00:00 @ $32795.57
+  Exit:  2022-05-09 16:00:00+00:00 @ $31766.93 (stop_loss)
+  PNL: $-101.74 (-3.17%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.228
+  FRVP: middle, Fusion: 0.588
+
+Trade 45: tier1_market
+  Entry: 2022-05-09 16:00:00+00:00 @ $31683.09
+  Exit:  2022-05-09 23:00:00+00:00 @ $30391.26 (stop_loss)
+  PNL: $-101.66 (-4.11%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.175
+  FRVP: middle, Fusion: 0.598
+
+Trade 46: tier1_market
+  Entry: 2022-05-09 23:00:00+00:00 @ $30078.27
+  Exit:  2022-05-10 16:00:00+00:00 @ $31210.98 (signal_neutralized)
+  PNL: $35.68 (3.74%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.225
+  FRVP: middle, Fusion: 0.589
+
+Trade 47: tier1_market
+  Entry: 2022-05-10 17:00:00+00:00 @ $31668.78
+  Exit:  2022-05-10 22:00:00+00:00 @ $30779.74 (signal_neutralized)
+  PNL: $-43.79 (-2.84%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.196
+  FRVP: middle, Fusion: 0.485
+
+Trade 48: tier1_market
+  Entry: 2022-05-11 09:00:00+00:00 @ $31752.55
+  Exit:  2022-05-11 12:00:00+00:00 @ $29993.20 (stop_loss)
+  PNL: $-85.29 (-5.57%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.182
+  FRVP: middle, Fusion: 0.487
+
+Trade 49: tier1_market
+  Entry: 2022-05-11 14:00:00+00:00 @ $31781.79
+  Exit:  2022-05-11 20:00:00+00:00 @ $29267.83 (stop_loss)
+  PNL: $-84.44 (-7.94%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.450
+  FRVP: middle, Fusion: 0.488
+
+Trade 50: tier1_market
+  Entry: 2022-05-11 20:00:00+00:00 @ $28407.87
+  Exit:  2022-05-12 00:00:00+00:00 @ $29713.28 (signal_neutralized)
+  PNL: $37.66 (4.57%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.473
+
+Trade 51: tier1_market
+  Entry: 2022-06-11 00:00:00+00:00 @ $29207.26
+  Exit:  2022-06-11 09:00:00+00:00 @ $29040.10 (signal_neutralized)
+  PNL: $-18.69 (-0.60%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.499
+
+Trade 52: tier1_market
+  Entry: 2022-06-12 01:00:00+00:00 @ $28200.95
+  Exit:  2022-06-12 02:00:00+00:00 @ $27425.55 (stop_loss)
+  PNL: $-83.95 (-2.78%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.485
+
+Trade 53: tier1_market
+  Entry: 2022-06-12 02:00:00+00:00 @ $27394.00
+  Exit:  2022-06-12 23:00:00+00:00 @ $26555.20 (structure_invalidated)
+  PNL: $-80.67 (-3.09%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.507
+
+Trade 54: tier1_market
+  Entry: 2022-06-16 04:00:00+00:00 @ $22071.73
+  Exit:  2022-06-16 10:00:00+00:00 @ $21230.54 (signal_neutralized)
+  PNL: $-42.65 (-3.84%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.502
+
+Trade 55: tier1_market
+  Entry: 2022-06-16 14:00:00+00:00 @ $20895.36
+  Exit:  2022-06-17 02:00:00+00:00 @ $20552.98 (structure_invalidated)
+  PNL: $-31.22 (-1.67%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.572
+
+Trade 56: tier1_market
+  Entry: 2022-06-17 04:00:00+00:00 @ $20510.76
+  Exit:  2022-06-17 07:00:00+00:00 @ $21067.64 (signal_neutralized)
+  PNL: $44.61 (2.69%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.354/0.250
+  FRVP: middle, Fusion: 0.453
+
+Trade 57: tier1_market
+  Entry: 2022-06-17 12:00:00+00:00 @ $20619.22
+  Exit:  2022-06-17 23:00:00+00:00 @ $20447.86 (signal_neutralized)
+  PNL: $-14.90 (-0.86%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.354/0.250
+  FRVP: middle, Fusion: 0.477
+
+Trade 58: tier1_market
+  Entry: 2022-06-18 00:00:00+00:00 @ $20546.73
+  Exit:  2022-06-18 06:00:00+00:00 @ $19896.49 (stop_loss)
+  PNL: $-88.00 (-3.19%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.293/0.250
+  FRVP: middle, Fusion: 0.534
+
+Trade 59: tier1_market
+  Entry: 2022-06-18 06:00:00+00:00 @ $19416.00
+  Exit:  2022-06-18 17:00:00+00:00 @ $18750.75 (stop_loss)
+  PNL: $-78.21 (-3.46%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.293/0.250
+  FRVP: middle, Fusion: 0.465
+
+Trade 60: tier1_market
+  Entry: 2022-06-18 17:00:00+00:00 @ $18593.41
+  Exit:  2022-06-19 00:00:00+00:00 @ $18945.58 (signal_neutralized)
+  PNL: $32.73 (1.86%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.293/0.000
+  FRVP: middle, Fusion: 0.555
+
+Trade 61: tier1_market
+  Entry: 2022-07-30 10:00:00+00:00 @ $23822.03
+  Exit:  2022-07-30 12:00:00+00:00 @ $24388.31 (signal_neutralized)
+  PNL: $96.93 (2.35%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.172
+  FRVP: middle, Fusion: 0.457
+
+Trade 62: tier1_market
+  Entry: 2022-07-30 19:00:00+00:00 @ $23932.53
+  Exit:  2022-07-31 23:00:00+00:00 @ $23354.51 (stop_loss)
+  PNL: $-126.59 (-2.45%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.466
+
+Trade 63: tier1_market
+  Entry: 2022-07-31 23:00:00+00:00 @ $23307.44
+  Exit:  2022-08-02 02:00:00+00:00 @ $22917.98 (signal_neutralized)
+  PNL: $-91.09 (-1.70%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.075
+  FRVP: middle, Fusion: 0.506
+
+Trade 64: tier1_market
+  Entry: 2022-08-02 03:00:00+00:00 @ $22862.11
+  Exit:  2022-08-02 04:00:00+00:00 @ $22870.47 (signal_neutralized)
+  PNL: $0.31 (0.01%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.253/0.208
+  FRVP: middle, Fusion: 0.450
+
+Trade 65: tier1_market
+  Entry: 2022-08-02 16:00:00+00:00 @ $23388.10
+  Exit:  2022-08-03 00:00:00+00:00 @ $22844.58 (stop_loss)
+  PNL: $-121.55 (-2.35%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.253/0.250
+  FRVP: middle, Fusion: 0.458
+
+Trade 66: tier1_market
+  Entry: 2022-08-03 07:00:00+00:00 @ $22996.04
+  Exit:  2022-08-03 22:00:00+00:00 @ $22978.60 (stop_loss)
+  PNL: $-4.50 (-0.11%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.473
+
+Trade 67: tier1_market
+  Entry: 2022-08-03 22:00:00+00:00 @ $22940.13
+  Exit:  2022-08-04 01:00:00+00:00 @ $23150.00 (signal_neutralized)
+  PNL: $49.74 (0.88%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.224
+  FRVP: middle, Fusion: 0.496
+
+Trade 68: tier1_market
+  Entry: 2022-08-05 04:00:00+00:00 @ $23157.29
+  Exit:  2022-08-08 20:00:00+00:00 @ $24068.56 (signal_neutralized)
+  PNL: $74.63 (3.91%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.469
+
+Trade 69: tier1_market
+  Entry: 2022-08-08 21:00:00+00:00 @ $23853.03
+  Exit:  2022-08-09 10:00:00+00:00 @ $23363.83 (stop_loss)
+  PNL: $-122.78 (-2.08%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.427/0.186
+  FRVP: middle, Fusion: 0.463
+
+Trade 70: tier1_market
+  Entry: 2022-08-09 10:00:00+00:00 @ $23355.74
+  Exit:  2022-08-10 00:00:00+00:00 @ $22948.46 (stop_loss)
+  PNL: $-127.79 (-1.77%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.530
+
+Trade 71: tier1_market
+  Entry: 2022-08-10 00:00:00+00:00 @ $22779.74
+  Exit:  2022-08-11 01:00:00+00:00 @ $24448.76 (signal_neutralized)
+  PNL: $158.25 (7.30%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.433
+  FRVP: middle, Fusion: 0.512
+
+Trade 72: tier1_market
+  Entry: 2022-08-11 18:00:00+00:00 @ $24156.99
+  Exit:  2022-08-11 20:00:00+00:00 @ $24214.55 (signal_neutralized)
+  PNL: $11.00 (0.21%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.540
+
+Trade 73: tier1_market
+  Entry: 2022-08-11 22:00:00+00:00 @ $23906.18
+  Exit:  2022-08-12 23:00:00+00:00 @ $24415.18 (signal_neutralized)
+  PNL: $97.86 (2.10%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.481
+  FRVP: middle, Fusion: 0.471
+
+Trade 74: tier1_market
+  Entry: 2022-08-14 17:00:00+00:00 @ $24235.51
+  Exit:  2022-08-15 00:00:00+00:00 @ $24407.62 (signal_neutralized)
+  PNL: $49.79 (0.68%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.336/0.250
+  FRVP: middle, Fusion: 0.478
+
+Trade 75: tier1_market
+  Entry: 2022-08-15 06:00:00+00:00 @ $24146.41
+  Exit:  2022-08-17 00:00:00+00:00 @ $24011.96 (signal_neutralized)
+  PNL: $-28.30 (-0.59%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.317
+  FRVP: middle, Fusion: 0.468
+
+Trade 76: tier1_market
+  Entry: 2022-08-17 13:00:00+00:00 @ $23425.66
+  Exit:  2022-08-18 00:00:00+00:00 @ $23458.06 (signal_neutralized)
+  PNL: $6.03 (0.11%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.465
+
+Trade 77: tier1_market
+  Entry: 2022-08-19 01:00:00+00:00 @ $22762.88
+  Exit:  2022-08-19 06:00:00+00:00 @ $22316.03 (stop_loss)
+  PNL: $-97.11 (-1.99%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: risk_off, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.453
+
+Trade 78: tier1_market
+  Entry: 2022-08-19 06:00:00+00:00 @ $21915.74
+  Exit:  2022-08-19 20:00:00+00:00 @ $21304.63 (stop_loss)
+  PNL: $-106.90 (-2.82%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: risk_off, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.525
+
+Trade 79: tier1_market
+  Entry: 2022-08-19 20:00:00+00:00 @ $21271.46
+  Exit:  2022-08-20 17:00:00+00:00 @ $21259.65 (signal_neutralized)
+  PNL: $-2.91 (-0.09%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: risk_off, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.488
+
+Trade 80: tier1_market
+  Entry: 2022-08-25 14:00:00+00:00 @ $21658.33
+  Exit:  2022-08-26 11:00:00+00:00 @ $21332.07 (stop_loss)
+  PNL: $-110.10 (-1.54%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.240
+  FRVP: middle, Fusion: 0.463
+
+Trade 81: tier1_market
+  Entry: 2022-08-26 11:00:00+00:00 @ $21193.45
+  Exit:  2022-08-26 14:00:00+00:00 @ $21182.11 (stop_loss)
+  PNL: $-3.52 (-0.08%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.561
+
+Trade 82: tier1_market
+  Entry: 2022-08-26 14:00:00+00:00 @ $21157.80
+  Exit:  2022-08-26 17:00:00+00:00 @ $20670.48 (stop_loss)
+  PNL: $-85.07 (-2.33%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.556
+
+Trade 83: tier1_market
+  Entry: 2022-08-26 21:00:00+00:00 @ $20645.65
+  Exit:  2022-08-27 09:00:00+00:00 @ $20153.83 (structure_invalidated)
+  PNL: $-52.81 (-2.41%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.470
+  FRVP: middle, Fusion: 0.451
+
+Trade 84: tier1_market
+  Entry: 2022-08-28 22:00:00+00:00 @ $19898.44
+  Exit:  2022-08-28 23:00:00+00:00 @ $19609.88 (stop_loss)
+  PNL: $-73.55 (-1.48%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.468
+
+Trade 85: tier1_market
+  Entry: 2022-08-28 23:00:00+00:00 @ $19554.03
+  Exit:  2022-08-29 00:00:00+00:00 @ $19640.44 (signal_neutralized)
+  PNL: $16.55 (0.41%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.476
+
+Trade 86: tier1_market
+  Entry: 2022-08-29 10:00:00+00:00 @ $19827.68
+  Exit:  2022-08-29 15:00:00+00:00 @ $20263.46 (signal_neutralized)
+  PNL: $52.39 (2.17%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.459
+
+Trade 87: tier1_market
+  Entry: 2022-08-30 01:00:00+00:00 @ $20162.40
+  Exit:  2022-08-30 16:00:00+00:00 @ $19734.05 (stop_loss)
+  PNL: $-83.11 (-2.15%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.553
+
+Trade 88: tier1_market
+  Entry: 2022-08-30 19:00:00+00:00 @ $19950.02
+  Exit:  2022-09-01 00:00:00+00:00 @ $20064.37 (signal_neutralized)
+  PNL: $16.60 (0.54%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.525
+
+Trade 89: tier1_market
+  Entry: 2022-09-02 00:00:00+00:00 @ $20071.05
+  Exit:  2022-09-02 17:00:00+00:00 @ $19804.79 (structure_invalidated)
+  PNL: $-43.19 (-1.36%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.502
+
+Trade 90: tier1_market
+  Entry: 2022-09-02 17:00:00+00:00 @ $19804.79
+  Exit:  2022-09-03 05:00:00+00:00 @ $19946.36 (structure_invalidated)
+  PNL: $25.27 (0.68%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.531
+
+Trade 91: tier1_market
+  Entry: 2022-09-03 05:00:00+00:00 @ $19946.36
+  Exit:  2022-09-03 17:00:00+00:00 @ $19818.67 (structure_invalidated)
+  PNL: $-28.12 (-0.67%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.243
+  FRVP: middle, Fusion: 0.527
+
+Trade 92: tier1_market
+  Entry: 2022-09-03 17:00:00+00:00 @ $19818.67
+  Exit:  2022-09-05 11:00:00+00:00 @ $19700.99 (signal_neutralized)
+  PNL: $-42.52 (-0.62%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.502
+
+Trade 93: tier1_market
+  Entry: 2022-09-05 12:00:00+00:00 @ $19726.46
+  Exit:  2022-09-05 19:00:00+00:00 @ $19706.60 (signal_neutralized)
+  PNL: $-6.49 (-0.13%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.489
+
+Trade 94: tier1_market
+  Entry: 2022-09-05 20:00:00+00:00 @ $19739.08
+  Exit:  2022-09-06 17:00:00+00:00 @ $19728.99 (stop_loss)
+  PNL: $-3.13 (-0.08%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.499
+
+Trade 95: tier1_market
+  Entry: 2022-09-06 17:00:00+00:00 @ $19101.94
+  Exit:  2022-09-07 00:00:00+00:00 @ $18836.76 (signal_neutralized)
+  PNL: $-40.72 (-1.42%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.264/0.200
+  FRVP: middle, Fusion: 0.480
+
+Trade 96: tier1_market
+  Entry: 2022-09-21 00:00:00+00:00 @ $18934.93
+  Exit:  2022-09-21 21:00:00+00:00 @ $18912.35 (stop_loss)
+  PNL: $-2.44 (-0.15%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.495
+
+Trade 97: tier1_market
+  Entry: 2022-10-14 04:00:00+00:00 @ $19814.02
+  Exit:  2022-10-14 10:00:00+00:00 @ $19689.18 (signal_neutralized)
+  PNL: $-16.82 (-0.66%)
+  Wyckoff: B (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.181
+  FRVP: middle, Fusion: 0.453
+
+Trade 98: phase4_reentry
+  Entry: 2022-10-14 14:00:00+00:00 @ $19468.15
+  Exit:  2022-10-14 20:00:00+00:00 @ $19176.67 (signal_neutralized)
+  PNL: $-31.77 (-1.53%)
+  Wyckoff: B (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.432
+
+Trade 99: tier1_market
+  Entry: 2022-10-24 00:00:00+00:00 @ $19519.89
+  Exit:  2022-10-24 15:00:00+00:00 @ $19304.75 (signal_neutralized)
+  PNL: $-62.21 (-1.13%)
+  Wyckoff: B (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.474
+
+Trade 100: tier1_market
+  Entry: 2022-11-06 01:00:00+00:00 @ $21199.67
+  Exit:  2022-11-06 17:00:00+00:00 @ $21249.97 (signal_neutralized)
+  PNL: $13.72 (0.21%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.368/0.250
+  FRVP: middle, Fusion: 0.481
+
+Trade 101: tier1_market
+  Entry: 2022-11-06 23:00:00+00:00 @ $20909.17
+  Exit:  2022-11-07 07:00:00+00:00 @ $20689.08 (stop_loss)
+  PNL: $-71.81 (-1.08%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.368/0.250
+  FRVP: middle, Fusion: 0.505
+
+Trade 102: tier1_market
+  Entry: 2022-11-07 07:00:00+00:00 @ $20635.07
+  Exit:  2022-11-08 03:00:00+00:00 @ $20325.91 (stop_loss)
+  PNL: $-100.33 (-1.53%)
+  Wyckoff: markup (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.419
+  FRVP: middle, Fusion: 0.513
+
+Trade 103: tier1_market
+  Entry: 2022-11-09 00:00:00+00:00 @ $18332.71
+  Exit:  2022-11-09 17:00:00+00:00 @ $16921.53 (structure_invalidated)
+  PNL: $-69.18 (-7.73%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.438
+  FRVP: middle, Fusion: 0.485
+
+Trade 104: tier1_market
+  Entry: 2022-11-09 17:00:00+00:00 @ $16921.53
+  Exit:  2022-11-09 21:00:00+00:00 @ $15895.71 (stop_loss)
+  PNL: $-81.18 (-6.09%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.210
+  FRVP: middle, Fusion: 0.599
+
+Trade 105: tier1_market
+  Entry: 2022-11-09 21:00:00+00:00 @ $15693.82
+  Exit:  2022-11-10 02:00:00+00:00 @ $16174.96 (signal_neutralized)
+  PNL: $30.08 (3.04%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.628
+
+Trade 106: archetype_funding_divergence
+  Entry: 2022-11-10 17:00:00+00:00 @ $17176.16
+  Exit:  2022-11-10 18:00:00+00:00 @ $17340.28 (signal_neutralized)
+  PNL: $19.83 (0.93%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.826
+
+Trade 107: archetype_funding_divergence
+  Entry: 2022-11-10 18:00:00+00:00 @ $17340.28
+  Exit:  2022-11-10 19:00:00+00:00 @ $17427.79 (signal_neutralized)
+  PNL: $10.29 (0.47%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.337
+  FRVP: middle, Fusion: 0.842
+
+Trade 108: archetype_funding_divergence
+  Entry: 2022-11-10 19:00:00+00:00 @ $17427.79
+  Exit:  2022-11-10 20:00:00+00:00 @ $18047.58 (signal_neutralized)
+  PNL: $77.33 (3.53%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.533
+  FRVP: middle, Fusion: 0.835
+
+Trade 109: tier1_market
+  Entry: 2022-11-13 15:00:00+00:00 @ $16553.48
+  Exit:  2022-11-14 01:00:00+00:00 @ $16232.73 (stop_loss)
+  PNL: $-106.41 (-1.97%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.500/0.000
+  FRVP: middle, Fusion: 0.452
+
+Trade 110: tier1_market
+  Entry: 2022-11-14 03:00:00+00:00 @ $16108.48
+  Exit:  2022-11-14 04:00:00+00:00 @ $15956.00 (signal_neutralized)
+  PNL: $-37.69 (-0.98%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.500/0.207
+  FRVP: middle, Fusion: 0.456
+
+Trade 111: tier1_market
+  Entry: 2022-11-21 00:00:00+00:00 @ $16235.41
+  Exit:  2022-11-21 19:00:00+00:00 @ $15941.03 (stop_loss)
+  PNL: $-116.50 (-1.84%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.579
+
+Trade 112: tier1_market
+  Entry: 2022-11-21 19:00:00+00:00 @ $15708.36
+  Exit:  2022-11-22 00:00:00+00:00 @ $15844.44 (signal_neutralized)
+  PNL: $36.21 (0.84%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.168
+  FRVP: middle, Fusion: 0.483
+
+Trade 113: archetype_funding_divergence
+  Entry: 2022-12-01 04:00:00+00:00 @ $17142.96
+  Exit:  2022-12-01 05:00:00+00:00 @ $17111.33 (signal_neutralized)
+  PNL: $-13.39 (-0.21%)
+  Wyckoff: distribution (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.939
+
+Trade 114: archetype_funding_divergence
+  Entry: 2022-12-01 05:00:00+00:00 @ $17111.33
+  Exit:  2022-12-01 06:00:00+00:00 @ $17118.18 (signal_neutralized)
+  PNL: $0.63 (0.01%)
+  Wyckoff: distribution (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.962
+
+Trade 115: archetype_funding_divergence
+  Entry: 2022-12-01 06:00:00+00:00 @ $17118.18
+  Exit:  2022-12-01 07:00:00+00:00 @ $17068.06 (signal_neutralized)
+  PNL: $-20.12 (-0.32%)
+  Wyckoff: distribution (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.965
+
+Trade 116: archetype_funding_divergence
+  Entry: 2022-12-01 07:00:00+00:00 @ $17068.06
+  Exit:  2022-12-01 08:00:00+00:00 @ $17110.95 (signal_neutralized)
+  PNL: $13.75 (0.22%)
+  Wyckoff: distribution (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.906
+
+Trade 117: tier1_market
+  Entry: 2022-12-19 00:00:00+00:00 @ $16781.37
+  Exit:  2022-12-19 03:00:00+00:00 @ $16689.18 (signal_neutralized)
+  PNL: $-36.07 (-0.58%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.500/0.189
+  FRVP: middle, Fusion: 0.482
+
+Trade 118: tier1_market
+  Entry: 2022-12-19 08:00:00+00:00 @ $16760.10
+  Exit:  2022-12-19 11:00:00+00:00 @ $16736.90 (signal_neutralized)
+  PNL: $-10.43 (-0.17%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.500/0.217
+  FRVP: middle, Fusion: 0.455
+
+Trade 119: tier1_market
+  Entry: 2022-12-19 22:00:00+00:00 @ $16415.69
+  Exit:  2022-12-20 00:00:00+00:00 @ $16463.18 (signal_neutralized)
+  PNL: $16.03 (0.26%)
+  Wyckoff: spring (M1=None, M2=None)
+  Macro: neutral, PTI: 0.500/0.250
+  FRVP: middle, Fusion: 0.459
+
+Trade 120: tier1_market
+  Entry: 2022-12-20 15:00:00+00:00 @ $16919.12
+  Exit:  2022-12-21 00:00:00+00:00 @ $16842.74 (signal_neutralized)
+  PNL: $-27.76 (-0.48%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.455
+
+Trade 121: tier1_market
+  Entry: 2022-12-28 00:00:00+00:00 @ $16680.49
+  Exit:  2022-12-28 22:00:00+00:00 @ $16514.89 (stop_loss)
+  PNL: $-63.11 (-1.02%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.000
+  FRVP: middle, Fusion: 0.469
+
+Trade 122: tier1_market
+  Entry: 2022-12-30 13:00:00+00:00 @ $16457.11
+  Exit:  2022-12-31 00:00:00+00:00 @ $16571.78 (end_of_period)
+  PNL: $27.16 (0.67%)
+  Wyckoff: accumulation (M1=None, M2=None)
+  Macro: neutral, PTI: 0.000/0.250
+  FRVP: middle, Fusion: 0.461
+
+================================================================================
+ML Feature Export
+================================================================================
+[ML] Feature Export starting...
+[ML] Exporting 122 trades...
+[ML] Exported 122 rows → artifacts/domain_wiring_test_20251212_145209/S4_core/trades.csv
+[ML] Features: 56 columns
+[ML] Win rate: 34.4%
