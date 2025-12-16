@@ -28,6 +28,48 @@ except ImportError:
 
 
 # ============================================================================
+# REGIME-AWARE ARCHETYPE ROUTING
+# ============================================================================
+
+# Define allowed regimes per archetype
+# This prevents archetypes from firing in inappropriate market conditions
+ARCHETYPE_REGIMES = {
+    # Bull-biased archetypes (long-only)
+    'spring': ['risk_on', 'neutral'],                    # A: Wyckoff Spring
+    'order_block_retest': ['risk_on', 'neutral'],        # B: Order Block Retest
+    'wick_trap': ['risk_on', 'neutral'],                 # C: Wick Trap Reversal
+    'failed_continuation': ['risk_on', 'neutral'],       # D: Failed Continuation
+    'volume_exhaustion': ['risk_on', 'neutral'],         # E: Volume Exhaustion
+    'exhaustion_reversal': ['risk_on', 'neutral'],       # F: Exhaustion Reversal
+    'liquidity_sweep': ['risk_on', 'neutral'],           # G: Liquidity Sweep
+    'momentum_continuation': ['risk_on', 'neutral'],     # H: Momentum Continuation
+    'trap_within_trend': ['risk_on', 'neutral'],         # K: Trap Within Trend
+    'retest_cluster': ['risk_on', 'neutral'],            # L: Retest Cluster
+    'confluence_breakout': ['risk_on', 'neutral'],       # M: Confluence Breakout
+
+    # Bear-biased archetypes (short-biased)
+    'breakdown': ['risk_off', 'crisis'],                 # S1 OLD: Breakdown (DEPRECATED)
+    'liquidity_vacuum': ['risk_off', 'crisis'],          # S1: Liquidity Vacuum (capitulation reversal)
+    'failed_rally': ['risk_off', 'neutral'],             # S2: Failed Rally Rejection (DEPRECATED for BTC)
+    'whipsaw': ['risk_off', 'crisis'],                   # S3: Whipsaw
+    'distribution': ['risk_off', 'neutral'],             # S4 OLD: Distribution (DEPRECATED)
+    'funding_divergence': ['risk_off', 'neutral'],       # S4: Funding Divergence (short squeeze)
+    'long_squeeze': ['risk_on', 'neutral'],              # S5: Long Squeeze Cascade (positive funding extreme)
+    'alt_rotation_down': ['risk_off', 'crisis'],         # S6: Alt Rotation Down
+    'curve_inversion': ['risk_off', 'crisis'],           # S7: Curve Inversion
+    'volume_fade_chop': ['neutral'],                     # S8: Volume Fade Chop
+
+    # Special cases
+    'bos_choch_reversal': ['risk_on', 'neutral'],        # BOS/CHOCH (momentum)
+    'wick_trap_moneytaur': ['risk_on', 'neutral'],       # Moneytaur variant
+    'wyckoff_spring_utad': ['risk_on', 'neutral'],       # Wyckoff events
+}
+
+# Default: Allow all regimes if not specified
+DEFAULT_ALLOWED_REGIMES = ['all']
+
+
+# ============================================================================
 # Helper Functions (Module Level)
 # ============================================================================
 
@@ -127,6 +169,74 @@ class ArchetypeLogic:
                 self.state_gate_module = None
         else:
             logger.info("[ArchetypeLogic] State-aware gates DISABLED (using static thresholds)")
+
+        # ===================================================================
+        # META-FUSION: Engine-Level Weight Optimization
+        # ===================================================================
+        # Initialize MetaFusionEngine if enabled (optimized domain weights)
+        self.meta_fusion_engine = None
+        self.use_meta_fusion = config.get('use_meta_fusion', False)
+
+        if self.use_meta_fusion:
+            try:
+                from engine.archetypes.meta_fusion import MetaFusionEngine
+                self.meta_fusion_engine = MetaFusionEngine(config)
+                logger.info("[ArchetypeLogic] Meta-fusion ENABLED with optimized weights")
+                logger.info(f"[ArchetypeLogic]   - Weights: {self.meta_fusion_engine.weights}")
+            except ImportError:
+                logger.warning("[ArchetypeLogic] MetaFusionEngine not available - using default fusion")
+                self.use_meta_fusion = False
+            except Exception as e:
+                logger.error(f"[ArchetypeLogic] Failed to initialize MetaFusionEngine: {e}")
+                self.use_meta_fusion = False
+        else:
+            logger.info("[ArchetypeLogic] Meta-fusion DISABLED (using legacy fusion weights)")
+
+        # ===================================================================
+        # WYCKOFF EVENTS INTEGRATION (PR#6C)
+        # ===================================================================
+        wyckoff_cfg = config.get('wyckoff_events', {})
+        self.wyckoff_enabled = wyckoff_cfg.get('enabled', False)
+        self.wyckoff_min_confidence = wyckoff_cfg.get('min_confidence', 0.65)
+        self.wyckoff_log_events = wyckoff_cfg.get('log_events', False)
+
+        # Avoid signals (BC, UTAD)
+        self.wyckoff_avoid_longs = wyckoff_cfg.get('avoid_longs_if', [])
+
+        # Boost signals (LPS, Spring-A, SOS, PTI confluence)
+        self.wyckoff_boost_longs = wyckoff_cfg.get('boost_longs_if', {})
+
+        # Position size reduction (LPSY, UT)
+        self.wyckoff_reduce_size = wyckoff_cfg.get('reduce_position_size_if', [])
+
+        if self.wyckoff_enabled:
+            logger.info(f"[ArchetypeLogic] Wyckoff events ENABLED")
+            logger.info(f"[ArchetypeLogic]   - Avoid longs: {self.wyckoff_avoid_longs}")
+            logger.info(f"[ArchetypeLogic]   - Boost longs: {list(self.wyckoff_boost_longs.keys())}")
+            logger.info(f"[ArchetypeLogic]   - Min confidence: {self.wyckoff_min_confidence}")
+
+        # ===================================================================
+        # TEMPORAL FUSION LAYER (Wisdom Time)
+        # ===================================================================
+        temporal_cfg = config.get('temporal_fusion', {})
+        self.temporal_fusion_enabled = temporal_cfg.get('enabled', False)
+        self.temporal_fusion_engine = None
+
+        if self.temporal_fusion_enabled:
+            try:
+                from engine.temporal.temporal_fusion import TemporalFusionEngine
+                self.temporal_fusion_engine = TemporalFusionEngine(temporal_cfg)
+                logger.info("[ArchetypeLogic] Temporal Fusion Layer ENABLED")
+                logger.info(f"[ArchetypeLogic]   - Component weights: {self.temporal_fusion_engine.weights}")
+                logger.info(f"[ArchetypeLogic]   - Adjustment range: [{self.temporal_fusion_engine.min_multiplier:.2f}, {self.temporal_fusion_engine.max_multiplier:.2f}]")
+            except ImportError as e:
+                logger.warning(f"[ArchetypeLogic] TemporalFusionEngine not available: {e}")
+                self.temporal_fusion_enabled = False
+            except Exception as e:
+                logger.error(f"[ArchetypeLogic] Failed to initialize TemporalFusionEngine: {e}")
+                self.temporal_fusion_enabled = False
+        else:
+            logger.info("[ArchetypeLogic] Temporal Fusion Layer DISABLED")
 
         # ===================================================================
         # ADAPTER LAYER: Alias mappings for TF-prefixed columns
@@ -244,9 +354,23 @@ class ArchetypeLogic:
         """
         Get or recompute fusion score.
 
+        META-FUSION INTEGRATION: If meta-fusion is enabled, uses optimized
+        engine weights instead of default fusion logic.
+
         Prefers engine's fusion if present; otherwise recomputes with weights.
         """
-        # Prefer existing fusion_score
+        # META-FUSION: Use optimized engine weights if available
+        if self.use_meta_fusion and self.meta_fusion_engine is not None:
+            fusion, _ = self.meta_fusion_engine.apply_meta_fusion(row)
+
+            # Debug first call
+            if not hasattr(self, '_logged_meta_fusion'):
+                logger.info(f"[META-FUSION] Using optimized weights: fusion={fusion:.3f}")
+                self._logged_meta_fusion = True
+
+            return fusion
+
+        # LEGACY FUSION: Prefer existing fusion_score
         fuse = self.g(row, "fusion_score", None)
 
         # Debug first call
@@ -257,7 +381,7 @@ class ArchetypeLogic:
         if fuse is not None:
             return max(0.0, min(1.0, fuse))
 
-        # Recompute from components
+        # Recompute from components (legacy weights)
         w = self.fusion_weights
         wy = self.g(row, "wyckoff_score", 0.0)
         liq = self._liquidity_score(row)
@@ -274,6 +398,197 @@ class ArchetypeLogic:
             self._logged_fusion_recompute = True
 
         return max(0.0, min(1.0, f))
+
+    def _apply_wyckoff_event_boosts(self, row: pd.Series, fusion_score: float) -> Tuple[float, Dict]:
+        """
+        Apply Wyckoff event boosts/filters to fusion score (PR#6C).
+
+        Returns:
+            (adjusted_fusion_score, wyckoff_metadata)
+        """
+        if not self.wyckoff_enabled:
+            return fusion_score, {}
+
+        metadata = {
+            'events_detected': [],
+            'boosts_applied': [],
+            'avoided': False,
+            'original_fusion': fusion_score,
+        }
+
+        # STEP 1: Check avoid signals (BC, UTAD) - VETO trade completely
+        for event_name in self.wyckoff_avoid_longs:
+            event_col = event_name  # e.g., 'wyckoff_bc'
+            conf_col = f"{event_name}_confidence"
+
+            if self.g(row, event_col, False):
+                # Check confidence threshold
+                confidence = self.g(row, conf_col, 0.0)
+                if confidence >= self.wyckoff_min_confidence:
+                    metadata['avoided'] = True
+                    metadata['avoid_reason'] = event_name
+                    metadata['avoid_confidence'] = confidence
+
+                    if self.wyckoff_log_events:
+                        logger.info(f"[WYCKOFF VETO] {event_name} detected (conf={confidence:.2f}) - AVOIDING long entry")
+
+                    return 0.0, metadata  # Kill signal completely
+
+        # STEP 2: Apply boost multipliers (LPS, Spring-A, SOS, PTI confluence)
+        total_boost = 0.0
+        for event_name, boost_multiplier in self.wyckoff_boost_longs.items():
+            event_col = event_name  # e.g., 'wyckoff_lps'
+            conf_col = f"{event_name}_confidence"
+
+            if self.g(row, event_col, False):
+                # Check confidence threshold
+                confidence = self.g(row, conf_col, 0.0)
+                if confidence >= self.wyckoff_min_confidence:
+                    total_boost += boost_multiplier
+                    metadata['events_detected'].append(event_name)
+                    metadata['boosts_applied'].append({
+                        'event': event_name,
+                        'boost': boost_multiplier,
+                        'confidence': confidence
+                    })
+
+                    if self.wyckoff_log_events:
+                        logger.info(f"[WYCKOFF BOOST] {event_name} detected (conf={confidence:.2f}) - boost={boost_multiplier:+.2f}")
+
+        # Apply total boost
+        if total_boost > 0:
+            boosted_fusion = fusion_score * (1.0 + total_boost)
+            metadata['final_fusion'] = min(1.0, boosted_fusion)  # Cap at 1.0
+            return min(1.0, boosted_fusion), metadata
+
+        return fusion_score, metadata
+
+    def _apply_domain_engines(self, context: RuntimeContext, base_score: float, tags: list) -> float:
+        """
+        Universal domain engine modifier - applies Wyckoff, SMC, Temporal, HOB, Macro, Fusion
+        Soft vetoes (penalties) not hard kills
+        """
+        r = context.row
+        score = base_score
+
+        # Determine direction from tags
+        direction = "LONG" if "LONG" in tags else ("SHORT" if "SHORT" in tags else "NEUTRAL")
+
+        # =============================================================================
+        # WYCKOFF ENGINE
+        # =============================================================================
+        phase = self.g(r, 'wyckoff_phase_abc', None)
+
+        if phase == 'D' and direction == "LONG":
+            score *= 0.65  # Soft veto - distribution phase reduces long confidence
+        elif phase == 'A' and direction == "LONG":
+            score *= 1.15  # Accumulation boosts longs
+        elif phase == 'A' and direction == "SHORT":
+            score *= 0.65  # Accumulation reduces short confidence
+        elif phase == 'D' and direction == "SHORT":
+            score *= 1.15  # Distribution boosts shorts
+
+        # Wyckoff events
+        if self.g(r, 'wyckoff_spring_a', False) and direction == "LONG":
+            score *= 2.50  # Major spring boost
+        if self.g(r, 'wyckoff_lps', False) and direction == "LONG":
+            score *= 1.50
+        if self.g(r, 'wyckoff_sos', False) and direction == "LONG":
+            score *= 1.80
+        if self.g(r, 'wyckoff_utad', False) and direction == "SHORT":
+            score *= 2.50  # UTAD top boost
+        if self.g(r, 'wyckoff_bc', False) and direction == "SHORT":
+            score *= 2.00
+
+        # =============================================================================
+        # SMC ENGINE
+        # =============================================================================
+        if direction == "LONG":
+            if self.g(r, 'tf4h_bos_bullish', False):
+                score *= 2.00  # 4H bullish structure
+            elif self.g(r, 'tf1h_bos_bullish', False):
+                score *= 1.40  # 1H bullish structure
+
+            if self.g(r, 'smc_demand_zone', False):
+                score *= 1.60
+            if self.g(r, 'smc_liquidity_sweep', False):
+                score *= 1.80
+
+            # Bearish SMC reduces long confidence
+            if self.g(r, 'tf4h_bos_bearish', False):
+                score *= 0.70
+            if self.g(r, 'smc_supply_zone', False):
+                score *= 0.70
+
+        elif direction == "SHORT":
+            if self.g(r, 'tf4h_bos_bearish', False):
+                score *= 2.00  # 4H bearish structure
+            elif self.g(r, 'tf1h_bos_bearish', False):
+                score *= 1.40
+
+            if self.g(r, 'smc_supply_zone', False):
+                score *= 1.60
+
+            # Bullish SMC reduces short confidence
+            if self.g(r, 'tf4h_bos_bullish', False):
+                score *= 0.70
+            if self.g(r, 'smc_demand_zone', False):
+                score *= 0.70
+
+        # =============================================================================
+        # TEMPORAL ENGINE
+        # =============================================================================
+        if self.g(r, 'fib_time_cluster', False):
+            score *= 1.70  # Fibonacci time window
+
+        temporal_conf = self.g(r, 'temporal_confluence', 0.0)
+        if temporal_conf >= 0.70:
+            score *= 1.40  # High multi-timeframe confluence
+        elif temporal_conf >= 0.50:
+            score *= 1.20
+        elif temporal_conf <= 0.20:
+            score *= 0.90  # Low confluence penalty
+
+        # =============================================================================
+        # HOB ENGINE (Order Book)
+        # =============================================================================
+        if direction == "LONG":
+            if self.g(r, 'hob_demand_zone', False):
+                score *= 1.50  # Large bid walls
+
+            hob_imbalance = self.g(r, 'hob_imbalance', 0.0)
+            if hob_imbalance > 0.60:
+                score *= 1.30  # Strong bid imbalance
+            elif hob_imbalance < -0.60:
+                score *= 0.75  # Ask imbalance penalty
+
+        elif direction == "SHORT":
+            # HOB supply zones would go here (if available)
+            hob_imbalance = self.g(r, 'hob_imbalance', 0.0)
+            if hob_imbalance < -0.60:
+                score *= 1.30  # Strong ask imbalance
+            elif hob_imbalance > 0.60:
+                score *= 0.75  # Bid imbalance penalty
+
+        # =============================================================================
+        # MACRO ENGINE
+        # =============================================================================
+        crisis = self.g(r, 'crisis_composite', 0.0)
+
+        if direction == "LONG" and crisis >= 0.60:
+            score *= 1.30  # Crisis = contrarian long opportunity
+        elif direction == "LONG" and crisis >= 0.40:
+            score *= 1.15
+
+        if direction == "SHORT" and crisis >= 0.60:
+            score *= 1.50  # Crisis boosts short confidence
+
+        # =============================================================================
+        # FUSION ENGINE (handled globally, usually 1.0x)
+        # =============================================================================
+        # This is typically handled at the portfolio level, not per-archetype
+
+        return max(0.0, min(score, 5.0))  # Cap score safely
 
     # =======================================================================
     # Main Archetype Detection Logic
@@ -335,6 +650,38 @@ class ArchetypeLogic:
         # Global precheck: liquidity >= min_threshold
         liquidity_score = self._liquidity_score(context.row)
         fusion_score = self._fusion(context.row)
+
+        # PR#6C: Apply Wyckoff event boosts/filters
+        fusion_score, wyckoff_meta = self._apply_wyckoff_event_boosts(context.row, fusion_score)
+
+        # If Wyckoff veto'd the trade, return immediately
+        if wyckoff_meta.get('avoided', False):
+            return None, fusion_score, liquidity_score
+
+        # TEMPORAL FUSION ADJUSTMENT (Wisdom Time Layer)
+        # Adjust fusion based on temporal confluence AFTER Wyckoff boosts
+        if self.temporal_fusion_enabled and self.temporal_fusion_engine is not None:
+            try:
+                # Compute temporal confluence
+                temporal_confluence = self.temporal_fusion_engine.compute_temporal_confluence(context)
+
+                # Adjust fusion weight
+                original_fusion = fusion_score
+                fusion_score = self.temporal_fusion_engine.adjust_fusion_weight(fusion_score, temporal_confluence)
+
+                # Log significant adjustments (only first few times to avoid spam)
+                if abs(fusion_score - original_fusion) > 0.01:
+                    if not hasattr(self, '_temporal_adjustment_log_count'):
+                        self._temporal_adjustment_log_count = 0
+                    if self._temporal_adjustment_log_count < 5:
+                        logger.info(
+                            f"[TEMPORAL] Fusion adjusted: {original_fusion:.3f} → {fusion_score:.3f} "
+                            f"(confluence={temporal_confluence:.3f})"
+                        )
+                        self._temporal_adjustment_log_count += 1
+            except Exception as e:
+                logger.error(f"[TEMPORAL] Error applying temporal adjustment: {e}")
+                # Continue with unadjusted fusion on error
 
         # DEBUG: Log first liquidity check with flag source
         if not hasattr(self, '_logged_first_liquidity_check'):
@@ -410,12 +757,12 @@ class ArchetypeLogic:
             'M': ('ratio_coil_break', self._check_M, 11),
             # Bear-biased archetypes (short-biased)
             'S1': ('breakdown', self._check_S1, 12),
-            'S2': ('failed_rally', self._check_S2, 13),  # Failed Rally Rejection
+            'S2': ('failed_rally', self._check_S2, 13),  # DEPRECATED for BTC - poor performance
             'S3': ('whipsaw', self._check_S3, 14),
-            'S4': ('distribution', self._check_S4, 15),
+            'S4': ('funding_divergence', self._check_S4, 15),  # Funding Divergence (Short Squeeze)
             'S5': ('long_squeeze', self._check_S5, 16),  # Long Squeeze Cascade
-            'S6': ('alt_rotation_down', self._check_S6, 17),
-            'S7': ('curve_inversion', self._check_S7, 18),
+            'S6': ('alt_rotation_down', self._check_S6, 17),  # STUB - always returns False
+            'S7': ('curve_inversion', self._check_S7, 18),  # STUB - always returns False
             'S8': ('volume_fade_chop', self._check_S8, 19),
         }
 
@@ -429,6 +776,18 @@ class ArchetypeLogic:
         # Evaluate all enabled archetypes without early returns
         for letter, (name, check_func, priority) in archetype_map.items():
             if not self.enabled[letter]:
+                continue
+
+            # REGIME-AWARE ROUTING: Check if archetype is allowed in current regime
+            current_regime = context.regime_label if context else 'neutral'
+            allowed_regimes = ARCHETYPE_REGIMES.get(name, DEFAULT_ALLOWED_REGIMES)
+
+            # Skip archetype if regime not allowed (hard filter for regime-aware optimization)
+            if 'all' not in allowed_regimes and current_regime not in allowed_regimes:
+                logger.debug(
+                    f"[REGIME ROUTING] Skipping {name}: regime={current_regime} "
+                    f"not in allowed={allowed_regimes}"
+                )
                 continue
 
             result = check_func(context)
@@ -683,15 +1042,185 @@ class ArchetypeLogic:
         archetype_weight = context.get_threshold('spring', 'archetype_weight', 1.0)
         score = max(0.0, min(1.0, base_score * archetype_weight))
 
+        # ============================================================================
+        # DOMAIN ENGINE INTEGRATION (BOOST/VETO LAYER)
+        # ============================================================================
+        # Apply domain engines BEFORE fusion threshold gate
+        # This allows marginal signals to qualify via boosts
+        # Order: VETOES first (safety) -> BOOSTS second -> GATE third
+
+        use_wyckoff = context.metadata.get('feature_flags', {}).get('enable_wyckoff', False)
+        use_smc = context.metadata.get('feature_flags', {}).get('enable_smc', False)
+        use_temporal = context.metadata.get('feature_flags', {}).get('enable_temporal', False)
+        use_hob = context.metadata.get('feature_flags', {}).get('enable_hob', False)
+        use_macro = context.metadata.get('feature_flags', {}).get('enable_macro', False)
+
+        domain_boost = 1.0
+        domain_signals = []
+
+        # ============================================================================
+        # WYCKOFF ENGINE: Accumulation signals for LONG archetype
+        # ============================================================================
+        if use_wyckoff:
+            # SOFT VETOES: Distribution phase reduces confidence
+            wyckoff_distribution = self.g(context.row, 'wyckoff_phase_abc', '') == 'D'
+            wyckoff_utad = self.g(context.row, 'wyckoff_utad', False)
+            wyckoff_bc = self.g(context.row, 'wyckoff_bc', False)
+
+            if wyckoff_distribution:
+                domain_boost *= 0.70  # Distribution phase = caution
+                domain_signals.append("wyckoff_distribution_caution")
+
+            if wyckoff_utad or wyckoff_bc:
+                domain_boost *= 0.70  # Distribution events = caution
+                domain_signals.append("wyckoff_distribution_event_caution")
+
+            # MAJOR BOOSTS: Spring events (Phase C - trap reversals)
+            wyckoff_spring_a = self.g(context.row, 'wyckoff_spring_a', False)
+            wyckoff_spring_b = self.g(context.row, 'wyckoff_spring_b', False)
+
+            if wyckoff_spring_a:
+                domain_boost *= 2.50  # Spring A = deep fake breakdown
+                domain_signals.append("wyckoff_spring_a_trap_reversal")
+            elif wyckoff_spring_b:
+                domain_boost *= 2.50  # Spring B = shallow spring
+                domain_signals.append("wyckoff_spring_b_trap_reversal")
+
+            # SUPPORT SIGNALS: LPS + Accumulation
+            wyckoff_lps = self.g(context.row, 'wyckoff_lps', False)
+            wyckoff_accumulation = self.g(context.row, 'wyckoff_phase_abc', '') == 'A'
+
+            if wyckoff_lps:
+                domain_boost *= 1.50  # Last Point Support
+                domain_signals.append("wyckoff_lps_support")
+
+            if wyckoff_accumulation:
+                domain_boost *= 2.00  # Accumulation phase
+                domain_signals.append("wyckoff_accumulation_phase")
+
+        # ============================================================================
+        # SMC ENGINE: Smart Money Concepts - bullish structure
+        # ============================================================================
+        if use_smc:
+            # VETOES: Don't long into supply zones
+            smc_supply_zone = self.g(context.row, 'smc_supply_zone', False)
+            tf4h_bos_bearish = self.g(context.row, 'tf4h_bos_bearish', False)
+
+            if smc_supply_zone:
+                domain_boost *= 0.70  # Supply overhead
+                domain_signals.append("smc_supply_zone_overhead")
+
+            if tf4h_bos_bearish:
+                domain_boost *= 0.70  # Bearish structure
+                domain_signals.append("smc_4h_bearish_structure_penalty")
+
+            # MAJOR BOOSTS: Bullish structure breaks
+            tf4h_bos_bullish = self.g(context.row, 'tf4h_bos_bullish', False)
+            tf1h_bos_bullish = self.g(context.row, 'tf1h_bos_bullish', False)
+
+            if tf4h_bos_bullish:
+                domain_boost *= 2.00  # 4H institutional shift
+                domain_signals.append("smc_4h_bos_bullish_institutional")
+            elif tf1h_bos_bullish:
+                domain_boost *= 1.40  # 1H structural shift
+                domain_signals.append("smc_1h_bos_bullish")
+
+            # DEMAND ZONES: Institutional buying areas
+            smc_demand_zone = self.g(context.row, 'smc_demand_zone', False)
+            smc_liquidity_sweep = self.g(context.row, 'smc_liquidity_sweep', False)
+
+            if smc_demand_zone:
+                domain_boost *= 1.60  # Demand zone support
+                domain_signals.append("smc_demand_zone_support")
+
+            if smc_liquidity_sweep:
+                domain_boost *= 1.80  # Liquidity sweep = trap setup
+                domain_signals.append("smc_liquidity_sweep_reversal")
+
+        # ============================================================================
+        # TEMPORAL ENGINE: Fibonacci time + multi-timeframe confluence
+        # ============================================================================
+        if use_temporal:
+            # MAJOR BOOSTS: Fibonacci time clusters
+            fib_time_cluster = self.g(context.row, 'fib_time_cluster', False)
+            temporal_confluence = self.g(context.row, 'temporal_confluence', False)
+
+            if fib_time_cluster:
+                domain_boost *= 1.70  # Fibonacci timing
+                domain_signals.append("fib_time_cluster_reversal")
+
+            if temporal_confluence:
+                domain_boost *= 1.40  # Multi-timeframe alignment
+                domain_signals.append("temporal_multi_tf_confluence")
+
+            # VETOES: Don't long into resistance
+            temporal_resistance_cluster = self.g(context.row, 'temporal_resistance_cluster', False)
+            if temporal_resistance_cluster:
+                domain_boost *= 0.75  # Resistance overhead
+                domain_signals.append("temporal_resistance_overhead")
+
+        # ============================================================================
+        # HOB ENGINE: Order book depth + imbalance
+        # ============================================================================
+        if use_hob:
+            # DEMAND ZONES: Large bid walls
+            hob_demand_zone = self.g(context.row, 'hob_demand_zone', False)
+            hob_imbalance = self.g(context.row, 'hob_imbalance', 0.0)
+
+            if hob_demand_zone:
+                domain_boost *= 1.50  # Demand wall support
+                domain_signals.append("hob_demand_zone_support")
+
+            # ORDER BOOK IMBALANCE: Bid/ask ratio
+            if hob_imbalance > 0.60:  # More bids than asks
+                domain_boost *= 1.30  # Strong buyer imbalance
+                domain_signals.append("hob_bid_imbalance_strong")
+            elif hob_imbalance > 0.40:
+                domain_boost *= 1.15  # Moderate buyer imbalance
+                domain_signals.append("hob_bid_imbalance_moderate")
+
+            # VETOES: Supply zones
+            hob_supply_zone = self.g(context.row, 'hob_supply_zone', False)
+            if hob_supply_zone:
+                domain_boost *= 0.70  # Supply wall overhead
+                domain_signals.append("hob_supply_zone_overhead")
+
+        # MACRO: Crisis composite check
+        if use_macro:
+            crisis_composite = self.g(context.row, 'crisis_composite', 0.0)
+            if crisis_composite > 0.60:  # High crisis reduces confidence
+                domain_boost *= 0.85  # Crisis penalty
+                domain_signals.append("macro_crisis_penalty")
+            elif crisis_composite < 0.30:  # Low crisis = favorable
+                domain_boost *= 1.20  # Risk-on boost
+                domain_signals.append("macro_risk_on_boost")
+
+        # Apply domain boost to final score
+        score_before_domain = score
+        score = score * domain_boost
+
+        # ============================================================================
+        # FUSION THRESHOLD GATE (applied AFTER domain engines)
+        # ============================================================================
         if score < fusion_th:
-            return False, score, {"reason": "score_below_threshold", "score": score, "threshold": fusion_th}
+            return False, score, {
+                "reason": "score_below_threshold",
+                "score": score,
+                "score_before_domain": score_before_domain,
+                "threshold": fusion_th,
+                "domain_boost": domain_boost,
+                "domain_signals": domain_signals
+            }
 
         meta = {
             "components": components,
             "weights": weights,
             "base_score": base_score,
             "archetype_weight": archetype_weight,
-            "pti_trap_type": pti_trap
+            "pti_trap_type": pti_trap,
+            "domain_boost": domain_boost,
+            "domain_signals": domain_signals,
+            "score_before_domain": score_before_domain
         }
 
         return True, score, meta
@@ -764,150 +1293,415 @@ class ArchetypeLogic:
         # Final score
         score = max(0.0, min(1.0, base_score * archetype_weight))
 
+        # ============================================================================
+        # DOMAIN ENGINE INTEGRATION (BOOST/VETO LAYER)
+        # ============================================================================
+        # Apply domain engines BEFORE fusion threshold gate
+        # This allows marginal signals to qualify via boosts
+        # Order: VETOES first (safety) -> BOOSTS second -> GATE third
+
+        use_wyckoff = context.metadata.get('feature_flags', {}).get('enable_wyckoff', False)
+        use_smc = context.metadata.get('feature_flags', {}).get('enable_smc', False)
+        use_temporal = context.metadata.get('feature_flags', {}).get('enable_temporal', False)
+        use_hob = context.metadata.get('feature_flags', {}).get('enable_hob', False)
+        use_macro = context.metadata.get('feature_flags', {}).get('enable_macro', False)
+
+        domain_boost = 1.0
+        domain_signals = []
+
+        # ============================================================================
+        # WYCKOFF ENGINE: Order block retest confirmation
+        # ============================================================================
+        if use_wyckoff:
+            # SOFT VETOES: Distribution phase reduces confidence
+            wyckoff_distribution = self.g(context.row, 'wyckoff_phase_abc', '') == 'D'
+            wyckoff_utad = self.g(context.row, 'wyckoff_utad', False)
+            wyckoff_bc = self.g(context.row, 'wyckoff_bc', False)
+
+            if wyckoff_distribution:
+                domain_boost *= 0.70  # Distribution phase = caution
+                domain_signals.append("wyckoff_distribution_caution")
+
+            if wyckoff_utad or wyckoff_bc:
+                domain_boost *= 0.70  # Distribution events = caution
+                domain_signals.append("wyckoff_distribution_event_caution")
+
+            # MAJOR BOOSTS: Accumulation + Support signals
+            wyckoff_accumulation = self.g(context.row, 'wyckoff_phase_abc', '') == 'A'
+            wyckoff_lps = self.g(context.row, 'wyckoff_lps', False)
+            wyckoff_ps = self.g(context.row, 'wyckoff_ps', False)
+
+            if wyckoff_accumulation:
+                domain_boost *= 2.00  # Accumulation phase
+                domain_signals.append("wyckoff_accumulation_phase")
+
+            if wyckoff_lps:
+                domain_boost *= 1.50  # Last Point Support = retest confirmation
+                domain_signals.append("wyckoff_lps_support")
+            elif wyckoff_ps:
+                domain_boost *= 1.30  # Preliminary Support
+                domain_signals.append("wyckoff_ps_support")
+
+            # SPRING SIGNALS: Shakeouts before markup
+            wyckoff_spring_a = self.g(context.row, 'wyckoff_spring_a', False)
+            wyckoff_spring_b = self.g(context.row, 'wyckoff_spring_b', False)
+
+            if wyckoff_spring_a:
+                domain_boost *= 2.50  # Spring A = deep shakeout
+                domain_signals.append("wyckoff_spring_a_shakeout")
+            elif wyckoff_spring_b:
+                domain_boost *= 2.00  # Spring B = shallow shakeout
+                domain_signals.append("wyckoff_spring_b_shakeout")
+
+        # ============================================================================
+        # SMC ENGINE: Smart Money Concepts - order block validation
+        # ============================================================================
+        if use_smc:
+            # VETOES: Don't long into supply zones
+            smc_supply_zone = self.g(context.row, 'smc_supply_zone', False)
+            tf4h_bos_bearish = self.g(context.row, 'tf4h_bos_bearish', False)
+
+            if smc_supply_zone:
+                domain_boost *= 0.70  # Supply overhead
+                domain_signals.append("smc_supply_zone_overhead")
+
+            if tf4h_bos_bearish:
+                domain_boost *= 0.70  # Bearish structure
+                domain_signals.append("smc_4h_bearish_structure_penalty")
+
+            # MAJOR BOOSTS: BOS confirmation (critical for order blocks)
+            tf4h_bos_bullish = self.g(context.row, 'tf4h_bos_bullish', False)
+            tf1h_bos_bullish = self.g(context.row, 'tf1h_bos_bullish', False)
+
+            if tf4h_bos_bullish:
+                domain_boost *= 2.00  # 4H BOS = institutional structure shift
+                domain_signals.append("smc_4h_bos_bullish_institutional")
+            elif tf1h_bos_bullish:
+                domain_boost *= 1.40  # 1H BOS = structural shift
+                domain_signals.append("smc_1h_bos_bullish")
+
+            # ORDER BLOCK ZONES: Institutional retest areas
+            smc_demand_zone = self.g(context.row, 'smc_demand_zone', False)
+            smc_order_block = self.g(context.row, 'smc_order_block', False)
+            smc_choch = self.g(context.row, 'smc_choch', False)
+
+            if smc_demand_zone:
+                domain_boost *= 1.60  # Demand zone = institutional support
+                domain_signals.append("smc_demand_zone_support")
+
+            if smc_order_block:
+                domain_boost *= 1.80  # Order block retest = high probability
+                domain_signals.append("smc_order_block_retest")
+
+            if smc_choch:
+                domain_boost *= 1.50  # Change of Character
+                domain_signals.append("smc_choch_trend_change")
+
+        # ============================================================================
+        # TEMPORAL ENGINE: Fibonacci time + confluence
+        # ============================================================================
+        if use_temporal:
+            # MAJOR BOOSTS: Fibonacci time clusters
+            fib_time_cluster = self.g(context.row, 'fib_time_cluster', False)
+            temporal_confluence = self.g(context.row, 'temporal_confluence', False)
+
+            if fib_time_cluster:
+                domain_boost *= 1.70  # Fibonacci timing
+                domain_signals.append("fib_time_cluster_reversal")
+
+            if temporal_confluence:
+                domain_boost *= 1.40  # Multi-timeframe alignment
+                domain_signals.append("temporal_multi_tf_confluence")
+
+            # VETOES: Don't long into resistance
+            temporal_resistance_cluster = self.g(context.row, 'temporal_resistance_cluster', False)
+            if temporal_resistance_cluster:
+                domain_boost *= 0.75  # Resistance overhead
+                domain_signals.append("temporal_resistance_overhead")
+
+        # ============================================================================
+        # HOB ENGINE: Order book confirmation
+        # ============================================================================
+        if use_hob:
+            # DEMAND ZONES: Large bid walls
+            hob_demand_zone = self.g(context.row, 'hob_demand_zone', False)
+            hob_imbalance = self.g(context.row, 'hob_imbalance', 0.0)
+
+            if hob_demand_zone:
+                domain_boost *= 1.50  # Demand wall support
+                domain_signals.append("hob_demand_zone_support")
+
+            # ORDER BOOK IMBALANCE: Bid/ask ratio
+            if hob_imbalance > 0.60:  # More bids than asks
+                domain_boost *= 1.30  # Strong buyer imbalance
+                domain_signals.append("hob_bid_imbalance_strong")
+            elif hob_imbalance > 0.40:
+                domain_boost *= 1.15  # Moderate buyer imbalance
+                domain_signals.append("hob_bid_imbalance_moderate")
+
+            # VETOES: Supply zones
+            hob_supply_zone = self.g(context.row, 'hob_supply_zone', False)
+            if hob_supply_zone:
+                domain_boost *= 0.70  # Supply wall overhead
+                domain_signals.append("hob_supply_zone_overhead")
+
+        # MACRO: Crisis composite check
+        if use_macro:
+            crisis_composite = self.g(context.row, 'crisis_composite', 0.0)
+            if crisis_composite > 0.60:  # High crisis reduces confidence
+                domain_boost *= 0.85  # Crisis penalty
+                domain_signals.append("macro_crisis_penalty")
+            elif crisis_composite < 0.30:  # Low crisis = favorable
+                domain_boost *= 1.20  # Risk-on boost
+                domain_signals.append("macro_risk_on_boost")
+
+        # Apply domain boost to final score
+        score_before_domain = score
+        score = score * domain_boost
+
+        # ============================================================================
+        # FUSION THRESHOLD GATE (applied AFTER domain engines)
+        # ============================================================================
         # Gate check on fusion threshold
         if score < fusion_th:
-            return False, score, {"reason": "score_below_fusion_th", "score": score, "threshold": fusion_th}
+            return False, score, {
+                "reason": "score_below_fusion_th",
+                "score": score,
+                "score_before_domain": score_before_domain,
+                "threshold": fusion_th,
+                "domain_boost": domain_boost,
+                "domain_signals": domain_signals
+            }
 
         meta = {
             "components": components,
             "weights": weights,
             "base_score": base_score,
             "archetype_weight": archetype_weight,
-            "penalties": penalties
+            "penalties": penalties,
+            "domain_boost": domain_boost,
+            "domain_signals": domain_signals,
+            "score_before_domain": score_before_domain
         }
 
         return True, score, meta
 
-    def _check_C(self, context: RuntimeContext) -> bool:
-        """
-        Archetype C: FVG Continuation (displacement + momentum).
+    def _pattern_C(self, context: RuntimeContext):
+        """Pattern detection for Archetype C: BOS/CHOCH Reversal (LONG)"""
+        r = context.row
+        if self.g(r, 'tf1h_bos_bullish', False) and self.g(r, 'tf1h_choch_flag', False):
+            score = 0.45
+            if self.g(r, 'wick_lower_ratio', 0.0) >= 0.55:
+                score += 0.20
+            return True, score, ["C", "bos_choch", "LONG"]
+        return None
 
-        **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
-        """
-        # PR#6A: Read ALL thresholds from context (not hardcoded!)
-        fusion_th = context.get_threshold('wick_trap', 'fusion_threshold', 0.42)
-        disp_multiplier = context.get_threshold('wick_trap', 'disp_atr_multiplier', 1.00)
-        momentum_th = context.get_threshold('wick_trap', 'momentum_min', 0.45)
-        tf4h_fusion_th = context.get_threshold('wick_trap', 'tf4h_fusion_min', 0.25)
+    def _check_C(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
+        """Archetype C: BOS/CHOCH Reversal (LONG)"""
 
-        # Get features from context
-        fvg_4h = self.g(context.row, "fvg_present_4h", 0)
-        if not fvg_4h:
-            return False
+        # 1) Base pattern detection - returns (matched, score, metadata)
+        base_result = self._pattern_C(context)
+        if not base_result:
+            return False, 0.0, {"reason": "pattern_not_matched"}
 
-        disp = self.g(context.row, "boms_disp", 0.0)
-        atr = max(self.g(context.row, "atr", 0.0), 1e-9)
-        momentum = self._momentum_score(context.row)
-        tf4h_fusion = self.g(context.row, "fusion_score", 0.0)
-        fusion = context.row.get('fusion_score', 0.0)
+        matched, base_score, pattern_tags = base_result  # base_score in [0,1]
 
-        # Now use DYNAMIC thresholds instead of hardcoded!
-        return (disp >= disp_multiplier * atr and
-                momentum >= momentum_th and
-                tf4h_fusion >= tf4h_fusion_th and
-                fusion >= fusion_th)
+        # 2) Global safety vetoes (soft - use penalties not hard returns)
+        # Note: Keep these soft - use penalties not hard returns
 
-    def _check_D(self, context: RuntimeContext) -> bool:
-        """
-        Archetype D: Failed Continuation (FVG + weak RSI).
+        # 3) Domain modifiers (standardized across all)
+        score = self._apply_domain_engines(context, base_score, pattern_tags)
 
-        **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
-        """
-        # PR#6A: Read ALL thresholds from context (not hardcoded!)
-        fusion_th = context.get_threshold('failed_continuation', 'fusion_threshold', 0.42)
-        rsi_max = context.get_threshold('failed_continuation', 'rsi_max', 50.0)
+        # 4) Final fusion gate
+        fusion_th = context.get_threshold('bos_choch', 'fusion_threshold', 0.40)
+        if score < fusion_th:
+            return False, score, {
+                "reason": "score_below_fusion_threshold",
+                "base_score": base_score,
+                "final_score": score,
+                "fusion_threshold": fusion_th
+            }
 
-        # Get features from context
-        fvg_1h = self.g(context.row, "fvg_present_1h", 0)
-        if not fvg_1h:
-            return False
+        # 5) Return with full metadata
+        return True, score, {
+            "base_score": base_score,
+            "final_score": score,
+            "pattern_tags": pattern_tags,
+            "domain_boost_applied": True
+        }
 
-        rsi = self.g(context.row, "rsi", 50.0)
-        fusion = context.row.get('fusion_score', 0.0)
+    def _pattern_D(self, context: RuntimeContext):
+        """Pattern detection for Archetype D: Order Block Retest (LONG)"""
+        r = context.row
+        ob_retest = self.g(r, 'tf1h_ob_retest_flag', False) or (
+            self.g(r, 'tf1h_ob_low', None) is not None and
+            abs(r['close'] - self.g(r, 'tf1h_ob_low', 999999)) < self.g(r, 'atr', 100) * 0.5
+        )
+        if ob_retest and self.g(r, 'rsi_14', 50) < 35:
+            score = 0.42
+            return True, score, ["D", "ob_retest", "LONG"]
+        return None
 
-        # Now use DYNAMIC thresholds instead of hardcoded!
-        return (rsi <= rsi_max and
-                fusion >= fusion_th)
+    def _check_D(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
+        """Archetype D: Order Block Retest (LONG)"""
 
-    def _check_E(self, context: RuntimeContext) -> bool:
-        """
-        Archetype E: Liquidity Compression (low ATR + volume cluster).
+        # 1) Base pattern detection - returns (matched, score, metadata)
+        base_result = self._pattern_D(context)
+        if not base_result:
+            return False, 0.0, {"reason": "pattern_not_matched"}
 
-        **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
-        """
-        # PR#6A: Read ALL thresholds from context (with state-aware adjustment)
-        base_fusion_th = context.get_threshold('volume_exhaustion', 'fusion_threshold', 0.35)
-        atr_pct_max = context.get_threshold('volume_exhaustion', 'atr_percentile_max', 0.25)
-        vol_z_min = context.get_threshold('volume_exhaustion', 'vol_z_min', 0.5)
-        vol_z_max = context.get_threshold('volume_exhaustion', 'vol_z_max', 1.5)
-        vol_cluster_min = context.get_threshold('volume_exhaustion', 'vol_cluster_min', 0.70)
+        matched, base_score, pattern_tags = base_result  # base_score in [0,1]
 
-        # Apply state-aware gate adjustment (Bull Machine v2)
-        fusion_th = apply_state_aware_gate(
-            'volume_exhaustion',
-            base_fusion_th,
-            context,
-            self.state_gate_module,
-            log_components=False
-        ) if STATE_GATES_AVAILABLE else base_fusion_th
+        # 2) Global safety vetoes (soft - use penalties not hard returns)
+        # Note: Keep these soft - use penalties not hard returns
 
-        # Get features from context
-        atr_pct = self.g(context.row, "atr_percentile", 0.5)
-        vol_z = self.g(context.row, "vol_z", 0.0)
-        fusion = context.row.get('fusion_score', 0.0)
+        # 3) Domain modifiers (standardized across all)
+        score = self._apply_domain_engines(context, base_score, pattern_tags)
 
-        # Volume clustering: check if vol_z is moderate (dynamic thresholds)
-        vol_cluster = 1.0 if vol_z_min <= vol_z <= vol_z_max else 0.0
+        # 4) Final fusion gate
+        fusion_th = context.get_threshold('ob_retest', 'fusion_threshold', 0.40)
+        if score < fusion_th:
+            return False, score, {
+                "reason": "score_below_fusion_threshold",
+                "base_score": base_score,
+                "final_score": score,
+                "fusion_threshold": fusion_th
+            }
 
-        # Now use DYNAMIC thresholds instead of hardcoded!
-        return (atr_pct <= atr_pct_max and
-                vol_cluster >= vol_cluster_min and
-                fusion >= fusion_th)
+        # 5) Return with full metadata
+        return True, score, {
+            "base_score": base_score,
+            "final_score": score,
+            "pattern_tags": pattern_tags,
+            "domain_boost_applied": True
+        }
 
-    def _check_F(self, context: RuntimeContext) -> bool:
-        """
-        Archetype F: Expansion Exhaustion (extreme RSI + high ATR + vol spike).
+    def _pattern_E(self, context: RuntimeContext):
+        """Pattern detection for Archetype E: Breakdown (SHORT)"""
+        r = context.row
+        if self.g(r, 'tf1h_bos_bearish', False) and self.g(r, 'volume_zscore', 0.0) > 1.5:
+            score = 0.45
+            return True, score, ["E", "breakdown", "SHORT"]
+        return None
 
-        **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
-        """
-        # PR#6A: Read ALL thresholds from context (not hardcoded!)
-        fusion_th = context.get_threshold('exhaustion_reversal', 'fusion_threshold', 0.38)
-        rsi_min = context.get_threshold('exhaustion_reversal', 'rsi_min', 78.0)
-        atr_pct_min = context.get_threshold('exhaustion_reversal', 'atr_percentile_min', 0.90)
-        vol_z_min = context.get_threshold('exhaustion_reversal', 'vol_z_min', 1.0)
+    def _check_E(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
+        """Archetype E: Breakdown (SHORT)"""
 
-        # Get features from context
-        rsi = self.g(context.row, "rsi", 50.0)
-        atr_pct = self.g(context.row, "atr_percentile", 0.5)
-        vol_z = self.g(context.row, "vol_z", 0.0)
-        fusion = context.row.get('fusion_score', 0.0)
+        # 1) Base pattern detection - returns (matched, score, metadata)
+        base_result = self._pattern_E(context)
+        if not base_result:
+            return False, 0.0, {"reason": "pattern_not_matched"}
 
-        # Now use DYNAMIC thresholds instead of hardcoded!
-        return (rsi >= rsi_min and
-                atr_pct >= atr_pct_min and
-                vol_z >= vol_z_min and
-                fusion >= fusion_th)
+        matched, base_score, pattern_tags = base_result  # base_score in [0,1]
 
-    def _check_G(self, context: RuntimeContext) -> bool:
-        """
-        Archetype G: Re-Accumulate Base (BOMS strength + high liquidity).
+        # 2) Global safety vetoes (soft - use penalties not hard returns)
+        # Note: Keep these soft - use penalties not hard returns
 
-        **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
-        """
-        # PR#6A: Read ALL thresholds from context (not hardcoded!)
+        # 3) Domain modifiers (standardized across all)
+        score = self._apply_domain_engines(context, base_score, pattern_tags)
+
+        # 4) Final fusion gate
+        fusion_th = context.get_threshold('breakdown', 'fusion_threshold', 0.40)
+        if score < fusion_th:
+            return False, score, {
+                "reason": "score_below_fusion_threshold",
+                "base_score": base_score,
+                "final_score": score,
+                "fusion_threshold": fusion_th
+            }
+
+        # 5) Return with full metadata
+        return True, score, {
+            "base_score": base_score,
+            "final_score": score,
+            "pattern_tags": pattern_tags,
+            "domain_boost_applied": True
+        }
+
+    def _pattern_F(self, context: RuntimeContext):
+        """Pattern detection for Archetype F: FVG Real Move (LONG)"""
+        r = context.row
+        if self.g(r, 'tf1h_fvg_present', False) and self.g(r, 'volume_zscore', 0.0) > 1.0:
+            score = 0.42
+            return True, score, ["F", "fvg_real_move", "LONG"]
+        return None
+
+    def _check_F(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
+        """Archetype F: FVG Real Move (LONG)"""
+
+        # 1) Base pattern detection - returns (matched, score, metadata)
+        base_result = self._pattern_F(context)
+        if not base_result:
+            return False, 0.0, {"reason": "pattern_not_matched"}
+
+        matched, base_score, pattern_tags = base_result  # base_score in [0,1]
+
+        # 2) Global safety vetoes (soft - use penalties not hard returns)
+        # Note: Keep these soft - use penalties not hard returns
+
+        # 3) Domain modifiers (standardized across all)
+        score = self._apply_domain_engines(context, base_score, pattern_tags)
+
+        # 4) Final fusion gate
+        fusion_th = context.get_threshold('fvg_real_move', 'fusion_threshold', 0.40)
+        if score < fusion_th:
+            return False, score, {
+                "reason": "score_below_fusion_threshold",
+                "base_score": base_score,
+                "final_score": score,
+                "fusion_threshold": fusion_th
+            }
+
+        # 5) Return with full metadata
+        return True, score, {
+            "base_score": base_score,
+            "final_score": score,
+            "pattern_tags": pattern_tags,
+            "domain_boost_applied": True
+        }
+
+    def _pattern_G(self, context: RuntimeContext):
+        """Pattern detection for Archetype G: Liquidity Sweep (LONG)"""
+        r = context.row
+        wick_low = self.g(r, 'wick_lower_ratio', 0.0)
+        if wick_low >= 0.65 and self.g(r, 'tf1h_bos_bullish', False):
+            score = 0.45 + 0.20 * min(1.0, wick_low)
+            return True, score, ["G", "liquidity_sweep", "LONG"]
+        return None
+
+    def _check_G(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
+        """Archetype G: Liquidity Sweep (LONG)"""
+
+        # 1) Base pattern detection - returns (matched, score, metadata)
+        base_result = self._pattern_G(context)
+        if not base_result:
+            return False, 0.0, {"reason": "pattern_not_matched"}
+
+        matched, base_score, pattern_tags = base_result  # base_score in [0,1]
+
+        # 2) Global safety vetoes (soft - use penalties not hard returns)
+        # Note: Keep these soft - use penalties not hard returns
+
+        # 3) Domain modifiers (standardized across all)
+        score = self._apply_domain_engines(context, base_score, pattern_tags)
+
+        # 4) Final fusion gate
         fusion_th = context.get_threshold('liquidity_sweep', 'fusion_threshold', 0.40)
-        boms_str_min = context.get_threshold('liquidity_sweep', 'boms_strength_min', 0.40)
-        liq_min = context.get_threshold('liquidity_sweep', 'liquidity_min', 0.40)
+        if score < fusion_th:
+            return False, score, {
+                "reason": "score_below_fusion_threshold",
+                "base_score": base_score,
+                "final_score": score,
+                "fusion_threshold": fusion_th
+            }
 
-        # Get features from context
-        boms_str = self.g(context.row, "boms_strength", 0.0)
-        liq = self._liquidity_score(context.row)
-        fusion = context.row.get('fusion_score', 0.0)
-
-        # Now use DYNAMIC thresholds instead of hardcoded!
-        return (boms_str >= boms_str_min and
-                liq >= liq_min and
-                fusion >= fusion_th)
+        # 5) Return with full metadata
+        return True, score, {
+            "base_score": base_score,
+            "final_score": score,
+            "pattern_tags": pattern_tags,
+            "domain_boost_applied": True
+        }
 
     def _check_H(self, context: RuntimeContext) -> tuple:
         """
@@ -964,163 +1758,1205 @@ class ArchetypeLogic:
 
         score = max(0.0, min(1.0, base_score * archetype_weight))
 
+        # ============================================================================
+        # DOMAIN ENGINE INTEGRATION (BOOST/VETO LAYER)
+        # ============================================================================
+        # Apply domain engines BEFORE fusion threshold gate
+        # This allows marginal signals to qualify via boosts
+        # Order: VETOES first (safety) -> BOOSTS second -> GATE third
+
+        use_wyckoff = context.metadata.get('feature_flags', {}).get('enable_wyckoff', False)
+        use_smc = context.metadata.get('feature_flags', {}).get('enable_smc', False)
+        use_temporal = context.metadata.get('feature_flags', {}).get('enable_temporal', False)
+        use_hob = context.metadata.get('feature_flags', {}).get('enable_hob', False)
+        use_macro = context.metadata.get('feature_flags', {}).get('enable_macro', False)
+
+        domain_boost = 1.0
+        domain_signals = []
+
+        # ============================================================================
+        # WYCKOFF ENGINE: Trap within trend confirmation
+        # ============================================================================
+        if use_wyckoff:
+            # SOFT VETOES: Distribution phase reduces confidence
+            wyckoff_distribution = self.g(context.row, 'wyckoff_phase_abc', '') == 'D'
+            wyckoff_utad = self.g(context.row, 'wyckoff_utad', False)
+            wyckoff_bc = self.g(context.row, 'wyckoff_bc', False)
+
+            if wyckoff_distribution:
+                domain_boost *= 0.70  # Distribution phase = caution
+                domain_signals.append("wyckoff_distribution_caution")
+
+            if wyckoff_utad or wyckoff_bc:
+                domain_boost *= 0.70  # Distribution events = caution
+                domain_signals.append("wyckoff_distribution_event_caution")
+
+            # MAJOR BOOSTS: Accumulation phase + Springs (trap reversals within trend)
+            wyckoff_accumulation = self.g(context.row, 'wyckoff_phase_abc', '') == 'A'
+            wyckoff_spring_a = self.g(context.row, 'wyckoff_spring_a', False)
+            wyckoff_spring_b = self.g(context.row, 'wyckoff_spring_b', False)
+
+            if wyckoff_accumulation:
+                domain_boost *= 2.00  # Accumulation phase
+                domain_signals.append("wyckoff_accumulation_phase")
+
+            if wyckoff_spring_a:
+                domain_boost *= 2.50  # Spring A = deep trap reversal
+                domain_signals.append("wyckoff_spring_a_trap_reversal")
+            elif wyckoff_spring_b:
+                domain_boost *= 2.00  # Spring B = shallow trap
+                domain_signals.append("wyckoff_spring_b_trap_reversal")
+
+            # SUPPORT SIGNALS: LPS + Shakeouts
+            wyckoff_lps = self.g(context.row, 'wyckoff_lps', False)
+            wyckoff_st = self.g(context.row, 'wyckoff_st', False)
+
+            if wyckoff_lps:
+                domain_boost *= 1.50  # Last Point Support
+                domain_signals.append("wyckoff_lps_support")
+
+            if wyckoff_st:
+                domain_boost *= 1.40  # Secondary Test = trap retest
+                domain_signals.append("wyckoff_secondary_test")
+
+        # ============================================================================
+        # SMC ENGINE: Smart Money Concepts - trend structure
+        # ============================================================================
+        if use_smc:
+            # VETOES: Don't long into supply zones
+            smc_supply_zone = self.g(context.row, 'smc_supply_zone', False)
+            tf4h_bos_bearish = self.g(context.row, 'tf4h_bos_bearish', False)
+
+            if smc_supply_zone:
+                domain_boost *= 0.70  # Supply overhead
+                domain_signals.append("smc_supply_zone_overhead")
+
+            if tf4h_bos_bearish:
+                domain_boost *= 0.70  # Bearish structure
+                domain_signals.append("smc_4h_bearish_structure_penalty")
+
+            # MAJOR BOOSTS: Bullish structure + liquidity sweeps
+            tf4h_bos_bullish = self.g(context.row, 'tf4h_bos_bullish', False)
+            tf1h_bos_bullish = self.g(context.row, 'tf1h_bos_bullish', False)
+            smc_liquidity_sweep = self.g(context.row, 'smc_liquidity_sweep', False)
+
+            if tf4h_bos_bullish:
+                domain_boost *= 2.00  # 4H BOS = institutional shift
+                domain_signals.append("smc_4h_bos_bullish_institutional")
+            elif tf1h_bos_bullish:
+                domain_boost *= 1.40  # 1H BOS
+                domain_signals.append("smc_1h_bos_bullish")
+
+            if smc_liquidity_sweep:
+                domain_boost *= 1.80  # Liquidity sweep = trap setup
+                domain_signals.append("smc_liquidity_sweep_reversal")
+
+            # DEMAND ZONES: Support areas
+            smc_demand_zone = self.g(context.row, 'smc_demand_zone', False)
+            if smc_demand_zone:
+                domain_boost *= 1.50  # Demand zone support
+                domain_signals.append("smc_demand_zone_support")
+
+        # ============================================================================
+        # TEMPORAL ENGINE: Fibonacci time + confluence
+        # ============================================================================
+        if use_temporal:
+            # MAJOR BOOSTS: Fibonacci time clusters
+            fib_time_cluster = self.g(context.row, 'fib_time_cluster', False)
+            temporal_confluence = self.g(context.row, 'temporal_confluence', False)
+
+            if fib_time_cluster:
+                domain_boost *= 1.70  # Fibonacci timing
+                domain_signals.append("fib_time_cluster_reversal")
+
+            if temporal_confluence:
+                domain_boost *= 1.40  # Multi-timeframe alignment
+                domain_signals.append("temporal_multi_tf_confluence")
+
+            # VETOES: Don't long into resistance
+            temporal_resistance_cluster = self.g(context.row, 'temporal_resistance_cluster', False)
+            if temporal_resistance_cluster:
+                domain_boost *= 0.75  # Resistance overhead
+                domain_signals.append("temporal_resistance_overhead")
+
+        # ============================================================================
+        # HOB ENGINE: Order book confirmation
+        # ============================================================================
+        if use_hob:
+            # DEMAND ZONES: Large bid walls
+            hob_demand_zone = self.g(context.row, 'hob_demand_zone', False)
+            hob_imbalance = self.g(context.row, 'hob_imbalance', 0.0)
+
+            if hob_demand_zone:
+                domain_boost *= 1.50  # Demand wall support
+                domain_signals.append("hob_demand_zone_support")
+
+            # ORDER BOOK IMBALANCE: Bid/ask ratio
+            if hob_imbalance > 0.60:  # More bids than asks
+                domain_boost *= 1.30  # Strong buyer imbalance
+                domain_signals.append("hob_bid_imbalance_strong")
+            elif hob_imbalance > 0.40:
+                domain_boost *= 1.15  # Moderate buyer imbalance
+                domain_signals.append("hob_bid_imbalance_moderate")
+
+            # VETOES: Supply zones
+            hob_supply_zone = self.g(context.row, 'hob_supply_zone', False)
+            if hob_supply_zone:
+                domain_boost *= 0.70  # Supply wall overhead
+                domain_signals.append("hob_supply_zone_overhead")
+
+        # MACRO: Crisis composite check
+        if use_macro:
+            crisis_composite = self.g(context.row, 'crisis_composite', 0.0)
+            if crisis_composite > 0.60:  # High crisis reduces confidence
+                domain_boost *= 0.85  # Crisis penalty
+                domain_signals.append("macro_crisis_penalty")
+            elif crisis_composite < 0.30:  # Low crisis = favorable
+                domain_boost *= 1.20  # Risk-on boost
+                domain_signals.append("macro_risk_on_boost")
+
+        # Apply domain boost to final score
+        score_before_domain = score
+        score = score * domain_boost
+
+        # ============================================================================
+        # FUSION THRESHOLD GATE (applied AFTER domain engines)
+        # ============================================================================
         if score < fusion_th:
-            return False, score, {"reason": "score_below_threshold", "score": score, "threshold": fusion_th}
+            return False, score, {
+                "reason": "score_below_threshold",
+                "score": score,
+                "score_before_domain": score_before_domain,
+                "threshold": fusion_th,
+                "domain_boost": domain_boost,
+                "domain_signals": domain_signals
+            }
 
         meta = {
             "components": components,
             "weights": weights,
             "base_score": base_score,
-            "archetype_weight": archetype_weight
+            "archetype_weight": archetype_weight,
+            "domain_boost": domain_boost,
+            "domain_signals": domain_signals,
+            "score_before_domain": score_before_domain
         }
 
         return True, score, meta
 
-    def _check_K(self, context: RuntimeContext) -> bool:
-        """
-        Archetype K: Wick Trap / Moneytaur (ADX + liquidity + wicks).
+    def _pattern_K(self, context: RuntimeContext):
+        """Pattern detection for Archetype K: Wick Trap (LONG)"""
+        r = context.row
+        wick_low = self.g(r, 'wick_lower_ratio', 0.0)
+        rsi = self.g(r, 'rsi_14', 50)
+        if wick_low >= 0.75 and rsi <= 35:
+            score = 0.50 + 0.25 * wick_low
+            return True, score, ["K", "wick_trap", "LONG"]
+        return None
 
-        **LAYER 5 FIX**: Read ALL thresholds from context, not just fusion!
-        This was causing zero-variance because ADX and liquidity were hardcoded.
-        """
-        # PR#6A: Read ALL thresholds from context (not hardcoded!)
-        fusion_th = context.get_threshold('wick_trap_moneytaur', 'fusion_threshold', 0.36)
-        adx_th = context.get_threshold('wick_trap_moneytaur', 'adx_threshold', 25.0)
-        liq_th = context.get_threshold('wick_trap_moneytaur', 'liquidity_threshold', 0.30)
+    def _check_K(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
+        """Archetype K: Wick Trap (LONG)"""
 
-        # Get features from context
-        adx = self.g(context.row, "adx", 0.0)
-        liq = self._liquidity_score(context.row)
-        fusion = context.row.get('fusion_score', 0.0)
+        # 1) Base pattern detection - returns (matched, score, metadata)
+        base_result = self._pattern_K(context)
+        if not base_result:
+            return False, 0.0, {"reason": "pattern_not_matched"}
 
-        # Now use DYNAMIC thresholds instead of hardcoded!
-        return (adx >= adx_th and
-                liq >= liq_th and
-                fusion >= fusion_th)
+        matched, base_score, pattern_tags = base_result  # base_score in [0,1]
 
-    def _check_L(self, context: RuntimeContext) -> tuple:
-        """
-        Archetype L: Volume Exhaustion / Zeroika (vol spike + extreme RSI).
+        # 2) Global safety vetoes (soft - use penalties not hard returns)
+        # Note: Keep these soft - use penalties not hard returns
 
-        **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
-        **DISPATCH FIX**: Returns (matched, score, meta) for true evaluate-all behavior.
+        # 3) Domain modifiers (standardized across all)
+        score = self._apply_domain_engines(context, base_score, pattern_tags)
 
-        Returns:
-            (matched: bool, score: float, meta: dict)
-        """
-        # Gates
-        fusion_th = context.get_threshold('volume_exhaustion', 'fusion_threshold', 0.38)
-        vol_z_min = context.get_threshold('volume_exhaustion', 'vol_z_min', 1.0)
-        rsi_min = context.get_threshold('volume_exhaustion', 'rsi_min', 70.0)
-
-        # Get features
-        vol_z = self.g(context.row, "vol_z", 0.0)
-        rsi = self.g(context.row, "rsi", 50.0)
-
-        # Gate checks
-        if vol_z < vol_z_min:
-            return False, 0.0, {"reason": "vol_z_low", "value": vol_z, "threshold": vol_z_min}
-        if rsi < rsi_min:
-            return False, 0.0, {"reason": "rsi_low", "value": rsi, "threshold": rsi_min}
-
-        # Archetype-specific scoring
-        components = {
-            "fusion": self._fusion(context.row),
-            "liquidity": self._liquidity_score(context.row),
-            "vol_z": min(vol_z / 3.0, 1.0),  # Normalize vol_z to 0-1 (3+ sigma = max)
-            "rsi": min((rsi - 50.0) / 50.0, 1.0),  # Normalize RSI above 50 to 0-1
-            "momentum": self._momentum_score(context.row)
-        }
-
-        # Volume exhaustion weights (emphasizes vol spike + RSI extremes)
-        weights = context.get_threshold('volume_exhaustion', 'weights', {
-            "fusion": 0.30,
-            "liquidity": 0.20,
-            "vol_z": 0.25,
-            "rsi": 0.15,
-            "momentum": 0.10
-        })
-
-        base_score = sum(components.get(k, 0.0) * weights.get(k, 0.0) for k in components)
-        archetype_weight = context.get_threshold('volume_exhaustion', 'archetype_weight', 1.05)  # Slightly favor (high quality archetype)
-
-        score = max(0.0, min(1.0, base_score * archetype_weight))
-
+        # 4) Final fusion gate
+        fusion_th = context.get_threshold('wick_trap', 'fusion_threshold', 0.40)
         if score < fusion_th:
-            return False, score, {"reason": "score_below_threshold", "score": score, "threshold": fusion_th}
+            return False, score, {
+                "reason": "score_below_fusion_threshold",
+                "base_score": base_score,
+                "final_score": score,
+                "fusion_threshold": fusion_th
+            }
 
-        meta = {
-            "components": components,
-            "weights": weights,
+        # 5) Return with full metadata
+        return True, score, {
             "base_score": base_score,
-            "archetype_weight": archetype_weight
+            "final_score": score,
+            "pattern_tags": pattern_tags,
+            "domain_boost_applied": True
         }
 
-        return True, score, meta
+    def _pattern_L(self, context: RuntimeContext):
+        """Pattern detection for Archetype L: Fakeout Real Move (LONG)"""
+        r = context.row
+        # Check for recent trap + reversal BOS
+        if self.g(r, 'tf1h_bos_bullish', False):
+            # Check if previous bars had bearish BOS (trap)
+            prev_idx = context.metadata.get('index', 0) - 1
+            if prev_idx >= 0:
+                df = context.metadata.get('df')
+                if df is not None and prev_idx < len(df):
+                    prev_row = df.iloc[prev_idx]
+                    if self.g(prev_row, 'tf1h_bos_bearish', False):
+                        score = 0.48
+                        return True, score, ["L", "fakeout_real_move", "LONG"]
+        return None
 
-    def _check_M(self, context: RuntimeContext) -> bool:
-        """
-        Archetype M: Ratio Coil Break / Wyckoff Insider (low ATR + near POC + BOMS).
+    def _check_L(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
+        """Archetype L: Fakeout Real Move (LONG)"""
 
-        **LAYER 5 FIX**: Read ALL thresholds from context to enable optimization.
-        """
-        # PR#6A: Read ALL thresholds from context (not hardcoded!)
-        fusion_th = context.get_threshold('confluence_breakout', 'fusion_threshold', 0.35)
-        atr_pct_max = context.get_threshold('confluence_breakout', 'atr_percentile_max', 0.30)
-        poc_dist_max = context.get_threshold('confluence_breakout', 'poc_dist_max', 0.50)
-        boms_str_min = context.get_threshold('confluence_breakout', 'boms_strength_min', 0.40)
+        # 1) Base pattern detection - returns (matched, score, metadata)
+        base_result = self._pattern_L(context)
+        if not base_result:
+            return False, 0.0, {"reason": "pattern_not_matched"}
 
-        # Get features from context
-        atr_pct = self.g(context.row, "atr_percentile", 0.5)
-        poc_dist = self.g(context.row, "poc_dist", 1.0)
-        boms_str = self.g(context.row, "boms_strength", 0.0)
-        fusion = context.row.get('fusion_score', 0.0)
+        matched, base_score, pattern_tags = base_result  # base_score in [0,1]
 
-        # Now use DYNAMIC thresholds instead of hardcoded!
-        return (atr_pct <= atr_pct_max and
-                poc_dist <= poc_dist_max and
-                boms_str >= boms_str_min and
-                fusion >= fusion_th)
+        # 2) Global safety vetoes (soft - use penalties not hard returns)
+        # Note: Keep these soft - use penalties not hard returns
+
+        # 3) Domain modifiers (standardized across all)
+        score = self._apply_domain_engines(context, base_score, pattern_tags)
+
+        # 4) Final fusion gate
+        fusion_th = context.get_threshold('fakeout_real_move', 'fusion_threshold', 0.40)
+        if score < fusion_th:
+            return False, score, {
+                "reason": "score_below_fusion_threshold",
+                "base_score": base_score,
+                "final_score": score,
+                "fusion_threshold": fusion_th
+            }
+
+        # 5) Return with full metadata
+        return True, score, {
+            "base_score": base_score,
+            "final_score": score,
+            "pattern_tags": pattern_tags,
+            "domain_boost_applied": True
+        }
+
+    def _pattern_M(self, context: RuntimeContext):
+        """Pattern detection for Archetype M: Coil Break (LONG)"""
+        r = context.row
+        atrp = self.g(r, 'atr_percentile', 0.5)
+        if atrp <= 0.25 and self.g(r, 'tf4h_bos_bullish', False):
+            score = 0.45 + 0.20 * (0.25 - atrp) / 0.25
+            return True, score, ["M", "coil_break", "LONG"]
+        return None
+
+    def _check_M(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
+        """Archetype M: Coil Break (LONG)"""
+
+        # 1) Base pattern detection - returns (matched, score, metadata)
+        base_result = self._pattern_M(context)
+        if not base_result:
+            return False, 0.0, {"reason": "pattern_not_matched"}
+
+        matched, base_score, pattern_tags = base_result  # base_score in [0,1]
+
+        # 2) Global safety vetoes (soft - use penalties not hard returns)
+        # Note: Keep these soft - use penalties not hard returns
+
+        # 3) Domain modifiers (standardized across all)
+        score = self._apply_domain_engines(context, base_score, pattern_tags)
+
+        # 4) Final fusion gate
+        fusion_th = context.get_threshold('coil_break', 'fusion_threshold', 0.40)
+        if score < fusion_th:
+            return False, score, {
+                "reason": "score_below_fusion_threshold",
+                "base_score": base_score,
+                "final_score": score,
+                "fusion_threshold": fusion_th
+            }
+
+        # 5) Return with full metadata
+        return True, score, {
+            "base_score": base_score,
+            "final_score": score,
+            "pattern_tags": pattern_tags,
+            "domain_boost_applied": True
+        }
 
     # =======================================================================
     # Bear Archetype Check Methods (Short-Biased)
     # =======================================================================
 
-    def _check_S1(self, context: RuntimeContext) -> bool:
+    def _check_S1(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
         """
-        S1 - Breakdown: Support break with volume confirmation.
+        Liquidity Vacuum Reversal (V2 - Multi-bar Capitulation Detection)
 
-        Criteria (short-biased):
-        - Low liquidity (breakdown below support)
-        - Volume spike confirmation
-        - Fusion score threshold
+        Trader: Insider (capitulation specialist)
+        Edge: Deep liquidity drain + multi-bar exhaustion signals = violent bounce
+
+        PATTERN LOGIC V2 (REDESIGNED - FIXES LIQUIDITY PARADOX):
+        Liquidity vacuum reversals occur when orderbook liquidity evaporates during sell-offs,
+        creating "air pockets" where sellers exhaust themselves. The resulting vacuum creates
+        explosive short-covering bounces as there's no resistance.
+
+        KEY V2 IMPROVEMENTS:
+        1. RELATIVE liquidity drain (vs 7d avg) - fixes June 18 detection failure
+        2. Multi-bar exhaustion signals (3-bar lookback) - handles messy real capitulations
+        3. Capitulation depth filter - separates micro-dips from macro capitulations
+        4. Crisis composite score - better macro context detection
+
+        Detection Logic V2 (DUAL MODE: V1 fallback if V2 features missing):
+
+        V2 MODE (when runtime features available):
+        1. HARD GATE: Capitulation depth (drawdown >= -20% from 30d high)
+        2. HARD GATE: Crisis composite (>= 0.40) - true capitulation environment
+        3. OR GATE: Multi-bar exhaustion (at least ONE):
+           - Volume climax last 3 bars (> 0.25) OR
+           - Wick exhaustion last 3 bars (> 0.30)
+        4. SOFT FUSION: Liquidity velocity, persistence, funding boost score
+
+        V1 MODE (fallback - backward compatible):
+        1. HARD GATE: Liquidity drain (liquidity_score < 0.20)
+        2. OR GATE: Single-bar exhaustion:
+           - Volume panic (volume_zscore > 1.5) OR
+           - Wick rejection (wick_lower_ratio > 0.28)
+        3. SOFT FUSION: Standard V1 scoring
+
+        WHY MULTI-BAR LOGIC:
+        Real capitulation events are MESSY. Signals rarely align on same bar:
+        - FTX bottom: volume + wick (same bar)
+        - 2022-06-18: wick bar 1, volume bar 2 (SEPARATED!)
+        - 2024-08-05: wick bar 1, entry bar 2
+        - 2022 Luna: volume spike across 3 bars, entry on bar 3
+
+        Validation Results (2022 major capitulations):
+        - LUNA (May 12): depth=-38.4%, crisis=63.9%, vol_3b=0.0%, wick_3b=48.9% → DETECT
+        - June 18: depth=-44.7%, crisis=61.7%, vol_3b=44.7%, wick_3b=37.2% → DETECT
+        - FTX (Nov 9): depth=-26.8%, crisis=30.3%, vol_3b=32.8%, wick_3b=21.0% → BORDERLINE
+
+        Returns:
+            (matched: bool, score: float, meta: dict)
         """
-        # Read thresholds from config
-        fusion_th = context.get_threshold('breakdown', 'fusion', 0.38)
-        liq_max = context.get_threshold('breakdown', 'liq_max', 0.22)
-        vol_z_min = context.get_threshold('breakdown', 'vol_z', 1.2)
+        # ============================================================================
+        # STEP 1: Get Thresholds (V2 thresholds with V1 fallbacks)
+        # ============================================================================
 
-        # Get features
-        liq = self._liquidity_score(context.row)
-        vol_z = self.g(context.row, "vol_z", 0.0)
-        fusion = context.row.get('fusion_score', 0.0)
+        # V2 thresholds (multi-bar capitulation detection)
+        use_v2_logic = context.get_threshold('liquidity_vacuum', 'use_v2_logic', True)
+        cap_depth_max = context.get_threshold('liquidity_vacuum', 'capitulation_depth_max', -0.20)  # Must be >= -20% drawdown
+        crisis_min = context.get_threshold('liquidity_vacuum', 'crisis_composite_min', 0.40)  # Must be in crisis
+        vol_climax_3b_min = context.get_threshold('liquidity_vacuum', 'volume_climax_3b_min', 0.25)
+        wick_exhaust_3b_min = context.get_threshold('liquidity_vacuum', 'wick_exhaustion_3b_min', 0.30)
 
-        # Check conditions
-        return (liq < liq_max and
-                vol_z > vol_z_min and
-                fusion >= fusion_th)
+        # V1 thresholds (backward compatible)
+        fusion_th = context.get_threshold('liquidity_vacuum', 'fusion_threshold', 0.30)
+        liq_max = context.get_threshold('liquidity_vacuum', 'liquidity_max', 0.20)
+        vol_z_min = context.get_threshold('liquidity_vacuum', 'volume_z_min', 1.5)
+        wick_lower_min = context.get_threshold('liquidity_vacuum', 'wick_lower_min', 0.28)
+
+        # ============================================================================
+        # STEP 1.5: REGIME FILTER (fast fail to prevent bull market false positives)
+        # ============================================================================
+        # S1 is a capitulation/crisis archetype. Only fire when macro supports the hypothesis.
+        # This prevents noise during bull markets (e.g., 2023: 0 trades, 2024: reduce from 12 to 4-6)
+
+        use_regime_filter = context.get_threshold('liquidity_vacuum', 'use_regime_filter', False)
+
+        if use_regime_filter:
+            # Get current regime (from RuntimeContext.regime_label or row.regime_label)
+            # Try RuntimeContext first (preferred), then fallback to row column
+            current_regime = context.regime_label if hasattr(context, 'regime_label') else 'unknown'
+            if current_regime == 'unknown' or current_regime is None:
+                current_regime = self.g(context.row, 'regime_label', 'unknown')
+
+            # Fallback: If regime_label not available, infer from crisis_composite
+            if current_regime == 'unknown':
+                crisis_composite = self.g(context.row, 'crisis_composite', 0.0)
+                if crisis_composite > 0.35:
+                    current_regime = 'risk_off'  # High crisis = bearish regime
+                else:
+                    current_regime = 'neutral'  # Default to neutral
+
+            # Get drawdown from V2 features (fallback to 0 if not available)
+            capitulation_depth = self.g(context.row, 'capitulation_depth', 0.0)
+
+            # Check regime allowlist
+            allowed_regimes = context.get_threshold('liquidity_vacuum', 'allowed_regimes', ['risk_off', 'crisis'])
+            regime_ok = current_regime in allowed_regimes
+
+            # Check drawdown override (severe drawdown = always allow regardless of regime)
+            drawdown_override_pct = context.get_threshold('liquidity_vacuum', 'drawdown_override_pct', 0.10)
+            drawdown_ok = capitulation_depth < -drawdown_override_pct  # e.g., < -0.10 (more than 10% drawdown)
+
+            # OR logic: pass if EITHER regime ok OR drawdown significant
+            require_or = context.get_threshold('liquidity_vacuum', 'require_regime_or_drawdown', True)
+
+            if require_or:
+                # OR logic: pass if EITHER regime ok OR drawdown significant
+                regime_check_pass = regime_ok or drawdown_ok
+            else:
+                # AND logic: require BOTH
+                regime_check_pass = regime_ok and drawdown_ok
+
+            # Block if regime filter fails
+            if not regime_check_pass:
+                return False, 0.0, {
+                    "reason": "regime_filter_blocked",
+                    "current_regime": current_regime,
+                    "allowed_regimes": allowed_regimes,
+                    "capitulation_depth": capitulation_depth,
+                    "drawdown_override_pct": drawdown_override_pct,
+                    "regime_ok": regime_ok,
+                    "drawdown_ok": drawdown_ok,
+                    "note": "Capitulation pattern blocked by regime filter (prevents bull market false positives)"
+                }
+
+        # ============================================================================
+        # STEP 2: Check for V2 Features (determine which mode to use)
+        # ============================================================================
+        has_v2_features = all([
+            context.row.get('capitulation_depth') is not None,
+            context.row.get('crisis_composite') is not None,
+            context.row.get('volume_climax_last_3b') is not None,
+            context.row.get('wick_exhaustion_last_3b') is not None
+        ])
+
+        # ============================================================================
+        # STEP 3: V2 DETECTION LOGIC (preferred - multi-bar capitulation)
+        # ============================================================================
+        if use_v2_logic and has_v2_features:
+            # Extract V2 features
+            cap_depth = self.g(context.row, 'capitulation_depth', 0.0)
+            crisis = self.g(context.row, 'crisis_composite', 0.0)
+            vol_climax_3b = self.g(context.row, 'volume_climax_last_3b', 0.0)
+            wick_exhaust_3b = self.g(context.row, 'wick_exhaustion_last_3b', 0.0)
+
+            # Optional V2 features
+            liq_drain_pct = self.g(context.row, 'liquidity_drain_pct', 0.0)
+            liq_velocity = self.g(context.row, 'liquidity_velocity', 0.0)
+            liq_persist = self.g(context.row, 'liquidity_persistence', 0)
+
+            # ============================================================================
+            # CONFLUENCE MODE (probabilistic 3-of-4 logic)
+            # ============================================================================
+            use_confluence = context.get_threshold('liquidity_vacuum', 'use_confluence', False)
+
+            if use_confluence:
+                # Score each condition [0-1] - how strong is this signal?
+                depth_score = max(0.0, min(1.0, abs(cap_depth) / 0.30))  # 0.30 = extreme capitulation
+                crisis_score = max(0.0, min(1.0, crisis / 0.50))  # 0.50 = peak crisis
+                vol_score = max(0.0, min(1.0, vol_climax_3b / 0.70))  # 0.70 = extreme volume climax
+                wick_score = max(0.0, min(1.0, wick_exhaust_3b / 0.80))  # 0.80 = max rejection
+
+                # Count binary conditions (pass/fail at thresholds)
+                conditions_met = sum([
+                    cap_depth < cap_depth_max,  # Depth threshold met
+                    crisis > crisis_min,  # Crisis threshold met
+                    vol_climax_3b > vol_climax_3b_min,  # Volume threshold met
+                    wick_exhaust_3b > wick_exhaust_3b_min  # Wick threshold met
+                ])
+
+                # Minimum conditions required (default: 3 of 4)
+                min_conditions = context.get_threshold('liquidity_vacuum', 'confluence_min_conditions', 3)
+
+                if conditions_met < min_conditions:
+                    return False, 0.0, {
+                        "reason": "confluence_insufficient_conditions",
+                        "conditions_met": conditions_met,
+                        "required": min_conditions,
+                        "condition_states": {
+                            "depth": cap_depth < cap_depth_max,
+                            "crisis": crisis > crisis_min,
+                            "volume": vol_climax_3b > vol_climax_3b_min,
+                            "wick": wick_exhaust_3b > wick_exhaust_3b_min
+                        },
+                        "values": {
+                            "cap_depth": cap_depth,
+                            "crisis": crisis,
+                            "vol_climax_3b": vol_climax_3b,
+                            "wick_exhaust_3b": wick_exhaust_3b
+                        }
+                    }
+
+                # Weighted confluence scoring (using normalized scores, not binary)
+                weights = context.get_threshold('liquidity_vacuum', 'confluence_weights', {
+                    'capitulation_depth': 0.30,
+                    'crisis_environment': 0.25,
+                    'volume_climax': 0.25,
+                    'wick_exhaustion': 0.20
+                })
+
+                confluence_score = (
+                    depth_score * weights.get('capitulation_depth', 0.30) +
+                    crisis_score * weights.get('crisis_environment', 0.25) +
+                    vol_score * weights.get('volume_climax', 0.25) +
+                    wick_score * weights.get('wick_exhaustion', 0.20)
+                )
+
+                # Confluence threshold (default: 0.65 = 65% weighted score required)
+                confluence_threshold = context.get_threshold('liquidity_vacuum', 'confluence_threshold', 0.65)
+
+                if confluence_score < confluence_threshold:
+                    return False, 0.0, {
+                        "reason": "confluence_score_insufficient",
+                        "confluence_score": confluence_score,
+                        "threshold": confluence_threshold,
+                        "conditions_met": conditions_met,
+                        "scores": {
+                            "depth_score": depth_score,
+                            "crisis_score": crisis_score,
+                            "vol_score": vol_score,
+                            "wick_score": wick_score
+                        },
+                        "values": {
+                            "cap_depth": cap_depth,
+                            "crisis": crisis,
+                            "vol_climax_3b": vol_climax_3b,
+                            "wick_exhaust_3b": wick_exhaust_3b
+                        }
+                    }
+
+                # CONFLUENCE PASS - build components for final fusion score
+                components = {
+                    # Use confluence score as primary signal
+                    "confluence_score": confluence_score,
+                    "capitulation_depth_score": depth_score,
+                    "crisis_environment": crisis_score,
+                    "volume_climax_3b": vol_score,
+                    "wick_exhaustion_3b": wick_score,
+
+                    # Liquidity dynamics (optional enhancements)
+                    "liquidity_drain_severity": abs(min(liq_drain_pct, 0.0) / 0.50),
+                    "liquidity_velocity_score": abs(min(liq_velocity, 0.0) / 0.10),
+                    "liquidity_persistence_score": min(liq_persist / 8.0, 1.0),
+                }
+
+                # Extract additional confluence features
+                funding_z = self.g(context.row, 'funding_Z', 0)
+                rsi = self.g(context.row, 'rsi_14', 50)
+                atr_pct = self.g(context.row, 'atr_percentile', 0.5)
+
+                components.update({
+                    "funding_reversal": 1.0 if funding_z < -0.5 else 0.5,
+                    "oversold": 1.0 if rsi < 30 else max(0.0, 1.0 - (rsi / 100)),
+                    "volatility_spike": atr_pct
+                })
+
+                # Use confluence_score directly as final score (already weighted)
+                final_score = confluence_score
+
+                # ============================================================================
+                # DOMAIN ENGINE INTEGRATION (CONFLUENCE MODE)
+                # ============================================================================
+                use_wyckoff = context.metadata.get('feature_flags', {}).get('enable_wyckoff', False)
+                use_smc = context.metadata.get('feature_flags', {}).get('enable_smc', False)
+                use_temporal = context.metadata.get('feature_flags', {}).get('enable_temporal', False)
+                use_macro = context.metadata.get('feature_flags', {}).get('enable_macro', False)
+
+                domain_boost = 1.0
+                domain_signals = []
+
+                if use_wyckoff:
+                    wyckoff_spring_a = self.g(context.row, 'wyckoff_spring_a', False)
+                    wyckoff_spring_b = self.g(context.row, 'wyckoff_spring_b', False)
+                    wyckoff_ps = self.g(context.row, 'wyckoff_ps', False)
+                    if wyckoff_spring_a or wyckoff_spring_b:
+                        domain_boost *= 1.25
+                        domain_signals.append("wyckoff_spring")
+                    elif wyckoff_ps:
+                        domain_boost *= 1.15
+                        domain_signals.append("wyckoff_ps")
+
+                if use_smc:
+                    smc_score = self.g(context.row, 'smc_score', 0.0)
+                    if smc_score > 0.5:
+                        domain_boost *= 1.15
+                        domain_signals.append("smc_bullish")
+
+                if use_temporal:
+                    wyckoff_pti_confluence = self.g(context.row, 'wyckoff_pti_confluence', False)
+                    if wyckoff_pti_confluence:
+                        domain_boost *= 1.10
+                        domain_signals.append("temporal_confluence")
+
+                if use_macro and crisis > 0.70:
+                    domain_boost *= 0.85
+                    domain_signals.append("macro_extreme_penalty")
+
+                final_score = final_score * domain_boost
+
+                # CONFLUENCE PATTERN MATCHED
+                return True, final_score, {
+                    "domain_boost": domain_boost,
+                    "domain_signals": domain_signals,
+                    "mode": "v2_confluence_probabilistic",
+                    "confluence_score": confluence_score,
+                    "conditions_met": conditions_met,
+                    "min_conditions": min_conditions,
+                    "components": components,
+                    "mechanism": "liquidity_vacuum_confluence_v2",
+                    "condition_states": {
+                        "depth": cap_depth < cap_depth_max,
+                        "crisis": crisis > crisis_min,
+                        "volume": vol_climax_3b > vol_climax_3b_min,
+                        "wick": wick_exhaust_3b > wick_exhaust_3b_min
+                    },
+                    "raw_values": {
+                        "cap_depth": cap_depth,
+                        "crisis": crisis,
+                        "vol_climax_3b": vol_climax_3b,
+                        "wick_exhaust_3b": wick_exhaust_3b
+                    },
+                    "normalized_scores": {
+                        "depth_score": depth_score,
+                        "crisis_score": crisis_score,
+                        "vol_score": vol_score,
+                        "wick_score": wick_score
+                    }
+                }
+
+            # ============================================================================
+            # BINARY MODE (original hard gate logic - backward compatible)
+            # ============================================================================
+
+            # HARD GATE 1: Capitulation depth (must be in drawdown)
+            if cap_depth >= cap_depth_max:
+                return False, 0.0, {
+                    "reason": "v2_insufficient_drawdown",
+                    "capitulation_depth": cap_depth,
+                    "threshold": cap_depth_max,
+                    "note": "Need >= 20% drawdown from 30d high for true capitulation"
+                }
+
+            # HARD GATE 2: Crisis environment (must be in crisis/stress)
+            if crisis < crisis_min:
+                return False, 0.0, {
+                    "reason": "v2_not_in_crisis",
+                    "crisis_composite": crisis,
+                    "threshold": crisis_min,
+                    "note": "Need crisis environment (VIX spike + funding extreme + volatility)"
+                }
+
+            # OR GATE: Multi-bar exhaustion (at least ONE signal in last 3 bars)
+            has_volume_exhaustion = vol_climax_3b > vol_climax_3b_min
+            has_wick_exhaustion = wick_exhaust_3b > wick_exhaust_3b_min
+
+            if not (has_volume_exhaustion or has_wick_exhaustion):
+                return False, 0.0, {
+                    "reason": "v2_no_multi_bar_exhaustion",
+                    "volume_climax_3b": vol_climax_3b,
+                    "volume_threshold": vol_climax_3b_min,
+                    "wick_exhaustion_3b": wick_exhaust_3b,
+                    "wick_threshold": wick_exhaust_3b_min,
+                    "note": "Need at least ONE exhaustion signal in last 3 bars"
+                }
+
+            # Extract additional features for scoring
+            funding_z = self.g(context.row, 'funding_Z', 0)
+            rsi = self.g(context.row, 'rsi_14', 50)
+            atr_pct = self.g(context.row, 'atr_percentile', 0.5)
+
+            # V2 SCORING COMPONENTS
+            components = {
+                # HARD GATES (already passed - contribute to score)
+                "capitulation_depth_score": abs(cap_depth / 0.50),  # Normalize: -50% = 1.0
+                "crisis_environment": crisis,  # Already [0, 1]
+
+                # EXHAUSTION SIGNALS
+                "volume_climax_3b": min(vol_climax_3b / 0.50, 1.0),  # Normalize
+                "wick_exhaustion_3b": min(wick_exhaust_3b / 0.50, 1.0),  # Normalize
+
+                # LIQUIDITY DYNAMICS (V2 features)
+                "liquidity_drain_severity": abs(min(liq_drain_pct, 0.0) / 0.50),  # Normalize: -50% drain = 1.0
+                "liquidity_velocity_score": abs(min(liq_velocity, 0.0) / 0.10),  # Normalize: -10% velocity = 1.0
+                "liquidity_persistence_score": min(liq_persist / 8.0, 1.0),  # Normalize: 8 bars = 1.0
+
+                # CONFLUENCE SIGNALS
+                "funding_reversal": 1.0 if funding_z < -0.5 else 0.5,
+                "oversold": 1.0 if rsi < 30 else max(0.0, 1.0 - (rsi / 100)),
+                "volatility_spike": atr_pct
+            }
+
+            # V2 WEIGHTS (emphasize V2 features)
+            weights = context.get_threshold('liquidity_vacuum', 'v2_weights', {
+                # Core capitulation signals (50%)
+                "capitulation_depth_score": 0.20,
+                "crisis_environment": 0.15,
+                "volume_climax_3b": 0.08,
+                "wick_exhaustion_3b": 0.07,
+
+                # Liquidity dynamics (25%)
+                "liquidity_drain_severity": 0.10,
+                "liquidity_velocity_score": 0.08,
+                "liquidity_persistence_score": 0.07,
+
+                # Confluence (25%)
+                "funding_reversal": 0.12,
+                "oversold": 0.08,
+                "volatility_spike": 0.05
+            })
+
+            # Calculate weighted fusion score
+            score = sum(components[k] * weights.get(k, 0.0) for k in components)
+
+            # ============================================================================
+            # DOMAIN ENGINE INTEGRATION (BOOST/VETO LAYER)
+            # ============================================================================
+            # CRITICAL FIX: Apply domain engines BEFORE fusion threshold gate
+            # This allows marginal signals (e.g., score=0.38) to qualify via boosts
+            # Order: VETOES first (safety) → BOOSTS second → GATE third
+
+            use_wyckoff = context.metadata.get('feature_flags', {}).get('enable_wyckoff', False)
+            use_smc = context.metadata.get('feature_flags', {}).get('enable_smc', False)
+            use_temporal = context.metadata.get('feature_flags', {}).get('enable_temporal', False)
+            use_hob = context.metadata.get('feature_flags', {}).get('enable_hob', False)
+            use_macro = context.metadata.get('feature_flags', {}).get('enable_macro', False)
+
+            # DEBUG: Log feature flags on first detection
+            if not hasattr(self, '_domain_flags_logged'):
+                logger.info(f"[DOMAIN_DEBUG] S1 Feature Flags: wyckoff={use_wyckoff}, smc={use_smc}, temporal={use_temporal}, hob={use_hob}, macro={use_macro}")
+                self._domain_flags_logged = True
+
+            domain_boost = 1.0
+            domain_signals = []
+
+            # ============================================================================
+            # WYCKOFF ENGINE: Complete capitulation event detection
+            # ============================================================================
+            if use_wyckoff:
+                # SOFT VETOES: Distribution phase reduces confidence but doesn't block
+                wyckoff_distribution = self.g(context.row, 'wyckoff_phase_abc', '') == 'D'
+                wyckoff_utad = self.g(context.row, 'wyckoff_utad', False)
+                wyckoff_bc = self.g(context.row, 'wyckoff_bc', False)
+
+                if wyckoff_distribution:
+                    domain_boost *= 0.30  # 70% confidence reduction for distribution phase
+                    domain_signals.append("wyckoff_distribution_caution")
+
+                if wyckoff_utad or wyckoff_bc:
+                    domain_boost *= 0.50  # Stronger events get more severe reduction
+                    domain_signals.append("wyckoff_utad_bc_caution")
+
+                # MAJOR BOOSTS: Spring events (Phase C - strongest capitulation signals)
+                wyckoff_spring_a = self.g(context.row, 'wyckoff_spring_a', False)
+                wyckoff_spring_b = self.g(context.row, 'wyckoff_spring_b', False)
+
+                if wyckoff_spring_a:
+                    domain_boost *= 2.50  # Spring A = deep fake breakdown, strongest signal
+                    domain_signals.append("wyckoff_spring_a_major_capitulation")
+                elif wyckoff_spring_b:
+                    domain_boost *= 2.50  # Spring B = shallow spring, still strong
+                    domain_signals.append("wyckoff_spring_b_capitulation")
+
+                # CLIMAX SIGNALS: Selling Climax + Secondary Test (Phase A)
+                wyckoff_sc = self.g(context.row, 'wyckoff_sc', False)
+                wyckoff_st = self.g(context.row, 'wyckoff_st', False)
+                wyckoff_ar = self.g(context.row, 'wyckoff_ar', False)
+
+                if wyckoff_sc:
+                    domain_boost *= 2.00  # Selling Climax = panic bottom
+                    domain_signals.append("wyckoff_selling_climax")
+                elif wyckoff_st:
+                    domain_boost *= 1.50  # Secondary Test = retest of lows
+                    domain_signals.append("wyckoff_secondary_test")
+                elif wyckoff_ar:
+                    domain_boost *= 1.30  # Automatic Rally = relief bounce
+                    domain_signals.append("wyckoff_automatic_rally")
+
+                # SUPPORT SIGNALS: LPS + Preliminary Support (Phase B/D)
+                wyckoff_lps = self.g(context.row, 'wyckoff_lps', False)
+                wyckoff_ps = self.g(context.row, 'wyckoff_ps', False)
+
+                if wyckoff_lps:
+                    domain_boost *= 1.80  # Last Point Support = final test before markup
+                    domain_signals.append("wyckoff_lps_support")
+                elif wyckoff_ps:
+                    domain_boost *= 1.30  # Preliminary Support = early accumulation
+                    domain_signals.append("wyckoff_ps_support")
+
+                # ACCUMULATION PHASE: General accumulation confirmation
+                wyckoff_accumulation = self.g(context.row, 'wyckoff_phase_abc', '') == 'A'
+                wyckoff_sos = self.g(context.row, 'wyckoff_sos', False)
+
+                if wyckoff_accumulation:
+                    domain_boost *= 1.40  # Accumulation phase = buying pressure
+                    domain_signals.append("wyckoff_accumulation_phase")
+                elif wyckoff_sos:
+                    domain_boost *= 1.35  # Sign of Strength = decisive up move
+                    domain_signals.append("wyckoff_sos_strength")
+
+            # ============================================================================
+            # SMC ENGINE: Smart Money Concepts - institutional structure
+            # ============================================================================
+            if use_smc:
+                # VETOES: Don't long into supply zones
+                smc_supply_zone = self.g(context.row, 'smc_supply_zone', False)
+                tf4h_bos_bearish = self.g(context.row, 'tf4h_bos_bearish', False)
+
+                if smc_supply_zone:
+                    domain_boost *= 0.70  # Supply overhead = resistance, reduce signal
+                    domain_signals.append("smc_supply_zone_overhead")
+
+                if tf4h_bos_bearish:
+                    # Soft veto: bearish 4H structure reduces confidence
+                    domain_boost *= 0.60
+                    domain_signals.append("smc_4h_bearish_structure_penalty")
+
+                # MAJOR BOOSTS: Multi-timeframe bullish structure
+                tf1h_bos_bullish = self.g(context.row, 'tf1h_bos_bullish', False)
+                tf4h_bos_bullish = self.g(context.row, 'tf4h_bos_bullish', False)
+
+                # 4H BOS = institutional timeframe (strongest signal)
+                if tf4h_bos_bullish:
+                    domain_boost *= 2.00  # +100% boost for 4H institutional shift
+                    domain_signals.append("smc_4h_bos_bullish_institutional")
+                elif tf1h_bos_bullish:
+                    domain_boost *= 1.40  # +40% boost for 1H structural shift
+                    domain_signals.append("smc_1h_bos_bullish")
+
+                # DEMAND ZONES: Institutional buying areas
+                smc_demand_zone = self.g(context.row, 'smc_demand_zone', False)
+                smc_liquidity_sweep = self.g(context.row, 'smc_liquidity_sweep', False)
+                smc_choch = self.g(context.row, 'smc_choch', False)  # Change of Character
+
+                if smc_demand_zone:
+                    domain_boost *= 1.50  # Demand zone = institutional support
+                    domain_signals.append("smc_demand_zone_support")
+
+                if smc_liquidity_sweep:
+                    domain_boost *= 1.80  # Liquidity sweep = stop hunt before rally
+                    domain_signals.append("smc_liquidity_sweep_reversal")
+
+                if smc_choch:
+                    domain_boost *= 1.60  # Character change = trend shift
+                    domain_signals.append("smc_choch_trend_change")
+
+                # LEGACY SMC SCORE: Fallback composite
+                smc_score = self.g(context.row, 'smc_score', 0.0)
+                if smc_score > 0.5 and domain_boost == 1.0:  # No specific signals yet
+                    domain_boost *= 1.15
+                    domain_signals.append("smc_bullish_structure")
+
+            # ============================================================================
+            # TEMPORAL ENGINE: Fibonacci time + multi-timeframe confluence
+            # ============================================================================
+            if use_temporal:
+                # MAJOR BOOSTS: Fibonacci time clusters
+                fib_time_cluster = self.g(context.row, 'fib_time_cluster', False)
+                temporal_confluence = self.g(context.row, 'temporal_confluence', False)
+
+                if fib_time_cluster:
+                    domain_boost *= 1.80  # Fibonacci timing = geometric reversal points
+                    domain_signals.append("fib_time_cluster_reversal")
+
+                if temporal_confluence:
+                    domain_boost *= 1.50  # Multi-timeframe alignment
+                    domain_signals.append("temporal_multi_tf_confluence")
+
+                # MULTI-TIMEFRAME FUSION: 4H fusion score
+                tf4h_fusion_score = self.g(context.row, 'tf4h_fusion_score', 0.0)
+                if tf4h_fusion_score > 0.70:
+                    domain_boost *= 1.60  # High 4H fusion = strong trend alignment
+                    domain_signals.append("tf4h_high_fusion_score")
+
+                # WYCKOFF-PTI CONFLUENCE: Combined Wyckoff + time patterns
+                wyckoff_pti_confluence = self.g(context.row, 'wyckoff_pti_confluence', False)
+                wyckoff_pti_score = self.g(context.row, 'wyckoff_pti_score', 0.0)
+
+                if wyckoff_pti_confluence:
+                    if wyckoff_pti_score > 0.50:
+                        domain_boost *= 1.50  # Strong PTI + Wyckoff combo
+                        domain_signals.append("wyckoff_pti_strong_confluence")
+                    else:
+                        domain_boost *= 1.20  # Moderate confluence
+                        domain_signals.append("wyckoff_pti_confluence")
+
+                # VETOES: Don't long into resistance clusters
+                temporal_resistance_cluster = self.g(context.row, 'temporal_resistance_cluster', False)
+                if temporal_resistance_cluster:
+                    domain_boost *= 0.75  # Resistance overhead = reduce conviction
+                    domain_signals.append("temporal_resistance_overhead")
+
+            # ============================================================================
+            # HOB ENGINE: Order book depth + imbalance analysis
+            # ============================================================================
+            if use_hob:
+                # DEMAND ZONES: Large bid walls
+                hob_demand_zone = self.g(context.row, 'hob_demand_zone', False)
+                hob_imbalance = self.g(context.row, 'hob_imbalance', 0.0)
+
+                if hob_demand_zone:
+                    domain_boost *= 1.50  # Demand wall = institutional support
+                    domain_signals.append("hob_demand_zone_support")
+
+                # ORDER BOOK IMBALANCE: Bid/ask ratio
+                if hob_imbalance > 0.60:  # More bids than asks
+                    domain_boost *= 1.30  # Strong buyer imbalance
+                    domain_signals.append("hob_bid_imbalance_strong")
+                elif hob_imbalance > 0.40:
+                    domain_boost *= 1.15  # Moderate buyer imbalance
+                    domain_signals.append("hob_bid_imbalance_moderate")
+
+                # VETOES: Supply zones
+                hob_supply_zone = self.g(context.row, 'hob_supply_zone', False)
+                if hob_supply_zone:
+                    domain_boost *= 0.70  # Supply wall overhead
+                    domain_signals.append("hob_supply_zone_overhead")
+
+            # MACRO: Extreme risk-off reduces confidence (avoid catching falling knife)
+            if use_macro:
+                # Use crisis_composite as proxy for macro stress
+                # Already in components, but apply additional veto logic
+                if crisis > 0.70:  # Extreme crisis (>70%) = reduce confidence
+                    domain_boost *= 0.85  # -15% penalty for extreme macro stress
+                    domain_signals.append("macro_extreme_crisis_penalty")
+
+            # Apply domain boost to final score
+            score_before_domain = score
+            score = score * domain_boost
+
+            # DEBUG: Log domain boost application
+            if domain_boost != 1.0 or len(domain_signals) > 0:
+                logger.info(f"[DOMAIN_DEBUG] S1 Domain Boost Applied: {domain_boost:.2f}x | Score: {score_before_domain:.3f} -> {score:.3f} | Signals: {domain_signals}")
+            else:
+                logger.info(f"[DOMAIN_DEBUG] S1 No Domain Boost: domain_boost={domain_boost}, signals={domain_signals}, score={score:.3f}")
+
+            # ============================================================================
+            # FUSION THRESHOLD GATE (applied AFTER domain engines)
+            # ============================================================================
+            # Check boosted score against threshold
+            # This allows marginal signals to qualify via domain boosts
+            if score < fusion_th:
+                return False, score, {
+                    "reason": "v2_score_below_threshold",
+                    "score": score,
+                    "score_before_domain": score_before_domain,
+                    "threshold": fusion_th,
+                    "mode": "v2_multi_bar",
+                    "components": components,
+                    "domain_boost": domain_boost,
+                    "domain_signals": domain_signals
+                }
+
+            # V2 PATTERN MATCHED
+            return True, score, {
+                "mode": "v2_multi_bar_capitulation",
+                "components": components,
+                "weights": weights,
+                "mechanism": "liquidity_vacuum_capitulation_fade_v2",
+                "domain_boost": domain_boost,
+                "domain_signals": domain_signals,
+                "gates_passed": {
+                    "capitulation_depth": cap_depth,
+                    "crisis_composite": crisis,
+                    "volume_climax_3b": vol_climax_3b,
+                    "wick_exhaustion_3b": wick_exhaust_3b,
+                    "has_volume_exhaustion": has_volume_exhaustion,
+                    "has_wick_exhaustion": has_wick_exhaustion
+                }
+            }
+
+        # ============================================================================
+        # STEP 4: V1 FALLBACK LOGIC (backward compatible)
+        # ============================================================================
+
+        # Extract V1 REQUIRED features
+        liquidity = self._liquidity_score(context.row)
+        volume_z = self.g(context.row, 'volume_zscore', 0)
+
+        # Try to get runtime-enriched wick_lower_ratio
+        wick_lower_ratio = self.g(context.row, 'wick_lower_ratio', None)
+
+        # If not pre-calculated, calculate on-the-fly
+        if wick_lower_ratio is None:
+            wick_lower_ratio = self._calculate_wick_lower_ratio(context.row)
+
+        # DEBUG: Log first call
+        if not hasattr(self, '_liquidity_vacuum_first_call_logged'):
+            mode = "V2" if has_v2_features else "V1 (fallback)"
+            logger.info(f"[Liquidity Vacuum {mode}] First evaluation")
+            if not has_v2_features:
+                logger.info(f"  V1 fallback: liq={liquidity:.3f}, vol_z={volume_z:.2f}, wick_lower={wick_lower_ratio:.3f}")
+            self._liquidity_vacuum_first_call_logged = True
+
+        # HARD GATE 1: Liquidity drain (ONLY true invariant across all capitulations)
+        if liquidity >= liq_max:
+            return False, 0.0, {
+                "reason": "v1_liquidity_not_drained",
+                "mode": "v1_fallback",
+                "liquidity": liquidity,
+                "threshold": liq_max
+            }
+
+        # OR GATE: At least ONE exhaustion signal required (NOT both)
+        volume_exhaustion = volume_z >= vol_z_min
+        wick_exhaustion = wick_lower_ratio >= wick_lower_min
+
+        if not (volume_exhaustion or wick_exhaustion):
+            return False, 0.0, {
+                "reason": "v1_no_exhaustion_signal",
+                "mode": "v1_fallback",
+                "volume_z": volume_z,
+                "volume_threshold": vol_z_min,
+                "wick_lower": wick_lower_ratio,
+                "wick_threshold": wick_lower_min,
+                "note": "Need at least ONE: volume panic OR wick rejection"
+            }
+
+        # Extract V1 OPTIONAL Features (Graceful Degradation)
+        funding_z = self.g(context.row, 'funding_Z', 0)
+        vix_z = self.g(context.row, 'VIX_Z', 0)
+        dxy_z = self.g(context.row, 'DXY_Z', 0)
+        rsi = self.g(context.row, 'rsi_14', 50)
+        atr_pct = self.g(context.row, 'atr_percentile', 0.5)
+        tf4h_trend = self.g(context.row, 'tf4h_external_trend', 'neutral')
+
+        # V1 SCORING COMPONENTS
+        components = {
+            # REQUIRED components (normalized scores)
+            "liquidity_vacuum": 1.0 - (liquidity / liq_max),  # Lower liquidity = higher score
+            "volume_capitulation": min(volume_z / 3.0, 1.0),  # Normalize (3.0 = extreme)
+            "wick_rejection": min(wick_lower_ratio / 0.5, 1.0),  # Normalize (0.5 = extreme)
+
+            # OPTIONAL components (with fallbacks)
+            "funding_reversal": 1.0 if funding_z < -0.5 else 0.5,  # Negative funding bonus
+            "crisis_context": min((vix_z + dxy_z) / 3.0, 1.0),  # Combined macro stress
+            "oversold": 1.0 if rsi < 30 else (1.0 - (rsi / 100)),  # Oversold bonus
+            "volatility_spike": atr_pct,  # Higher volatility = higher score
+            "downtrend_confirm": 1.0 if tf4h_trend == 'down' else 0.3  # Downtrend context
+        }
+
+        # V1 WEIGHTS
+        weights = context.get_threshold('liquidity_vacuum', 'weights', {
+            # REQUIRED feature weights (total: 65%)
+            "liquidity_vacuum": 0.25,      # Primary signal
+            "volume_capitulation": 0.20,   # Panic selling
+            "wick_rejection": 0.20,        # Exhaustion signal
+
+            # OPTIONAL feature weights (total: 35%)
+            "funding_reversal": 0.15,      # Short squeeze fuel
+            "crisis_context": 0.10,        # Macro capitulation
+            "oversold": 0.05,              # Mean reversion
+            "volatility_spike": 0.03,      # Violent moves expected
+            "downtrend_confirm": 0.02      # Context confirmation
+        })
+
+        # Weighted fusion score
+        score = sum(components[k] * weights.get(k, 0.0) for k in components)
+
+        # ============================================================================
+        # DOMAIN ENGINE INTEGRATION (V1 FALLBACK MODE)
+        # ============================================================================
+        # CRITICAL FIX: Apply domain engines BEFORE fusion threshold gate
+        use_wyckoff = context.metadata.get('feature_flags', {}).get('enable_wyckoff', False)
+        use_smc = context.metadata.get('feature_flags', {}).get('enable_smc', False)
+        use_temporal = context.metadata.get('feature_flags', {}).get('enable_temporal', False)
+
+        domain_boost = 1.0
+        domain_signals = []
+
+        if use_wyckoff:
+            wyckoff_spring_a = self.g(context.row, 'wyckoff_spring_a', False)
+            wyckoff_spring_b = self.g(context.row, 'wyckoff_spring_b', False)
+            wyckoff_ps = self.g(context.row, 'wyckoff_ps', False)
+            if wyckoff_spring_a or wyckoff_spring_b:
+                domain_boost *= 1.25
+                domain_signals.append("wyckoff_spring")
+            elif wyckoff_ps:
+                domain_boost *= 1.15
+                domain_signals.append("wyckoff_ps")
+
+        if use_smc:
+            smc_score = self.g(context.row, 'smc_score', 0.0)
+            if smc_score > 0.5:
+                domain_boost *= 1.15
+                domain_signals.append("smc_bullish")
+
+        if use_temporal:
+            wyckoff_pti_confluence = self.g(context.row, 'wyckoff_pti_confluence', False)
+            if wyckoff_pti_confluence:
+                domain_boost *= 1.10
+                domain_signals.append("temporal_confluence")
+
+        score_before_domain = score
+        score = score * domain_boost
+
+        # Final Fusion Threshold Gate (applied AFTER domain engines)
+        if score < fusion_th:
+            return False, score, {
+                "reason": "v1_score_below_threshold",
+                "mode": "v1_fallback",
+                "score": score,
+                "score_before_domain": score_before_domain,
+                "threshold": fusion_th,
+                "components": components,
+                "domain_boost": domain_boost,
+                "domain_signals": domain_signals
+            }
+
+        # V1 PATTERN MATCHED
+        return True, score, {
+            "mode": "v1_single_bar_fallback",
+            "components": components,
+            "weights": weights,
+            "mechanism": "liquidity_vacuum_capitulation_fade_v1",
+            "domain_boost": domain_boost,
+            "domain_signals": domain_signals,
+            "gates_passed": {
+                "liquidity": liquidity,
+                "volume_z": volume_z,
+                "wick_lower": wick_lower_ratio
+            }
+        }
+
+    def _calculate_wick_lower_ratio(self, row: pd.Series) -> float:
+        """
+        Calculate lower wick ratio on-the-fly if not pre-enriched.
+
+        Returns:
+            float [0, 1] - lower wick as percentage of candle range
+        """
+        try:
+            open_price = float(row.get('open', 0))
+            close = float(row.get('close', 0))
+            high = float(row.get('high', 0))
+            low = float(row.get('low', 0))
+
+            # Candle range
+            candle_range = high - low
+            if candle_range == 0:
+                return 0.0
+
+            # Body low (min of open/close)
+            body_low = min(open_price, close)
+
+            # Lower wick
+            wick_lower = body_low - low
+
+            # Normalize
+            wick_lower_ratio = wick_lower / candle_range
+
+            return max(0.0, min(1.0, wick_lower_ratio))
+
+        except (TypeError, KeyError, ValueError):
+            return 0.0
 
     def _check_S2(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
         """
-        Archetype S2: Failed Rally Rejection
+        Archetype S2: Failed Rally Rejection (WITH RUNTIME FEATURE ENRICHMENT)
 
         Trader: Zeroika (dead cat bounce specialist)
         Edge: Order block retest + volume fade + RSI divergence = bull trap
 
-        Validated Performance (2022):
-        - Win Rate: 58.5%
-        - Estimated PF: 1.4
-        - Forward 24H: -0.68%
+        **RUNTIME ENRICHMENT UPDATE:**
+        Now uses runtime-calculated features when available:
+        - wick_upper_ratio (from runtime vs manual calculation)
+        - volume_fade_flag (proper 3-bar sequence detection)
+        - rsi_bearish_div (true divergence detection)
+        - ob_retest_flag (enhanced OB detection)
+
+        Baseline Performance (2022, NO enrichment):
+        - PF: 0.38 (baseline) / 0.56 (optimized)
+        - Win Rate: 38.5% / 42.6%
+        - Trade Count: 335 / 444
 
         Detection Logic:
         1. Price retests order block (resistance)
@@ -1135,8 +2971,26 @@ class ArchetypeLogic:
         # Get thresholds
         fusion_th = context.get_threshold('failed_rally', 'fusion_threshold', 0.36)
         wick_ratio_min = context.get_threshold('failed_rally', 'wick_ratio_min', 2.0)
-        rsi_div_required = context.get_threshold('failed_rally', 'require_rsi_divergence', False)
+        use_runtime_features = context.get_threshold('failed_rally', 'use_runtime_features', False)
 
+        # ENHANCED: Check for runtime-enriched features first
+        if use_runtime_features:
+            # Prefer runtime-calculated features (more accurate)
+            wick_upper_ratio = self.g(context.row, 'wick_upper_ratio', None)
+            volume_fade_flag = self.g(context.row, 'volume_fade_flag', None)
+            rsi_bearish_div = self.g(context.row, 'rsi_bearish_div', None)
+            ob_retest_flag = self.g(context.row, 'ob_retest_flag', None)
+
+            # Log first runtime feature usage
+            if not hasattr(self, '_s2_runtime_logged'):
+                logger.info(f"[S2 RUNTIME] Using enriched features - wick={wick_upper_ratio is not None}, vol_fade={volume_fade_flag is not None}, rsi_div={rsi_bearish_div is not None}, ob={ob_retest_flag is not None}")
+                self._s2_runtime_logged = True
+
+            # If runtime features available, use enhanced logic
+            if all(x is not None for x in [wick_upper_ratio, volume_fade_flag, rsi_bearish_div, ob_retest_flag]):
+                return self._check_S2_enhanced(context, wick_upper_ratio, volume_fade_flag, rsi_bearish_div, ob_retest_flag, fusion_th)
+
+        # FALLBACK: Original logic (for backward compatibility)
         # Extract features
         ob_high = self.g(context.row, 'tf1h_ob_high', None)
         close = self.g(context.row, 'close', 0)
@@ -1211,58 +3065,549 @@ class ArchetypeLogic:
             "rsi": rsi,
             "volume_z": volume_z,
             "tf4h_trend": tf4h_trend,
-            "ob_high": ob_high
+            "ob_high": ob_high,
+            "feature_source": "legacy"
         }
 
-    def _check_S3(self, context: RuntimeContext) -> bool:
+    def _check_S2_enhanced(
+        self,
+        context: RuntimeContext,
+        wick_upper_ratio: float,
+        volume_fade_flag: bool,
+        rsi_bearish_div: bool,
+        ob_retest_flag: bool,
+        fusion_th: float
+    ) -> Tuple[bool, float, Dict]:
         """
-        S3 - Whipsaw: False break + reversal (upthrust rejection).
+        S2 Enhanced Logic using runtime-calculated features.
 
-        Criteria (short-biased):
-        - RSI extreme (overbought)
-        - Low volume (weak momentum)
-        - Fusion score threshold
+        This version uses proper feature calculations:
+        - wick_upper_ratio: Vectorized wick calculation (% of candle range)
+        - volume_fade_flag: 3-bar volume sequence detection
+        - rsi_bearish_div: True divergence (price up, RSI down over 14 bars)
+        - ob_retest_flag: Enhanced OB detection
 
-        Note: Simplified from wick_ratio check (field may not exist)
+        Args:
+            context: RuntimeContext
+            wick_upper_ratio: Pre-calculated upper wick ratio [0, 1]
+            volume_fade_flag: Boolean, True if volume fading
+            rsi_bearish_div: Boolean, True if bearish divergence detected
+            ob_retest_flag: Boolean, True if price retesting resistance
+
+        Returns:
+            (matched: bool, score: float, meta: dict)
         """
-        # Read thresholds from config (use friendly name, ThresholdPolicy maps letter codes)
-        fusion_th = context.get_threshold('whipsaw', 'fusion', 0.35)
-        rsi_min = context.get_threshold('whipsaw', 'rsi_extreme', 70.0)
-        vol_max = context.get_threshold('whipsaw', 'vol_max', 0.5)
+        # Check if multi-confluence mode is enabled
+        use_multi_confluence = context.get_threshold('failed_rally', 'use_multi_confluence', False)
 
-        # Get features
-        rsi = self.g(context.row, "rsi", 50.0)
-        vol_z = self.g(context.row, "vol_z", 0.0)
-        fusion = context.row.get('fusion_score', 0.0)
+        if use_multi_confluence:
+            return self._check_S2_multi_confluence(context, wick_upper_ratio, volume_fade_flag, rsi_bearish_div, ob_retest_flag, fusion_th)
 
-        # Check conditions
-        return (rsi >= rsi_min and
-                vol_z <= vol_max and
-                fusion >= fusion_th)
+        # Original enhanced logic
+        # Get configurable thresholds
+        wick_min = context.get_threshold('failed_rally', 'wick_ratio_min', 0.4)  # More lenient for ratio
+        rsi_div_weight = context.get_threshold('failed_rally', 'rsi_div_weight', 0.25)
 
-    def _check_S4(self, context: RuntimeContext) -> bool:
+        # Gate 1: Order block retest (required)
+        if not ob_retest_flag:
+            return False, 0.0, {"reason": "no_ob_retest", "ob_retest_flag": ob_retest_flag}
+
+        # Gate 2: Upper wick rejection (required)
+        if wick_upper_ratio < wick_min:
+            return False, 0.0, {"reason": "weak_wick", "wick_upper_ratio": wick_upper_ratio, "threshold": wick_min}
+
+        # Compute enhanced components
+        components = {
+            "ob_retest": 1.0 if ob_retest_flag else 0.0,
+            "wick_rejection": min(wick_upper_ratio / 0.6, 1.0),  # Normalize (0.6 = very strong)
+            "volume_fade": 1.0 if volume_fade_flag else 0.3,     # Strong signal if present
+            "rsi_divergence": 1.0 if rsi_bearish_div else 0.4    # BONUS if true divergence
+        }
+
+        # Enhanced weights (emphasize actual divergence over simple overbought)
+        weights = context.get_threshold('failed_rally', 'enhanced_weights', {
+            "ob_retest": 0.25,
+            "wick_rejection": 0.30,  # Increased (most reliable)
+            "volume_fade": 0.25,      # Increased (key signal)
+            "rsi_divergence": 0.20    # New (true divergence bonus)
+        })
+
+        score = sum(components[k] * weights.get(k, 0.0) for k in components)
+
+        # Final gate
+        if score < fusion_th:
+            return False, score, {
+                "reason": "score_below_threshold",
+                "components": components,
+                "score": score,
+                "threshold": fusion_th
+            }
+
+        return True, score, {
+            "components": components,
+            "wick_upper_ratio": wick_upper_ratio,
+            "volume_fade_flag": volume_fade_flag,
+            "rsi_bearish_div": rsi_bearish_div,
+            "ob_retest_flag": ob_retest_flag,
+            "feature_source": "runtime_enriched"
+        }
+
+    def _check_S2_multi_confluence(
+        self,
+        context: RuntimeContext,
+        wick_upper_ratio: float,
+        volume_fade_flag: bool,
+        rsi_bearish_div: bool,
+        ob_retest_flag: bool,
+        fusion_th: float
+    ) -> Tuple[bool, float, Dict]:
         """
-        S4 - Distribution: High volume + no follow (exhaustion climax).
+        S2 v2: Multi-Confluence Failed Rally (trader-style discretion)
 
-        Criteria (short-biased):
-        - Volume climax (very high volume)
-        - Low liquidity (distribution/selling)
-        - Fusion score threshold
+        Implements 8-factor confluence filter to reduce false positives:
+        - Original 4: OB retest, RSI div, volume fade, wick rejection
+        - NEW 4: MTF down, DXY strength, OI drain, Wyckoff distribution
+
+        Requires 6/8 confluence minimum (trader discretion threshold).
+        Crisis veto: VIX > 1.5 sigma = panic avoidance.
+        Dynamic sizing: 6/8=0.8x, 7/8=1.0x, 8/8=1.2x
+
+        Args:
+            context: RuntimeContext
+            wick_upper_ratio: Pre-calculated upper wick ratio
+            volume_fade_flag: Boolean volume fade signal
+            rsi_bearish_div: Boolean RSI divergence
+            ob_retest_flag: Boolean OB retest
+            fusion_th: Minimum fusion threshold
+
+        Returns:
+            (matched: bool, score: float, meta: dict)
         """
-        # Read thresholds from config
-        fusion_th = context.get_threshold('distribution', 'fusion', 0.37)
-        vol_climax = context.get_threshold('distribution', 'vol_climax', 1.5)
-        liq_max = context.get_threshold('distribution', 'liq_max', 0.3)
+        # Original 4 conditions
+        c1_ob_retest = ob_retest_flag
+        c2_rsi_div = rsi_bearish_div
+        c3_volume_fade = volume_fade_flag
+        c4_wick_rejection = wick_upper_ratio > 0.4
 
-        # Get features
-        vol_z = self.g(context.row, "vol_z", 0.0)
-        liq = self._liquidity_score(context.row)
-        fusion = context.row.get('fusion_score', 0.0)
+        # NEW: 4 trader discretion conditions with graceful degradation
+        # c5: 4H downtrend (prefer external_trend as it has 100% coverage)
+        tf4h_trend_raw = self.g(context.row, 'tf4h_external_trend', 'neutral')
+        c5_mtf_down = tf4h_trend_raw == 'down' if isinstance(tf4h_trend_raw, str) else (tf4h_trend_raw < 0)
 
-        # Check conditions
-        return (vol_z >= vol_climax and
-                liq < liq_max and
-                fusion >= fusion_th)
+        # c6: DXY strength (use DXY_Z from features, 100% coverage)
+        dxy_z = self.g(context.row, 'DXY_Z', 0.0)
+        c6_dxy_strength = dxy_z > 0.5
+
+        # c7: OI drain (OI_CHANGE has 100% coverage)
+        # Note: OI increasing = liquidity trap (more longs to squeeze)
+        oi_change = self.g(context.row, 'OI_CHANGE', 0.0)
+        c7_oi_drain = oi_change > 0.10  # 10% increase = trap
+
+        # c8: Wyckoff distribution (check for distribution-like conditions)
+        # Simplified: high RSI + low liquidity = distribution proxy
+        wyckoff_score = self.g(context.row, 'wyckoff_score', 0.0)
+        rsi = self.g(context.row, 'rsi_14', 50.0)
+        liquidity = self._liquidity_score(context.row)
+        c8_wyckoff_dist = (wyckoff_score > 0.35) or (rsi > 65 and liquidity < 0.30)
+
+        # Count confluence
+        conditions = [c1_ob_retest, c2_rsi_div, c3_volume_fade, c4_wick_rejection,
+                      c5_mtf_down, c6_dxy_strength, c7_oi_drain, c8_wyckoff_dist]
+        confluence_count = sum(conditions)
+
+        # Get configurable min confluence
+        min_confluence = context.get_threshold('failed_rally', 'min_confluence', 6)
+
+        # Require minimum confluence (trader discretion threshold)
+        if confluence_count < min_confluence:
+            return False, 0.0, {
+                'reason': 'insufficient_confluence',
+                'confluence': confluence_count,
+                'min_required': min_confluence,
+                'conditions': {
+                    'ob_retest': c1_ob_retest,
+                    'rsi_div': c2_rsi_div,
+                    'volume_fade': c3_volume_fade,
+                    'wick': c4_wick_rejection,
+                    'mtf_down': c5_mtf_down,
+                    'dxy_up': c6_dxy_strength,
+                    'oi_drain': c7_oi_drain,
+                    'wyckoff': c8_wyckoff_dist
+                }
+            }
+
+        # Crisis veto (VIX > 1.5 sigma = panic, traders avoid fades)
+        vix_z = self.g(context.row, 'VIX_Z', 0.0)
+        vix_z_max = context.get_threshold('failed_rally', 'vix_z_max', 1.5)
+        if vix_z > vix_z_max:
+            return False, 0.0, {
+                'reason': 'crisis_veto',
+                'vix_z': vix_z,
+                'threshold': vix_z_max,
+                'confluence': confluence_count
+            }
+
+        # Calculate fusion score (use original fusion calculation)
+        fusion = self._fusion(context.row)
+
+        if fusion < fusion_th:
+            return False, fusion, {
+                'reason': 'fusion_below_threshold',
+                'fusion': fusion,
+                'threshold': fusion_th,
+                'confluence': confluence_count
+            }
+
+        # Dynamic sizing based on confluence (6/8 = 0.8x, 7/8 = 1.0x, 8/8 = 1.2x)
+        size_mult = 0.6 + (0.1 * confluence_count)
+
+        # Build metadata
+        meta = {
+            'confluence': confluence_count,
+            'size_mult': size_mult,
+            'fusion': fusion,
+            'vix_z': vix_z,
+            'conditions': {
+                'ob_retest': c1_ob_retest,
+                'rsi_div': c2_rsi_div,
+                'volume_fade': c3_volume_fade,
+                'wick': c4_wick_rejection,
+                'mtf_down': c5_mtf_down,
+                'dxy_up': c6_dxy_strength,
+                'oi_drain': c7_oi_drain,
+                'wyckoff': c8_wyckoff_dist
+            },
+            'feature_values': {
+                'wick_upper_ratio': wick_upper_ratio,
+                'tf4h_trend': tf4h_trend_raw,
+                'dxy_z': dxy_z,
+                'oi_change': oi_change,
+                'wyckoff_score': wyckoff_score,
+                'rsi': rsi,
+                'liquidity': liquidity
+            },
+            'feature_source': 'multi_confluence_v2'
+        }
+
+        return True, fusion, meta
+
+    def _pattern_S3(self, context: RuntimeContext):
+        """Pattern detection for Archetype S3: Distribution Climax Short (SHORT)"""
+        r = context.row
+        vc = self.g(r, 'volume_climax_last_3b', 0.0)
+        if vc >= 1.0 and self.g(r, 'rsi_14', 50) >= 70:
+            score = 0.45
+            return True, score, ["S3", "distribution_climax", "SHORT"]
+        return None
+
+    def _check_S3(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
+        """Archetype S3: Distribution Climax Short (SHORT)"""
+
+        # 1) Base pattern detection - returns (matched, score, metadata)
+        base_result = self._pattern_S3(context)
+        if not base_result:
+            return False, 0.0, {"reason": "pattern_not_matched"}
+
+        matched, base_score, pattern_tags = base_result  # base_score in [0,1]
+
+        # 2) Global safety vetoes (soft - use penalties not hard returns)
+        # Note: Keep these soft - use penalties not hard returns
+
+        # 3) Domain modifiers (standardized across all)
+        score = self._apply_domain_engines(context, base_score, pattern_tags)
+
+        # 4) Final fusion gate
+        fusion_th = context.get_threshold('distribution_climax', 'fusion_threshold', 0.40)
+        if score < fusion_th:
+            return False, score, {
+                "reason": "score_below_fusion_threshold",
+                "base_score": base_score,
+                "final_score": score,
+                "fusion_threshold": fusion_th
+            }
+
+        # 5) Return with full metadata
+        return True, score, {
+            "base_score": base_score,
+            "final_score": score,
+            "pattern_tags": pattern_tags,
+            "domain_boost_applied": True
+        }
+
+    def _check_S4(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
+        """
+        Archetype S4: Funding Divergence (Short Squeeze)
+
+        Trader: Contra-funding specialist
+        Edge: Overcrowded shorts + price strength = violent squeeze UP
+
+        OPPOSITE OF S5:
+        - S5 (Long Squeeze): Positive funding → longs overcrowded → cascade DOWN
+        - S4 (Funding Divergence): Negative funding → shorts overcrowded → squeeze UP
+
+        Detection Logic:
+        1. REQUIRED: Negative funding extreme (funding_Z < -1.2) -> shorts overcrowded
+        2. REQUIRED: Price resilience (price NOT falling despite bearish funding) -> strength signal
+        3. REQUIRED: Low liquidity (liquidity < threshold) -> thin bids amplify squeeze
+        4. OPTIONAL: Volume quiet -> coiled spring effect (calm before storm)
+
+        Mechanism:
+        - Shorts paying high negative funding -> unsustainable
+        - Price showing strength despite bearish sentiment -> divergence
+        - Thin liquidity -> violent squeeze when shorts panic cover
+        - Low volume before spike -> coiled spring (explosive covering)
+
+        BTC Examples:
+        - 2022-08-15: Funding -0.15% → +18% rally (violent short squeeze)
+        - 2023-01-14: Negative funding + price strength → 12% rally
+
+        Returns:
+            (matched: bool, score: float, meta: dict)
+        """
+        # Get thresholds
+        fusion_th = context.get_threshold('funding_divergence', 'fusion_threshold', 0.40)
+        funding_z_max = context.get_threshold('funding_divergence', 'funding_z_max', -1.2)  # Negative!
+        resilience_min = context.get_threshold('funding_divergence', 'resilience_min', 0.5)
+        liq_max = context.get_threshold('funding_divergence', 'liquidity_max', 0.30)
+
+        # Extract features
+        funding_z = self.g(context.row, 'funding_Z', 0)
+        liquidity = self._liquidity_score(context.row)
+
+        # Try to get S4 runtime features if available
+        price_resilience = self.g(context.row, 'price_resilience', None)
+        volume_quiet = self.g(context.row, 'volume_quiet', False)
+
+        # DEBUG: Log first call
+        if not hasattr(self, '_s4_first_call_logged'):
+            logger.info(f"[S4 DEBUG] First evaluation - funding_z={funding_z:.3f}, liquidity={liquidity:.3f}, resilience={price_resilience}")
+            self._s4_first_call_logged = True
+
+        # SMC VETO GATE: Don't long into bearish 4H structure
+        # Check BEFORE other gates (fast fail for structural misalignment)
+        tf4h_bos_bearish = self.g(context.row, 'tf4h_bos_bearish', False)
+        if tf4h_bos_bearish:
+            return False, 0.0, {
+                "reason": "smc_4h_bos_bearish_veto",
+                "message": "4H bearish BOS - institutional sellers active, abort long"
+            }
+
+        # Gate 1: NEGATIVE funding extreme (shorts overcrowded) - REQUIRED
+        # Note: funding_z_max is NEGATIVE (e.g., -1.2), so we check if funding_z < -1.2
+        if funding_z > funding_z_max:  # If funding is > -1.2, not negative enough
+            return False, 0.0, {
+                "reason": "funding_not_negative_extreme",
+                "funding_z": funding_z,
+                "threshold": funding_z_max
+            }
+
+        # Gate 2: Low liquidity (amplification factor) - REQUIRED
+        if liquidity > liq_max:
+            return False, 0.0, {
+                "reason": "liquidity_not_thin",
+                "liquidity": liquidity,
+                "threshold": liq_max
+            }
+
+        # Gate 3: Price resilience (if runtime features available)
+        if price_resilience is not None:
+            if price_resilience < resilience_min:
+                return False, 0.0, {
+                    "reason": "price_not_resilient",
+                    "resilience": price_resilience,
+                    "threshold": resilience_min
+                }
+
+        # Compute score components
+        components = {
+            "funding_negative": min((-funding_z - 1.0) / 2.0, 1.0),  # Map -3 to -1 sigma → 1.0 to 0.0
+            "price_resilience": price_resilience if price_resilience is not None else 0.5,
+            "liquidity_thin": 1.0 - (liquidity / 0.5),  # Lower liquidity = higher score
+            "volume_quiet": 1.0 if volume_quiet else 0.0
+        }
+
+        # Cap liquidity_thin at 1.0
+        components["liquidity_thin"] = min(components["liquidity_thin"], 1.0)
+
+        # Weights (tuned for BTC short squeezes)
+        weights = context.get_threshold('funding_divergence', 'weights', {
+            "funding_negative": 0.40,
+            "price_resilience": 0.30,
+            "volume_quiet": 0.15,
+            "liquidity_thin": 0.15
+        })
+
+        score = sum(components[k] * weights.get(k, 0.0) for k in components)
+
+        # ============================================================================
+        # DOMAIN ENGINE INTEGRATION (BOOST/VETO LAYER) - S4 FUNDING DIVERGENCE
+        # ============================================================================
+        # CRITICAL FIX: Apply domain engines BEFORE fusion threshold gate
+        use_wyckoff = context.metadata.get('feature_flags', {}).get('enable_wyckoff', False)
+        use_smc = context.metadata.get('feature_flags', {}).get('enable_smc', False)
+        use_temporal = context.metadata.get('feature_flags', {}).get('enable_temporal', False)
+        use_hob = context.metadata.get('feature_flags', {}).get('enable_hob', False)
+
+        domain_boost = 1.0
+        domain_signals = []
+
+        # ============================================================================
+        # WYCKOFF ENGINE: Accumulation vs Distribution detection
+        # ============================================================================
+        if use_wyckoff:
+            # SOFT VETOES: Distribution phase reduces confidence but doesn't block
+            wyckoff_distribution = self.g(context.row, 'wyckoff_phase_abc', '') == 'D'
+            wyckoff_utad = self.g(context.row, 'wyckoff_utad', False)
+            wyckoff_bc = self.g(context.row, 'wyckoff_bc', False)
+            wyckoff_sow = self.g(context.row, 'wyckoff_sow', False)
+
+            if wyckoff_distribution:
+                domain_boost *= 0.30  # 70% confidence reduction for distribution phase
+                domain_signals.append("wyckoff_distribution_caution")
+
+            if wyckoff_utad or wyckoff_bc:
+                domain_boost *= 0.50  # Stronger events get more severe reduction
+                domain_signals.append("wyckoff_utad_bc_caution")
+
+            if wyckoff_sow:
+                # Soft veto: Sign of Weakness reduces conviction
+                domain_boost *= 0.70
+                domain_signals.append("wyckoff_sow_weakness_penalty")
+
+            # MAJOR BOOSTS: Accumulation phase signals
+            wyckoff_accumulation = self.g(context.row, 'wyckoff_phase_abc', '') == 'A'
+            wyckoff_spring_a = self.g(context.row, 'wyckoff_spring_a', False)
+            wyckoff_spring_b = self.g(context.row, 'wyckoff_spring_b', False)
+            wyckoff_lps = self.g(context.row, 'wyckoff_lps', False)
+
+            if wyckoff_spring_a or wyckoff_spring_b:
+                domain_boost *= 2.50  # Spring confirms squeeze setup (shorts trapped)
+                domain_signals.append("wyckoff_spring_squeeze_setup")
+            elif wyckoff_lps:
+                domain_boost *= 1.50  # Last Point Support = final accumulation
+                domain_signals.append("wyckoff_lps_accumulation")
+            elif wyckoff_accumulation:
+                domain_boost *= 2.00  # Accumulation phase = smart money buying
+                domain_signals.append("wyckoff_accumulation_phase")
+
+            # SUPPORT SIGNALS: Wyckoff accumulation events
+            wyckoff_ps = self.g(context.row, 'wyckoff_ps', False)
+            wyckoff_sos = self.g(context.row, 'wyckoff_sos', False)
+            wyckoff_ar = self.g(context.row, 'wyckoff_ar', False)
+
+            if wyckoff_sos:
+                domain_boost *= 1.80  # Sign of Strength = buying pressure
+                domain_signals.append("wyckoff_sos_strength")
+            elif wyckoff_ps:
+                domain_boost *= 1.40  # Preliminary Support
+                domain_signals.append("wyckoff_ps_support")
+            elif wyckoff_ar:
+                domain_boost *= 1.30  # Automatic Rally
+                domain_signals.append("wyckoff_ar_bounce")
+
+        # ============================================================================
+        # SMC ENGINE: Bullish structure confirmation
+        # ============================================================================
+        if use_smc:
+            # Multi-timeframe bullish BOS (institutional buying)
+            tf1h_bos_bullish = self.g(context.row, 'tf1h_bos_bullish', False)
+            tf4h_bos_bullish = self.g(context.row, 'tf4h_bos_bullish', False)
+
+            if tf4h_bos_bullish:
+                domain_boost *= 2.00  # 4H institutional structure shift
+                domain_signals.append("smc_4h_bos_bullish")
+            elif tf1h_bos_bullish:
+                domain_boost *= 1.40  # 1H bullish structure
+                domain_signals.append("smc_1h_bos_bullish")
+
+            # DEMAND ZONES + LIQUIDITY SWEEPS
+            smc_demand_zone = self.g(context.row, 'smc_demand_zone', False)
+            smc_liquidity_sweep = self.g(context.row, 'smc_liquidity_sweep', False)
+
+            if smc_liquidity_sweep:
+                domain_boost *= 1.80  # Liquidity sweep = stop hunt before squeeze
+                domain_signals.append("smc_liquidity_sweep_reversal")
+            elif smc_demand_zone:
+                domain_boost *= 1.60  # Demand zone support
+                domain_signals.append("smc_demand_zone_support")
+
+            # VETOES: Supply zones overhead
+            smc_supply_zone = self.g(context.row, 'smc_supply_zone', False)
+            if smc_supply_zone:
+                domain_boost *= 0.70  # Supply overhead reduces conviction
+                domain_signals.append("smc_supply_zone_overhead")
+
+        # ============================================================================
+        # TEMPORAL ENGINE: Fibonacci time + confluence
+        # ============================================================================
+        if use_temporal:
+            # Fibonacci time clusters
+            fib_time_cluster = self.g(context.row, 'fib_time_cluster', False)
+            temporal_confluence = self.g(context.row, 'temporal_confluence', False)
+
+            if fib_time_cluster:
+                domain_boost *= 1.70  # Perfect timing for squeeze
+                domain_signals.append("fib_time_cluster_reversal")
+
+            if temporal_confluence:
+                domain_boost *= 1.50  # Multi-timeframe alignment
+                domain_signals.append("temporal_confluence")
+
+            # Wyckoff-PTI confluence
+            wyckoff_pti_confluence = self.g(context.row, 'wyckoff_pti_confluence', False)
+            if wyckoff_pti_confluence:
+                domain_boost *= 1.40  # Combined pattern + time
+                domain_signals.append("wyckoff_pti_confluence")
+
+        # ============================================================================
+        # HOB ENGINE: Order book confirmation
+        # ============================================================================
+        if use_hob:
+            # Demand zones in order book
+            hob_demand_zone = self.g(context.row, 'hob_demand_zone', False)
+            hob_imbalance = self.g(context.row, 'hob_imbalance', 0.0)
+
+            if hob_demand_zone:
+                domain_boost *= 1.50  # Large bid walls support squeeze
+                domain_signals.append("hob_demand_zone_support")
+
+            if hob_imbalance > 0.60:
+                domain_boost *= 1.30  # Strong bid imbalance
+                domain_signals.append("hob_bid_imbalance_strong")
+
+        score_before_domain = score
+        score = score * domain_boost
+
+        # ============================================================================
+        # FUSION THRESHOLD GATE (applied AFTER domain engines)
+        # ============================================================================
+        if score < fusion_th:
+            return False, score, {
+                "reason": "score_below_threshold",
+                "score": score,
+                "score_before_domain": score_before_domain,
+                "threshold": fusion_th,
+                "components": components,
+                "domain_boost": domain_boost,
+                "domain_signals": domain_signals,
+                "funding_z": funding_z,
+                "resilience": price_resilience,
+                "liquidity": liquidity,
+                "volume_quiet": volume_quiet
+            }
+
+        # MATCH! Short squeeze setup detected
+        return True, score, {
+            "reason": "short_squeeze_detected",
+            "components": components,
+            "score": score,
+            "domain_boost": domain_boost,
+            "domain_signals": domain_signals,
+            "funding_z": funding_z,
+            "resilience": price_resilience,
+            "liquidity": liquidity,
+            "volume_quiet": volume_quiet
+        }
 
     def _check_S5(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
         """
@@ -1310,6 +3655,15 @@ class ArchetypeLogic:
         if not hasattr(self, '_s5_first_call_logged'):
             logger.info(f"[S5 DEBUG] First evaluation - funding_z={funding_z:.3f}, rsi={rsi:.1f}, liquidity={liquidity:.3f}")
             self._s5_first_call_logged = True
+
+        # SMC VETO GATE: Don't short into bullish 1H structure
+        # Check BEFORE other gates (fast fail for structural misalignment)
+        tf1h_bos_bullish = self.g(context.row, 'tf1h_bos_bullish', False)
+        if tf1h_bos_bullish:
+            return False, 0.0, {
+                "reason": "smc_1h_bos_bullish_veto",
+                "message": "1H bullish BOS - institutional buyers active, abort short"
+            }
 
         # Gate 1: High positive funding (longs overcrowded) - REQUIRED
         if funding_z < funding_z_min:
@@ -1374,20 +3728,192 @@ class ArchetypeLogic:
 
         score = sum(components[k] * weights.get(k, 0.0) for k in components)
 
-        # Final gate
+        # ============================================================================
+        # DOMAIN ENGINE INTEGRATION (BOOST/VETO LAYER) - S5 LONG SQUEEZE
+        # ============================================================================
+        # CRITICAL FIX: Apply domain engines BEFORE fusion threshold gate
+        use_wyckoff = context.metadata.get('feature_flags', {}).get('enable_wyckoff', False)
+        use_smc = context.metadata.get('feature_flags', {}).get('enable_smc', False)
+        use_temporal = context.metadata.get('feature_flags', {}).get('enable_temporal', False)
+        use_hob = context.metadata.get('feature_flags', {}).get('enable_hob', False)
+
+        domain_boost = 1.0
+        domain_signals = []
+
+        # ============================================================================
+        # WYCKOFF ENGINE: Distribution top detection
+        # ============================================================================
+        if use_wyckoff:
+            # HARD VETOES: Don't short into accumulation phase
+            wyckoff_accumulation = self.g(context.row, 'wyckoff_phase_abc', '') == 'A'
+            wyckoff_spring_a = self.g(context.row, 'wyckoff_spring_a', False)
+            wyckoff_spring_b = self.g(context.row, 'wyckoff_spring_b', False)
+
+            if wyckoff_accumulation or wyckoff_spring_a or wyckoff_spring_b:
+                # Hard veto: Accumulation/Spring signals = abort short
+                return False, 0.0, {
+                    "reason": "wyckoff_accumulation_veto",
+                    "wyckoff_accumulation": wyckoff_accumulation,
+                    "wyckoff_spring_a": wyckoff_spring_a,
+                    "wyckoff_spring_b": wyckoff_spring_b,
+                    "note": "Don't short into Wyckoff accumulation phase"
+                }
+
+            # MAJOR BOOSTS: Distribution phase signals (Phase A-D)
+            wyckoff_distribution = self.g(context.row, 'wyckoff_phase_abc', '') == 'D'
+            wyckoff_utad = self.g(context.row, 'wyckoff_utad', False)
+            wyckoff_bc = self.g(context.row, 'wyckoff_bc', False)
+
+            if wyckoff_utad:
+                domain_boost *= 2.50  # UTAD = final trap before markdown (strongest)
+                domain_signals.append("wyckoff_utad_distribution_climax")
+            elif wyckoff_bc:
+                domain_boost *= 2.00  # Buying Climax = euphoria top
+                domain_signals.append("wyckoff_buying_climax_top")
+            elif wyckoff_distribution:
+                domain_boost *= 2.00  # Distribution phase = smart money selling
+                domain_signals.append("wyckoff_distribution_phase")
+
+            # WEAKNESS SIGNALS: Sign of Weakness + LPSY (Phase D)
+            wyckoff_sow = self.g(context.row, 'wyckoff_sow', False)
+            wyckoff_lpsy = self.g(context.row, 'wyckoff_lpsy', False)
+            wyckoff_as = self.g(context.row, 'wyckoff_as', False)
+
+            if wyckoff_sow:
+                domain_boost *= 1.80  # Sign of Weakness = selling pressure emerging
+                domain_signals.append("wyckoff_sow_weakness")
+            elif wyckoff_lpsy:
+                domain_boost *= 1.80  # Last Point Supply = final rally before markdown
+                domain_signals.append("wyckoff_lpsy_final_supply")
+            elif wyckoff_as:
+                domain_boost *= 1.40  # Automatic Reaction = relief drop after BC
+                domain_signals.append("wyckoff_as_reaction")
+
+        # ============================================================================
+        # SMC ENGINE: Bearish structure confirmation
+        # ============================================================================
+        if use_smc:
+            # Multi-timeframe bearish BOS (institutional distribution)
+            tf1h_bos_bearish = self.g(context.row, 'tf1h_bos_bearish', False)
+            tf4h_bos_bearish = self.g(context.row, 'tf4h_bos_bearish', False)
+
+            if tf4h_bos_bearish:
+                domain_boost *= 2.00  # 4H institutional structure shift DOWN
+                domain_signals.append("smc_4h_bos_bearish_institutional")
+            elif tf1h_bos_bearish:
+                domain_boost *= 1.60  # 1H bearish structure
+                domain_signals.append("smc_1h_bos_bearish")
+
+            # SUPPLY ZONES: Institutional resistance
+            smc_supply_zone = self.g(context.row, 'smc_supply_zone', False)
+            smc_choch = self.g(context.row, 'smc_choch', False)
+
+            if smc_supply_zone:
+                domain_boost *= 1.80  # Supply zone = institutional sellers
+                domain_signals.append("smc_supply_zone_resistance")
+
+            if smc_choch:
+                domain_boost *= 1.60  # Change of Character = trend reversal DOWN
+                domain_signals.append("smc_choch_bearish_reversal")
+
+            # VETOES: Demand zones below (support)
+            smc_demand_zone = self.g(context.row, 'smc_demand_zone', False)
+            smc_liquidity_sweep = self.g(context.row, 'smc_liquidity_sweep', False)
+
+            if smc_demand_zone:
+                domain_boost *= 0.70  # Demand support below reduces short conviction
+                domain_signals.append("smc_demand_zone_support_below")
+
+            if smc_liquidity_sweep:
+                # Liquidity sweep could be bullish setup, reduce short signal
+                domain_boost *= 0.75
+                domain_signals.append("smc_liquidity_sweep_caution")
+
+        # ============================================================================
+        # TEMPORAL ENGINE: Fibonacci resistance + time clusters
+        # ============================================================================
+        if use_temporal:
+            # Fibonacci time clusters at tops
+            fib_time_cluster = self.g(context.row, 'fib_time_cluster', False)
+            temporal_resistance_cluster = self.g(context.row, 'temporal_resistance_cluster', False)
+
+            if fib_time_cluster and temporal_resistance_cluster:
+                domain_boost *= 1.80  # Perfect timing at resistance = ideal short entry
+                domain_signals.append("fib_time_resistance_cluster_top")
+            elif fib_time_cluster:
+                domain_boost *= 1.50  # Fibonacci time alignment
+                domain_signals.append("fib_time_cluster_top")
+
+            # Wyckoff-PTI confluence (resistance vs support)
+            wyckoff_pti_confluence = self.g(context.row, 'wyckoff_pti_confluence', False)
+            wyckoff_pti_score = self.g(context.row, 'wyckoff_pti_score', 0.0)
+
+            if wyckoff_pti_confluence:
+                if wyckoff_pti_score > 0.50:
+                    domain_boost *= 1.50  # Strong resistance confluence
+                    domain_signals.append("wyckoff_pti_resistance_confluence")
+                elif wyckoff_pti_score < -0.50:
+                    # Support cluster = veto short
+                    return False, 0.0, {
+                        "reason": "temporal_support_veto",
+                        "wyckoff_pti_score": wyckoff_pti_score,
+                        "note": "Don't short into Fibonacci support cluster"
+                    }
+
+        # ============================================================================
+        # HOB ENGINE: Order book supply/demand
+        # ============================================================================
+        if use_hob:
+            # Supply zones in order book
+            hob_supply_zone = self.g(context.row, 'hob_supply_zone', False)
+            hob_imbalance = self.g(context.row, 'hob_imbalance', 0.0)
+
+            if hob_supply_zone:
+                domain_boost *= 1.50  # Large ask walls = institutional resistance
+                domain_signals.append("hob_supply_zone_resistance")
+
+            # Negative imbalance = more sellers than buyers
+            if hob_imbalance < -0.60:
+                domain_boost *= 1.30  # Strong sell-side imbalance
+                domain_signals.append("hob_ask_imbalance_strong")
+            elif hob_imbalance < -0.40:
+                domain_boost *= 1.15  # Moderate sell imbalance
+                domain_signals.append("hob_ask_imbalance_moderate")
+
+            # VETOES: Demand zones below
+            hob_demand_zone = self.g(context.row, 'hob_demand_zone', False)
+            if hob_demand_zone:
+                domain_boost *= 0.70  # Bid walls below reduce short conviction
+                domain_signals.append("hob_demand_zone_support_below")
+
+        score_before_domain = score
+        score = score * domain_boost
+
+        # ============================================================================
+        # FUSION THRESHOLD GATE (applied AFTER domain engines)
+        # ============================================================================
         if score < fusion_th:
             return False, score, {
                 "reason": "score_below_threshold",
-                "components": components,
                 "score": score,
+                "score_before_domain": score_before_domain,
                 "threshold": fusion_th,
-                "has_oi_data": has_oi_data
+                "components": components,
+                "has_oi_data": has_oi_data,
+                "domain_boost": domain_boost,
+                "domain_signals": domain_signals,
+                "funding_z": funding_z,
+                "oi_change": oi_change if has_oi_data else "N/A",
+                "rsi": rsi,
+                "liquidity": liquidity
             }
 
         return True, score, {
             "components": components,
             "weights": weights,
             "has_oi_data": has_oi_data,
+            "domain_boost": domain_boost,
+            "domain_signals": domain_signals,
             "funding_z": funding_z,
             "oi_change": oi_change if has_oi_data else "N/A",
             "rsi": rsi,
@@ -1399,7 +3925,10 @@ class ArchetypeLogic:
         """
         S6 - Alt Rotation Down: Altcoin underperformance (TOTAL3 < BTC).
 
+        DEPRECATED: STUB archetype - no implementation exists.
         DISABLED: Requires altcoin dominance data not in feature store.
+
+        DO NOT ENABLE in configs - this will never fire.
         """
         return False
 
@@ -1407,34 +3936,52 @@ class ArchetypeLogic:
         """
         S7 - Curve Inversion Breakdown: Yield curve inversion + support break.
 
+        DEPRECATED: STUB archetype - no implementation exists.
         DISABLED: Requires yield curve data not in feature store.
+
+        DO NOT ENABLE in configs - this will never fire.
         """
         return False
 
-    def _check_S8(self, context: RuntimeContext) -> bool:
-        """
-        S8 - Volume Fade in Chop: Low volume drift + failure (chop filter).
+    def _pattern_S8(self, context: RuntimeContext):
+        """Pattern detection for Archetype S8: Fakeout Exhaustion (SHORT)"""
+        r = context.row
+        # Volume fade + low ATR = chop signature
+        if self.g(r, 'volume_zscore', 0.0) <= -0.5 and self.g(r, 'atr_percentile', 0.5) <= 0.35:
+            score = 0.42
+            return True, score, ["S8", "fakeout_exhaustion", "SHORT"]
+        return None
 
-        Criteria (short-biased):
-        - Low volume (weak momentum)
-        - RSI extreme (overbought)
-        - Low ADX (choppy market)
-        - Fusion score threshold
-        """
-        # Read thresholds from config
-        fusion_th = context.get_threshold('volume_fade_chop', 'fusion', 0.34)
-        vol_max = context.get_threshold('volume_fade_chop', 'vol_max', 0.5)
-        rsi_extreme = context.get_threshold('volume_fade_chop', 'rsi_extreme', 70.0)
-        adx_max = context.get_threshold('volume_fade_chop', 'adx_max', 25.0)
+    def _check_S8(self, context: RuntimeContext) -> Tuple[bool, float, Dict]:
+        """Archetype S8: Fakeout Exhaustion (SHORT)"""
 
-        # Get features
-        vol_z = self.g(context.row, "vol_z", 0.0)
-        rsi = self.g(context.row, "rsi", 50.0)
-        adx = self.g(context.row, "adx", 0.0)
-        fusion = context.row.get('fusion_score', 0.0)
+        # 1) Base pattern detection - returns (matched, score, metadata)
+        base_result = self._pattern_S8(context)
+        if not base_result:
+            return False, 0.0, {"reason": "pattern_not_matched"}
 
-        # Check conditions
-        return (vol_z <= vol_max and
-                rsi >= rsi_extreme and
-                adx <= adx_max and
-                fusion >= fusion_th)
+        matched, base_score, pattern_tags = base_result  # base_score in [0,1]
+
+        # 2) Global safety vetoes (soft - use penalties not hard returns)
+        # Note: Keep these soft - use penalties not hard returns
+
+        # 3) Domain modifiers (standardized across all)
+        score = self._apply_domain_engines(context, base_score, pattern_tags)
+
+        # 4) Final fusion gate
+        fusion_th = context.get_threshold('fakeout_exhaustion', 'fusion_threshold', 0.40)
+        if score < fusion_th:
+            return False, score, {
+                "reason": "score_below_fusion_threshold",
+                "base_score": base_score,
+                "final_score": score,
+                "fusion_threshold": fusion_th
+            }
+
+        # 5) Return with full metadata
+        return True, score, {
+            "base_score": base_score,
+            "final_score": score,
+            "pattern_tags": pattern_tags,
+            "domain_boost_applied": True
+        }

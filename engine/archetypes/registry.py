@@ -60,13 +60,14 @@ ARCHETYPES = {
         "description": "Displacement + momentum + recent BOS"
     },
 
-    "fvg_reclaim": {
-        "display": "FVG Reclaim",
-        "class": "FvgReclaim",
-        "aliases": ["P", "fvg"],
-        "priority": 13,
-        "description": "Fair value gap reclaim with volume confirmation (experimental)"
-    },
+    # DEPRECATED: Ghost archetype - no implementation exists
+    # "fvg_reclaim": {
+    #     "display": "FVG Reclaim",
+    #     "class": "FvgReclaim",
+    #     "aliases": ["P", "fvg"],
+    #     "priority": 13,
+    #     "description": "Fair value gap reclaim with volume confirmation (experimental)"
+    # },
 
     # --- LIQUIDITY PATTERNS ---
     "liquidity_sweep_reclaim": {
@@ -77,13 +78,14 @@ ARCHETYPES = {
         "description": "BOMS strength + rising liquidity from oversold"
     },
 
-    "liquidity_cascade": {
-        "display": "Liquidity Cascade",
-        "class": "LiquidityCascade",
-        "aliases": ["Q", "cascade"],
-        "priority": 14,
-        "description": "Multi-level liquidity run with acceleration (experimental)"
-    },
+    # DEPRECATED: Ghost archetype - no implementation exists
+    # "liquidity_cascade": {
+    #     "display": "Liquidity Cascade",
+    #     "class": "LiquidityCascade",
+    #     "aliases": ["Q", "cascade"],
+    #     "priority": 14,
+    #     "description": "Multi-level liquidity run with acceleration (experimental)"
+    # },
 
     # --- WICK / REJECTION PATTERNS ---
     "wick_trap_moneytaur": {
@@ -163,13 +165,14 @@ ARCHETYPES = {
     },
 
     # --- EXPERIMENTAL ---
-    "htf_trap_reversal": {
-        "display": "HTF Trap Reversal",
-        "class": "HtfTrapReversal",
-        "aliases": ["N"],
-        "priority": 12,
-        "description": "Multi-timeframe trap with HTF confirmation (experimental)"
-    },
+    # DEPRECATED: Ghost archetype - no implementation exists
+    # "htf_trap_reversal": {
+    #     "display": "HTF Trap Reversal",
+    #     "class": "HtfTrapReversal",
+    #     "aliases": ["N"],
+    #     "priority": 12,
+    #     "description": "Multi-timeframe trap with HTF confirmation (experimental)"
+    # },
 }
 
 

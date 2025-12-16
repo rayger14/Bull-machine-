@@ -335,11 +335,16 @@ class KnowledgeAwareBacktest:
         logger.info(f"DIAGNOSTIC: use_archetypes={use_archetypes}, archetype_config_keys={list(archetype_config.keys())}")
         if use_archetypes:
             # Bull Machine v2: Merge top-level config keys needed by ArchetypeLogic
-            # (fusion weights, state_aware_gates) into archetype_config
+            # (fusion weights, state_aware_gates, domain engines) into archetype_config
             full_archetype_config = {
                 **archetype_config,
                 'fusion': self.runtime_config.get('fusion', {}),
-                'state_aware_gates': self.runtime_config.get('state_aware_gates', {})
+                'state_aware_gates': self.runtime_config.get('state_aware_gates', {}),
+                'wyckoff_events': self.runtime_config.get('wyckoff_events', {}),  # PR#6C: Wyckoff events integration
+                # Domain engine sections (Ghost Modules V2)
+                'temporal_fusion': self.runtime_config.get('temporal_fusion', {}),
+                'smc_engine': self.runtime_config.get('smc_engine', {}),
+                'hob_engine': self.runtime_config.get('hob_engine', {})
             }
             self.archetype_logic = ArchetypeLogic(full_archetype_config)
             self.archetype_telemetry = ArchetypeTelemetry()
@@ -450,16 +455,23 @@ class KnowledgeAwareBacktest:
         context['m1_signal'] = row.get('tf1d_m1_signal', None)
         context['m2_signal'] = row.get('tf1d_m2_signal', None)
 
-        # 2. Liquidity (BOMS/FVG based)
-        boms_strength = row.get('tf1d_boms_strength', 0.0)
-        fvg_present = 1.0 if row.get('tf4h_fvg_present', False) else 0.0
+        # 2. Liquidity - prefer feature store value, derive if missing
+        # BUGFIX: Check if feature store already has liquidity_score before deriving
+        if 'liquidity_score' in row and pd.notna(row['liquidity_score']):
+            # Use pre-computed liquidity_score from feature store
+            liquidity = row['liquidity_score']
+        else:
+            # Fallback: Derive from BOMS/FVG components
+            boms_strength = row.get('tf1d_boms_strength', 0.0)
+            fvg_present = 1.0 if row.get('tf4h_fvg_present', False) else 0.0
 
-        # Normalize BOMS displacement to 0-1 range based on ATR
-        boms_disp = row.get('tf4h_boms_displacement', 0.0)
-        atr = row.get('atr_14', 500.0)
-        disp_normalized = min(boms_disp / (2.0 * atr), 1.0) if atr > 0 else 0.0
+            # Normalize BOMS displacement to 0-1 range based on ATR
+            boms_disp = row.get('tf4h_boms_displacement', 0.0)
+            atr = row.get('atr_14', 500.0)
+            disp_normalized = min(boms_disp / (2.0 * atr), 1.0) if atr > 0 else 0.0
 
-        liquidity = (boms_strength + fvg_present + disp_normalized) / 3.0
+            liquidity = (boms_strength + fvg_present + disp_normalized) / 3.0
+
         context['liquidity_score'] = liquidity
 
         # 3. Momentum (ADX + RSI + Squiggle)
@@ -616,7 +628,8 @@ class KnowledgeAwareBacktest:
                     metadata={
                         'prev_row': prev_row,
                         'df': self.df,
-                        'index': current_idx
+                        'index': current_idx,
+                        'feature_flags': self.runtime_config.get('feature_flags', {})
                     }
                 )
 
@@ -2028,8 +2041,11 @@ class KnowledgeAwareBacktest:
                     logger.info(f"PR#4 Liquidity Telemetry (n={len(self.liquidity_scores)}): "
                               f"median={telemetry['p50']:.3f}, p75={telemetry['p75']:.3f}, "
                               f"p90={telemetry['p90']:.3f}, nonzero={telemetry['nonzero_pct']:.1f}%")
-            else:
-                context['liquidity_score'] = 0.0
+            # BUGFIX: Don't set context['liquidity_score'] = 0.0 when runtime is disabled
+            # This was overwriting the good feature store liquidity_score values
+            # Just let the feature store value pass through naturally
+            # else:
+            #     context['liquidity_score'] = 0.0
 
             # Check for open position
             if self.current_position is not None:
@@ -2354,6 +2370,7 @@ class KnowledgeAwareBacktest:
 
                 # Calculate archetype one-hot encoding
                 archetype_map = {
+                    # Bull archetypes (A-M)
                     'trap': 'archetype_trap',
                     'order_block_retest': 'archetype_retest',
                     'fvg_continuation': 'archetype_continuation',
@@ -2365,7 +2382,16 @@ class KnowledgeAwareBacktest:
                     'wick_trap': 'archetype_wick_trap',
                     'volume_exhaustion': 'archetype_volume_exhaustion',
                     'ratio_coil_break': 'archetype_ratio_coil_break',
-                    'false_break_reversal': 'archetype_false_break_reversal'
+                    'false_break_reversal': 'archetype_false_break_reversal',
+                    # Bear archetypes (S1-S8)
+                    'liquidity_vacuum': 'archetype_liquidity_vacuum',  # S1
+                    'failed_rally': 'archetype_failed_rally',  # S2
+                    'bear_ob_retest': 'archetype_bear_ob_retest',  # S3
+                    'distribution_climax': 'archetype_distribution_climax',  # S4
+                    'long_squeeze': 'archetype_long_squeeze',  # S5
+                    'bear_fvg_continuation': 'archetype_bear_fvg_continuation',  # S6
+                    'bear_compression': 'archetype_bear_compression',  # S7
+                    'bear_exhaustion_spike': 'archetype_bear_exhaustion_spike'  # S8
                 }
 
                 record = {
@@ -2537,11 +2563,12 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # Select feature store that covers the requested date range
+    # Prefer: 1) Widest coverage, 2) Most recent modification time
     start_ts = pd.Timestamp(args.start, tz='UTC')
     end_ts = pd.Timestamp(args.end, tz='UTC')
 
-    feature_path = None
-    for fpath in sorted(files):
+    matching_files = []
+    for fpath in files:
         # Parse date range from filename (e.g., BTC_1H_2022-01-01_to_2023-12-31.parquet)
         fname = fpath.stem  # Remove .parquet
         parts = fname.split('_')
@@ -2552,17 +2579,21 @@ if __name__ == '__main__':
 
                 # Check if this feature store covers our requested range
                 if store_start <= start_ts and store_end >= end_ts:
-                    feature_path = fpath
-                    break
+                    coverage_days = (store_end - store_start).days
+                    mod_time = fpath.stat().st_mtime
+                    matching_files.append((fpath, coverage_days, mod_time))
             except:
                 continue
 
-    # Fallback to most recent if no exact match
-    if feature_path is None:
-        feature_path = sorted(files)[-1]
-        print(f"⚠️  No feature store covering {args.start} to {args.end}, using: {feature_path}")
+    if matching_files:
+        # Sort by: 1) Widest coverage (descending), 2) Most recent modification (descending)
+        matching_files.sort(key=lambda x: (x[1], x[2]), reverse=True)
+        feature_path = matching_files[0][0]
+        print(f"✓ Selected feature store: {feature_path.name} ({matching_files[0][1]} days, modified {pd.Timestamp(matching_files[0][2], unit='s').strftime('%Y-%m-%d %H:%M')})")
     else:
-        print(f"Loading feature store: {feature_path}")
+        # Fallback to most recent if no exact match
+        feature_path = sorted(files, key=lambda f: f.stat().st_mtime)[-1]
+        print(f"⚠️  No feature store covering {args.start} to {args.end}, using most recent: {feature_path.name}")
 
     df = pd.read_parquet(feature_path)
 
@@ -2589,6 +2620,53 @@ if __name__ == '__main__':
         params = KnowledgeParams()  # Use defaults for now
     else:
         params = KnowledgeParams()
+
+    # Apply S2 runtime enrichment if enabled
+    # Apply Liquidity Vacuum Reversal (S1) runtime enrichment if enabled
+    if runtime_config and runtime_config.get('archetypes', {}).get('enable_S1', False):
+        s1_thresholds = runtime_config['archetypes'].get('thresholds', {}).get('liquidity_vacuum', {})
+        if s1_thresholds.get('use_runtime_features', False):
+            try:
+                from engine.strategies.archetypes.bear.liquidity_vacuum_runtime import apply_liquidity_vacuum_enrichment
+                print("[Liquidity Vacuum] Applying runtime feature enrichment...")
+                lookback = s1_thresholds.get('lookback', 24)
+                volume_lookback = s1_thresholds.get('volume_lookback', 24)
+                df = apply_liquidity_vacuum_enrichment(df, lookback=lookback, volume_lookback=volume_lookback)
+                print(f"[Liquidity Vacuum] ✓ Enriched {len(df)} bars with runtime features")
+            except Exception as e:
+                print(f"[Liquidity Vacuum] ✗ Runtime enrichment failed: {e}")
+                import traceback
+                traceback.print_exc()
+
+    if runtime_config and runtime_config.get('archetypes', {}).get('enable_S2', False):
+        s2_thresholds = runtime_config['archetypes'].get('thresholds', {}).get('failed_rally', {})
+        if s2_thresholds.get('use_runtime_features', False):
+            try:
+                from engine.strategies.archetypes.bear.failed_rally_runtime import apply_runtime_enrichment
+                print("[S2] Applying runtime feature enrichment...")
+                lookback = s2_thresholds.get('lookback_window', 14)
+                df = apply_runtime_enrichment(df, lookback=lookback)
+                print(f"[S2] ✓ Enriched {len(df)} bars with runtime features")
+            except Exception as e:
+                print(f"[S2] ✗ Runtime enrichment failed: {e}")
+                import traceback
+                traceback.print_exc()
+
+    # Apply Funding Divergence (S4) runtime enrichment if enabled
+    if runtime_config and runtime_config.get('archetypes', {}).get('enable_S4', False):
+        s4_thresholds = runtime_config['archetypes'].get('thresholds', {}).get('funding_divergence', {})
+        if s4_thresholds.get('use_runtime_features', False):
+            try:
+                from engine.strategies.archetypes.bear.funding_divergence_runtime import apply_s4_enrichment
+                print("[S4] Applying runtime feature enrichment...")
+                funding_lookback = s4_thresholds.get('funding_lookback', 24)
+                price_lookback = s4_thresholds.get('price_lookback', 12)
+                df = apply_s4_enrichment(df, funding_lookback=funding_lookback, price_lookback=price_lookback)
+                print(f"[S4] ✓ Enriched {len(df)} bars with runtime features")
+            except Exception as e:
+                print(f"[S4] ✗ Runtime enrichment failed: {e}")
+                import traceback
+                traceback.print_exc()
 
     # Run backtest
     backtest = KnowledgeAwareBacktest(df, params, asset=args.asset, runtime_config=runtime_config)
