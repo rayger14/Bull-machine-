@@ -221,6 +221,28 @@ profiles/**/*
 /institutional_testing_results.json
 
 # ----------------------------------------------------------------------------
+# Backup Files (2025-12-19)
+# ----------------------------------------------------------------------------
+*.bak
+*.backup
+*_backup_*
+*.backup_before_*
+
+# ----------------------------------------------------------------------------
+# Test Output Files (2025-12-19)
+# ----------------------------------------------------------------------------
+*_validation_output.txt
+*_test_output.txt
+multi_regime_test_output.txt
+
+# ----------------------------------------------------------------------------
+# Optuna Databases (2025-12-19)
+# ----------------------------------------------------------------------------
+optuna_*.db
+optuna_*.db-shm
+optuna_*.db-wal
+
+# ----------------------------------------------------------------------------
 # Archive (Optional - uncomment if you want to gitignore)
 # ----------------------------------------------------------------------------
 # archive/
@@ -401,3 +423,18 @@ poetry.lock
 # ----------------------------------------------------------------------------
 # End of .gitignore
 # ----------------------------------------------------------------------------
+
+# Research and analysis reports (keep in docs/archive/)
+/BENCHMARK_*.md
+/BEFORE_AFTER_*.md
+/*_DELIVERABLES*.md
+/*_INDEX.md
+/*_QUICK_START.md
+/*_QUICK_REF*.md
+/*_SUMMARY.md
+/*_COMPLETE*.md
+
+# Allow specific permanent docs
+!README.md
+!ARCHITECTURE.md
+!CHANGELOG.md
