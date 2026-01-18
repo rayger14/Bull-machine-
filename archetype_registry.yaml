@@ -108,9 +108,10 @@ archetypes:
     slug: "long_squeeze"
     class: "engine.strategies.archetypes.bear.LongSqueezeArchetype"
     maturity: production
-    direction: short  # Trend continuation
+    direction: short  # Contrarian short in bull exhaustion
     regime_tags:
-      - risk_off
+      - risk_on  # FIXED: S5 needs bull markets to find overleveraged longs
+      - neutral
     requires_engines:
       - funding
       - liquidity

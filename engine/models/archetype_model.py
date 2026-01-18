@@ -36,7 +36,8 @@ class ArchetypeModel(BaseModel):
         config_path: str,
         archetype_name: str = 'S4',
         name: Optional[str] = None,
-        regime_classifier_path: Optional[str] = None
+        regime_classifier_path: Optional[str] = None,
+        regime_allocator: Optional[Any] = None
     ):
         """
         Initialize archetype model wrapper.
@@ -46,12 +47,14 @@ class ArchetypeModel(BaseModel):
             archetype_name: Single archetype to use (e.g., 'S4', 'S1', 'trap_within_trend')
             name: Human-readable model name (defaults to archetype_name)
             regime_classifier_path: Optional path to regime classifier model
+            regime_allocator: Optional RegimeWeightAllocator for soft gating
         """
         super().__init__(name=name or f"Archetype-{archetype_name}")
 
         self.config_path = Path(config_path)
         self.archetype_name = archetype_name
         self.regime_classifier_path = regime_classifier_path
+        self.regime_allocator = regime_allocator
 
         # Load configuration
         if not self.config_path.exists():
@@ -84,6 +87,8 @@ class ArchetypeModel(BaseModel):
 
         logger.info(f"Initialized {self.name} with config: {self.config_path}")
         logger.info(f"Archetype params: {self.archetype_params}")
+        if self.regime_allocator:
+            logger.info("Soft gating enabled with RegimeWeightAllocator")
 
     def _extract_archetype_params(self):
         """Extract archetype-specific parameters from config."""
@@ -163,8 +168,11 @@ class ArchetypeModel(BaseModel):
         # Build RuntimeContext for archetype detection
         context = self._build_runtime_context(bar)
 
-        # Call archetype logic
-        archetype_name, fusion_score, liquidity_score = self.archetype_logic.detect(context)
+        # Call archetype logic (returns 4 values: name, fusion, liquidity, direction)
+        archetype_name, fusion_score, liquidity_score, direction = self.archetype_logic.detect(context)
+
+        # Get regime label from context
+        regime_label = context.regime_label if context else self.default_regime
 
         # Convert to Signal
         if archetype_name is None:
@@ -173,6 +181,7 @@ class ArchetypeModel(BaseModel):
                 direction='hold',
                 confidence=0.0,
                 entry_price=bar['close'],
+                regime_label=regime_label,
                 metadata={
                     'fusion_score': fusion_score,
                     'liquidity_score': liquidity_score,
@@ -187,20 +196,40 @@ class ArchetypeModel(BaseModel):
         # Calculate stop loss
         atr = bar.get('atr_14', bar.get('atr', bar['close'] * 0.02))
 
-        if self.direction == 'long':
-            stop_loss = bar['close'] - (self.atr_stop_mult * atr)
-            signal_direction = 'long'
-        else:
+        # CRITICAL FIX (2026-01-15): Use direction from archetype detection, not from config
+        # This fixes the S5 short execution bug where all trades executed as longs
+        if direction == 'SHORT':
             stop_loss = bar['close'] + (self.atr_stop_mult * atr)
             signal_direction = 'short'
+        elif direction == 'LONG':
+            stop_loss = bar['close'] - (self.atr_stop_mult * atr)
+            signal_direction = 'long'
+        elif direction == 'EITHER':
+            # For ambiguous archetypes, fall back to config direction
+            if self.direction == 'long':
+                stop_loss = bar['close'] - (self.atr_stop_mult * atr)
+                signal_direction = 'long'
+            else:
+                stop_loss = bar['close'] + (self.atr_stop_mult * atr)
+                signal_direction = 'short'
+        else:
+            # Fallback to config direction if None
+            if self.direction == 'long':
+                stop_loss = bar['close'] - (self.atr_stop_mult * atr)
+                signal_direction = 'long'
+            else:
+                stop_loss = bar['close'] + (self.atr_stop_mult * atr)
+                signal_direction = 'short'
 
         return Signal(
             direction=signal_direction,
             confidence=confidence,
             entry_price=bar['close'],
             stop_loss=stop_loss,
+            regime_label=regime_label,
             metadata={
                 'archetype': archetype_name,
+                'archetype_direction': direction,  # Store actual archetype direction
                 'fusion_score': fusion_score,
                 'liquidity_score': liquidity_score,
                 'atr': atr,
@@ -210,9 +239,23 @@ class ArchetypeModel(BaseModel):
 
     def get_position_size(self, bar: pd.Series, signal: Signal) -> float:
         """
-        Calculate position size using ATR-based risk management.
+        Calculate position size using ATR-based risk management with soft gating.
 
-        Formula: Position Size = (Portfolio Value × Risk %) / Stop Distance %
+        This implements BOTH:
+        1. Regime weight scaling (soft gating) using SQUARE-ROOT SPLIT
+        2. Regime risk budget caps
+
+        SQUARE-ROOT SPLIT FIX:
+        To prevent double-weight bug (w² instead of w), we apply sqrt(regime_weight)
+        at the sizing layer. The score layer also applies sqrt(regime_weight),
+        giving combined impact: sqrt(w) * sqrt(w) = w (correct!)
+
+        Formula:
+            Base Size = (Portfolio Value × Risk %) / Stop Distance %
+            Regime Weight = RegimeAllocator.get_weight(archetype, regime)
+            Sqrt Weight = sqrt(Regime Weight)  [SQUARE-ROOT SPLIT]
+            Position Size = Base Size × Sqrt Weight × Confidence
+            Final Size = min(Position Size, Regime Budget Available)
 
         Args:
             bar: Current bar data
@@ -231,21 +274,73 @@ class ArchetypeModel(BaseModel):
         # Risk amount in dollars
         risk_dollars = portfolio_value * self.max_risk_pct
 
-        # Position size calculation
+        # Base position size calculation
         # Example: $10k portfolio, 2% risk = $200 risk
         #          Stop 5% away = $200 / 0.05 = $4000 position
-        position_size = risk_dollars / stop_distance_pct
+        base_position_size = risk_dollars / stop_distance_pct
 
-        # Cap at reasonable max (e.g., 15% of portfolio)
-        max_position = portfolio_value * 0.15
-        position_size = min(position_size, max_position)
+        # Cap at reasonable max (e.g., 12% of portfolio)
+        max_position = portfolio_value * 0.12
+        base_position_size = min(base_position_size, max_position)
 
-        logger.debug(
-            f"Position sizing: portfolio=${portfolio_value:,.0f}, "
-            f"risk={self.max_risk_pct*100:.1f}%, "
-            f"stop_dist={stop_distance_pct*100:.2f}%, "
-            f"size=${position_size:,.0f}"
-        )
+        # Convert to percentage for soft gating
+        base_size_pct = base_position_size / portfolio_value
+
+        # Get regime from signal metadata or bar
+        regime = signal.metadata.get('regime', bar.get('macro_regime', self.default_regime))
+
+        # Map archetype name to internal key
+        archetype_key_map = {
+            'S1': 'liquidity_vacuum',
+            'S4': 'funding_divergence',
+            'B': 'order_block_retest',
+            'C': 'wick_trap_moneytaur',
+            'K': 'trap_within_trend',
+        }
+        archetype_key = archetype_key_map.get(self.archetype_name, self.archetype_name)
+
+        # Apply soft gating if regime allocator is available
+        if self.regime_allocator:
+            # Get regime weight
+            regime_weight = self.regime_allocator.get_weight(archetype_key, regime)
+
+            # SQUARE-ROOT SPLIT: Apply sqrt(regime_weight) to prevent double-weight bug
+            # This is the sizing layer - score layer also applies sqrt(regime_weight)
+            # Combined impact: sqrt(w) * sqrt(w) = w (correct!)
+            import math
+            sqrt_weight = math.sqrt(regime_weight)
+
+            # Apply sqrt regime weight to size
+            size_pct = base_size_pct * sqrt_weight
+
+            # Apply confidence scaling
+            size_pct *= signal.confidence
+
+            # Apply regime risk budget cap
+            size_pct, was_capped = self.regime_allocator.apply_regime_budget_cap(
+                regime, size_pct
+            )
+
+            # Convert back to dollar amount
+            position_size = portfolio_value * size_pct
+
+            logger.info(
+                f"Soft gating (sqrt split) applied: archetype={archetype_key}, regime={regime}, "
+                f"base_size_pct={base_size_pct:.1%}, regime_weight={regime_weight:.2f}, "
+                f"sqrt_weight={sqrt_weight:.3f}, confidence={signal.confidence:.2f}, "
+                f"final_size_pct={size_pct:.1%}, position_size=${position_size:,.0f}, "
+                f"budget_capped={was_capped}"
+            )
+        else:
+            # No soft gating - use base size
+            position_size = base_position_size
+
+            logger.debug(
+                f"Position sizing (no soft gating): portfolio=${portfolio_value:,.0f}, "
+                f"risk={self.max_risk_pct*100:.1f}%, "
+                f"stop_dist={stop_distance_pct*100:.2f}%, "
+                f"size=${position_size:,.0f}"
+            )
 
         return position_size
 
