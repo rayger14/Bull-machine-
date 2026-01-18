@@ -1,0 +1,196 @@
+# Archetype-Regime Gating Configuration
+# ======================================
+#
+# Purpose: Hard gates to prevent archetypes from trading in regimes where they lose money
+#
+# Based on edge table analysis showing:
+# - liquidity_vacuum + crisis: +$59 (7 trades, +$8.48 avg) ✅ EXCELLENT
+# - liquidity_vacuum + risk_off: +$63 (38 trades, +$1.66 avg) ✅ GOOD
+# - funding_divergence + risk_off: -$48 (6 trades, -$8 avg) ❌ DISASTER
+# - wick_trap_moneytaur + risk_off: -$1 (39 trades, -$0.03 avg) ⚠️ BREAKEVEN
+#
+# Gate Structure:
+#   enabled: true/false (hard gate)
+#   min_pf: minimum profit factor requirement (soft gate, used for position sizing)
+#   max_allocation: maximum allocation even if edge is good (risk cap)
+#
+# Author: Performance Engineer Agent
+# Date: 2026-01-12
+
+gates:
+  # BEAR ARCHETYPES
+  # ---------------
+
+  funding_divergence:
+    crisis:
+      enabled: false
+      min_pf: 0.0
+      max_allocation: 0.0
+      reason: "LOSES MONEY: Edge table shows negative PF"
+
+    risk_off:
+      enabled: true  # ✅ EXCELLENT: +$143, PF 2.36
+      min_pf: 2.0
+      max_allocation: 0.40
+      reason: "BEST PAIR: +$143 in 11 trades, PF 2.36"
+
+    neutral:
+      enabled: true
+      min_pf: 1.0
+      max_allocation: 0.15
+      reason: "Marginal edge in neutral (+$5 in 10 trades)"
+
+    risk_on:
+      enabled: true
+      min_pf: 1.5
+      max_allocation: 0.25
+      reason: "Good edge during euphoric funding peaks"
+
+  liquidity_vacuum:
+    crisis:
+      enabled: false
+      min_pf: 0.0
+      max_allocation: 0.0
+      reason: "LOSES MONEY: Edge table shows -$201, PF 0.91"
+
+    risk_off:
+      enabled: true
+      min_pf: 1.2
+      max_allocation: 0.40
+      reason: "PROFITABLE: +$366 in 68 trades, PF 1.23"
+
+    neutral:
+      enabled: false
+      min_pf: 0.0
+      max_allocation: 0.0
+      reason: "Not designed for neutral regimes"
+
+    risk_on:
+      enabled: false
+      min_pf: 0.0
+      max_allocation: 0.0
+      reason: "Bearish archetype in bullish regime"
+
+  long_squeeze:
+    crisis:
+      enabled: true
+      min_pf: 1.3
+      max_allocation: 0.30
+      reason: "Rapid liquidations during crashes"
+
+    risk_off:
+      enabled: true
+      min_pf: 1.2
+      max_allocation: 0.25
+      reason: "Moderate squeeze potential"
+
+    neutral:
+      enabled: true
+      min_pf: 1.1
+      max_allocation: 0.15
+      reason: "Minor squeezes possible"
+
+    risk_on:
+      enabled: true
+      min_pf: 1.2
+      max_allocation: 0.20
+      reason: "Overleveraged longs vulnerable at tops"
+
+  # BULL ARCHETYPES
+  # ---------------
+
+  wick_trap_moneytaur:
+    crisis:
+      enabled: false
+      min_pf: 0.0
+      max_allocation: 0.0
+      reason: "Bullish archetype doesn't work in crashes"
+
+    risk_off:
+      enabled: true
+      min_pf: 0.8  # ⚠️ Allow breakeven for diversification
+      max_allocation: 0.15
+      reason: "BREAKEVEN: -$0.03 avg, but provides diversification"
+
+    neutral:
+      enabled: true
+      min_pf: 1.0
+      max_allocation: 0.25
+      reason: "Core regime for wick trap patterns"
+
+    risk_on:
+      enabled: true
+      min_pf: 1.1
+      max_allocation: 0.30
+      reason: "Good edge in bullish conditions"
+
+  order_block_retest:
+    crisis:
+      enabled: false
+      min_pf: 0.0
+      max_allocation: 0.0
+      reason: "Bullish retests don't hold in crashes"
+
+    risk_off:
+      enabled: false
+      min_pf: 0.0
+      max_allocation: 0.0
+      reason: "Weak edge in bearish conditions"
+
+    neutral:
+      enabled: true
+      min_pf: 1.0
+      max_allocation: 0.25
+      reason: "GOOD: +$69 in 120 trades (+$0.58 avg)"
+
+    risk_on:
+      enabled: true
+      min_pf: 1.1
+      max_allocation: 0.30
+      reason: "Strong retests in bullish regime"
+
+  trap_within_trend:
+    crisis:
+      enabled: false
+      min_pf: 0.0
+      max_allocation: 0.0
+      reason: "Trend continuation doesn't exist in crashes"
+
+    risk_off:
+      enabled: false
+      min_pf: 0.0
+      max_allocation: 0.0
+      reason: "Needs established uptrend"
+
+    neutral:
+      enabled: true
+      min_pf: 0.5  # ⚠️ DISASTER but keep for testing
+      max_allocation: 0.05
+      reason: "DISASTER: -$80 in 7 trades, but keep minimal for learning"
+
+    risk_on:
+      enabled: true
+      min_pf: 1.1
+      max_allocation: 0.20
+      reason: "Works in strong uptrends"
+
+# GLOBAL SETTINGS
+# ---------------
+
+global:
+  # If archetype-regime pair not defined above, use default
+  default_enabled: false
+  default_min_pf: 1.0
+  default_max_allocation: 0.10
+
+  # Crisis overrides (extra conservative)
+  crisis_multiplier: 0.7  # Reduce all allocations by 30% in crisis
+
+  # Minimum trades required to trust edge
+  min_trades_for_gate: 5
+
+  # Validation thresholds
+  validation:
+    min_pf_for_full_allocation: 1.5  # Need PF > 1.5 for full allocation
+    min_pf_for_any_allocation: 0.8   # Need PF > 0.8 to trade at all
+    min_trades_for_confidence: 10     # Need 10+ trades for high confidence

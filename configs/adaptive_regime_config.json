@@ -1,0 +1,94 @@
+{
+  "adaptive_regime": {
+    "enabled": true,
+    "description": "State-based adaptive regime detection with hysteresis",
+
+    "thresholds": {
+      "crisis": {
+        "enter": 0.75,
+        "exit": 0.55,
+        "min_duration": 6,
+        "description": "Crisis regime (flash crash, volume spike, liquidation cascade)"
+      },
+      "risk_off": {
+        "enter": 0.65,
+        "exit": 0.45,
+        "min_duration": 24,
+        "description": "Risk-off regime (bear market, sustained drawdown)"
+      },
+      "risk_on": {
+        "enter": 0.70,
+        "exit": 0.50,
+        "min_duration": 48,
+        "description": "Risk-on regime (bull market, high confidence only)"
+      }
+    },
+
+    "event_override": {
+      "enabled": true,
+      "ttl_hours": 12,
+      "description": "Crisis event override (Layer 1)",
+      "triggers": {
+        "flash_crash": {
+          "threshold_pct": 0.04,
+          "window_hours": 1,
+          "description": "4% drop in 1 hour"
+        },
+        "volume_spike": {
+          "z_threshold": 5.0,
+          "require_negative_return": true,
+          "description": "Volume z-score > 5 + negative return"
+        },
+        "funding_shock": {
+          "z_threshold": 4.0,
+          "description": "Absolute funding z-score > 4"
+        },
+        "oi_cascade": {
+          "threshold_pct": 0.08,
+          "window_hours": 1,
+          "description": "OI drop > 8% in 1 hour"
+        }
+      }
+    },
+
+    "scorer_weights": {
+      "crisis": {
+        "crash_frequency_7d": 0.4,
+        "crisis_persistence": 0.3,
+        "aftershock_score": 0.2,
+        "flash_crash_1h": 0.1
+      },
+      "risk_off": {
+        "drawdown_persistence": 0.3,
+        "VIX_Z": 0.3,
+        "funding_Z": 0.2,
+        "rv_20d": 0.2
+      }
+    },
+
+    "fallback": {
+      "enable_static_fallback": false,
+      "static_regime_map": {
+        "2022": "risk_off",
+        "2023": "neutral",
+        "2024": "risk_on",
+        "2025": "neutral"
+      }
+    },
+
+    "integration": {
+      "replace_hmm": true,
+      "replace_gmm": true,
+      "backward_compatible": true,
+      "description": "Drop-in replacement for RegimeClassifier"
+    },
+
+    "monitoring": {
+      "log_transitions": true,
+      "log_override_events": true,
+      "alert_on_low_confidence": true,
+      "low_confidence_threshold": 0.6,
+      "generate_reports": true
+    }
+  }
+}
