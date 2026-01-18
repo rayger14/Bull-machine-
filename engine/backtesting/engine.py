@@ -31,6 +31,7 @@ class Trade:
     pnl_pct: float  # Profit/loss as %
     stop_loss: float
     exit_reason: str  # 'profit_target', 'stop_loss', 'signal', 'end_of_data'
+    regime_label: str = 'unknown'  # Regime when trade was entered (crisis/risk_off/neutral/risk_on)
     metadata: dict = field(default_factory=dict)
 
     @property
@@ -366,6 +367,7 @@ class BacktestEngine:
                 size=position_size - commission,
                 stop_loss=signal.stop_loss or (signal.entry_price * 0.95),  # 5% default
                 take_profit=signal.take_profit,
+                regime_label=signal.regime_label,
                 metadata=signal.metadata
             )
 
@@ -373,7 +375,7 @@ class BacktestEngine:
                 logger.info(
                     f"ENTRY @ {timestamp}: {signal.direction.upper()} "
                     f"${signal.entry_price:.2f}, size=${position_size:.2f}, "
-                    f"SL=${self.position.stop_loss:.2f}"
+                    f"SL=${self.position.stop_loss:.2f}, regime={signal.regime_label}"
                 )
 
         # Exit logic (signal says hold = close position)
@@ -413,6 +415,7 @@ class BacktestEngine:
             pnl_pct=pnl_pct,
             stop_loss=self.position.stop_loss,
             exit_reason=reason,
+            regime_label=self.position.regime_label or 'unknown',
             metadata=self.position.metadata
         )
 
