@@ -205,15 +205,26 @@ def test_archetype(archetype: str, df: pd.DataFrame, test_df: pd.DataFrame) -> D
             # Call archetype check
             result = method(ctx)
 
-            # Parse result (tuple of matched, score, metadata)
+            # Parse result - handle both 3-tuple and 4-tuple returns
+            # New format: (matched, score, metadata, direction)
+            # Legacy format: (matched, score, metadata)
             if result and len(result) >= 3:
-                matched, score, metadata = result[0], result[1], result[2]
+                matched = result[0]
+                score = result[1]
+                metadata = result[2]
+                direction = result[3] if len(result) == 4 else 'Unknown'
+
+                # Store direction in metadata for reporting
+                if isinstance(metadata, dict):
+                    metadata['direction'] = direction
+                elif not isinstance(metadata, dict):
+                    metadata = {'direction': direction}
 
                 if matched and score > 0:
                     signals.append({
                         'timestamp': ts,
                         'score': float(score),
-                        'metadata': metadata if isinstance(metadata, dict) else {},
+                        'metadata': metadata,
                     })
 
         except Exception as e:
@@ -267,28 +278,42 @@ def compute_signal_stats(signals: List[Dict], archetype: str) -> Dict[str, Any]:
     for sig in signals:
         meta = sig.get('metadata', {})
         if isinstance(meta, dict):
-            # Look for domain boost multiplier
-            boost = meta.get('domain_boost', 1.0)
+            # Look for domain boost multiplier (standardized field name)
+            boost = meta.get('boost_multiplier', meta.get('domain_boost', 1.0))
             if boost != 1.0:
                 domain_boosts.append(boost)
 
     # Extract direction info
     long_count = 0
     short_count = 0
+    either_count = 0
     for sig in signals:
         meta = sig.get('metadata', {})
         if isinstance(meta, dict):
             direction = meta.get('direction', '').upper()
-            if 'LONG' in direction:
+            if direction == 'EITHER':
+                either_count += 1
+            elif 'LONG' in direction:
                 long_count += 1
             elif 'SHORT' in direction:
                 short_count += 1
 
-    total_with_direction = long_count + short_count
+    total_with_direction = long_count + short_count + either_count
     if total_with_direction > 0:
-        long_pct = long_count / total_with_direction * 100
-        short_pct = short_count / total_with_direction * 100
-        direction_breakdown = f"{long_pct:.0f}% LONG / {short_pct:.0f}% SHORT"
+        if either_count == total_with_direction:
+            # All signals are EITHER (bidirectional)
+            direction_breakdown = "EITHER (bidirectional)"
+        elif either_count > 0:
+            # Mixed LONG/SHORT/EITHER
+            long_pct = long_count / total_with_direction * 100
+            short_pct = short_count / total_with_direction * 100
+            either_pct = either_count / total_with_direction * 100
+            direction_breakdown = f"{long_pct:.0f}% LONG / {short_pct:.0f}% SHORT / {either_pct:.0f}% EITHER"
+        else:
+            # Only LONG/SHORT (no EITHER)
+            long_pct = long_count / total_with_direction * 100
+            short_pct = short_count / total_with_direction * 100
+            direction_breakdown = f"{long_pct:.0f}% LONG / {short_pct:.0f}% SHORT"
     else:
         direction_breakdown = "No direction info"
 
