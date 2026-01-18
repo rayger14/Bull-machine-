@@ -1,21 +1,21 @@
 SMOKE TEST ISSUES
 ================================================================================
 
-⚠️ S5: Very low signal count (1) - check thresholds
-⚠️ B: Low domain boost detection (0.0%) - boosts may not be working
-❌ B: ZERO signals detected - archetype may be broken or thresholds too strict
-⚠️ C: Low domain boost detection (0.0%) - boosts may not be working
-⚠️ D: Low domain boost detection (0.0%) - boosts may not be working
-⚠️ E: Low domain boost detection (0.0%) - boosts may not be working
-⚠️ F: Low domain boost detection (0.0%) - boosts may not be working
-⚠️ G: Low domain boost detection (0.0%) - boosts may not be working
-⚠️ K: Low domain boost detection (0.0%) - boosts may not be working
-⚠️ L: Low domain boost detection (0.0%) - boosts may not be working
-⚠️ M: Low domain boost detection (0.0%) - boosts may not be working
-⚠️ S3: Low domain boost detection (0.0%) - boosts may not be working
 ⚠️ S3: Very low signal count (2) - check thresholds
-⚠️ S8: Low domain boost detection (0.0%) - boosts may not be working
 
 
 ERROR DETAILS
 --------------------------------------------------------------------------------
+
+S1 (218 errors):
+  1. Error at 2022-06-03 20:00:00+00:00: local variable 'score_before_boost' referenced before assignment
+  2. Error at 2022-06-13 02:00:00+00:00: local variable 'score_before_boost' referenced before assignment
+  3. Error at 2022-06-13 03:00:00+00:00: local variable 'score_before_boost' referenced before assignment
+  4. Error at 2022-06-13 04:00:00+00:00: local variable 'score_before_boost' referenced before assignment
+  5. Error at 2022-06-13 05:00:00+00:00: local variable 'score_before_boost' referenced before assignment
+  6. Error at 2022-06-13 06:00:00+00:00: local variable 'score_before_boost' referenced before assignment
+  7. Error at 2022-06-13 07:00:00+00:00: local variable 'score_before_boost' referenced before assignment
+  8. Error at 2022-06-13 08:00:00+00:00: local variable 'score_before_boost' referenced before assignment
+  9. Error at 2022-06-13 09:00:00+00:00: local variable 'score_before_boost' referenced before assignment
+  10. Error at 2022-06-13 10:00:00+00:00: local variable 'score_before_boost' referenced before assignment
+  ... and 208 more
