@@ -1,0 +1,78 @@
+Production Stack Integration - Files Changed
+==============================================
+Date: 2026-01-07
+Agent: Claude Code (Backend Architect)
+
+MODIFIED FILES
+==============
+
+1. bin/backtest_full_engine_replay.py
+   - Added adaptive regime import (line 45)
+   - Added enable_adaptive_regime flag (line 144)
+   - Initialize AdaptiveRegimeClassifier (lines 178-181)
+   - Replace static regime with adaptive (lines 300-311)
+   - Add signal de-duplication (line 250, method lines 359-405)
+   - Add regime confidence scaling (lines 470-495)
+   - Add position limit prioritization (lines 531-554)
+   - Update circuit breaker with regime (lines 276-281)
+   - Update config to enable all systems (lines 995-1009)
+
+2. engine/risk/circuit_breaker.py
+   - Add regime tracking state (lines 169-171)
+   - Add update_regime() method (lines 185-197)
+   - Add get_adaptive_drawdown_threshold() (lines 199-234)
+   - Use adaptive thresholds in drawdown check (lines 318-333)
+   - Update init logging (lines 177-179)
+
+NEW FILES
+=========
+
+3. bin/validate_production_stack_integration.py
+   - Comprehensive validation test suite
+   - Tests all 5 sophisticated systems
+   - All tests passing (5/5)
+
+4. PRODUCTION_STACK_INTEGRATION_COMPLETE.md
+   - Full integration report
+   - Validation results
+   - Performance expectations
+   - Next steps
+
+5. PRODUCTION_STACK_QUICK_REFERENCE.md
+   - Quick reference guide
+   - Run commands
+   - Key changes summary
+
+6. INTEGRATION_FILES_CHANGED.txt
+   - This file
+
+VALIDATION
+==========
+
+✓ Syntax validation: PASS
+✓ Import validation: PASS  
+✓ Integration tests: 5/5 PASS
+  - Adaptive Regime: PASS
+  - Direction Balance: PASS
+  - Circuit Breaker: PASS
+  - Signal De-duplication: PASS
+  - Position Limits: PASS
+
+SYSTEMS STATUS
+==============
+
+✅ Adaptive Regime: INTEGRATED
+✅ Direction Balance: ACTIVE
+✅ Circuit Breaker (Regime-aware): INTEGRATED
+✅ Signal De-duplication: IMPLEMENTED
+✅ Position Limits (Prioritized): ENFORCED
+⚠️  Domain Engine: DEFERRED (Week 2)
+
+PRODUCTION READY
+================
+
+All sophisticated systems integrated.
+NO dumbing down.
+Ready for backtest validation.
+
+Next: Run backtest and compare results.

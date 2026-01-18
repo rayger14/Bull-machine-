@@ -1,0 +1,336 @@
+HYBRID REGIME DETECTION ARCHITECTURE
+====================================
+
+LAYERED ARCHITECTURE (Event → State → Regime)
+==============================================
+
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                            RAW MARKET DATA (1H bars)                           │
+│  ┌─────────────────────────────────────────────────────────────────────────┐  │
+│  │ Price: close, high, low, volume                                         │  │
+│  │ Derivatives: oi, funding_rate, liquidations                             │  │
+│  │ Macro: VIX, DXY, yields, M2, dominance                                  │  │
+│  └─────────────────────────────────────────────────────────────────────────┘  │
+└───────────────────────────────────────┬───────────────────────────────────────┘
+                                        │
+                                        ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                      LAYER 1: EVENT DETECTOR (Fast, Binary)                     │
+│                                                                                  │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐             │
+│  │ Flash Crash      │  │ Liquidation      │  │ Volume Spike     │             │
+│  │ Detection        │  │ Cascade          │  │ Detection        │             │
+│  │                  │  │                  │  │                  │             │
+│  │ flash_crash_1h:1 │  │ oi_cascade: 1    │  │ volume_spike: 1  │             │
+│  │ flash_crash_4h:0 │  │ oi_funding_div:0 │  └──────────────────┘             │
+│  │ flash_crash_1d:0 │  └──────────────────┘                                    │
+│  └──────────────────┘                                                          │
+│                                                                                  │
+│  ┌──────────────────┐                                                           │
+│  │ Funding Extreme  │                                                           │
+│  │ Detection        │                                                           │
+│  │                  │                                                           │
+│  │ funding_extreme:1│                                                           │
+│  │ funding_flip: 0  │                                                           │
+│  └──────────────────┘                                                           │
+│                                                                                  │
+│  Output: 8 binary features (0 or 1)                                             │
+│  Latency: 0-6 hours (real-time detection)                                       │
+│  Trigger rate: 0.05-2% of bars (RARE, SHARP signals)                            │
+│  Implementation: ✅ PRODUCTION READY (engine/features/crisis_indicators.py)     │
+└──────────────────────────────────────┬──────────────────────────────────────────┘
+                                       │
+                                       │ CRITICAL TRANSFORMATION
+                                       │ (Binary → Continuous)
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│              LAYER 1.5: STATE TRANSFORMER (NEW - Core Innovation)               │
+│                                                                                  │
+│  ┌────────────────────────────────────────────────────────────────────────┐    │
+│  │  TRANSFORMATION FUNCTIONS                                              │    │
+│  │                                                                         │    │
+│  │  Group A: Temporal Decay (hours since last event)                      │    │
+│  │  ┌────────────────────────────────────────────────────────────┐        │    │
+│  │  │ crash_proximity = 1 / (1 + hours_since / half_life)        │        │    │
+│  │  │ half_life = 24h for 1h crashes, 72h for 4h crashes         │        │    │
+│  │  │ Output: [0.0=old, 1.0=just now] - smooth exponential decay │        │    │
+│  │  └────────────────────────────────────────────────────────────┘        │    │
+│  │                                                                         │    │
+│  │  Group B: Smoothed Intensity (EWMA of event flags)                     │    │
+│  │  ┌────────────────────────────────────────────────────────────┐        │    │
+│  │  │ crash_intensity_72h = EWMA(flash_crash_*, span=72h)        │        │    │
+│  │  │ cascade_severity = EWMA(oi_cascade + volume_spike, 48h)    │        │    │
+│  │  │ funding_stress = EWMA(funding_extreme + funding_flip, 24h) │        │    │
+│  │  │ Output: [0.0=calm, 1.0=sustained stress] - smooth average  │        │    │
+│  │  └────────────────────────────────────────────────────────────┘        │    │
+│  │                                                                         │    │
+│  │  Group C: Event Frequency (count over 7-day window)                    │    │
+│  │  ┌────────────────────────────────────────────────────────────┐        │    │
+│  │  │ crash_frequency_7d = count(flash_crash_1h, 7d) / 168h      │        │    │
+│  │  │ extreme_event_rate = sum(all_events, 7d) / (168h * 8)      │        │    │
+│  │  │ Output: [0.0=isolated, 1.0=clustered] - crisis clustering  │        │    │
+│  │  └────────────────────────────────────────────────────────────┘        │    │
+│  │                                                                         │    │
+│  │  Group D: Persistence (consecutive events, volatility ratios)          │    │
+│  │  ┌────────────────────────────────────────────────────────────┐        │    │
+│  │  │ crash_persistence = max_consecutive_streak(events, 24h)    │        │    │
+│  │  │ volatility_persistence = vol_24h / vol_7d                  │        │    │
+│  │  │ drawdown_persistence = (peak - current) / peak (7d)        │        │    │
+│  │  │ Output: [0.0=noise, 1.0=sustained pattern] - crisis depth  │        │    │
+│  │  └────────────────────────────────────────────────────────────┘        │    │
+│  └────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                  │
+│  Output: 12 continuous state features (normalized [0.0, 1.0])                   │
+│  Latency: Days to weeks (regime-level smoothing)                                │
+│  Active rate: 10-30% of bars (FREQUENT, SMOOTH signals)                         │
+│  Implementation: 🔨 TO BE BUILT (engine/features/state_transformer.py)          │
+└──────────────────────────────────────┬──────────────────────────────────────────┘
+                                       │
+                                       │ Feed into HMM
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                  LAYER 2: REGIME CLASSIFIER (HMM - Modified)                    │
+│                                                                                  │
+│  ┌────────────────────────────────────────────────────────────────────────┐    │
+│  │  HMM INPUT FEATURES (15-22 features)                                   │    │
+│  │                                                                         │    │
+│  │  ✅ State features (NEW):                                              │    │
+│  │     - crash_intensity_72h, cascade_severity, funding_stress            │    │
+│  │     - crash_frequency_7d, extreme_event_rate                           │    │
+│  │     - crash_persistence, volatility_persistence                        │    │
+│  │     - (Phase 1: 3 features, Phase 2: 7-10 features)                    │    │
+│  │                                                                         │    │
+│  │  ✅ Macro z-scores (UNCHANGED):                                        │    │
+│  │     - VIX_Z, DXY_Z, YC_SPREAD, M2_GROWTH                               │    │
+│  │                                                                         │    │
+│  │  ✅ Market structure (UNCHANGED):                                      │    │
+│  │     - BTC.D, USDT.D, TOTAL_RET_21d, ALT_ROTATION                       │    │
+│  │                                                                         │    │
+│  │  ✅ Crypto-native (UNCHANGED):                                         │    │
+│  │     - funding_Z, OI_CHANGE, RV_21, LIQ_VOL_24h                         │    │
+│  │                                                                         │    │
+│  │  ❌ REMOVED (cause thrashing):                                         │    │
+│  │     - flash_crash_1h, flash_crash_4h, flash_crash_1d (binary)          │    │
+│  │     - oi_cascade, volume_spike (binary)                                │    │
+│  │     - funding_extreme, funding_flip (binary)                           │    │
+│  └────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                  │
+│  ┌────────────────────────────────────────────────────────────────────────┐    │
+│  │  HMM MODEL (4-state Gaussian HMM)                                      │    │
+│  │                                                                         │    │
+│  │  States: [crisis, risk_off, neutral, risk_on]                          │    │
+│  │  Window: 21 days (504 hours) - rolling Viterbi decoding               │    │
+│  │  Covariance: diagonal (assume feature independence)                    │    │
+│  │  Training: 10 random initializations, pick best log-likelihood         │    │
+│  │                                                                         │    │
+│  │  Transition priors (anti-thrashing):                                   │    │
+│  │    - Self-transition probability: 0.85-0.90 (sticky regimes)           │    │
+│  │    - Crisis → risk_off: 0.08 (likely path)                             │    │
+│  │    - Crisis → risk_on: 0.01 (unlikely direct jump)                     │    │
+│  └────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                  │
+│  ┌────────────────────────────────────────────────────────────────────────┐    │
+│  │  POST-PROCESSING (Anti-Thrashing Mechanisms)                           │    │
+│  │                                                                         │    │
+│  │  Layer 1: Probability Smoothing (12h rolling average)                  │    │
+│  │  Layer 2: Hysteresis Bands (entry/exit thresholds)                     │    │
+│  │           - Crisis: enter at 60%, exit below 40%                       │    │
+│  │           - Risk_off: enter at 50%, exit below 35%                     │    │
+│  │  Layer 3: Minimum Regime Duration                                      │    │
+│  │           - Crisis: must last ≥24 hours                                │    │
+│  │           - Risk_off: must last ≥48 hours                              │    │
+│  │           - Neutral: must last ≥72 hours                               │    │
+│  └────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                  │
+│  Output: regime_label ∈ {crisis, risk_off, neutral, risk_on}                    │
+│         + regime_confidence ∈ [0.0, 1.0]                                        │
+│         + regime_proba_{crisis, risk_off, neutral, risk_on}                     │
+│  Latency: Days to weeks (regime-level changes)                                  │
+│  Transition frequency: 10-20 per year (TARGET vs 117 current)                   │
+│  Implementation: 🔧 MODIFY EXISTING (engine/context/hmm_regime_model.py)        │
+└──────────────────────────────────────┬──────────────────────────────────────────┘
+                                       │
+                                       │ Feed downstream
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                      DOWNSTREAM CONSUMERS (Unchanged Interface)                 │
+│                                                                                  │
+│  ┌────────────────────────────────────────────────────────────────────────┐    │
+│  │  Archetype System                                                      │    │
+│  │  - Regime-aware archetype selection (route to S1/S2/S4/S5)            │    │
+│  │  - Position sizing (crisis → reduce leverage)                         │    │
+│  │  - Risk management (circuit breakers, kill switches)                  │    │
+│  └────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                  │
+│  Interface (NO BREAKING CHANGES):                                               │
+│    regime_result = regime_classifier.classify(features, timestamp)              │
+│    regime = regime_result['regime']  # Same API as before                       │
+│    confidence = regime_result['confidence']                                     │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+
+DATA FLOW EXAMPLE (LUNA Crisis May 9, 2022)
+============================================
+
+T=0 (May 9, 00:00 UTC): Initial crash
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Layer 1 (Events):
+  flash_crash_1h = 1 (price dropped 7.1% in 1h)
+  flash_crash_4h = 0 (only been 1h)
+  volume_spike = 1 (volume 5σ above mean)
+  oi_cascade = 1 (OI dropped 8% in 1h)
+  funding_extreme = 0 (not yet)
+
+Layer 1.5 (State):
+  crash_proximity_1h = 1.0 (just happened)
+  crash_intensity_72h = 0.01 (EWMA just starting)
+  cascade_severity = 0.02 (EWMA just starting)
+  crash_frequency_7d = 0.006 (1 event / 168h)
+  crash_persistence = 1.0 (1 consecutive hour)
+
+Layer 2 (HMM):
+  regime_proba_crisis = 0.15 (not enough evidence yet)
+  regime_label = 'neutral' (still in neutral)
+
+
+T=12 (May 9, 12:00 UTC): Sustained crash
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Layer 1 (Events):
+  flash_crash_1h = 1 (58 of last 80 hours)
+  flash_crash_4h = 1 (multiple 4h crashes)
+  flash_crash_1d = 1 (now >12% down in 24h)
+  volume_spike = 1 (sustained panic)
+  oi_cascade = 1 (liquidations continue)
+  funding_extreme = 1 (funding >3σ)
+
+Layer 1.5 (State):
+  crash_proximity_1h = 1.0 (still crashing)
+  crash_intensity_72h = 0.45 ⬆️ (EWMA building up)
+  cascade_severity = 0.62 ⬆️ (sustained liquidations)
+  crash_frequency_7d = 0.48 ⬆️ (58 events / 168h)
+  crash_persistence = 8.0 ⬆️ (8 consecutive hours)
+
+Layer 2 (HMM):
+  regime_proba_crisis = 0.73 ⬆️ (strong evidence)
+  regime_label = 'crisis' ✅ (DETECTED!)
+
+Post-processing:
+  - Probability smoothed over 12h
+  - Hysteresis: 73% > 60% entry threshold → ENTER crisis
+  - Minimum duration: Will stay in crisis for ≥24h
+
+
+T=72 (May 12, 00:00 UTC): Post-crash recovery
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Layer 1 (Events):
+  flash_crash_1h = 0 (no new crashes in 12h)
+  volume_spike = 0 (volume normalizing)
+  oi_cascade = 0 (no new liquidations)
+
+Layer 1.5 (State):
+  crash_proximity_1h = 0.33 ⬇️ (decaying: 12h ago / 24h half_life)
+  crash_intensity_72h = 0.28 ⬇️ (EWMA decaying)
+  cascade_severity = 0.18 ⬇️ (EWMA decaying)
+  crash_frequency_7d = 0.35 (still elevated, 58 events / 168h)
+  crash_persistence = 0.0 ⬇️ (no consecutive crashes)
+
+Layer 2 (HMM):
+  regime_proba_crisis = 0.35 ⬇️ (fading evidence)
+  regime_label = 'crisis' (STILL crisis due to minimum duration)
+
+Post-processing:
+  - 72h in crisis regime (meets 24h minimum)
+  - Hysteresis: 35% < 40% exit threshold → ALLOW transition
+  - Next bar: transition to 'risk_off'
+
+
+COMPARISON: Binary Events vs State Features
+============================================
+
+Feature Type          | Raw Binary Events        | State Features (Transformed)
+─────────────────────┼─────────────────────────┼─────────────────────────────
+Continuity           | Discontinuous (0→1→0)    | Continuous (smooth curve)
+Temporal behavior    | Instant spike/drop       | Gradual rise/decay
+Active time          | 0.5-2% (rare)            | 10-30% (frequent)
+HMM interpretation   | Regime change!           | Gradual transition
+Example (1h crash):  | [0,0,1,0,0,0,0,0]        | [0.0,0.1,0.8,0.6,0.4,0.3,0.2,0.1]
+Transition behavior  | Thrashing (117/year)     | Smooth (10-20/year)
+Crisis detection     | 0% (too noisy)           | 60-80% (captures sustained)
+
+
+KEY INSIGHT
+===========
+
+Binary events are SYMPTOMS (instantaneous shocks)
+State features are DISEASE (persistent conditions)
+
+HMM should detect DISEASE, not SYMPTOMS.
+
+Transformation layer converts symptoms → disease progression.
+
+
+MONITORING DASHBOARDS
+=====================
+
+Real-Time Health Monitor:
+┌─────────────────────────────────────────────────────────────┐
+│ Regime Detection System Health                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│ ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
+│ │ Event Layer     │  │ State Layer     │  │ HMM Layer    │ │
+│ │                 │  │                 │  │              │ │
+│ │ Trigger: 1.2%   │  │ Active: 18.3%   │  │ Regime: risk_│ │
+│ │ Coverage: 100%  │  │ Smooth: 0.94    │  │  off         │ │
+│ │ LUNA: ✅ Pass   │  │ Discont: 0.8%   │  │ Conf: 0.72   │ │
+│ │ Status: 🟢 OK   │  │ Status: 🟢 OK   │  │ Trans: 14/yr │ │
+│ └─────────────────┘  └─────────────────┘  │ Status: 🟢 OK│ │
+│                                            └──────────────┘ │
+│                                                              │
+│ Recent Transitions:                                          │
+│   2024-11-15 12:00  neutral → risk_off   (confidence: 0.68) │
+│   2024-10-03 08:00  risk_off → neutral   (confidence: 0.71) │
+│   2024-08-15 16:00  neutral → risk_off   (confidence: 0.65) │
+│                                                              │
+│ Alerts:                                                      │
+│   🟢 No thrashing detected (14 transitions in 365 days)     │
+│   🟢 State features responding to events (corr: 0.67)       │
+│   🟢 HMM confidence healthy (mean: 0.71, min: 0.52)         │
+└─────────────────────────────────────────────────────────────┘
+
+
+IMPLEMENTATION STATUS
+=====================
+
+Component                       | Status          | LOE        | Owner
+───────────────────────────────┼────────────────┼───────────┼──────────
+Layer 1: Event Detection        | ✅ COMPLETE    | 0 days     | Agent 2
+Layer 1.5: State Transformer    | 🔨 TO BUILD    | 3-5 days   | TBD
+  - Phase 1 (3 features)        | 🔨 TO BUILD    | 2 days     | TBD
+  - Phase 2 (12 features)       | 📋 PLANNED     | 3 days     | TBD
+Layer 2: HMM Modifications      | 🔧 MODIFY      | 2-3 days   | Agent 3
+  - Feature list update         | 🔧 MODIFY      | 1 day      | TBD
+  - Post-processing             | 🔨 TO BUILD    | 2 days     | TBD
+Integration & Testing           | 📋 PLANNED     | 2-3 days   | TBD
+Documentation & Monitoring      | 📋 PLANNED     | 1-2 days   | TBD
+───────────────────────────────┼────────────────┼───────────┼──────────
+TOTAL (Phase 1 MVP)             | 📋 READY       | 7-10 days  | -
+TOTAL (Phase 2 Full)            | 📋 PLANNED     | 14-20 days | -
+
+
+PHASE 1 QUICK WIN TARGETS
+==========================
+
+Metric                  | Current | Phase 1 Target | Success?
+───────────────────────┼─────────┼───────────────┼──────────
+Transitions/year        | 117     | <50            | ⏳ TBD
+Crisis detection %      | 0%      | >40%           | ⏳ TBD
+Silhouette score        | 0.11    | >0.30          | ⏳ TBD
+LUNA detection %        | 0%      | >60%           | ⏳ TBD
+Implementation time     | -       | 7 days         | ⏳ TBD
+
+If Phase 1 succeeds → Proceed to Phase 2
+If Phase 1 fails → Analyze & pivot to Contingency Plan

@@ -1,0 +1,292 @@
+REGIME DETECTION SYSTEM - ARCHITECTURE DIAGRAM
+==============================================
+
+CURRENT ARCHITECTURE (BROKEN)
+==============================
+
+┌──────────────────────────────────────────────────────────────────────┐
+│                         LAYER 0: EVENT OVERRIDE                       │
+│                                                                       │
+│  EventOverrideDetector.check_event(features)                         │
+│  ┌────────────────────────────────────────────────────────┐          │
+│  │ • Flash crash: >10% drop in 1H                         │          │
+│  │ • Extreme volume: z>5 + negative return               │          │
+│  │ • Funding shock: |z|>5                                │          │
+│  │ • OI cascade: >15% drop in 1H                         │          │
+│  └────────────────────────────────────────────────────────┘          │
+│                                                                       │
+│  IF crisis event detected:                                           │
+│    → Force crisis=1.0, skip all other layers ✅                      │
+│    → Pass override_active=True to hysteresis                        │
+│                                                                       │
+└──────────────────────────────────────────────────────────────────────┘
+                              ↓ (no event)
+┌──────────────────────────────────────────────────────────────────────┐
+│                    LAYER 1: LOGISTIC REGIME MODEL                     │
+│                                                                       │
+│  LogisticRegimeModel.classify(features)                              │
+│  ┌────────────────────────────────────────────────────────┐          │
+│  │ Input: 14 features (crisis_persistence, rv_20d, ...)  │          │
+│  │ Model: Multinomial Logistic Regression (v1)           │          │
+│  │ Output: P(crisis), P(risk_off), P(neutral), P(risk_on)│          │
+│  └────────────────────────────────────────────────────────┘          │
+│                                                                       │
+│  Example Output:                                                     │
+│    raw_probs = {                                                     │
+│      'crisis': 0.45,     ← Highest (argmax)                         │
+│      'risk_off': 0.35,                                              │
+│      'neutral': 0.15,                                               │
+│      'risk_on': 0.05                                                │
+│    }                                                                 │
+│                                                                       │
+│  ⚠️  PROBLEM: Model v1 outputs crisis 68% of the time!              │
+│                                                                       │
+└──────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────────────┐
+│              LAYER 1.5: CRISIS THRESHOLD + EMA (BROKEN)              │
+│                                                                       │
+│  RegimeService._apply_crisis_threshold_and_ema(raw_probs)           │
+│                                                                       │
+│  STEP 1: Apply EMA smoothing (α=0.08, 24h window)                   │
+│  ┌────────────────────────────────────────────────────────┐          │
+│  │ IF first call:                                         │          │
+│  │   ema_probs = raw_probs                               │          │
+│  │ ELSE:                                                  │          │
+│  │   ema_probs[regime] = α * raw_probs[regime]          │          │
+│  │                     + (1-α) * ema_probs[regime]       │          │
+│  └────────────────────────────────────────────────────────┘          │
+│                                                                       │
+│  Example: raw_probs = {crisis: 0.45, ...}                           │
+│           ema_probs  = {crisis: 0.43, ...}  ← Slightly smoothed     │
+│                                                                       │
+│  STEP 2: Apply crisis threshold check                                │
+│  ┌────────────────────────────────────────────────────────┐          │
+│  │ top_regime = argmax(ema_probs)  # 'crisis'            │          │
+│  │ top_prob = 0.43                                        │          │
+│  │                                                        │          │
+│  │ IF top_regime == 'crisis' AND top_prob < 0.60:        │          │
+│  │   → VETO crisis!                                      │          │
+│  │   → final_regime = second_highest ('risk_off')       │          │
+│  │   → metadata['crisis_threshold_veto'] = True         │          │
+│  │   → Log warning                                       │          │
+│  │ ELSE:                                                  │          │
+│  │   → Accept top_regime                                 │          │
+│  └────────────────────────────────────────────────────────┘          │
+│                                                                       │
+│  OUTPUT:                                                             │
+│    smoothed_probs = {crisis: 0.43, risk_off: 0.35, ...}            │
+│    metadata = {                                                      │
+│      'crisis_threshold_veto': True,                                 │
+│      'fallback_regime': 'risk_off',                                 │
+│      'crisis_prob': 0.43                                            │
+│    }                                                                 │
+│    final_regime = 'risk_off'  ← Threshold decision                 │
+│                                                                       │
+│  ⚠️  CRITICAL BUG: final_regime is computed but NOT used!           │
+│                                                                       │
+└──────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────────────┐
+│              LAYER 2: HYSTERESIS (OVERRIDES THRESHOLD)               │
+│                                                                       │
+│  RegimeHysteresis.apply(smoothed_probs, timestamp)                  │
+│                                                                       │
+│  ❌ BUG: Hysteresis receives probabilities, NOT final_regime         │
+│                                                                       │
+│  STEP 1: Apply DUPLICATE EMA smoothing (α=0.3, 3h window)           │
+│  ┌────────────────────────────────────────────────────────┐          │
+│  │ smoothed2[regime] = α * smoothed_probs[regime]        │          │
+│  │                   + (1-α) * smoothed2[regime]          │          │
+│  └────────────────────────────────────────────────────────┘          │
+│                                                                       │
+│  Example: smoothed_probs = {crisis: 0.43, risk_off: 0.35, ...}     │
+│           smoothed2      = {crisis: 0.41, risk_off: 0.36, ...}     │
+│                                                                       │
+│  STEP 2: Re-compute regime from probabilities                        │
+│  ┌────────────────────────────────────────────────────────┐          │
+│  │ top_regime = argmax(smoothed2)  # 'crisis' AGAIN!     │          │
+│  │                                                        │          │
+│  │ ❌ IGNORES threshold veto decision                     │          │
+│  │ ❌ Re-selects crisis even though Layer 1.5 vetoed it  │          │
+│  └────────────────────────────────────────────────────────┘          │
+│                                                                       │
+│  STEP 3: Apply dual threshold logic                                  │
+│  ┌────────────────────────────────────────────────────────┐          │
+│  │ current_regime = 'risk_off'  (previous state)         │          │
+│  │ current_prob = smoothed2['risk_off'] = 0.36          │          │
+│  │ exit_threshold = 0.50                                  │          │
+│  │                                                        │          │
+│  │ IF current_prob < exit_threshold:                     │          │
+│  │   → Can exit current regime                           │          │
+│  │   IF top_prob >= enter_threshold (0.70):             │          │
+│  │     → Enter new regime                                │          │
+│  │   ELSE:                                                │          │
+│  │     → Stay in current regime                          │          │
+│  │ ELSE:                                                  │          │
+│  │   → Stay in current regime (prob still high)         │          │
+│  └────────────────────────────────────────────────────────┘          │
+│                                                                       │
+│  OUTPUT:                                                             │
+│    regime_label = 'crisis'  ← OVERRIDES Layer 1.5 veto!            │
+│    regime_probs = smoothed2                                         │
+│    regime_confidence = 0.41 - 0.36 = 0.05                          │
+│                                                                       │
+│  ⚠️  RESULT: Crisis threshold veto is IGNORED!                      │
+│      Threshold fired 0 times in backtest.                            │
+│                                                                       │
+└──────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────────────┐
+│                          FINAL OUTPUT                                 │
+│                                                                       │
+│  result = {                                                          │
+│    'regime_label': 'crisis',  ← From hysteresis (NOT threshold)     │
+│    'regime_probs': smoothed2,                                        │
+│    'regime_confidence': 0.05,                                        │
+│    'regime_source': 'logistic+ema+threshold+hysteresis',            │
+│    'crisis_threshold_veto': True,  ← Metadata preserved             │
+│    'fallback_regime': 'risk_off'   ← But NOT used                   │
+│  }                                                                   │
+│                                                                       │
+│  ⚠️  DISCONNECT: Metadata says veto occurred, but regime='crisis'    │
+│                                                                       │
+└──────────────────────────────────────────────────────────────────────┘
+
+
+EXECUTION FLOW TRACE
+====================
+
+BAR T=1000, P(crisis)=0.45 (below threshold 0.60)
+
+[RegimeService.get_regime()]
+  ├─ Layer 0: EventOverride
+  │  └─ No event detected → continue
+  │
+  ├─ Layer 1: LogisticRegimeModel
+  │  ├─ Input: 14 features
+  │  └─ Output: raw_probs = {crisis: 0.45, risk_off: 0.35, ...}
+  │
+  ├─ Layer 1.5: Crisis Threshold + EMA
+  │  ├─ Apply EMA: smoothed_probs = {crisis: 0.43, risk_off: 0.35, ...}
+  │  ├─ Check threshold: argmax='crisis', P(crisis)=0.43 < 0.60
+  │  ├─ VETO: final_regime = 'risk_off' (second-highest)
+  │  └─ Output: smoothed_probs, metadata['crisis_threshold_veto']=True
+  │
+  ├─ Layer 2: Hysteresis
+  │  ├─ Input: smoothed_probs (NOT final_regime) ❌
+  │  ├─ Apply DUPLICATE EMA: smoothed2 = {crisis: 0.41, risk_off: 0.36, ...}
+  │  ├─ Re-compute regime: argmax(smoothed2) = 'crisis' ❌
+  │  ├─ Apply dual thresholds: ...
+  │  └─ Output: regime_label = 'crisis' (OVERRIDES veto!)
+  │
+  └─ Return: regime_label='crisis', crisis_threshold_veto=True ⚠️
+     INCONSISTENT: Veto metadata says crisis rejected, but regime IS crisis
+
+
+WHY CRISIS THRESHOLD FIRES 0 VETOS
+===================================
+
+1. Layer 1.5 computes: final_regime = 'risk_off' (veto crisis)
+2. Layer 1.5 passes: smoothed_probs (NOT final_regime) to hysteresis
+3. Layer 2 re-computes: argmax(smoothed_probs) = 'crisis'
+4. Layer 2 overrides: final_regime decision from Layer 1.5
+5. Result: Crisis threshold veto is IGNORED by downstream layer
+
+
+FIXED ARCHITECTURE (PROPOSED)
+==============================
+
+┌──────────────────────────────────────────────────────────────────────┐
+│                    LAYER 0: EVENT OVERRIDE (unchanged)                │
+│  → Force crisis on flash crash, extreme events                       │
+└──────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────────────┐
+│               LAYER 1: LOGISTIC REGIME MODEL v2 (retrain)             │
+│  → Output: P(crisis), P(risk_off), ...                               │
+│  → Crisis rate: 5-10% (was 68%)  ✅                                  │
+└──────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────────────┐
+│              LAYER 1.5: CRISIS THRESHOLD (NO EMA)                     │
+│  → Check: if argmax=='crisis' AND P(crisis)<0.60                     │
+│  → Output: final_regime (vetoed or accepted)  ✅                     │
+│  → NO smoothing (remove duplicate)  ✅                               │
+└──────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────────────┐
+│                  LAYER 2: HYSTERESIS (modified)                       │
+│  → Input: regime_label (from Layer 1.5)  ✅                          │
+│  → Apply: min dwell time, dual thresholds                            │
+│  → Keep: EWMA smoothing (α=0.3, 3h)                                  │
+│  → Output: stabilized regime (respects threshold)  ✅               │
+└──────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────────────┐
+│                          FINAL OUTPUT                                 │
+│  → regime_label: Reflects threshold veto decisions  ✅              │
+│  → regime_probs: For confidence computation                          │
+│  → crisis_threshold_veto: Meaningful (>0 vetos)  ✅                 │
+└──────────────────────────────────────────────────────────────────────┘
+
+
+INTEGRATION ISSUES SUMMARY
+===========================
+
+Issue #1: Hysteresis Overrides Threshold ❌
+  • Location: regime_service.py:404-430
+  • Bug: Hysteresis receives probabilities, re-computes regime
+  • Impact: Crisis threshold veto ignored (0 vetos)
+  • Fix: Pass regime_label to hysteresis, not just probabilities
+
+Issue #2: Duplicate Smoothing ❌
+  • Layer 1.5: EMA (α=0.08, 24h window)
+  • Layer 2: EWMA (α=0.3, 3h window)
+  • Impact: Probabilities smoothed twice, regime timing broken
+  • Fix: Remove EMA from Layer 1.5, keep only Layer 2 smoothing
+
+Issue #3: Batch Mode EMA State Bug ❌
+  • Location: regime_service.py:485-496
+  • Bug: EMA state not reset in classify_batch()
+  • Impact: Non-reproducible backtests
+  • Fix: Add self.ema_probs = None in classify_batch()
+
+Issue #4: Model v1 Predicts 68% Crisis ❌
+  • Root cause: Model trained on mislabeled crisis data
+  • Impact: Threshold can't fix bad model predictions
+  • Fix: Retrain model v2 with correct labels (5-10% crisis)
+
+
+PERFORMANCE IMPACT
+==================
+
+Configuration         | PnL      | Crisis Rate | Vetos
+---------------------|----------|-------------|------
+v0 (baseline)        | -$324    | 68.0%       | N/A
+v1 (threshold)       | -$825    | 78.6%       | 0 ❌
+v1 (threshold off)   | -$324    | 68.0%       | 0
+v2 (fixed + retrain) | TBD      | 5-10%       | 5-10%
+
+Key Takeaway: Threshold made performance WORSE (-$501) due to:
+  1. Threshold never fired (0 vetos)
+  2. Duplicate EMA broke regime timing
+  3. Model issue not addressed
+
+
+IMMEDIATE ACTION
+================
+
+1. Disable crisis threshold:
+   crisis_threshold=0.0, enable_ema_smoothing=False
+
+2. Fix EMA state reset:
+   Add self.ema_probs = None in classify_batch()
+
+3. Validate reversion:
+   Re-run backtest, expect -$324 (v0 baseline)
+
+4. Plan fixes:
+   - Fix hysteresis integration
+   - Retrain model v2
+   - Re-enable threshold

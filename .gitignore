@@ -438,3 +438,39 @@ poetry.lock
 !README.md
 !ARCHITECTURE.md
 !CHANGELOG.md
+
+# ============================================
+# Documentation Cleanup Rules (Added 2026-01-18)
+# ============================================
+
+# Temporary documentation files
+*_TEMP.md
+*_DRAFT.md
+*_WIP.md
+commit_message_*.txt
+*_log.txt
+*_notes.txt
+
+# Quick reference duplicates (keep only in docs/)
+/*_QUICK_START.md
+/*_QUICK_REF.md
+/*_DELIVERABLES.md
+/*_INDEX.md
+
+# Intermediate reports (use docs/reports/ instead)
+/*_REPORT.md
+/*_STATUS.md
+/*_DIAGNOSIS.md
+/*_ANALYSIS.md
+/*_INVESTIGATION.md
+
+# Exception: Keep core root-level docs
+!README.md
+!CHANGELOG.md
+!LICENSE.md
+!CONTRIBUTING.md
+
+# Cleanup scripts (temporary)
+cleanup_step*.sh
+REPOSITORY_CLEANUP_STRATEGY.md
+

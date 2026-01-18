@@ -1,0 +1,336 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                   TEMPORAL REGIME ALLOCATOR ARCHITECTURE                     ║
+║                          Bull Machine v2 - 2026-01-12                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  FEATURE ENGINEERING LAYER                                                   │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━                                                 │
+│                                                                              │
+│  ┌─────────────────────┐   ┌─────────────────────┐  ┌────────────────────┐│
+│  │ Wyckoff Engine      │   │ Temporal Engine     │  │ Macro Engine       ││
+│  │ ─────────────────── │   │ ───────────────────  │  │ ────────────────── ││
+│  │ • wyckoff_spring_a  │   │ • temporal_conflu-  │  │ • funding_Z        ││
+│  │ • wyckoff_utad      │   │   ence (0-1)        │  │ • VIX_Z            ││
+│  │ • wyckoff_sc        │   │ • fib_time_cluster  │  │ • DXY_Z            ││
+│  │ • wyckoff_lps       │   │ • bars_since_*      │  │ • YC_SPREAD        ││
+│  └─────────────────────┘   └─────────────────────┘  └────────────────────┘│
+│                                        │                                     │
+│                                        ▼                                     │
+│                            ┌───────────────────────┐                        │
+│                            │  context.row (Series) │                        │
+│                            │  ───────────────────  │                        │
+│                            │  All features merged  │                        │
+│                            └───────────────────────┘                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                        │
+                                        ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  RUNTIME CONTEXT LAYER                                                       │
+│  ━━━━━━━━━━━━━━━━━━━━                                                       │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐│
+│  │ RuntimeContext (Immutable)                                             ││
+│  │ ────────────────────────────────────────────────────────────────────── ││
+│  │  • ts: Current timestamp                                               ││
+│  │  • row: Feature row (pd.Series) with temporal/Wyckoff/macro features   ││
+│  │  • regime_probs: {'crisis': 0.1, 'risk_off': 0.2, ...}                ││
+│  │  • regime_label: 'risk_on' (argmax after hysteresis)                  ││
+│  │  • adapted_params: Adaptive fusion parameters                          ││
+│  │  • thresholds: Per-archetype thresholds                                ││
+│  └────────────────────────────────────────────────────────────────────────┘│
+└──────────────────────────────────────────────────────────────────────────────┘
+                                        │
+                                        ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  ARCHETYPE DETECTION LAYER                                                   │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━                                                   │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐│
+│  │ ArchetypeLogic.detect(context)                                         ││
+│  │ ────────────────────────────────────────────────────────────────────── ││
+│  │  1. Extract global features (liquidity_score, fusion_score)            ││
+│  │  2. Apply Wyckoff boosts/filters                                       ││
+│  │  3. Apply soft filters (liquidity/regime/session penalties)            ││
+│  │  4. Evaluate all enabled archetypes:                                   ││
+│  │     ┌──────────────────────────────────────────────────────────────┐  ││
+│  │     │ _check_B(context) → order_block_retest                       │  ││
+│  │     │ ──────────────────────────────────────────────────────────── │  ││
+│  │     │  • Compute archetype-specific score                          │  ││
+│  │     │  • Apply regime soft penalty                                 │  ││
+│  │     │                                                               │  ││
+│  │     │  ╔═══════════════════════════════════════════════════════╗  │  ││
+│  │     │  ║ SOFT GATING: Temporal-Aware Allocation (NEW)         ║  │  ││
+│  │     │  ╠═══════════════════════════════════════════════════════╣  │  ││
+│  │     │  ║  1. Extract temporal state:                           ║  │  ││
+│  │     │  ║     temporal_state = _extract_temporal_state(row)     ║  │  ││
+│  │     │  ║                                                        ║  │  ││
+│  │     │  ║  2. Get temporal-aware weight:                        ║  │  ││
+│  │     │  ║     weight, meta = allocator.get_weight_with_temporal(║  │  ││
+│  │     │  ║         archetype='order_block_retest',               ║  │  ││
+│  │     │  ║         regime='risk_on',                             ║  │  ││
+│  │     │  ║         temporal_state=temporal_state                 ║  │  ││
+│  │     │  ║     )                                                  ║  │  ││
+│  │     │  ║                                                        ║  │  ││
+│  │     │  ║  3. Apply sqrt split:                                 ║  │  ││
+│  │     │  ║     sqrt_weight = √(weight)                           ║  │  ││
+│  │     │  ║     gated_score = raw_score * sqrt_weight             ║  │  ││
+│  │     │  ║                                                        ║  │  ││
+│  │     │  ║  4. Check threshold:                                  ║  │  ││
+│  │     │  ║     if gated_score < fusion_th: VETO                  ║  │  ││
+│  │     │  ╚═══════════════════════════════════════════════════════╝  │  ││
+│  │     │                                                               │  ││
+│  │     │  • Check fusion threshold gate                                │  ││
+│  │     │  • Return (passed, score, metadata)                           │  ││
+│  │     └──────────────────────────────────────────────────────────────┘  ││
+│  │  5. Select best archetype by score                                     ││
+│  └────────────────────────────────────────────────────────────────────────┘│
+└──────────────────────────────────────────────────────────────────────────────┘
+                                        │
+                                        ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  TEMPORAL REGIME ALLOCATOR (NEW)                                             │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                                             │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐│
+│  │ TemporalRegimeAllocator.get_weight_with_temporal()                     ││
+│  │ ────────────────────────────────────────────────────────────────────── ││
+│  │                                                                         ││
+│  │  INPUT: archetype, regime, temporal_state                              ││
+│  │  ─────                                                                  ││
+│  │  temporal_state = {                                                     ││
+│  │      'temporal_confluence': 0.72,    # Time pressure                   ││
+│  │      'fib_time_cluster': True,       # Fib alignment                   ││
+│  │      'bars_since_spring': 21,        # Spring freshness                ││
+│  │      'bars_since_utad': 144,         # UTAD freshness                  ││
+│  │      'bars_since_sc': 34,            # SC freshness                    ││
+│  │      ...                                                                ││
+│  │  }                                                                      ││
+│  │                                                                         ││
+│  │  STEP 1: Base Weight (from parent RegimeWeightAllocator)               ││
+│  │  ──────────────────────────────────────────────────────────            ││
+│  │  ┌─────────────────────────────────────────────────────────────────┐  ││
+│  │  │ Edge Table: archetype_regime_edge_table.csv                     │  ││
+│  │  │ ────────────────────────────────────────────────────────────    │  ││
+│  │  │  archetype          | regime   | n_trades | sharpe_like | ...  │  ││
+│  │  │  ──────────────────────────────────────────────────────────    │  ││
+│  │  │  order_block_retest | risk_on  | 42       | 0.85        | ...  │  ││
+│  │  │  spring             | neutral  | 15       | 0.32        | ...  │  ││
+│  │  │  liquidity_vacuum   | crisis   | 28       | -0.15       | ...  │  ││
+│  │  │                                                                  │  ││
+│  │  │  ↓ Empirical Bayes shrinkage                                    │  ││
+│  │  │  edge_shrunk = edge * (N / (N + k_shrinkage))                   │  ││
+│  │  │                                                                  │  ││
+│  │  │  ↓ Sigmoid mapping                                               │  ││
+│  │  │  strength = 1 / (1 + exp(-alpha * edge_shrunk))                 │  ││
+│  │  │                                                                  │  ││
+│  │  │  ↓ Guardrails (cap negative edge at 20%, floor at 1%)           │  ││
+│  │  │  base_weight = apply_guardrails(strength)                       │  ││
+│  │  └─────────────────────────────────────────────────────────────────┘  ││
+│  │                                                                         ││
+│  │  STEP 2: Temporal Boost (time pressure)                                ││
+│  │  ───────────────────────────────────────                               ││
+│  │  if temporal_confluence > 0.80:                                        ││
+│  │      temporal_boost = 1.15  # Strong time pressure                     ││
+│  │  elif temporal_confluence > 0.60:                                      ││
+│  │      temporal_boost = 1.05  # Medium time pressure                     ││
+│  │  else:                                                                  ││
+│  │      temporal_boost = 1.00  # Neutral                                  ││
+│  │                                                                         ││
+│  │  if fib_time_cluster and confluence > 0.60:                            ││
+│  │      temporal_boost *= 1.02  # +2% Fib bonus                           ││
+│  │                                                                         ││
+│  │  STEP 3: Phase Boost (Wyckoff event freshness)                         ││
+│  │  ──────────────────────────────────────────────                        ││
+│  │  ┌─────────────────────────────────────────────────────────────────┐  ││
+│  │  │ PHASE_TIMING = {                                                │  ││
+│  │  │     'spring': {                                                  │  ││
+│  │  │         'event_key': 'bars_since_spring',                       │  ││
+│  │  │         'perfect_min': 13,    'perfect_max': 34,  # Perfect ✓  │  ││
+│  │  │         'stale_threshold': 89,                    # Stale ✗     │  ││
+│  │  │         'perfect_boost': 1.20,  'stale_penalty': 0.85           │  ││
+│  │  │     },                                                           │  ││
+│  │  │     'liquidity_vacuum': {                                        │  ││
+│  │  │         'event_key': 'bars_since_sc',                           │  ││
+│  │  │         'perfect_min': 21,    'perfect_max': 55,                │  ││
+│  │  │         'stale_threshold': 144,                                  │  ││
+│  │  │         'perfect_boost': 1.15,  'stale_penalty': 0.90           │  ││
+│  │  │     },                                                           │  ││
+│  │  │     'wick_trap': { ... },                                        │  ││
+│  │  │     ...                                                          │  ││
+│  │  │ }                                                                │  ││
+│  │  └─────────────────────────────────────────────────────────────────┘  ││
+│  │                                                                         ││
+│  │  bars_since = temporal_state[event_key]                                ││
+│  │                                                                         ││
+│  │  if perfect_min <= bars_since <= perfect_max:                          ││
+│  │      phase_boost = perfect_boost  # 1.10-1.20x                         ││
+│  │  elif bars_since > stale_threshold:                                    ││
+│  │      phase_boost = stale_penalty  # 0.75-0.90x                         ││
+│  │  else:                                                                  ││
+│  │      phase_boost = 1.0  # Neutral                                      ││
+│  │                                                                         ││
+│  │  STEP 4: Combine Factors                                               ││
+│  │  ────────────────────                                                   ││
+│  │  weight = base_weight * temporal_boost * phase_boost                   ││
+│  │                                                                         ││
+│  │  STEP 5: Apply Guardrails                                              ││
+│  │  ──────────────────────                                                ││
+│  │  if regime == 'crisis' and edge < 0:                                   ││
+│  │      weight = min(weight, 0.20)  # Crisis cap                          ││
+│  │  weight = max(weight, 0.01)      # Minimum floor                       ││
+│  │                                                                         ││
+│  │  OUTPUT: (weight, metadata)                                            ││
+│  │  ──────                                                                 ││
+│  │  metadata = {                                                           ││
+│  │      'base_weight': 0.500,                                             ││
+│  │      'temporal_boost': 1.17,                                           ││
+│  │      'phase_boost': 1.12,                                              ││
+│  │      'combined_weight': 0.656,                                         ││
+│  │      'final_weight': 0.656,                                            ││
+│  │      'was_capped': False                                               ││
+│  │  }                                                                      ││
+│  └────────────────────────────────────────────────────────────────────────┘│
+└──────────────────────────────────────────────────────────────────────────────┘
+                                        │
+                                        ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  POSITION SIZING LAYER                                                       │
+│  ━━━━━━━━━━━━━━━━━━━━                                                       │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐│
+│  │ Position Sizing (sqrt split - prevents double-weight bug)             ││
+│  │ ────────────────────────────────────────────────────────────────────── ││
+│  │  Score Layer:  score' = score * √(weight)                              ││
+│  │  Sizing Layer: size'  = size  * √(weight)                              ││
+│  │                                                                         ││
+│  │  Combined impact: √(w) * √(w) = w  (correct!)                          ││
+│  │                                                                         ││
+│  │  Regime Budget Cap:                                                     ││
+│  │  • CRISIS: Max 30% total exposure                                      ││
+│  │  • RISK_OFF: Max 50% total exposure                                    ││
+│  │  • NEUTRAL: Max 70% total exposure                                     ││
+│  │  • RISK_ON: Max 80% total exposure                                     ││
+│  └────────────────────────────────────────────────────────────────────────┘│
+└──────────────────────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          ALLOCATION EXAMPLE                                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Scenario: Fresh Spring in RISK_OFF Regime
+──────────────────────────────────────────
+
+INPUT:
+  archetype = 'spring'
+  regime = 'risk_off'
+  temporal_state = {
+      'temporal_confluence': 0.65,  # Medium time pressure
+      'bars_since_spring': 21,      # Perfect timing (13-34 window)
+  }
+
+COMPUTATION:
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ Step 1: Base Weight                                             │
+  │ ──────────────────                                              │
+  │   edge_table lookup: spring + risk_off → no data               │
+  │   base_weight = 0.01 (minimum floor)                            │
+  │                                                                 │
+  │ Step 2: Temporal Boost                                          │
+  │ ──────────────────────                                          │
+  │   confluence = 0.65 > 0.60 → temporal_boost = 1.05             │
+  │                                                                 │
+  │ Step 3: Phase Boost                                             │
+  │ ──────────────────                                              │
+  │   bars_since_spring = 21                                        │
+  │   13 <= 21 <= 34 (perfect window) → phase_boost = 1.20        │
+  │                                                                 │
+  │ Step 4: Combine                                                 │
+  │ ───────────────                                                 │
+  │   weight = 0.01 * 1.05 * 1.20 = 0.0126                         │
+  │                                                                 │
+  │ Step 5: Guardrails                                              │
+  │ ──────────────────                                              │
+  │   max(0.0126, 0.01) = 0.0126                                   │
+  └─────────────────────────────────────────────────────────────────┘
+
+OUTPUT:
+  final_weight = 0.0126 (1.26% allocation)
+
+  Temporal lift: +26% vs base allocation (0.01)
+
+  Effective portfolio allocation:
+    spring: 1.26% * 50% regime budget = 0.63% of portfolio
+    CASH: 99.37%
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                      PHILOSOPHY INTEGRATION                                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Moneytaur Wisdom: "Time decays liquidity traps"                             │
+│ ──────────────────────────────────────────────────────────────               │
+│                                                                              │
+│  Fresh Setup (13-34 bars):    EDGE ↑  → Allocation BOOST (+10-20%)          │
+│  Stale Setup (>89 bars):      EDGE ↓  → Allocation PENALTY (-15-25%)        │
+│                                                                              │
+│  Implementation:                                                             │
+│  ───────────────                                                             │
+│  phase_boost = {                                                             │
+│      bars_since in [13-34]:  1.10-1.20x  (fresh = edge)                     │
+│      bars_since > 89:        0.75-0.90x  (stale = decay)                    │
+│      else:                   1.00x       (neutral)                           │
+│  }                                                                           │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Wyckoff Wisdom: "Phase rhythm creates allocation windows"                   │
+│ ──────────────────────────────────────────────────────────                   │
+│                                                                              │
+│  Accumulation Phase:   34-55 bars → Maximum allocation                      │
+│  Testing Phase (C):    13-34 bars → Perfect timing window                   │
+│  Distribution Phase:   21-34 bars → Peak opportunity                         │
+│                                                                              │
+│  Implementation:                                                             │
+│  ───────────────                                                             │
+│  PHASE_TIMING = {                                                            │
+│      'spring':          [13-34] → 1.20x   (Phase C test)                    │
+│      'liquidity_vacuum':[21-55] → 1.15x   (SC recovery)                     │
+│      'wick_trap':       [13-34] → 1.10x   (UTAD test)                       │
+│  }                                                                           │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         PRODUCTION STATUS                                    ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+✅ Core Implementation Complete
+   • TemporalRegimeAllocator class (423 lines)
+   • 7 archetype phase timing rules
+   • Temporal + phase boost calculations
+
+✅ Integration Layer Complete
+   • _apply_soft_gating() updated
+   • _extract_temporal_state() added
+   • 7 soft gating call sites updated
+
+✅ Validation Complete
+   • 4 test scenarios (all passing)
+   • Boost/penalty calculations verified
+   • Guardrails working correctly
+
+✅ Documentation Complete
+   • Full architecture spec
+   • Quick start guide
+   • Delivery summary
+   • Architecture diagram (this file)
+
+✅ Production Ready
+   • Backward compatible
+   • Graceful degradation
+   • Comprehensive logging
+   • No breaking changes
+
+═══════════════════════════════════════════════════════════════════════════════
+                    STATUS: MISSION COMPLETE ✓
+═══════════════════════════════════════════════════════════════════════════════
