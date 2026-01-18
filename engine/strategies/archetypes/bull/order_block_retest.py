@@ -135,17 +135,38 @@ class OrderBlockRetestArchetype:
             self.regime_weight * regime_score
         )
 
+        # THERMO-FLOOR BOOST: Extreme capitulation = strong buy signal (BTC only)
+        symbol = row.get('symbol', 'BTCUSDT')
+        if 'BTC' in symbol:
+            # FIX: Use correct feature name from data
+            thermo_distance = row.get('thermo_floor_distance', 0.0)
+            # If price near/below mining cost = extreme capitulation
+            if thermo_distance < -0.10:  # Price > 10% below mining cost
+                # Miners selling at loss = bottom signal → boost by 2x
+                fusion_score *= 2.00
+                logger.debug(f"[B Thermo Boost] Extreme capitulation (distance={thermo_distance:.2f}), boosting by 2.0x")
+
         # Step 7: Apply safety vetoes
         veto_reason = self._check_vetoes(row, regime_label)
         if veto_reason:
             return None, 0.0, {'veto_reason': veto_reason, 'fusion_score': fusion_score}
 
-        # Step 8: Check fusion threshold
+        # Step 8: Apply temporal confluence timing multiplier
+        temporal_confluence = row.get('temporal_confluence', None)
+        temporal_mult = 1.0  # Default neutral
+        if temporal_confluence is not None and not pd.isna(temporal_confluence):
+            # Apply conservative 0.85-1.15 range (max ±15% adjustment)
+            # High confluence (0.80) = 1.09x boost, Low confluence (0.20) = 0.91x penalty
+            temporal_mult = 0.85 + (temporal_confluence * 0.30)
+            fusion_score *= temporal_mult
+
+        # Step 9: Check fusion threshold
         if fusion_score < self.min_fusion_score:
             return None, 0.0, {
                 'reason': 'below_threshold',
                 'fusion_score': fusion_score,
-                'threshold': self.min_fusion_score
+                'threshold': self.min_fusion_score,
+                'temporal_mult': temporal_mult
             }
 
         # Signal detected!
@@ -156,6 +177,8 @@ class OrderBlockRetestArchetype:
             'volume_score': volume_score,
             'regime_score': regime_score,
             'fusion_score': fusion_score,
+            'temporal_confluence': temporal_confluence,
+            'temporal_mult': temporal_mult,
             'pattern_type': 'order_block_retest_long'
         }
 
@@ -206,12 +229,17 @@ class OrderBlockRetestArchetype:
 
         # Check if low touched OB (more precise retest)
         if ob_bull_bottom <= low <= ob_bull_top:
-            score += 0.20
+            score += 0.15
 
         # Check for FVG confluence
         fvg_bull = row.get('tf1h_fvg_bull', False)
         if fvg_bull:
-            score += 0.20
+            score += 0.15
+
+        # NEW: Check for FVG high (upside price target above current price)
+        fvg_high = row.get('tf1h_fvg_high', False)
+        if fvg_high:
+            score += 0.10  # Confirms upside target exists for long entry
 
         return min(1.0, score)
 
@@ -275,30 +303,53 @@ class OrderBlockRetestArchetype:
 
         Checks for:
         - Reaccumulation phase (Phase B/C)
-        - SOS (Sign of Strength)
-        - LPS (Last Point of Support)
+        - SOS (Sign of Strength) - breakout confirmation
+        - LPS (Last Point of Support) - final accumulation entry
+        - Spring A (best entry) - institutional accumulation
+        - ST (Secondary Test) - support retest validation
 
         Returns:
             Score 0.0-1.0
         """
         score = 0.0
+        confidence_threshold = 0.70  # High-confidence threshold for all events
 
         # Check Wyckoff phase
         phase = row.get('wyckoff_phase_abc', 'neutral')
         if phase in ['B', 'C']:  # Reaccumulation phases
-            score += 0.40
+            score += 0.25
+        elif phase == 'D':  # Last point phase (LPS context)
+            score += 0.20
 
-        # Check for SOS (Sign of Strength)
-        sos = row.get('wyckoff_sos', False)
-        sos_conf = row.get('wyckoff_sos_confidence', 0.0)
-        if sos and sos_conf >= 0.5:
-            score += 0.30
+        # Check for Spring A (premium entry signal)
+        spring_a = row.get('wyckoff_spring_a', False)
+        spring_a_conf = row.get('wyckoff_spring_a_confidence', 0.0)
+        if spring_a and spring_a_conf >= confidence_threshold:
+            score += 0.30  # Highest weight - best entry in Wyckoff
 
-        # Check for LPS (Last Point of Support)
+        # Check for Spring B (shallow spring)
+        spring_b = row.get('wyckoff_spring_b', False)
+        spring_b_conf = row.get('wyckoff_spring_b_confidence', 0.0)
+        if spring_b and spring_b_conf >= confidence_threshold:
+            score += 0.20
+
+        # Check for LPS (Last Point of Support - final accumulation entry)
         lps = row.get('wyckoff_lps', False)
         lps_conf = row.get('wyckoff_lps_confidence', 0.0)
-        if lps and lps_conf >= 0.5:
-            score += 0.30
+        if lps and lps_conf >= confidence_threshold:
+            score += 0.25  # Strong signal for OB retest
+
+        # Check for SOS (Sign of Strength - breakout confirmation)
+        sos = row.get('wyckoff_sos', False)
+        sos_conf = row.get('wyckoff_sos_confidence', 0.0)
+        if sos and sos_conf >= confidence_threshold:
+            score += 0.20
+
+        # Check for ST (Secondary Test - support retest validation)
+        st = row.get('wyckoff_st', False)
+        st_conf = row.get('wyckoff_st_confidence', 0.0)
+        if st and st_conf >= confidence_threshold:
+            score += 0.15  # Confirms support holding
 
         return min(1.0, score)
 
@@ -367,6 +418,28 @@ class OrderBlockRetestArchetype:
         Returns:
             Veto reason string, or None if no veto
         """
+        # LPPLS VETO: Don't buy parabolic tops (CRITICAL safety)
+        # FIX: Use correct feature names from data
+        lppls_veto = row.get('lppls_blowoff_detected', False)
+        lppls_confidence = row.get('lppls_confidence', 0.0)
+        if lppls_veto and lppls_confidence > 0.75:
+            return f'lppls_blowoff_detected_conf_{lppls_confidence:.2f}'
+
+        # PTI VETO: Don't go LONG when retail longs are trapped (they will be liquidated)
+        # Order Block Retest is a LONG archetype - veto when bullish_trap detected
+        # FIX: Use correct feature names from data
+        pti_score = row.get('tf1h_pti_score', 0.0)
+        pti_confidence = row.get('tf1h_pti_confidence', 0.0)
+        # Derive trap type from tf1d_pti_reversal (1=bullish reversal, -1=bearish reversal)
+        pti_reversal = row.get('tf1d_pti_reversal', 0)
+        pti_trap_type = 'bullish_trap' if pti_reversal < 0 else ('bearish_trap' if pti_reversal > 0 else 'none')
+
+        if (pti_trap_type == 'bullish_trap' and
+            pti_score > 0.60 and
+            pti_confidence > 0.70):
+            # Smart money will push down to liquidate trapped longs
+            return f'pti_bullish_trap_veto_score_{pti_score:.2f}_conf_{pti_confidence:.2f}'
+
         # Veto 1: Price closed below order block (support broken)
         ob_bull_bottom = row.get('tf1h_ob_bull_bottom', None)
         close = row.get('close', 0)
@@ -388,7 +461,19 @@ class OrderBlockRetestArchetype:
         if volume_zscore < self.max_volume_spike_down and close_price < open_price:
             return f'volume_dump_{volume_zscore:.1f}'
 
-        # Veto 4: Crisis regime
+        # Veto 4: UTAD (Upthrust After Distribution) - distribution top
+        utad = row.get('wyckoff_utad', False)
+        utad_conf = row.get('wyckoff_utad_confidence', 0.0)
+        if utad and utad_conf >= 0.70:
+            return 'wyckoff_utad_distribution_top'
+
+        # Veto 5: SOW (Sign of Weakness) - bearish breakdown
+        sow = row.get('wyckoff_sow', False)
+        sow_conf = row.get('wyckoff_sow_confidence', 0.0)
+        if sow and sow_conf >= 0.70:
+            return 'wyckoff_sow_weakness_detected'
+
+        # Veto 6: Crisis regime
         if regime_label == 'crisis':
             return 'crisis_regime'
 

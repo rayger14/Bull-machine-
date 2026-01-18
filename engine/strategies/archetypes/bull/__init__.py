@@ -16,6 +16,7 @@ from .order_block_retest import OrderBlockRetestArchetype, detect_order_block_re
 from .bos_choch_reversal import BOSCHOCHReversalArchetype, detect_bos_choch_reversal_signal
 from .liquidity_sweep import LiquiditySweepArchetype, detect_liquidity_sweep_signal
 from .trap_within_trend import TrapWithinTrendArchetype, detect_trap_within_trend_signal
+from .wick_trap_moneytaur import WickTrapMoneytaurArchetype
 
 __all__ = [
     # Archetype classes
@@ -24,6 +25,7 @@ __all__ = [
     'BOSCHOCHReversalArchetype',
     'LiquiditySweepArchetype',
     'TrapWithinTrendArchetype',
+    'WickTrapMoneytaurArchetype',
     # Detection helpers
     'detect_spring_utad_signal',
     'detect_order_block_retest_signal',

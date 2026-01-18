@@ -141,17 +141,38 @@ class TrapWithinTrendArchetype:
             self.regime_weight * regime_score
         )
 
+        # THERMO-FLOOR BOOST: Extreme capitulation = strong buy signal (BTC only)
+        symbol = row.get('symbol', 'BTCUSDT')
+        if 'BTC' in symbol:
+            # FIX: Use correct feature name from data
+            thermo_distance = row.get('thermo_floor_distance', 0.0)
+            # If price near/below mining cost = extreme capitulation
+            if thermo_distance < -0.10:  # Price > 10% below mining cost
+                # Miners selling at loss = bottom signal → boost by 2x
+                fusion_score *= 2.00
+                logger.debug(f"[H Thermo Boost] Extreme capitulation (distance={thermo_distance:.2f}), boosting by 2.0x")
+
         # Step 7: Apply safety vetoes
         veto_reason = self._check_vetoes(row, regime_label)
         if veto_reason:
             return None, 0.0, {'veto_reason': veto_reason, 'fusion_score': fusion_score}
 
-        # Step 8: Check fusion threshold
+        # Step 8: Apply temporal confluence timing multiplier
+        temporal_confluence = row.get('temporal_confluence', None)
+        temporal_mult = 1.0  # Default neutral
+        if temporal_confluence is not None and not pd.isna(temporal_confluence):
+            # Apply conservative 0.85-1.15 range (max ±15% adjustment)
+            # High confluence (0.80) = 1.09x boost, Low confluence (0.20) = 0.91x penalty
+            temporal_mult = 0.85 + (temporal_confluence * 0.30)
+            fusion_score *= temporal_mult
+
+        # Step 9: Check fusion threshold
         if fusion_score < self.min_fusion_score:
             return None, 0.0, {
                 'reason': 'below_threshold',
                 'fusion_score': fusion_score,
-                'threshold': self.min_fusion_score
+                'threshold': self.min_fusion_score,
+                'temporal_mult': temporal_mult
             }
 
         # Signal detected!
@@ -162,6 +183,8 @@ class TrapWithinTrendArchetype:
             'volume_score': volume_score,
             'regime_score': regime_score,
             'fusion_score': fusion_score,
+            'temporal_confluence': temporal_confluence,
+            'temporal_mult': temporal_mult,
             'pattern_type': 'trap_within_trend_long'
         }
 
@@ -352,6 +375,28 @@ class TrapWithinTrendArchetype:
         Returns:
             Veto reason string, or None if no veto
         """
+        # PTI VETO: Don't go LONG when retail longs are trapped (they will be liquidated)
+        # Trap Within Trend is a LONG archetype - veto when bullish_trap detected
+        # FIX: Use correct feature names from data
+        pti_score = row.get('tf1h_pti_score', 0.0)
+        pti_confidence = row.get('tf1h_pti_confidence', 0.0)
+        # Derive trap type from tf1d_pti_reversal (1=bullish reversal, -1=bearish reversal)
+        pti_reversal = row.get('tf1d_pti_reversal', 0)
+        pti_trap_type = 'bullish_trap' if pti_reversal < 0 else ('bearish_trap' if pti_reversal > 0 else 'none')
+
+        if (pti_trap_type == 'bullish_trap' and
+            pti_score > 0.60 and
+            pti_confidence > 0.70):
+            # Smart money will push down to liquidate trapped longs
+            return f'pti_bullish_trap_veto_score_{pti_score:.2f}_conf_{pti_confidence:.2f}'
+
+        # Veto 0: LPPLS blowoff - Don't buy parabolic tops (CRITICAL safety)
+        # FIX: Use correct feature names from data
+        lppls_veto = row.get('lppls_blowoff_detected', False)
+        lppls_confidence = row.get('lppls_confidence', 0.0)
+        if lppls_veto and lppls_confidence > 0.75:
+            return f'lppls_blowoff_detected_conf_{lppls_confidence:.2f}'
+
         # Veto 1: 4H trend turned bearish
         tf4h_trend = row.get('tf4h_trend_direction', 0)
         if tf4h_trend < 0:

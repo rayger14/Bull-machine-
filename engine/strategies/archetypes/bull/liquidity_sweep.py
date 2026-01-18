@@ -146,12 +146,22 @@ class LiquiditySweepArchetype:
         if veto_reason:
             return None, 0.0, {'veto_reason': veto_reason, 'fusion_score': fusion_score}
 
-        # Step 8: Check fusion threshold
+        # Step 8: Apply temporal confluence timing multiplier
+        temporal_confluence = row.get('temporal_confluence', None)
+        temporal_mult = 1.0  # Default neutral
+        if temporal_confluence is not None and not pd.isna(temporal_confluence):
+            # Apply conservative 0.85-1.15 range (max ±15% adjustment)
+            # High confluence (0.80) = 1.09x boost, Low confluence (0.20) = 0.91x penalty
+            temporal_mult = 0.85 + (temporal_confluence * 0.30)
+            fusion_score *= temporal_mult
+
+        # Step 9: Check fusion threshold
         if fusion_score < self.min_fusion_score:
             return None, 0.0, {
                 'reason': 'below_threshold',
                 'fusion_score': fusion_score,
-                'threshold': self.min_fusion_score
+                'threshold': self.min_fusion_score,
+                'temporal_mult': temporal_mult
             }
 
         # Signal detected!
@@ -162,6 +172,8 @@ class LiquiditySweepArchetype:
             'wyckoff_score': wyckoff_score,
             'regime_score': regime_score,
             'fusion_score': fusion_score,
+            'temporal_confluence': temporal_confluence,
+            'temporal_mult': temporal_mult,
             'pattern_type': 'liquidity_sweep_long'
         }
 

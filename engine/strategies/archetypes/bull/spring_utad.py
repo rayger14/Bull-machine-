@@ -79,8 +79,8 @@ class SpringUTADArchetype:
         # Extract thresholds with defaults (permissive for MVP)
         thresholds = self.config.get('thresholds', {})
 
-        # Core pattern thresholds
-        self.min_wyckoff_confidence = thresholds.get('min_wyckoff_confidence', 0.50)
+        # Core pattern thresholds (ENHANCED: use 0.70 confidence for high-conviction signals)
+        self.min_wyckoff_confidence = thresholds.get('min_wyckoff_confidence', 0.70)
         self.min_wick_lower_ratio = thresholds.get('min_wick_lower_ratio', 0.25)
         self.min_volume_zscore = thresholds.get('min_volume_zscore', 1.0)
         self.min_fusion_score = thresholds.get('min_fusion_score', 0.35)
@@ -134,17 +134,38 @@ class SpringUTADArchetype:
             self.regime_weight * regime_score
         )
 
+        # THERMO-FLOOR BOOST: Extreme capitulation = strong buy signal (BTC only)
+        symbol = row.get('symbol', 'BTCUSDT')
+        if 'BTC' in symbol:
+            # FIX: Use correct feature name from data
+            thermo_distance = row.get('thermo_floor_distance', 0.0)
+            # If price near/below mining cost = extreme capitulation
+            if thermo_distance < -0.10:  # Price > 10% below mining cost
+                # Miners selling at loss = bottom signal → boost by 2x
+                fusion_score *= 2.00
+                logger.debug(f"[A Thermo Boost] Extreme capitulation (distance={thermo_distance:.2f}), boosting by 2.0x")
+
         # Step 7: Apply safety vetoes
         veto_reason = self._check_vetoes(row, regime_label)
         if veto_reason:
             return None, 0.0, {'veto_reason': veto_reason, 'fusion_score': fusion_score}
 
-        # Step 8: Check fusion threshold
+        # Step 8: Apply temporal confluence timing multiplier
+        temporal_confluence = row.get('temporal_confluence', None)
+        temporal_mult = 1.0  # Default neutral
+        if temporal_confluence is not None and not pd.isna(temporal_confluence):
+            # Apply conservative 0.85-1.15 range (max ±15% adjustment)
+            # High confluence (0.80) = 1.09x boost, Low confluence (0.20) = 0.91x penalty
+            temporal_mult = 0.85 + (temporal_confluence * 0.30)
+            fusion_score *= temporal_mult
+
+        # Step 9: Check fusion threshold
         if fusion_score < self.min_fusion_score:
             return None, 0.0, {
                 'reason': 'below_threshold',
                 'fusion_score': fusion_score,
-                'threshold': self.min_fusion_score
+                'threshold': self.min_fusion_score,
+                'temporal_mult': temporal_mult
             }
 
         # Signal detected!
@@ -155,6 +176,8 @@ class SpringUTADArchetype:
             'momentum_score': momentum_score,
             'regime_score': regime_score,
             'fusion_score': fusion_score,
+            'temporal_confluence': temporal_confluence,
+            'temporal_mult': temporal_mult,
             'pattern_type': 'spring_long'
         }
 
@@ -165,36 +188,45 @@ class SpringUTADArchetype:
         Compute Wyckoff domain engine score.
 
         Checks for:
-        - Spring Type A or Type B events
+        - Spring Type A or Type B events (PRIMARY for this archetype)
         - Phase C or D context
         - LPS (Last Point of Support) events
+        - ST (Secondary Test) - retest validation
 
         Returns:
             Score 0.0-1.0
         """
         score = 0.0
 
-        # Check for Spring events (primary signal)
+        # Check for Spring events (primary signal) - ALWAYS USE CONFIDENCE >= 0.70
         spring_a = row.get('wyckoff_spring_a', False)
         spring_a_conf = row.get('wyckoff_spring_a_confidence', 0.0)
         spring_b = row.get('wyckoff_spring_b', False)
         spring_b_conf = row.get('wyckoff_spring_b_confidence', 0.0)
 
         if spring_a and spring_a_conf >= self.min_wyckoff_confidence:
-            score += 0.50  # Strong spring signal
+            score += 0.50  # Highest weight - Type A spring is best entry
         elif spring_b and spring_b_conf >= self.min_wyckoff_confidence:
-            score += 0.40  # Moderate spring signal
+            score += 0.40  # Type B spring is also strong
 
         # Check for LPS (Last Point of Support) - bullish
         lps = row.get('wyckoff_lps', False)
         lps_conf = row.get('wyckoff_lps_confidence', 0.0)
         if lps and lps_conf >= self.min_wyckoff_confidence:
-            score += 0.30
+            score += 0.25  # Strong accumulation signal
+
+        # Check for ST (Secondary Test) - support retest
+        st = row.get('wyckoff_st', False)
+        st_conf = row.get('wyckoff_st_confidence', 0.0)
+        if st and st_conf >= self.min_wyckoff_confidence:
+            score += 0.20  # Confirms support holding
 
         # Check Wyckoff phase context
         phase = row.get('wyckoff_phase_abc', 'neutral')
         if phase in ['C', 'D']:  # Testing/Last Point phases
             score += 0.20
+        elif phase == 'B':  # Building cause phase
+            score += 0.10
 
         return min(1.0, score)
 
@@ -349,6 +381,28 @@ class SpringUTADArchetype:
         Returns:
             Veto reason string, or None if no veto
         """
+        # LPPLS VETO: Don't buy parabolic tops (CRITICAL safety)
+        # FIX: Use correct feature names from data
+        lppls_veto = row.get('lppls_blowoff_detected', False)
+        lppls_confidence = row.get('lppls_confidence', 0.0)
+        if lppls_veto and lppls_confidence > 0.75:
+            return f'lppls_blowoff_detected_conf_{lppls_confidence:.2f}'
+
+        # PTI VETO: Don't go LONG when retail longs are trapped (they will be liquidated)
+        # Spring/UTAD is a LONG archetype - veto when bullish_trap detected
+        # FIX: Use correct feature names from data
+        pti_score = row.get('tf1h_pti_score', 0.0)
+        pti_confidence = row.get('tf1h_pti_confidence', 0.0)
+        # Derive trap type from tf1d_pti_reversal (1=bullish reversal, -1=bearish reversal)
+        pti_reversal = row.get('tf1d_pti_reversal', 0)
+        pti_trap_type = 'bullish_trap' if pti_reversal < 0 else ('bearish_trap' if pti_reversal > 0 else 'none')
+
+        if (pti_trap_type == 'bullish_trap' and
+            pti_score > 0.60 and
+            pti_confidence > 0.70):
+            # Smart money will push down to liquidate trapped longs
+            return f'pti_bullish_trap_veto_score_{pti_score:.2f}_conf_{pti_confidence:.2f}'
+
         # Veto 1: Overbought RSI (missed the move)
         rsi = row.get('rsi_14', 50)
         if rsi > self.max_rsi_entry:
@@ -364,7 +418,26 @@ class SpringUTADArchetype:
         if row.get('bearish_divergence_detected', False):
             return 'bearish_divergence'
 
-        # Veto 4: Crisis regime without extreme capitulation
+        # Veto 4: UTAD (Upthrust After Distribution) - HARD VETO
+        # If we're at a distribution top, DO NOT enter long
+        utad = row.get('wyckoff_utad', False)
+        utad_conf = row.get('wyckoff_utad_confidence', 0.0)
+        if utad and utad_conf >= 0.70:
+            return 'wyckoff_utad_distribution_top'
+
+        # Veto 5: SOW (Sign of Weakness) - bearish breakdown
+        sow = row.get('wyckoff_sow', False)
+        sow_conf = row.get('wyckoff_sow_confidence', 0.0)
+        if sow and sow_conf >= 0.70:
+            return 'wyckoff_sow_weakness_detected'
+
+        # Veto 6: BC (Buying Climax) - euphoria top
+        bc = row.get('wyckoff_bc', False)
+        bc_conf = row.get('wyckoff_bc_confidence', 0.0)
+        if bc and bc_conf >= 0.70:
+            return 'wyckoff_bc_euphoria_top'
+
+        # Veto 7: Crisis regime without extreme capitulation
         if regime_label == 'crisis':
             capitulation_depth = row.get('capitulation_depth', 0.0)
             if capitulation_depth > -0.15:  # Not deep enough drawdown

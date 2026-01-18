@@ -92,10 +92,11 @@ class BOSCHOCHReversalArchetype:
         self.min_volume_zscore = thresholds.get('min_volume_zscore', 0.8)
         self.min_fusion_score = thresholds.get('min_fusion_score', 0.35)
 
-        # Domain engine weights
-        self.smc_weight = thresholds.get('smc_weight', 0.40)
-        self.momentum_weight = thresholds.get('momentum_weight', 0.30)
-        self.volume_weight = thresholds.get('volume_weight', 0.20)
+        # Domain engine weights (rebalanced to include Wyckoff)
+        self.smc_weight = thresholds.get('smc_weight', 0.35)
+        self.momentum_weight = thresholds.get('momentum_weight', 0.25)
+        self.volume_weight = thresholds.get('volume_weight', 0.15)
+        self.wyckoff_weight = thresholds.get('wyckoff_weight', 0.15)
         self.regime_weight = thresholds.get('regime_weight', 0.10)
 
         # Safety thresholds
@@ -124,28 +125,53 @@ class BOSCHOCHReversalArchetype:
         # Step 3: Check volume confirmation
         volume_score = self._compute_volume_score(row)
 
-        # Step 4: Check regime alignment
+        # Step 4: Check Wyckoff events
+        wyckoff_score = self._compute_wyckoff_score(row)
+
+        # Step 5: Check regime alignment
         regime_score = self._compute_regime_score(regime_label)
 
-        # Step 5: Compute weighted fusion score
+        # Step 6: Compute weighted fusion score
         fusion_score = (
             self.smc_weight * smc_score +
             self.momentum_weight * momentum_score +
             self.volume_weight * volume_score +
+            self.wyckoff_weight * wyckoff_score +
             self.regime_weight * regime_score
         )
+
+        # THERMO-FLOOR BOOST: Extreme capitulation = strong buy signal (BTC only)
+        symbol = row.get('symbol', 'BTCUSDT')
+        if 'BTC' in symbol:
+            # FIX: Use correct feature name from data
+            thermo_distance = row.get('thermo_floor_distance', 0.0)
+            # If price near/below mining cost = extreme capitulation
+            if thermo_distance < -0.10:  # Price > 10% below mining cost
+                # Miners selling at loss = bottom signal → boost by 2x
+                fusion_score *= 2.00
+                logger.debug(f"[C Thermo Boost] Extreme capitulation (distance={thermo_distance:.2f}), boosting by 2.0x")
 
         # Step 6: Apply safety vetoes
         veto_reason = self._check_vetoes(row, regime_label)
         if veto_reason:
             return None, 0.0, {'veto_reason': veto_reason, 'fusion_score': fusion_score}
 
-        # Step 7: Check fusion threshold
+        # Step 7: Apply temporal confluence timing multiplier
+        temporal_confluence = row.get('temporal_confluence', None)
+        temporal_mult = 1.0  # Default neutral
+        if temporal_confluence is not None and not pd.isna(temporal_confluence):
+            # Apply conservative 0.85-1.15 range (max ±15% adjustment)
+            # High confluence (0.80) = 1.09x boost, Low confluence (0.20) = 0.91x penalty
+            temporal_mult = 0.85 + (temporal_confluence * 0.30)
+            fusion_score *= temporal_mult
+
+        # Step 8: Check fusion threshold
         if fusion_score < self.min_fusion_score:
             return None, 0.0, {
                 'reason': 'below_threshold',
                 'fusion_score': fusion_score,
-                'threshold': self.min_fusion_score
+                'threshold': self.min_fusion_score,
+                'temporal_mult': temporal_mult
             }
 
         # Signal detected!
@@ -153,8 +179,11 @@ class BOSCHOCHReversalArchetype:
             'smc_score': smc_score,
             'momentum_score': momentum_score,
             'volume_score': volume_score,
+            'wyckoff_score': wyckoff_score,
             'regime_score': regime_score,
             'fusion_score': fusion_score,
+            'temporal_confluence': temporal_confluence,
+            'temporal_mult': temporal_mult,
             'pattern_type': 'bos_choch_long'
         }
 
@@ -168,6 +197,7 @@ class BOSCHOCHReversalArchetype:
         - Bullish BOS on 1H or 4H
         - CHOCH signal (change of character)
         - Structure break confirmation
+        - 4H CHOCH flag (additional confirmation)
 
         Returns:
             Score 0.0-1.0
@@ -177,22 +207,27 @@ class BOSCHOCHReversalArchetype:
         # Check for bullish BOS on 1H
         tf1h_bos_bull = row.get('tf1h_bos_bullish', False)
         if tf1h_bos_bull:
-            score += 0.40
+            score += 0.35
 
         # Check for bullish BOS on 4H (stronger signal)
         tf4h_bos_bull = row.get('tf4h_bos_bullish', False)
         if tf4h_bos_bull:
-            score += 0.50
+            score += 0.45
 
         # Check for CHOCH (if available)
         smc_choch = row.get('smc_choch', False)
         if smc_choch:
-            score += 0.30
+            score += 0.25
+
+        # NEW: Check for 4H CHOCH flag (higher timeframe character change)
+        tf4h_choch = row.get('tf4h_choch_flag', False)
+        if tf4h_choch:
+            score += 0.20  # Strong confirmation of trend reversal
 
         # Check 4H fusion score as structure quality indicator
         tf4h_fusion = row.get('tf4h_fusion_score', 0.0)
         if tf4h_fusion > 0.5:
-            score += 0.20 * (tf4h_fusion - 0.5) / 0.5
+            score += 0.15 * (tf4h_fusion - 0.5) / 0.5
 
         return min(1.0, score)
 
@@ -278,6 +313,48 @@ class BOSCHOCHReversalArchetype:
 
         return min(1.0, score)
 
+    def _compute_wyckoff_score(self, row: pd.Series) -> float:
+        """
+        Compute Wyckoff domain engine score.
+
+        Checks for:
+        - SOS (Sign of Strength) - breakout confirmation
+        - LPS (Last Point of Support) - retest before continuation
+        - Phase D/E - trend continuation context
+
+        Returns:
+            Score 0.0-1.0
+        """
+        score = 0.0
+        confidence_threshold = 0.70  # High-confidence threshold
+
+        # Check for SOS (Sign of Strength - perfect for BOS/CHOCH)
+        sos = row.get('wyckoff_sos', False)
+        sos_conf = row.get('wyckoff_sos_confidence', 0.0)
+        if sos and sos_conf >= confidence_threshold:
+            score += 0.50  # Highest weight - confirms breakout strength
+
+        # Check for LPS (Last Point of Support - retest before markup)
+        lps = row.get('wyckoff_lps', False)
+        lps_conf = row.get('wyckoff_lps_confidence', 0.0)
+        if lps and lps_conf >= confidence_threshold:
+            score += 0.30
+
+        # Check Wyckoff phase context
+        phase = row.get('wyckoff_phase_abc', 'neutral')
+        if phase == 'D':  # Trend beginning phase
+            score += 0.25
+        elif phase == 'E':  # Trend continuation phase
+            score += 0.20
+
+        # Check for AR (Automatic Rally) - initial bounce after capitulation
+        ar = row.get('wyckoff_ar', False)
+        ar_conf = row.get('wyckoff_ar_confidence', 0.0)
+        if ar and ar_conf >= confidence_threshold:
+            score += 0.20
+
+        return min(1.0, score)
+
     def _compute_regime_score(self, regime_label: str) -> float:
         """
         Compute regime alignment score.
@@ -310,6 +387,28 @@ class BOSCHOCHReversalArchetype:
         Returns:
             Veto reason string, or None if no veto
         """
+        # LPPLS VETO: Don't buy parabolic tops (CRITICAL safety)
+        # FIX: Use correct feature names from data
+        lppls_veto = row.get('lppls_blowoff_detected', False)
+        lppls_confidence = row.get('lppls_confidence', 0.0)
+        if lppls_veto and lppls_confidence > 0.75:
+            return f'lppls_blowoff_detected_conf_{lppls_confidence:.2f}'
+
+        # PTI VETO: Don't go LONG when retail longs are trapped (they will be liquidated)
+        # BOS/CHOCH Reversal is a LONG archetype - veto when bullish_trap detected
+        # FIX: Use correct feature names from data
+        pti_score = row.get('tf1h_pti_score', 0.0)
+        pti_confidence = row.get('tf1h_pti_confidence', 0.0)
+        # Derive trap type from tf1d_pti_reversal (1=bullish reversal, -1=bearish reversal)
+        pti_reversal = row.get('tf1d_pti_reversal', 0)
+        pti_trap_type = 'bullish_trap' if pti_reversal < 0 else ('bearish_trap' if pti_reversal > 0 else 'none')
+
+        if (pti_trap_type == 'bullish_trap' and
+            pti_score > 0.60 and
+            pti_confidence > 0.70):
+            # Smart money will push down to liquidate trapped longs
+            return f'pti_bullish_trap_veto_score_{pti_score:.2f}_conf_{pti_confidence:.2f}'
+
         # Veto 1: Extreme overbought RSI
         rsi = row.get('rsi_14', 50)
         if rsi > self.max_rsi:
@@ -336,6 +435,24 @@ class BOSCHOCHReversalArchetype:
 
         if (tf1h_bos_bull or tf4h_bos_bull) and volume_zscore < -0.5:
             return f'weak_volume_breakout_{volume_zscore:.1f}'
+
+        # Veto 6: UTAD (Upthrust After Distribution) - distribution top
+        utad = row.get('wyckoff_utad', False)
+        utad_conf = row.get('wyckoff_utad_confidence', 0.0)
+        if utad and utad_conf >= 0.70:
+            return 'wyckoff_utad_distribution_top'
+
+        # Veto 7: SOW (Sign of Weakness) - bearish breakdown signal
+        sow = row.get('wyckoff_sow', False)
+        sow_conf = row.get('wyckoff_sow_confidence', 0.0)
+        if sow and sow_conf >= 0.70:
+            return 'wyckoff_sow_weakness_detected'
+
+        # Veto 8: AS (Automatic Reaction) - relief drop after BC
+        as_event = row.get('wyckoff_as', False)
+        as_conf = row.get('wyckoff_as_confidence', 0.0)
+        if as_event and as_conf >= 0.70:
+            return 'wyckoff_as_selling_pressure'
 
         return None
 
