@@ -93,7 +93,8 @@ class HMMRegimeModel:
         self.model = data['model']
         self.state_map = data['state_map']
         self.scaler = data.get('scaler')
-        self.feature_order = data.get('features', REGIME_FEATURES_V2)
+        # Prioritize 'feature_order' key (used by simplified training script)
+        self.feature_order = data.get('feature_order', data.get('features', REGIME_FEATURES_V2))
 
         logger.info(f"Loaded HMM model from {model_path}")
         logger.info(f"State mapping: {self.state_map}")
