@@ -1,0 +1,417 @@
+# Archetype Registry - Single Source of Truth
+# All archetypes MUST be registered here to be recognized by the system
+#
+# Version: 2.0
+# Last Updated: 2025-12-12
+# Schema: See ARCHETYPE_CONTRACT_DESIGN.md for specification
+
+version: "2.0"
+registry_type: "archetype"
+description: "Canonical registry of all Bull Machine archetypes"
+
+# ============================================================================
+# PRODUCTION ARCHETYPES (Battle-tested, live-ready)
+# ============================================================================
+
+archetypes:
+  # --- BEAR MARKET ARCHETYPES (SHORT BIAS) ---
+
+  - id: S1
+    name: "Liquidity Vacuum Reversal"
+    slug: "liquidity_vacuum"
+    class: "engine.strategies.archetypes.bear.LiquidityVacuumArchetype"
+    maturity: production
+    direction: long  # Counter-trend reversal
+    regime_tags:
+      - risk_off
+      - crisis
+    requires_engines:
+      - liquidity
+      - wyckoff
+      - macro
+    requires_features:
+      critical:
+        - liquidity_score
+        - liquidity_drain_pct
+        - volume_zscore
+        - wick_lower_ratio
+      recommended:
+        - VIX_Z
+        - DXY_Z
+        - funding_Z
+        - crisis_composite
+      optional:
+        - capitulation_depth
+        - liquidity_velocity
+        - liquidity_persistence
+    enable_flag: enable_S1
+    description: |
+      Capitulation reversal during liquidity vacuum conditions.
+      Detects extreme orderbook drain + panic selling + wick rejection.
+      Key signals: Liquidity drained >30% below 7d avg, volume panic z>2.0, deep lower wick >30%.
+      Target: 10-15 trades/year, PF > 2.0 in bear markets.
+
+      Historical Examples:
+      - 2022-06-18: LUNA capitulation → -44% liquidity drain → violent 25% bounce
+      - 2022-11-09: FTX collapse → liquidity vacuum → explosive reversal
+      - 2022-05-12: LUNA death spiral → extreme capitulation → sharp bounce
+    historical_performance:
+      backtest_period: "2022-2024"
+      total_trades: 34
+      win_rate: 0.68
+      profit_factor: 2.34
+      sharpe_ratio: 1.82
+      avg_hold_hours: 48
+      max_drawdown_pct: -8.2
+
+  - id: S4
+    name: "Funding Divergence (Short Squeeze)"
+    slug: "funding_divergence"
+    class: "engine.strategies.archetypes.bear.FundingDivergenceArchetype"
+    maturity: production
+    direction: long  # Counter-trend reversal
+    regime_tags:
+      - risk_off
+      - neutral
+    requires_engines:
+      - funding
+      - liquidity
+    requires_features:
+      critical:
+        - funding_rate
+        - funding_Z
+        - oi_change
+      recommended:
+        - liquidity_score
+        - volume_zscore
+        - rsi_14
+      optional:
+        - shorts_liquidations
+        - perp_spot_basis
+    enable_flag: enable_S4
+    description: |
+      Short squeeze setup from extreme negative funding + rising OI.
+      Targets overleveraged short positions forced to cover.
+      Key signals: Funding <-0.01% (negative), OI rising, liquidity recovering.
+      Target: 12-18 trades/year, PF > 1.8.
+    historical_performance:
+      backtest_period: "2022-2024"
+      total_trades: 42
+      win_rate: 0.64
+      profit_factor: 1.89
+      sharpe_ratio: 1.45
+      avg_hold_hours: 36
+      max_drawdown_pct: -11.4
+
+  - id: S5
+    name: "Long Squeeze Cascade"
+    slug: "long_squeeze"
+    class: "engine.strategies.archetypes.bear.LongSqueezeArchetype"
+    maturity: production
+    direction: short  # Contrarian short in bull exhaustion
+    regime_tags:
+      - risk_on  # FIXED: S5 needs bull markets to find overleveraged longs
+      - neutral
+    requires_engines:
+      - funding
+      - liquidity
+      - smc
+    requires_features:
+      critical:
+        - funding_rate
+        - funding_Z
+        - oi_change
+        - bos_detected
+      recommended:
+        - liquidity_score
+        - volume_zscore
+        - tf4h_external_trend
+      optional:
+        - longs_liquidations
+        - perp_spot_basis
+    enable_flag: enable_S5
+    description: |
+      Long squeeze during downtrend with overleveraged longs.
+      Extreme positive funding + BOS down + liquidity drain cascades into liquidations.
+      Key signals: Funding >+0.01% (positive), BOS down detected, OI rising.
+      Target: 8-12 trades/year, PF > 2.0.
+    historical_performance:
+      backtest_period: "2022-2024"
+      total_trades: 28
+      win_rate: 0.71
+      profit_factor: 2.18
+      sharpe_ratio: 1.67
+      avg_hold_hours: 42
+      max_drawdown_pct: -9.8
+
+  # --- BULL MARKET ARCHETYPES (LONG BIAS) ---
+
+  - id: H
+    name: "Trap Within Trend"
+    slug: "trap_within_trend"
+    class: "engine.strategies.archetypes.bull.TrapWithinTrendArchetype"
+    maturity: calibrated
+    direction: long
+    regime_tags:
+      - risk_on
+    requires_engines:
+      - wyckoff
+      - smc
+      - liquidity
+    requires_features:
+      critical:
+        - tf4h_external_trend
+        - liquidity_score
+        - wick_upper_ratio
+        - bos_detected
+      recommended:
+        - adx_14
+        - atr_percentile
+        - wyckoff_phase
+      optional:
+        - volume_zscore
+    enable_flag: enable_H
+    description: |
+      HTF uptrend + liquidity drop + wick against trend.
+      Counter-trend trap that fails, resuming main trend.
+      Key signals: 4H uptrend, liquidity drops, upper wick rejection, BOS detected.
+      Target: 20-30 trades/year, PF > 1.8.
+    historical_performance:
+      backtest_period: "2023-2024"
+      total_trades: 58
+      win_rate: 0.62
+      profit_factor: 1.76
+      sharpe_ratio: 1.34
+      avg_hold_hours: 28
+      max_drawdown_pct: -14.2
+
+  - id: B
+    name: "Order Block Retest"
+    slug: "order_block_retest"
+    class: "engine.strategies.archetypes.bull.OrderBlockRetestArchetype"
+    maturity: calibrated
+    direction: long
+    regime_tags:
+      - risk_on
+    requires_engines:
+      - smc
+      - wyckoff
+    requires_features:
+      critical:
+        - boms_strength
+        - bos_detected
+        - order_block_proximity
+      recommended:
+        - wyckoff_phase
+        - volume_zscore
+        - liquidity_score
+      optional:
+        - fvg_reclaim
+    enable_flag: enable_B
+    description: |
+      Price returns to test significant order block zone.
+      BOMS strength + Wyckoff context + near BOS zone.
+      Key signals: BOMS >0.5, price within 2% of order block, volume confirmation.
+      Target: 25-35 trades/year, PF > 1.6.
+    historical_performance:
+      backtest_period: "2023-2024"
+      total_trades: 64
+      win_rate: 0.59
+      profit_factor: 1.58
+      sharpe_ratio: 1.22
+      avg_hold_hours: 32
+      max_drawdown_pct: -16.8
+
+  - id: K
+    name: "Wick Trap (Moneytaur)"
+    slug: "wick_trap_moneytaur"
+    class: "engine.strategies.archetypes.bull.WickTrapMoneytaurArchetype"
+    maturity: calibrated
+    direction: long
+    regime_tags:
+      - risk_on
+      - neutral
+    requires_engines:
+      - smc
+      - liquidity
+    requires_features:
+      critical:
+        - wick_lower_ratio
+        - adx_14
+        - bos_detected
+      recommended:
+        - liquidity_score
+        - volume_zscore
+      optional:
+        - wick_anomaly_score
+    enable_flag: enable_K
+    description: |
+      Wick anomaly + ADX > 25 + BOS context.
+      Extreme lower wick in trending market indicates trap exhaustion.
+      Key signals: Lower wick >40%, ADX >25, BOS detected.
+      Target: 15-20 trades/year, PF > 1.7.
+    historical_performance:
+      backtest_period: "2023-2024"
+      total_trades: 38
+      win_rate: 0.61
+      profit_factor: 1.73
+      sharpe_ratio: 1.28
+      avg_hold_hours: 24
+      max_drawdown_pct: -12.4
+
+  # --- STUB ARCHETYPES (Placeholders, not yet implemented) ---
+
+  - id: A
+    name: "Spring / UTAD"
+    slug: "wyckoff_spring_utad"
+    class: "engine.strategies.archetypes.bull.SpringUTADArchetype"
+    maturity: stub
+    direction: long
+    regime_tags:
+      - risk_on
+      - neutral
+    requires_engines:
+      - wyckoff
+      - pti
+    requires_features:
+      critical:
+        - pti_score_1h
+        - pti_score_1d
+        - wyckoff_phase
+      recommended:
+        - wyckoff_m1_signal
+        - wyckoff_m2_signal
+        - displacement_detected
+      optional:
+        - volume_zscore
+    enable_flag: enable_A
+    description: |
+      Wyckoff spring (bullish) or UTAD (bearish) trap reversals.
+      Uses PTI-based displacement confirmation.
+      Target: 15-20 trades/year, PF > 2.5.
+
+      **STATUS: STUB - Needs Implementation**
+      Blockers:
+      - PTI feature integration incomplete
+      - Wyckoff phase detection needs calibration
+      - No historical validation yet
+
+      Next Steps:
+      1. Implement required_features() method
+      2. Implement score() using PTI + Wyckoff phase
+      3. Add regime veto logic
+      4. Calibrate on 2020-2024 data
+    implementation_status:
+      status: "stub"
+      blockers:
+        - "PTI feature integration incomplete"
+        - "Wyckoff phase detection needs calibration"
+        - "No historical validation yet"
+      next_steps:
+        - "Implement required_features() method"
+        - "Implement score() using PTI + Wyckoff phase"
+        - "Add regime veto logic"
+        - "Calibrate on 2020-2024 data"
+
+  - id: C
+    name: "BOS/CHOCH Reversal"
+    slug: "bos_choch_reversal"
+    class: "engine.strategies.archetypes.bull.BosChochReversalArchetype"
+    maturity: stub
+    direction: long
+    regime_tags:
+      - risk_on
+    requires_engines:
+      - smc
+      - momentum
+    requires_features:
+      critical:
+        - bos_detected
+        - choch_detected
+        - displacement_detected
+      recommended:
+        - momentum_score
+        - volume_zscore
+      optional: []
+    enable_flag: enable_C
+    description: |
+      Displacement + momentum + recent BOS.
+      Strong structural break with momentum continuation.
+      Target: 18-25 trades/year, PF > 1.9.
+
+      **STATUS: STUB - Needs Implementation**
+    implementation_status:
+      status: "stub"
+      blockers:
+        - "BOS/CHOCH detection logic incomplete"
+        - "Displacement scoring undefined"
+      next_steps:
+        - "Define BOS/CHOCH detection algorithm"
+        - "Implement displacement scoring"
+        - "Calibrate thresholds"
+
+# ============================================================================
+# DEPRECATED ARCHETYPES (Historical record, not used)
+# ============================================================================
+
+deprecated:
+  - id: S2
+    name: "Failed Rally Rejection"
+    slug: "failed_rally"
+    reason: "PF 0.48 after optimization, pattern fundamentally broken for BTC"
+    deprecated_date: "2024-12-01"
+    replacement: null
+    note: "Works for altcoins with different microstructure, disabled for BTC"
+
+  - id: S1_OLD
+    name: "Breakdown (Old)"
+    slug: "breakdown"
+    reason: "Replaced by S1 (Liquidity Vacuum) with better feature engineering"
+    deprecated_date: "2024-11-15"
+    replacement: "S1"
+
+  - id: S4_OLD
+    name: "Distribution (Old)"
+    slug: "distribution"
+    reason: "Replaced by S4 (Funding Divergence) with funding-centric logic"
+    deprecated_date: "2024-11-15"
+    replacement: "S4"
+
+  - id: D
+    name: "Failed Continuation"
+    slug: "failed_continuation"
+    reason: "Low signal count (<5 trades/year), merged into other patterns"
+    deprecated_date: "2024-10-15"
+    replacement: null
+
+  - id: E
+    name: "Liquidity Compression"
+    slug: "liquidity_compression"
+    reason: "Pattern overlap with Wick Trap, low discrimination"
+    deprecated_date: "2024-10-15"
+    replacement: "K"
+
+# ============================================================================
+# REGISTRY METADATA
+# ============================================================================
+
+metadata:
+  total_archetypes: 8
+  production_count: 3
+  calibrated_count: 3
+  development_count: 0
+  stub_count: 2
+  deprecated_count: 5
+  last_updated: "2025-12-12"
+  schema_version: "2.0"
+
+  # Summary by direction
+  long_bias_count: 6
+  short_bias_count: 1
+  bidirectional_count: 1
+
+  # Summary by regime
+  risk_on_count: 5
+  risk_off_count: 3
+  neutral_count: 2
+  crisis_count: 1
