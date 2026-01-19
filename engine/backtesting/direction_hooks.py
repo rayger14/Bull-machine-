@@ -364,10 +364,13 @@ def example_backtest_integration():
 
     This is pseudo-code demonstrating the integration pattern.
     """
-    from engine.archetypes.base_archetype import ArchetypeEntry, SignalType
+    raise NotImplementedError("This is example/documentation code only")
+
+    # The code below is kept for documentation purposes
+    from engine.archetypes.base_archetype import ArchetypeEntry, SignalType  # noqa: F401
 
     # Initialize direction tracking
-    direction_hooks = DirectionBacktestHooks(
+    direction_hooks = DirectionBacktestHooks(  # noqa: F821
         enabled=True,
         imbalance_threshold=0.70,
         scale_mode='soft',
