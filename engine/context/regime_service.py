@@ -50,8 +50,10 @@ import logging
 from pathlib import Path
 import pickle
 
-from engine.context.logistic_regime_model import LogisticRegimeModel
-from engine.context.regime_hysteresis import RegimeHysteresis
+# LogisticRegimeModel not present in current codebase - DYNAMIC_BASELINE mode unavailable
+# from engine.context.logistic_regime_model import LogisticRegimeModel
+# RegimeHysteresis not present in current codebase - hysteresis disabled
+# from engine.context.regime_hysteresis import RegimeHysteresis
 from engine.context.confidence_calibrator import CompositeCalibrator
 from engine.context.hybrid_regime_model import HybridRegimeModel
 
@@ -262,13 +264,11 @@ class RegimeService:
         if self.mode == REGIME_MODE_STATIC:
             logger.info("✓ Layer 1: Static mode (will read precomputed labels)")
         elif self.mode == REGIME_MODE_DYNAMIC_BASELINE:
-            # Load logistic model
-            if model_path and Path(model_path).exists():
-                self.model = LogisticRegimeModel(model_path)
-                logger.info(f"✓ Layer 1: Logistic Model loaded from {model_path}")
-            else:
-                logger.warning(f"⚠ Layer 1: No model found at {model_path}, initializing empty")
-                self.model = LogisticRegimeModel()
+            # Load logistic model - NOT IMPLEMENTED (missing LogisticRegimeModel)
+            raise NotImplementedError(
+                f"REGIME_MODE_DYNAMIC_BASELINE requires LogisticRegimeModel which is not present in codebase.\n"
+                f"Use mode='hybrid' (production default) instead, which uses HybridRegimeModel."
+            )
         elif self.mode == REGIME_MODE_DYNAMIC_ENSEMBLE:
             # Load ensemble model
             if model_path and Path(model_path).exists():
@@ -347,8 +347,10 @@ class RegimeService:
         # Layer 2: Hysteresis
         self.enable_hysteresis = enable_hysteresis
         if self.enable_hysteresis:
-            self.hysteresis = RegimeHysteresis(hysteresis_config)
-            logger.info("✓ Layer 2: Hysteresis enabled")
+            logger.warning("RegimeHysteresis not available - hysteresis will be disabled")
+            self.hysteresis = None
+            self.enable_hysteresis = False  # Force disable since module missing
+            logger.info("✗ Layer 2: Hysteresis disabled (module not found)")
         else:
             self.hysteresis = None
             logger.info("✗ Layer 2: Hysteresis disabled")
