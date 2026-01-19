@@ -30,7 +30,7 @@ from engine.backtesting.engine import BacktestEngine
 from engine.models.archetype_model import ArchetypeModel
 from engine.risk.circuit_breaker import CircuitBreakerEngine, CircuitBreakerThresholds
 from engine.portfolio.regime_allocator import RegimeWeightAllocator
-from engine.context.regime_service import RegimeService
+from engine.context.regime_manager import RegimeManager
 
 
 # ============================================================================
@@ -295,23 +295,21 @@ class TestRegimeCausality:
         - Regime labels for Jan-Jun are IDENTICAL in both runs
         - Proves regime[t] only depends on data[:t]
         """
-        # Create regime service (static mode for determinism)
-        # RegimeService doesn't use singleton pattern
-        rm = RegimeService(
-            mode='static',  # Use static mode for determinism
-            enable_event_override=False,
-            enable_hysteresis=False
+        # Create regime manager (static mode for determinism)
+        RegimeManager.reset_instance()
+        rm = RegimeManager(
+            enable_adaptive=False,  # Use static mode for determinism
+            static_regime_map={
+                '2024': 'neutral'
+            }
         )
 
         # Run 1: Full dataset (200 bars)
-        # Add static regime labels (all neutral for 2024)
         full_data = synthetic_ohlcv.copy()
-        full_data['regime_label'] = 'neutral'
         full_labeled = rm.classify_batch(full_data)
 
         # Run 2: Truncated dataset (first 100 bars)
         truncated_data = synthetic_ohlcv.iloc[:100].copy()
-        truncated_data['regime_label'] = 'neutral'
         truncated_labeled = rm.classify_batch(truncated_data)
 
         # CRITICAL ASSERTION: Regime labels must match on overlap
@@ -335,21 +333,25 @@ class TestRegimeCausality:
         For static regime mode, this is trivially true (regime = f(year)).
         For adaptive mode, this would verify HMM only uses features[:t].
         """
+        # Reset singleton
+        RegimeManager.reset_instance()
+
         # Use static mode (guaranteed causal)
-        rm = RegimeService(
-            mode='static',
-            enable_event_override=False,
-            enable_hysteresis=False
+        rm = RegimeManager(
+            enable_adaptive=False,
+            static_regime_map={'2024': 'neutral'}
         )
 
         # Classify single bar
-        test_bar = synthetic_ohlcv.iloc[50:51].copy()  # Need DataFrame for classify_batch
-        test_bar['regime_label'] = 'neutral'  # Add static label
-        result = rm.classify_batch(test_bar)
+        test_bar = synthetic_ohlcv.iloc[50]
+        result = rm.classify(
+            features={},  # Static mode doesn't need features
+            timestamp=test_bar.name
+        )
 
         # Verify result
-        assert 'regime_label' in result.columns, "Should have regime_label column"
-        assert result['regime_label'].iloc[0] == 'neutral', "Static regime should match provided label"
+        assert result['regime'] == 'neutral', "Static regime should match year map"
+        assert result['adaptive'] == False, "Should be in static mode"
 
         # For adaptive mode test, we'd need to verify:
         # 1. HMM state transitions only use past observations
