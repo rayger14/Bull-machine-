@@ -1,0 +1,50 @@
+{
+  "S1": {
+    "archetype": "S1",
+    "core": {
+      "status": "failed",
+      "error": "usage: backtest_knowledge_v2.py [-h] --asset ASSET [--start START] [--end END]\n                                [--config CONFIG]\n                                [--export-trades EXPORT_TRADES]\nbacktest_knowledge_v2.py: error: the following arguments are required: --asset\n"
+    },
+    "full": {
+      "status": "failed",
+      "error": "usage: backtest_knowledge_v2.py [-h] --asset ASSET [--start START] [--end END]\n                                [--config CONFIG]\n                                [--export-trades EXPORT_TRADES]\nbacktest_knowledge_v2.py: error: the following arguments are required: --asset\n"
+    },
+    "wiring_verified": false,
+    "checks": {
+      "error": "One or both tests failed",
+      "config_flags_correct": true
+    }
+  },
+  "S4": {
+    "archetype": "S4",
+    "core": {
+      "status": "failed",
+      "error": "usage: backtest_knowledge_v2.py [-h] --asset ASSET [--start START] [--end END]\n                                [--config CONFIG]\n                                [--export-trades EXPORT_TRADES]\nbacktest_knowledge_v2.py: error: the following arguments are required: --asset\n"
+    },
+    "full": {
+      "status": "failed",
+      "error": "usage: backtest_knowledge_v2.py [-h] --asset ASSET [--start START] [--end END]\n                                [--config CONFIG]\n                                [--export-trades EXPORT_TRADES]\nbacktest_knowledge_v2.py: error: the following arguments are required: --asset\n"
+    },
+    "wiring_verified": false,
+    "checks": {
+      "error": "One or both tests failed",
+      "config_flags_correct": true
+    }
+  },
+  "S5": {
+    "archetype": "S5",
+    "core": {
+      "status": "failed",
+      "error": "usage: backtest_knowledge_v2.py [-h] --asset ASSET [--start START] [--end END]\n                                [--config CONFIG]\n                                [--export-trades EXPORT_TRADES]\nbacktest_knowledge_v2.py: error: the following arguments are required: --asset\n"
+    },
+    "full": {
+      "status": "failed",
+      "error": "usage: backtest_knowledge_v2.py [-h] --asset ASSET [--start START] [--end END]\n                                [--config CONFIG]\n                                [--export-trades EXPORT_TRADES]\nbacktest_knowledge_v2.py: error: the following arguments are required: --asset\n"
+    },
+    "wiring_verified": false,
+    "checks": {
+      "error": "One or both tests failed",
+      "config_flags_correct": true
+    }
+  }
+}

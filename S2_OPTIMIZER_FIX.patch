@@ -1,0 +1,34 @@
+diff --git a/bin/backtest_knowledge_v2.py b/bin/backtest_knowledge_v2.py
+index abc123..def456 100644
+--- a/bin/backtest_knowledge_v2.py
++++ b/bin/backtest_knowledge_v2.py
+@@ -2575,6 +2575,24 @@ if __name__ == '__main__':
+     # Filter to date range
+     start_ts = pd.Timestamp(args.start, tz='UTC')
+     end_ts = pd.Timestamp(args.end, tz='UTC')
+     df = df[(df.index >= start_ts) & (df.index <= end_ts)].copy()
+
+     print(f"Loaded {len(df)} bars from {df.index[0]} to {df.index[-1]}")
++
++    # ============================================================================
++    # PR#6D: Apply archetype-specific runtime enrichment
++    # ============================================================================
++    if runtime_config and 'archetypes' in runtime_config:
++        archetypes = runtime_config['archetypes']
++
++        # S2 (Failed Rally) runtime enrichment
++        if archetypes.get('enable_S2', False):
++            s2_cfg = archetypes.get('failed_rally', {})
++            if s2_cfg.get('use_runtime_features', False):
++                try:
++                    from engine.strategies.archetypes.bear.failed_rally_runtime import apply_runtime_enrichment
++                    print("[S2] Applying runtime feature enrichment...")
++                    lookback = s2_cfg.get('lookback_window', 14)
++                    df = apply_runtime_enrichment(df, lookback=lookback)
++                    print(f"[S2] ✓ Enriched {len(df)} bars with runtime features")
++                except Exception as e:
++                    print(f"[S2] ✗ Runtime enrichment failed: {e}")
++                    print("[S2] Continuing with legacy S2 logic (config thresholds will be ignored)")
+
+     # Load params from config or use defaults
+     runtime_config = None

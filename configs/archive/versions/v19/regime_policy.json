@@ -1,0 +1,99 @@
+{
+  "version": "1.9.0",
+  "enabled": true,
+  "note": "Regime-adaptive policy for Bull Machine v1.9. Applies bounded adjustments to fusion threshold, risk sizing, and domain weights based on macro regime classification.",
+
+  "min_confidence_for_adjustment": 0.60,
+  "max_threshold_delta": 0.10,
+  "max_total_weight_shift": 0.15,
+
+  "bounds": {
+    "enter_threshold_delta": {
+      "risk_on": -0.05,
+      "neutral": 0.00,
+      "risk_off": 0.05,
+      "crisis": 0.10
+    },
+
+    "risk_multiplier": {
+      "risk_on": 1.25,
+      "neutral": 1.00,
+      "risk_off": 0.60,
+      "crisis": 0.00
+    },
+
+    "weight_nudges": {
+      "risk_on": {
+        "momentum": 0.05,
+        "wyckoff": -0.03,
+        "temporal": 0.02
+      },
+      "neutral": {},
+      "risk_off": {
+        "wyckoff": 0.05,
+        "momentum": -0.03,
+        "smc": 0.02
+      },
+      "crisis": {
+        "wyckoff": 0.08,
+        "smc": 0.04,
+        "momentum": -0.08,
+        "temporal": -0.04
+      }
+    }
+  },
+
+  "feature_order": [
+    "VIX",
+    "DXY",
+    "MOVE",
+    "YIELD_2Y",
+    "YIELD_10Y",
+    "USDT.D",
+    "BTC.D",
+    "TOTAL",
+    "TOTAL2",
+    "funding",
+    "oi",
+    "rv_20d",
+    "rv_60d"
+  ],
+
+  "regime_labels": {
+    "0": "risk_on",
+    "1": "neutral",
+    "2": "risk_off",
+    "3": "crisis"
+  },
+
+  "training": {
+    "vix_bands": {
+      "risk_on": [0, 15],
+      "neutral": [15, 22],
+      "risk_off": [22, 30],
+      "crisis": [30, 999]
+    },
+    "move_bands": {
+      "risk_on": [0, 80],
+      "neutral": [80, 100],
+      "risk_off": [100, 120],
+      "crisis": [120, 999]
+    },
+    "dxy_bands": {
+      "risk_on": [0, 100],
+      "neutral": [100, 103],
+      "risk_off": [103, 105],
+      "crisis": [105, 999]
+    }
+  },
+
+  "validation": {
+    "hysteresis": {
+      "enabled": true,
+      "required_consecutive_signals": 3,
+      "note": "Require 3 consecutive regime signals before switching to prevent whipsaw"
+    },
+    "override_on_macro_veto": true,
+    "note": "If macro veto triggers, force crisis regime regardless of classifier"
+  }
+}

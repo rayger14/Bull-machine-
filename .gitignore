@@ -1,9 +1,28 @@
+# ============================================================================
+# Bull Machine .gitignore
+# Enhanced version - 2025-11-14
+# Repository restructuring - 2025-11-14
+#
+# Structure:
+# - configs/{frozen,mvp,experiments,regime,bear}/
+# - data/{processed,raw,archive}/
+# - engine/strategies/archetypes/{bull,bear}/
+# - tests/{unit,integration}/
+# - docs/{technical,backtests,analysis,reports}/
+# ============================================================================
+
+# ----------------------------------------------------------------------------
 # Python
+# ----------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+
+# ----------------------------------------------------------------------------
+# Build & Distribution
+# ----------------------------------------------------------------------------
 build/
 develop-eggs/
 dist/
@@ -16,12 +35,16 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
 
-# Virtual environments
+# ----------------------------------------------------------------------------
+# Virtual Environments
+# ----------------------------------------------------------------------------
 .env
 .venv
 env/
@@ -30,14 +53,21 @@ ENV/
 env.bak/
 venv.bak/
 
-# IDEs
+# ----------------------------------------------------------------------------
+# IDEs & Editors
+# ----------------------------------------------------------------------------
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.pydevproject
+.settings/
 
-# OS
+# ----------------------------------------------------------------------------
+# OS Files
+# ----------------------------------------------------------------------------
 .DS_Store
 .DS_Store?
 ._*
@@ -45,25 +75,228 @@ venv.bak/
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Bull Machine specific
+# ----------------------------------------------------------------------------
+# Cache Directories
+# ----------------------------------------------------------------------------
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.cache/
+.dmypy.json
+dmypy.json
+
+# ----------------------------------------------------------------------------
+# Bull Machine Specific - State
+# ----------------------------------------------------------------------------
 .bm_state.json
-*.log
 
-# Results & reports (don't commit large backtest artifacts)
-reports/**/*
+# ----------------------------------------------------------------------------
+# Data Directories (Feature Stores, Cached Data)
+# ----------------------------------------------------------------------------
 data/**/*
+!data/.gitkeep
+!data/README.md
+
+# Telemetry (large JSON masks)
+telemetry/**/*
+!telemetry/.gitkeep
+!telemetry/README.md
+
+# ----------------------------------------------------------------------------
+# Results & Experiments (All experimental outputs gitignored)
+# ----------------------------------------------------------------------------
+results/**/*
+!results/.gitkeep
+!results/README.md
+!results/bench_v2/
+results/bench_v2/**/*
+!results/bear_patterns/
+results/bear_patterns/**/*
+
+# Allow curated reference results (ground truth)
+!results_reference/
+!results_reference/**/*
+
+# Allow specific production benchmarks if needed
+# !results/production/
+
+# ----------------------------------------------------------------------------
+# Logs (All logs gitignored except structure)
+# ----------------------------------------------------------------------------
+logs/**/*
+!logs/.gitkeep
+!logs/README.md
+!logs/paper_trading/
+logs/paper_trading/**/*
+
+# ----------------------------------------------------------------------------
+# Reports (Optuna trials, optimization outputs)
+# ----------------------------------------------------------------------------
+# Root /reports directory removed - all reports now in docs/reports/
+reports/**/*
+!reports/.gitkeep
+!reports/README.md
+
+# Archive experimental reports (only curated reports tracked)
+docs/reports/archive/**/*
+!docs/reports/archive/README.md
+
+# ----------------------------------------------------------------------------
+# Models (ML Artifacts)
+# ----------------------------------------------------------------------------
+models/**/*
+!models/.gitkeep
+!models/README.md
+
+# ----------------------------------------------------------------------------
+# Profiles
+# ----------------------------------------------------------------------------
+profiles/**/*
+*.prof
+*_profile.txt
+
+# ----------------------------------------------------------------------------
+# Root-Level Experimental Outputs (Prevent future accumulation)
+# ----------------------------------------------------------------------------
+
+# Backtest Results
+/*_backtest_results*.json
+/*_results*.json
+/*_validation*.json
+/*_optimization*.json
+/*_fine_grid*.json
+/*_comparison*.csv
+/*_training*.json
+/*_candidates*.jsonl
+
+# Signal & Decision Logs
+/hybrid_signals_*.jsonl
+/decision_log*.jsonl
+/fusion_*.jsonl
+/signal_blocks*.jsonl
+/open_fail*.jsonl
+/open_ok*.jsonl
+
+# Health & Portfolio Summaries
+/health_summary_*.json
+/portfolio_summary_*.json
+
+# Sweep Results
+/sweep_results_*.json
+/sweep_parameters*.json
+/threshold_sensitivity_sweep*.csv
+
+# ----------------------------------------------------------------------------
+# Root-Level Scripts (Prevent experimental scripts in root)
+# ----------------------------------------------------------------------------
+/test_*.py
+/sweep_*.py
+/analyze_*.py
+/download_*.py
+/check_*.py
+/diagnose_*.py
+/debug_*.py
+/monitor_*.sh
+/optimize_all.sh
+/WATCH_*.sh
+
+# ----------------------------------------------------------------------------
+# Root-Level Temporary Files
+# ----------------------------------------------------------------------------
+/*.log
+/q3_2024*.log
+/monitor_output.log
+/full_year_test_output.log
+
+# Config patches
+/config_patch_*.json
+/exit_cfg_applied.json
+/*_cfg_applied.json
+
+# Temporary utilities
+/engine_factory.py
+/bull_machine_config.py
+/institutional_testing_results.json
+
+# ----------------------------------------------------------------------------
+# Backup Files (2025-12-19)
+# ----------------------------------------------------------------------------
+*.bak
+*.backup
+*_backup_*
+*.backup_before_*
+
+# ----------------------------------------------------------------------------
+# Test Output Files (2025-12-19)
+# ----------------------------------------------------------------------------
+*_validation_output.txt
+*_test_output.txt
+multi_regime_test_output.txt
+
+# ----------------------------------------------------------------------------
+# Optuna Databases (2025-12-19)
+# ----------------------------------------------------------------------------
+optuna_*.db
+optuna_*.db-shm
+optuna_*.db-wal
+
+# ----------------------------------------------------------------------------
+# Archive (Optional - uncomment if you want to gitignore)
+# ----------------------------------------------------------------------------
+# archive/
+
+# ----------------------------------------------------------------------------
+# Data Formats (Large binary/serialized data)
+# ----------------------------------------------------------------------------
 *.parquet
 *.jsonl
 *.csv
 *.feather
 *.pickle
+*.pkl
+*.h5
+*.hdf5
+
+# ----------------------------------------------------------------------------
+# Media Files
+# ----------------------------------------------------------------------------
 *.png
+*.jpg
+*.jpeg
+*.gif
 *.pdf
-*.xlsx
+*.svg
+
+# Allow documentation diagrams and reference images
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
+!docs/**/*.pdf
+!docs/**/*.svg
+!README_assets/**/*
+
+# ----------------------------------------------------------------------------
+# Archives
+# ----------------------------------------------------------------------------
 *.zip
 *.tar.gz
-.cache/
+*.tar.bz2
+*.tar.xz
+*.rar
+*.7z
+
+# ----------------------------------------------------------------------------
+# Spreadsheets
+# ----------------------------------------------------------------------------
+*.xlsx
+*.xls
+*.ods
+
+# ----------------------------------------------------------------------------
+# Pattern-Based Exclusions
+# ----------------------------------------------------------------------------
 **/*_results_*/
 **/final_*_results*/
 **/acceptance_matrix*/
@@ -74,28 +307,219 @@ data/**/*
 **/*equity*.csv
 **/*trades*.csv
 
-# Notebooks & scratch
+# Optuna experiment folders
+**/optuna_*/
+**/bench_v2_*/
+**/frontier_*/
+**/macro_fix_*/
+**/router_v10_*/
+**/tiered_tests/
+**/trap_validation/
+
+# ----------------------------------------------------------------------------
+# Notebooks & Scratch
+# ----------------------------------------------------------------------------
 notebooks/.ipynb_checkpoints/
 scratch/
+*.ipynb_checkpoints/
 
-# Archive folder (temporary storage for old files)
-archive/
-# Test artifacts and results
-results/health_summary_*.json
-results/portfolio_summary_*.json
-results/live_signals_*.jsonl
-results/live_trades_*.jsonl
-*_backtest_results_*.json
-eth_production_backtest_results.json
-btc_backtest_results_*.json
+# ----------------------------------------------------------------------------
+# Test Artifacts
+# ----------------------------------------------------------------------------
+test_checkpoints/
+.coverage
+htmlcov/
+.tox/
+.nox/
 
-# Temporary analysis files
-analyze_trade_details.py
-branch_system_check.md
-mtf_confluence_analysis.py
-run_eth_macro_backtest.py
-run_full_system_backtest.py
-test_macro_impact.py
-btc_year_backtest.py
-configs/test_no_macro.json
-exit_cfg_applied.json
+# ----------------------------------------------------------------------------
+# Documentation Build Outputs
+# ----------------------------------------------------------------------------
+docs/_build/
+docs/.doctrees/
+site/
+
+# ----------------------------------------------------------------------------
+# Documentation Bloat Prevention
+# ----------------------------------------------------------------------------
+# Version-specific directories (archived to docs/archive/versions/)
+docs/v*/
+configs/v*/
+tests/v*/
+reports/v*/
+scripts/backtests/v*/
+
+# Cleanup and summary reports (should be in docs/archive/)
+**/CLEANUP_*.md
+**/cleanup_*.txt
+**/*_SUMMARY.md
+**/*_SUMMARY.txt
+**/SESSION_*.md
+
+# Bear pattern documentation (should be in docs/archive/2024-q4/archetype_work/)
+**/BEAR_ARCHETYPES_*.md
+**/BEAR_ARCHITECTURE_*.md
+**/BEAR_FEATURE_*.md
+**/BEAR_MARKET_*.md
+**/BEAR_PATTERNS_*.md
+
+# Regime routing documentation (should be in docs/archive/2024-q4/)
+**/REGIME_ROUTING_*.md
+
+# Optimization documentation (should be in docs/archive/2024-q4/optimization/)
+**/OPTIMIZATION_*.md
+**/OPTUNA_*.md
+**/OB_HIGH_*.md
+
+# ML documentation (should be in docs/archive/2024-q4/features/)
+**/ML_*.md
+**/META_FUSION_*.md
+**/ADAPTIVE_*.md
+
+# Implementation and phase documentation (should be in docs/archive/2024-q4/)
+**/PHASE*_*.md
+**/MVP_*.md
+**/PR*_*.md
+
+# ----------------------------------------------------------------------------
+# Temporary Project-Specific Files
+# ----------------------------------------------------------------------------
+/shasum
+/rev-parse
+/git
+/HEAD
+
+# ----------------------------------------------------------------------------
+# Keep These Files (Explicit Exceptions)
+# ----------------------------------------------------------------------------
+# README files
+!README.md
+!**/README.md
+
+# Gitkeep files
+!.gitkeep
+!**/.gitkeep
+
+# Configuration schema
+!configs/schema/
+
+# Test fixtures (if needed)
+# !tests/fixtures/
+
+# ----------------------------------------------------------------------------
+# Environment-Specific
+# ----------------------------------------------------------------------------
+.envrc
+.env.local
+.env.*.local
+
+# ----------------------------------------------------------------------------
+# CI/CD
+# ----------------------------------------------------------------------------
+# .github/ tracked for workflows
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# ----------------------------------------------------------------------------
+# Package Manager
+# ----------------------------------------------------------------------------
+package-lock.json
+yarn.lock
+poetry.lock
+
+# ----------------------------------------------------------------------------
+# End of .gitignore
+# ----------------------------------------------------------------------------
+
+# Research and analysis reports (keep in docs/archive/)
+/BENCHMARK_*.md
+/BEFORE_AFTER_*.md
+/*_DELIVERABLES*.md
+/*_INDEX.md
+/*_QUICK_START.md
+/*_QUICK_REF*.md
+/*_SUMMARY.md
+/*_COMPLETE*.md
+
+# Allow specific permanent docs
+!README.md
+!ARCHITECTURE.md
+!CHANGELOG.md
+
+# ============================================
+# Documentation Cleanup Rules (Added 2026-01-18)
+# ============================================
+
+# Temporary documentation files
+*_TEMP.md
+*_DRAFT.md
+*_WIP.md
+commit_message_*.txt
+*_log.txt
+*_notes.txt
+
+# Quick reference duplicates (keep only in docs/)
+/*_QUICK_START.md
+/*_QUICK_REF.md
+/*_DELIVERABLES.md
+/*_INDEX.md
+
+# Intermediate reports (use docs/reports/ instead)
+/*_REPORT.md
+/*_STATUS.md
+/*_DIAGNOSIS.md
+/*_ANALYSIS.md
+/*_INVESTIGATION.md
+
+# Exception: Keep core root-level docs
+!README.md
+!CHANGELOG.md
+!LICENSE.md
+!CONTRIBUTING.md
+
+# Cleanup scripts (temporary)
+cleanup_step*.sh
+REPOSITORY_CLEANUP_STRATEGY.md
+
+
+# Research scripts (do not commit)
+bin/analyze_*.py
+bin/backfill_*.py
+bin/train_*.py
+bin/validate_*.py
+bin/optimize_*.py
+bin/backtest_*.py
+bin/test_*.py
+bin/diagnose_*.py
+bin/compare_*.py
+bin/compute_*.py
+bin/demo_*.py
+bin/execute_*.py
+bin/extract_*.py
+bin/generate_*.py
+bin/label_*.py
+bin/monitor_*.py
+bin/patch_*.py
+bin/phase*.py
+bin/retrain_*.py
+bin/s5_*.py
+bin/soft_gating_*.py
+bin/tune_*.py
+bin/verify_*.py
+bin/visualize_*.py
+bin/walk_forward_*.py
+
+# Temporary documentation (do not commit to root)
+/*_REPORT.md
+/*_DELIVERABLES.md
+/*_TEMP.md
+/*_QUICK_START.md
+/*_INDEX.md
+commit_message_*.txt
+GIT_COMMIT_MESSAGE.txt
+
+# Backup files
+*.bak
+*.backup
+*.backup_*

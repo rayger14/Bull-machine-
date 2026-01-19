@@ -1,0 +1,318 @@
+{
+  "_template": "MVP Optimizer Config Template - Two-Layer Threshold Architecture",
+  "_version": "v2.0",
+  "_description": "Shows where global safety rails vs archetype-specific thresholds are defined",
+
+  "version": "mvp_optimized",
+  "profile": "optimizer_output",
+
+  "_LAYER_1_GLOBAL_SAFETY_RAILS": {
+    "_note": "These are FIXED constants, NEVER optimized",
+    "_location": "Applied by MVPConfigGenerator._apply_safety_rails()",
+    "_values": {
+      "min_liquidity_floor": 0.05,
+      "vix_panic_threshold": 30.0,
+      "move_panic_threshold": 120.0,
+      "dxy_extreme_threshold": 105.0,
+      "funding_z_extreme": 3.0,
+      "crisis_fuse_enabled": true,
+      "crisis_fuse_lookback_hours": 24,
+      "max_portfolio_risk_pct": 0.10
+    }
+  },
+
+  "_LAYER_2_ARCHETYPE_THRESHOLDS": {
+    "_note": "These are OPTIMIZED per archetype",
+    "_location": "Written to archetypes.thresholds[pattern] and archetypes[pattern]",
+    "_parameters": {
+      "fusion_threshold": "Entry confidence threshold (0.20 - 0.52)",
+      "archetype_weight": "Scoring multiplier (0.40 - 1.35)",
+      "min_liquidity": "Minimum liquidity score (inherits from global floor)",
+      "pattern_filters": {
+        "funding_z_min": "Funding rate z-score minimum",
+        "rsi_min": "RSI minimum threshold",
+        "vol_z_min": "Volume z-score minimum",
+        "adx_threshold": "ADX trend strength minimum",
+        "boms_strength_min": "BOMS strength minimum",
+        "wyckoff_min": "Wyckoff score minimum"
+      }
+    }
+  },
+
+  "fusion_adapt": {
+    "enable": true,
+    "ema_alpha": 0.2,
+    "min_weight": 0.05
+  },
+
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX", "DXY", "MOVE", "YIELD_2Y", "YIELD_10Y",
+      "USDT.D", "BTC.D", "TOTAL", "TOTAL2",
+      "funding", "oi", "rv_20d", "rv_60d"
+    ],
+    "zero_fill_missing": false,
+    "regime_override": {
+      "_comment": "For testing, can force specific regime",
+      "2024": "risk_on"
+    }
+  },
+
+  "ml_filter": {
+    "enabled": true,
+    "model_path": "models/btc_trade_quality_filter_v1.pkl",
+    "threshold": 0.283
+  },
+
+  "fusion": {
+    "_optimizer_writes": "Global fusion weights (optimized)",
+    "entry_threshold_confidence": 0.40,
+    "weights": {
+      "wyckoff": 0.44,
+      "liquidity": 0.23,
+      "momentum": 0.33,
+      "smc": 0.0
+    }
+  },
+
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 3,
+
+    "_comment_enable_flags": "Optimizer sets these based on group being optimized",
+    "enable_A": true,
+    "enable_B": true,
+    "enable_C": true,
+    "enable_G": true,
+    "enable_H": true,
+    "enable_K": true,
+    "enable_L": true,
+    "enable_S5": false,
+
+    "thresholds": {
+      "_optimizer_writes": "Archetype-specific thresholds written here",
+      "min_liquidity": 0.30,
+
+      "trap_within_trend": {
+        "direction": "long",
+        "fusion_threshold": 0.42,
+        "adx_threshold": 25.0,
+        "max_risk_pct": 0.02,
+        "atr_stop_mult": 1.8
+      },
+
+      "order_block_retest": {
+        "direction": "long",
+        "fusion_threshold": 0.40,
+        "boms_strength_min": 0.35,
+        "wyckoff_min": 0.40,
+        "max_risk_pct": 0.02,
+        "atr_stop_mult": 1.8
+      },
+
+      "wick_trap": {
+        "direction": "long",
+        "fusion_threshold": 0.45,
+        "disp_atr_multiplier": 1.0,
+        "max_risk_pct": 0.02,
+        "atr_stop_mult": 1.8
+      },
+
+      "liquidity_sweep": {
+        "direction": "long",
+        "fusion_threshold": 0.38,
+        "boms_strength_min": 0.40,
+        "max_risk_pct": 0.02,
+        "atr_stop_mult": 1.8
+      },
+
+      "spring": {
+        "direction": "long",
+        "fusion_threshold": 0.35,
+        "pti_score_threshold": 0.40,
+        "disp_atr_multiplier": 0.8,
+        "max_risk_pct": 0.02,
+        "atr_stop_mult": 1.8
+      },
+
+      "momentum_continuation": {
+        "direction": "long",
+        "fusion_threshold": 0.40,
+        "adx_threshold": 30.0,
+        "max_risk_pct": 0.02,
+        "atr_stop_mult": 1.8
+      },
+
+      "volume_exhaustion": {
+        "direction": "long",
+        "fusion_threshold": 0.38,
+        "vol_z_min": 1.2,
+        "rsi_min": 70.0,
+        "max_risk_pct": 0.02,
+        "atr_stop_mult": 1.8
+      },
+
+      "long_squeeze": {
+        "direction": "short",
+        "fusion_threshold": 0.50,
+        "funding_z_min": 2.0,
+        "rsi_min": 75.0,
+        "liquidity_max": 0.20,
+        "max_risk_pct": 0.015,
+        "atr_stop_mult": 3.0
+      }
+    },
+
+    "_comment_top_level_configs": "Optimizer also writes archetype_weight and final_fusion_gate here",
+
+    "trap_within_trend": {
+      "archetype_weight": 1.20,
+      "final_fusion_gate": 0.42,
+      "cooldown_bars": 16
+    },
+
+    "order_block_retest": {
+      "archetype_weight": 1.10,
+      "final_fusion_gate": 0.40,
+      "cooldown_bars": 12
+    },
+
+    "wick_trap": {
+      "archetype_weight": 1.00,
+      "final_fusion_gate": 0.45,
+      "cooldown_bars": 14
+    },
+
+    "liquidity_sweep": {
+      "archetype_weight": 1.10,
+      "final_fusion_gate": 0.38,
+      "cooldown_bars": 14
+    },
+
+    "spring": {
+      "archetype_weight": 1.05,
+      "final_fusion_gate": 0.35,
+      "cooldown_bars": 12
+    },
+
+    "momentum_continuation": {
+      "archetype_weight": 1.10,
+      "final_fusion_gate": 0.40,
+      "cooldown_bars": 12
+    },
+
+    "volume_exhaustion": {
+      "archetype_weight": 1.00,
+      "final_fusion_gate": 0.38,
+      "cooldown_bars": 10
+    },
+
+    "long_squeeze": {
+      "archetype_weight": 0.50,
+      "final_fusion_gate": 0.50,
+      "cooldown_bars": 8
+    },
+
+    "routing": {
+      "risk_on": {
+        "weights": {
+          "trap_within_trend": 1.3,
+          "order_block_retest": 1.4,
+          "bos_choch_reversal": 1.2,
+          "long_squeeze": 0.2
+        },
+        "final_gate_delta": 0.0
+      },
+      "neutral": {
+        "weights": {
+          "trap_within_trend": 1.0,
+          "order_block_retest": 1.0,
+          "bos_choch_reversal": 1.0,
+          "long_squeeze": 0.5
+        },
+        "final_gate_delta": 0.01
+      },
+      "risk_off": {
+        "weights": {
+          "trap_within_trend": 0.3,
+          "order_block_retest": 0.4,
+          "bos_choch_reversal": 0.5,
+          "long_squeeze": 1.8
+        },
+        "final_gate_delta": 0.02
+      },
+      "crisis": {
+        "weights": {
+          "trap_within_trend": 0.1,
+          "order_block_retest": 0.2,
+          "bos_choch_reversal": 0.3,
+          "long_squeeze": 2.5
+        },
+        "final_gate_delta": 0.04
+      }
+    },
+
+    "exits": {
+      "trap_within_trend": {
+        "trail_atr": 1.3,
+        "time_limit_hours": 78
+      },
+      "order_block_retest": {
+        "trail_atr": 1.4,
+        "time_limit_hours": 84
+      },
+      "wick_trap": {
+        "trail_atr": 1.5,
+        "time_limit_hours": 96
+      },
+      "liquidity_sweep": {
+        "trail_atr": 1.3,
+        "time_limit_hours": 72
+      },
+      "spring": {
+        "trail_atr": 1.2,
+        "time_limit_hours": 60
+      },
+      "momentum_continuation": {
+        "trail_atr": 1.4,
+        "time_limit_hours": 84
+      },
+      "volume_exhaustion": {
+        "trail_atr": 1.2,
+        "time_limit_hours": 60
+      },
+      "long_squeeze": {
+        "trail_atr": 0.8,
+        "time_limit_hours": 24
+      }
+    }
+  },
+
+  "context": {
+    "_fixed_by_optimizer": "Crisis fuse settings are applied as safety rails",
+    "crisis_fuse": {
+      "enabled": true,
+      "lookback_hours": 24,
+      "allow_one_trade_if_fusion_confidence_ge": 0.8
+    }
+  },
+
+  "pnl_tracker": {
+    "leverage": 5.0,
+    "risk_per_trade": 0.02,
+    "exits": {
+      "enable_partial": true,
+      "scale_out_rr": 1.0,
+      "scale_out_pct": 0.5,
+      "trail_atr_mult": 1.25
+    }
+  },
+
+  "risk": {
+    "_fixed_by_optimizer": "Max portfolio risk is a safety rail",
+    "base_risk_pct": 0.02,
+    "max_position_size_pct": 0.12,
+    "max_portfolio_risk_pct": 0.10
+  }
+}

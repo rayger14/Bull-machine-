@@ -1,0 +1,233 @@
+{
+  "version": "1.0.0",
+  "tier": "full",
+  "description": "Complete feature store: raw + MTF + regime + macro",
+  "resolution": "1H",
+  "index": {
+    "name": "timestamp",
+    "type": "datetime64[ns, UTC]",
+    "description": "Bar timestamp (1H resolution)",
+    "constraints": {
+      "unique": true,
+      "monotonic_increasing": true,
+      "no_nulls": true
+    }
+  },
+  "columns": {
+    "open": {
+      "type": "float64",
+      "tier": 1,
+      "required": true,
+      "range": [0, null],
+      "description": "Opening price"
+    },
+    "high": {
+      "type": "float64",
+      "tier": 1,
+      "required": true,
+      "range": [0, null],
+      "description": "Highest price"
+    },
+    "low": {
+      "type": "float64",
+      "tier": 1,
+      "required": true,
+      "range": [0, null],
+      "description": "Lowest price"
+    },
+    "close": {
+      "type": "float64",
+      "tier": 1,
+      "required": true,
+      "range": [0, null],
+      "description": "Closing price"
+    },
+    "volume": {
+      "type": "float64",
+      "tier": 1,
+      "required": true,
+      "range": [0, null],
+      "description": "Trading volume"
+    },
+    "atr_20": {
+      "type": "float64",
+      "tier": 1,
+      "required": false,
+      "range": [0, null],
+      "description": "Average True Range (20 periods)"
+    },
+    "adx_14": {
+      "type": "float64",
+      "tier": 1,
+      "required": false,
+      "range": [0, 100],
+      "description": "Average Directional Index (14 periods)"
+    },
+    "rsi_14": {
+      "type": "float64",
+      "tier": 1,
+      "required": false,
+      "range": [0, 100],
+      "description": "Relative Strength Index (14 periods)"
+    },
+    "tf4h_fusion_score": {
+      "type": "float64",
+      "tier": 2,
+      "required": false,
+      "range": [-1.0, 1.0],
+      "description": "4H timeframe fusion score (trend + structure quality)"
+    },
+    "tf4h_trend_strength": {
+      "type": "float64",
+      "tier": 2,
+      "required": false,
+      "range": [0, 1.0],
+      "description": "4H trend strength indicator"
+    },
+    "tf1d_trend_direction": {
+      "type": "int8",
+      "tier": 2,
+      "required": false,
+      "range": [-1, 1],
+      "description": "Daily trend direction: 1 (up), -1 (down), 0 (neutral)"
+    },
+    "tf1h_bos_bullish": {
+      "type": "bool",
+      "tier": 2,
+      "required": false,
+      "description": "1H bullish break of structure detected"
+    },
+    "tf1h_bos_bearish": {
+      "type": "bool",
+      "tier": 2,
+      "required": false,
+      "description": "1H bearish break of structure detected"
+    },
+    "tf1h_fvg_bull": {
+      "type": "bool",
+      "tier": 2,
+      "required": false,
+      "description": "1H bullish fair value gap present"
+    },
+    "tf1h_fvg_bear": {
+      "type": "bool",
+      "tier": 2,
+      "required": false,
+      "description": "1H bearish fair value gap present"
+    },
+    "tf1h_ob_bull_top": {
+      "type": "float64",
+      "tier": 2,
+      "required": false,
+      "description": "Bullish order block upper boundary"
+    },
+    "tf1h_ob_bull_bottom": {
+      "type": "float64",
+      "tier": 2,
+      "required": false,
+      "description": "Bullish order block lower boundary"
+    },
+    "tf1h_ob_bear_top": {
+      "type": "float64",
+      "tier": 2,
+      "required": false,
+      "description": "Bearish order block upper boundary"
+    },
+    "tf1h_ob_bear_bottom": {
+      "type": "float64",
+      "tier": 2,
+      "required": false,
+      "description": "Bearish order block lower boundary"
+    },
+    "liquidity_score": {
+      "type": "float64",
+      "tier": 2,
+      "required": false,
+      "range": [0, 1.0],
+      "description": "Liquidity availability score"
+    },
+    "smc_score": {
+      "type": "float64",
+      "tier": 2,
+      "required": false,
+      "range": [0, 1.0],
+      "description": "Smart money concepts composite score"
+    },
+    "wyckoff_score": {
+      "type": "float64",
+      "tier": 2,
+      "required": false,
+      "range": [0, 1.0],
+      "description": "Wyckoff method composite score"
+    },
+    "momentum_score": {
+      "type": "float64",
+      "tier": 2,
+      "required": false,
+      "range": [0, 1.0],
+      "description": "Momentum composite score"
+    },
+    "regime_label": {
+      "type": "category",
+      "tier": 3,
+      "required": true,
+      "values": ["risk_on", "risk_off", "neutral", "crisis"],
+      "description": "Market regime classification"
+    },
+    "regime_confidence": {
+      "type": "float64",
+      "tier": 3,
+      "required": false,
+      "range": [0, 1.0],
+      "description": "Regime classification confidence"
+    },
+    "regime_prob_risk_on": {
+      "type": "float64",
+      "tier": 3,
+      "required": false,
+      "range": [0, 1.0],
+      "description": "Probability of risk_on regime"
+    },
+    "regime_prob_risk_off": {
+      "type": "float64",
+      "tier": 3,
+      "required": false,
+      "range": [0, 1.0],
+      "description": "Probability of risk_off regime"
+    },
+    "regime_prob_neutral": {
+      "type": "float64",
+      "tier": 3,
+      "required": false,
+      "range": [0, 1.0],
+      "description": "Probability of neutral regime"
+    },
+    "regime_prob_crisis": {
+      "type": "float64",
+      "tier": 3,
+      "required": false,
+      "range": [0, 1.0],
+      "description": "Probability of crisis regime"
+    }
+  },
+  "constraints": {
+    "no_duplicates": ["timestamp"],
+    "no_nulls_in_required": true,
+    "high_ge_low": "high >= low",
+    "high_ge_close": "high >= close",
+    "high_ge_open": "high >= open",
+    "low_le_close": "low <= close",
+    "low_le_open": "low <= open",
+    "regime_probs_sum_to_one": "regime_prob_* columns should sum to ~1.0"
+  },
+  "metadata": {
+    "created_by": "Raymond + Claude",
+    "created_at": "2025-11-06",
+    "based_on": "data/features_mtf/BTC_1H_2022-01-01_to_2024-12-31.parquet",
+    "compatible_with": [
+      "backtest_knowledge_v2.py",
+      "backtest_router_v10_full.py",
+      "optuna_trap_v2.py"
+    ]
+  }
+}

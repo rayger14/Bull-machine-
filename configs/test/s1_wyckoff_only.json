@@ -1,0 +1,100 @@
+{
+  "version": "test_s1_wyckoff_only",
+  "profile": "test_domain_engine_wiring",
+  "description": "S1 with ONLY Wyckoff enabled (isolate Wyckoff impact)",
+
+  "fusion_adapt": {
+    "enable": true,
+    "ema_alpha": 0.2,
+    "min_weight": 0.05
+  },
+
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX", "DXY", "MOVE", "YIELD_2Y", "YIELD_10Y",
+      "USDT.D", "BTC.D", "TOTAL", "TOTAL2",
+      "funding", "oi", "rv_20d", "rv_60d"
+    ],
+    "zero_fill_missing": false,
+    "regime_override": {
+      "_comment": "Force 2022 as risk_off to activate S1",
+      "2022": "risk_off"
+    }
+  },
+
+  "ml_filter": {
+    "enabled": false
+  },
+
+  "fusion": {
+    "entry_threshold_confidence": 0.30,
+    "weights": {
+      "wyckoff": 0.25,
+      "liquidity": 0.25,
+      "momentum": 0.25,
+      "smc": 0.25
+    }
+  },
+
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 10,
+
+    "enable_A": false,
+    "enable_B": false,
+    "enable_C": false,
+    "enable_D": false,
+    "enable_E": false,
+    "enable_F": false,
+    "enable_G": false,
+    "enable_H": false,
+    "enable_K": false,
+    "enable_L": false,
+    "enable_M": false,
+    "enable_S1": true,
+    "enable_S2": false,
+    "enable_S3": false,
+    "enable_S4": false,
+    "enable_S5": false,
+    "enable_S6": false,
+    "enable_S7": false,
+    "enable_S8": false,
+
+    "thresholds": {
+      "min_liquidity": 0.10
+    },
+
+    "liquidity_vacuum": {
+      "direction": "long",
+      "archetype_weight": 1.0,
+      "use_v2_logic": true,
+      "fusion_threshold": 0.30,
+      "capitulation_depth_max": -0.20,
+      "crisis_composite_min": 0.40,
+      "volume_climax_3b_min": 0.25,
+      "wick_exhaustion_3b_min": 0.30,
+      "use_regime_filter": true,
+      "allowed_regimes": ["risk_off", "crisis"],
+      "max_risk_pct": 0.02,
+      "atr_stop_mult": 2.0,
+      "cooldown_bars": 12
+    }
+  },
+
+  "risk": {
+    "base_risk_pct": 0.02,
+    "max_position_size_pct": 0.12,
+    "max_portfolio_risk_pct": 0.10
+  },
+
+  "feature_flags": {
+    "enable_wyckoff": true,
+    "enable_smc": false,
+    "enable_temporal": false,
+    "enable_hob": false,
+    "enable_macro": false,
+    "enable_fusion": false,
+    "_comment": "WYCKOFF ONLY - Isolate Wyckoff spring/PS impact on S1"
+  }
+}

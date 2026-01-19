@@ -1,0 +1,76 @@
+Bull Machine v2 Codebase Cleanup - Execution Summary
+Date: 2025-11-13
+Branch: bull-machine-v2-integration
+
+================================================================================
+CLEANUP COMPLETED
+================================================================================
+
+✅ Temporary Files Removed (45.8 MB)
+  - profile_baseline.prof
+  - profile_optimized.prof
+  - profile_baseline_output.txt
+  - test_output.txt
+  - test_optimization.sh
+
+✅ Backup Parquet Files Removed (10.1 MB)
+  Verified current > backup before deletion:
+  - data/features_mtf/BTC_1H_2022-01-01_to_2023-12-31_ORIGINAL_BACKUP.parquet (119 cols → current: 119 cols)
+  - data/features_mtf/BTC_1H_2022-01-01_to_2023-12-31_ORIGINAL.parquet (113 cols → current: 119 cols +6)
+  - data/features_mtf/BTC_1H_2024-01-01_to_2024-12-31_ORIGINAL_BACKUP.parquet (110 cols → current: 116 cols +6)
+  - data/macro/BTC_macro_features.parquet.bak (16 cols → current: 19 cols +3)
+  - data/macro/ETH_macro_features.parquet.bak (16 cols → current: 19 cols +3)
+
+✅ Obsolete Feature Stores Archived (7.6 MB)
+  Moved to archive/data/:
+  - data/features/v18 → archive/data/features_v18 (15 features, pre-MTF)
+  - data/features_v2 → archive/data/features_v2 (75 features, pre-macro)
+
+================================================================================
+CURRENT STATE
+================================================================================
+
+Feature Stores (Canon):
+  data/features_mtf/     ← 114 features (ACTIVE)
+  
+Archive:
+  archive/data/features_v18/  ← 15 features (historical reference)
+  archive/data/features_v2/   ← 75 features (historical reference)
+
+Total Disk Space Recovered: ~63.5 MB
+Total Files Removed: 10 files
+Total Directories Archived: 2 directories
+
+================================================================================
+DOCUMENTATION STATUS
+================================================================================
+
+✅ Feature count corrected: 89/69 → 114 features
+   - docs/BULL_MACHINE_V2_PIPELINE.md
+   - bin/backtest_knowledge_v2.py
+   - bin/optimize_v3_full_knowledge.py
+   - docs/ADAPTIVE_WIRING_CHANGES.md
+   - docs/ARCH_REVIEW_NOTES.md
+
+✅ Validation tools created:
+   - docs/VALIDATION_CHECKLIST.md
+   - docs/validate.sh
+
+✅ Cleanup documentation:
+   - docs/CLEANUP_REPORT.md
+
+================================================================================
+MENTAL MODEL NOW ALIGNED
+================================================================================
+
+Before cleanup:
+  - Documentation said 89 features, reality was 114 ❌
+  - 3 feature directories (v18, v2, mtf) causing confusion ❌
+  - 10 backup/temp files cluttering workspace ❌
+
+After cleanup:
+  - Documentation matches reality: 114 features ✅
+  - Single canonical feature store: data/features_mtf/ ✅
+  - Clean workspace, archived history preserved ✅
+
+Runtime logic unchanged. All gold standard tests still pass.

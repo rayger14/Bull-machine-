@@ -1,0 +1,309 @@
+WALK-FORWARD VALIDATION ARCHITECTURE
+================================================================================
+Production Engine Integration - TRUE Backtest, NO Simplified Logic
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     WALK-FORWARD ORCHESTRATOR                                │
+│                  (bin/walk_forward_production_engine.py)                     │
+│                                                                              │
+│  Input: Optimized configs (results/optimization_2026-01-16/)                │
+│  Output: OOS validation results + production readiness assessment           │
+└──────────────────────────────────┬───────────────────────────────────────────┘
+                                   │
+                                   │ Generate Windows
+                                   ▼
+         ┌─────────────────────────────────────────────────────┐
+         │           WINDOW GENERATION                          │
+         │                                                      │
+         │  Train: 365 days  → Optimize params (FROZEN)        │
+         │  Embargo: 48 hours → Prevent temporal leakage       │
+         │  Test: 90 days    → Out-of-sample validation        │
+         │  Step: 90 days    → Non-overlapping windows         │
+         │                                                      │
+         │  Timeline:                                           │
+         │  [----Train----|Embargo|--Test--]                   │
+         │                [----Train----|Embargo|--Test--]     │
+         │                             [----Train----|...]      │
+         │                                                      │
+         │  Expected: 8-10 windows (2022-2024)                 │
+         └──────────────────┬───────────────────────────────────┘
+                            │
+                            │ For each window
+                            ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    PRODUCTION BACKTEST ENGINE                                │
+│               (bin/backtest_full_engine_replay.py)                          │
+│                     FullEngineBacktest Class                                 │
+│                                                                              │
+│  Configuration:                                                              │
+│  ┌────────────────────────────────────────────────────────────────┐         │
+│  │ • Initial Capital: $10,000                                     │         │
+│  │ • Position Size: 12% per trade                                 │         │
+│  │ • Fees: 0.06% (Binance taker)                                  │         │
+│  │ • Slippage: 0.08% (realistic market impact)                    │         │
+│  │ • Max Positions: 5                                              │         │
+│  │ • Cooldown: 12 hours (prevent overtrading)                     │         │
+│  │                                                                 │         │
+│  │ PRODUCTION SYSTEMS (ALL ENABLED):                              │         │
+│  │ ✅ Circuit Breakers                                            │         │
+│  │ ✅ Direction Balance Tracking                                  │         │
+│  │ ✅ Regime Soft Penalties                                       │         │
+│  │ ✅ Adaptive Regime Classification                              │         │
+│  │                                                                 │         │
+│  │ WALK-FORWARD INTEGRATION (NEW):                                │         │
+│  │ 🔧 archetype_param_overrides: {                                │         │
+│  │      'S1': {'fusion_threshold': 0.35, ...}  ← Injected params │         │
+│  │    }                                                            │         │
+│  └────────────────────────────────────────────────────────────────┘         │
+│                                                                              │
+│  ┌──────────────────────────────────────────────────────────────┐           │
+│  │                    EXECUTION FLOW                             │           │
+│  │                                                               │           │
+│  │  Bar T:                                                       │           │
+│  │  1. Compute features (OHLCV, indicators, regime)             │           │
+│  │  2. Evaluate archetypes → Generate signals                   │           │
+│  │     ↓                                                         │           │
+│  │     ArchetypeFactory.evaluate_archetype()                    │           │
+│  │     ├─ Load real implementation                              │           │
+│  │     ├─ Apply param overrides (walk-forward)                  │           │
+│  │     └─ Return (confidence, direction, metadata)              │           │
+│  │                                                               │           │
+│  │  3. Pipeline Processing:                                     │           │
+│  │     ├─ Regime confidence scaling                             │           │
+│  │     ├─ Domain boost/veto                                     │           │
+│  │     ├─ Regime soft penalties                                 │           │
+│  │     ├─ Direction balance scaling                             │           │
+│  │     └─ Circuit breaker gate                                  │           │
+│  │                                                               │           │
+│  │  4. Schedule order for Bar T+1 (next-bar execution)          │           │
+│  │                                                               │           │
+│  │  Bar T+1:                                                     │           │
+│  │  5. Execute pending orders at T+1 open                       │           │
+│  │     ├─ Apply fees (0.06%)                                    │           │
+│  │     ├─ Apply slippage (0.08%)                                │           │
+│  │     └─ Create position with stops/targets                    │           │
+│  │                                                               │           │
+│  │  6. Manage positions:                                        │           │
+│  │     ├─ Check stop loss (intrabar)                            │           │
+│  │     ├─ Check take profit (intrabar)                          │           │
+│  │     └─ Update direction balance                              │           │
+│  └──────────────────────────────────────────────────────────────┘           │
+└──────────────────────────┬───────────────────────────────────────────────────┘
+                           │
+                           │ Delegates to
+                           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      ARCHETYPE FACTORY                                       │
+│              (engine/archetypes/archetype_factory.py)                       │
+│                                                                              │
+│  Registry-Driven Architecture:                                              │
+│  ┌──────────────────────────────────────────────────────────┐               │
+│  │  archetype_registry.yaml                                 │               │
+│  │  ┌────────────────────────────────────────────────────┐  │               │
+│  │  │ - id: S1                                           │  │               │
+│  │  │   slug: liquidity_vacuum                           │  │               │
+│  │  │   class: engine.strategies.archetypes.bear.        │  │               │
+│  │  │          LiquidityVacuumRuntimeArchetype           │  │               │
+│  │  │   direction: short                                 │  │               │
+│  │  │   maturity: production                             │  │               │
+│  │  │   enable_flag: enable_S1                           │  │               │
+│  │  └────────────────────────────────────────────────────┘  │               │
+│  └──────────────────────────────────────────────────────────┘               │
+│                                                                              │
+│  evaluate_archetype(slug, bar, regime, config_override=None):               │
+│  ┌──────────────────────────────────────────────────────────┐               │
+│  │ 1. Load archetype instance from registry                │               │
+│  │ 2. Apply config_override if provided (walk-forward)      │               │
+│  │ 3. Call instance.detect(bar, regime)                     │               │
+│  │ 4. Return (confidence, direction, metadata)              │               │
+│  │ 5. Restore original config                               │               │
+│  └──────────────────────────────────────────────────────────┘               │
+└──────────────────────────┬───────────────────────────────────────────────────┘
+                           │
+                           │ Loads
+                           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                  REAL ARCHETYPE IMPLEMENTATIONS                              │
+│                                                                              │
+│  Bull Archetypes (engine/strategies/archetypes/bull/):                      │
+│  ┌──────────────────────────────────────────────────────────┐               │
+│  │ • B (Order Block Retest)      - order_block_retest.py   │               │
+│  │ • H (Trap Within Trend)       - trap_within_trend.py    │               │
+│  │ • K (Wick Trap Moneytaur)     - wick_trap_moneytaur.py  │               │
+│  └──────────────────────────────────────────────────────────┘               │
+│                                                                              │
+│  Bear Archetypes (engine/strategies/archetypes/bear/):                      │
+│  ┌──────────────────────────────────────────────────────────┐               │
+│  │ • S1 (Liquidity Vacuum)       - liquidity_vacuum_runtime.py            │ │
+│  │ • S4 (Funding Divergence)     - funding_divergence_runtime.py          │ │
+│  │ • S5 (Long Squeeze)           - long_squeeze_runtime.py                │ │
+│  └──────────────────────────────────────────────────────────┘               │
+│                                                                              │
+│  Each implements:                                                            │
+│  ┌──────────────────────────────────────────────────────────┐               │
+│  │ class ArchetypeXXX:                                       │               │
+│  │     def __init__(self, config: Dict):                     │               │
+│  │         self.config = config  # Stores thresholds         │               │
+│  │                                                            │               │
+│  │     def detect(self, row: pd.Series, regime: str)        │               │
+│  │              -> Tuple[Optional[str], float, Dict]:        │               │
+│  │         # Real detection logic                            │               │
+│  │         # Uses self.config['thresholds']                  │               │
+│  │         # Returns (name, confidence, metadata)            │               │
+│  └──────────────────────────────────────────────────────────┘               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+SUPPORTING SYSTEMS (All Production, All Enabled)
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Regime Detection (engine/context/regime_service.py)                        │
+│  ├─ Logistic regression model (models/logistic_regime_v2.pkl)              │
+│  ├─ Hysteresis (prevent oscillation)                                        │
+│  ├─ Event override (crisis threshold=0.30)                                  │
+│  └─ Outputs: regime_label, regime_confidence                                │
+│                                                                              │
+│  Circuit Breaker (engine/risk/circuit_breaker.py)                           │
+│  ├─ Kill switch (halt trading on catastrophic losses)                       │
+│  ├─ Soft halt (reduce position sizes)                                       │
+│  └─ Regime-aware thresholds                                                 │
+│                                                                              │
+│  Direction Balance (engine/risk/direction_balance.py)                       │
+│  ├─ Track long/short exposure                                               │
+│  ├─ Scale position sizes when imbalanced (>70% directional)                │
+│  └─ Adaptive sizing (mild: 0.75x, severe: 0.50x, extreme: 0.25x)           │
+│                                                                              │
+│  Transaction Costs (engine/risk/transaction_costs.py)                       │
+│  ├─ Fees: 0.06% per trade (Binance taker)                                  │
+│  ├─ Slippage: 0.08% (market impact)                                         │
+│  └─ Applied on entry AND exit                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+DATA FLOW
+================================================================================
+
+┌──────────────────┐
+│  Optimized       │  results/optimization_2026-01-16/S1/best_config.json
+│  Configs         │  ├─ fusion_threshold: 0.35
+│                  │  ├─ liquidity_weight: 0.32
+└────────┬─────────┘  └─ volume_weight: 0.23
+         │
+         │ Load params
+         ▼
+┌──────────────────┐
+│  Walk-Forward    │  For each window:
+│  Orchestrator    │  1. Extract test period (OOS data)
+│                  │  2. Inject params into backtest config
+└────────┬─────────┘  3. Run FullEngineBacktest
+         │
+         │ Test data + params
+         ▼
+┌──────────────────┐
+│  FullEngineBacktest │  1. Load ArchetypeFactory with overrides
+│                     │  2. For each bar:
+│                     │     - Generate signals (real archetypes)
+└────────┬────────────┘    - Apply pipeline
+         │                  - Execute trades (next-bar)
+         │                  - Track positions
+         │
+         │ Results
+         ▼
+┌──────────────────┐
+│  Window Metrics  │  Per window:
+│                  │  ├─ Trades: 9
+│                  │  ├─ PnL: $327.45
+└────────┬─────────┘  ├─ Sharpe: 1.23
+         │             └─ Max DD: 8.7%
+         │
+         │ Aggregate across windows
+         ▼
+┌──────────────────┐
+│  OOS Validation  │  ├─ In-Sample Sharpe: 1.78
+│  Results         │  ├─ OOS Sharpe: 1.42
+│                  │  ├─ Degradation: 20.2%
+└────────┬─────────┘  └─ Production Ready: ❌ (degradation >20%)
+         │
+         │ Save
+         ▼
+┌──────────────────┐
+│  Output Files    │  results/walk_forward_production/
+│                  │  ├─ S1_validation.json
+│                  │  ├─ comparison_report.md
+└──────────────────┘  └─ production_ready_configs.json
+
+
+KEY DIFFERENCES FROM LEGACY WALK-FORWARD
+================================================================================
+
+❌ OLD (bin/walk_forward_validation.py):
+   - Simplified archetype logic (lines 414-455)
+   - Placeholder signal generation
+   - No circuit breakers
+   - No direction balance
+   - No regime systems
+   - Fictional execution model
+
+✅ NEW (bin/walk_forward_production_engine.py):
+   - Real ArchetypeFactory integration
+   - Production archetype implementations
+   - Full circuit breaker system
+   - Direction balance tracking
+   - Regime detection (logistic + hysteresis)
+   - Next-bar execution (realistic)
+   - Transaction costs (fees + slippage)
+   - Portfolio constraints
+
+
+VALIDATION CRITERIA
+================================================================================
+
+Per Window Success:
+├─ Trades > 5 (sufficient sample)
+├─ Sharpe > 0.5 (positive risk-adjusted return)
+└─ Max DD < 50% (no catastrophic failure)
+
+Aggregate Success (Production Ready):
+├─ ✅ OOS Degradation < 20% (robust generalization)
+├─ ✅ Profitable Windows > 60% (consistency)
+├─ ✅ Aggregate Sharpe > 0.5 (overall profitable)
+└─ ✅ Zero catastrophic failures (no >50% DD windows)
+
+
+EXPECTED TIMELINE (2022-2024, 3 years)
+================================================================================
+
+Window Distribution:
+├─ Window 1: Train 2022-01-01→2023-01-01, Test 2023-01-03→2023-04-03
+├─ Window 2: Train 2022-04-02→2023-04-02, Test 2023-04-04→2023-07-03
+├─ Window 3: Train 2022-07-02→2023-07-02, Test 2023-07-04→2023-10-02
+├─ Window 4: Train 2022-10-01→2023-10-01, Test 2023-10-03→2024-01-01
+├─ Window 5: Train 2023-01-01→2024-01-01, Test 2024-01-03→2024-04-02
+├─ Window 6: Train 2023-04-02→2024-04-02, Test 2024-04-04→2024-07-03
+├─ Window 7: Train 2023-07-02→2024-07-02, Test 2024-07-04→2024-10-01
+└─ Window 8: Train 2023-10-01→2024-10-01, Test 2024-10-03→2024-12-31
+
+Total: 8 windows, 720 days OOS validation
+
+
+EXECUTION METRICS
+================================================================================
+
+Performance:
+├─ Single window: ~5 seconds
+├─ Single archetype (8 windows): ~45 seconds
+├─ All archetypes (6 × 8 windows): ~5 minutes
+└─ Memory usage: ~1-2GB
+
+Output Size:
+├─ Per-archetype JSON: ~50KB
+├─ Comparison report: ~10KB
+└─ Total deliverables: ~500KB
+
+
+STATUS: READY FOR IMPLEMENTATION
+================================================================================
+All components exist, documented, and tested.
+Implementation time: 4-5 hours.

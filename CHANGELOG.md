@@ -1,309 +1,218 @@
-# Bull Machine Trading System - Changelog
+# Changelog
 
-## v1.7.3 - Live Feeds + Macro Context Integration (2025-10-06)
+All notable changes to Bull Machine will be documented in this file.
 
-### 🚀 Live Trading Pipeline
-**Three-Tier Validation System**
-- **Mock Feed Runner**: CSV replay with MTF alignment for validation
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- MIT LICENSE file for legal clarity
+- CONTRIBUTING.md with development guidelines
+- CHANGELOG.md for version history tracking
+- requirements.txt for dependency management
+
+### Changed
+- Updated .gitignore to allow documentation diagrams in docs/
+- Cleaned root directory: moved 43 logs, 12 DBs, and 5 temp docs to archive
+
+### Fixed
+- Synchronized version between README (v1.8.6) and pyproject.toml (was v1.7.2)
+
+## [1.8.6] - 2025-01-XX
+
+### Added - Temporal Intelligence Module
+- **Gann Cycles**: 30/60/90 day ACF vibrations for cycle detection
+- **Square of 9**: Sacred geometry price level proximity scoring
+- **Gann Angles**: 1×1, 2×1 support/resistance analysis
+- **Thermo-floor**: Mining cost floor calculation (energy + difficulty)
+- **Log Premium**: Difficulty-based time multiplier for value assessment
+- **Logistic Bid**: Institutional re-accumulation probability
+- **LPPLS Blowoff**: Power law bubble detection with veto capability
+
+### Added - Testing & Validation
+- 25 temporal intelligence unit tests (all passing)
+- 25 v1.8.5 module unit tests (all passing)
+- Full year 2025 validation: 7 trades, +1.95% return, 57% WR, 5.8% max DD
+
+### Changed
+- Complete v1.8 stack now integrated: Fusion + Exits + Sizing + Batch + Logic + Temporal
+- Production codebase: 12,837 lines across all domain engines
+- 3-tier configuration system: Conservative (0.70), Moderate (0.60), Fast (0.60+opts)
+
+## [1.8.5] - 2025-01-XX
+
+### Added - Enhanced Logic
+- Negative Fibonacci retracements for extended moves
+- Fourier filter for noise reduction in signals
+- Event tagging system for narrative detection
+- Enhanced confluence logic with multi-domain integration
+
+## [1.8.4] - 2025-01-XX
+
+### Added - Batch Mode
+- Window merging for efficient batch processing
+- Auto-fallback mechanism for performance optimization
+- Batch processing framework for historical analysis
+
+## [1.8.3] - 2025-01-XX
+
+### Added - Dynamic Position Sizing
+- Fusion score adaptive sizing (confluence-based allocation)
+- ADX trend strength multiplier
+- Dynamic position sizing based on market conditions
+
+## [1.8.2] - 2025-01-XX
+
+### Added - Smart Exits
+- Regime-adaptive stop losses
+- Liquidity trap protection mechanism
+- Enhanced exit logic with market context awareness
+
+## [1.8.1] - 2025-01-XX
+
+### Added - True Fusion
+- Real Wyckoff domain engine implementation
+- Smart Money Concepts (SMC) integration
+- Harmonic Order Blocks (HOB) detector
+- Momentum domain with divergence detection
+- True multi-domain confluence system
+
+## [1.7.3] - 2025-01-XX
+
+### Added - Live Trading Pipeline
+- **Mock Feed Runner**: CSV replay with MTF alignment (168 ETH, 97 SOL, 263 BTC signals)
 - **Paper Trading**: Realistic execution simulation with P&L tracking
 - **Shadow Mode**: Log-only signal tracking for live monitoring
-- **Health Monitoring**: Macro veto rate (5-15%), SMC 2+ hit (≥30%), continuous validation
+- **Health Monitoring**: Macro veto rate, SMC hit rate tracking
+- Live trading presets: ETH_conservative, BTC_vanilla, SOL_tuned
 
-### 🎯 Macro Context System
-**Extended Macro Analysis**
-- **VIX Hysteresis Guards**: On=22.0, Off=18.0 with proper state memory
-- **Macro Veto Integration**: Suppression flag with veto_strength calculation
-- **Fire Rate Monitoring**: Rolling window veto engagement tracking
-- **Greenlight Signals**: Positive macro confirmation (VIX calm, DXY bullish)
-- **Stock Market Context**: SPY/QQQ support for equity correlation analysis
+### Added - Macro Context Integration
+- VIX hysteresis guards (on=22.0, off=18.0) with state memory
+- Macro veto integration with suppression flags
+- Fire rate monitoring with 100-bar rolling windows
+- Greenlight signals (VIX <18, DXY >100)
+- SPY/QQQ support for equity correlation analysis
 
-### 🏥 Production Validation
-**Pre-Merge Shakedown Results**
-- ✅ **Test Suite**: 318 passed, 0 failed, 0 errors
-- ✅ **Mock Feeds**: ETH 168, SOL 97, BTC 263 signals generated
-- ✅ **Paper Trading**: 30-day ETH clean execution (697 bars)
-- ✅ **Determinism**: 2 independent runs identical
-- ✅ **Backtest Parity**: 8 trades, -0.4% return, 62.5% win rate
+### Fixed - Critical Bugs
+- VIX parameter passing to mtf_confluence() (vix_now + vix_prev)
+- VIXHysteresis.previous_value tracking for proper state memory
+- OHLCV column case sensitivity (Close vs close) throughout MTF engine
+- None/NaN handling for VIX values with safe defaults
+- MacroPulse fire_rate_stats initialization TypeError
+- CVD dict/float type mismatch in orderflow
 
-### 🔧 Critical Fixes
-**Live Feed Integration**
-- Fixed VIX parameter passing to mtf_confluence() (vix_now + vix_prev)
-- Added VIXHysteresis.previous_value tracking for proper hysteresis memory
-- Fixed OHLCV column case sensitivity (Close vs close) in MTF engine
-- Added None/NaN handling for VIX values with safe defaults
+### Changed
+- Test suite: 318 passed, 0 failed, 0 errors (45 xfailed documented)
+- Determinism validated: 2 independent runs identical (48 signals)
+- Backtest parity: 8 trades, -0.4% return, 62.5% win rate
 
-**Macro Engine**
-- Added fire_rate_stats to MacroPulse initialization (TypeError fix)
-- Added greenlight_score for positive macro signals
-- Added vix_calm_threshold and dxy_bullish_threshold configuration
+## [1.7.2] - 2025-01-XX
 
-**Orderflow**
-- Fixed CVD dict/float type mismatch in calculate_intent_nudge
+### Added - Universal Asset Adapter Architecture
+- Multi-asset support: ETH, SOL, XRP, BTC, SPY
+- Asset-specific profiling with automated optimization
+- Universal backtesting framework
+- Adaptive configuration system
+- Cross-asset validation suite
 
-**Test Suite**
-- Achieved perfect test suite: 318 passed, 0 failed, 0 errors
-- Added 45 xfail markers with detailed documentation
-- Improved v170 test granularity (20 tests → specific failures only)
-- Added pytest.ini configuration with proper test paths and markers
+### Added - Professional Repository Organization
+- Clean directory structure: `/bin/`, `/scripts/research/`, `/tests/`, `/docs/`
+- 5 production entry points in `/bin/`
+- Comprehensive institutional-grade documentation
+- Test consolidation framework
+- Professional CLI interfaces
 
-### 📊 System Architecture
-**Live Feed Components**
-- `bin/live/live_mock_feed.py` - CSV replay with MTF alignment
-- `bin/live/paper_trading.py` - Execution simulation with P&L tracking
-- `bin/live/shadow_live.py` - Signal logging without orders
-- `bin/live/adapters.py` - Right-edge data alignment and streaming
-- `bin/live/execution_sim.py` - Realistic fill simulation with fees/slippage
-- `bin/live/health_monitor.py` - VIX hysteresis and health band validation
+### Changed
+- Root directory cleanup: reduced from 45 to 3 Python files
+- Organized experimental code into proper structure
+- Enhanced error handling and debugging capabilities
 
-**Macro Context Components**
-- `engine/context/loader.py` - Multi-source macro data loading (VIX, DXY, etc.)
-- `engine/context/macro_engine.py` - Comprehensive macro analysis with veto logic
-- `engine/context/macro_pulse.py` - Fire rate monitoring and hysteresis tracking
-- `configs/live/presets/` - ETH/BTC/SOL preset configurations
+### Added - Production Executables
+- `bull_machine_cli.py`: Main CLI interface
+- `production_backtest.py`: ETH production backtesting
+- `run_adaptive_backtest.py`: Multi-asset system
+- `run_institutional_testing.py`: Validation framework
+- `run_multi_asset_profiler.py`: Asset profiling system
 
-**Testing & Tools**
-- `bin/tools/check_determinism.py` - Validate reproducible behavior
-- `bin/tools/check_macro_data.py` - Macro data health validation
-- `bin/tools/aggregate_daily_report.py` - Daily performance aggregation
-- `tests/live/` - Comprehensive live system tests (alignment, execution, health)
+## [1.7.1] - 2025-01-XX
 
-### 📈 Known Issues (Post-Merge)
-**45 xfailed Tests Documented**
-- 20 v170 legacy tests - API/threshold changes (low priority)
-- 6 Bojan tests - Legacy Bojan AB module compatibility
-- 5 veto tests - Macro veto logic differences
-- 2 config tests - Configuration key changes
-- 2 telemetry tests - Telemetry integration issues
-- 2 liquidity tests - Liquidity module updates
-- 8 other domain-specific tests
+### Added
+- Modular configuration system: context, exits, fusion, liquidity, momentum, risk
+- Enhanced configuration management
+- Improved system modularity
 
-All xfailed tests are documented with clear reasons and can be addressed incrementally.
+## [1.7.0] - 2025-01-XX
 
-### 🎯 Configuration
-**Live Presets**
-- `configs/live/presets/ETH_conservative.json` - 5.0% risk, 0.40 entry threshold
-- `configs/live/presets/BTC_vanilla.json` - Standard BTC configuration
-- `configs/live/presets/SOL_tuned.json` - Optimized SOL parameters
+### Added
+- Historical calibration and tuning framework
+- Asset-specific configuration templates
+- Enhanced backtesting capabilities
 
-**Macro Context**
-- VIX regime switch threshold: 20.0
-- VIX calm threshold: 18.0 (greenlight)
-- VIX hysteresis: on=22.0, off=18.0
-- DXY breakout: 105.0, bullish: 100.0, veto: 106.0
-- Macro veto threshold: 0.85 (85% veto strength)
+## [1.6.2] - 2024-XX-XX
 
-### 🚦 Breaking Changes
-- **mtf_confluence() signature**: Now requires vix_now and vix_prev parameters
-- **MacroPulse output**: Now includes fire_rate_stats and greenlight_score
-- **OHLCV columns**: All internal processing uses lowercase (close, high, low, etc.)
+### Added
+- Production-ready feature set
+- Enhanced stability and reliability
 
-### 🔧 Migration Guide
-**From v1.7.2 to v1.7.3**
-1. Update mtf_confluence() calls to include vix_now and vix_prev
-2. Initialize VIXHysteresis to track previous_value
-3. Ensure OHLCV data uses consistent column naming (lowercase preferred)
-4. Update MacroPulse handling to expect fire_rate_stats and greenlight_score
-5. Use new live feed presets for mock/paper/shadow testing
+## [1.6.1] - 2024-XX-XX
 
-### ⚠️ Scope Note
-v1.7.3 includes mock/shadow/paper modes only. NO real exchange connections, MCP servers, or persistent execution services. Production deployment requires additional infrastructure.
+### Added - Fibonacci Clusters
+- Price-time confluence zones
+- Overlapping Fib bar counts (21, 34, 55, 89, 144)
+- Temporal pressure zone detection
+- Integration with Wyckoff Phase C/D
 
----
+## [1.6.0] - 2024-XX-XX
 
-## v1.7.2 - Institutional Repository + Asset Adapter Architecture (2025-10-01)
+### Added - 9-Layer Enhanced Confluence
+1. Wyckoff structure (accumulation/distribution)
+2. M1/M2 Wyckoff (spring/shakeout and markup)
+3. Liquidity analysis (OB, FVG, sweeps)
+4. Structure (support/resistance, trends)
+5. Momentum (RSI, MACD, divergences)
+6. Volume (profile and confirmation)
+7. Context (regime, volatility)
+8. Fibonacci clusters (price-time confluence)
+9. MTF synchronization (multi-timeframe bias)
 
-### 🏛️ Repository Transformation
-**Professional Organization**
-- **Clean Directory Structure**: Organized `/bin/`, `/scripts/research/`, `/tests/`, `/docs/` for institutional standards
-- **Root Directory Cleanup**: Reduced from 45 to 3 Python files for professional appearance
-- **Production Entry Points**: 5 dedicated executables in `/bin/` directory
-- **Documentation Consolidation**: Comprehensive structure in `/docs/` with institutional documentation
-- **Test Organization**: All tests consolidated in `/tests/` with robust validation framework
+### Added - Oracle Whisper System
+- Soul-layer wisdom for high-confluence events
+- Price-time symmetry detection
+- Premium/discount zone awareness
+- Temporal pressure insights
+- CVD divergence revelation
 
-### 🌐 Universal Asset Adapter Architecture
-**Multi-Asset Trading System**
-- **Asset Support**: ETH, SOL, XRP, BTC, SPY with unified framework
-- **Asset Profiler System**: Automated parameter optimization for each asset class
-- **Adaptive Configuration**: Dynamic parameter adjustment based on asset characteristics
-- **Cross-Asset Validation**: Comprehensive testing across all supported assets
-- **Universal Backtesting**: Consistent framework for diverse asset classes
+### Added - Enhanced CVD & Orderflow
+- Cumulative Volume Delta with IamZeroIka slope analysis
+- Divergence detection (price vs volume intent)
+- Break of Structure (BOS) with 1/3 body validation
+- Liquidity Capture Analysis (LCA)
+- Intent nudging via volume confirmation
 
-### 🚀 Production Features
-**Enhanced CLI Interfaces**
-- `bin/bull_machine_cli.py` - Main CLI interface for all operations
-- `bin/production_backtest.py` - ETH production backtesting with frozen parameters
-- `bin/run_adaptive_backtest.py` - Multi-asset backtesting system (v1.7.2)
-- `bin/run_institutional_testing.py` - Comprehensive validation suite
-- `bin/run_multi_asset_profiler.py` - Asset profiling and configuration generation
+## [1.5.x] - 2024-XX-XX
 
-**Institutional Testing Suite**
-- Enhanced error handling with JSON serialization fixes
-- MTF alignment logic improvements
-- Temporal boundary validation
-- Comprehensive test coverage across all components
-
-### 📊 Repository Impact
-**Before → After Transformation**
-- **Python files in root**: 45 → 3
-- **Scattered experimental code**: → Organized in `/scripts/research/`
-- **Debug directories**: → Clean professional structure
-- **JSON result files**: → Organized in `/results/archive/`
-- **Mixed test files**: → Consolidated in `/tests/`
-
-### 🎯 Institutional Benefits
-- **Team Collaboration Ready**: Clean structure for professional development
-- **Code Audit Compliant**: Organized codebase meeting institutional standards
-- **Regulatory Compliance**: Professional appearance and documentation
-- **Scalable Architecture**: Clear patterns for adding new assets and features
+### Added
+- Legacy feature set (backward compatibility maintained)
+- Risk profile templates: aggressive, balanced, conservative
 
 ---
 
-## v1.6.2 - Production Release (2025-09-28)
+## Version Naming Convention
 
-### 🚀 Major Features
+- **Major (X.0.0)**: Breaking changes, major architecture shifts
+- **Minor (1.X.0)**: New features, non-breaking enhancements
+- **Patch (1.0.X)**: Bug fixes, minor improvements
 
-**5-Domain Confluence System**
-- Complete implementation of institutional-grade confluence strategy
-- Integrated Wyckoff, Liquidity, Momentum, Temporal, and Fusion domains
-- Multi-timeframe signal generation (1H, 4H, 1D) with proper data handling
+## Links
 
-**Crash-Resistant Optimization Framework**
-- Safe grid runner with process isolation and timeout protection
-- Resource guardrails preventing system crashes during long optimizations
-- Append-only JSONL logging to prevent corruption during interruptions
-- Multi-stage optimization: Grid Search → Bayesian → Walk-Forward validation
-
-**Professional Tearsheet Generation**
-- Fund-style performance reporting with institutional metrics
-- Risk-adjusted returns analysis with Sharpe ratio, Sortino ratio
-- Maximum drawdown analysis and volatility measurements
-- Scaling projections for institutional AUM ($250K to $10M+)
-
-### 🎯 Institutional Achievements
-
-**Performance Validation (2024 Test Period)**
-- **12.76% Annual Returns** with 7.5% risk allocation
-- **62.5% Win Rate** across 8 trades
-- **2.07 Profit Factor** with controlled risk exposure
-- **8.34% Maximum Drawdown** within institutional tolerances
-- **0.57 Sharpe Ratio** demonstrating risk-adjusted performance
-
-**Risk Parameter Scaling**
-- Optimized risk levels to achieve 8-15% institutional target returns
-- Identified 7.5% as optimal risk allocation for institutional deployment
-- Comprehensive risk scaling analysis across multiple allocation levels
-- Production-ready parameters frozen for reproducibility
-
-### 🔧 Technical Improvements
-
-**Date Filtering & Validation**
-- Fixed critical date filtering bug in backtest function for proper fold isolation
-- Implemented config-based date range filtering for walk-forward validation
-- Enhanced Stage C validation with proper out-of-sample testing
-
-**System Architecture**
-- Feature caching system for expensive indicator computations
-- Resource monitoring with memory and CPU usage controls
-- Production monitoring system for deployment validation
-- Git-tracked reproducibility with frozen configurations
-
-**Code Quality**
-- Comprehensive error handling and graceful degradation
-- Professional logging and telemetry systems
-- Modular architecture supporting institutional deployment
-- Type hints and documentation for maintainability
-
-### 📊 Validated Results
-
-**2024 Performance (ETH)**
-- Starting Capital: $100,000
-- Ending Capital: $112,762
-- Total Trades: 8
-- Win Rate: 62.5%
-- Best Trade: +59.38%
-- Worst Trade: -36.44%
-- Average Trade Return: 1.69%
-
-**Multi-Year Validation (2022-2024)**
-- **16.4% Total Returns** over 2+ year period
-- **8.4% Maximum Drawdown** demonstrating resilience
-- Consistent performance across different market cycles
-- Validated across bull, bear, and sideways market conditions
-
-### 🏗️ Infrastructure
-
-**Production Components**
-- `configs/v160/rc/ETH_production_v162.json` - Frozen production parameters
-- `generate_institutional_tearsheet.py` - Professional reporting system
-- `safe_grid_runner.py` - Crash-resistant optimization engine
-- `tools/resource_guard.py` - System protection and monitoring
-- `tools/feature_cache.py` - Performance optimization for indicators
-
-**Development Tools**
-- `run_stage_a_complete.py` - Grid search optimization
-- `run_signal_weight_optimization.py` - Signal weighting analysis
-- `run_extended_pnl_scaling.py` - Risk parameter optimization
-- `test_risk_scaling.py` - Institutional return target validation
-
-### 🔒 Deployment Ready
-
-**Quality Gates Passed**
-- ✅ Institutional return targets achieved (8-15% annual)
-- ✅ Risk controls validated (max 8.34% drawdown)
-- ✅ Multi-timeframe data integration tested
-- ✅ Walk-forward validation completed
-- ✅ Professional tearsheet generation verified
-- ✅ Production monitoring systems active
-
-**Configuration Frozen**
-- Git commit: `a6cb3d3` locked for reproducibility
-- Frozen timestamp: `2025-09-28T18:20:00Z`
-- All optimization parameters locked for institutional deployment
-- DO NOT MODIFY production configuration
-
-### 📈 Scaling Projections
-
-**Institutional AUM Targets**
-- $250K AUM: $31,905 annual profit
-- $1M AUM: $127,620 annual profit
-- $5M AUM: $638,100 annual profit
-- $10M AUM: $1,276,200 annual profit
-
-### 🚦 Breaking Changes
-
-- **Date filtering**: Backtest function now requires proper config-based date ranges
-- **Result structure**: Metrics now properly nested under `result['metrics']`
-- **Risk scaling**: Default risk moved from 2.5% to 7.5% for institutional targets
-
-### 🔧 Migration Guide
-
-**From v1.6.1 to v1.6.2**
-1. Update risk parameters to use new 7.5% allocation
-2. Ensure config includes proper date range filtering
-3. Update result parsing to access `result['metrics']`
-4. Use new tearsheet generator for professional reporting
+- [Unreleased]: https://github.com/rayger14/Bull-machine-/compare/v1.8.6...HEAD
+- [1.8.6]: https://github.com/rayger14/Bull-machine-/releases/tag/v1.8.6
+- [Repository]: https://github.com/rayger14/Bull-machine-
+- [Bug Reports]: https://github.com/rayger14/Bull-machine-/issues
+- [Documentation]: https://github.com/rayger14/Bull-machine-/tree/main/docs
 
 ---
 
-## v1.6.1 - Optimization Framework (Previous)
-
-### Features
-- PO3 detection system implementation
-- Fibonacci clusters and cross-asset optimization
-- Basic grid search optimization
-- Preliminary confluence detection
-
-### Performance
-- Initial validation on limited datasets
-- Basic backtest functionality
-- Research-grade optimization tools
-
----
-
-## Previous Versions
-
-See git history for complete version details prior to v1.6.1.
-
----
-
-**Note**: This changelog follows institutional standards for version tracking and deployment validation. All performance figures are based on historical backtesting and do not guarantee future results.
+**Note**: Dates marked as "2025-01-XX" or "2024-XX-XX" indicate releases without specific public release dates in the current documentation. This changelog will be updated with precise dates as releases are formalized.

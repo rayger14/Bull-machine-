@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bull-machine"
-version = "1.7.2"
+version = "1.8.6"
 description = "Advanced multi-domain confluence trading system"
 authors = [{name = "Bull Machine Team", email = "team@bullmachine.ai"}]
 license = "MIT"

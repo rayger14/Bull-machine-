@@ -1,0 +1,56 @@
+{
+  "S1": {
+    "archetype": "S1",
+    "core": {
+      "status": "error",
+      "error": "[Errno 2] No such file or directory: 'python'",
+      "variant": "S1_core"
+    },
+    "full": {
+      "status": "error",
+      "error": "[Errno 2] No such file or directory: 'python'",
+      "variant": "S1_full"
+    },
+    "wiring_verified": false,
+    "checks": {
+      "error": "One or both tests failed",
+      "config_flags_correct": true
+    }
+  },
+  "S4": {
+    "archetype": "S4",
+    "core": {
+      "status": "error",
+      "error": "[Errno 2] No such file or directory: 'python'",
+      "variant": "S4_core"
+    },
+    "full": {
+      "status": "error",
+      "error": "[Errno 2] No such file or directory: 'python'",
+      "variant": "S4_full"
+    },
+    "wiring_verified": false,
+    "checks": {
+      "error": "One or both tests failed",
+      "config_flags_correct": true
+    }
+  },
+  "S5": {
+    "archetype": "S5",
+    "core": {
+      "status": "error",
+      "error": "[Errno 2] No such file or directory: 'python'",
+      "variant": "S5_core"
+    },
+    "full": {
+      "status": "error",
+      "error": "[Errno 2] No such file or directory: 'python'",
+      "variant": "S5_full"
+    },
+    "wiring_verified": false,
+    "checks": {
+      "error": "One or both tests failed",
+      "config_flags_correct": true
+    }
+  }
+}

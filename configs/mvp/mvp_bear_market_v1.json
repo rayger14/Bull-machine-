@@ -1,0 +1,217 @@
+{
+  "version": "mvp_bear_market_v1",
+  "profile": "bear_market_optimized",
+  "description": "Optimized for 2022-like bear market conditions (PF target: 1.3-2.0, SHORT bias)",
+  "_fix_notes": "CRITICAL FIX: Added fusion_adapt.enable=true and regime_override to enable config-specific parameters. This enables bear archetypes (S2, S5) and routing logic.",
+
+  "fusion_adapt": {
+    "enable": true,
+    "ema_alpha": 0.2,
+    "min_weight": 0.05
+  },
+
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX",
+      "DXY",
+      "MOVE",
+      "YIELD_2Y",
+      "YIELD_10Y",
+      "USDT.D",
+      "BTC.D",
+      "TOTAL",
+      "TOTAL2",
+      "funding",
+      "oi",
+      "rv_20d",
+      "rv_60d"
+    ],
+    "zero_fill_missing": false,
+    "regime_override": {
+      "_comment": "Force 2022 as risk_off to activate bear archetypes",
+      "2022": "risk_off"
+    }
+  },
+
+  "ml_filter": {
+    "enabled": true,
+    "model_path": "models/btc_trade_quality_filter_v1.pkl",
+    "threshold": 0.32
+  },
+
+  "fusion": {
+    "entry_threshold_confidence": 0.36,
+    "weights": {
+      "wyckoff": 0.35,
+      "liquidity": 0.30,
+      "momentum": 0.35,
+      "smc": 0.0
+    }
+  },
+
+  "archetypes": {
+    "use_archetypes": true,
+
+    "max_trades_per_day": 4,
+
+    "monthly_share_cap": {
+      "failed_rally": 0.40,
+      "long_squeeze": 0.25,
+      "trap_within_trend": 0.10,
+      "order_block_retest": 0.15,
+      "bos_choch_reversal": 0.10
+    },
+
+    "enable_A": false,
+    "enable_B": false,
+    "enable_C": false,
+    "enable_D": false,
+    "enable_E": false,
+    "enable_F": false,
+    "enable_G": false,
+    "enable_H": false,
+    "enable_K": false,
+    "enable_L": false,
+    "enable_M": false,
+    "_comment_bull_archetypes": "DISABLED: All bull archetypes disabled to enable BEAR feature flags (BEAR_EVALUATE_ALL, BEAR_SOFT_LIQUIDITY)",
+    "enable_S1": false,
+    "enable_S2": false,
+    "_comment_S2": "Failed Rally - PF 0.48 after optimization (baseline 0.38, enriched 0.48), pattern fundamentally broken",
+    "enable_S3": false,
+    "enable_S4": false,
+    "enable_S5": true,
+    "enable_S6": false,
+    "enable_S7": false,
+    "enable_S8": false,
+
+    "thresholds": {
+      "min_liquidity": 0.10,
+      "_comment": "Lowered from 0.20 to 0.10 to work with BEAR soft liquidity filter (0.7x penalty instead of hard veto)"
+    },
+
+    "failed_rally": {
+      "direction": "short",
+      "archetype_weight": 2.0,
+      "final_fusion_gate": 0.36,
+      "fusion_threshold": 0.36,
+      "rsi_min": 70,
+      "vol_z_max": 0.5,
+      "wick_ratio_min": 2.0,
+      "max_risk_pct": 0.015,
+      "atr_stop_mult": 2.0,
+      "cooldown_bars": 8
+    },
+
+    "long_squeeze": {
+      "direction": "short",
+      "archetype_weight": 2.5,
+      "final_fusion_gate": 0.45,
+      "fusion_threshold": 0.45,
+      "funding_z_min": 1.5,
+      "rsi_min": 70,
+      "liquidity_max": 0.20,
+      "max_risk_pct": 0.015,
+      "atr_stop_mult": 3.0,
+      "cooldown_bars": 8,
+      "_comment": "Optimized parameters: PF 1.86, WR 55.6%, 9 trades/year"
+    },
+
+    "trap_within_trend": {
+      "archetype_weight": 0.2,
+      "final_fusion_gate": 0.55,
+      "cooldown_bars": 30
+    },
+
+    "order_block_retest": {
+      "archetype_weight": 0.6,
+      "final_fusion_gate": 0.48,
+      "cooldown_bars": 20
+    },
+
+    "bos_choch_reversal": {
+      "archetype_weight": 0.5,
+      "final_fusion_gate": 0.52,
+      "cooldown_bars": 18
+    },
+
+    "routing": {
+      "risk_on": {
+        "weights": {
+          "failed_rally": 0.0,
+          "long_squeeze": 0.2,
+          "trap_within_trend": 1.2,
+          "order_block_retest": 1.3
+        },
+        "final_gate_delta": 0.0,
+        "_comment": "S2 disabled, S5 minimal weight in risk_on"
+      },
+      "neutral": {
+        "weights": {
+          "failed_rally": 0.0,
+          "long_squeeze": 0.6,
+          "trap_within_trend": 0.6,
+          "order_block_retest": 0.8
+        },
+        "final_gate_delta": 0.0,
+        "_comment": "S2 disabled, S5 moderate weight in neutral"
+      },
+      "risk_off": {
+        "weights": {
+          "failed_rally": 0.0,
+          "long_squeeze": 2.5,
+          "trap_within_trend": 0.2,
+          "order_block_retest": 0.4
+        },
+        "final_gate_delta": 0.02,
+        "_comment": "S2 disabled (PF 0.48), S5 maximized (PF 1.86)"
+      },
+      "crisis": {
+        "weights": {
+          "failed_rally": 0.0,
+          "long_squeeze": 2.5,
+          "trap_within_trend": 0.1,
+          "order_block_retest": 0.2
+        },
+        "final_gate_delta": 0.04,
+        "_comment": "S2 disabled, S5 only bear pattern in crisis"
+      }
+    },
+
+    "exits": {
+      "failed_rally": {
+        "trail_atr": 1.5,
+        "time_limit_hours": 48
+      },
+      "long_squeeze": {
+        "trail_atr": 1.5,
+        "time_limit_hours": 24
+      }
+    }
+  },
+
+  "context": {
+    "crisis_fuse": {
+      "enabled": false
+    }
+  },
+
+  "risk": {
+    "base_risk_pct": 0.015,
+    "max_position_size_pct": 0.15,
+    "max_portfolio_risk_pct": 0.08
+  },
+
+  "feature_flags": {
+    "enable_wyckoff": true,
+    "enable_smc": true,
+    "enable_temporal": true,
+    "enable_hob": true,
+    "enable_fusion": true,
+    "enable_macro": true,
+    "use_temporal_confluence": true,
+    "use_fusion_layer": true,
+    "use_macro_regime": true,
+    "_comment": "All 6 domain engines enabled for bear archetypes (S5)"
+  }
+}

@@ -1,0 +1,83 @@
+================================================================================
+TEMPORAL VALIDATION - QUICK REFERENCE
+================================================================================
+
+Test Period: 2022-06-01 to 2022-12-31 (Crisis Period, 5,113 bars)
+Test Date: 2026-01-12
+Agent: Performance Engineer
+
+================================================================================
+RESULTS SUMMARY
+================================================================================
+
+PROFIT FACTOR: 1.03 (Target: 3.5) ❌ FAIL
+- 71% below target
+- Barely breakeven (1.03 means $103 profit per $100 risk)
+- NOT DEPLOYABLE
+
+TOTAL PNL: +$14 (Target: $500+) ❌ FAIL
+- $10,000 capital → $10,014 after 7 months
+- 0.14% return (worse than holding USD)
+- 97% below target
+
+WIN RATE: 34% (Target: 50%+) ❌ FAIL
+- 16 percentage points below target
+- 2 out of 3 trades LOSE money
+- Below breakeven for amplification strategies (need 46%+)
+
+TOTAL TRADES: 83 trades
+- 28 winners (+$325 total)
+- 55 losers (-$311 total)
+- Net: +$14
+
+================================================================================
+TEMPORAL FEATURES STATUS
+================================================================================
+
+✅ temporal_confluence: WORKING (1.16x avg boost)
+   - Before fix: Boolean False (broken)
+   - After fix: Float 0.30-0.90 (working)
+   - Distribution: 99.8% HIGH (too uniform)
+
+✅ fib_time_cluster: WORKING
+   - Before fix: 0.34% of bars
+   - After fix: 42.7% of bars
+   - Properly detecting Fib time levels
+
+✅ bars_since_* (Wyckoff): WORKING
+   - bars_since_spring: 0-1209 bars
+   - bars_since_utad: 0-1859 bars
+   - Tracking event freshness correctly
+
+❌ TEMPORAL IMPACT: -16% Profit Factor
+   - Baseline (broken temporal): PF 1.22
+   - With temporal (working): PF 1.03
+   - **Temporal boosts HURT performance**
+
+================================================================================
+KEY FINDING: Temporal Boosts Amplify LOSSES
+================================================================================
+
+Math:
+  Win Rate 34% < 46% breakeven for amplification
+  → Amplifying 66% losing trades HURTS more than amplifying 34% winning trades
+
+  Baseline: (0.34 * +$10) + (0.66 * -$10) = -$3.20 avg
+  Temporal: (0.34 * +$11.50) + (0.66 * -$11.50) = -$3.68 avg
+  Impact: -15% worse with temporal boosts
+
+================================================================================
+DEPLOYMENT RECOMMENDATION
+================================================================================
+
+❌ DO NOT DEPLOY
+
+Next Actions:
+1. Fix base strategy (PF 1.03 → 2.0+) BEFORE adding temporal
+2. Disable funding_divergence archetype (worst performer)
+3. Optimize liquidity_vacuum (only profitable archetype)
+4. Test on multiple market regimes (not just 2022 crisis)
+
+Timeline: +8 hours to PF 2.0, +1 week to PF 3.0
+
+Current Status: VALIDATION FAILED

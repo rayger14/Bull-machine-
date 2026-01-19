@@ -1,0 +1,17 @@
+{
+  "wyckoff_weight": 0.28832472946590365,
+  "liquidity_weight": 0.2935854277657758,
+  "momentum_weight": 0.1933257028417238,
+  "macro_weight": 0.08970283357723721,
+  "pti_weight": 0.06499474925040628,
+  "tier1_threshold": 0.5237503959370029,
+  "tier2_threshold": 0.3137562859947081,
+  "tier3_threshold": 0.24715740269698125,
+  "require_m1m2_confirmation": true,
+  "require_macro_alignment": true,
+  "atr_stop_mult": 1.533126185770264,
+  "trailing_atr_mult": 1.9743817837052164,
+  "max_hold_bars": 120,
+  "max_risk_pct": 0.018999023080600624,
+  "volatility_scaling": true
+}

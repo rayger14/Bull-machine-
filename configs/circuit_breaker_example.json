@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0",
+  "description": "Example configuration with circuit breaker enabled",
+  "circuit_breaker": {
+    "enabled": true,
+    "config": {
+      "log_dir": "logs/circuit_breaker",
+      "thresholds": {
+        "daily_loss_pct": 0.05,
+        "weekly_loss_pct": 0.10,
+        "monthly_loss_pct": 0.15,
+        "drawdown_tier1": 0.25,
+        "drawdown_tier2": 0.20,
+        "drawdown_tier3": 0.15,
+        "sharpe_tier2": 0.5,
+        "sharpe_tier3": 1.0,
+        "win_rate_tier1": 0.45,
+        "win_rate_tier3": 0.50,
+        "fill_rate_tier1": 0.85,
+        "fill_rate_tier2": 0.90,
+        "fill_rate_tier3": 0.95,
+        "slippage_tier1": 0.005,
+        "slippage_tier2": 0.003,
+        "slippage_tier3": 0.0015,
+        "order_failures_tier1": 10,
+        "order_failures_tier2": 5,
+        "order_failures_tier3": 3,
+        "flash_crash_pct": 0.10,
+        "liquidity_spread_pct": 0.01,
+        "api_latency_ms": 5000,
+        "archetype_failure_tier1": 8,
+        "archetype_failure_tier2": 3,
+        "regime_transitions_tier1": 5,
+        "signal_overlap_tier1": 0.65,
+        "signal_overlap_tier2": 0.55,
+        "max_risk_per_trade_pct": 0.01,
+        "max_position_pct": 0.10,
+        "max_leverage": 1.5
+      }
+    }
+  },
+  "risk": {
+    "base_risk_pct": 0.075,
+    "max_position_size_pct": 0.12,
+    "max_portfolio_risk_pct": 0.15
+  },
+  "safety": {
+    "loss_streak_threshold": 3,
+    "atr_floor_percentile": 0.2,
+    "atr_cap_percentile": 0.95
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "description": "Regime-specific thresholds extracted from winning trades (2022-2024)",
+  "extraction_date": "2025-11-16T23:27:09.113141",
+  "total_trades": 70,
+  "total_winners": 32,
+  "regimes": {
+    "0": {
+      "regime_name": "neutral",
+      "min_liquidity": 0.0,
+      "fusion_threshold": 0.45880065312145496,
+      "volume_z_min": -0.29902442001164203,
+      "funding_z_min": 1.5,
+      "sample_size": 32
+    },
+    "1": {
+      "regime_name": "risk_on",
+      "min_liquidity": 0.0,
+      "fusion_threshold": 0.4,
+      "volume_z_min": -1.0,
+      "funding_z_min": 1.5,
+      "sample_size": 0
+    },
+    "2": {
+      "regime_name": "risk_off",
+      "min_liquidity": 0.0,
+      "fusion_threshold": 0.4,
+      "volume_z_min": -1.0,
+      "funding_z_min": 1.5,
+      "sample_size": 0
+    },
+    "3": {
+      "regime_name": "crisis",
+      "min_liquidity": 0.0,
+      "fusion_threshold": 0.4,
+      "volume_z_min": -1.0,
+      "funding_z_min": 1.5,
+      "sample_size": 0
+    }
+  }
+}

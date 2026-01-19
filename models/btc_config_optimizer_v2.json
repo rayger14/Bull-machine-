@@ -1,0 +1,35 @@
+{
+  "version": "1.0.0-config-optimizer",
+  "description": "XGBoost Regressor trained on Optuna trials to predict PF from config params",
+  "n_features": 19,
+  "feature_names": [
+    "final_fusion_floor",
+    "neutralize_fusion_drop",
+    "neutralize_min_bars",
+    "neutralize_pti_margin",
+    "min_liquidity",
+    "w_wyckoff",
+    "w_liquidity",
+    "w_momentum",
+    "size_min",
+    "size_max",
+    "B_fusion",
+    "C_fusion",
+    "H_fusion",
+    "K_fusion",
+    "L_fusion",
+    "trail_atr_mult",
+    "max_bars",
+    "range_stop_factor",
+    "trend_stop_factor"
+  ],
+  "metrics": {
+    "train_mae": 0.2520506354740689,
+    "train_rmse": 0.3689282608808102,
+    "train_r2": 0.6954570480045918,
+    "test_mae": 0.3694228431156706,
+    "test_rmse": 0.4500113914341666,
+    "test_r2": -0.28873194172333005,
+    "overfit_gap": 0.9841889897279219
+  }
+}

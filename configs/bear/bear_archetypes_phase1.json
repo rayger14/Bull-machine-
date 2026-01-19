@@ -1,0 +1,136 @@
+{
+  "_meta": {
+    "description": "Bear Archetype Configuration - Phase 1 (S2 + S5)",
+    "version": "1.0",
+    "created": "2025-11-13",
+    "approved_patterns": ["failed_rally", "long_squeeze"],
+    "rejected_patterns": ["alt_rotation_down", "curve_inversion"]
+  },
+
+  "archetypes": {
+    "use_archetypes": true,
+
+    "enable_S1": false,
+    "enable_S2": true,
+    "enable_S3": false,
+    "enable_S4": false,
+    "enable_S5": true,
+    "enable_S6": false,
+    "enable_S7": false,
+    "enable_S8": false,
+
+    "thresholds": {
+      "failed_rally": {
+        "direction": "short",
+        "fusion_threshold": 0.36,
+        "wick_ratio_min": 2.0,
+        "require_rsi_divergence": false,
+        "max_risk_pct": 0.015,
+        "atr_stop_mult": 2.0,
+        "weights": {
+          "ob_retest": 0.25,
+          "wick_rejection": 0.25,
+          "rsi_signal": 0.20,
+          "volume_fade": 0.15,
+          "tf4h_confirm": 0.15
+        },
+        "_description": "S2: Failed Rally Rejection - Dead cat bounce trap",
+        "_edge": "Order block retest + volume fade + RSI divergence = bull trap",
+        "_validated_performance": {
+          "win_rate": 0.585,
+          "profit_factor": 1.4,
+          "forward_24h": -0.0068
+        }
+      },
+
+      "long_squeeze": {
+        "direction": "short",
+        "fusion_threshold": 0.35,
+        "funding_z_min": 1.2,
+        "rsi_min": 70,
+        "liquidity_max": 0.25,
+        "max_risk_pct": 0.015,
+        "atr_stop_mult": 2.0,
+        "weights": {
+          "funding_extreme": 0.40,
+          "rsi_exhaustion": 0.30,
+          "oi_spike": 0.15,
+          "liquidity_thin": 0.15
+        },
+        "_description": "S5: Long Squeeze Cascade - Overcrowded longs cascade",
+        "_edge": "Positive funding + OI spike + RSI overbought = long squeeze down",
+        "_critical_fix": "Original logic was backwards - positive funding means longs pay shorts (long squeeze DOWN)",
+        "_mechanism": {
+          "funding_positive": "Longs paying high funding rate (unsustainable)",
+          "oi_spike": "New longs entering at top (fuel for cascade)",
+          "rsi_overbought": "No buyers left (exhaustion)",
+          "liquidity_thin": "Thin books amplify cascade (no bids to catch fall)"
+        }
+      }
+    },
+
+    "routing": {
+      "_description": "Regime-specific routing weights for bear archetypes",
+
+      "neutral": {
+        "weights": {
+          "failed_rally": 1.0,
+          "long_squeeze": 1.0,
+          "trap_within_trend": 1.0
+        }
+      },
+
+      "risk_on": {
+        "weights": {
+          "failed_rally": 0.8,
+          "long_squeeze": 0.9,
+          "trap_within_trend": 1.1
+        }
+      },
+
+      "risk_off": {
+        "_description": "Boost bear patterns during risk-off regime",
+        "weights": {
+          "failed_rally": 1.8,
+          "long_squeeze": 2.0,
+          "trap_within_trend": 0.3
+        }
+      },
+
+      "crisis": {
+        "_description": "Maximum boost for bear patterns during crisis",
+        "weights": {
+          "failed_rally": 2.0,
+          "long_squeeze": 2.5,
+          "trap_within_trend": 0.2
+        }
+      }
+    }
+  },
+
+  "exits": {
+    "_description": "Exit strategy for bear archetypes",
+    "failed_rally": {
+      "trail_atr": 1.5,
+      "time_limit_hours": 48
+    },
+    "long_squeeze": {
+      "trail_atr": 1.5,
+      "time_limit_hours": 24,
+      "_note": "Cascades are fast - tighter time limit"
+    }
+  },
+
+  "_validation_notes": {
+    "gold_standard_requirement": "Must not break 2024 results (17 trades, PF 6.17)",
+    "feature_dependencies": {
+      "failed_rally": ["tf1h_ob_high", "wick_ratio", "rsi_14", "volume_zscore", "tf4h_external_trend"],
+      "long_squeeze": ["funding_Z", "oi_change_24h", "rsi_14", "liquidity_score"]
+    },
+    "missing_features_handling": {
+      "liquidity_score": "Derived from BOMS + FVG if missing",
+      "tf1h_ob_high": "Skip pattern if missing (hard dependency)",
+      "funding_Z": "Skip pattern if missing (hard dependency)"
+    }
+  }
+}

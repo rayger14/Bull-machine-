@@ -1,0 +1,72 @@
+{
+  "experiment_name": "BTC 1H Standard Test (2020-2025)",
+  "description": "Standardized backtest experiment for baseline and archetype comparison",
+
+  "asset": "BTC",
+  "timeframe": "1H",
+
+  "data_path": "data/features_mtf/BTC_1H_2022-01-01_to_2024-12-31.parquet",
+
+  "periods": {
+    "train": {
+      "start": "2022-01-01",
+      "end": "2023-06-30",
+      "description": "Bear market + recovery (2022 crash through early 2023)"
+    },
+    "test": {
+      "start": "2023-07-01",
+      "end": "2023-12-31",
+      "description": "Bull market run (primary validation period)"
+    },
+    "oos": {
+      "start": "2024-01-01",
+      "end": "2024-12-31",
+      "description": "True out-of-sample (not used in optimization)"
+    }
+  },
+
+  "regime_filter": "all",
+
+  "costs": {
+    "slippage_bps": 5,
+    "fee_bps": 3,
+    "total_bps": 8,
+    "description": "Conservative cost assumptions (5bp slippage + 3bp fees)"
+  },
+
+  "initial_capital": 10000.0,
+
+  "acceptance_criteria": {
+    "min_test_pf": 1.5,
+    "min_test_sharpe": 0.5,
+    "max_overfit": 0.5,
+    "min_trades": 50,
+    "description": "Minimum requirements to consider a strategy viable"
+  },
+
+  "baseline_config": {
+    "enabled": true,
+    "models": [
+      "Baseline0_BuyAndHold",
+      "Baseline1_SMA200Trend",
+      "Baseline2_SMACrossover",
+      "Baseline3_RSIMeanReversion",
+      "Baseline4_VolTargetTrend",
+      "Baseline5_Cash"
+    ]
+  },
+
+  "archetype_config": {
+    "enabled": false,
+    "models": [],
+    "description": "Bull Machine archetypes to test (disabled by default)"
+  },
+
+  "output": {
+    "results_dir": "results/quant_suite",
+    "save_csv": true,
+    "save_report": true,
+    "save_trades": false,
+    "plot_equity_curves": false
+  }
+}

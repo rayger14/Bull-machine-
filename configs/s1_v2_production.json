@@ -1,0 +1,267 @@
+{
+  "version": "s1_v2_production",
+  "profile": "S1 Liquidity Vacuum V2 - Production (Confluence + Regime)",
+  "description": "Production-ready S1 config with confluence logic, regime filtering, and validated thresholds targeting 40-60 trades/year",
+  "_comment_overview": "============ PRODUCTION CONFIGURATION (2025-11-23) ============",
+  "_comment_purpose": "This config implements S1 Liquidity Vacuum V2 with multi-bar capitulation detection, confluence logic, and regime-aware filtering for production deployment",
+  "_comment_lineage": "Based on s1_v2_quick_fix.json (60.7 trades/year validation) with production hardening and operator documentation",
+  "_comment_target_performance": "40-60 trades/year, 50-60% win rate, captures 3-4 out of 7 major capitulation events per bear market cycle",
+  "adaptive_fusion": false,
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX",
+      "DXY",
+      "MOVE",
+      "YIELD_2Y",
+      "YIELD_10Y",
+      "USDT.D",
+      "BTC.D",
+      "TOTAL",
+      "TOTAL2",
+      "funding",
+      "oi",
+      "rv_20d",
+      "rv_60d"
+    ],
+    "zero_fill_missing": false,
+    "regime_override": {}
+  },
+  "ml_filter": {
+    "enabled": false,
+    "_comment": "ML filter disabled for S1 - pattern is rare enough that filter would cause false negatives"
+  },
+  "fusion": {
+    "entry_threshold_confidence": 1.0,
+    "weights": {
+      "wyckoff": 0.0,
+      "liquidity": 0.0,
+      "momentum": 0.0,
+      "smc": 0.0
+    },
+    "_comment": "Legacy fusion disabled - S1 uses archetype-specific confluence logic instead"
+  },
+  "risk": {
+    "base_risk_pct": 0.02,
+    "max_position_size_pct": 0.12
+    "max_portfolio_risk_pct": 0.1,
+    "_comment_risk": "Conservative risk settings for high-volatility capitulation reversals"
+  },
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 0,
+    "_comment_archetype_flags": "============ ARCHETYPE ENABLE FLAGS ============",
+    "enable_A": false,
+    "enable_B": false,
+    "enable_C": false,
+    "enable_D": false,
+    "enable_E": false,
+    "enable_F": false,
+    "enable_G": false,
+    "enable_H": false,
+    "enable_K": false,
+    "enable_L": false,
+    "enable_M": false,
+    "enable_S1": true,
+    "_comment_S1": "S1 Liquidity Vacuum V2 - Primary capitulation reversal pattern",
+    "enable_S2": false,
+    "enable_S3": false,
+    "enable_S4": false,
+    "enable_S5": false,
+    "enable_S6": false,
+    "enable_S7": false,
+    "enable_S8": false,
+    "thresholds": {
+      "min_liquidity": 0.1,
+      "liquidity_vacuum": {
+        "direction": "long",
+        "archetype_weight": 1.0,
+        "_comment_archetype_weight": "REDUCED FROM 2.5 TO 1.0 to fix -75% drawdown issue (2025-12-09). With 2.5x multiplier, effective risk was 5% per trade causing catastrophic DD. Now capped at 2% per trade for target DD < 20%.",
+        "_comment_detection_mode": "============ V2 MULTI-BAR CAPITULATION DETECTION ============",
+        "use_v2_logic": true,
+        "use_confluence": true,
+        "use_regime_filter": true,
+        "_mode_description": "V2 encodes multi-bar capitulation dynamics (velocity, persistence, exhaustion) to catch major events while filtering noise",
+        "_comment_hard_gates": "============ HARD GATES (Must ALL Pass) ============",
+        "_gate_philosophy": "These are minimum requirements - if any fails, trade rejected immediately without computing confluence",
+        "capitulation_depth_max": -0.2,
+        "_note_cap_depth": "Minimum drawdown from 30d high. -0.20 = 20% drop required. Set at p10 of historical capitulations. Lower = more sensitive",
+        "crisis_composite_min": 0.35,
+        "_note_crisis": "Minimum macro stress score [0,1]. Composite of VIX, DXY, MOVE. 0.35 catches FTX (0.34) and major events. 0.40 misses FTX. 0.30 adds too many false positives",
+        "_comment_confluence_system": "============ CONFLUENCE LOGIC (Weighted Scoring) ============",
+        "_confluence_philosophy": "After hard gates pass, require multiple confirmation signals (3-of-4 conditions + 65% weighted score). Reduces false positive ratio from 236:1 to 10-15:1",
+        "confluence_min_conditions": 3,
+        "_note_min_conditions": "Require at least 3 out of 4 core conditions to pass (depth, crisis, volume, wick). 4-of-4 is too strict, 2-of-4 adds noise",
+        "confluence_threshold": 0.65,
+        "_note_confluence_threshold": "Minimum weighted confluence score [0,1]. 0.65 = high confidence. 0.50-0.60 = moderate. 0.70+ = very conservative (may miss events)",
+        "confluence_weights": {
+          "_comment": "Weights sum to 1.0 for interpretability",
+          "_group_core_signals": "Core capitulation indicators (50% total)",
+          "capitulation_depth_score": 0.2,
+          "_note_depth": "Drawdown severity - deeper drops score higher",
+          "crisis_environment": 0.15,
+          "_note_crisis_weight": "Macro stress - VIX/DXY/MOVE composite",
+          "volume_climax_3b": 0.08,
+          "_note_vol": "Volume spike in last 3 bars - panic selling",
+          "wick_exhaustion_3b": 0.07,
+          "_note_wick": "Wick rejection in last 3 bars - seller exhaustion",
+          "_group_liquidity": "Liquidity dynamics (25% total)",
+          "liquidity_drain_severity": 0.1,
+          "_note_liq_drain": "Magnitude of orderbook drain",
+          "liquidity_velocity_score": 0.08,
+          "_note_liq_velocity": "Speed of drain - fast = capitulation, slow = grind",
+          "liquidity_persistence_score": 0.07,
+          "_note_liq_persist": "Multi-bar sustained stress count",
+          "_group_confluence": "Additional confirmation signals (25% total)",
+          "funding_reversal": 0.12,
+          "_note_funding": "Funding rate extreme reversal",
+          "oversold": 0.08,
+          "_note_oversold": "RSI/momentum extreme",
+          "volatility_spike": 0.05,
+          "_note_vol_spike": "Realized volatility surge"
+        },
+        "_comment_exhaustion_gates": "============ EXHAUSTION SIGNALS (OR Gate) ============",
+        "_exhaustion_philosophy": "After hard gates pass, require at least ONE exhaustion signal (volume climax OR wick rejection). Ensures panic visible in microstructure",
+        "volume_climax_3b_min": 0.5,
+        "_note_vol_climax": "Max volume z-score in last 3 bars. 0.50 = p95+ level. Raised from 0.25 to reduce false positives. Lower = more trades but more noise",
+        "wick_exhaustion_3b_min": 0.6,
+        "_note_wick_exhaust": "Max wick rejection ratio in last 3 bars. 0.60 = deep rejection (60% of candle is lower wick). Raised from 0.30 to reduce FPs",
+        "_comment_regime_filter": "============ REGIME CONTEXT FILTER ============",
+        "_regime_philosophy": "Capitulations most tradable in bear markets (risk_off) and crisis periods. Drawdown override allows detection in any regime during major crashes",
+        "allowed_regimes": [
+          "risk_off",
+          "crisis"
+        ],
+        "_note_regimes": "Whitelist of tradable regimes. risk_off = bear market, crisis = extreme stress. Remove 'crisis' to only trade confirmed bear markets",
+        "drawdown_override_pct": 0.1,
+        "_note_drawdown_override": "If drawdown > 10%, bypass regime check. Catches flash crashes in bull markets (e.g., 2024 Japan carry unwind). Set to 0.15 to be more conservative",
+        "require_regime_or_drawdown": true,
+        "_note_regime_gate": "If true, MUST be in allowed regime OR exceed drawdown override. If false, regime is advisory only (not recommended)",
+        "_comment_risk_management": "============ RISK MANAGEMENT ============",
+        "max_risk_pct": 0.02,
+        "_note_max_risk": "Position size as % of capital. 2% is conservative for high-volatility pattern",
+        "atr_stop_mult": 2.756052450054769,
+        "_note_stop": "Stop loss as multiple of ATR. 2.5x allows for volatility while protecting capital",
+        "cooldown_bars": 12.0,
+        "_note_cooldown": "Hours between trades. Prevents overtrading same event",
+        "_comment_fusion_legacy": "============ LEGACY FUSION (Kept for Compatibility) ============",
+        "fusion_threshold": 0.5442544322373216,
+        "_note_fusion": "Legacy fusion score threshold. Kept for compatibility but not primary gate in confluence mode",
+        "_comment_expected_performance": "============ EXPECTED PERFORMANCE ============",
+        "_expected_trades_year": "40-60 trades/year (1-2 per week in bear markets, near-zero in bull markets)",
+        "_expected_trade_distribution": "Concentrated in bear market capitulation events. 2023 (bull recovery) = 0 trades is CORRECT",
+        "_expected_win_rate": "50-60% (high variance - big wins when right, small losses when wrong)",
+        "_expected_events_caught": "3-4 out of 7 major capitulation events per bear cycle",
+        "_historical_examples": [
+          "LUNA May-12 (caught): -80% crash \u2192 25% bounce",
+          "LUNA Jun-18 (caught): Final capitulation \u2192 violent reversal",
+          "FTX Nov-9 (caught): Exchange collapse \u2192 liquidity vacuum bounce",
+          "Japan Carry Aug-5 2024 (caught): Flash crash \u2192 mean reversion"
+        ],
+        "_known_misses_by_design": [
+          "SVB Mar-10 (moderate event, no volume climax)",
+          "Aug Flush Aug-17 (mild, regime uncertain)",
+          "Sept Flush Sep-6 (mild, no crisis confirmation)"
+        ],
+        "liquidity_max": 0.17240186439426278,
+        "volume_z_min": 1.9672749534023555,
+        "wick_lower_min": 0.33764190571119296,
+        "_calibration_metadata": {
+          "applied_date": "2025-12-08",
+          "optuna_db": "results/liquidity_vacuum_calibration/optuna_liquidity_vacuum.db",
+          "study_name": "liquidity_vacuum_calibration",
+          "trial_id": 8,
+          "trial_number": 7,
+          "best_pf": 12.5,
+          "parameter_count": 6,
+          "tool": "bin/apply_optimized_calibrations.py (manual)"
+        }
+      }
+    },
+    "exits": {
+      "liquidity_vacuum": {
+        "trail_atr": 2.0,
+        "time_limit_hours": 72,
+        "_comment_exits": "Wide stops for volatility, 72h time limit to avoid holding through reversal"
+      }
+    },
+    "routing": {
+      "_comment_routing": "Regime-specific archetype weight multipliers",
+      "risk_on": {
+        "weights": {
+          "liquidity_vacuum": 0.5
+        },
+        "final_gate_delta": 0.0,
+        "_comment": "Reduced weight in bull markets - capitulations rare but drawdown_override allows detection"
+      },
+      "neutral": {
+        "weights": {
+          "liquidity_vacuum": 1.0
+        },
+        "final_gate_delta": 0.0,
+        "_comment": "Baseline weight in neutral regime"
+      },
+      "risk_off": {
+        "weights": {
+          "liquidity_vacuum": 1.5
+        },
+        "final_gate_delta": 0.0,
+        "_comment": "Increased weight in bear markets - primary operating environment"
+      },
+      "crisis": {
+        "weights": {
+          "liquidity_vacuum": 2.0
+        },
+        "final_gate_delta": 0.0,
+        "_comment": "Maximum weight during crisis - highest probability environment"
+      }
+    }
+  },
+  "_production_metadata": {
+    "created": "2025-11-23",
+    "last_updated": "2025-12-09",
+    "update_reason": "CRITICAL FIX: Reduced archetype_weight 2.5→1.0 to fix -75% max drawdown. Position sizing multipliers were causing 5% risk per trade instead of 2%.",
+    "validated_period": "2022-01-01 to 2024-11-18",
+    "validation_results": {
+      "trades_per_year": 60.7,
+      "events_caught": 4,
+      "events_total": 7,
+      "recall": 0.57,
+      "false_positive_ratio": "~10-15:1 (improved from 236:1 baseline)"
+    },
+    "expected_performance_after_fix": {
+      "max_drawdown_target": "< 20%",
+      "expected_drawdown_10_losses": "~18%",
+      "profit_factor": "Should remain ~1.44 (position sizing doesn't affect win rate)",
+      "risk_per_trade": "2.0% (down from 5.0%)"
+    },
+    "deployment_readiness": "REQUIRES_VALIDATION",
+    "operator_guide": "docs/S1_V2_OPERATOR_GUIDE.md",
+    "tuning_guide": "docs/S1_V2_TUNING_GUIDE.md",
+    "known_issues": "docs/S1_V2_KNOWN_ISSUES.md"
+  },
+  "feature_flags": {
+    "enable_wyckoff": true,
+    "enable_smc": true,
+    "enable_temporal": true,
+    "enable_hob": true,
+    "enable_fusion": true,
+    "enable_macro": true,
+    "use_temporal_confluence": true,
+    "use_fusion_layer": true,
+    "use_macro_regime": true
+  },
+  "_domain_engine_metadata": {
+    "enabled_date": "2025-12-08T15:53:46.361919",
+    "enabled_engines": [
+      "enable_wyckoff",
+      "enable_smc",
+      "enable_temporal",
+      "enable_hob",
+      "enable_fusion",
+      "enable_macro"
+    ],
+    "tool": "bin/enable_domain_engines.py",
+    "reason": "Fix archetype feature coverage from 20% to 100%"
+  }
+}

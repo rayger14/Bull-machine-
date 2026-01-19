@@ -1,0 +1,151 @@
+ARCHETYPE STATUS QUICK REFERENCE
+Generated: 2025-12-12
+Purpose: One-page truth table - what works vs what's ghost
+
+================================================================================
+PRODUCTION READY (3) - BEAR MARKET ONLY
+================================================================================
+✅ S1  Liquidity Vacuum V2      PF 1.4-1.8   40-60/yr   Bear/Crisis
+✅ S4  Funding Divergence        PF 2.22      10-15/yr   Bear/Volatile  
+✅ S5  Long Squeeze              PF 1.86      8-12/yr    Bear
+
+REALITY: These work. Validated 2022-2024. Zero bull market coverage.
+
+================================================================================
+READY TO VALIDATE (3) - BULL MARKET - ZERO FEATURE WORK NEEDED ⭐
+================================================================================
+🟨 H   Trap Within Trend         80% ready   All features exist   4h
+🟨 F   Expansion Exhaustion      90% ready   All features exist   5h
+🟨 K   Wick Trap Moneytaur       80% ready   All features exist   6h
+
+ACTION: Start backtests TODAY. Can be working this week.
+
+================================================================================
+NEED SIMPLE FIXES (4) - BULL MARKET - <3H TOTAL
+================================================================================
+🟦 C   BOS/CHOCH Reversal        Add FVG alias                    0.5h
+🟦 D   Failed Continuation        Add FVG alias                    0.5h
+🟦 E   Liquidity Compression      Add atr_percentile               1h
+🟦 M   Ratio Coil Break           Add atr_percentile + poc_dist    2h
+
+ACTION: Feature engineering, then validate.
+
+================================================================================
+NEED DOMAIN WIRING (3) - BULL MARKET - COMPLEX
+================================================================================
+🟧 B   Order Block Retest         Wire BOMS strength               12h
+🟧 G   Liquidity Sweep            Wire BOMS strength               10h
+🟧 A   Wyckoff Spring/UTAD        Wire PTI engine                  20h
+🟧 L   Volume Exhaustion          Clarify vs E                     4h
+
+ACTION: Wire BOMS first (unlocks B+G), defer A (too complex).
+
+================================================================================
+DISABLED (1) - BULL MARKET - POOR PERFORMANCE
+================================================================================
+⛔ S2  Failed Rally Rejection     PF 0.48 (optimized)              N/A
+
+REALITY: Code works but unprofitable. Disabled in production configs.
+
+================================================================================
+GHOST ARCHETYPES (6) - DELETE FROM DOCS
+================================================================================
+❌ P   FVG Reclaim                Registry only, no code
+❌ Q   Liquidity Cascade          Registry only, no code
+❌ N   HTF Trap Reversal          Registry only, no code
+❌ S3  Whipsaw                    Stub returns False
+❌ S6  Alt Rotation Down          Stub returns False (needs TOTAL3)
+❌ S7  Curve Inversion            Stub returns False (needs yields)
+
+ACTION: Remove from registry, mark DEPRECATED in docs.
+
+================================================================================
+SUMMARY BY MARKET REGIME
+================================================================================
+BULL MARKETS (risk_on):
+  Working:         0
+  Ready (1 week):  3 (H, F, K)
+  Needs work:      7 (C, D, E, M, B, G, A, L)
+  Coverage:        ZERO (critical gap)
+
+BEAR MARKETS (risk_off/crisis):
+  Working:         3 (S1, S4, S5)
+  Coverage:        EXCELLENT
+
+VOLATILE/NEUTRAL:
+  Working:         1 (S4 fires in volatility)
+  Coverage:        POOR
+
+================================================================================
+EFFORT TO FULL BULL COVERAGE
+================================================================================
+Week 1:  H + F + K               15h   →  3 bull archetypes working
+Week 2:  Feature fixes           11h   →  7 bull archetypes ready
+Week 3:  Validation              16h   →  7 bull archetypes validated
+Week 4:  Optimization            8h    →  7 bull archetypes optimized
+
+TOTAL:   50 hours = 2 weeks focused work
+
+================================================================================
+KEY METRICS
+================================================================================
+Documented archetypes:           26+ (includes ghosts/stubs)
+Registry entries:                18
+Working implementations:         3 (S1, S4, S5)
+Close to working:                3 (H, F, K)
+Ghosts to delete:                6 (P, Q, N, S3, S6, S7)
+
+Truth-to-Documentation Ratio:    11.5% (3/26)
+After cleanup:                    20% (3/15)
+After Week 1:                     40% (6/15)
+After Week 4:                     67% (10/15)
+
+================================================================================
+RECOMMENDED NEXT ACTIONS
+================================================================================
+1. Delete ghosts (1 day)         → Remove P,Q,N,S3,S6,S7 from docs
+2. Test H+F+K (5 days)           → Validate on 2022-2024 data
+3. Deploy winners (1 day)        → If PF > 1.2, add to System B0
+4. Fix features (3 days)         → FVG aliases, percentiles, BOMS wiring
+5. Complete portfolio (2 weeks)  → All 10 archetypes production-ready
+
+================================================================================
+TRUTH CHECK QUESTIONS
+================================================================================
+Q: How many bull archetypes are working?
+A: ZERO. All working archetypes (S1, S4, S5) are bear-market specialists.
+
+Q: How many archetypes can be working in 1 week?
+A: 3 more (H, F, K) - no feature work needed, just validation.
+
+Q: Are there really 26+ archetypes?
+A: NO. 6 are ghosts, 11 are stubs, 1 is disabled. Only 3 work.
+
+Q: What's blocking bull coverage?
+A: Lack of validation, not lack of code. H/F/K can work TODAY.
+
+Q: Should we implement all 15?
+A: NO. Focus on top 5 bull (H,F,K,B,G). Skip A (too complex), S2 (unprofitable).
+
+================================================================================
+DECISION TREE
+================================================================================
+Need bull coverage URGENTLY?
+  → Validate H+F+K this week (15h)
+  → 3 bull archetypes working by Friday
+
+Have 2 weeks for infrastructure?
+  → Do full Phase 1-3
+  → 7 bull archetypes + BOMS wiring
+  → Sustainable foundation
+
+Just want truth in docs?
+  → Delete ghosts + mark stubs (1 day)
+  → Documentation matches reality
+  → No functional changes
+
+================================================================================
+REALITY: You have a bear market machine, not a bull machine.
+SOLUTION: Validate H+F+K this week to get bull coverage.
+EFFORT: 15 hours to transform system from bear-only to balanced.
+================================================================================
