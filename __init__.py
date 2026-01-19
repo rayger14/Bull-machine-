@@ -1,17 +1,17 @@
 """
-Bull Machine Trading System v1.6.2
+Bull Machine Trading System v1.8.6
 
-Institutional-grade multi-domain confluence trading framework with crash-resistant optimization.
+Institutional-grade algorithmic trading framework with archetype-based pattern detection.
 
 Features:
-- 5-Domain Confluence Strategy (Wyckoff, Liquidity, Momentum, Temporal, Fusion)
-- Multi-stage optimization (Grid Search → Bayesian → Walk-Forward)
-- Professional tearsheet generation with fund-style metrics
-- Risk parameter scaling for institutional return targets (8-15% annual)
+- Archetype-based trading strategies (13 production archetypes)
+- Multi-domain engine layer (Liquidity, Wyckoff, Macro, Temporal, Funding)
+- Regime-aware soft gating with Empirical Bayes shrinkage
+- Multi-objective optimization (NSGA-II with purging & embargo)
 - Production monitoring and deployment validation
 """
 
-__version__ = "1.6.2"
+__version__ = "1.8.6"
 __author__ = "Bull Machine Capital"
 __description__ = "Institutional-grade multi-domain confluence trading framework"
 
