@@ -1,0 +1,39 @@
+{
+  "regime_detection": {
+    "description": "Hybrid Regime Detection - Crisis Rules + ML for Normal Regimes",
+    "enabled": true,
+    "mode": "hybrid",
+
+    "model_path": "models/logistic_regime_v3.pkl",
+
+    "crisis_detector": {
+      "description": "Rule-based crisis detection (2-of-4 voting)",
+      "rv_zscore_threshold": 3.5,
+      "drawdown_threshold": -0.08,
+      "crash_frequency_threshold": 2,
+      "crisis_persistence_threshold": 0.7,
+      "drawdown_persistence_threshold": 0.90,
+      "crisis_composite_threshold": 1.5,
+      "min_triggers": 2,
+      "min_crisis_hours": 6
+    },
+
+    "hysteresis": {
+      "enabled": true,
+      "description": "Stability constraints to prevent regime flapping",
+      "min_dwell_time_hours": 6,
+      "dual_threshold_margin": 0.1
+    },
+
+    "event_override": {
+      "enabled": false,
+      "description": "Disabled - hybrid model has its own crisis detection"
+    },
+
+    "fallback": {
+      "enabled": false,
+      "default_regime": "neutral",
+      "description": "Fallback to neutral if hybrid model fails"
+    }
+  }
+}

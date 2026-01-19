@@ -53,6 +53,7 @@ import pickle
 from engine.context.logistic_regime_model import LogisticRegimeModel
 from engine.context.regime_hysteresis import RegimeHysteresis
 from engine.context.confidence_calibrator import CompositeCalibrator
+from engine.context.hybrid_regime_model import HybridRegimeModel
 
 logger = logging.getLogger(__name__)
 
@@ -61,8 +62,9 @@ logger = logging.getLogger(__name__)
 REGIME_MODE_STATIC = 'static'  # Use precomputed static labels (for baseline comparison)
 REGIME_MODE_DYNAMIC_BASELINE = 'dynamic_baseline'  # Use logistic model dynamically
 REGIME_MODE_DYNAMIC_ENSEMBLE = 'dynamic_ensemble'  # Use ensemble model dynamically (recommended)
+REGIME_MODE_HYBRID = 'hybrid'  # Use hybrid model (crisis rules + ML for normal regimes) - PRODUCTION DEFAULT
 
-VALID_REGIME_MODES = [REGIME_MODE_STATIC, REGIME_MODE_DYNAMIC_BASELINE, REGIME_MODE_DYNAMIC_ENSEMBLE]
+VALID_REGIME_MODES = [REGIME_MODE_STATIC, REGIME_MODE_DYNAMIC_BASELINE, REGIME_MODE_DYNAMIC_ENSEMBLE, REGIME_MODE_HYBRID]
 
 
 class EventOverrideDetector:
@@ -178,7 +180,7 @@ class RegimeService:
 
     def __init__(
         self,
-        mode: str = REGIME_MODE_DYNAMIC_ENSEMBLE,
+        mode: str = REGIME_MODE_HYBRID,  # PRODUCTION DEFAULT: hybrid model (crisis rules + ML)
         model_path: Optional[str] = None,
         static_labels_column: str = 'regime_label',
         enable_event_override: bool = True,
@@ -189,7 +191,8 @@ class RegimeService:
         enable_ema_smoothing: bool = False,  # CRITICAL FIX (2026-01-09): Disabled by default (hysteresis has its own EMA)
         ema_alpha: float = 0.08,  # 24-hour window: α = 2/(24+1) ≈ 0.08
         enable_calibration: bool = True,  # NEW: Enable confidence calibration (hybrid approach)
-        calibrator_path: Optional[str] = None  # NEW: Path to confidence calibrator (defaults to models/confidence_calibrator_v1.pkl)
+        calibrator_path: Optional[str] = None,  # NEW: Path to confidence calibrator (defaults to models/confidence_calibrator_v1.pkl)
+        crisis_config: Optional[Dict] = None  # NEW: Crisis detector configuration (for hybrid mode)
     ):
         """
         Initialize regime service.
@@ -198,10 +201,12 @@ class RegimeService:
             mode: Regime mode flag (see REGIME_MODE_* constants)
                 - 'static': Read from precomputed labels (for baseline comparison)
                 - 'dynamic_baseline': Use logistic model dynamically
-                - 'dynamic_ensemble': Use ensemble model dynamically (recommended)
+                - 'dynamic_ensemble': Use ensemble model dynamically
+                - 'hybrid': Use hybrid model (crisis rules + ML) - PRODUCTION DEFAULT
             model_path: Path to trained model
                 - For 'dynamic_baseline': 'models/logistic_regime_v1.pkl'
                 - For 'dynamic_ensemble': 'models/ensemble_regime_v1.pkl'
+                - For 'hybrid': 'models/logistic_regime_v3.pkl' (optional, uses internal default)
             static_labels_column: Column name for static labels (only used in 'static' mode)
             enable_event_override: If True, enable Layer 0 (event detection)
             enable_hysteresis: If True, enable Layer 2 (stability)
@@ -212,6 +217,7 @@ class RegimeService:
             ema_alpha: EMA smoothing factor (default: 0.08 for 24-hour window)
             enable_calibration: If True, calibrate confidence scores using outcome-based calibrator
             calibrator_path: Path to confidence calibrator model (defaults to models/confidence_calibrator_v1.pkl)
+            crisis_config: Crisis detector configuration (for hybrid mode only)
         """
         logger.info("=" * 80)
         logger.info("Initializing RegimeService")
@@ -245,11 +251,13 @@ class RegimeService:
             self.event_detector = None
             logger.info("✗ Layer 0: Event Override disabled")
 
-        # Layer 1: Model (Logistic or Ensemble)
+        # Layer 1: Model (Logistic, Ensemble, or Hybrid)
         self.model = None
         self.ensemble_models = None
         self.ensemble_config = None
         self.ensemble_features = None
+        self.hybrid_model = None
+        self.crisis_config = crisis_config
 
         if self.mode == REGIME_MODE_STATIC:
             logger.info("✓ Layer 1: Static mode (will read precomputed labels)")
@@ -273,6 +281,20 @@ class RegimeService:
                     f"Ensemble model not found at {model_path}\n"
                     f"Run bin/train_ensemble_regime_model.py first"
                 )
+        elif self.mode == REGIME_MODE_HYBRID:
+            # Load hybrid model (crisis rules + ML)
+            # Use provided model_path or default to logistic_regime_v3.pkl
+            if model_path is None:
+                model_path = 'models/logistic_regime_v3.pkl'
+
+            self.hybrid_model = HybridRegimeModel(
+                ml_model_path=model_path,
+                crisis_config=crisis_config
+            )
+            logger.info(f"✓ Layer 1: Hybrid Model initialized")
+            logger.info(f"   - Crisis detector: Rule-based (2-of-4 voting)")
+            logger.info(f"   - Normal regimes: ML model ({model_path})")
+            logger.info(f"   - Conflict resolution: Crisis rules override ML")
 
         # Layer 1.5: Crisis Threshold + EMA Smoothing (NEW)
         self.crisis_threshold = crisis_threshold
@@ -420,6 +442,50 @@ class RegimeService:
             'regime_source': 'static',
             'transition_flag': False,  # Can't track transitions in static mode
             'time_in_regime_hours': 0.0
+        }
+
+    def _get_regime_from_hybrid(
+        self,
+        features: Dict[str, float],
+        timestamp: Optional[datetime] = None
+    ) -> Dict[str, Any]:
+        """
+        Get regime from hybrid model (crisis rules + ML).
+
+        Steps:
+        1. HybridRegimeModel.classify() checks crisis rules first
+        2. If crisis detected → return crisis with high confidence
+        3. Else → use ML for normal regime classification
+        4. Return unified result
+
+        Args:
+            features: Feature dict
+            timestamp: Optional timestamp
+
+        Returns:
+            Dict with regime classification results
+        """
+        self.validation_counters['bars_processed'] += 1
+
+        # Call hybrid model
+        result = self.hybrid_model.classify(features, timestamp)
+
+        # Convert to RegimeService format
+        # HybridRegimeModel returns:
+        # - regime_label
+        # - regime_confidence
+        # - regime_proba (dict)
+        # - crisis_override (bool)
+        # - regime_source
+
+        return {
+            'regime_label': result['regime_label'],
+            'regime_probs': result['regime_proba'],
+            'regime_confidence': result['regime_confidence'],
+            'regime_source': result['regime_source'],
+            'crisis_override': result.get('crisis_override', False),
+            'crisis_triggers': result.get('crisis_triggers'),
+            'triggers_fired': result.get('triggers_fired', 0)
         }
 
     def _get_regime_from_ensemble(
@@ -703,6 +769,70 @@ class RegimeService:
         if self.mode == REGIME_MODE_STATIC:
             # Static mode: read precomputed labels
             return self._get_regime_from_static_labels(features, timestamp)
+
+        elif self.mode == REGIME_MODE_HYBRID:
+            # Hybrid mode: use hybrid model (crisis rules + ML)
+            self.validation_counters['baseline_calls'] += 1
+            hybrid_result = self._get_regime_from_hybrid(features, timestamp)
+
+            # Extract for hysteresis processing
+            proposed_regime = hybrid_result['regime_label']
+            raw_probs = hybrid_result['regime_probs']
+            smoothed_probs = raw_probs  # Hybrid model handles its own smoothing
+
+            # Store hybrid metadata
+            hybrid_metadata = {
+                'crisis_override': hybrid_result.get('crisis_override', False),
+                'crisis_triggers': hybrid_result.get('crisis_triggers'),
+                'triggers_fired': hybrid_result.get('triggers_fired', 0)
+            }
+
+            # Apply hysteresis if enabled
+            if self.enable_hysteresis and self.hysteresis:
+                hyst_result = self.hysteresis.apply_with_regime(
+                    proposed_regime,
+                    smoothed_probs,
+                    timestamp,
+                    override_active=hybrid_metadata['crisis_override']
+                )
+
+                if hyst_result['transition_flag']:
+                    self.transition_count += 1
+
+                result = {
+                    'regime_label': hyst_result['regime_label'],
+                    'regime_probs': hyst_result['regime_probs'],
+                    'regime_confidence': hyst_result['regime_confidence'],
+                    'regime_source': 'hybrid+hysteresis',
+                    'transition_flag': hyst_result['transition_flag'],
+                    'time_in_regime_hours': hyst_result['time_in_regime_hours'],
+                    'raw_model_probs': raw_probs,
+                    'smoothed_probs': smoothed_probs
+                }
+
+                # Add hybrid metadata
+                result.update(hybrid_metadata)
+
+                return result
+            else:
+                # No hysteresis
+                final_confidence = max(raw_probs.values()) - sorted(raw_probs.values(), reverse=True)[1] if len(raw_probs) > 1 else max(raw_probs.values())
+
+                result = {
+                    'regime_label': proposed_regime,
+                    'regime_probs': raw_probs,
+                    'regime_confidence': final_confidence,
+                    'regime_source': 'hybrid',
+                    'transition_flag': False,
+                    'time_in_regime_hours': 0.0,
+                    'raw_model_probs': raw_probs,
+                    'smoothed_probs': smoothed_probs
+                }
+
+                # Add hybrid metadata
+                result.update(hybrid_metadata)
+
+                return result
 
         elif self.mode == REGIME_MODE_DYNAMIC_ENSEMBLE:
             # Ensemble mode: use ensemble model
@@ -1090,6 +1220,10 @@ class RegimeService:
         # Reset ensemble EMA state
         if self.mode == REGIME_MODE_DYNAMIC_ENSEMBLE:
             self.ensemble_ema_state = None
+
+        # Reset hybrid model state
+        if self.mode == REGIME_MODE_HYBRID and self.hybrid_model:
+            self.hybrid_model.reset()
 
         # Reset counters
         self.call_count = 0

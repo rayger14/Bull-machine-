@@ -8,11 +8,12 @@ specific strategy logic. It just calls model.predict() and executes trades.
 import pandas as pd
 import numpy as np
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Any
 from datetime import datetime
 import logging
 
 from engine.models.base import BaseModel, Signal, Position
+from engine.risk.circuit_breaker import CircuitBreakerEngine
 
 logger = logging.getLogger(__name__)
 
@@ -231,7 +232,8 @@ class BacktestEngine:
         model: BaseModel,
         data: pd.DataFrame,
         initial_capital: float = 10000.0,
-        commission_pct: float = 0.001  # 0.1% per trade
+        commission_pct: float = 0.001,  # 0.1% per trade
+        circuit_breaker_config: Optional[Dict[str, Any]] = None
     ):
         """
         Initialize backtest engine.
@@ -241,6 +243,7 @@ class BacktestEngine:
             data: Historical OHLCV + features data
             initial_capital: Starting portfolio value ($)
             commission_pct: Commission per trade (0.001 = 0.1%)
+            circuit_breaker_config: Circuit breaker config dict (None = use defaults)
         """
         self.model = model
         self.data = data
@@ -252,6 +255,16 @@ class BacktestEngine:
         self.trades: List[Trade] = []
         self.equity: List[float] = []
         self.timestamps: List[pd.Timestamp] = []
+
+        # Circuit breaker
+        self.circuit_breaker_config = circuit_breaker_config or {}
+        self.circuit_breaker_enabled = self.circuit_breaker_config.get('enabled', False)
+        self.circuit_breaker: Optional[CircuitBreakerEngine] = None
+
+        if self.circuit_breaker_enabled:
+            cb_config = self.circuit_breaker_config.get('config', {})
+            self.circuit_breaker = CircuitBreakerEngine(config=cb_config)
+            logger.info("Circuit breaker ENABLED for backtest")
 
     def run(
         self,
@@ -299,8 +312,41 @@ class BacktestEngine:
 
         # Iterate through bars
         for idx, (timestamp, bar) in enumerate(test_data.iterrows()):
+            # Check circuit breakers (if enabled)
+            if self.circuit_breaker_enabled and self.circuit_breaker is not None:
+                # Create portfolio snapshot for CB checks
+                portfolio_snapshot = self._create_portfolio_snapshot(bar, timestamp)
+
+                # Check all circuit breakers
+                trigger = self.circuit_breaker.check_all_circuit_breakers(
+                    portfolio_snapshot,
+                    {'close': bar.get('close'), 'timestamp': timestamp}
+                )
+
+                if trigger:
+                    # Execute circuit breaker action
+                    self.circuit_breaker.execute_circuit_breaker(
+                        trigger,
+                        portfolio_snapshot,
+                        {'close': bar.get('close'), 'timestamp': timestamp}
+                    )
+
+                    # If trading halted, skip signal generation
+                    if not self.circuit_breaker.trading_enabled:
+                        logger.warning(f"[{timestamp}] Trading HALTED by circuit breaker: {trigger}")
+                        # Track equity but don't generate new signals
+                        current_equity = self._compute_equity(bar)
+                        self.equity.append(current_equity)
+                        self.timestamps.append(timestamp)
+                        continue
+
             # Get signal from model
             signal = self.model.predict(bar, self.position)
+
+            # Apply position size multiplier if circuit breaker is active
+            if self.circuit_breaker_enabled and self.circuit_breaker is not None:
+                if signal and hasattr(signal, 'position_size'):
+                    signal.position_size *= self.circuit_breaker.position_size_multiplier
 
             # Execute trade logic
             self._execute_bar(timestamp, bar, signal, verbose=verbose)
@@ -437,3 +483,119 @@ class BacktestEngine:
             equity += unrealized
 
         return equity
+
+    def _create_portfolio_snapshot(self, bar: pd.Series, timestamp: pd.Timestamp) -> 'PortfolioSnapshot':
+        """Create portfolio snapshot for circuit breaker checks."""
+        return PortfolioSnapshot(
+            trades=self.trades,
+            equity_curve=self.equity,
+            timestamps=self.timestamps,
+            initial_capital=self.initial_capital,
+            current_position=self.position,
+            current_timestamp=timestamp
+        )
+
+
+class PortfolioSnapshot:
+    """Lightweight portfolio snapshot for circuit breaker checks."""
+
+    def __init__(
+        self,
+        trades: List[Trade],
+        equity_curve: List[float],
+        timestamps: List[pd.Timestamp],
+        initial_capital: float,
+        current_position: Optional[Position],
+        current_timestamp: pd.Timestamp
+    ):
+        self.trades = trades
+        self.equity_curve = equity_curve
+        self.timestamps = timestamps
+        self.initial_capital = initial_capital
+        self.current_position = current_position
+        self.current_timestamp = current_timestamp
+
+    def get_daily_pnl_pct(self) -> Optional[float]:
+        """Get daily PnL as percentage of capital."""
+        if len(self.timestamps) < 2:
+            return None
+
+        # Find trades in last 24 hours
+        cutoff = self.current_timestamp - pd.Timedelta(hours=24)
+        recent_trades = [t for t in self.trades if t.exit_time >= cutoff]
+
+        if not recent_trades:
+            return 0.0
+
+        daily_pnl = sum(t.pnl for t in recent_trades)
+        return daily_pnl / self.initial_capital
+
+    def get_weekly_pnl_pct(self) -> Optional[float]:
+        """Get weekly PnL as percentage of capital."""
+        if len(self.timestamps) < 2:
+            return None
+
+        # Find trades in last 7 days
+        cutoff = self.current_timestamp - pd.Timedelta(days=7)
+        recent_trades = [t for t in self.trades if t.exit_time >= cutoff]
+
+        if not recent_trades:
+            return 0.0
+
+        weekly_pnl = sum(t.pnl for t in recent_trades)
+        return weekly_pnl / self.initial_capital
+
+    def calculate_drawdown(self) -> Optional[float]:
+        """Calculate current drawdown from peak equity."""
+        if len(self.equity_curve) < 2:
+            return 0.0
+
+        peak = max(self.equity_curve)
+        current = self.equity_curve[-1]
+        drawdown = (peak - current) / peak
+
+        return max(0.0, drawdown)
+
+    def get_trade_count(self, hours: int) -> int:
+        """Get number of trades in last N hours."""
+        cutoff = self.current_timestamp - pd.Timedelta(hours=hours)
+        return sum(1 for t in self.trades if t.exit_time >= cutoff)
+
+    def get_win_rate(self, hours: int) -> Optional[float]:
+        """Get win rate over last N hours."""
+        cutoff = self.current_timestamp - pd.Timedelta(hours=hours)
+        recent_trades = [t for t in self.trades if t.exit_time >= cutoff]
+
+        if not recent_trades:
+            return None
+
+        winners = sum(1 for t in recent_trades if t.is_winner)
+        return winners / len(recent_trades)
+
+    def calculate_sharpe_ratio(self, days: int) -> Optional[float]:
+        """Calculate rolling Sharpe ratio (not implemented - would need returns series)."""
+        # This would require storing returns, which we don't have in this snapshot
+        # Return None to skip this check
+        return None
+
+    def get_total_allocated_pct(self) -> float:
+        """Get total allocated capital percentage."""
+        if self.current_position is None:
+            return 0.0
+
+        # Assuming position.size is in dollars
+        return self.current_position.size / self.initial_capital
+
+    def get_leverage(self) -> float:
+        """Get current portfolio leverage."""
+        # For now, assume unlevered (1.0x)
+        return 1.0
+
+    def to_dict(self) -> Dict:
+        """Convert to dictionary for logging."""
+        return {
+            "current_equity": self.equity_curve[-1] if self.equity_curve else self.initial_capital,
+            "total_trades": len(self.trades),
+            "drawdown": self.calculate_drawdown(),
+            "timestamp": self.current_timestamp.isoformat() if self.current_timestamp else None
+        }

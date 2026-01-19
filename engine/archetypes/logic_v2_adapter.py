@@ -414,7 +414,8 @@ class ArchetypeLogic:
             # S1 is LONG direction but classified as "bear" → was getting 1.20x in crisis
             # This caused 267 crisis trades with -$912 loss
 
-            direction = context.get('direction', 'long').upper()
+            # FIX (2026-01-18): RuntimeContext is a dataclass, not a dict - use .metadata
+            direction = context.metadata.get('direction', 'long').upper()
 
             if direction == "LONG":
                 # LONG reversals (S1, S4) - catching falling knives
@@ -4294,6 +4295,21 @@ class ArchetypeLogic:
                 )
 
             # ============================================================================
+        # FIX (2026-01-18): V1 FALLBACK - if V2 block didn't execute, return early
+        # Lines below reference 'score' which is only defined inside V2 block
+        else:
+            # V2 features missing or disabled - return early (no V1 logic implemented)
+            return (
+                False,
+                0.0,
+                {
+                    "reason": "v2_features_unavailable_or_disabled",
+                    "use_v2_logic": use_v2_logic,
+                    "has_v2_features": has_v2_features,
+                    "note": "V1 fallback not implemented - V2 features required for S1 detection",
+                },
+            )
+
         # REGIME SOFT PENALTY (applied AFTER domain engines, BEFORE threshold gate)
         # ============================================================================
         score, regime_penalty, regime_tags = self._apply_regime_soft_penalty(
@@ -4370,9 +4386,6 @@ class ArchetypeLogic:
             },
             "LONG",
         )
-
-        # NOTE: Unreachable V1 fallback code removed (was dead code after return statement).
-        # If V1 fallback is needed, it should be implemented outside this if block.
 
     def _calculate_wick_lower_ratio(self, row: pd.Series) -> float:
         """
