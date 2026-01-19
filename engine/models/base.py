@@ -22,6 +22,7 @@ class Signal:
     entry_price: float
     stop_loss: Optional[float] = None
     take_profit: Optional[float] = None
+    regime_label: Optional[str] = None  # Regime when signal was generated (crisis/risk_off/neutral/risk_on)
     metadata: Dict[str, Any] = None  # Model-specific context
 
     def __post_init__(self):
@@ -44,6 +45,7 @@ class Position:
     size: float  # Position size in quote currency ($)
     stop_loss: float
     take_profit: Optional[float] = None
+    regime_label: Optional[str] = None  # Regime when position was opened
     metadata: Dict[str, Any] = None
 
     def __post_init__(self):
