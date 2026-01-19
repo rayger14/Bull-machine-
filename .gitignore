@@ -269,6 +269,14 @@ optuna_*.db-wal
 *.pdf
 *.svg
 
+# Allow documentation diagrams and reference images
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
+!docs/**/*.pdf
+!docs/**/*.svg
+!README_assets/**/*
+
 # ----------------------------------------------------------------------------
 # Archives
 # ----------------------------------------------------------------------------
