@@ -30,7 +30,7 @@ from engine.backtesting.engine import BacktestEngine
 from engine.models.archetype_model import ArchetypeModel
 from engine.risk.circuit_breaker import CircuitBreakerEngine, CircuitBreakerThresholds
 from engine.portfolio.regime_allocator import RegimeWeightAllocator
-from engine.context.regime_service import RegimeService
+from engine.context.regime_manager import RegimeManager
 
 
 # ============================================================================
