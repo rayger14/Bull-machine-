@@ -1,0 +1,147 @@
+================================================================================
+FEATURE STORE QUICK REFERENCE
+================================================================================
+Generated: 2025-12-10
+
+PRIMARY FEATURE STORE (USE THIS):
+  Path: data/features_mtf/BTC_1H_2022-01-01_to_2024-12-31.parquet
+  Size: 12.5 MB
+  Rows: 26,236 (2022-2024 hourly)
+  Cols: 171 features
+  Modified: 2025-12-03 17:14
+
+FEATURE COMPLETENESS:
+  ✅ Wyckoff:  30/30 (100%) - ALL events + confidence scores
+  ✅ SMC:      24/30 (80%)  - BOS, CHOCH, FVG, Liquidity, OB
+  ✅ Fusion:    4/4  (100%) - K2 + multi-TF fusion scores
+  ✅ Macro:    33/20 (165%) - DXY, VIX, yields, funding, OI, RV
+  ❌ Temporal:  0/8  (0%)   - NOT NEEDED (use PTI features)
+  ❌ HOB:       0/5  (0%)   - NOT NEEDED (use OB features)
+
+TOTAL DOMAIN COVERAGE: 91/117 (78%)
+
+WHAT'S INSIDE (171 features):
+  • 30 Wyckoff events (SC, BC, Spring, UTAD, etc.)
+  • 24 SMC features (BOS, CHOCH, FVG, liquidity, order blocks)
+  • 4 Fusion scores (K2 + multi-TF)
+  • 33 Macro features (DXY, VIX, BTC.D, yields, funding, OI)
+  • 35 Multi-timeframe features (1H/4H/Daily PTI, FRVP, BOMS)
+  • 12 Volume/volatility features
+  • 6 Technical indicators (RSI, ADX, SMAs)
+  • 22 Context features (swing points, crisis detection, governance)
+  • 5 OHLCV
+
+ENGINE CONFIGURATION:
+  Script: bin/backtest_knowledge_v2.py
+  Loads:  data/features_mtf/BTC_1H_*.parquet
+  Logic:  Most recent file matching date range
+  Status: ✅ Working correctly
+
+ALTERNATIVE STORES:
+  1. features_2022_with_regimes.parquet (169 cols, 2022 only)
+     - Includes regime_label, regime_confidence
+     - Use for: Regime model training
+
+  2. BTC_1H_2022_ENRICHED.parquet (136 cols, 2022 only)
+     - Runtime-enriched for S2/S5 archetypes
+     - Use for: Archetype-specific backtesting
+     - DO NOT use as primary store
+
+  3. archive/features_v18/BTC_1H.parquet (20 cols, legacy)
+     - Superseded by current store
+     - Keep for historical reference only
+
+MISSING FEATURES (LOW IMPACT):
+  ❌ Temporal (0/8):
+     - temporal_confluence, fib_time_cluster, temporal_support_cluster
+     - WORKAROUND: Use PTI features (tf1h_pti_*, tf1d_pti_*)
+     - IMPACT: LOW - overlapping functionality exists
+
+  ❌ HOB (0/5):
+     - hob_demand_zone, hob_supply_zone, hob_imbalance
+     - WORKAROUND: Use Order Block features (ob_*, is_*_ob)
+     - IMPACT: LOW - OB features are "HOB lite"
+
+  ⚠️ SMC (6/30 missing):
+     - smc_score, smc_liquidity_sweep, additional CHOCH variants
+     - IMPACT: MEDIUM - recommend adding for 100% SMC coverage
+
+RECOMMENDATION:
+  ✅ USE AS-IS - Current store is production-ready
+  
+  No immediate action required. Missing features are:
+  • Temporal → Covered by PTI features
+  • HOB → Covered by Order Block features
+  • SMC gaps → Nice-to-have, not critical
+
+OPTIONAL ENHANCEMENTS (if bandwidth):
+  1. Add SMC composites (smc_score, smc_liquidity_sweep)
+  2. Add missing CHOCH variants (tf1h_choch, tf1d_choch)
+  3. Backfill 2025 data monthly
+
+MAINTENANCE SCHEDULE:
+  Monthly:   Backfill latest data (2025-01-01 to present)
+  Quarterly: Feature audit + performance review
+  Next:      2025-01-10
+
+KEY METRICS:
+  Date Coverage: 2022-01-01 to 2024-12-31 (3 years)
+  Granularity:   1H (hourly candles)
+  Asset:         BTC/USD
+  Total Features: 171 (78% domain completeness)
+  File Size:     12.5 MB
+  Last Updated:  2025-12-03
+
+QUICK CHECKS:
+  # View feature list
+  python -c "import pandas as pd; df = pd.read_parquet('data/features_mtf/BTC_1H_2022-01-01_to_2024-12-31.parquet'); print(df.columns.tolist())"
+
+  # Check date range
+  python -c "import pandas as pd; df = pd.read_parquet('data/features_mtf/BTC_1H_2022-01-01_to_2024-12-31.parquet'); print(f'Range: {df.index.min()} to {df.index.max()}')"
+
+  # Verify features
+  python -c "import pandas as pd; df = pd.read_parquet('data/features_mtf/BTC_1H_2022-01-01_to_2024-12-31.parquet'); wyckoff = [c for c in df.columns if 'wyckoff' in c]; print(f'Wyckoff: {len(wyckoff)} features')"
+
+FEATURE GROUPS:
+  Wyckoff Events:
+    - wyckoff_sc, wyckoff_bc, wyckoff_ar, wyckoff_as, wyckoff_st
+    - wyckoff_sos, wyckoff_sow
+    - wyckoff_spring_a, wyckoff_spring_b, wyckoff_ut, wyckoff_utad
+    - wyckoff_lps, wyckoff_lpsy
+    - All with _confidence scores
+    - wyckoff_phase_abc, wyckoff_sequence_position
+    - tf1d_wyckoff_phase, tf1d_wyckoff_score
+
+  SMC/Structure:
+    - tf1h_bos_bullish, tf1h_bos_bearish
+    - tf4h_choch_flag
+    - tf1h_fvg_present, tf1h_fvg_high, tf1h_fvg_low
+    - tf1h_fakeout_detected, tf1h_fakeout_direction
+    - tf4h_structure_alignment
+
+  Liquidity:
+    - liquidity_score, liquidity_vacuum_score, liquidity_vacuum_fusion
+    - liquidity_drain_pct, liquidity_velocity, liquidity_persistence
+
+  Order Blocks:
+    - is_bullish_ob, is_bearish_ob
+    - ob_confidence, ob_strength_bullish, ob_strength_bearish
+    - tf1h_ob_high, tf1h_ob_low
+
+  Fusion:
+    - k2_fusion_score
+    - tf1h_fusion_score, tf4h_fusion_score, tf1d_fusion_score
+
+  Macro:
+    - DXY, DXY_Z, VIX, VIX_Z
+    - BTC.D, BTC.D_Z, USDT.D, USDT.D_Z
+    - TOTAL, TOTAL2, TOTAL_RET, TOTAL2_RET
+    - YIELD_10Y, YIELD_2Y, YC_SPREAD, YC_Z
+    - funding, funding_rate, funding_Z, funding_reversal
+    - oi, oi_z, oi_change_24h, oi_change_pct_24h
+    - RV_7, RV_20, RV_30, RV_60
+    - macro_regime, macro_correlation, macro_*_trend
+
+================================================================================
+FULL REPORT: See FEATURE_STORE_AUDIT_REPORT.md
+================================================================================

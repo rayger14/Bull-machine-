@@ -474,3 +474,44 @@ commit_message_*.txt
 cleanup_step*.sh
 REPOSITORY_CLEANUP_STRATEGY.md
 
+
+# Research scripts (do not commit)
+bin/analyze_*.py
+bin/backfill_*.py
+bin/train_*.py
+bin/validate_*.py
+bin/optimize_*.py
+bin/backtest_*.py
+bin/test_*.py
+bin/diagnose_*.py
+bin/compare_*.py
+bin/compute_*.py
+bin/demo_*.py
+bin/execute_*.py
+bin/extract_*.py
+bin/generate_*.py
+bin/label_*.py
+bin/monitor_*.py
+bin/patch_*.py
+bin/phase*.py
+bin/retrain_*.py
+bin/s5_*.py
+bin/soft_gating_*.py
+bin/tune_*.py
+bin/verify_*.py
+bin/visualize_*.py
+bin/walk_forward_*.py
+
+# Temporary documentation (do not commit to root)
+/*_REPORT.md
+/*_DELIVERABLES.md
+/*_TEMP.md
+/*_QUICK_START.md
+/*_INDEX.md
+commit_message_*.txt
+GIT_COMMIT_MESSAGE.txt
+
+# Backup files
+*.bak
+*.backup
+*.backup_*

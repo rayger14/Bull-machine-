@@ -1,0 +1,46 @@
+# Bull Machine v1.7.2 Production Requirements
+# Core dependencies for production deployment
+
+# Data processing and analysis
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Scientific computing
+scipy>=1.10.0
+
+# Financial calculations
+quantlib>=1.31
+TA-Lib>=0.4.25
+
+# Configuration and serialization
+pyyaml>=6.0
+toml>=0.10.0
+
+# Logging and monitoring
+structlog>=23.1.0
+
+# API and web framework (if needed)
+fastapi>=0.100.0
+uvicorn>=0.23.0
+
+# Database (if needed)
+sqlalchemy>=2.0.0
+alembic>=1.11.0
+
+# Development and testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+black>=23.0.0
+ruff>=0.0.280
+
+# Type checking
+mypy>=1.5.0
+
+# Documentation
+sphinx>=7.0.0
+
+# Environment management
+python-dotenv>=1.0.0
+
+# Performance
+numba>=0.57.0
