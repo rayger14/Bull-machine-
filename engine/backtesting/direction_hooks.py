@@ -363,18 +363,17 @@ def example_backtest_integration():
     Example showing how to integrate direction hooks into backtest loop.
 
     This is pseudo-code demonstrating the integration pattern.
-    """
-    raise NotImplementedError("This is example/documentation code only")
 
-    # The code below is kept for documentation purposes
-    from engine.archetypes.base_archetype import ArchetypeEntry, SignalType  # noqa: F401
+    Example Code (for documentation):
+    ```python
+    from engine.archetypes.base_archetype import ArchetypeEntry, SignalType
 
     # Initialize direction tracking
-    direction_hooks = DirectionBacktestHooks(  # noqa: F821
+    direction_hooks = DirectionBacktestHooks(
         enabled=True,
         imbalance_threshold=0.70,
         scale_mode='soft',
-        shadow_mode=False  # Set True for monitoring-only
+        shadow_mode=False
     )
 
     # Reset for new backtest
@@ -382,25 +381,19 @@ def example_backtest_integration():
 
     # Backtest loop
     for bar in historical_data:
-        # Generate archetype signal
-        original_entry = generate_archetype_signal(bar)  # Returns ArchetypeEntry
-
-        # Apply direction scaling
+        original_entry = generate_archetype_signal(bar)
         scaled_entry = direction_hooks.apply_direction_scaling(
             entry=original_entry,
             archetype_id='S1',
             symbol='BTC-USD'
         )
 
-        # Check if signal was vetoed
         if scaled_entry.signal == SignalType.FLAT:
-            continue  # Skip this trade
+            continue
 
-        # Execute position entry
         position_opened = execute_trade(scaled_entry)
 
         if position_opened:
-            # Track in direction system
             direction_hooks.on_position_entry(
                 symbol='BTC-USD',
                 direction='long' if scaled_entry.signal == SignalType.LONG else 'short',
@@ -410,15 +403,16 @@ def example_backtest_integration():
                 confidence=scaled_entry.confidence
             )
 
-        # Check exits
         for position in open_positions:
             if should_exit(position):
                 close_position(position)
                 direction_hooks.on_position_exit(position.symbol)
 
-    # Get final metrics
     final_balance = direction_hooks.get_current_balance()
     print(f"Final balance: {final_balance}")
+    ```
+    """
+    raise NotImplementedError("This is example/documentation code only")
 
 
 if __name__ == '__main__':
