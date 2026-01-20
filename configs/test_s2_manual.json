@@ -1,0 +1,98 @@
+{
+  "version": "s2_manual_test",
+  "profile": "s2_manual_test",
+  "description": "Manual S2 test with very strict parameters",
+
+  "adaptive_fusion": true,
+
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX", "DXY", "MOVE", "YIELD_2Y", "YIELD_10Y",
+      "USDT.D", "BTC.D", "TOTAL", "TOTAL2",
+      "funding", "oi", "rv_20d", "rv_60d"
+    ],
+    "zero_fill_missing": false,
+    "regime_override": {
+      "2022": "risk_off"
+    }
+  },
+
+  "ml_filter": {
+    "enabled": false
+  },
+
+  "fusion": {
+    "entry_threshold_confidence": 0.99,
+    "weights": {
+      "wyckoff": 0.35,
+      "liquidity": 0.30,
+      "momentum": 0.35,
+      "smc": 0.0
+    }
+  },
+
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 8,
+
+    "enable_A": false,
+    "enable_B": false,
+    "enable_C": false,
+    "enable_D": false,
+    "enable_E": false,
+    "enable_F": false,
+    "enable_G": false,
+    "enable_H": false,
+    "enable_K": false,
+    "enable_L": false,
+    "enable_M": false,
+    "enable_S1": false,
+    "enable_S2": true,
+    "enable_S3": false,
+    "enable_S4": false,
+    "enable_S5": false,
+    "enable_S6": false,
+    "enable_S7": false,
+    "enable_S8": false,
+
+    "thresholds": {
+      "min_liquidity": 0.10,
+      "failed_rally": {
+        "direction": "short",
+        "archetype_weight": 2.0,
+        "fusion_threshold": 0.80,
+        "final_fusion_gate": 0.80,
+        "cooldown_bars": 20,
+        "max_risk_pct": 0.015,
+        "atr_stop_mult": 2.0,
+        "wick_ratio_min": 0.55,
+        "rsi_min": 75.0,
+        "volume_z_max": -0.2,
+        "require_rsi_divergence": false,
+        "use_runtime_features": true,
+        "lookback_window": 14,
+
+        "weights": {
+          "ob_retest": 0.25,
+          "wick_rejection": 0.25,
+          "rsi_signal": 0.20,
+          "volume_fade": 0.15,
+          "tf4h_confirm": 0.15
+        }
+      }
+    },
+
+    "routing": {
+      "risk_on": {
+        "weights": {"failed_rally": 0.0}
+      },
+      "neutral": {
+        "weights": {"failed_rally": 1.0}
+      },
+      "risk_off": {
+        "weights": {"failed_rally": 1.0}
+      }
+    }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "_optimization_summary": {
+    "date": "2025-11-15",
+    "test_period": "2022-01-01 to 2022-12-31",
+    "configurations_tested": 100,
+    "optimization_method": "Random Search",
+    "execution_time_minutes": 12.8,
+    "verdict": "FAILED - Disable S2 in production"
+  },
+
+  "_baseline_performance": {
+    "profit_factor": 0.38,
+    "win_rate": 38.5,
+    "total_trades": 335,
+    "sharpe_ratio": -0.27,
+    "max_drawdown": 35.2
+  },
+
+  "_best_optimized_performance": {
+    "profit_factor": 0.56,
+    "win_rate": 42.6,
+    "total_trades": 444,
+    "sharpe_ratio": -0.14,
+    "max_drawdown": 28.3,
+    "improvement_vs_baseline": "+47% PF, +10.7% WR, -19.6% DD",
+    "assessment": "Still deeply unprofitable - does not meet minimum viability (PF > 1.0)"
+  },
+
+  "_quarterly_breakdown": {
+    "Q1_2022": {"trades": 105, "win_rate": 38.1, "pf": 0.62, "sharpe": -0.28},
+    "Q2_2022": {"trades": 112, "win_rate": 42.0, "pf": 0.53, "sharpe": -0.32},
+    "Q3_2022": {"trades": 96, "win_rate": 40.6, "pf": 0.38, "sharpe": -0.48},
+    "Q4_2022": {"trades": 128, "win_rate": 47.7, "pf": 0.77, "sharpe": -0.12},
+    "conclusion": "Unprofitable in all 4 quarters. Even Q4 (best: PF 0.77) loses money."
+  },
+
+  "_key_findings": {
+    "1_target_miss": "Target PF 1.4 → Achieved 0.56 (-60% miss)",
+    "2_target_miss_wr": "Target WR 55% → Achieved 42.6% (-22.5% miss)",
+    "3_overtrading": "Target 80-150 trades → Generated 444 trades (+196% over)",
+    "4_root_cause": "Pattern fires on bear market bounces that succeed, not fail",
+    "5_parameter_sensitivity": "Cooldown bars -0.771 correlation (dominant variable)",
+    "6_design_flaw": "Avg loss ($25) > Avg win ($19) by 40-65% in all configs"
+  },
+
+  "_recommendations": {
+    "immediate": "DISABLE S2 - set enable_S2: false",
+    "reason": "Cannot achieve profitability across 100 tested configurations",
+    "alternatives": [
+      "Invert pattern logic (use S2 signals as LONG entries, not shorts)",
+      "Combine with S5 (funding + failed rally) for extreme selectivity",
+      "Require ML filter score > 0.7 to drastically reduce trade count",
+      "Redesign feature engineering (proper RSI divergence, OB quality scoring)"
+    ]
+  },
+
+  "_production_config": {
+    "comment": "RECOMMENDED CONFIGURATION FOR PRODUCTION",
+    "enable_S2": false,
+    "reason": "Failed optimization - best PF 0.56 vs target 1.4",
+    "status": "DISABLED until pattern redesign"
+  },
+
+  "_if_attempting_to_fix": {
+    "best_params_found": {
+      "fusion_threshold": 0.39,
+      "atr_stop_mult": 2.7,
+      "trail_atr_mult": 1.3,
+      "max_risk_pct": 0.025,
+      "cooldown_bars": 6,
+      "wick_ratio_min": 1.4,
+      "archetype_weight": 3.3
+    },
+    "warning": "These params still produce PF 0.56 (unprofitable)",
+    "next_steps": [
+      "Test pattern inversion (direction: long instead of short)",
+      "Implement proper RSI divergence detection",
+      "Add order block strength validation",
+      "Require macro regime = crisis for extreme selectivity"
+    ]
+  },
+
+  "version": "s2_disabled_recommendation",
+  "profile": "production_ready",
+  "description": "S2 DISABLED based on optimization results - use this config for production",
+
+  "archetypes": {
+    "enable_S2": false,
+
+    "_comment_s2_disabled": "S2 failed optimization with PF 0.56 (target 1.4). Unprofitable in all 4 quarters of 2022. Pattern has fundamental design flaws that cannot be fixed with parameter tuning alone.",
+
+    "_s2_archived_best_params": {
+      "direction": "short",
+      "archetype_weight": 3.3,
+      "fusion_threshold": 0.39,
+      "final_fusion_gate": 0.39,
+      "cooldown_bars": 6,
+      "max_risk_pct": 0.025,
+      "atr_stop_mult": 2.7,
+      "wick_ratio_min": 1.4,
+      "require_rsi_divergence": false,
+      "weights": {
+        "ob_retest": 0.25,
+        "wick_rejection": 0.25,
+        "rsi_signal": 0.20,
+        "volume_fade": 0.15,
+        "tf4h_confirm": 0.15
+      }
+    },
+
+    "_s2_exit_archived": {
+      "enable_trail": true,
+      "trail_atr_mult": 1.3,
+      "time_limit_hours": 48
+    }
+  }
+}

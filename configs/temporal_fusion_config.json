@@ -1,0 +1,105 @@
+{
+  "_comment": "Temporal Fusion Layer Configuration - The Bull Machine's Sense of Time",
+  "_version": "v2.0",
+  "_description": "Adjusts fusion weights based on temporal confluence across 4 time-based systems",
+
+  "temporal_fusion": {
+    "enabled": true,
+    "description": "Master enable flag for temporal fusion layer",
+
+    "temporal_weights": {
+      "_comment": "Component weights (must sum to 1.0)",
+      "fib_time": 0.40,
+      "gann_cycles": 0.30,
+      "volatility_cycles": 0.20,
+      "emotional_cycles": 0.10
+    },
+
+    "temporal_adjustment_range": [0.85, 1.15],
+    "_adjustment_comment": "Soft adjustment bounds: [min_multiplier, max_multiplier]",
+    "_adjustment_examples": {
+      "high_confluence_0.85+": "1.15x boost (+15%)",
+      "moderate_confluence_0.70-0.85": "1.10x boost (+10%)",
+      "neutral_confluence_0.30-0.70": "1.00x (no adjustment)",
+      "low_confluence_0.15-0.30": "0.95x penalty (-5%)",
+      "very_low_confluence_<0.15": "0.85x penalty (-15%)"
+    },
+
+    "fib_levels": [13, 21, 34, 55, 89, 144],
+    "_fib_comment": "Fibonacci bar counts for time projections from pivots",
+
+    "gann_vibrations": [3, 7, 9, 12, 21, 36, 45, 72, 90, 144],
+    "_gann_comment": "Sacred Gann cycle numbers (vibrations)",
+
+    "fib_tolerance_bars": 3,
+    "_fib_tolerance_comment": "±3 bars window for Fibonacci hit detection",
+
+    "gann_tolerance_bars": 2,
+    "_gann_tolerance_comment": "±2 bars window for Gann vibration hit detection",
+
+    "vol_compression_threshold": 0.75,
+    "_vol_compression_comment": "ATR < 0.75 × ATR_MA = compression (high score)",
+
+    "vol_expansion_threshold": 1.25,
+    "_vol_expansion_comment": "ATR > 1.25 × ATR_MA = expansion climax (low score)",
+
+    "emotional_rsi_thresholds": {
+      "_comment": "Wall Street Cheat Sheet RSI mapping",
+      "extreme_fear": 25,
+      "hope_lower": 35,
+      "hope_upper": 45,
+      "greed": 65,
+      "extreme_greed": 75
+    },
+
+    "_component_descriptions": {
+      "fib_time": {
+        "weight": "40%",
+        "description": "Fibonacci time clusters from Wyckoff events",
+        "inputs": "bars_since_sc, bars_since_ar, bars_since_st, bars_since_sos",
+        "scoring": "3+ hits=0.80, 2 hits=0.60, 1 hit=0.40, 0 hits=0.20"
+      },
+      "gann_cycles": {
+        "weight": "30%",
+        "description": "Gann vibration numbers from major events",
+        "inputs": "bars_since_sc (primary reference)",
+        "scoring": "Major (90,144)=0.90, Strong (45,72)=0.75, Medium (21,36)=0.60, Minor=0.45"
+      },
+      "volatility_cycles": {
+        "weight": "20%",
+        "description": "Compression/expansion phase detection",
+        "inputs": "atr, atr_ma_20",
+        "scoring": "Compression=0.90, Normal=0.50, Expansion=0.10"
+      },
+      "emotional_cycles": {
+        "weight": "10%",
+        "description": "Market psychology via RSI + funding",
+        "inputs": "rsi, funding",
+        "scoring": "Capitulation=0.95, Hope=0.70, Greed=0.20, Euphoria=0.05"
+      }
+    }
+  },
+
+  "_usage_examples": {
+    "enable_temporal_in_config": {
+      "description": "Add to your engine config to enable temporal fusion",
+      "example": {
+        "temporal_fusion": {
+          "enabled": true
+        }
+      }
+    },
+    "compute_features": {
+      "description": "Compute temporal features for backtesting",
+      "command": "python bin/compute_temporal_features.py --input data/features/btc_1h.parquet --output data/features/btc_1h_temporal.parquet --config configs/temporal_fusion_config.json"
+    },
+    "validate_historical": {
+      "description": "Validate temporal confluence on historical events",
+      "command": "python bin/validate_temporal_confluence.py --data data/features/btc_1h_temporal.parquet --output results/temporal_validation.txt"
+    }
+  },
+
+  "_philosophy": "Time is pressure, not prediction. High confluence zones indicate when multiple time cycles align, creating pressure for price resolution. This layer does NOT predict moves - it detects when signals deserve higher conviction.",
+
+  "_integration_point": "Temporal adjustment occurs AFTER Wyckoff boosts, BEFORE soft filters in ArchetypeLogic.detect()"
+}

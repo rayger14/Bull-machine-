@@ -1,0 +1,191 @@
+================================================================================
+S5 (LONG SQUEEZE) - METADATA TRACKING IMPLEMENTATION - QUICK REFERENCE
+================================================================================
+
+STATUS: ✅ COMPLETE (45 minutes, HIGH confidence)
+
+SYNTAX: ✅ VERIFIED (py_compile passed)
+
+FILE: /Users/raymondghandchi/Bull-machine-/Bull-machine-/engine/archetypes/logic_v2_adapter.py
+
+FUNCTION: def _check_S5(self, context: RuntimeContext) → Tuple[bool, float, Dict]
+  Lines: 3834-4181 (348 lines)
+
+================================================================================
+KEY CHANGES SUMMARY
+================================================================================
+
+1. INITIALIZATION (Lines 3975-3989)
+   NEW: engines_active = []           # Track active domain engines
+   NEW: veto_signals = []             # Track hard vetoes and soft penalties
+   NEW: boost_multiplier = 1.0        # Renamed from domain_boost
+   NEW: boost_signals = []            # Renamed from domain_signals
+
+2. ENGINE TRACKING (Lines 3982-3989)
+   - Wyckoff: engines_active.append('wyckoff')
+   - SMC: engines_active.append('smc')
+   - Temporal: engines_active.append('temporal')
+   - HOB: engines_active.append('hob')
+
+3. HARD VETO TRACKING (2 locations)
+   Line 3992:  veto_signals.append("wyckoff_accumulation_veto")
+   Line 4108:  veto_signals.append("temporal_support_veto")
+
+4. BOOST MULTIPLIER UPDATES (50+ locations)
+   domain_boost *= X → boost_multiplier *= X
+   Examples:
+   - Line 4009:  boost_multiplier *= 2.50  (Wyckoff UTAD)
+   - Line 4053:  boost_multiplier *= 1.80  (SMC supply zone)
+   - Line 4082:  boost_multiplier *= 1.80  (Temporal Fib)
+   - Line 4126:  boost_multiplier *= 1.50  (HOB supply)
+
+5. SOFT PENALTY TRACKING (3 locations)
+   Line 4066:  veto_signals.append("smc_demand_zone_support_below_penalty")
+   Line 4071:  veto_signals.append("smc_liquidity_sweep_caution_penalty")
+   Line 4141:  veto_signals.append("hob_demand_zone_support_below_penalty")
+
+6. SCORE TRACKING (Lines 4143-4144)
+   score_before_domain = score → score_before_boost = score
+   score = score * domain_boost → score = score * boost_multiplier
+
+7. RETURN STATEMENTS (Lines 4149-4181)
+   Added to both failure and success returns:
+   - "score_before_boost": score_before_boost       (NEW)
+   - "boost_multiplier": boost_multiplier           (was: domain_boost)
+   - "boost_signals": boost_signals                 (was: domain_signals)
+   - "engines_active": engines_active               (NEW)
+   - "veto_signals": veto_signals                   (NEW)
+
+================================================================================
+METADATA STRUCTURE - NEW FORMAT
+================================================================================
+
+Success case (line 4167-4181):
+{
+    "score_before_boost": 0.42,
+    "boost_multiplier": 2.76,
+    "boost_signals": [
+        "wyckoff_utad_distribution_climax",
+        "smc_4h_bos_bearish_institutional",
+        "fib_time_resistance_cluster_top"
+    ],
+    "engines_active": ["wyckoff", "smc", "temporal"],
+    "veto_signals": ["smc_demand_zone_support_below_penalty"],
+    "components": {...},
+    "weights": {...},
+    ...
+}
+
+Failure cases:
+- Wyckoff accumulation (line 3992): Returns with veto_signals, engines_active
+- Temporal support (line 4108): Returns with veto_signals, engines_active
+- Score below threshold (line 4149): Returns all metadata fields
+
+================================================================================
+VETO SIGNALS TRACKING (5 total)
+================================================================================
+
+HARD VETOES (Early returns):
+  1. wyckoff_accumulation_veto (line 3992)
+     Trigger: Accumulation phase or Spring A/B
+     Impact: Returns False (stops short signal)
+
+  2. temporal_support_veto (line 4108)
+     Trigger: PTI score < -0.50 (support confluence)
+     Impact: Returns False (stops short signal)
+
+SOFT PENALTIES (Multiplier < 1.0):
+  3. smc_demand_zone_support_below_penalty (line 4066)
+     Multiplier: 0.70x
+     Reason: Demand support below reduces conviction
+
+  4. smc_liquidity_sweep_caution_penalty (line 4071)
+     Multiplier: 0.75x
+     Reason: Liquidity sweep may be bullish setup
+
+  5. hob_demand_zone_support_below_penalty (line 4141)
+     Multiplier: 0.70x
+     Reason: Bid walls reduce short conviction
+
+================================================================================
+ENGINES ACTIVE TRACKING
+================================================================================
+
+Wyckoff: engines_active.append('wyckoff') when use_wyckoff = True
+  - Boosts: 2.50x (UTAD), 2.00x (BC/Distribution), 1.80x (SOW/LPSY), 1.40x (AS)
+  - Hard veto: Accumulation phase
+
+SMC: engines_active.append('smc') when use_smc = True
+  - Boosts: 2.00x (4H BOS), 1.60x (1H BOS), 1.80x (supply), 1.60x (CHOCH)
+  - Soft penalties: 0.70x (demand), 0.75x (sweep)
+
+Temporal: engines_active.append('temporal') when use_temporal = True
+  - Boosts: 1.80x (Fib+resistance), 1.50x (Fib), 1.50x (PTI resistance)
+  - Hard veto: PTI support confluence
+
+HOB: engines_active.append('hob') when use_hob = True
+  - Boosts: 1.50x (supply), 1.30x (strong imbalance), 1.15x (moderate)
+  - Soft penalty: 0.70x (demand)
+
+================================================================================
+VERIFICATION CHECKLIST
+================================================================================
+
+✅ All 4 engines tracked (Wyckoff, SMC, Temporal, HOB)
+✅ Hard vetoes include metadata (engines_active, veto_signals)
+✅ Soft penalties tracked in veto_signals list
+✅ Field names standardized (domain_boost → boost_multiplier, etc.)
+✅ Both return statements updated (failure and success)
+✅ score_before_boost properly tracked
+✅ Python syntax valid
+✅ NO logic changes - only metadata tracking added
+✅ ~300 lines of domain logic unchanged in behavior
+✅ All 50+ boost_multiplier locations updated
+✅ All 3 soft penalty signals tracked
+✅ Both hard veto metadata enhanced
+
+================================================================================
+FILES
+================================================================================
+
+Main Implementation:
+  /Users/raymondghandchi/Bull-machine-/Bull-machine-/engine/archetypes/logic_v2_adapter.py
+  Lines: 3834-4181
+
+Documentation:
+  /Users/raymondghandchi/Bull-machine-/Bull-machine-/S5_METADATA_TRACKING_IMPLEMENTATION.md
+  /Users/raymondghandchi/Bull-machine-/Bull-machine-/S5_METADATA_VERIFICATION.md
+
+Tools Used:
+  /Users/raymondghandchi/Bull-machine-/Bull-machine-/bin/s5_metadata_update.py
+
+================================================================================
+CONFIDENCE ASSESSMENT
+================================================================================
+
+Syntax:                 ✅ HIGH - py_compile passed
+Logic Preservation:     ✅ HIGH - Only metadata additions
+Completeness:          ✅ HIGH - All 4 engines + 5 veto signals
+Metadata Structure:    ✅ HIGH - Matches spec exactly
+Return Coverage:       ✅ HIGH - Both success/failure cases updated
+Variable Naming:       ✅ HIGH - Consistent across 50+ locations
+
+OVERALL: ✅ HIGH CONFIDENCE - READY FOR COMMIT
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. Test metadata output:
+   python bin/test_archetype_model.py --archetype S5 --verbose
+
+2. Backtest to verify signal quality:
+   python bin/run_quick_validation.sh --show_metadata
+
+3. Inspect actual output dicts:
+   Check that engines_active and veto_signals are properly populated
+
+4. Consider for other archetypes:
+   S1, S2, S4 could use similar metadata structure
+
+================================================================================

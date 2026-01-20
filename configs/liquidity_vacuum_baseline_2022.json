@@ -1,0 +1,78 @@
+{
+  "version": "liquidity_vacuum_baseline_v1",
+  "profile": "Liquidity Vacuum Reversal Baseline (2022 Bear Market)",
+  "description": "Baseline config for Liquidity Vacuum Reversal pattern testing on 2022 bear market with capitulation events (Luna, FTX)",
+
+  "adaptive_fusion": false,
+
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX", "DXY", "MOVE", "YIELD_2Y", "YIELD_10Y",
+      "USDT.D", "BTC.D", "TOTAL", "TOTAL2",
+      "funding", "oi", "rv_20d", "rv_60d"
+    ],
+    "zero_fill_missing": false,
+    "regime_override": {}
+  },
+
+  "ml_filter": {"enabled": false},
+
+  "fusion": {
+    "entry_threshold_confidence": 0.99,
+    "weights": {
+      "wyckoff": 0.35,
+      "liquidity": 0.30,
+      "momentum": 0.35,
+      "smc": 0.0
+    }
+  },
+
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 8,
+
+    "enable_A": false, "enable_B": false, "enable_C": false, "enable_D": false,
+    "enable_E": false, "enable_F": false, "enable_G": false, "enable_H": false,
+    "enable_K": false, "enable_L": false, "enable_M": false,
+    "enable_S1": true,
+    "enable_S2": false, "enable_S3": false, "enable_S4": false,
+    "enable_S5": false, "enable_S6": false, "enable_S7": false, "enable_S8": false,
+
+    "thresholds": {
+      "min_liquidity": 0.10,
+      "liquidity_vacuum": {
+        "direction": "long",
+        "archetype_weight": 2.5,
+        "fusion_threshold": 0.45,
+        "final_fusion_gate": 0.45,
+        "liquidity_max": 0.15,
+        "volume_z_min": 2.0,
+        "wick_lower_min": 0.30,
+        "cooldown_bars": 12,
+        "max_risk_pct": 0.02,
+        "atr_stop_mult": 2.5,
+        "use_runtime_features": true,
+        "lookback": 24,
+        "volume_lookback": 24,
+        "weights": {
+          "liquidity_vacuum": 0.25,
+          "volume_capitulation": 0.20,
+          "wick_rejection": 0.20,
+          "funding_reversal": 0.15,
+          "crisis_context": 0.10,
+          "oversold": 0.05,
+          "volatility_spike": 0.03,
+          "downtrend_confirm": 0.02
+        }
+      }
+    },
+
+    "routing": {
+      "risk_on": {"weights": {"liquidity_vacuum": 0.5}},
+      "neutral": {"weights": {"liquidity_vacuum": 1.0}},
+      "risk_off": {"weights": {"liquidity_vacuum": 1.5}},
+      "crisis": {"weights": {"liquidity_vacuum": 2.0}}
+    }
+  }
+}

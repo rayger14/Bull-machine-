@@ -1,0 +1,269 @@
+{
+  "version": "s5_production_v1",
+  "profile": "S5 Long Squeeze - Production",
+  "description": "Production-ready S5 (Long Squeeze) archetype config - Long squeeze cascade pattern targeting 9 trades/year, PF 1.86 in bear markets",
+  "_comment_overview": "============ PRODUCTION CONFIGURATION (2025-12-03) ============",
+  "_comment_purpose": "S5 detects long squeezes during bear markets when funding rates are extremely positive (longs overcrowded). Short-side specialist pattern.",
+  "_comment_lineage": "Based on HighConv_v1 optimization results (PF 1.86 on 2022 data, only profitable config across 10 tests)",
+  "_comment_target_performance": "9 trades/year in bear markets, 55.6% win rate, PF 1.86, captures genuine squeeze events (LUNA, 3AC, FTX)",
+  "_comment_regime_behavior": "BEAR SPECIALIST - fires in risk_off/crisis regimes during rallies, takes SHORT positions",
+  "_comment_data_limitation": "\u26a0\ufe0f OI data unavailable for 2022 - pattern uses funding/RSI/liquidity only. May have reduced coverage for 2023-2024.",
+  "adaptive_fusion": false,
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX",
+      "DXY",
+      "MOVE",
+      "YIELD_2Y",
+      "YIELD_10Y",
+      "USDT.D",
+      "BTC.D",
+      "TOTAL",
+      "TOTAL2",
+      "funding",
+      "oi",
+      "rv_20d",
+      "rv_60d"
+    ],
+    "zero_fill_missing": false,
+    "regime_override": {},
+    "_comment_regime": "No override in production - let GMM classify naturally. S5 fires during bear market rallies."
+  },
+  "ml_filter": {
+    "enabled": false,
+    "_comment_ml": "ML filter disabled - S5 is rare enough (9 trades/year) that filter would cause false negatives"
+  },
+  "fusion": {
+    "entry_threshold_confidence": 0.99,
+    "weights": {
+      "wyckoff": 0.35,
+      "liquidity": 0.3,
+      "momentum": 0.35,
+      "smc": 0.0
+    },
+    "_comment_fusion": "High threshold (0.99) effectively disables legacy tier1 fallback trades - S5 archetype only"
+  },
+  "risk": {
+    "base_risk_pct": 0.015,
+    "max_position_size_pct": 0.12,
+    "max_portfolio_risk_pct": 0.08,
+    "_comment_risk": "Conservative risk settings for bear market short positions - high volatility environment"
+  },
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 2,
+    "_comment_daily_limit": "Reduced to 2 for production - long squeezes are rare, quality over quantity",
+    "_comment_archetype_flags": "============ ARCHETYPE ENABLE FLAGS ============",
+    "enable_A": false,
+    "enable_B": false,
+    "enable_C": false,
+    "enable_D": false,
+    "enable_E": false,
+    "enable_F": false,
+    "enable_G": false,
+    "enable_H": false,
+    "enable_K": false,
+    "enable_L": false,
+    "enable_M": false,
+    "enable_S1": false,
+    "enable_S2": false,
+    "enable_S3": false,
+    "enable_S4": false,
+    "enable_S5": true,
+    "_comment_S5": "S5 Long Squeeze - LONG SQUEEZE specialist for bear market rallies (SHORT positions)",
+    "enable_S6": false,
+    "enable_S7": false,
+    "enable_S8": false,
+    "thresholds": {
+      "min_liquidity": 0.1,
+      "long_squeeze": {
+        "direction": "short",
+        "_note_direction": "S5 takes SHORT positions - betting against overleveraged longs",
+        "archetype_weight": 2.5,
+        "_comment_detection": "============ OPTIMIZED PARAMETERS (PF 1.86, HighConv_v1) ============",
+        "_detection_philosophy": "Detect extreme positive funding (longs overcrowded) + overbought RSI + thin liquidity \u2192 long squeeze cascade",
+        "fusion_threshold": 0.45,
+        "_note_fusion": "S5-specific fusion threshold. Higher than baseline (0.38) for quality over quantity. Only profitable config across 10 tests.",
+        "final_fusion_gate": 0.45,
+        "_note_final_gate": "Final gate after regime routing. Must match fusion_threshold for consistency.",
+        "funding_z_min": 1.5,
+        "_note_funding": "Minimum positive funding z-score required. +1.5 = ~93rd percentile positive. Indicates longs overcrowded.",
+        "rsi_min": 70,
+        "_note_rsi": "Minimum RSI required. 70 = overbought. Bear market rallies often fail from overbought levels.",
+        "liquidity_max": 0.2,
+        "_note_liquidity": "Maximum liquidity score allowed [0,1]. Lower liquidity = thinner orderbook = easier cascade. 0.20 is strict (from 0.25 baseline).",
+        "cooldown_bars": 8,
+        "_note_cooldown": "Hours between S5 trades. Prevents overtrading same squeeze cascade event.",
+        "max_risk_pct": 0.015,
+        "_note_risk": "Position size as % of capital. 1.5% is conservative for short positions in volatile bear markets.",
+        "atr_stop_mult": 3.0,
+        "_note_stop": "Stop loss as multiple of ATR. 3.0 ATR gives room for bear market rally volatility before squeeze.",
+        "_comment_oi_data": "============ OI DATA LIMITATION ============",
+        "_oi_note": "\u26a0\ufe0f Open Interest data unavailable for 2022 historical validation. Pattern validated without OI component. May have better performance when OI data available (2024+).",
+        "_oi_impact": "Without OI: Pattern relies on funding_z, rsi, liquidity only. With OI: Can detect position imbalances earlier.",
+        "_comment_expected_performance": "============ EXPECTED PERFORMANCE ============",
+        "_expected_trades_year": "9 trades/year in bear markets (~1 every 6 weeks)",
+        "_expected_distribution": "Fires during bear market rallies when longs pile in. Rare but high-quality pattern.",
+        "_expected_pf": "1.86 (2022 validation, HighConv_v1 config)",
+        "_expected_win_rate": "55.6% (2022 validation)",
+        "_expected_avg_trade": "+0.449R positive expectancy",
+        "_regime_dependency": "BEAR SPECIALIST (SHORT SIDE) - captures failed rallies in downtrends",
+        "_historical_examples": [
+          "LUNA Mar 2022: Early stress rally \u2192 +4.50R capture",
+          "3AC Jul 2022: Post-liquidation rally \u2192 +2.20R capture",
+          "FTX Dec 2022: Continuation squeeze \u2192 +1.25R capture"
+        ],
+        "_known_misses": [
+          "Main crashes (LUNA May, FTX Nov) missed due to 1H timeframe lag",
+          "Loses on regime reversals (ETH Merge, year-end bottoms)"
+        ],
+        "_calibration_metadata": {
+          "applied_date": "2025-12-08",
+          "study_name": "S5_HighConv_v1_Optimization",
+          "source": "results/optimization/S5_EXECUTIVE_SUMMARY.md",
+          "best_pf": 1.86,
+          "trades_per_year": 9,
+          "win_rate": 0.556,
+          "total_return": "+4.04R",
+          "parameter_count": 7,
+          "tool": "bin/apply_optimized_calibrations.py (manual)",
+          "notes": "HighConv_v1 - Only profitable config across 10 tests"
+        }
+      }
+    },
+    "exits": {
+      "long_squeeze": {
+        "trail_atr": 1.5,
+        "_note_trail": "Trailing stop as ATR multiple. Capture squeeze momentum downward.",
+        "time_limit_hours": 24,
+        "_note_time_limit": "Exit if position still open after 24h. Squeezes are fast cascading events."
+      }
+    },
+    "routing": {
+      "_comment_routing": "Regime-specific archetype weight multipliers. S5 is bear rally specialist (short side).",
+      "risk_on": {
+        "weights": {
+          "long_squeeze": 0.0
+        },
+        "final_gate_delta": 0.0,
+        "_comment": "Disabled in bull markets - long squeezes don't occur during healthy uptrends"
+      },
+      "neutral": {
+        "weights": {
+          "long_squeeze": 0.5
+        },
+        "final_gate_delta": 0.0,
+        "_comment": "Reduced weight in neutral - transition period, uncertain regime"
+      },
+      "risk_off": {
+        "weights": {
+          "long_squeeze": 2.2
+        },
+        "final_gate_delta": 0.0,
+        "_comment": "Primary operating environment - bear market failed rallies. High weight from optimization."
+      },
+      "crisis": {
+        "weights": {
+          "long_squeeze": 2.5
+        },
+        "final_gate_delta": 0.0,
+        "_comment": "Maximum weight during crisis - overleveraged longs get squeezed fastest"
+      }
+    }
+  },
+  "_production_metadata": {
+    "created": "2025-12-03",
+    "optimization_date": "2025-11-15",
+    "validated_period": "2022-01-01 to 2022-12-31",
+    "validation_results": {
+      "period": "2022 (bear market)",
+      "trades_per_year": 9,
+      "profit_factor": 1.86,
+      "win_rate": 0.556,
+      "total_return": "+4.04R",
+      "avg_trade": "+0.449R",
+      "sharpe_ratio": 0.66,
+      "max_drawdown": "-2.68R",
+      "top_winners": [
+        "+4.50R (LUNA)",
+        "+2.20R (3AC)",
+        "+1.25R (FTX)"
+      ],
+      "config_tested": "HighConv_v1 (only profitable config across 10 optimization tests)"
+    },
+    "deployment_readiness": "PRODUCTION_READY_WITH_CAVEATS",
+    "deployment_caveats": [
+      "\u26a0\ufe0f OI DATA UNAVAILABLE for 2022 validation - pattern may perform better with OI data (2024+)",
+      "\u26a0\ufe0f Low trade frequency (9/year) - not suitable as standalone strategy",
+      "\u26a0\ufe0f SHORT POSITIONS in bear markets - requires margin/futures capability",
+      "\u26a0\ufe0f 1H timeframe lag - may miss main crash events (design tradeoff for lower false positives)"
+    ],
+    "deployment_notes": [
+      "S5 is a BEAR MARKET SHORT specialist - fires during failed rallies in downtrends",
+      "Deploy as part of multi-archetype portfolio alongside S4 (long side) and S1 (reversals)",
+      "Monitor funding rate extremes - S5 fires when funding > +1.5\u03c3",
+      "Expect 0-2 trades in bull markets, 8-12 in bear markets",
+      "Best used with position sizing limits due to short-side risk"
+    ],
+    "known_limitations": [
+      "Regime dependency: Only fires in bear markets, ineffective in bulls",
+      "OI data gaps: Pattern validated without OI - may miss early position signals",
+      "Timeframe lag: 1H bars miss intra-hour crashes (LUNA May, FTX Nov)",
+      "False signals: Loses on regime reversals (bottoms, macro rallies)",
+      "Correlation: May cluster with other bear shorts - manage portfolio exposure"
+    ],
+    "complementary_archetypes": [
+      "S4 (Funding Divergence): Opposite direction (long), negative funding extremes",
+      "S1 (Liquidity Vacuum): Capitulation reversals (long), catches bottoms that S5 misses",
+      "Deploy S4+S5 together for complete funding-based strategy (both directions)"
+    ],
+    "data_requirements": [
+      "\u2705 Funding rate data (required, 100% coverage 2022)",
+      "\u2705 RSI data (required, 100% coverage 2022)",
+      "\u2705 Liquidity score (required, 100% coverage 2022)",
+      "\u274c OI data (optional but recommended, 0% coverage 2022, may improve for 2024+)"
+    ],
+    "monitoring_guide": "docs/ARCHETYPE_SYSTEMS_PRODUCTION_GUIDE.md",
+    "operator_checklist": [
+      "1. Verify funding rate data feed is live (required for S5)",
+      "2. Confirm regime classifier is running (determines S5 activation)",
+      "3. Check margin/futures capability for SHORT positions",
+      "4. Monitor for S5 signals during bear market rallies (expect 1-2 per 6 weeks)",
+      "5. Review stop losses - bear rallies can be violent before reversing",
+      "6. Check OI data availability - improves pattern if available"
+    ],
+    "performance_expectations": {
+      "bull_market": "0-2 trades/year (near-zero activity expected)",
+      "bear_market": "8-12 trades/year (primary operating environment)",
+      "crisis_regime": "12-18 trades/year (increased activity)",
+      "avg_hold_time": "12-24 hours (fast cascade events)",
+      "win_loss_profile": "Few large wins (+2R to +4R), multiple small losses (-0.5R to -1R)",
+      "ideal_portfolio_allocation": "10-20% (specialist pattern, not core strategy)"
+    }
+  },
+  "feature_flags": {
+    "enable_wyckoff": true,
+    "enable_smc": true,
+    "enable_temporal": true,
+    "enable_hob": true,
+    "enable_fusion": true,
+    "enable_macro": true,
+    "use_temporal_confluence": true,
+    "use_fusion_layer": true,
+    "use_macro_regime": true
+  },
+  "_domain_engine_metadata": {
+    "enabled_date": "2025-12-08T15:53:46.380848",
+    "enabled_engines": [
+      "enable_wyckoff",
+      "enable_smc",
+      "enable_temporal",
+      "enable_hob",
+      "enable_fusion",
+      "enable_macro"
+    ],
+    "tool": "bin/enable_domain_engines.py",
+    "reason": "Fix archetype feature coverage from 20% to 100%"
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "version": "1.0.0",
+  "description": "Institutional-grade Wyckoff Event Detection Configuration",
+  "wyckoff_events": {
+    "enabled": true,
+    "pti_integration": true,
+    "log_events": true,
+
+    "sc_volume_z_min": 2.5,
+    "sc_range_pos_max": 0.2,
+    "sc_range_z_min": 1.5,
+    "sc_wick_min": 0.6,
+
+    "bc_volume_z_min": 2.5,
+    "bc_range_pos_min": 0.8,
+    "bc_range_z_min": 1.5,
+    "bc_wick_min": 0.6,
+
+    "ar_lookback_max": 10,
+    "ar_volume_z_max": 1.0,
+    "ar_retrace_min": 0.40,
+    "ar_retrace_max": 0.70,
+    "ar_close_position_min": 0.6,
+
+    "as_lookback_max": 10,
+    "as_volume_z_max": 1.0,
+    "as_retrace_min": 0.40,
+    "as_retrace_max": 0.70,
+    "as_close_position_max": 0.4,
+
+    "st_lookback": 30,
+    "st_low_proximity": 0.05,
+    "st_volume_z_max": 0.3,
+
+    "sos_lookback": 20,
+    "sos_volume_z_min": 1.5,
+    "sos_close_position_min": 0.7,
+    "sos_breakout_margin": 0.01,
+
+    "sow_lookback": 20,
+    "sow_volume_z_min": 1.5,
+    "sow_close_position_max": 0.3,
+    "sow_breakdown_margin": 0.01,
+
+    "spring_a_lookback": 20,
+    "spring_a_breakdown_margin": 0.015,
+    "spring_a_recovery_bars": 2,
+    "spring_a_volume_z_max": 1.0,
+
+    "spring_b_lookback": 20,
+    "spring_b_breakdown_min": 0.003,
+    "spring_b_breakdown_max": 0.01,
+    "spring_b_recovery_bars": 2,
+
+    "ut_lookback": 20,
+    "ut_breakout_margin": 0.02,
+    "ut_recovery_bars": 3,
+
+    "utad_rsi_min": 70,
+
+    "lps_lookback": 30,
+    "lps_volume_z_max": 0.0,
+    "lps_close_position_min": 0.6,
+
+    "lpsy_lookback": 30,
+    "lpsy_volume_z_max": 0.0,
+    "lpsy_close_position_max": 0.4
+  },
+
+  "trading_notes": {
+    "phase_a_events": {
+      "sc": "Capitulation. Wait for AR confirmation before entering longs.",
+      "bc": "Euphoria. Wait for AS confirmation before entering shorts.",
+      "ar": "Relief bounce. Not yet safe to enter longs (wait for ST).",
+      "st": "Secondary test. If holds above SC low with low volume, accumulation likely."
+    },
+    "phase_b_events": {
+      "sos": "Sign of Strength. First breakout from range. Consider longs on pullback.",
+      "sow": "Sign of Weakness. First breakdown from range. Consider shorts on bounce."
+    },
+    "phase_c_events": {
+      "spring_a": "Deep spring. High-probability long setup if recovers quickly.",
+      "spring_b": "Shallow spring. Safer long entry than Type A (less risk).",
+      "ut": "Upthrust. Trap for late buyers. Avoid longs, consider shorts.",
+      "utad": "Final upthrust. Strong short signal, marks distribution end."
+    },
+    "phase_d_events": {
+      "lps": "Last Point of Support. Final pullback before markup. Strong long signal.",
+      "lpsy": "Last Point of Supply. Final rally before markdown. Strong short signal."
+    },
+    "pti_integration": {
+      "description": "When Wyckoff trap events (Spring/UT/UTAD) coincide with high PTI (>0.6), confluence strengthens signal",
+      "usage": "Use wyckoff_pti_confluence for filtering entries, wyckoff_pti_score for sizing"
+    }
+  },
+
+  "backtest_recommendations": {
+    "phase_a_min_confidence": 0.6,
+    "phase_b_min_confidence": 0.5,
+    "phase_c_min_confidence": 0.7,
+    "phase_d_min_confidence": 0.65,
+
+    "confluence_requirements": {
+      "spring_entry": ["wyckoff_spring_a OR wyckoff_spring_b", "liquidity_score > 0.3", "tf4h_fusion_score > 0.4"],
+      "lps_entry": ["wyckoff_lps", "wyckoff_lps_confidence > 0.65", "recent SOS within 30 bars"],
+      "utad_short": ["wyckoff_utad", "wyckoff_pti_confluence", "rsi_14 > 70"]
+    },
+
+    "filters": {
+      "avoid_longs_if": ["wyckoff_bc OR wyckoff_utad", "wyckoff_pti_score > 0.7 AND pti_trap_type == 'bullish_trap'"],
+      "avoid_shorts_if": ["wyckoff_sc OR wyckoff_spring_a", "wyckoff_pti_score > 0.7 AND pti_trap_type == 'bearish_trap'"]
+    }
+  },
+
+  "validation_periods": {
+    "2022_bear_market": {
+      "description": "2022 bear market - expect SC/BC/Distribution events",
+      "expected_events": ["BC at Q1 2022 top", "SC at June 2022 lows", "ST at July 2022", "Multiple UT/UTAD events"]
+    },
+    "2024_bull_market": {
+      "description": "2024 bull market - expect Accumulation/Markup events",
+      "expected_events": ["SC at 2023 lows", "SOS at breakout points", "Springs at pullbacks", "LPS before major rallies"]
+    }
+  }
+}

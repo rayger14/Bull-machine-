@@ -1,0 +1,198 @@
+{
+  "asset": "BTC",
+  "period": "2024-01-01 to 2024-12-31",
+  "n_trials": 200,
+  "timestamp": "2025-10-19T03:45:01.496947",
+  "top_10_configs": [
+    {
+      "rank": 1,
+      "score": 922.8312044581265,
+      "params": {
+        "wyckoff_weight": 0.3312479746948601,
+        "liquidity_weight": 0.3922478011876004,
+        "momentum_weight": 0.20468389832876047,
+        "threshold": 0.37371773280647314,
+        "fakeout_penalty": 0.07504891639431525,
+        "exit_aggressiveness": 0.4700340162317236
+      },
+      "metrics": {
+        "total_pnl": 412.70266098527554,
+        "total_trades": 5,
+        "profit_factor": 412.70266098527554,
+        "sharpe_ratio": 18.308703734808088,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 2,
+      "score": 308.52250979126813,
+      "params": {
+        "wyckoff_weight": 0.27110350391863075,
+        "liquidity_weight": 0.344758951052063,
+        "momentum_weight": 0.2173233949629566,
+        "threshold": 0.36410792986609114,
+        "fakeout_penalty": 0.24041483611102787,
+        "exit_aggressiveness": 0.6002527213991018
+      },
+      "metrics": {
+        "total_pnl": 178.12555407904762,
+        "total_trades": 3,
+        "profit_factor": 178.12555407904762,
+        "sharpe_ratio": 11.422935262549084,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 3,
+      "score": 275.88410225439736,
+      "params": {
+        "wyckoff_weight": 0.2805076343138334,
+        "liquidity_weight": 0.276954336480872,
+        "momentum_weight": 0.2032227115294023,
+        "threshold": 0.3661055196943412,
+        "fakeout_penalty": 0.06399651792501145,
+        "exit_aggressiveness": 0.5150935449575693
+      },
+      "metrics": {
+        "total_pnl": 195.07951952564724,
+        "total_trades": 2,
+        "profit_factor": 195.07951952564724,
+        "sharpe_ratio": 37.83938842900566,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 4,
+      "score": 275.88410225439736,
+      "params": {
+        "wyckoff_weight": 0.27886860499471783,
+        "liquidity_weight": 0.26186596156456343,
+        "momentum_weight": 0.22088397209719488,
+        "threshold": 0.3739399309928929,
+        "fakeout_penalty": 0.08738749025208453,
+        "exit_aggressiveness": 0.5789228860448025
+      },
+      "metrics": {
+        "total_pnl": 195.07951952564724,
+        "total_trades": 2,
+        "profit_factor": 195.07951952564724,
+        "sharpe_ratio": 37.83938842900566,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 5,
+      "score": 275.88410225439736,
+      "params": {
+        "wyckoff_weight": 0.2810575520827483,
+        "liquidity_weight": 0.27299362152239265,
+        "momentum_weight": 0.2217415978160062,
+        "threshold": 0.37566060387215167,
+        "fakeout_penalty": 0.08863295005860206,
+        "exit_aggressiveness": 0.5836362872414754
+      },
+      "metrics": {
+        "total_pnl": 195.07951952564724,
+        "total_trades": 2,
+        "profit_factor": 195.07951952564724,
+        "sharpe_ratio": 37.83938842900566,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 6,
+      "score": 275.88410225439736,
+      "params": {
+        "wyckoff_weight": 0.28071371893579655,
+        "liquidity_weight": 0.2645979570077777,
+        "momentum_weight": 0.2219262142841152,
+        "threshold": 0.3789764501132589,
+        "fakeout_penalty": 0.08807144238051659,
+        "exit_aggressiveness": 0.5765765005891903
+      },
+      "metrics": {
+        "total_pnl": 195.07951952564724,
+        "total_trades": 2,
+        "profit_factor": 195.07951952564724,
+        "sharpe_ratio": 37.83938842900566,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 7,
+      "score": 275.88410225439736,
+      "params": {
+        "wyckoff_weight": 0.2755224329708948,
+        "liquidity_weight": 0.2827312233709621,
+        "momentum_weight": 0.23035749642792067,
+        "threshold": 0.3802414284129351,
+        "fakeout_penalty": 0.09734370833567431,
+        "exit_aggressiveness": 0.6079831286862172
+      },
+      "metrics": {
+        "total_pnl": 195.07951952564724,
+        "total_trades": 2,
+        "profit_factor": 195.07951952564724,
+        "sharpe_ratio": 37.83938842900566,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 8,
+      "score": 275.88410225439736,
+      "params": {
+        "wyckoff_weight": 0.2951964130319953,
+        "liquidity_weight": 0.2631768480212175,
+        "momentum_weight": 0.24878721311523933,
+        "threshold": 0.4019056123840427,
+        "fakeout_penalty": 0.09355079081131283,
+        "exit_aggressiveness": 0.5596351433706044
+      },
+      "metrics": {
+        "total_pnl": 195.07951952564724,
+        "total_trades": 2,
+        "profit_factor": 195.07951952564724,
+        "sharpe_ratio": 37.83938842900566,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 9,
+      "score": 275.88410225439736,
+      "params": {
+        "wyckoff_weight": 0.27747827649579393,
+        "liquidity_weight": 0.27075542286577503,
+        "momentum_weight": 0.22020849198953363,
+        "threshold": 0.37431510746836316,
+        "fakeout_penalty": 0.11243999256951222,
+        "exit_aggressiveness": 0.6121826436257449
+      },
+      "metrics": {
+        "total_pnl": 195.07951952564724,
+        "total_trades": 2,
+        "profit_factor": 195.07951952564724,
+        "sharpe_ratio": 37.83938842900566,
+        "max_drawdown": 0.0
+      }
+    },
+    {
+      "rank": 10,
+      "score": 275.88410225439736,
+      "params": {
+        "wyckoff_weight": 0.2772250048785555,
+        "liquidity_weight": 0.29826505986465585,
+        "momentum_weight": 0.21968237087486042,
+        "threshold": 0.37339790607005485,
+        "fakeout_penalty": 0.11086278152256199,
+        "exit_aggressiveness": 0.612414212319799
+      },
+      "metrics": {
+        "total_pnl": 195.07951952564724,
+        "total_trades": 2,
+        "profit_factor": 195.07951952564724,
+        "sharpe_ratio": 37.83938842900566,
+        "max_drawdown": 0.0
+      }
+    }
+  ]
+}

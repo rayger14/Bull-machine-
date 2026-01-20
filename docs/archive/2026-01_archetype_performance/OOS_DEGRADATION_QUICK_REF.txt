@@ -1,0 +1,82 @@
+================================================================================
+OOS DEGRADATION - QUICK REFERENCE
+================================================================================
+
+FORMULA:
+  OOS Degradation (%) = (IS_Sharpe - OOS_Sharpe) / IS_Sharpe × 100
+
+THRESHOLDS:
+  < 15%:  EXCELLENT (production ready)
+  15-20%: GOOD (acceptable)
+  20-30%: WARNING (monitor closely)
+  > 30%:  FAIL (severe overfitting)
+
+================================================================================
+RESULTS:
+================================================================================
+
+S1 (Liquidity Vacuum):
+  In-Sample Sharpe:  1.167
+  OOS Sharpe:        1.149
+  Degradation:       1.5%  ✅ EXCELLENT
+  Status:            PASS (< 20%)
+  Production:        CLOSE (needs consistency tuning)
+
+S4 (Funding Divergence):
+  In-Sample Sharpe:  2.22
+  OOS Sharpe:        0.649
+  Degradation:       70.7%  ❌ SEVERE OVERFITTING
+  Status:            FAIL (> 20% by 50.7 points)
+  Production:        NOT READY (re-engineering required)
+
+Full-Engine (All 16):
+  Sharpe:            0.31 (placeholder logic)
+  Status:            Infrastructure validated
+  Production:        Needs optimization integration
+
+================================================================================
+WALK-FORWARD DETAILS:
+================================================================================
+
+Windows:           15 (2022-2024)
+Train Window:      180 days (6 months)
+Embargo:           72 hours (3 days)
+Test Window:       60 days (2 months)
+Step Size:         60 days (non-overlapping)
+
+Total OOS Trades:  S1: 29, S4: 188
+
+Profitable Windows:
+  S1: 8/15 (53%) - Below 60% target
+  S4: 8/15 (53%) - Below 60% target
+
+================================================================================
+PRODUCTION READINESS:
+================================================================================
+
+S1: 4/6 checks passed - NEEDS TUNING (1-2 weeks)
+S4: 3/7 checks passed - NOT READY (4-6 weeks re-engineering)
+Full-Engine: Infrastructure ready, needs configs (2-3 weeks)
+
+Total Timeline to Production: 9-15 weeks
+
+================================================================================
+KEY FINDINGS:
+================================================================================
+
+1. Walk-forward validation WORKING - caught S4 overfitting
+2. S1 has excellent generalization (1.5% degradation)
+3. S4 severely overfitted to 2022 H1 crisis (70.7% degradation)
+4. Full-engine infrastructure validated (no lookahead)
+5. Position sizing too aggressive (20% → reduce to 12%)
+
+================================================================================
+NEXT ACTIONS:
+================================================================================
+
+1. S1: Relax fusion_threshold (increase signals) → re-validate
+2. S4: DO NOT DEPLOY - re-optimize on full 2022 dataset
+3. Full-Engine: Integrate production configs, reduce position sizing
+4. Paper trade: 2-4 weeks before production deployment
+
+================================================================================

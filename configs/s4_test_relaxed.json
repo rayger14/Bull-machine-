@@ -1,0 +1,119 @@
+{
+  "version": "s4_test_relaxed",
+  "profile": "S4 Funding Divergence - RELAXED TEST CONFIG",
+  "description": "S4 test config with relaxed thresholds for baseline comparison. NOT FOR PRODUCTION.",
+
+  "_comment": "This is a TEST config with relaxed thresholds to ensure S4 generates trades for comparison. Production config (s4_optimized_oos_test.json) has stricter filters.",
+
+  "adaptive_fusion": false,
+
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX", "DXY", "MOVE", "YIELD_2Y", "YIELD_10Y",
+      "USDT.D", "BTC.D", "TOTAL", "TOTAL2",
+      "funding", "oi", "rv_20d", "rv_60d"
+    ],
+    "zero_fill_missing": false,
+    "regime_override": {}
+  },
+
+  "ml_filter": {"enabled": false},
+
+  "fusion": {
+    "entry_threshold_confidence": 0.50,
+    "_comment_relaxed_fusion": "Lowered from 0.99 to 0.50 for testing",
+    "weights": {
+      "wyckoff": 0.35,
+      "liquidity": 0.30,
+      "momentum": 0.35,
+      "smc": 0.0
+    }
+  },
+
+  "risk": {
+    "base_risk_pct": 0.015,
+    "max_position_size_pct": 0.15,
+    "max_portfolio_risk_pct": 0.08
+  },
+
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 8,
+
+    "enable_A": false, "enable_B": false, "enable_C": false, "enable_D": false,
+    "enable_E": false, "enable_F": false, "enable_G": false, "enable_H": false,
+    "enable_K": false, "enable_L": false, "enable_M": false,
+    "enable_S1": false, "enable_S2": false, "enable_S3": false,
+    "enable_S4": true,
+    "enable_S5": false, "enable_S6": false, "enable_S7": false, "enable_S8": false,
+
+    "thresholds": {
+      "min_liquidity": 0.10,
+      "funding_divergence": {
+        "direction": "long",
+        "archetype_weight": 2.5,
+
+        "_comment_relaxed": "RELAXED THRESHOLDS FOR TESTING",
+        "fusion_threshold": 0.45,
+        "_note_relaxed_fusion": "Lowered from 0.7824 to 0.45 for testing",
+
+        "final_fusion_gate": 0.45,
+        "_note_relaxed_final": "Lowered from 0.7824 to 0.45 for testing",
+
+        "funding_z_max": -0.75,
+        "_note_relaxed_funding": "Relaxed from -1.976 to -0.75 for testing",
+
+        "resilience_min": 0.30,
+        "_note_relaxed_resilience": "Lowered from 0.555 to 0.30 for testing",
+
+        "liquidity_max": 0.65,
+        "_note_relaxed_liquidity": "Increased from 0.348 to 0.65 for testing",
+
+        "cooldown_bars": 11,
+        "max_risk_pct": 0.02,
+        "atr_stop_mult": 2.282,
+        "use_runtime_features": true,
+        "funding_lookback": 24,
+        "price_lookback": 12,
+        "weights": {
+          "funding_negative": 0.40,
+          "price_resilience": 0.30,
+          "volume_quiet": 0.15,
+          "liquidity_thin": 0.15
+        }
+      }
+    },
+
+    "routing": {
+      "risk_on": {
+        "weights": {"funding_divergence": 1.0},
+        "_comment_relaxed": "Increased from 0.5 to 1.0 for testing"
+      },
+      "neutral": {
+        "weights": {"funding_divergence": 1.0}
+      },
+      "risk_off": {
+        "weights": {"funding_divergence": 1.0}
+      },
+      "crisis": {
+        "weights": {"funding_divergence": 1.5}
+      }
+    }
+  },
+
+  "_test_metadata": {
+    "created": "2025-12-03",
+    "purpose": "TESTING ONLY - Relaxed thresholds for baseline comparison",
+    "changes_from_production": [
+      "fusion_threshold: 0.7824 → 0.45",
+      "final_fusion_gate: 0.7824 → 0.45",
+      "funding_z_max: -1.976 → -0.75",
+      "resilience_min: 0.555 → 0.30",
+      "liquidity_max: 0.348 → 0.65",
+      "entry_threshold_confidence: 0.99 → 0.50",
+      "risk_on weight: 0.5 → 1.0"
+    ],
+    "deployment_readiness": "TEST_ONLY - NOT FOR PRODUCTION"
+  }
+}

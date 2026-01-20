@@ -1,0 +1,74 @@
+{
+  "version": "s4_optimized_v1",
+  "profile": "S4 OOS Validation (2024 Q1-Q2)",
+  "description": "S4 (Funding Divergence) optimized config - OOS validation on 2024 volatility period",
+
+  "adaptive_fusion": false,
+
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX", "DXY", "MOVE", "YIELD_2Y", "YIELD_10Y",
+      "USDT.D", "BTC.D", "TOTAL", "TOTAL2",
+      "funding", "oi", "rv_20d", "rv_60d"
+    ],
+    "zero_fill_missing": false,
+    "regime_override": {}
+  },
+
+  "ml_filter": {"enabled": false},
+
+  "fusion": {
+    "entry_threshold_confidence": 0.99,
+    "weights": {
+      "wyckoff": 0.35,
+      "liquidity": 0.30,
+      "momentum": 0.35,
+      "smc": 0.0
+    }
+  },
+
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 8,
+
+    "enable_A": false, "enable_B": false, "enable_C": false, "enable_D": false,
+    "enable_E": false, "enable_F": false, "enable_G": false, "enable_H": false,
+    "enable_K": false, "enable_L": false, "enable_M": false,
+    "enable_S1": false, "enable_S2": false, "enable_S3": false,
+    "enable_S4": true,
+    "enable_S5": false, "enable_S6": false, "enable_S7": false, "enable_S8": false,
+
+    "thresholds": {
+      "min_liquidity": 0.10,
+      "funding_divergence": {
+        "direction": "long",
+        "archetype_weight": 2.5,
+        "fusion_threshold": 0.7824,
+        "final_fusion_gate": 0.7824,
+        "funding_z_max": -1.976,
+        "resilience_min": 0.555,
+        "liquidity_max": 0.348,
+        "cooldown_bars": 11,
+        "max_risk_pct": 0.02,
+        "atr_stop_mult": 2.282,
+        "use_runtime_features": true,
+        "funding_lookback": 24,
+        "price_lookback": 12,
+        "weights": {
+          "funding_negative": 0.40,
+          "price_resilience": 0.30,
+          "volume_quiet": 0.15,
+          "liquidity_thin": 0.15
+        }
+      }
+    },
+
+    "routing": {
+      "risk_on": {"weights": {"funding_divergence": 0.5}},
+      "neutral": {"weights": {"funding_divergence": 1.0}},
+      "risk_off": {"weights": {"funding_divergence": 1.0}},
+      "crisis": {"weights": {"funding_divergence": 1.5}}
+    }
+  }
+}

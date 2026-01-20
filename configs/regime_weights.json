@@ -1,0 +1,11 @@
+{
+  "funding_divergence|neutral": 0.2582096564877323,
+  "order_block_retest|neutral": 0.26058085221518595,
+  "trap_within_trend|neutral": 0.22367196767810213,
+  "wick_trap_moneytaur|neutral": 0.2575375236189796,
+  "funding_divergence|risk_off": 0.5133559497919038,
+  "liquidity_vacuum|risk_off": 0.48664405020809615,
+  "trap_within_trend|risk_on": 0.5086849598341582,
+  "wick_trap_moneytaur|risk_on": 0.4913150401658418,
+  "liquidity_vacuum|crisis": 1.0
+}

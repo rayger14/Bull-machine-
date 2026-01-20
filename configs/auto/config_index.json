@@ -1,0 +1,37 @@
+{
+  "version": "1.0",
+  "description": "Auto-generated regime-specific configurations",
+  "base_config": "configs/mvp/mvp_bull_market_v1.json",
+  "thresholds_source": "configs/auto/hmm_thresholds.json",
+  "generation_date": "2025-11-16T23:27:09.113141",
+  "configs": [
+    {
+      "regime_id": 0,
+      "regime_name": "neutral",
+      "path": "/Users/raymondghandchi/Bull-machine-/Bull-machine-/configs/auto/config_regime_0.json",
+      "sample_size": 32,
+      "fusion_threshold": 0.45880065312145496
+    },
+    {
+      "regime_id": 1,
+      "regime_name": "risk_on",
+      "path": "/Users/raymondghandchi/Bull-machine-/Bull-machine-/configs/auto/config_regime_1.json",
+      "sample_size": 0,
+      "fusion_threshold": 0.4
+    },
+    {
+      "regime_id": 2,
+      "regime_name": "risk_off",
+      "path": "/Users/raymondghandchi/Bull-machine-/Bull-machine-/configs/auto/config_regime_2.json",
+      "sample_size": 0,
+      "fusion_threshold": 0.4
+    },
+    {
+      "regime_id": 3,
+      "regime_name": "crisis",
+      "path": "/Users/raymondghandchi/Bull-machine-/Bull-machine-/configs/auto/config_regime_3.json",
+      "sample_size": 0,
+      "fusion_threshold": 0.4
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "version": "2.1.0-bear-v10-base",
+  "profile": "bear_v10_base",
+  "description": "Bear market baseline - Defensive config for 2022-2023 capital preservation",
+
+  "fusion": {
+    "entry_threshold_confidence": 0.50,
+    "weights": {
+      "wyckoff": 0.38,
+      "liquidity": 0.35,
+      "momentum": 0.22,
+      "smc": 0.05
+    }
+  },
+
+  "archetypes": {
+    "thresholds": {
+      "min_liquidity": 0.26
+    }
+  },
+
+  "pnl_tracker": {
+    "exits": {
+      "trail_atr_mult": 1.80,
+      "max_bars_in_trade": 68
+    }
+  },
+
+  "decision_gates": {
+    "size_min": 0.50,
+    "size_max": 0.90
+  },
+
+  "ml_filter": {
+    "enabled": true,
+    "threshold": 0.35
+  },
+
+  "risk": {
+    "base_risk_pct": 0.050,
+    "max_position_size_pct": 0.15
+  }
+}

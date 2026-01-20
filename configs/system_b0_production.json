@@ -1,0 +1,134 @@
+{
+  "system_name": "System B0 - Baseline Conservative",
+  "version": "1.0.0",
+  "description": "Production deployment of drawdown-based baseline strategy. Test PF: 3.17, WR: 42.9%",
+
+  "strategy": {
+    "model_class": "BuyHoldSellClassifier",
+    "parameters": {
+      "buy_threshold": -0.15,
+      "profit_target": 0.08,
+      "stop_atr_mult": 2.5,
+      "require_volume_spike": false,
+      "volume_z_min": 2.0
+    },
+    "description": "Entry on -15% drawdown from 30d high, exit at +8% profit or -2.5 ATR stop"
+  },
+
+  "risk_management": {
+    "portfolio_size": 10000,
+    "risk_per_trade_pct": 0.02,
+    "max_portfolio_risk_pct": 0.06,
+    "max_concurrent_positions": 3,
+    "max_daily_trades": 5,
+    "cooldown_hours": 24,
+    "position_sizing_method": "fixed_risk",
+    "description": "2% risk per trade, max 6% portfolio exposure"
+  },
+
+  "execution": {
+    "asset": "BTC",
+    "timeframe": "1H",
+    "min_bars_history": 720,
+    "signal_ttl_bars": 20,
+    "slippage_pct": 0.001,
+    "commission_pct": 0.001,
+    "description": "1H timeframe with 30 days history minimum"
+  },
+
+  "monitoring": {
+    "enabled": true,
+    "check_interval_seconds": 300,
+    "alerts": {
+      "console": true,
+      "file": true,
+      "webhook": false,
+      "webhook_url": null
+    },
+    "thresholds": {
+      "max_drawdown_pct": 0.20,
+      "min_win_rate_pct": 0.35,
+      "max_consecutive_losses": 5,
+      "profit_target_distance_warn": 0.02
+    },
+    "log_level": "INFO",
+    "log_file": "logs/system_b0.log"
+  },
+
+  "data_sources": {
+    "feature_store_path": "data/feature_store",
+    "live_data_source": "okx",
+    "backup_data_source": "ccxt",
+    "cache_ttl_seconds": 60
+  },
+
+  "validation": {
+    "required_features": [
+      "close",
+      "high",
+      "low",
+      "volume",
+      "atr_14",
+      "capitulation_depth"
+    ],
+    "test_periods": [
+      {"start": "2022-01-01", "end": "2022-12-31", "regime": "bear", "expected_pf_min": 2.0},
+      {"start": "2023-01-01", "end": "2023-12-31", "regime": "bull", "expected_pf_min": 2.5}
+    ],
+    "walk_forward": {
+      "enabled": true,
+      "train_months": 6,
+      "test_months": 3,
+      "step_months": 3
+    }
+  },
+
+  "deployment": {
+    "mode": "backtest",
+    "modes_available": ["backtest", "live_signal", "paper_trading", "live_trading"],
+    "safety_checks": {
+      "require_validation": true,
+      "require_approval": true,
+      "max_position_size_usd": 5000
+    }
+  },
+
+  "performance_targets": {
+    "min_profit_factor": 2.0,
+    "min_win_rate_pct": 35.0,
+    "max_drawdown_pct": 25.0,
+    "min_sharpe_ratio": 1.0,
+    "min_trades_per_month": 2
+  },
+
+  "emergency": {
+    "kill_switch_enabled": true,
+    "auto_stop_on_drawdown_pct": 0.30,
+    "auto_stop_on_consecutive_losses": 10,
+    "emergency_contact": "system_admin",
+    "recovery_procedures": "docs/SYSTEM_B0_PRODUCTION_GUIDE.md#emergency-procedures"
+  },
+
+  "metadata": {
+    "created_at": "2025-12-04",
+    "last_modified": "2025-12-04",
+    "test_results": {
+      "backtest_period": "2022-01-01 to 2024-09-30",
+      "profit_factor": 3.17,
+      "win_rate_pct": 42.9,
+      "total_trades": 47,
+      "regime_performance": {
+        "bear_2022": {"pf": 2.8, "wr": 40.0},
+        "bull_2023": {"pf": 3.5, "wr": 45.0}
+      }
+    },
+    "deployment_checklist": [
+      "Feature store validated (2022-2024)",
+      "Risk parameters reviewed",
+      "Monitoring system tested",
+      "Alert channels configured",
+      "Emergency procedures documented",
+      "Deployment approval obtained"
+    ]
+  }
+}

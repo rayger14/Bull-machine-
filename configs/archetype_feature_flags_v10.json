@@ -1,0 +1,380 @@
+{
+  "version": "v10_archetype_enablement",
+  "description": "Feature flags and quality gates for archetype re-enablement. Start with H/K/L/S (Phase 1), then add A/E/M (Phase 2).",
+
+  "archetypes": {
+    "H_order_block_retest": {
+      "enabled": true,
+      "priority": "HIGH",
+      "status": "ACTIVE_WINNER",
+      "thresholds": {
+        "ob_quality": {
+          "min": 0.6,
+          "description": "Minimum OB formation quality (0-1). Higher = cleaner displacement + volume."
+        },
+        "displacement_z": {
+          "min": 1.2,
+          "description": "Z-score of displacement from OB level. Higher = stronger move away from OB."
+        },
+        "htf_alignment": {
+          "required": true,
+          "description": "Higher timeframe must agree with retest direction."
+        },
+        "mitigation_state": {
+          "allowed": ["unmitigated", "lightly_mitigated"],
+          "description": "OB must not be fully mitigated (price hasn't fully retraced through it)."
+        },
+        "retest_tolerance": {
+          "max_distance_pct": 0.015,
+          "description": "Max % distance from OB level to qualify as retest (1.5% default)."
+        },
+        "min_bars_since_formation": {
+          "min": 4,
+          "max": 200,
+          "description": "OB age window - too fresh = unreliable, too old = stale."
+        }
+      },
+      "vetoes": {
+        "wrong_side_of_eq": true,
+        "macro_risk_off_strong": true,
+        "pti_trap_same_side": true
+      },
+      "expected_metrics": {
+        "win_rate_target": 0.75,
+        "avg_pnl_target": 120.0,
+        "trades_per_year_target": 10,
+        "profit_factor_target": 3.0
+      }
+    },
+
+    "K_wick_lies": {
+      "enabled": true,
+      "priority": "MEDIUM",
+      "status": "PHASE_1_REACTIVATION",
+      "thresholds": {
+        "wick_ratio": {
+          "min": 0.70,
+          "description": "Wick size as % of full candle range. High wick ratio = rejection."
+        },
+        "magnet_unmitigated": {
+          "required": true,
+          "description": "Target magnet level (liquidity grab) must be unmitigated."
+        },
+        "reclaim_bars": {
+          "max": 20,
+          "description": "Must reclaim swept level within N bars or entry invalidates."
+        },
+        "wrong_side_eq": {
+          "reject": true,
+          "description": "Reject if entry would be wrong side of equilibrium."
+        },
+        "volume_confirmation": {
+          "min_volume_pctl": 0.60,
+          "description": "Wick candle should have decent volume (not thin air)."
+        }
+      },
+      "vetoes": {
+        "htf_strong_counter": true,
+        "macro_crisis": true
+      },
+      "expected_metrics": {
+        "win_rate_target": 0.60,
+        "avg_pnl_target": 40.0,
+        "trades_per_year_target": 15,
+        "profit_factor_target": 1.8
+      }
+    },
+
+    "L_false_volume_break": {
+      "enabled": true,
+      "priority": "MEDIUM",
+      "status": "PHASE_1_REACTIVATION",
+      "thresholds": {
+        "volume_spike_pctl": {
+          "min": 0.90,
+          "description": "Volume must be in top 10% (spike) without structural follow-through."
+        },
+        "structural_follow_through": {
+          "required": false,
+          "description": "Breakout must FAIL (no follow-through) to qualify as false break."
+        },
+        "reclaim_bars": {
+          "max": 3,
+          "description": "Must reclaim broken level quickly (within 3 bars)."
+        },
+        "near_vacuum": {
+          "preferred": true,
+          "description": "Works best when false break is near liquidity vacuum."
+        },
+        "displacement_after_reclaim": {
+          "min_z": 0.8,
+          "description": "After reclaim, expect displacement away from false break."
+        }
+      },
+      "vetoes": {
+        "htf_aligned_with_break": true,
+        "macro_risk_off": false
+      },
+      "expected_metrics": {
+        "win_rate_target": 0.65,
+        "avg_pnl_target": 50.0,
+        "trades_per_year_target": 12,
+        "profit_factor_target": 2.0
+      }
+    },
+
+    "S_vacuum_grab_moneytaur": {
+      "enabled": true,
+      "priority": "HIGH",
+      "status": "PHASE_1_REACTIVATION",
+      "thresholds": {
+        "void_score": {
+          "min": 0.65,
+          "description": "Vacuum quality score (low volume, wide spread, thin order book)."
+        },
+        "sweep_quality": {
+          "min": 0.60,
+          "description": "Liquidity grab quality (clean sweep + reversal)."
+        },
+        "reclaim_required": {
+          "required": true,
+          "description": "Must reclaim swept level after engineered move."
+        },
+        "continuation_bars": {
+          "max": 10,
+          "description": "After reclaim, continuation should happen within N bars."
+        },
+        "htf_alignment": {
+          "required": true,
+          "description": "HTF must support continuation direction."
+        }
+      },
+      "vetoes": {
+        "macro_crisis": true,
+        "low_regime_confidence": true
+      },
+      "expected_metrics": {
+        "win_rate_target": 0.70,
+        "avg_pnl_target": 80.0,
+        "trades_per_year_target": 8,
+        "profit_factor_target": 2.5
+      }
+    },
+
+    "trap_within_trend": {
+      "enabled": true,
+      "priority": "CRITICAL_FIX",
+      "status": "NEEDS_OPTIMIZATION",
+      "note": "Currently generating 83% of trades but net loss. Need strict quality gates.",
+      "thresholds": {
+        "trap_quality_threshold": {
+          "min": 0.50,
+          "current": 0.35,
+          "description": "INCREASE THIS - too many low-quality traps entering. Target 0.50-0.65."
+        },
+        "trap_confirmation_bars": {
+          "min": 2,
+          "max": 5,
+          "current": 2,
+          "description": "Require more confirmation before entry to reduce false signals."
+        },
+        "trap_volume_ratio": {
+          "min": 1.5,
+          "current": 1.2,
+          "description": "Trap must have volume spike vs recent avg. Increase to 1.5-2.5."
+        },
+        "trap_stop_multiplier": {
+          "min": 0.8,
+          "max": 1.5,
+          "current": 2.5,
+          "description": "CRITICAL: Tighten stops. Currently ~2.5x ATR, target 1.0-1.5x."
+        },
+        "wrong_side_eq_reject": {
+          "required": true,
+          "description": "Reject traps that would enter wrong side of equilibrium."
+        },
+        "recent_failed_trap_cooldown": {
+          "bars": 20,
+          "description": "If trap failed recently, cooldown before re-entering same archetype."
+        }
+      },
+      "vetoes": {
+        "choppy_regime": true,
+        "low_trend_strength": true,
+        "macro_crisis": true
+      },
+      "optimization_targets": {
+        "reduce_trade_count_by_pct": 0.30,
+        "increase_win_rate_to": 0.55,
+        "reduce_avg_loss_to": 45.0,
+        "target_profit_factor": 1.5
+      }
+    },
+
+    "volume_exhaustion": {
+      "enabled": true,
+      "priority": "MEDIUM",
+      "status": "UNDERUTILIZED_SOLID",
+      "note": "Only 6 trades/3yr but 66.7% WR. Increase detection without sacrificing quality.",
+      "thresholds": {
+        "ve_threshold": {
+          "current": 0.60,
+          "target_range": [0.30, 0.50],
+          "description": "Lower threshold to catch more setups. Test 0.40-0.50 range."
+        },
+        "ve_volume_spike": {
+          "min": 2.0,
+          "current": 2.5,
+          "description": "Volume spike requirement vs avg. Can lower slightly."
+        },
+        "ve_divergence_periods": {
+          "min": 10,
+          "max": 30,
+          "current": 20,
+          "description": "Lookback for price/volume divergence detection."
+        },
+        "ve_confirmation_bars": {
+          "min": 1,
+          "max": 3,
+          "current": 2,
+          "description": "Bars required for reversal confirmation."
+        }
+      },
+      "vetoes": {
+        "htf_strong_momentum": true
+      },
+      "optimization_targets": {
+        "increase_trades_to_per_year": 8,
+        "maintain_win_rate_above": 0.60,
+        "target_profit_factor": 2.0
+      }
+    },
+
+    "M_poc_phase_shift": {
+      "enabled": false,
+      "priority": "LOW",
+      "status": "PHASE_2_FUTURE",
+      "prerequisites": [
+        "stable wyckoff_phase labels",
+        "FRVP/POC anchors validated",
+        "volume profile computation optimized"
+      ],
+      "thresholds": {
+        "poc_shift_quality": 0.70,
+        "wyckoff_confidence": 0.65
+      }
+    },
+
+    "A_spring_utad": {
+      "enabled": false,
+      "priority": "MEDIUM",
+      "status": "PHASE_2_FUTURE",
+      "prerequisites": [
+        "wyckoff_phase stable",
+        "PTI trap labels reliable"
+      ],
+      "thresholds": {
+        "spring_quality": 0.65,
+        "utad_quality": 0.65
+      }
+    },
+
+    "E_wyckoff_continuation": {
+      "enabled": false,
+      "priority": "MEDIUM",
+      "status": "PHASE_2_FUTURE"
+    },
+
+    "breaker_flip": {
+      "enabled": false,
+      "priority": "LOW",
+      "status": "PHASE_2_FUTURE",
+      "prerequisites": [
+        "clean BOS/CHOCH detection",
+        "breaker block quality scoring"
+      ]
+    },
+
+    "range_break_retest": {
+      "enabled": false,
+      "priority": "LOW",
+      "status": "PHASE_2_FUTURE"
+    }
+  },
+
+  "global_vetoes": {
+    "description": "Cross-archetype vetoes that apply to all enabled archetypes",
+    "event_suppression": {
+      "enabled": true,
+      "description": "Suppress all entries during EventCalendar suppression windows (Fed, CPI, etc.)"
+    },
+    "regime_confidence_floor": {
+      "min": 0.45,
+      "description": "If regime confidence < 0.45, go to CASH mode (too uncertain)"
+    },
+    "max_daily_entries": {
+      "limit": 5,
+      "description": "Circuit breaker - max entries per day to prevent overtrading"
+    },
+    "same_archetype_cooldown": {
+      "bars": 10,
+      "description": "After archetype entry, cooldown before same archetype can fire again"
+    }
+  },
+
+  "ablation_config": {
+    "description": "Config for single-archetype ablation tests to measure incremental value",
+    "enabled": false,
+    "test_mode": "single_archetype",
+    "active_archetype": "H_order_block_retest",
+    "baseline_comparison": "trap_within_trend_only"
+  },
+
+  "phase_1_roadmap": {
+    "week_1": {
+      "action": "Enable H (order_block_retest) only",
+      "test": "OOS validation on 2024 data",
+      "acceptance": "WR >= 75%, PF >= 2.5, expectancy >= $100"
+    },
+    "week_2": {
+      "action": "Enable H + K (wick_lies)",
+      "test": "Additive test - does K improve or cannibalize H?",
+      "acceptance": "Combined PF >= H-only, K contributes >= $300/yr"
+    },
+    "week_3": {
+      "action": "Enable H + K + L (false_volume_break)",
+      "test": "Additive test with all three",
+      "acceptance": "L adds >= $200/yr without degrading H/K"
+    },
+    "week_4": {
+      "action": "Enable H + K + L + S (vacuum_grab)",
+      "test": "Full Phase 1 stack",
+      "acceptance": "Total PF >= 2.0, WR >= 60%, combined gain >= $800/yr vs baseline"
+    }
+  },
+
+  "acceptance_criteria": {
+    "per_archetype": {
+      "minimum_trades_per_year": 5,
+      "minimum_win_rate": 0.50,
+      "minimum_profit_factor": 1.2,
+      "maximum_avg_loss": 60.0,
+      "minimum_expectancy": 15.0
+    },
+    "system_wide": {
+      "minimum_total_pf": 1.5,
+      "minimum_sharpe": 0.8,
+      "maximum_drawdown": 0.15,
+      "minimum_return_pct": 10.0
+    }
+  },
+
+  "monitoring": {
+    "log_archetype_decisions": true,
+    "log_veto_reasons": true,
+    "log_quality_scores": true,
+    "export_per_archetype_ledger": true,
+    "alert_on_archetype_degradation": true,
+    "degradation_threshold_pf": 1.0
+  }
+}

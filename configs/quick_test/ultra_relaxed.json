@@ -1,0 +1,67 @@
+{
+  "archetypes": {
+    "use_archetypes": true,
+
+    "enable_A": false,
+    "enable_B": false,
+    "enable_C": false,
+    "enable_D": false,
+    "enable_E": false,
+    "enable_F": false,
+    "enable_G": false,
+    "enable_H": false,
+    "enable_K": false,
+    "enable_L": false,
+    "enable_M": false,
+
+    "enable_S1": false,
+    "enable_S2": true,
+    "enable_S3": false,
+    "enable_S4": false,
+    "enable_S5": true,
+    "enable_S6": false,
+    "enable_S7": false,
+    "enable_S8": false,
+
+    "thresholds": {
+      "failed_rally": {
+        "fusion_threshold": 0.36,
+        "wick_ratio_min": 1.8,
+        "rsi_min": 65.0,
+        "vol_z_max": 0.8,
+        "use_runtime_features": false
+      },
+      "long_squeeze": {
+        "fusion_threshold": 0.35,
+        "funding_z_min": 1.0,
+        "rsi_min": 65,
+        "liquidity_max": 0.30
+      }
+    },
+
+    "routing": {
+      "neutral": {
+        "weights": {
+          "failed_rally": 1.5,
+          "long_squeeze": 1.5
+        }
+      },
+      "risk_off": {
+        "weights": {
+          "failed_rally": 2.0,
+          "long_squeeze": 2.2
+        }
+      },
+      "crisis": {
+        "weights": {
+          "failed_rally": 2.5,
+          "long_squeeze": 2.8
+        }
+      }
+    },
+
+    "regime_override": {
+      "2022": "risk_off"
+    }
+  }
+}

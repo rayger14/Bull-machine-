@@ -1,0 +1,53 @@
+{
+  "description": "Regime-conditioned weight allocator configuration for soft gating",
+  "version": "1.0.0",
+  "updated": "2026-01-09",
+
+  "weighting_parameters": {
+    "k_shrinkage": 30,
+    "min_weight": 0.01,
+    "neg_edge_cap": 0.20,
+    "min_trades": 5,
+    "alpha": 4.0,
+    "offset": 0.05
+  },
+
+  "regime_risk_budgets": {
+    "description": "Maximum total exposure per regime (prevents concentration)",
+    "crisis": 0.30,
+    "risk_off": 0.50,
+    "neutral": 0.70,
+    "risk_on": 0.80
+  },
+
+  "edge_table_path": "results/archetype_regime_edge_table.csv",
+  "weights_output_path": "results/regime_conditioned_weights.csv",
+
+  "quality_thresholds": {
+    "description": "Thresholds for weight computation guardrails",
+    "strongly_negative_sharpe": -0.10,
+    "neutral_sharpe": 0.0,
+    "min_sample_for_confidence": 10
+  },
+
+  "logging": {
+    "log_weight_decisions": true,
+    "log_level": "DEBUG",
+    "log_path": "logs/regime_allocator.log"
+  },
+
+  "experimental": {
+    "enable_adaptive_reweighting": false,
+    "reweight_frequency_days": 30,
+    "use_thompson_sampling": false
+  },
+
+  "comments": {
+    "k_shrinkage": "Sample size shrinkage constant - higher = more conservative with small samples",
+    "min_weight": "Minimum allocation floor (1%) - prevents hard zeros, allows 'earning back'",
+    "neg_edge_cap": "Maximum allocation to negative-edge archetypes (20%)",
+    "min_trades": "Minimum trades for reliable edge estimate",
+    "alpha": "Sigmoid steepness - higher = more winner-takes-all behavior",
+    "regime_risk_budgets": "CRISIS=30% prevents forced allocation, RISK_ON=80% allows normal operation"
+  }
+}

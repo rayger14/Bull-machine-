@@ -31,6 +31,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import hashlib
 import gc
+import logging
 
 # Bull Machine imports
 from engine.io.tradingview_loader import load_tv
@@ -42,6 +43,19 @@ from bin.live.smart_exits import SmartExitPortfolio
 from bull_machine.utils.merge_windows import (
     merge_windows, calculate_coverage, calculate_density, should_fallback_to_full
 )
+from utils.config_compat import normalize_config_for_hybrid
+from utils.datetime_utils import to_timezone_naive
+from bin.live.constants import (
+    MIN_BARS_1H, MIN_BARS_4H, MIN_BARS_1D,
+    GC_INTERVAL_BARS,
+    LOG_FLUSH_INTERVAL, PROGRESS_REPORT_INTERVAL,
+    ATR_MIN_BARS, ATR_PERIOD, ATR_PERCENTILE_WINDOW,
+    MAX_TRADES_FOR_LOSS_STREAK,
+    DEFAULT_OUTPUT_DIR
+)
+
+# Initialize logger
+logger = logging.getLogger(__name__)
 
 
 def load_candidates(candidates_path: str, window_bars: int = 48,
@@ -155,6 +169,9 @@ class HybridRunner:
         with open(config_path, 'r') as f:
             self.config = json.load(f)
 
+        # Apply config compatibility layer (hob↔liquidity aliases)
+        self.config = normalize_config_for_hybrid(self.config)
+
         # Validate v1.8 config
         self._validate_config()
 
@@ -182,11 +199,16 @@ class HybridRunner:
         self.cache_macro_snapshot = None
         self.cache_macro_timestamp = None
 
-        # PHASE 1 PERFORMANCE: Buffered logging (flush every 100 bars)
+        # PHASE 1 PERFORMANCE: Buffered logging
         self.log_buffer_signal_blocks = []
         self.log_buffer_fusion = []
         self.log_buffer_decision = []
-        self.log_flush_interval = 100
+        self.log_flush_interval = LOG_FLUSH_INTERVAL
+
+        # Configurable output directory (from config or default)
+        self.output_dir = Path(self.config.get('output_dir', DEFAULT_OUTPUT_DIR))
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Output directory: {self.output_dir}")
 
     def _validate_config(self):
         """Validate v1.8 hybrid configuration."""
@@ -285,7 +307,6 @@ class HybridRunner:
         # Process each 1H bar incrementally (simulate live streaming)
         bars_processed = 0
         bars_skipped = 0
-        gc_interval = 500  # Trigger GC every 500 bars (backtest only)
         is_backtest = self.start_date is not None  # Detect backtest mode
 
         for i in range(len(df_1h_full)):
@@ -302,7 +323,7 @@ class HybridRunner:
             bars_processed += 1
 
             # Periodic GC for backtest mode (avoid memory creep in long runs)
-            if is_backtest and bars_processed % gc_interval == 0:
+            if is_backtest and bars_processed % GC_INTERVAL_BARS == 0:
                 gc.collect()
 
             # Build incremental dataframes (growing window)
@@ -313,7 +334,7 @@ class HybridRunner:
             self.df_1d = df_1d_full[df_1d_full.index <= current_time].copy()
 
             # Fetch macro snapshot for smart exits
-            timestamp_naive = current_time.replace(tzinfo=None) if hasattr(current_time, 'tzinfo') else current_time
+            timestamp_naive = to_timezone_naive(current_time)
             macro_snapshot = fetch_macro_snapshot(self.macro_data, timestamp_naive)
 
             # Update open positions (check stops/targets with smart exits)
@@ -322,8 +343,8 @@ class HybridRunner:
                 self.df_1h, self.df_4h, macro_snapshot, self.config_hash
             )
 
-            # Need minimum data (relaxed for validation - was 50/14/50)
-            if len(self.df_1h) < 50 or len(self.df_4h) < 14 or len(self.df_1d) < 20:
+            # Need minimum data for indicator calculations
+            if len(self.df_1h) < MIN_BARS_1H or len(self.df_4h) < MIN_BARS_4H or len(self.df_1d) < MIN_BARS_1D:
                 continue
 
             # Generate signal (dataframes already aligned by time)
@@ -349,7 +370,7 @@ class HybridRunner:
                         'macro_veto': signal_result.get('macro_veto', 0.0),
                         'reasons': signal_result.get('reasons', [])
                     }
-                    with open('results/decision_log.jsonl', 'a') as f:
+                    with open(self.output_dir / 'decision_log.jsonl', 'a') as f:
                         f.write(json.dumps(decision_log) + '\n')
 
                     # Check if we already have a position for this asset
@@ -370,8 +391,8 @@ class HybridRunner:
                         df_4h=self.df_4h
                     )
 
-            # PHASE 1 PERFORMANCE: Flush buffered logs every 100 bars
-            if i % 100 == 0:
+            # PHASE 1 PERFORMANCE: Flush buffered logs periodically
+            if i % PROGRESS_REPORT_INTERVAL == 0:
                 if batch_mode:
                     print(f"   Progress: {i+1}/{len(df_1h_full)} | Processed: {bars_processed} | Skipped: {bars_skipped} | Signals: {len(self.signals)}")
                 else:
@@ -420,7 +441,7 @@ class HybridRunner:
 
         # 1. MACRO VETO (first check)
         # Convert timestamp to timezone-naive for macro data comparison
-        timestamp_naive = timestamp.replace(tzinfo=None) if hasattr(timestamp, 'tzinfo') else timestamp
+        timestamp_naive = to_timezone_naive(timestamp)
 
         # PHASE 1 PERFORMANCE: Cache macro snapshot (changes once per day max)
         macro_date = timestamp_naive.date()
@@ -431,20 +452,13 @@ class HybridRunner:
         macro_snapshot = self.cache_macro_snapshot
         macro_result = analyze_macro(macro_snapshot, self.macro_config)
 
-        # DEBUG: Log every check
-        import os
-        os.makedirs('results', exist_ok=True)
-        debug_log = {
-            'timestamp': timestamp.isoformat(),
-            'macro_veto_strength': float(macro_result['veto_strength']),
-            'macro_threshold': float(self.macro_config['macro_veto_threshold']),
-            'macro_blocked': bool(macro_result['veto_strength'] >= self.macro_config['macro_veto_threshold'])
-        }
-
         if macro_result['veto_strength'] >= self.macro_config['macro_veto_threshold']:
-            debug_log['reason'] = 'macro_veto'
-            # PHASE 1 PERFORMANCE: Buffer log write
-            self.log_buffer_signal_blocks.append(debug_log)
+            # Log macro veto for analysis
+            logger.debug(
+                f"Macro veto triggered at {timestamp.isoformat()}: "
+                f"strength={macro_result['veto_strength']:.3f}, "
+                f"threshold={self.macro_config['macro_veto_threshold']:.3f}"
+            )
             return {
                 'timestamp': timestamp.isoformat(),
                 'asset': self.asset,
@@ -462,11 +476,8 @@ class HybridRunner:
 
         # ATR throttle
         atr_ok = self._check_atr_throttle(df_1h)
-        debug_log['atr_ok'] = bool(atr_ok) if atr_ok is not None else None
         if not atr_ok:
-            debug_log['reason'] = 'atr_throttle'
-            # PHASE 1 PERFORMANCE: Buffer log write
-            self.log_buffer_signal_blocks.append(debug_log)
+            logger.debug(f"ATR throttle blocked signal at {timestamp.isoformat()}")
             return None  # Too quiet or too volatile
 
         # 3. GENERATE FAST SIGNAL
@@ -499,19 +510,12 @@ class HybridRunner:
         # 5. APPLY EXECUTION MODE
         execute_signal = self._apply_execution_mode(fast_signal, fusion_signal, require_fusion)
 
-        debug_log['fast_signal'] = fast_signal is not None
-        debug_log['fusion_signal'] = fusion_signal is not None
-        debug_log['execute_signal'] = execute_signal is not None
-
         if not execute_signal:
-            debug_log['reason'] = 'execution_mode_blocked'
-            # PHASE 1 PERFORMANCE: Buffer log write
-            self.log_buffer_signal_blocks.append(debug_log)
+            logger.debug(
+                f"Execution mode blocked at {timestamp.isoformat()}: "
+                f"fast={fast_signal is not None}, fusion={fusion_signal is not None}"
+            )
             return None
-
-        debug_log['reason'] = 'signal_generated'
-        # PHASE 1 PERFORMANCE: Buffer log write
-        self.log_buffer_signal_blocks.append(debug_log)
 
         # 6. RETURN SIGNAL
         return {
@@ -521,10 +525,12 @@ class HybridRunner:
             'action': 'signal',
             'side': execute_signal['side'],
             'confidence': execute_signal['confidence'],
+            'fusion_score': execute_signal['confidence'],  # FIX: Add fusion_score key for position sizing
             'reasons': execute_signal.get('reasons', []),
             'fast_signal': fast_signal is not None,
             'fusion_signal': fusion_signal is not None,
             'fusion_validated': fusion_signal is not None and current_4h_bar != self.last_4h_bar,
+            'mtf_aligned': execute_signal.get('mtf_aligned', False),  # FIX: Add MTF alignment for decision logging
             'mode': self.config['fast_signals']['mode'],
             'loss_streak_override': require_fusion,
             'macro_vetoed': False,
@@ -590,17 +596,16 @@ class HybridRunner:
 
     def _flush_log_buffers(self):
         """PHASE 1 PERFORMANCE: Flush buffered logs to disk."""
-        import os
-        os.makedirs('results', exist_ok=True)
+        # Output directory already created in __init__
 
         if self.log_buffer_signal_blocks:
-            with open('results/signal_blocks.jsonl', 'a') as f:
+            with open(self.output_dir / 'signal_blocks.jsonl', 'a') as f:
                 for entry in self.log_buffer_signal_blocks:
                     f.write(json.dumps(entry) + '\n')
             self.log_buffer_signal_blocks = []
 
         if self.log_buffer_fusion:
-            with open('results/fusion_validation.jsonl', 'a') as f:
+            with open(self.output_dir / 'fusion_validation.jsonl', 'a') as f:
                 for entry in self.log_buffer_fusion:
                     json.dump(entry, f)
                     f.write('\n')
@@ -657,12 +662,12 @@ class HybridRunner:
         return None
 
     def _count_consecutive_losses(self) -> int:
-        """Count consecutive losses in last 24 hours."""
+        """Count consecutive losses in recent trades."""
         if not self.recent_trades:
             return 0
 
         count = 0
-        for trade in reversed(self.recent_trades[-10:]):  # Check last 10 trades
+        for trade in reversed(self.recent_trades[-MAX_TRADES_FOR_LOSS_STREAK:]):
             if trade.get('pnl', 0) < 0:
                 count += 1
             else:
@@ -671,7 +676,7 @@ class HybridRunner:
 
     def _check_atr_throttle(self, df_1h: pd.DataFrame) -> bool:
         """Check if ATR is within acceptable range."""
-        if len(df_1h) < 100:
+        if len(df_1h) < ATR_MIN_BARS:
             return True  # Not enough data, allow
 
         # Calculate ATR
@@ -685,11 +690,11 @@ class HybridRunner:
             (low - close.shift()).abs()
         ], axis=1).max(axis=1)
 
-        atr = tr.rolling(14).mean()
+        atr = tr.rolling(ATR_PERIOD).mean()
         current_atr = atr.iloc[-1]
 
         # Calculate percentile
-        atr_window = atr.tail(100)
+        atr_window = atr.tail(ATR_PERCENTILE_WINDOW)
         percentile = (atr_window < current_atr).sum() / len(atr_window)
 
         floor = self.config['safety']['atr_floor_percentile']
@@ -703,11 +708,10 @@ class HybridRunner:
 
     def _log_signal(self, signal: Dict):
         """Log signal to JSONL file."""
-        import os
-        os.makedirs('results', exist_ok=True)
+        # Output directory already created in __init__
 
         date_str = datetime.now().strftime('%Y%m%d_%H%M%S')
-        log_file = f'results/hybrid_signals_{self.asset}_{date_str}.jsonl'
+        log_file = self.output_dir / f'hybrid_signals_{self.asset}_{date_str}.jsonl'
 
         with open(log_file, 'a') as f:
             json.dump(signal, f)

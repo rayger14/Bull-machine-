@@ -1,0 +1,133 @@
+{
+  "analysis_period": "2022-01-01 to 2022-12-31",
+  "baseline_performance": {
+    "trades": 13,
+    "profit_factor": 0.11394807678348609,
+    "win_rate": 0.23076923076923078,
+    "avg_r": -0.9913250050424243
+  },
+  "regime_characteristics": {
+    "funding": {
+      "mean": -0.01421575220371254,
+      "median": 0.0,
+      "std": 1.0257062035940683,
+      "pct_positive": 0.4883880562864661,
+      "pct_extreme_positive": 0.0663539640773367,
+      "pct_extreme_negative": 0.06166342523738703,
+      "max": 5.110825824155296,
+      "min": -7.515323219587353
+    },
+    "oi": {
+      "mean": 0.0,
+      "median": 0.0,
+      "std": 0.0,
+      "pct_large_drop": 0.0,
+      "pct_large_spike": 0.0
+    },
+    "vix": {
+      "mean": 0.09536219904114794,
+      "median": 0.0024784640322659175,
+      "pct_elevated": 0.34069328452122183,
+      "pct_extreme": 0.08397208557373298
+    },
+    "volume": {
+      "mean": 0.029598996029099118,
+      "median": -0.28762015222034565,
+      "pct_climax": 0.08866262441368264,
+      "pct_very_low": 0.1253861114288983
+    },
+    "dxy": {
+      "mean": 1.1755595023089893,
+      "median": 1.5080472702481165,
+      "pct_strong": 0.7276055371238989
+    },
+    "yield_curve": {
+      "mean": -0.05302184479908408,
+      "median": -0.08800005912780762,
+      "pct_inverted": 0.6589635053197574
+    }
+  },
+  "proposed_patterns": {
+    "S1_liquidity_vacuum": {
+      "exists_in_data": false,
+      "occurrences": 0,
+      "frequency_pct": 0.0,
+      "forward_performance": {
+        "1h": null,
+        "4h": null,
+        "24h": null
+      },
+      "win_rate_1h": null
+    },
+    "S2_failed_rally": {
+      "exists_in_data": true,
+      "occurrences": 205,
+      "frequency_pct": 0.02345269419974831,
+      "forward_performance": {
+        "1h": -0.0009616182594778845,
+        "4h": -0.0003954482229658587,
+        "24h": -0.006760439263369882
+      },
+      "win_rate_1h": 0.5853658536585366
+    },
+    "S4_distribution": {
+      "exists_in_data": true,
+      "occurrences": 992,
+      "frequency_pct": 0.11348815924951379,
+      "forward_performance": {
+        "1h": -0.00023023324748560172,
+        "4h": -0.0009615230541412902,
+        "24h": -0.0012026263668852267
+      },
+      "win_rate_1h": 0.49798387096774194
+    },
+    "S5_long_squeeze": {
+      "exists_in_data": false,
+      "occurrences": 0,
+      "frequency_pct": 0.0,
+      "forward_performance": {
+        "1h": null,
+        "4h": null,
+        "24h": null
+      },
+      "win_rate_1h": null
+    },
+    "S8_exhaustion": {
+      "exists_in_data": true,
+      "occurrences": 390,
+      "frequency_pct": 0.04461732067269191,
+      "forward_performance": {
+        "1h": 0.0003211369771868211,
+        "4h": 0.0011398205355370053,
+        "24h": -0.00253038959128118
+      },
+      "win_rate_1h": 0.48717948717948717
+    }
+  },
+  "feature_availability": {
+    "S1_liquidity_vacuum": {
+      "available": false,
+      "missing": [
+        "liquidity_score"
+      ]
+    },
+    "S2_failed_rally": {
+      "available": true,
+      "missing": []
+    },
+    "S4_distribution": {
+      "available": false,
+      "missing": [
+        "liquidity_score"
+      ]
+    },
+    "S5_long_squeeze": {
+      "available": true,
+      "missing": []
+    },
+    "S8_exhaustion": {
+      "available": true,
+      "missing": []
+    }
+  }
+}

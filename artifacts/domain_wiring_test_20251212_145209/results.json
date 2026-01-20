@@ -1,0 +1,98 @@
+{
+  "S1": {
+    "archetype": "S1",
+    "core": {
+      "trades": 110,
+      "profit_factor": 0.32,
+      "win_rate": 0.318,
+      "sharpe": -0.7,
+      "max_dd": 0.379,
+      "total_pnl": 0.0,
+      "status": "success",
+      "variant": "S1_core"
+    },
+    "full": {
+      "trades": 110,
+      "profit_factor": 0.32,
+      "win_rate": 0.318,
+      "sharpe": -0.7,
+      "max_dd": 0.379,
+      "total_pnl": 0.0,
+      "status": "success",
+      "variant": "S1_full"
+    },
+    "pf_improvement_pct": 0.0,
+    "trade_count_diff": 0,
+    "checks": {
+      "trades_differ": false,
+      "pf_improved": false,
+      "full_better": false,
+      "config_flags_correct": true
+    },
+    "wiring_verified": false
+  },
+  "S4": {
+    "archetype": "S4",
+    "core": {
+      "trades": 122,
+      "profit_factor": 0.36,
+      "win_rate": 0.344,
+      "sharpe": -0.59,
+      "max_dd": 0.368,
+      "total_pnl": 0.0,
+      "status": "success",
+      "variant": "S4_core"
+    },
+    "full": {
+      "trades": 116,
+      "profit_factor": 0.32,
+      "win_rate": 0.31,
+      "sharpe": -0.68,
+      "max_dd": 0.39,
+      "total_pnl": 0.0,
+      "status": "success",
+      "variant": "S4_full"
+    },
+    "pf_improvement_pct": -11.111111111111107,
+    "trade_count_diff": -6,
+    "checks": {
+      "trades_differ": true,
+      "pf_improved": false,
+      "full_better": false,
+      "config_flags_correct": true
+    },
+    "wiring_verified": false
+  },
+  "S5": {
+    "archetype": "S5",
+    "core": {
+      "trades": 110,
+      "profit_factor": 0.32,
+      "win_rate": 0.318,
+      "sharpe": -0.7,
+      "max_dd": 0.379,
+      "total_pnl": 0.0,
+      "status": "success",
+      "variant": "S5_core"
+    },
+    "full": {
+      "trades": 110,
+      "profit_factor": 0.32,
+      "win_rate": 0.318,
+      "sharpe": -0.7,
+      "max_dd": 0.379,
+      "total_pnl": 0.0,
+      "status": "success",
+      "variant": "S5_full"
+    },
+    "pf_improvement_pct": 0.0,
+    "trade_count_diff": 0,
+    "checks": {
+      "trades_differ": false,
+      "pf_improved": false,
+      "full_better": false,
+      "config_flags_correct": true
+    },
+    "wiring_verified": false
+  }
+}

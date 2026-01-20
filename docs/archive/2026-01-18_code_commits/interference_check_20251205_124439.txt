@@ -1,0 +1,56 @@
+Timestamp: 2025-12-05 12:44:39
+
+=== CHECK 1: Database File Integrity ===
+Baseline modification times:
+optuna_production_v2_bos_choch.db: 1763403493.825
+optuna_production_v2_long_squeeze.db: 1763403636.334
+optuna_production_v2_order_block_retest.db: 1763403503.999
+optuna_production_v2_trap_within_trend.db: 1763403505.737
+
+Current modification times:
+1763403493.3N /Users/raymondghandchi/Bull-machine-/Bull-machine-/optuna_production_v2_bos_choch.db
+1763403636.3N /Users/raymondghandchi/Bull-machine-/Bull-machine-/optuna_production_v2_long_squeeze.db
+1763403503.3N /Users/raymondghandchi/Bull-machine-/Bull-machine-/optuna_production_v2_order_block_retest.db
+1763403505.3N /Users/raymondghandchi/Bull-machine-/Bull-machine-/optuna_production_v2_trap_within_trend.db
+
+=== CHECK 2: File Lock Status ===
+Active locks on Optuna databases: 0
+✓ PASS: No locks detected
+
+=== CHECK 3: Database Accessibility ===
+✓ optuna_production_v2_bos_choch.db: ACCESSIBLE and VALID
+✓ optuna_production_v2_long_squeeze.db: ACCESSIBLE and VALID
+✓ optuna_production_v2_order_block_retest.db: ACCESSIBLE and VALID
+✓ optuna_production_v2_trap_within_trend.db: ACCESSIBLE and VALID
+
+=== CHECK 4: Process Isolation ===
+Active Python processes:
+65607 0.4 0.2 /private/var/folders/45/f1799yhj5zx1kyntp676t1b80000gn/T/AppTranslocation/D8C65A3D-ADA2-4AF7-8690-0620D0695F86/d/Visual Studio Code.app/Contents/Frameworks/Code
+65423 0.0 0.0 /Users/raymondghandchi/.vscode/extensions/ms-python.python-2025.18.0-darwin-x64/python-env-tools/bin/pet server 
+
+=== CHECK 5: Resource Contention ===
+Current resource usage:
+Processes: 707 total, 3 running, 704 sleeping, 3392 threads 
+CPU usage: 12.13% user, 9.71% sys, 78.15% idle 
+PhysMem: 14G used (3948M wired, 792M compressor), 1903M unused.
+
+=== CHECK 6: Directory Separation ===
+System B0 directory:
+total 936
+drwxr-xr-x@  9 raymondghandchi  staff   288B Dec  4 00:25 .
+drwxr-xr-x@ 59 raymondghandchi  staff   1.8K Dec  4 00:24 ..
+-rw-r--r--@  1 raymondghandchi  staff    76K Dec  4 00:24 equity_curve_20251204_002403.csv
+-rw-r--r--@  1 raymondghandchi  staff   362K Dec  4 00:24 equity_curve_20251204_002435.csv
+-rw-r--r--@  1 raymondghandchi  staff   7.2K Dec  4 00:24 summary_20251204_002403.txt
+-rw-r--r--@  1 raymondghandchi  staff   7.2K Dec  4 00:24 summary_20251204_002435.txt
+-rw-r--r--@  1 raymondghandchi  staff   792B Dec  4 00:24 trades_20251204_002403.csv
+-rw-r--r--@  1 raymondghandchi  staff   1.3K Dec  4 00:24 trades_20251204_002435.csv
+-rw-r--r--@  1 raymondghandchi  staff   2.1K Dec  4 00:25 validation_20251204_002558.json
+
+
+=== INTERFERENCE ASSESSMENT ===
+Interference Score: 0 / 100 (lower is better)
+✓ RESULT: NO INTERFERENCE DETECTED
+Status: PASS - System B0 deployment is isolated
+
+Report saved to: /Users/raymondghandchi/Bull-machine-/Bull-machine-/interference_check_20251205_124439.txt

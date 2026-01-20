@@ -1,0 +1,196 @@
+================================================================================
+MULTI-TIMEFRAME FEATURES MAP (57 Total)
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ TIMEFRAME: 1-DAY (tf1d_*) - Governor Layer                                 │
+│ 19 Features | Updates: Every 24 hours                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│ Wyckoff (3)                                                                 │
+│   ├─ tf1d_wyckoff_phase          String   Phase classification            │
+│   ├─ tf1d_wyckoff_score          0-1      Bullish bias score              │
+│   └─ tf1d_wyckoff_confidence     0-1      Detection confidence            │
+│                                                                             │
+│ BOMS (3)                                                                    │
+│   ├─ tf1d_boms_detected          Bool     Break of structure flag         │
+│   ├─ tf1d_boms_direction         String   'bullish'/'bearish'/'none'      │
+│   └─ tf1d_boms_strength          0-1      ATR-normalized strength         │
+│                                                                             │
+│ Range (3)                                                                   │
+│   ├─ tf1d_range_outcome          String   Resolution classification       │
+│   ├─ tf1d_range_confidence       0-1      Confidence                      │
+│   └─ tf1d_range_direction        String   'bullish'/'bearish'/'neutral'   │
+│                                                                             │
+│ FRVP (4)                                                                    │
+│   ├─ tf1d_frvp_poc               Float    Point of Control price          │
+│   ├─ tf1d_frvp_va_high           Float    Value Area High                 │
+│   ├─ tf1d_frvp_va_low            Float    Value Area Low                  │
+│   └─ tf1d_frvp_position          String   Position vs VA                  │
+│                                                                             │
+│ PTI (3)                                                                     │
+│   ├─ tf1d_pti_score              0-1      Trap intensity                  │
+│   ├─ tf1d_pti_confidence         0-1      Confidence                      │
+│   └─ tf1d_pti_reversal           Bool     Reversal likely flag            │
+│                                                                             │
+│ Technical (4)                                                               │
+│   ├─ tf1d_ema_12                 Float    12-period EMA                   │
+│   ├─ tf1d_ema_26                 Float    26-period EMA                   │
+│   ├─ tf1d_rsi_14                 0-100    RSI indicator                   │
+│   └─ tf1d_atr_14                 Float    Average True Range              │
+│                                                                             │
+│ Fusion (1)                                                                  │
+│   └─ tf1d_fusion_score           0-1      Composite signal                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ TIMEFRAME: 4-HOUR (tf4h_*) - Structure Layer                               │
+│ 19 Features | Updates: Every 4 hours                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│ Wyckoff (3)                                                                 │
+│   ├─ tf4h_wyckoff_phase          String   Phase classification            │
+│   ├─ tf4h_wyckoff_score          0-1      Bullish bias score              │
+│   └─ tf4h_wyckoff_confidence     0-1      Detection confidence            │
+│                                                                             │
+│ BOMS (3)                                                                    │
+│   ├─ tf4h_boms_detected          Bool     Break of structure flag         │
+│   ├─ tf4h_boms_direction         String   'bullish'/'bearish'/'none'      │
+│   └─ tf4h_boms_strength          0-1      ATR-normalized strength         │
+│                                                                             │
+│ Range (3)                                                                   │
+│   ├─ tf4h_range_outcome          String   Resolution classification       │
+│   ├─ tf4h_range_confidence       0-1      Confidence                      │
+│   └─ tf4h_range_direction        String   'bullish'/'bearish'/'neutral'   │
+│                                                                             │
+│ FRVP (4)                                                                    │
+│   ├─ tf4h_frvp_poc               Float    Point of Control price          │
+│   ├─ tf4h_frvp_va_high           Float    Value Area High                 │
+│   ├─ tf4h_frvp_va_low            Float    Value Area Low                  │
+│   └─ tf4h_frvp_position          String   Position vs VA                  │
+│                                                                             │
+│ PTI (3)                                                                     │
+│   ├─ tf4h_pti_score              0-1      Trap intensity                  │
+│   ├─ tf4h_pti_confidence         0-1      Confidence                      │
+│   └─ tf4h_pti_reversal           Bool     Reversal likely flag            │
+│                                                                             │
+│ Technical (4)                                                               │
+│   ├─ tf4h_ema_12                 Float    12-period EMA                   │
+│   ├─ tf4h_ema_26                 Float    26-period EMA                   │
+│   ├─ tf4h_rsi_14                 0-100    RSI indicator                   │
+│   └─ tf4h_atr_14                 Float    Average True Range              │
+│                                                                             │
+│ Fusion (1)                                                                  │
+│   └─ tf4h_fusion_score           0-1      Composite signal                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ TIMEFRAME: 1-HOUR (tf1h_*) - Execution Layer                               │
+│ 19 Features | Updates: Every hour                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│ Wyckoff (3)                                                                 │
+│   ├─ tf1h_wyckoff_phase          String   Phase classification            │
+│   ├─ tf1h_wyckoff_score          0-1      Bullish bias score              │
+│   └─ tf1h_wyckoff_confidence     0-1      Detection confidence            │
+│                                                                             │
+│ BOMS (3)                                                                    │
+│   ├─ tf1h_boms_detected          Bool     Break of structure flag         │
+│   ├─ tf1h_boms_direction         String   'bullish'/'bearish'/'none'      │
+│   └─ tf1h_boms_strength          0-1      ATR-normalized strength         │
+│                                                                             │
+│ Range (3)                                                                   │
+│   ├─ tf1h_range_outcome          String   Resolution classification       │
+│   ├─ tf1h_range_confidence       0-1      Confidence                      │
+│   └─ tf1h_range_direction        String   'bullish'/'bearish'/'neutral'   │
+│                                                                             │
+│ FRVP (4)                                                                    │
+│   ├─ tf1h_frvp_poc               Float    Point of Control price          │
+│   ├─ tf1h_frvp_va_high           Float    Value Area High                 │
+│   ├─ tf1h_frvp_va_low            Float    Value Area Low                  │
+│   └─ tf1h_frvp_position          String   Position vs VA                  │
+│                                                                             │
+│ PTI (3)                                                                     │
+│   ├─ tf1h_pti_score              0-1      Trap intensity                  │
+│   ├─ tf1h_pti_confidence         0-1      Confidence                      │
+│   └─ tf1h_pti_reversal           Bool     Reversal likely flag            │
+│                                                                             │
+│ Technical (4)                                                               │
+│   ├─ tf1h_ema_12                 Float    12-period EMA                   │
+│   ├─ tf1h_ema_26                 Float    26-period EMA                   │
+│   ├─ tf1h_rsi_14                 0-100    RSI indicator                   │
+│   └─ tf1h_atr_14                 Float    Average True Range              │
+│                                                                             │
+│ Fusion (1)                                                                  │
+│   └─ tf1h_fusion_score           0-1      Composite signal                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+COMPUTATION FLOW
+================================================================================
+
+1H BASE DATA (OHLCV)
+        │
+        ├────────────────────────────────────────────────┐
+        │                                                │
+        ▼                                                ▼
+  RESAMPLE TO 4H                                  RESAMPLE TO 1D
+  (6 bars per day)                                (1 bar per day)
+        │                                                │
+        ▼                                                ▼
+  COMPUTE 19 FEATURES                             COMPUTE 19 FEATURES
+  - Wyckoff (3)                                   - Wyckoff (3)
+  - BOMS (3)                                      - BOMS (3)
+  - Range (3)                                     - Range (3)
+  - FRVP (4)                                      - FRVP (4)
+  - PTI (3)                                       - PTI (3)
+  - Technical (4)                                 - Technical (4)
+  - Fusion (1)                                    - Fusion (1)
+        │                                                │
+        ▼                                                ▼
+  FORWARD-FILL TO 1H                              FORWARD-FILL TO 1H
+  (Each 4H value lasts 4 bars)                    (Each 1D value lasts 24 bars)
+        │                                                │
+        └────────────────┬───────────────────────────────┘
+                         │
+                         ▼
+                   MERGE WITH 1H
+                   COMPUTE 19 FEATURES
+                   - Wyckoff (3)
+                   - BOMS (3)
+                   - Range (3)
+                   - FRVP (4)
+                   - PTI (3)
+                   - Technical (4)
+                   - Fusion (1)
+                         │
+                         ▼
+                   FINAL OUTPUT
+                   57 MTF FEATURES
+                   @ 1H RESOLUTION
+
+================================================================================
+USAGE EXAMPLE
+================================================================================
+
+# Run backfill
+python3 bin/backfill_mtf_features.py \
+  --input data/btc_1h.parquet \
+  --output data/btc_1h_with_mtf.parquet
+
+# Load and use
+import pandas as pd
+df = pd.read_parquet('data/btc_1h_with_mtf.parquet')
+
+# Multi-timeframe filtering
+entry_signal = (
+    df['tf1d_wyckoff_score'] > 0.6 &      # Daily bullish
+    df['tf4h_boms_detected'] &            # 4H structure break
+    df['tf1h_fusion_score'] > 0.5 &       # 1H setup
+    ~df['tf1h_pti_reversal']              # No trap
+)
+
+================================================================================
