@@ -358,12 +358,13 @@ def create_direction_hooks_from_config(config: Dict) -> DirectionBacktestHooks:
 
 
 # Example integration into backtest loop
-def example_backtest_integration():
+def example_backtest_integration():  # pragma: no cover
     """
     Example showing how to integrate direction hooks into backtest loop.
 
     This is pseudo-code demonstrating the integration pattern.
     """
+    # ruff: noqa: F821
     from engine.archetypes.base_archetype import ArchetypeEntry, SignalType
 
     # Initialize direction tracking
@@ -377,10 +378,10 @@ def example_backtest_integration():
     # Reset for new backtest
     direction_hooks.reset_for_backtest()
 
-    # Backtest loop
-    for bar in historical_data:
+    # Backtest loop (pseudo-code with placeholder variables)
+    for bar in historical_data:  # noqa: F821
         # Generate archetype signal
-        original_entry = generate_archetype_signal(bar)  # Returns ArchetypeEntry
+        original_entry = generate_archetype_signal(bar)  # noqa: F821
 
         # Apply direction scaling
         scaled_entry = direction_hooks.apply_direction_scaling(
@@ -394,7 +395,7 @@ def example_backtest_integration():
             continue  # Skip this trade
 
         # Execute position entry
-        position_opened = execute_trade(scaled_entry)
+        position_opened = execute_trade(scaled_entry)  # noqa: F821
 
         if position_opened:
             # Track in direction system
@@ -408,9 +409,9 @@ def example_backtest_integration():
             )
 
         # Check exits
-        for position in open_positions:
-            if should_exit(position):
-                close_position(position)
+        for position in open_positions:  # noqa: F821
+            if should_exit(position):  # noqa: F821
+                close_position(position)  # noqa: F821
                 direction_hooks.on_position_exit(position.symbol)
 
     # Get final metrics
