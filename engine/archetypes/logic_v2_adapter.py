@@ -1770,20 +1770,40 @@ class ArchetypeLogic:
         domain_signals = []
 
         # ============================================================================
+        # WEIGHTED DOMAIN BOOST SYSTEM
+        # ============================================================================
+        # Wyckoff is the "structural grammar" - highest weight (0.4)
+        # SMC/Temporal confirm structure - moderate weight (0.3 each)
+        # HOB/Macro support - lower weight (0.2/0.1)
+        #
+        # Formula: final_boost = 1 + (raw_boost - 1) * weight
+        # Example: Wyckoff spring (2.5x raw) with 0.4 weight = 1 + (2.5-1)*0.4 = 1.6x
+        # ============================================================================
+        domain_weights = {
+            'wyckoff': 0.4,   # Structural core - phases, springs, distribution
+            'smc': 0.3,       # Order flow confirmation - BOS, CHOCH, FVG
+            'temporal': 0.3,  # Timing psychology - fib/gann, bars_since
+            'hob': 0.2,       # Order blocks - support/resistance
+            'macro': 0.1      # Global sentiment - crisis/risk-on
+        }
+
+        # ============================================================================
         # WYCKOFF ENGINE: Accumulation signals for LONG archetype
         # ============================================================================
         if use_wyckoff:
+            wyckoff_boost = 1.0  # Track Wyckoff-specific boost separately
+
             # SOFT VETOES: Distribution phase reduces confidence
             wyckoff_distribution = self.g(context.row, "wyckoff_phase_abc", "") == "D"
             wyckoff_utad = self.g(context.row, "wyckoff_utad", False)
             wyckoff_bc = self.g(context.row, "wyckoff_bc", False)
 
             if wyckoff_distribution:
-                domain_boost *= 0.70  # Distribution phase = caution
+                wyckoff_boost *= 0.70  # Distribution phase = caution
                 domain_signals.append("wyckoff_distribution_caution")
 
             if wyckoff_utad or wyckoff_bc:
-                domain_boost *= 0.70  # Distribution events = caution
+                wyckoff_boost *= 0.70  # Distribution events = caution
                 domain_signals.append("wyckoff_distribution_event_caution")
 
             # MAJOR BOOSTS: Spring events (Phase C - trap reversals)
@@ -1791,10 +1811,10 @@ class ArchetypeLogic:
             wyckoff_spring_b = self.g(context.row, "wyckoff_spring_b", False)
 
             if wyckoff_spring_a:
-                domain_boost *= 2.50  # Spring A = deep fake breakdown
+                wyckoff_boost *= 2.50  # Spring A = deep fake breakdown
                 domain_signals.append("wyckoff_spring_a_trap_reversal")
             elif wyckoff_spring_b:
-                domain_boost *= 2.50  # Spring B = shallow spring
+                wyckoff_boost *= 2.50  # Spring B = shallow spring
                 domain_signals.append("wyckoff_spring_b_trap_reversal")
 
             # SUPPORT SIGNALS: LPS + Accumulation
@@ -1802,27 +1822,65 @@ class ArchetypeLogic:
             wyckoff_accumulation = self.g(context.row, "wyckoff_phase_abc", "") == "A"
 
             if wyckoff_lps:
-                domain_boost *= 1.50  # Last Point Support
+                wyckoff_boost *= 1.50  # Last Point Support
                 domain_signals.append("wyckoff_lps_support")
 
             if wyckoff_accumulation:
-                domain_boost *= 2.00  # Accumulation phase
+                wyckoff_boost *= 2.00  # Accumulation phase
                 domain_signals.append("wyckoff_accumulation_phase")
+
+            # NEW: Missing Wyckoff states for complete cycle coverage
+            # These signals come from engine/wyckoff/events.py
+            wyckoff_reaccumulation = self.g(context.row, "wyckoff_phase_abc", "") == "B"
+            wyckoff_markup = self.g(context.row, "wyckoff_phase_abc", "") == "E"  # Markup = Phase E
+            wyckoff_absorption = self.g(context.row, "wyckoff_absorption", False)  # Range-bound
+            wyckoff_sow = self.g(context.row, "wyckoff_sow", False)  # Sign of Weakness
+            wyckoff_ar = self.g(context.row, "wyckoff_ar", False)  # Automatic Rally
+            wyckoff_st = self.g(context.row, "wyckoff_st", False)  # Secondary Test
+
+            if wyckoff_reaccumulation:
+                wyckoff_boost *= 1.5  # Reaccumulation (Phase B) = recovery
+                domain_signals.append("wyckoff_reaccumulation_phase")
+
+            if wyckoff_markup:
+                wyckoff_boost *= 1.8  # Markup (Phase E) = bull confirmation
+                domain_signals.append("wyckoff_markup_phase")
+
+            if wyckoff_absorption:
+                wyckoff_boost *= 0.7  # Absorption = range-bound caution
+                domain_signals.append("wyckoff_absorption_caution")
+
+            if wyckoff_sow:
+                wyckoff_boost *= 0.6  # Sign of Weakness = bearish signal
+                domain_signals.append("wyckoff_sow_penalty")
+
+            if wyckoff_ar:
+                wyckoff_boost *= 1.4  # Automatic Rally = relief bounce
+                domain_signals.append("wyckoff_ar_rally")
+
+            if wyckoff_st:
+                wyckoff_boost *= 0.8  # Secondary Test = retest caution
+                domain_signals.append("wyckoff_st_retest")
+
+            # Apply weighted Wyckoff boost to domain_boost
+            domain_boost *= (1 + (wyckoff_boost - 1) * domain_weights['wyckoff'])
 
         # ============================================================================
         # SMC ENGINE: Smart Money Concepts - bullish structure
         # ============================================================================
         if use_smc:
+            smc_boost = 1.0  # Track SMC-specific boost separately
+
             # VETOES: Don't long into supply zones
             smc_supply_zone = self.g(context.row, "smc_supply_zone", False)
             tf4h_bos_bearish = self.g(context.row, "tf4h_bos_bearish", False)
 
             if smc_supply_zone:
-                domain_boost *= 0.70  # Supply overhead
+                smc_boost *= 0.70  # Supply overhead
                 domain_signals.append("smc_supply_zone_overhead")
 
             if tf4h_bos_bearish:
-                domain_boost *= 0.70  # Bearish structure
+                smc_boost *= 0.70  # Bearish structure
                 domain_signals.append("smc_4h_bearish_structure_penalty")
 
             # MAJOR BOOSTS: Bullish structure breaks
@@ -1830,10 +1888,10 @@ class ArchetypeLogic:
             tf1h_bos_bullish = self.g(context.row, "tf1h_bos_bullish", False)
 
             if tf4h_bos_bullish:
-                domain_boost *= 2.00  # 4H institutional shift
+                smc_boost *= 2.00  # 4H institutional shift
                 domain_signals.append("smc_4h_bos_bullish_institutional")
             elif tf1h_bos_bullish:
-                domain_boost *= 1.40  # 1H structural shift
+                smc_boost *= 1.40  # 1H structural shift
                 domain_signals.append("smc_1h_bos_bullish")
 
             # DEMAND ZONES: Institutional buying areas
@@ -1841,70 +1899,90 @@ class ArchetypeLogic:
             smc_liquidity_sweep = self.g(context.row, "smc_liquidity_sweep", False)
 
             if smc_demand_zone:
-                domain_boost *= 1.60  # Demand zone support
+                smc_boost *= 1.60  # Demand zone support
                 domain_signals.append("smc_demand_zone_support")
 
             if smc_liquidity_sweep:
-                domain_boost *= 1.80  # Liquidity sweep = trap setup
+                smc_boost *= 1.80  # Liquidity sweep = trap setup
                 domain_signals.append("smc_liquidity_sweep_reversal")
+
+            # Apply weighted SMC boost to domain_boost
+            domain_boost *= (1 + (smc_boost - 1) * domain_weights['smc'])
 
         # ============================================================================
         # TEMPORAL ENGINE: Fibonacci time + multi-timeframe confluence
         # ============================================================================
         if use_temporal:
+            temporal_boost = 1.0  # Track Temporal-specific boost separately
+
             # MAJOR BOOSTS: Fibonacci time clusters
             fib_time_cluster = self.g(context.row, "fib_time_cluster", False)
             temporal_confluence = self.g(context.row, "temporal_confluence", False)
 
             if fib_time_cluster:
-                domain_boost *= 1.70  # Fibonacci timing
+                temporal_boost *= 1.70  # Fibonacci timing
                 domain_signals.append("fib_time_cluster_reversal")
 
             if temporal_confluence:
-                domain_boost *= 1.40  # Multi-timeframe alignment
+                temporal_boost *= 1.40  # Multi-timeframe alignment
                 domain_signals.append("temporal_multi_tf_confluence")
 
             # VETOES: Don't long into resistance
             temporal_resistance_cluster = self.g(context.row, "temporal_resistance_cluster", False)
             if temporal_resistance_cluster:
-                domain_boost *= 0.75  # Resistance overhead
+                temporal_boost *= 0.75  # Resistance overhead
                 domain_signals.append("temporal_resistance_overhead")
+
+            # Apply weighted Temporal boost to domain_boost
+            domain_boost *= (1 + (temporal_boost - 1) * domain_weights['temporal'])
 
         # ============================================================================
         # HOB ENGINE: Order book depth + imbalance
         # ============================================================================
         if use_hob:
+            hob_boost = 1.0  # Track HOB-specific boost separately
+
             # DEMAND ZONES: Large bid walls
             hob_demand_zone = self.g(context.row, "hob_demand_zone", False)
             hob_imbalance = self.g(context.row, "hob_imbalance", 0.0)
 
             if hob_demand_zone:
-                domain_boost *= 1.50  # Demand wall support
+                hob_boost *= 1.50  # Demand wall support
                 domain_signals.append("hob_demand_zone_support")
 
             # ORDER BOOK IMBALANCE: Bid/ask ratio
             if hob_imbalance > 0.60:  # More bids than asks
-                domain_boost *= 1.30  # Strong buyer imbalance
+                hob_boost *= 1.30  # Strong buyer imbalance
                 domain_signals.append("hob_bid_imbalance_strong")
             elif hob_imbalance > 0.40:
-                domain_boost *= 1.15  # Moderate buyer imbalance
+                hob_boost *= 1.15  # Moderate buyer imbalance
                 domain_signals.append("hob_bid_imbalance_moderate")
 
             # VETOES: Supply zones
             hob_supply_zone = self.g(context.row, "hob_supply_zone", False)
             if hob_supply_zone:
-                domain_boost *= 0.70  # Supply wall overhead
+                hob_boost *= 0.70  # Supply wall overhead
                 domain_signals.append("hob_supply_zone_overhead")
 
-        # MACRO: Crisis composite check
+            # Apply weighted HOB boost to domain_boost
+            domain_boost *= (1 + (hob_boost - 1) * domain_weights['hob'])
+
+        # ============================================================================
+        # MACRO ENGINE: Global sentiment and crisis detection
+        # ============================================================================
         if use_macro:
+            macro_boost = 1.0  # Track Macro-specific boost separately
+
             crisis_composite = self.g(context.row, "crisis_composite", 0.0)
             if crisis_composite > 0.60:  # High crisis reduces confidence
-                domain_boost *= 0.85  # Crisis penalty
+                macro_boost *= 0.85  # Crisis penalty
                 domain_signals.append("macro_crisis_penalty")
             elif crisis_composite < 0.30:  # Low crisis = favorable
-                domain_boost *= 1.20  # Risk-on boost
+                macro_boost *= 1.20  # Risk-on boost
                 domain_signals.append("macro_risk_on_boost")
+
+            # Apply weighted Macro boost to domain_boost
+            domain_boost *= (1 + (macro_boost - 1) * domain_weights['macro'])
 
         # Apply domain boost to final score
         score_before_domain = score
