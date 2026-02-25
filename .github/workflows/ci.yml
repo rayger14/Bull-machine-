@@ -49,7 +49,7 @@ jobs:
       run: |
         python -c "
         from engine.archetypes.archetype_instance import ArchetypeInstance
-        from engine.config.archetype_config_loader import ArchetypeConfigLoader
+        from engine.config.archetype_config_loader import load_archetype_configs
         from engine.integrations.isolated_archetype_engine import IsolatedArchetypeEngine
         print('Core engine imports OK')
         "

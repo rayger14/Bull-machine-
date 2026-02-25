@@ -60,9 +60,8 @@ jobs:
     - name: Validate archetype config loader
       run: |
         python -c "
-        from engine.config.archetype_config_loader import ArchetypeConfigLoader
-        loader = ArchetypeConfigLoader('configs/archetypes')
-        configs = loader.load_all()
+        from engine.config.archetype_config_loader import load_archetype_configs
+        configs = load_archetype_configs('configs/archetypes')
         print(f'Loaded {len(configs)} archetype configs')
         for name, cfg in sorted(configs.items()):
             direction = cfg.get('direction', 'unknown')
