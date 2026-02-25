@@ -28,7 +28,6 @@ Date: 2026-01-19
 import logging
 from typing import Dict, Optional
 import pandas as pd
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -309,7 +308,7 @@ class RegimeHysteresis:
             self.transition_count = 0
 
             logger.warning(f"⚠ REGIME INITIALIZED (LOW CONFIDENCE): {regime} (prob={regime_prob:.3f} < {self.enter_threshold:.3f}) @ {timestamp}")
-            logger.warning(f"  Defaulting to proposed regime despite low confidence")
+            logger.warning("  Defaulting to proposed regime despite low confidence")
 
             return {
                 'regime': regime,

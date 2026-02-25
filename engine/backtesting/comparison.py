@@ -5,7 +5,6 @@ Compare multiple models on the same data with clear train/test separation.
 """
 
 import pandas as pd
-import numpy as np
 from typing import List, Dict, Tuple
 from dataclasses import dataclass
 import logging

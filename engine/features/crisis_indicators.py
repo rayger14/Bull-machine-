@@ -21,7 +21,6 @@ Historical validation: LUNA (May 9), FTX (Nov 8), June dump (June 13)
 
 import pandas as pd
 import numpy as np
-from typing import Optional
 
 
 def compute_flash_crash_indicators(df: pd.DataFrame) -> pd.DataFrame:

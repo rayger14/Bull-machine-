@@ -1184,7 +1184,7 @@ def _run_backfill(
         print(f"\nResult: {len(df)} rows x {len(df.columns)} columns")
         print(f"Columns: {list(df.columns)}")
         print(f"Date range: {df['timestamp'].iloc[0]} to {df['timestamp'].iloc[-1]}")
-        print(f"\nFirst 5 rows:")
+        print("\nFirst 5 rows:")
         print(df.head().to_string())
 
         out_path = Path(output)

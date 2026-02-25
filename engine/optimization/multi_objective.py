@@ -21,7 +21,6 @@ References:
 - Academic: "The Deflated Sharpe Ratio" (Bailey & López de Prado, 2014)
 """
 
-import pandas as pd
 import numpy as np
 from typing import List, Tuple, Dict, Optional, Callable
 from datetime import datetime, timedelta
@@ -311,7 +310,7 @@ def create_pareto_study(
     logger.info(f"Created multi-objective study: {study_name}")
     logger.info(f"  Objectives: {n_objectives}")
     logger.info(f"  Population: {population_size}")
-    logger.info(f"  Sampler: NSGA-II")
+    logger.info("  Sampler: NSGA-II")
 
     return study
 

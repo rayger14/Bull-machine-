@@ -12,7 +12,7 @@ Compatible with Python 3.9+ (no Nautilus dependency required).
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Callable, Any
+from typing import Dict, List, Optional, Any
 from enum import Enum
 import pandas as pd
 import logging

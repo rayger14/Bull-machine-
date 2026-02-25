@@ -15,7 +15,6 @@ Author: Bull Machine v2.0
 """
 
 import pandas as pd
-import numpy as np
 import logging
 from typing import Dict, Optional, List, Tuple
 from dataclasses import dataclass
@@ -261,7 +260,7 @@ def check_macro_regime_exit(current_row: pd.Series, entry_row: pd.Series,
     if direction == 'long':
         # Crisis entry → exit immediately (shouldn't happen, but safety check)
         if current_regime == 'crisis':
-            return True, f"Macro: Crisis regime (VIX extreme)", 0.9
+            return True, "Macro: Crisis regime (VIX extreme)", 0.9
 
         # Risk-off entry → consider exit if persists
         if current_regime == 'risk_off' and entry_regime in ['neutral', 'risk_on']:

@@ -21,7 +21,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from flask import Flask, jsonify, Response, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
 
 logger = logging.getLogger(__name__)
 

@@ -303,7 +303,7 @@ if __name__ == '__main__':
 
     # Align back to 1H
     df_1h = align_htf_to_1h(df_1h, df_4h, '4H', ['test_feature'], prefix='tf4h_')
-    print(f"\nAligned 1H data:")
+    print("\nAligned 1H data:")
     print(df_1h[['close', 'tf4h_test_feature']].head(10))
 
     # Validate alignment

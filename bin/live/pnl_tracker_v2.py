@@ -285,21 +285,21 @@ class Portfolio:
         print("📊 PERFORMANCE SUMMARY")
         print("=" * 70)
 
-        print(f"\n💰 Account:")
+        print("\n💰 Account:")
         print(f"  Starting: ${self.initial_balance:,.2f}")
         print(f"  Ending:   ${metrics['ending_balance']:,.2f}")
         print(f"  Return:   {metrics['total_return']:+.2f}%")
         print(f"  Max DD:   {metrics['max_drawdown']:.2f}%")
 
         if metrics['total_trades'] > 0:
-            print(f"\n📈 Trades:")
+            print("\n📈 Trades:")
             print(f"  Total:    {metrics['total_trades']}")
             print(f"  Wins:     {metrics['wins']} ({metrics['win_rate']:.1f}%)")
             print(f"  Losses:   {metrics['losses']}")
             print(f"  Breakeven: {metrics.get('breakeven', 0)}")
 
             pf_str = f"{metrics['profit_factor']:.2f}" if metrics['profit_factor'] != float('inf') else "∞"
-            print(f"\n💵 Performance:")
+            print("\n💵 Performance:")
             print(f"  PF:       {pf_str}")
 
             r_mults = metrics['r_multiples']

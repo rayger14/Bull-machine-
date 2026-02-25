@@ -97,7 +97,7 @@ class RegimeDetector:
 
         # Validate feature list matches expected
         if self.features != REGIME_FEATURES:
-            print(f"⚠️  Warning: Model features differ from expected REGIME_FEATURES")
+            print("⚠️  Warning: Model features differ from expected REGIME_FEATURES")
             print(f"   Model: {self.features}")
             print(f"   Expected: {REGIME_FEATURES}")
 
@@ -300,7 +300,7 @@ if __name__ == '__main__':
 
     # Initialize detector
     detector = RegimeDetector()
-    print(f"\n✅ Loaded GMM v3.1 model")
+    print("\n✅ Loaded GMM v3.1 model")
     print(f"   Features: {len(detector.features)}")
     print(f"   Label map: {detector.label_map}")
 
@@ -310,7 +310,7 @@ if __name__ == '__main__':
     dummy_features['ALT_ROTATION'] = 1.0  # Alts outperforming (bullish)
 
     regime, conf = detector.classify(dummy_features)
-    print(f"\n✅ Test classification:")
+    print("\n✅ Test classification:")
     print(f"   Regime: {regime}")
     print(f"   Confidence: {conf:.3f}")
 

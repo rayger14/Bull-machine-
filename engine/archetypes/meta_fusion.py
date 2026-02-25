@@ -19,7 +19,6 @@ Author: Backend Architect
 import logging
 from typing import Dict, Optional, Tuple
 import pandas as pd
-import numpy as np
 
 logger = logging.getLogger(__name__)
 

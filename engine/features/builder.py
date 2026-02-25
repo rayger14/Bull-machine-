@@ -24,7 +24,7 @@ from typing import Optional, List
 import json
 
 from engine.features.registry import get_registry
-from engine.features.validate import FeatureValidator, ValidationResult
+from engine.features.validate import FeatureValidator
 
 
 @dataclass
@@ -135,7 +135,7 @@ class FeatureStoreBuilder:
         if spec.normalize:
             print("\n▶ Normalizing column names via registry...")
             df = self._normalize_columns(df)
-            print(f"  ✓ Normalized to canonical names")
+            print("  ✓ Normalized to canonical names")
 
         # Validate contracts
         if spec.validate:
@@ -234,8 +234,8 @@ class FeatureStoreBuilder:
             return df_mtf
 
         # Otherwise, call the existing MTF builder
-        print(f"  → Building MTF features from scratch...")
-        print(f"  ⚠️  This may take 10-20 minutes. Consider running:")
+        print("  → Building MTF features from scratch...")
+        print("  ⚠️  This may take 10-20 minutes. Consider running:")
         print(f"      python3 bin/build_mtf_feature_store.py --asset {spec.asset} --start {spec.start} --end {spec.end}")
 
         # For now, we'll use a simplified version

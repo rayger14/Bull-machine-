@@ -17,7 +17,7 @@ Usage:
 
 import logging
 from dataclasses import dataclass, field, asdict
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 import pandas as pd
 import numpy as np
 

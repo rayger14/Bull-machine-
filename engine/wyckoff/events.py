@@ -44,7 +44,7 @@ Author: Bull Machine v2.0 - Institutional Grade Wyckoff System
 
 import pandas as pd
 import numpy as np
-from typing import Tuple, Dict, Optional, List
+from typing import Tuple, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
 import logging

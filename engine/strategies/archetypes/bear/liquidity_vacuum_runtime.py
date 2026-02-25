@@ -64,7 +64,7 @@ import logging
 
 import numpy as np
 import pandas as pd
-from .feature_fallback import FeatureFallbackManager, safe_get_funding_z
+from .feature_fallback import FeatureFallbackManager
 
 logger = logging.getLogger(__name__)
 

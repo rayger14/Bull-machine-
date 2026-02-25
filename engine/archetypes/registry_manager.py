@@ -15,7 +15,7 @@ from typing import List, Dict, Optional
 from importlib import import_module
 import logging
 
-from engine.archetypes.base_archetype import BaseArchetype, MaturityLevel, SignalType
+from engine.archetypes.base_archetype import BaseArchetype
 
 logger = logging.getLogger(__name__)
 
@@ -438,7 +438,7 @@ if __name__ == '__main__':
             recommended = requires_features.get('recommended', [])
             optional = requires_features.get('optional', [])
 
-            print(f"  Features:")
+            print("  Features:")
             print(f"    Critical: {len(critical)} ({', '.join(critical[:3])}...)")
             print(f"    Recommended: {len(recommended)} ({', '.join(recommended[:3])}...)")
             print(f"    Optional: {len(optional)}")

@@ -6,12 +6,10 @@ Validates dataframes against feature registry before backtest/Optuna runs.
 """
 
 import pandas as pd
-import numpy as np
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 from dataclasses import dataclass
-from pathlib import Path
 
-from engine.features.registry import get_registry, FeatureSpec
+from engine.features.registry import get_registry
 
 
 @dataclass

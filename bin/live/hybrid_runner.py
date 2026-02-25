@@ -17,7 +17,6 @@ Modes:
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Add project root to path (needed for imports)
@@ -26,9 +25,8 @@ sys.path.insert(0, str(project_root))
 
 import json
 import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from datetime import datetime
+from typing import Dict, Optional
 import hashlib
 import gc
 import logging
@@ -136,7 +134,7 @@ def load_candidates(candidates_path: str, window_bars: int = 48,
     merged_count = len(candidate_bars)
     reduction_pct = (1 - merged_count / unmerged_count) * 100 if unmerged_count > 0 else 0
 
-    print(f"📊 Window merge stats:")
+    print("📊 Window merge stats:")
     print(f"   Before merge: {unmerged_count} bar-visits ({len(intervals)} windows × {2*window_bars+1} bars)")
     print(f"   After merge:  {merged_count} unique bars")
     print(f"   Reduction:    {reduction_pct:.1f}%")
@@ -149,7 +147,7 @@ def load_candidates(candidates_path: str, window_bars: int = 48,
 
     if should_fallback:
         print(f"⚠️  AUTO-FALLBACK: {fallback_reason}")
-        print(f"   Batch mode not beneficial - will use full replay instead")
+        print("   Batch mode not beneficial - will use full replay instead")
 
     return candidates, candidate_bars, should_fallback, fallback_reason
 
@@ -401,7 +399,7 @@ class HybridRunner:
 
         # Final statistics
         if batch_mode:
-            print(f"\n✅ Batch mode complete:")
+            print("\n✅ Batch mode complete:")
             print(f"   Total bars:      {len(df_1h_full)}")
             print(f"   Bars processed:  {bars_processed} ({bars_processed/len(df_1h_full)*100:.1f}%)")
             print(f"   Bars skipped:    {bars_skipped} ({bars_skipped/len(df_1h_full)*100:.1f}%)")

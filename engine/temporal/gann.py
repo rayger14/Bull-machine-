@@ -5,9 +5,8 @@ Provides basic Gann square and time projection analysis with conservative bounds
 """
 
 import pandas as pd
-import numpy as np
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Any
 from dataclasses import dataclass
 import logging
 

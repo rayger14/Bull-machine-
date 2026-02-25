@@ -16,7 +16,6 @@ Author: System Architect
 """
 
 import pandas as pd
-import numpy as np
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 import logging
@@ -397,7 +396,6 @@ class FeatureLoader:
 
 # Example usage and testing
 if __name__ == '__main__':
-    import sys
 
     logging.basicConfig(level=logging.INFO)
 
@@ -437,7 +435,7 @@ if __name__ == '__main__':
     # Close and flush
     logger.close()
 
-    print(f"\n✅ Feature logging test complete")
+    print("\n✅ Feature logging test complete")
     print(f"   Flushes: {logger.flush_count}")
 
     # Test feature loader
@@ -445,7 +443,7 @@ if __name__ == '__main__':
     loader = FeatureLoader("data/test_feature_logs")
     df = loader.load_all_features()
 
-    print(f"\n✅ Feature loading test complete")
+    print("\n✅ Feature loading test complete")
     print(f"   Rows: {len(df)}")
     print(f"   Columns: {list(df.columns)}")
     print(f"\nSample data:\n{df.head()}")

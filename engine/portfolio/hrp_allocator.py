@@ -115,7 +115,7 @@ class HRPAllocator:
         weights = self._apply_min_weight_floor(weights_series.to_dict())
 
         logger.info(
-            f"[HRPAllocator] HRP weights computed: "
+            "[HRPAllocator] HRP weights computed: "
             + ", ".join(f"{k}={v:.1%}" for k, v in sorted(weights.items(), key=lambda x: -x[1]))
         )
 

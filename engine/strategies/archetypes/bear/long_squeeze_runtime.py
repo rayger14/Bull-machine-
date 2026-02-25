@@ -41,8 +41,7 @@ Date: 2025-11-20
 import pandas as pd
 import numpy as np
 import logging
-from typing import Optional, Tuple
-from .feature_fallback import FeatureFallbackManager, safe_get_funding_z, safe_get_oi_change
+from .feature_fallback import FeatureFallbackManager
 
 logger = logging.getLogger(__name__)
 
@@ -315,7 +314,7 @@ class S5RuntimeFeatures:
         high_fusion = (df['s5_fusion_score'] > 0.5).sum()
         extreme_fusion = (df['s5_fusion_score'] > 0.7).sum()
 
-        logger.info(f"[S5 Runtime] Enrichment statistics:")
+        logger.info("[S5 Runtime] Enrichment statistics:")
         logger.info(f"  - High funding (>2σ): {high_funding} ({high_funding/len(df)*100:.1f}%)")
         logger.info(f"  - Extreme funding (>3σ): {extreme_funding} ({extreme_funding/len(df)*100:.1f}%)")
         logger.info(f"  - Rising OI (>10%): {rising_oi} ({rising_oi/len(df)*100:.1f}%)")
@@ -449,9 +448,9 @@ if __name__ == '__main__':
         print("Recommended Optuna search ranges:")
         print(f"  fusion_threshold: [{np.percentile(fusion_scores.dropna(), 97):.4f}, "
               f"{np.percentile(fusion_scores.dropna(), 99.5):.4f}]")
-        print(f"  funding_z_min: [1.0, 3.0]")
-        print(f"  rsi_min: [70, 85]")
-        print(f"  liquidity_max: [0.05, 0.25]")
+        print("  funding_z_min: [1.0, 3.0]")
+        print("  rsi_min: [70, 85]")
+        print("  liquidity_max: [0.05, 0.25]")
         print("="*80)
 
     except FileNotFoundError as e:

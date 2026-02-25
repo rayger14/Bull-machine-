@@ -352,7 +352,7 @@ class MetaEnsemble:
             elif hasattr(model, 'feature_importances_'):
                 importance = model.feature_importances_
             else:
-                logger.warning(f"[MetaEnsemble] Model does not support feature importance")
+                logger.warning("[MetaEnsemble] Model does not support feature importance")
                 return None
 
             df = pd.DataFrame({
@@ -496,7 +496,6 @@ class EnsembleBacktester:
 
 # Example usage and testing
 if __name__ == '__main__':
-    import sys
 
     logging.basicConfig(level=logging.INFO)
 

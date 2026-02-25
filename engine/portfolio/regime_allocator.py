@@ -1273,7 +1273,7 @@ class RegimeWeightAllocator:
         # Show directional budgets
         directional_budgets = self.REGIME_DIRECTIONAL_BUDGETS.get(regime, {})
         if directional_budgets:
-            lines.append(f"\nDirectional Budgets:")
+            lines.append("\nDirectional Budgets:")
             lines.append(f"  Long:  {directional_budgets.get('long', 0.5):.1%}")
             lines.append(f"  Short: {directional_budgets.get('short', 0.5):.1%}")
 
@@ -1301,7 +1301,7 @@ class RegimeWeightAllocator:
 
         # Show long archetypes
         if long_weights:
-            lines.append(f"\n  Long Archetypes:")
+            lines.append("\n  Long Archetypes:")
             for archetype, weight in sorted(long_weights.items(), key=lambda x: -x[1]):
                 metrics = self.get_edge_metrics(archetype, regime)
                 lines.append(
@@ -1311,7 +1311,7 @@ class RegimeWeightAllocator:
 
         # Show short archetypes
         if short_weights:
-            lines.append(f"\n  Short Archetypes:")
+            lines.append("\n  Short Archetypes:")
             for archetype, weight in sorted(short_weights.items(), key=lambda x: -x[1]):
                 metrics = self.get_edge_metrics(archetype, regime)
                 lines.append(
@@ -1323,7 +1323,7 @@ class RegimeWeightAllocator:
         if cash_bucket > 0:
             lines.append(f"\nCash Bucket: {cash_bucket:.1%}")
             lines.append(
-                f"  → Unused allocation due to weak archetype edge"
+                "  → Unused allocation due to weak archetype edge"
             )
 
         # Show effective allocation with regime budget

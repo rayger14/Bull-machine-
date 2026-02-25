@@ -45,7 +45,7 @@ Date: 2026-01-19
 import pickle
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 from pathlib import Path
 import logging
 from sklearn.linear_model import LogisticRegression
@@ -636,7 +636,6 @@ def load_model(model_path: str) -> LogisticRegimeModel:
 
 if __name__ == '__main__':
     # Simple test/demo
-    import sys
 
     logging.basicConfig(
         level=logging.INFO,
@@ -649,7 +648,7 @@ if __name__ == '__main__':
     # Initialize model (will use fallback if no trained model available)
     model = LogisticRegimeModel()
 
-    print(f"\nModel Status:")
+    print("\nModel Status:")
     print(f"  Fallback Mode: {model.fallback_mode}")
     print(f"  Features: {len(model.feature_order)}")
     print(f"  Regimes: {model.regime_labels}")
@@ -670,19 +669,19 @@ if __name__ == '__main__':
         'YC_SPREAD': 0.4
     }
 
-    print(f"\nTest Classification:")
+    print("\nTest Classification:")
     result = model.classify(test_features)
     print(f"  Regime: {result['regime_label']}")
     print(f"  Confidence: {result['regime_confidence']:.2%}")
-    print(f"  Probabilities:")
+    print("  Probabilities:")
     for regime, prob in result['regime_probs'].items():
         print(f"    {regime}: {prob:.2%}")
 
     # Test batch classification
     test_df = pd.DataFrame([test_features] * 3)
     batch_result = model.classify_batch(test_df)
-    print(f"\nBatch Classification:")
+    print("\nBatch Classification:")
     print(f"  Rows: {len(batch_result)}")
     print(f"  Regimes: {batch_result['regime_label'].tolist()}")
 
-    print(f"\nImplementation complete. Model ready for production use.")
+    print("\nImplementation complete. Model ready for production use.")

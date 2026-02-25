@@ -18,8 +18,8 @@ Usage:
 """
 
 import pandas as pd
-from datetime import datetime, timedelta
-from typing import Tuple, Optional, Dict, List
+from datetime import timedelta
+from typing import Optional, Dict
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -305,7 +305,7 @@ if __name__ == '__main__':
 
     # Initialize calendar
     calendar = EventCalendar()
-    print(f"\n✅ Initialized EventCalendar")
+    print("\n✅ Initialized EventCalendar")
     print(f"   Suppression window: T-{calendar.pre_event_hours}h to T+{calendar.post_event_hours}h")
     print(f"   Total events: {len(calendar.events)}")
     print(f"   - FOMC: {len(calendar.fomc_dates)}")
@@ -323,7 +323,7 @@ if __name__ == '__main__':
     print(f"Suppressed bars: {stats['suppressed_bars']:,} ({stats['suppressed_pct']:.1f}%)")
     print(f"Events in 2024: {stats['events_in_range']}")
 
-    print(f"\nSuppressed bars by event type:")
+    print("\nSuppressed bars by event type:")
     for event_type, count in stats['by_event_type'].items():
         pct = 100 * count / stats['total_bars']
         print(f"  {event_type:6s}: {count:5d} bars ({pct:4.1f}%)")

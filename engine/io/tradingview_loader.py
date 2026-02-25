@@ -8,7 +8,6 @@ This ensures all backtest results are based on real market data only.
 from pathlib import Path
 import re
 import pandas as pd
-import numpy as np
 import logging
 
 logger = logging.getLogger(__name__)

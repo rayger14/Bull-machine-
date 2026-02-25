@@ -34,8 +34,8 @@ from dataclasses import dataclass
 import logging
 
 from .gann import GannAnalyzer, GannLevel, GannTimeProject
-from .cycles import CycleDetector, CycleSignal, CycleType
-from .tpi import TemporalEngine, TPISignal, TPIType
+from .cycles import CycleDetector, CycleSignal
+from .tpi import TemporalEngine, TPISignal
 
 logger = logging.getLogger(__name__)
 

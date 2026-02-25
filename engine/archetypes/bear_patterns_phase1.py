@@ -18,9 +18,8 @@ CRITICAL FIX:
 """
 
 import pandas as pd
-import numpy as np
 import logging
-from typing import Tuple, Optional
+from typing import Tuple
 from engine.runtime.context import RuntimeContext
 
 logger = logging.getLogger(__name__)
@@ -303,7 +302,6 @@ if __name__ == '__main__':
         python3 engine/archetypes/bear_patterns_phase1.py
     """
     import pandas as pd
-    from pathlib import Path
 
     print("Loading 2022 feature data...")
     df = pd.read_parquet('data/features_mtf/BTC_1H_2022-01-01_to_2023-12-31.parquet')

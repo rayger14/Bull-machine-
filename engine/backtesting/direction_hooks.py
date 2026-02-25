@@ -48,7 +48,6 @@ Date: 2025-12-19
 """
 
 from typing import Dict, Optional, Any
-from pathlib import Path
 import logging
 
 from engine.risk.direction_integration import (
@@ -365,7 +364,7 @@ def example_backtest_integration():  # pragma: no cover
     This is pseudo-code demonstrating the integration pattern.
     """
     # ruff: noqa: F821
-    from engine.archetypes.base_archetype import ArchetypeEntry, SignalType
+    from engine.archetypes.base_archetype import SignalType
 
     # Initialize direction tracking
     direction_hooks = DirectionBacktestHooks(

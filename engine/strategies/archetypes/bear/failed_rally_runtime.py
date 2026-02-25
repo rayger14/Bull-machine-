@@ -41,7 +41,6 @@ Date: 2025-11-16
 import pandas as pd
 import numpy as np
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +104,7 @@ class S2RuntimeFeatures:
             rsi_divs = df['rsi_bearish_div'].sum()
             ob_retests = df['ob_retest_flag'].sum()
 
-            logger.info(f"[S2 Runtime] Enrichment stats:")
+            logger.info("[S2 Runtime] Enrichment stats:")
             logger.info(f"  - Strong upper wicks (>0.3): {non_zero_wick} ({non_zero_wick/len(df)*100:.1f}%)")
             logger.info(f"  - Volume fades: {volume_fades} ({volume_fades/len(df)*100:.1f}%)")
             logger.info(f"  - RSI bearish divs: {rsi_divs} ({rsi_divs/len(df)*100:.1f}%)")

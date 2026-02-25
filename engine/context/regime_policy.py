@@ -291,11 +291,11 @@ if __name__ == '__main__':
             print(f"    → New threshold: {0.65 + adjustment['enter_threshold_delta']:.3f}")
             print(f"  Risk multiplier: {adjustment['risk_multiplier']:.2f}x")
             if adjustment['weight_nudges']:
-                print(f"  Weight nudges:")
+                print("  Weight nudges:")
                 for domain, nudge in adjustment['weight_nudges'].items():
                     print(f"    {domain:12s}: {nudge:+.3f}")
             else:
-                print(f"  Weight nudges: (none)")
+                print("  Weight nudges: (none)")
 
         print("\n✅ Regime policy test passed!")
 

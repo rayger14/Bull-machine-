@@ -6,9 +6,8 @@ indicating potential trend changes or continuation patterns.
 """
 
 import pandas as pd
-import numpy as np
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 import logging
 

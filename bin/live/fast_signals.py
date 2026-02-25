@@ -8,7 +8,6 @@ PHASE 2 PERFORMANCE: Uses Numba-accelerated indicators for 10-100× speedup.
 """
 
 import pandas as pd
-import numpy as np
 from typing import Dict, Optional
 
 # NOTE: Numba indicators disabled - pandas NaN handling too complex to replicate
@@ -129,7 +128,7 @@ def generate_fast_signal(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.Dat
             'confidence': confidence,
             'reasons': [
                 f'ADX trending ({adx:.1f} > 20)',
-                f'MA20 > MA50 (bullish)',
+                'MA20 > MA50 (bullish)',
                 f'RSI {current_rsi:.1f} (not overbought)',
                 f'Price {price_vs_ma20:+.1f}% from MA20'
             ],
@@ -147,7 +146,7 @@ def generate_fast_signal(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.Dat
             'confidence': confidence,
             'reasons': [
                 f'ADX trending ({adx:.1f} > 20)',
-                f'MA20 < MA50 (bearish)',
+                'MA20 < MA50 (bearish)',
                 f'RSI {current_rsi:.1f} (not oversold)',
                 f'Price {price_vs_ma20:+.1f}% from MA20'
             ],

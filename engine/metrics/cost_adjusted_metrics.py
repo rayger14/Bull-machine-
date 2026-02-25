@@ -323,7 +323,7 @@ def test_cost_adjusted_metrics():
     # Compute performance metrics
     metrics = metrics_calc.compute_performance_metrics(cost_adjusted_trades)
 
-    print(f"✅ Computed performance metrics:")
+    print("✅ Computed performance metrics:")
     print(f"   Profit Factor: {metrics['profit_factor']:.2f}")
     print(f"   Max Drawdown: ${metrics['max_drawdown']:.2f}")
     print(f"   Win Rate: {metrics['win_rate']:.1%}")
@@ -332,7 +332,7 @@ def test_cost_adjusted_metrics():
     # Stress test
     stress_results = metrics_calc.stress_test_metrics(test_trades, price_data)
 
-    print(f"✅ Stress test completed:")
+    print("✅ Stress test completed:")
     print(f"   Normal PF: {stress_results['scenarios']['normal']['profit_factor']:.2f}")
     print(f"   Extreme PF: {stress_results['scenarios']['extreme']['profit_factor']:.2f}")
     print(f"   PF Degradation: {(1 - stress_results['pf_degradation']['extreme']) * 100:.1f}%")

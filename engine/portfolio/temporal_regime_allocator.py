@@ -20,11 +20,9 @@ Spec: TEMPORAL_REGIME_ALLOCATOR_SPEC.md
 """
 
 import logging
-import math
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
-import numpy as np
 import yaml
 
 from engine.portfolio.regime_allocator import RegimeWeightAllocator
@@ -483,7 +481,7 @@ class TemporalRegimeAllocator(RegimeWeightAllocator):
         confluence = temporal_state.get('temporal_confluence', 0.5)
         fib_cluster = temporal_state.get('fib_time_cluster', False)
 
-        lines.append(f"Temporal State:")
+        lines.append("Temporal State:")
         lines.append(f"  temporal_confluence: {confluence:.2f} "
                     f"({'HIGH' if confluence > 0.8 else 'MED' if confluence > 0.6 else 'LOW'} pressure)")
         lines.append(f"  fib_time_cluster: {fib_cluster}")
@@ -499,7 +497,7 @@ class TemporalRegimeAllocator(RegimeWeightAllocator):
         # Get archetype weights with temporal factors
         weights = self.get_regime_distribution(regime)
 
-        lines.append(f"Archetype Weights (with temporal factors):")
+        lines.append("Archetype Weights (with temporal factors):")
         lines.append("-" * 60)
 
         # Show each archetype with decomposition
@@ -515,7 +513,7 @@ class TemporalRegimeAllocator(RegimeWeightAllocator):
             lines.append(f"  Final weight: {metadata['final_weight']:.3f}")
 
             if metadata['was_capped']:
-                lines.append(f"  → Capped by guardrails")
+                lines.append("  → Capped by guardrails")
 
         # Show cash bucket
         cash_bucket = self.get_cash_bucket_weight(regime)

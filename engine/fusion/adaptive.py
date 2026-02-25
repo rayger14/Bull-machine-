@@ -7,7 +7,6 @@ regime probability distributions (no discrete switching).
 Designed for smooth transitions and Specter-readiness.
 """
 
-import numpy as np
 from typing import Dict, Any
 import logging
 

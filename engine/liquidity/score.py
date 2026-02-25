@@ -291,7 +291,7 @@ if __name__ == '__main__':
 
     score_strong = compute_liquidity_score(ctx_strong, 'long')
     print(f"Strong setup score: {score_strong:.3f}")
-    print(f"  Expected: > 0.70 (high liquidity)")
+    print("  Expected: > 0.70 (high liquidity)")
 
     # Test case 2: Weak setup (low BOMS, no FVG, low volume)
     ctx_weak = {
@@ -309,7 +309,7 @@ if __name__ == '__main__':
 
     score_weak = compute_liquidity_score(ctx_weak, 'long')
     print(f"\nWeak setup score: {score_weak:.3f}")
-    print(f"  Expected: < 0.40 (low liquidity)")
+    print("  Expected: < 0.40 (low liquidity)")
 
     # Test case 3: Missing fields (defensive fallbacks)
     ctx_minimal = {
@@ -320,7 +320,7 @@ if __name__ == '__main__':
 
     score_minimal = compute_liquidity_score(ctx_minimal, 'long')
     print(f"\nMinimal context score: {score_minimal:.3f}")
-    print(f"  Expected: 0.20–0.40 (neutral fallbacks)")
+    print("  Expected: 0.20–0.40 (neutral fallbacks)")
 
     # Test telemetry
     test_scores = [0.45, 0.52, 0.38, 0.61, 0.72, 0.44, 0.58, 0.66, 0.41, 0.55]

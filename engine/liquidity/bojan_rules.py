@@ -8,11 +8,11 @@ order flow analysis and position management rules.
 import pandas as pd
 import numpy as np
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Any, Union
+from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 import logging
 
-from .hob import HOBSignal, HOBType, HOBQuality, LiquidityLevel
+from .hob import HOBSignal, HOBType
 
 logger = logging.getLogger(__name__)
 

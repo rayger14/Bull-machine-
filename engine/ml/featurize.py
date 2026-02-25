@@ -15,7 +15,7 @@ Features include:
 """
 
 import numpy as np
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 import pandas as pd
 
 

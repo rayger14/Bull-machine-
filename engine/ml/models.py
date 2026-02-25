@@ -13,7 +13,7 @@ Models:
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple
 from pathlib import Path
 import json
 import pickle
@@ -237,7 +237,7 @@ class ConfigSuggestionModel:
                 'val_r2': val_r2
             })
 
-        print(f"\n✅ Training complete:")
+        print("\n✅ Training complete:")
         print(f"   Train RMSE: {metrics['train_rmse']:.4f}, MAE: {metrics['train_mae']:.4f}, R²: {metrics['train_r2']:.4f}")
         if 'val_rmse' in metrics:
             print(f"   Val RMSE: {metrics['val_rmse']:.4f}, MAE: {metrics['val_mae']:.4f}, R²: {metrics['val_r2']:.4f}")

@@ -105,7 +105,7 @@ class ArchetypeModel(BaseModel):
         if self.regime_allocator:
             logger.info("Soft gating enabled with RegimeWeightAllocator")
         if self.regime_service and self.regime_mode == 'probabilistic':
-            logger.info(f"Probabilistic regime mode enabled (3-output system with soft controls)")
+            logger.info("Probabilistic regime mode enabled (3-output system with soft controls)")
 
     def _extract_archetype_params(self):
         """Extract archetype-specific parameters from config."""

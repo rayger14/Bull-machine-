@@ -3,8 +3,7 @@ Extended Macro Engine for Bull Machine v1.8.6
 Implements traders' macro logic: Wyckoff Insider, Moneytaur, ZeroIKA
 Now with 8-factor macro fusion composite score
 """
-import numpy as np
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 import logging
 
 # Import new macro fusion helpers
@@ -134,7 +133,7 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
         elif dxy is not None and wti > 80.0 and dxy > 104.0:
             veto_strength += 0.3
             signals['stagflation_combo'] = True
-            notes.append(f"DXY+Oil stagflation combo - risk off")
+            notes.append("DXY+Oil stagflation combo - risk off")
 
     # US10Y/US2Y: Yield curve (inversion = risk-off, Moneytaur: rotations)
     us10y = get_value('US10Y', 4.0)
@@ -201,7 +200,7 @@ def analyze_macro(macro_snapshot: Dict[str, Dict], config: Dict, asset_type: str
             if total3 / total2 < config.get('total3_lag_threshold', 0.9):
                 veto_strength += 0.2
                 signals['alt_bleed'] = True
-                notes.append(f"TOTAL3 lagging - alt sector bleed")
+                notes.append("TOTAL3 lagging - alt sector bleed")
 
         # ENHANCED: TOTAL2/TOTAL divergence + BTC.D drop = altseason (Wyckoff Insider post:35)
         # Greenlight if TOTAL2/TOTAL >0.405 AND BTC.D is dropping

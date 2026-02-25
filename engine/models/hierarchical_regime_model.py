@@ -12,7 +12,6 @@ Date: 2026-01-27
 """
 
 import numpy as np
-import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.ensemble import VotingClassifier, RandomForestClassifier

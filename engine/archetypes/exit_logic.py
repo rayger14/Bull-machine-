@@ -23,7 +23,7 @@ but regime-adaptive exits achieved Sharpe 2.24 in bear markets (2025 study).
 
 import logging
 from dataclasses import dataclass
-from typing import Optional, Dict, Any, Literal, TYPE_CHECKING
+from typing import Optional, Dict, Any, TYPE_CHECKING
 from enum import Enum
 import pandas as pd
 
@@ -109,7 +109,7 @@ class ExitLogic:
             if 'failed_rally' in config['archetypes']:
                 print(f"[EXIT_LOGIC INIT DEBUG] failed_rally config: {config['archetypes']['failed_rally']}")
         else:
-            print(f"[EXIT_LOGIC INIT DEBUG] No 'archetypes' key found in config!")
+            print("[EXIT_LOGIC INIT DEBUG] No 'archetypes' key found in config!")
         if 'exit_rules' in config:
             print(f"[EXIT_LOGIC INIT DEBUG] exit_rules found with {len(config['exit_rules'])} entries")
 
@@ -134,7 +134,7 @@ class ExitLogic:
         # After exit_config.update(user_config), archetype configs are at TOP LEVEL
         exit_config = self.config.get('exit_rules', {})
 
-        logger.info(f"[EXIT_LOGIC BUILD] Loading exit rules from config")
+        logger.info("[EXIT_LOGIC BUILD] Loading exit rules from config")
         logger.info(f"  Config has 'exit_rules' key: {'exit_rules' in self.config}")
         logger.info(f"  Config top-level keys: {list(self.config.keys())}")
 
@@ -192,7 +192,7 @@ class ExitLogic:
 
             # DEBUG: Log trap_reversal and whipsaw rules at initialization
             if archetype_key == 'trap_reversal':
-                logger.info(f"[EXIT_LOGIC INIT] trap_reversal exit rules:")
+                logger.info("[EXIT_LOGIC INIT] trap_reversal exit rules:")
                 logger.info(f"  max_hold_hours: {archetype_rules.get('max_hold_hours')}")
                 logger.info(f"  scale_out_levels: {archetype_rules.get('scale_out_levels')}")
                 logger.info(f"  trailing_start_r: {archetype_rules.get('trailing_start_r')}")
@@ -200,7 +200,7 @@ class ExitLogic:
                 logger.info(f"  Config override applied: {config_override_applied}")
 
             if archetype_key == 'whipsaw':
-                logger.info(f"[EXIT_LOGIC INIT] whipsaw exit rules:")
+                logger.info("[EXIT_LOGIC INIT] whipsaw exit rules:")
                 logger.info(f"  max_hold_hours: {archetype_rules.get('max_hold_hours')}")
                 logger.info(f"  scale_out_levels: {archetype_rules.get('scale_out_levels')}")
                 logger.info(f"  trailing_start_r: {archetype_rules.get('trailing_start_r')}")
@@ -272,7 +272,7 @@ class ExitLogic:
         # DEBUG: Log exit rules being used for trap_reversal (every position check)
         if archetype == 'trap_reversal':
             if not hasattr(self, '_trap_reversal_rules_logged'):
-                logger.info(f"[EXIT RULES DEBUG] trap_reversal rules loaded:")
+                logger.info("[EXIT RULES DEBUG] trap_reversal rules loaded:")
                 logger.info(f"  max_hold_hours: {rules.get('max_hold_hours', 'MISSING')}")
                 logger.info(f"  scale_out_levels: {rules.get('scale_out_levels', 'MISSING')}")
                 logger.info(f"  trailing_start_r: {rules.get('trailing_start_r', 'MISSING')}")

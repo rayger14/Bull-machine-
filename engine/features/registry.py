@@ -6,7 +6,7 @@ This registry eliminates confusion from scattered naming conventions across diff
 builders and data sources.
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 
 

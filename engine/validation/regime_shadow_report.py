@@ -8,7 +8,7 @@ Purpose: Quantify regime model issues for future retraining.
 """
 
 import pandas as pd
-from typing import Dict, List
+from typing import Dict
 from collections import defaultdict
 import logging
 

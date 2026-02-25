@@ -13,7 +13,7 @@ Problem Solved:
 This mapper enables 100% feature coverage by handling all naming variations.
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Set
 import pandas as pd
 import logging
 

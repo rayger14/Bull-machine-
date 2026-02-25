@@ -44,7 +44,7 @@ Date: 2025-01-08 (Updated: 2026-01-14 for ensemble integration)
 
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from datetime import datetime
 import logging
 from pathlib import Path
@@ -52,7 +52,6 @@ import pickle
 
 from engine.context.logistic_regime_model import LogisticRegimeModel
 from engine.context.regime_hysteresis import RegimeHysteresis
-from engine.context.confidence_calibrator import CompositeCalibrator
 from engine.context.hybrid_regime_model import HybridRegimeModel
 from engine.context.probabilistic_regime_detector import ProbabilisticRegimeDetector
 
@@ -294,10 +293,10 @@ class RegimeService:
                 ml_model_path=model_path,
                 crisis_config=crisis_config
             )
-            logger.info(f"✓ Layer 1: Hybrid Model initialized")
-            logger.info(f"   - Crisis detector: Rule-based (2-of-4 voting)")
+            logger.info("✓ Layer 1: Hybrid Model initialized")
+            logger.info("   - Crisis detector: Rule-based (2-of-4 voting)")
             logger.info(f"   - Normal regimes: ML model ({model_path})")
-            logger.info(f"   - Conflict resolution: Crisis rules override ML")
+            logger.info("   - Conflict resolution: Crisis rules override ML")
         elif self.mode == REGIME_MODE_PROBABILISTIC:
             # Load probabilistic regime detector (3-output system)
             # Use provided model_path or default to logistic_regime_v4_no_funding_stratified.pkl
@@ -336,11 +335,11 @@ class RegimeService:
                 crisis_model=crisis_model,
                 crisis_threshold=crisis_threshold  # Use from __init__ param
             )
-            logger.info(f"✓ Layer 1: Probabilistic Regime Detector initialized")
+            logger.info("✓ Layer 1: Probabilistic Regime Detector initialized")
             logger.info(f"   - Crisis model: {model_path}")
             logger.info(f"   - Crisis threshold: {crisis_threshold:.2f}")
-            logger.info(f"   - Outputs: crisis_prob, risk_temperature, instability_score")
-            logger.info(f"   - Soft controls: position_size_multiplier, trade_frequency_multiplier")
+            logger.info("   - Outputs: crisis_prob, risk_temperature, instability_score")
+            logger.info("   - Soft controls: position_size_multiplier, trade_frequency_multiplier")
 
         # Layer 1.5: Crisis Threshold + EMA Smoothing (NEW)
         self.crisis_threshold = crisis_threshold
@@ -376,16 +375,16 @@ class RegimeService:
                     logger.info(f"✓ Layer 1.5b: Confidence Calibrator loaded from {calibrator_path}")
                     logger.info(f"   Version: {calibrator_data.get('version', 'unknown')}")
                     logger.info(f"   OOS R²: {calibrator_data['validation_results']['composite']['r2']:.4f}")
-                    logger.info(f"   Hybrid Mode: ensemble_agreement (raw) + regime_stability_forecast (calibrated)")
+                    logger.info("   Hybrid Mode: ensemble_agreement (raw) + regime_stability_forecast (calibrated)")
 
                 except Exception as e:
                     logger.warning(f"⚠ Layer 1.5b: Failed to load calibrator: {e}")
-                    logger.warning(f"   Falling back to raw confidence only")
+                    logger.warning("   Falling back to raw confidence only")
                     self.enable_calibration = False
             else:
                 logger.warning(f"⚠ Layer 1.5b: Calibrator not found at {calibrator_path}")
-                logger.warning(f"   Falling back to raw confidence only")
-                logger.warning(f"   Run bin/build_confidence_calibrator.py to create calibrator")
+                logger.warning("   Falling back to raw confidence only")
+                logger.warning("   Run bin/build_confidence_calibrator.py to create calibrator")
                 self.enable_calibration = False
         else:
             logger.info("✗ Layer 1.5b: Confidence Calibration disabled (raw agreement only)")
@@ -435,7 +434,7 @@ class RegimeService:
         self.ensemble_ema_state = None
         self.ensemble_ema_span = self.ensemble_config.get('ema_span', 48)
 
-        logger.info(f"Ensemble model loaded:")
+        logger.info("Ensemble model loaded:")
         logger.info(f"  - Version: {ensemble_data.get('version', 'unknown')}")
         logger.info(f"  - Trained: {ensemble_data.get('train_date', 'unknown')}")
         logger.info(f"  - Models: {len(self.ensemble_models)}")
@@ -1221,7 +1220,7 @@ class RegimeService:
         if 'regime_transition' in df.columns:
             n_transitions = df['regime_transition'].sum()
             transitions_per_year = (n_transitions / len(df)) * 8760
-            logger.info(f"\nTransitions:")
+            logger.info("\nTransitions:")
             logger.info(f"  Total: {n_transitions}")
             logger.info(f"  Per year: {transitions_per_year:.1f}")
 
@@ -1233,7 +1232,7 @@ class RegimeService:
             logger.info(f"  {source:20s}: {count:6d} ({pct:5.1f}%)")
 
         # Confidence statistics
-        logger.info(f"\nConfidence statistics:")
+        logger.info("\nConfidence statistics:")
         logger.info(f"  Mean: {df['regime_confidence'].mean():.3f}")
         logger.info(f"  Median: {df['regime_confidence'].median():.3f}")
         logger.info(f"  Min: {df['regime_confidence'].min():.3f}")
@@ -1357,7 +1356,7 @@ class RegimeService:
         logger.info("Integration Validation Results (Test 1: No Stale Reads)")
         logger.info("=" * 80)
         logger.info(f"Mode: {self.mode}")
-        logger.info(f"\nValidation Counters:")
+        logger.info("\nValidation Counters:")
         for key, value in counters.items():
             logger.info(f"  {key:30s}: {value}")
 
@@ -1475,13 +1474,13 @@ if __name__ == '__main__':
             print(f"  Regime: {result['regime_label']}")
             print(f"  Confidence: {result['regime_confidence']:.3f}")
             print(f"  Source: {result['regime_source']}")
-            print(f"  Probabilities:")
+            print("  Probabilities:")
             for regime, prob in result['regime_probs'].items():
                 print(f"    {regime:12s}: {prob:.3f}")
 
             # Get statistics
             stats = service.get_statistics()
-            print(f"\nService statistics:")
+            print("\nService statistics:")
             print(f"  Total calls: {stats['total_calls']}")
             print(f"  Overrides: {stats['override_count']}")
             print(f"  Transitions: {stats['transition_count']}")

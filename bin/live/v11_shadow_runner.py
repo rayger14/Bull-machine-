@@ -20,16 +20,14 @@ Usage:
 import argparse
 import json
 import logging
-import os
 import signal
 import sys
 import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
-import numpy as np
 import pandas as pd
 
 # Project root
@@ -237,7 +235,7 @@ class V11ShadowRunner:
         self.signal_log_path = self.output_dir / 'signals.csv'
         self._init_signal_log()
 
-        logger.info(f"V11ShadowRunner initialized")
+        logger.info("V11ShadowRunner initialized")
         logger.info(f"  Config: {config_path}")
         logger.info(f"  Cash: ${initial_cash:,.0f}")
         logger.info(f"  Commission: {commission_rate*10000:.1f} bps | Slippage: {slippage_bps:.1f} bps")
@@ -750,7 +748,7 @@ class V11ShadowRunner:
                 if s.archetype_id in self.disabled_archetypes:
                     idx = sig_index[id(s)]
                     self.last_bar_signals[idx]['status'] = 'rejected'
-                    self.last_bar_signals[idx]['rejection_reason'] = f'archetype disabled'
+                    self.last_bar_signals[idx]['rejection_reason'] = 'archetype disabled'
                     self.last_bar_signals[idx]['rejection_stage'] = 'disabled'
                     self.signals_rejected += 1
                 else:

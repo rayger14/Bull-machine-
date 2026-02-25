@@ -675,7 +675,7 @@ def main():
             print(f"  Date Range:       {s.get('first_occurrence')} to {s.get('last_occurrence')}")
         print(f"  Max Drawdown:     {s.get('max_drawdown_pct', 0):.1f}%")
         print(f"  Avg Threshold:    {s.get('avg_threshold_during', '?')}")
-        print(f"  Forward Returns:")
+        print("  Forward Returns:")
         for horizon in ["24h", "72h", "168h"]:
             avg = s.get(f"avg_return_{horizon}")
             med = s.get(f"median_return_{horizon}")
@@ -686,7 +686,7 @@ def main():
                       f"worst={worst:+.2f}%, {pct_pos:.0f}% positive")
             else:
                 print(f"    {horizon}: insufficient data")
-        print(f"  Trade Stats:")
+        print("  Trade Stats:")
         print(f"    Eligible trades:  {s.get('trades_eligible', 0)}")
         print(f"    Est. win rate:    {s.get('estimated_win_rate', '?')}%")
         print(f"    Avg fusion:       {s.get('avg_fusion_during', '?')}")

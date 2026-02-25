@@ -38,7 +38,7 @@ import json
 
 from engine.integrations.event_engine import BaseStrategy, Bar, Order, OrderSide, EventEngine
 from engine.integrations.feature_provider import FeatureProvider
-from engine.context.regime_service import RegimeService, REGIME_MODE_HYBRID, REGIME_MODE_PROBABILISTIC
+from engine.context.regime_service import RegimeService, REGIME_MODE_PROBABILISTIC
 from engine.runtime.context import RuntimeContext
 from engine.archetypes.logic_v2_adapter import ArchetypeLogic
 from engine.archetypes.threshold_policy import ThresholdPolicy
@@ -361,7 +361,7 @@ class NautilusBullMachineStrategy(BaseStrategy):
         if bar.timestamp.hour == 0:
             self.logger.info(f"[EXIT DEBUG] Strategy positions: {list(self.positions.keys())}")
             self.logger.info(f"[EXIT DEBUG] Portfolio positions: {list(engine.portfolio.positions.keys())}")
-        
+
         for position_id in list(self.positions.keys()):
             if position_id in engine.portfolio.positions:
                 self._check_exit_conditions(bar, engine, context, regime_label, position_id)

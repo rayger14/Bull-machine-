@@ -8,7 +8,7 @@ across different market conditions and time periods.
 
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)

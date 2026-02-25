@@ -30,7 +30,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, Tuple, Optional, Any
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 
 from engine.context.logistic_regime_model import LogisticRegimeModel
@@ -691,12 +691,12 @@ class HybridRegimeModel:
         # Crisis override stats
         crisis_bars = df['crisis_override'].sum()
         crisis_pct = crisis_bars / len(df) * 100
-        logger.info(f"\nCrisis override:")
+        logger.info("\nCrisis override:")
         logger.info(f"  Bars: {crisis_bars}/{len(df)} ({crisis_pct:.1f}%)")
         logger.info(f"  Target: 1-5% {'✅' if 1 <= crisis_pct <= 5 else '⚠️'}")
 
         # Confidence stats
-        logger.info(f"\nConfidence statistics:")
+        logger.info("\nConfidence statistics:")
         logger.info(f"  Mean: {df['regime_confidence'].mean():.3f}")
         logger.info(f"  Median: {df['regime_confidence'].median():.3f}")
         logger.info(f"  Min: {df['regime_confidence'].min():.3f}")
@@ -704,9 +704,9 @@ class HybridRegimeModel:
 
         # Crisis detector stats
         crisis_stats = self.crisis_detector.get_statistics()
-        logger.info(f"\nCrisis detector statistics:")
+        logger.info("\nCrisis detector statistics:")
         logger.info(f"  Crisis events detected: {crisis_stats.get('crisis_events', 0)}")
-        logger.info(f"  Trigger fire rates:")
+        logger.info("  Trigger fire rates:")
         for trigger, rate in crisis_stats.get('trigger_fire_rates', {}).items():
             logger.info(f"    {trigger:20s}: {rate:5.1f}%")
 

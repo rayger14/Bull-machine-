@@ -8,8 +8,7 @@ specific strategy logic. It just calls model.predict() and executes trades.
 import pandas as pd
 import numpy as np
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple, Dict, Any
-from datetime import datetime
+from typing import List, Optional, Dict, Any
 import logging
 
 from engine.models.base import BaseModel, Signal, Position

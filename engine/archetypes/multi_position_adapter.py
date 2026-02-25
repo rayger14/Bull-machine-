@@ -24,7 +24,7 @@ USAGE:
 """
 
 import logging
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 from engine.archetypes.logic_v2_adapter import ArchetypeLogic
 from engine.runtime.context import RuntimeContext
 

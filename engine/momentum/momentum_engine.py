@@ -7,9 +7,8 @@ Protects RSI from divide-by-zero and keeps momentum capped at ±0.05 total contr
 
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, Optional, Any
 from dataclasses import dataclass
-from enum import Enum
 import logging
 
 logger = logging.getLogger(__name__)

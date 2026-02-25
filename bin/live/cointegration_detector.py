@@ -18,7 +18,7 @@ Date: 2026-02-18
 
 import logging
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import numpy as np
 
@@ -284,7 +284,7 @@ def _generate_signal(
 ) -> str:
     """Generate a human-readable signal description."""
     if not cointegrated:
-        return f"Not cointegrated -- no mean-reversion signal"
+        return "Not cointegrated -- no mean-reversion signal"
 
     if stability == "unstable":
         return f"Relationship unstable -- spread z={z_score:+.1f} but unreliable"

@@ -18,12 +18,11 @@ Example:
 """
 
 import logging
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 import pandas as pd
-import numpy as np
 
-from engine.models.base import Signal, Position
+from engine.models.base import Signal
 
 logger = logging.getLogger(__name__)
 

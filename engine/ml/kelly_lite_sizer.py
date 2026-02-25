@@ -23,7 +23,6 @@ import pandas as pd
 from pathlib import Path
 import pickle
 import logging
-from typing import Dict, Optional
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler

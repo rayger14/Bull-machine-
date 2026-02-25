@@ -28,9 +28,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import json
 import pandas as pd
-import numpy as np
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict
 import time
 from dataclasses import asdict
 
@@ -147,7 +146,7 @@ class ReplayRunner:
         replay_elapsed = time.time() - replay_start
 
         print(f"\n{'='*80}")
-        print(f"✅ Replay complete!")
+        print("✅ Replay complete!")
         print(f"⏱️  Wall time: {replay_elapsed:.2f}s")
         print(f"⏩ Effective speed: ~{len(self.df) / max(replay_elapsed, 1):.0f} bars/sec")
 
@@ -174,7 +173,7 @@ class ReplayRunner:
         print(f"Total Return:    {(results['final_equity']/10000 - 1)*100:.2f}%")
 
         # Exit reason breakdown
-        print(f"\nExit Reasons:")
+        print("\nExit Reasons:")
         exit_reasons = {}
         for trade in results['trades']:
             reason = str(trade.exit_reason)
@@ -186,7 +185,7 @@ class ReplayRunner:
 
         # Adaptive max-hold stats (if enabled)
         if self.params.adaptive_max_hold and hasattr(self.backtest, '_adaptive_extension_count'):
-            print(f"\nAdaptive Max-Hold:")
+            print("\nAdaptive Max-Hold:")
             print(f"  Extensions: {self.backtest._adaptive_extension_count}")
             if self.backtest._adaptive_events:
                 print(f"  Events logged: {len(self.backtest._adaptive_events)}")

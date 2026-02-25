@@ -16,7 +16,6 @@ Usage:
 """
 
 import sys
-import os
 import logging
 import time
 import argparse

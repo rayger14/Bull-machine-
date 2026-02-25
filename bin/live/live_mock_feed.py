@@ -213,7 +213,7 @@ class LiveMockFeedRunner:
                     print(f"   ✓ SIGNAL: {fast_signal['side'].upper()} @ {fast_signal['confidence']:.2f} confidence")
                     print(f"   Reasons: {', '.join(fast_signal['reasons'])}")
                 else:
-                    print(f"   ✗ No signal (ADX < 20 or no clear setup)")
+                    print("   ✗ No signal (ADX < 20 or no clear setup)")
 
             # Check macro veto BEFORE returning signal
             if macro_result['veto_strength'] >= self.macro_config['macro_veto_threshold']:

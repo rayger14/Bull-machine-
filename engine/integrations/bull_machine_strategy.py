@@ -22,12 +22,11 @@ Key Design:
 import logging
 from typing import Dict, Any, Optional, List
 import pandas as pd
-import numpy as np
 from pathlib import Path
 import json
 
 from engine.integrations.event_engine import (
-    BaseStrategy, EventEngine, Bar, Order, OrderSide, PositionSide
+    BaseStrategy, EventEngine, Bar, Order, OrderSide
 )
 from engine.context.regime_service import RegimeService
 from engine.archetypes.logic_v2_adapter import ArchetypeLogic

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Quick counterfactual analysis of live trading signals vs actual price data."""
-import csv, json, sys
+import csv, sys
 from collections import defaultdict
 import pandas as pd
 
@@ -258,13 +258,13 @@ avg_daily_range = candles.groupby(candles.index.date).apply(
 ).mean()
 print(f'1. Average SL ({avg_sl:.2f}%) vs Average Daily Range ({avg_daily_range:.2f}%)')
 if avg_sl < avg_daily_range:
-    print(f'   SL is TIGHTER than daily range -- normal intraday noise triggers stops')
-    print(f'   This is the main reason for the 0% win rate')
+    print('   SL is TIGHTER than daily range -- normal intraday noise triggers stops')
+    print('   This is the main reason for the 0% win rate')
 print(f'2. BTC price change: {price_change:+.2f}% over {len(candles)} bars')
 print(f'3. All {len(entries)} entries were LONG')
 if price_change > 0:
-    print(f'   Direction was CORRECT (price ended higher) but stops were too tight')
+    print('   Direction was CORRECT (price ended higher) but stops were too tight')
 elif price_change < -2:
-    print(f'   Direction was WRONG -- bearish period, long signals failed')
+    print('   Direction was WRONG -- bearish period, long signals failed')
 else:
-    print(f'   Market was choppy/flat -- tight stops get whipsawed repeatedly')
+    print('   Market was choppy/flat -- tight stops get whipsawed repeatedly')

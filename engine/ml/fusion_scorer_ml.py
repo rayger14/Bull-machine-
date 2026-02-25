@@ -228,7 +228,7 @@ class FusionScorerML:
         train_auc = roc_auc_score(y_train, y_train_pred_proba)
         test_auc = roc_auc_score(y_test, y_test_pred_proba)
 
-        logger.info(f"\n📊 Performance:")
+        logger.info("\n📊 Performance:")
         logger.info(f"   Train AUC: {train_auc:.3f}")
         logger.info(f"   Test AUC: {test_auc:.3f}")
 
@@ -247,7 +247,7 @@ class FusionScorerML:
             logger.info(f"   F1 Score: {f1_scores[best_idx]:.3f}")
 
         # Feature importance
-        logger.info(f"\n📈 Feature Importance (Top 10):")
+        logger.info("\n📈 Feature Importance (Top 10):")
         importances = self.model.feature_importances_
         indices = np.argsort(importances)[::-1]
 

@@ -19,9 +19,7 @@ Usage:
 """
 
 import pandas as pd
-import numpy as np
-from typing import Dict, Tuple, Optional, List
-from pathlib import Path
+from typing import Dict, Tuple, Optional
 
 
 def compute_parameter_bounds(

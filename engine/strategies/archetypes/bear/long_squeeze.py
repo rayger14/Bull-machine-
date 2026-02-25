@@ -33,7 +33,6 @@ Date: 2026-01-08
 
 import logging
 import pandas as pd
-import numpy as np
 from typing import Optional, Dict, Any, Tuple
 
 logger = logging.getLogger(__name__)
@@ -69,10 +68,10 @@ class LongSqueezeArchetype:
         self.liquidity_weight = thresholds.get('liquidity_weight', 0.20)
         self.oi_weight = thresholds.get('oi_weight', 0.10)
 
-        logger.info(f"[S5 Long Squeeze] Initialized FIXED v2 (2026-01-08)")
+        logger.info("[S5 Long Squeeze] Initialized FIXED v2 (2026-01-08)")
         logger.info(f"[S5 Long Squeeze] min_fusion={self.min_fusion_score}, funding_Z={self.min_funding_z}, OI_change={self.min_oi_change}%")
         logger.info(f"[S5 Long Squeeze] ADX range: {self.adx_min}-{self.adx_max}, weakening_filter={self.require_trend_weakening}")
-        logger.info(f"[S5 Long Squeeze] DIRECTION=SHORT (contrarian in bull exhaustion)")
+        logger.info("[S5 Long Squeeze] DIRECTION=SHORT (contrarian in bull exhaustion)")
 
     def detect(
         self,

@@ -50,8 +50,7 @@ Date: 2025-11-20
 import pandas as pd
 import numpy as np
 import logging
-from typing import Optional, Tuple
-from .feature_fallback import FeatureFallbackManager, safe_get_funding_z
+from .feature_fallback import FeatureFallbackManager
 
 logger = logging.getLogger(__name__)
 
@@ -341,7 +340,7 @@ class S4RuntimeFeatures:
         high_fusion = (df['s4_fusion_score'] > 0.5).sum()
         extreme_fusion = (df['s4_fusion_score'] > 0.7).sum()
 
-        logger.info(f"[S4 Runtime] Enrichment statistics:")
+        logger.info("[S4 Runtime] Enrichment statistics:")
         logger.info(f"  - Negative funding (<-1.5σ): {negative_funding} ({negative_funding/len(df)*100:.1f}%)")
         logger.info(f"  - Extreme negative (<-2.5σ): {extreme_negative} ({extreme_negative/len(df)*100:.1f}%)")
         logger.info(f"  - High resilience (>0.6): {high_resilience} ({high_resilience/len(df)*100:.1f}%)")
@@ -474,9 +473,9 @@ if __name__ == '__main__':
         print("Recommended Optuna search ranges:")
         print(f"  fusion_threshold: [{np.percentile(fusion_scores.dropna(), 97):.4f}, "
               f"{np.percentile(fusion_scores.dropna(), 99.5):.4f}]")
-        print(f"  funding_z_max: [-3.0, -1.0] (negative values!)")
-        print(f"  resilience_min: [0.5, 0.8]")
-        print(f"  liquidity_max: [0.05, 0.25]")
+        print("  funding_z_max: [-3.0, -1.0] (negative values!)")
+        print("  resilience_min: [0.5, 0.8]")
+        print("  liquidity_max: [0.05, 0.25]")
         print("="*80)
 
     except FileNotFoundError as e:

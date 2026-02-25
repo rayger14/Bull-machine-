@@ -35,7 +35,6 @@ Usage:
 import json
 from pathlib import Path
 from typing import Dict, Optional
-from datetime import datetime
 import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
@@ -343,7 +342,7 @@ if __name__ == '__main__':
 
     # Initialize router
     router = RouterV10()
-    print(f"\n✅ Initialized RouterV10")
+    print("\n✅ Initialized RouterV10")
     print(f"   Bull config: {router.bull_config_path}")
     print(f"   Bear config: {router.bear_config_path}")
     print(f"   Confidence threshold: {router.confidence_threshold}")
@@ -391,16 +390,16 @@ if __name__ == '__main__':
     stats = router.get_stats()
     print(f"\nTotal decisions: {stats['total_decisions']}")
 
-    print(f"\nAction distribution:")
+    print("\nAction distribution:")
     for action, pct in stats['action_distribution'].items():
         bar = '█' * int(pct / 5)
         print(f"  {action:5s}: {pct:5.1f}% {bar}")
 
-    print(f"\nReason distribution:")
+    print("\nReason distribution:")
     for reason, count in sorted(stats['reason_distribution'].items()):
         print(f"  {reason:30s}: {count:3d}")
 
-    print(f"\nConfidence stats:")
+    print("\nConfidence stats:")
     for stat, val in stats['confidence_stats'].items():
         print(f"  {stat:8s}: {val:.3f}")
 

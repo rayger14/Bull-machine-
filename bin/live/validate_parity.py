@@ -196,7 +196,7 @@ def print_report(entry_results: dict, exit_results: dict):
         print("-" * 72)
         print(f"  Mean diff:    {np.mean(pdiffs):.4f}%")
         print(f"  Max diff:     {np.max(pdiffs):.4f}%")
-        print(f"  Note: Differences expected from slippage modeling")
+        print("  Note: Differences expected from slippage modeling")
 
     # Exit comparison
     print(f"\n{'EXIT COMPARISON':^72}")
@@ -204,11 +204,11 @@ def print_report(entry_results: dict, exit_results: dict):
     print(f"  Backtest exits:  {exit_results['backtest_exits']}")
     print(f"  Shadow exits:    {exit_results['shadow_exits']}")
 
-    print(f"\n  Backtest exit reasons:")
+    print("\n  Backtest exit reasons:")
     for reason, count in sorted(exit_results['backtest_reason_counts'].items()):
         print(f"    {reason:30s}: {count}")
 
-    print(f"\n  Shadow exit reasons:")
+    print("\n  Shadow exit reasons:")
     for reason, count in sorted(exit_results['shadow_reason_counts'].items()):
         print(f"    {reason:30s}: {count}")
 

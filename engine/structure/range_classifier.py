@@ -8,7 +8,6 @@ Author: Bull Machine v2.0
 """
 
 import pandas as pd
-import numpy as np
 from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
 

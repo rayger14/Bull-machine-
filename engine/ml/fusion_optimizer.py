@@ -18,7 +18,7 @@ Based on optimization results showing:
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, Optional
 from dataclasses import dataclass
 import logging
 
@@ -421,12 +421,11 @@ class FusionWeightOptimizer:
             json.dump(patch, f, indent=2)
 
         logger.info(f"✅ Config patch exported to {output_path}")
-        logger.info(f"   Review and test before merging!")
+        logger.info("   Review and test before merging!")
 
 
 # Example usage
 if __name__ == '__main__':
-    import sys
     logging.basicConfig(level=logging.INFO)
 
     # Initialize optimizer
@@ -457,7 +456,7 @@ if __name__ == '__main__':
     print(f"Regime: {update.regime}")
     print(f"Confidence: {update.confidence:.2f}")
     print(f"Reason: {update.reason}")
-    print(f"\nRecommended weights:")
+    print("\nRecommended weights:")
     for domain, weight in update.to_dict().items():
         current = current_weights.get(domain, 0.0)
         delta = weight - current

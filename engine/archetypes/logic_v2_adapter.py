@@ -3671,7 +3671,7 @@ class ArchetypeLogic:
         # 1) Base pattern detection - returns (matched, score, metadata)
         base_result = self._pattern_K(context)
         if not base_result:
-            logger.info(f"[K] Pattern not matched - wick_lower_ratio or rsi check failed")
+            logger.info("[K] Pattern not matched - wick_lower_ratio or rsi check failed")
             return False, 0.0, {"reason": "pattern_not_matched"}
 
         matched, base_score, pattern_tags = base_result  # base_score in [0,1]

@@ -16,7 +16,7 @@ This is the BRAINSTEM of the Bull Machine - regime awareness that filters realit
 
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, Tuple, Optional, List
+from typing import Tuple, Optional, List
 from collections import deque
 from pathlib import Path
 import pickle
@@ -152,7 +152,7 @@ class HMMRegimeModel:
 
         # Log regime distribution
         regime_dist = df['regime_label'].value_counts()
-        logger.info(f"Regime distribution:")
+        logger.info("Regime distribution:")
         for regime, count in regime_dist.items():
             pct = count / len(df) * 100
             logger.info(f"  {regime:12s}: {count:6d} ({pct:5.1f}%)")

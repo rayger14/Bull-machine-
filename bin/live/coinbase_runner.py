@@ -25,7 +25,6 @@ Usage:
 import argparse
 import json
 import logging
-import os
 import signal
 import sys
 import time
@@ -2952,7 +2951,6 @@ class CoinbasePaperRunner:
                     f"{candle_dict.get('close',0):.2f},{candle_dict.get('volume',0):.2f}\n"
                 )
             # Trim to last 200 candles
-            import os
             if hist_path.stat().st_size > 20000:
                 lines_hist = hist_path.read_text().splitlines()
                 if len(lines_hist) > 201:

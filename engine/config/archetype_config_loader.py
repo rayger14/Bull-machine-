@@ -20,7 +20,6 @@ Usage:
 """
 
 import logging
-import os
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
@@ -391,7 +390,7 @@ def main():
                 f"{'ENABLED' if config['enabled'] else 'DISABLED'}"
             )
 
-        print(f"\nAll configs valid ✓")
+        print("\nAll configs valid ✓")
 
     except Exception as e:
         print(f"Error: {e}")

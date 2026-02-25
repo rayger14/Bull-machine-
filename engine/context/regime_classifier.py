@@ -13,7 +13,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -106,7 +106,7 @@ class RegimeClassifier:
         # Support both 'model' and 'gmm' keys for backward compatibility
         model_obj = obj.get("model") or obj.get("gmm")
         if model_obj is None or "label_map" not in obj:
-            raise ValueError(f"Invalid model file: missing 'model'/'gmm' or 'label_map'")
+            raise ValueError("Invalid model file: missing 'model'/'gmm' or 'label_map'")
 
         return cls(
             model=model_obj,
@@ -280,7 +280,7 @@ if __name__ == '__main__':
         print("\n📊 Test Classification:")
         print(f"   Regime: {result['regime']}")
         print(f"   Confidence: {result['proba'][result['regime']]:.1%}")
-        print(f"   All probabilities:")
+        print("   All probabilities:")
         for regime, prob in result['proba'].items():
             print(f"     {regime:12s}: {prob:.1%}")
 

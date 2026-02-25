@@ -14,7 +14,7 @@ Date: 2025-12-12
 Version: 2.0
 """
 
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path

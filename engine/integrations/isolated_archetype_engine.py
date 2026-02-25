@@ -39,7 +39,7 @@ from engine.portfolio.archetype_allocator import (
 )
 from engine.config.archetype_config_loader import load_archetype_configs
 from engine.context.regime_service import RegimeService, REGIME_MODE_PROBABILISTIC
-from engine.models.base import Signal, Position
+from engine.models.base import Signal
 
 logger = logging.getLogger(__name__)
 
