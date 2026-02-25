@@ -12,7 +12,6 @@ Trader Alignment:
 
 from typing import List, Dict
 import pandas as pd
-import numpy as np
 
 
 def calculate_fib_levels(swing_high: float, swing_low: float, config: Dict) -> List[float]:

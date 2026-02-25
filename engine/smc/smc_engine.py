@@ -5,8 +5,7 @@ Unified engine that coordinates all SMC modules for institutional trading analys
 """
 
 import pandas as pd
-import numpy as np
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Tuple, Any
 from dataclasses import dataclass
 import logging
 
@@ -288,3 +287,104 @@ class SMCEngine:
             confluence_rate=0.0,
             metadata={}
         )
+
+    def compute_confluence_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Compute SMC confluence features for feature store.
+
+        Args:
+            df: OHLCV dataframe
+
+        Returns:
+            df with added columns:
+                - smc_ob_hit: 1 if price near Order Block, 0 otherwise
+                - smc_fvg_hit: 1 if price in FVG, 0 otherwise
+                - smc_sweep_recent: 1 if sweep in last 5 bars, 0 otherwise
+                - smc_bos_aligned: 1 if BOS in trend direction, 0 otherwise
+        """
+        logger.info("Computing SMC confluence features for feature store")
+
+        # Initialize columns with 0
+        df['smc_ob_hit'] = 0
+        df['smc_fvg_hit'] = 0
+        df['smc_sweep_recent'] = 0
+        df['smc_bos_aligned'] = 0
+
+        # Need at least 50 bars for meaningful SMC analysis
+        if len(df) < 50:
+            logger.warning(f"Insufficient data for SMC analysis: {len(df)} bars (need 50+)")
+            return df
+
+        # Process each bar with sufficient history
+        for i in range(50, len(df)):
+            try:
+                # Get data up to current bar
+                data_slice = df.iloc[:i+1].copy()
+                current_price = data_slice['close'].iloc[-1]
+
+                # Run SMC analysis
+                smc_signal = self.analyze_smc(data_slice)
+
+                # 1. Check Order Block hit (price within ±2% of OB range)
+                if smc_signal.order_blocks:
+                    for ob in smc_signal.order_blocks:
+                        # Check if price is near the order block range
+                        ob_low_threshold = ob.low * (1 - self.proximity_pct)
+                        ob_high_threshold = ob.high * (1 + self.proximity_pct)
+
+                        if ob_low_threshold <= current_price <= ob_high_threshold:
+                            df.loc[df.index[i], 'smc_ob_hit'] = 1
+                            break
+
+                # 2. Check FVG hit (price strictly within FVG range)
+                if smc_signal.fair_value_gaps:
+                    for fvg in smc_signal.fair_value_gaps:
+                        # Check if price is strictly within FVG range
+                        if fvg.low < current_price < fvg.high:
+                            df.loc[df.index[i], 'smc_fvg_hit'] = 1
+                            break
+
+                # 3. Check recent sweep (sweep with reversal_confirmation in last 5 bars)
+                if smc_signal.liquidity_sweeps:
+                    current_time = data_slice.index[-1]
+                    for sweep in smc_signal.liquidity_sweeps:
+                        # Calculate bar difference
+                        bar_diff = i - df.index.get_loc(sweep.timestamp)
+
+                        # Check if sweep has reversal confirmation and is within last 5 bars
+                        if sweep.reversal_confirmation and 0 <= bar_diff <= 5:
+                            df.loc[df.index[i], 'smc_sweep_recent'] = 1
+                            break
+
+                # 4. Check BOS alignment (latest BOS trend matches institutional_bias)
+                if smc_signal.structure_breaks:
+                    latest_bos = smc_signal.structure_breaks[-1]
+
+                    # Check if BOS trend aligns with institutional bias
+                    bos_bullish = latest_bos.bos_type.value == 'bullish'
+                    bos_bearish = latest_bos.bos_type.value == 'bearish'
+                    bias_bullish = smc_signal.institutional_bias == 'bullish'
+                    bias_bearish = smc_signal.institutional_bias == 'bearish'
+
+                    if (bos_bullish and bias_bullish) or (bos_bearish and bias_bearish):
+                        df.loc[df.index[i], 'smc_bos_aligned'] = 1
+
+            except Exception as e:
+                logger.error(f"Error computing SMC features for bar {i}: {e}")
+                # Continue processing remaining bars
+                continue
+
+        # Log summary statistics
+        total_bars = len(df) - 50
+        ob_hits = df['smc_ob_hit'].sum()
+        fvg_hits = df['smc_fvg_hit'].sum()
+        sweep_hits = df['smc_sweep_recent'].sum()
+        bos_aligned = df['smc_bos_aligned'].sum()
+
+        logger.info(f"SMC confluence features computed for {total_bars} bars:")
+        logger.info(f"  - Order Block hits: {ob_hits} ({ob_hits/total_bars*100:.1f}%)")
+        logger.info(f"  - FVG hits: {fvg_hits} ({fvg_hits/total_bars*100:.1f}%)")
+        logger.info(f"  - Recent sweeps: {sweep_hits} ({sweep_hits/total_bars*100:.1f}%)")
+        logger.info(f"  - BOS aligned: {bos_aligned} ({bos_aligned/total_bars*100:.1f}%)")
+
+        return df

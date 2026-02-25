@@ -1,0 +1,58 @@
+name: confluence_breakout
+display_name: Confluence Breakout / Ratio Coil Break
+aliases:
+- M
+- coil
+- wyckoff_insider
+- ratio_coil_break
+direction: long
+fusion_weights:
+  wyckoff: 0.3
+  liquidity: 0.25
+  momentum: 0.2
+  smc: 0.25
+thresholds:
+  fusion_threshold: 0.18
+  min_coil_score: 0.25
+  require_breakout_flag: false
+  atr_pctile: 0.4
+  poc_dist: 1.0
+  boms_strength: 0.0
+  fusion: 0.18
+  cooling_period_bars: 24
+hard_gates:
+- feature: atr_percentile
+  op: max
+  value: 0.4
+  nan_policy: skip
+  description: Low volatility coil
+gate_mode: soft
+exit_logic:
+  max_hold_hours: 168
+  scale_out_enabled: true
+  scale_out_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  scale_out_pcts:
+  - 0.2
+  - 0.2
+  - 0.3
+  runner_pct: 0.15
+  runner_trailing_atr: 2.5
+  trailing_start_r: 1.0
+  trailing_atr_mult: 2.0
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 3.3
+  atr_tp_mult: 4.7
+regime_preferences:
+  risk_on: 1.3
+  neutral: 1.0
+  risk_off: 0.7
+  crisis: 0.5
+allowed_regimes: []
+description: Low ATR + near POC + BOMS strength. High-quality coil breakout pattern.
+priority: 11
+enabled: true

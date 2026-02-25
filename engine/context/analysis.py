@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 import logging
 
-from .signals import SMTSignal, SMTSignalType, HPS_Score
+from .signals import SMTSignal
 
 logger = logging.getLogger(__name__)
 

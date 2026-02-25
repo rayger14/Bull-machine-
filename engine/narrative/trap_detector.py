@@ -11,7 +11,7 @@ Trader Alignment:
 
 import pandas as pd
 import numpy as np
-from typing import Dict, Optional
+from typing import Dict
 
 
 def decode_liquidity_programming(df: pd.DataFrame, macro_cache: Dict, config: Dict) -> tuple:
@@ -193,7 +193,7 @@ if __name__ == '__main__':
     }
 
     is_trap, trap_msg = decode_liquidity_programming(trap_df, macro_cache, config)
-    print(f"\nHODL trap test:")
+    print("\nHODL trap test:")
     print(f"  Detected: {is_trap}")
     print(f"  Message: {trap_msg}")
 
@@ -207,13 +207,13 @@ if __name__ == '__main__':
     })
 
     is_dist, dist_conf = check_distribution_pattern(dist_df, config)
-    print(f"\nDistribution pattern test:")
+    print("\nDistribution pattern test:")
     print(f"  Detected: {is_dist}")
     print(f"  Confidence: {dist_conf:.2f}")
 
     # Test 3: Veto check
     veto, reason = should_veto_narrative(trap_df, macro_cache, config)
-    print(f"\nVeto test:")
+    print("\nVeto test:")
     print(f"  Should veto: {veto}")
     print(f"  Reason: {reason}")
 

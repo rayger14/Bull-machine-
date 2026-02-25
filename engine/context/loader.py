@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 UNIVERSAL_MACRO_SERIES = [
     'DXY',       # Dollar Index (Moneytaur: liquidity drain)
     'WTI',       # Oil/Energy (ZeroIKA: inflation/stagflation)
+    'BRENT',     # Brent Oil (Alternative energy measure)
     'US10Y',     # 10Y Treasury (yield curve)
     'US2Y',      # 2Y Treasury (inversion detection)
     'VIX',       # Volatility Index (Wyckoff: risk regime)
@@ -45,15 +46,15 @@ def load_macro_data(data_dir: str = "data",
                    symbols: Optional[List[str]] = None,
                    asset_type: str = "crypto") -> Dict[str, pd.DataFrame]:
     """
-    Load macro series from CSV files based on asset type.
+    Load macro series from consolidated parquet file or CSV fallback.
 
     Args:
-        data_dir: Directory containing macro CSV files
+        data_dir: Directory containing macro data
         symbols: List of symbols to load (default: auto-selected by asset_type)
         asset_type: "crypto", "stock", or "all" to determine which series to load
 
     Returns:
-        Dict mapping symbol to DataFrame
+        Dict mapping symbol to DataFrame with columns ['timestamp', 'value']
     """
     if symbols is None:
         if asset_type == "crypto":
@@ -67,6 +68,66 @@ def load_macro_data(data_dir: str = "data",
 
     macro_data = {}
     data_path = Path(data_dir)
+
+    # **NEW**: Try loading from consolidated parquet file first
+    # Prefer COMPLETE_SOUL version with all indicators
+    macro_parquet = data_path / "macro" / "macro_history_COMPLETE_SOUL_2018_2024.parquet"
+    if not macro_parquet.exists():
+        macro_parquet = data_path / "macro" / "macro_history.parquet"
+
+    if macro_parquet.exists():
+        try:
+            logger.info(f"Loading macro data from {macro_parquet}")
+            df = pd.read_parquet(macro_parquet)
+
+            # Map column names to standardized symbol names
+            column_map = {
+                'VIX': 'VIX',
+                'DXY': 'DXY',
+                'MOVE': 'MOVE',
+                'YIELD_10Y': 'US10Y',  # Map YIELD_10Y to US10Y
+                'YIELD_2Y': 'US2Y',    # Map YIELD_2Y to US2Y
+                'GOLD': 'GOLD',        # NEW: Gold (flight to safety)
+                'WTI': 'WTI',          # NEW: WTI Oil (energy/inflation)
+                'BRENT': 'BRENT',      # NEW: Brent Oil (alternative energy)
+                'EURUSD': 'EURUSD',    # NEW: EUR/USD (dollar weakness)
+                'USDT.D': 'USDT.D',
+                'BTC.D': 'BTC.D',
+                'TOTAL': 'TOTAL',
+                'TOTAL2': 'TOTAL2',
+                'TOTAL3': 'TOTAL3',
+                'funding_rate': 'FUNDING',  # Support both funding and funding_rate
+                'funding': 'FUNDING',
+                'oi': 'OI'
+            }
+
+            for col_name, symbol in column_map.items():
+                if col_name in df.columns and symbol in symbols:
+                    macro_data[symbol] = df[['timestamp', col_name]].copy()
+                    macro_data[symbol].columns = ['timestamp', 'value']
+                    macro_data[symbol] = macro_data[symbol].sort_values('timestamp').reset_index(drop=True)
+                    logger.info(f"Loaded {symbol} from parquet: {len(macro_data[symbol])} bars")
+
+            # If we got all requested symbols from parquet, return early
+            loaded_symbols = set(macro_data.keys())
+            requested_symbols = set(symbols)
+            missing_symbols = requested_symbols - loaded_symbols
+
+            if not missing_symbols:
+                logger.info(f"All {len(loaded_symbols)} macro symbols loaded from parquet")
+                return macro_data
+            else:
+                logger.info(f"Loaded {len(loaded_symbols)} symbols from parquet, {len(missing_symbols)} missing: {missing_symbols}")
+                # Fall through to CSV loading for missing symbols
+                symbols = list(missing_symbols)
+
+        except Exception as e:
+            logger.error(f"Error loading from parquet {macro_parquet}: {e}")
+            # Fall through to CSV loading
+    else:
+        logger.warning(f"Macro parquet not found: {macro_parquet}, falling back to CSV loading")
+
+    # **FALLBACK**: Try CSV loading for any missing symbols
 
     for symbol in symbols:
         file_patterns = [

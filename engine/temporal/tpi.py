@@ -6,10 +6,8 @@ to avoid over-optimization while providing useful temporal context.
 """
 
 import pandas as pd
-import numpy as np
-import math
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 import logging
 

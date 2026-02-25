@@ -1,0 +1,143 @@
+{
+  "generated": "2026-02-21T07:01:47.583986Z",
+  "method": "logistic_regression_l2_cv5",
+  "train_period": "2020-01-02 to 2022-12-28",
+  "test_period": "2023-01-03 to 2024-12-30",
+  "train_auc": 0.6419881931267131,
+  "test_auc": 0.6204979596664498,
+  "cmi_weights": {
+    "risk_temp": {
+      "trend_align": 0.02,
+      "trend_strength": 0.0,
+      "sentiment": 0.25,
+      "dd_score": 0.73
+    },
+    "instability": {
+      "chop": 0.55,
+      "adx_weakness": 0.04,
+      "wick_score": 0.02,
+      "vol_instab": 0.39
+    },
+    "crisis": {
+      "base_crisis": 0.11,
+      "vol_shock": 0.15,
+      "sentiment_crisis": 0.74
+    }
+  },
+  "threshold_params": {
+    "base_threshold": 0.18,
+    "temp_range": 0.35,
+    "instab_range": 0.05,
+    "crisis_coefficient": 0.6
+  },
+  "comparison": {
+    "hand_tuned": {
+      "train_pf": 1.276434247693632,
+      "test_pf": 1.344339198558028,
+      "train_trades": 363,
+      "test_trades": 334,
+      "train_pnl": 51520.35995026486,
+      "test_pnl": 37007.91757569548
+    },
+    "optimized": {
+      "train_pf": 1.3453969999183832,
+      "test_pf": 1.235420378734418,
+      "train_trades": 199,
+      "test_trades": 186,
+      "train_pnl": 51520.35995026486,
+      "test_pnl": 16807.29350449044
+    }
+  },
+  "ic_analysis": {
+    "trend_align": {
+      "spearman": 0.08303082475384521,
+      "p_value": 0.00025866138550963174,
+      "signal": "STRONG"
+    },
+    "trend_strength": {
+      "spearman": 0.017515412824031417,
+      "p_value": 0.44163075024047127,
+      "signal": "NOISE"
+    },
+    "sentiment_score": {
+      "spearman": 0.026599172370558973,
+      "p_value": 0.24256321851157714,
+      "signal": "WEAK"
+    },
+    "dd_score": {
+      "spearman": 0.19921208016062988,
+      "p_value": 9.628206635801745e-19,
+      "signal": "STRONG"
+    },
+    "chop": {
+      "spearman": -0.023105449193729012,
+      "p_value": 0.3100737966958085,
+      "signal": "WEAK"
+    },
+    "adx_weakness": {
+      "spearman": -0.017515412824031417,
+      "p_value": 0.44163075024047127,
+      "signal": "NOISE"
+    },
+    "wick_sc": {
+      "spearman": -0.026902786982384897,
+      "p_value": 0.2372264318131062,
+      "signal": "WEAK"
+    },
+    "vol_instab": {
+      "spearman": -0.01951743917356733,
+      "p_value": 0.39122045469729616,
+      "signal": "NOISE"
+    },
+    "base_crisis": {
+      "spearman": -0.14582086221428966,
+      "p_value": 1.1964061185678829e-10,
+      "signal": "STRONG"
+    },
+    "vol_shock": {
+      "spearman": 0.012121676748762484,
+      "p_value": 0.594395498824112,
+      "signal": "NOISE"
+    },
+    "sentiment_crisis": {
+      "spearman": -0.044240769116649314,
+      "p_value": 0.05186226360957175,
+      "signal": "WEAK"
+    }
+  },
+  "hand_tuned_baseline": {
+    "cmi_weights": {
+      "risk_temp": {
+        "trend_align": 0.45,
+        "trend_strength": 0.25,
+        "sentiment": 0.15,
+        "dd_score": 0.15
+      },
+      "instability": {
+        "chop": 0.35,
+        "adx_weakness": 0.25,
+        "wick_score": 0.2,
+        "vol_instab": 0.2
+      },
+      "crisis": {
+        "base_crisis": 0.6,
+        "vol_shock": 0.2,
+        "sentiment_crisis": 0.2
+      }
+    },
+    "threshold_params": {
+      "base_threshold": 0.18,
+      "temp_range": 0.38,
+      "instab_range": 0.2,
+      "crisis_coefficient": 0.4
+    },
+    "label": "original_guessed_weights"
+  },
+  "notes": [
+    "To apply these weights, update adaptive_fusion.cmi_weights in your production config.",
+    "Threshold params go into adaptive_fusion.temp_range / instab_range / crisis_coefficient.",
+    "Always validate on a fresh OOS period before deploying.",
+    "If test AUC < 0.55, the model has no predictive power \u2014 keep hand-tuned weights.",
+    "2026-02-21: Production config updated to data-informed weights (Variant A). This file now shows regression-raw vs old guessed baseline."
+  ]
+}

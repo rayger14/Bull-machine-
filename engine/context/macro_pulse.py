@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from enum import Enum
 import logging
 
-from .macro_pulse_calibration import calibrate_macro_thresholds
 
 logger = logging.getLogger(__name__)
 

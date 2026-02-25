@@ -1,0 +1,62 @@
+name: volume_fade_chop
+display_name: Volume Fade Chop
+aliases:
+- S8
+direction: neutral
+fusion_weights:
+  wyckoff: 0.15
+  liquidity: 0.35
+  momentum: 0.4
+  smc: 0.1
+thresholds:
+  fusion_threshold: 0.18
+  volume_z_max: -0.6
+  adx_max: 25.0
+  chop_score_min: 0.4
+  vol_max: 0.8
+  rsi_extreme: 65.0
+  fusion: 0.18
+  cooling_period_bars: 24
+hard_gates:
+- feature: volume_zscore
+  op: max
+  value: 0.5
+  description: Low volume
+- feature: adx_14
+  op: max
+  value: 25.0
+  description: No strong trend
+- feature: derived:rsi_extreme_65
+  op: bool_true
+  description: RSI at extreme
+gate_mode: soft
+exit_logic:
+  max_hold_hours: 168
+  scale_out_enabled: true
+  scale_out_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  scale_out_pcts:
+  - 0.2
+  - 0.2
+  - 0.3
+  runner_pct: 0.15
+  runner_trailing_atr: 2.5
+  trailing_start_r: 1.0
+  trailing_atr_mult: 2.0
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 2.7
+  atr_tp_mult: 3.8
+regime_preferences:
+  risk_on: 0.7
+  neutral: 1.5
+  risk_off: 0.8
+  crisis: 0.6
+allowed_regimes: []
+description: Low-volume fade in choppy conditions. Scalping specialist for neutral
+  regimes.
+priority: 16
+enabled: true

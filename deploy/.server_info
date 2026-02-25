@@ -1,0 +1,8 @@
+SERVER_IP=165.1.79.19
+INSTANCE_ID=ocid1.instance.oc1.us-sanjose-1.anzwuljrhonr53icxgqgucjgjvw6sz4caitrnudbieunslpgwiriymcwyvvq
+REGION=us-sanjose-1
+AD=aOId:US-SANJOSE-1-AD-1
+SHAPE=VM.Standard.E2.1.Micro
+VCN_ID=ocid1.vcn.oc1.us-sanjose-1.amaaaaaahonr53iat6imis6fqp4ogzi4szb6ztqs2t6utu75sttdjrw7cgyq
+SUBNET_ID=ocid1.subnet.oc1.us-sanjose-1.aaaaaaaalse3qf47pnwzw4223epuiyaowvjtaempw6w6pa4tdttwydlrdcdq
+CREATED=2026-02-10T08:18:00Z

@@ -1,0 +1,340 @@
+{
+  "version": "nautilus_production_backfilled_features_v2",
+  "description": "BACKFILLED FEATURES - All archetypes set to p75 fusion threshold (0.215) with backfilled feature thresholds added",
+  "_comment": "This config adds backfilled feature thresholds (PTI, BOMS, resilience, funding_z) with low starting values to enable all archetypes to fire. Features now available in runtime. Regime bypass active for entries.",
+  "nautilus": {
+    "backtest_params": {
+      "initial_cash": 100000.0,
+      "commission_rate": 0.001,
+      "slippage_bps": 2.0
+    },
+    "risk_params": {
+      "risk_per_trade": 0.02,
+      "atr_stop_mult": 2.5,
+      "max_position_pct": 0.12
+    },
+    "logging": {
+      "level": "INFO",
+      "log_signals": true,
+      "log_fills": true,
+      "log_regime_changes": true,
+      "log_domain_boosts": true,
+      "log_exit_logic": true
+    }
+  },
+  "_comment_regime": "PROBABILISTIC REGIME - Smooth transitions, no binary gates",
+  "regime_classifier": {
+    "enabled": true,
+    "mode": "probabilistic",
+    "model_path": "models/logistic_regime_v4_no_funding_stratified.pkl",
+    "crisis_threshold": 0.15,
+    "use_soft_controls": true,
+    "enable_position_scaling": true,
+    "enable_frequency_scaling": true,
+    "enable_event_override": true,
+    "enable_hysteresis": false,
+    "_comment": "Hysteresis disabled for smooth probabilistic transitions"
+  },
+  "_comment_regime_allocator": "BYPASS ENTRY FILTERING - Regime used for exits/risk only, not entry gates. Research shows regime lag causes 93% signal waste when used for binary filtering. All archetypes allowed to express, regime modulates via sizing/exits.",
+  "regime_allocator": {
+    "bypass_entry_filtering": true,
+    "use_regime_for_exits": true,
+    "_comment_bypass": "Research-backed: Use regime for exits/risk management, not entry filtering",
+    "directional_budgets": {
+      "spring": {"crisis": 0.0, "risk_off": 0.3, "neutral": 0.8, "risk_on": 1.0},
+      "trap_reversal": {"crisis": 0.0, "risk_off": 0.3, "neutral": 0.8, "risk_on": 1.0},
+      "wick_trap": {"crisis": 0.0, "risk_off": 0.4, "neutral": 0.9, "risk_on": 1.0},
+      "liquidity_vacuum": {"crisis": 1.0, "risk_off": 0.9, "neutral": 0.4, "risk_on": 0.0},
+      "trap_within_trend": {"crisis": 0.0, "risk_off": 0.5, "neutral": 0.9, "risk_on": 1.0},
+      "order_block_retest": {"crisis": 0.0, "risk_off": 0.4, "neutral": 0.9, "risk_on": 0.8},
+      "funding_divergence": {"crisis": 1.0, "risk_off": 0.9, "neutral": 0.3, "risk_on": 0.0},
+      "long_squeeze": {"crisis": 0.0, "risk_off": 0.4, "neutral": 0.9, "risk_on": 1.0},
+      "failed_rally": {"crisis": 0.0, "risk_off": 0.8, "neutral": 0.6, "risk_on": 0.2},
+      "failed_continuation": {"crisis": 0.0, "risk_off": 0.7, "neutral": 0.8, "risk_on": 0.3},
+      "re_accumulate": {"crisis": 0.0, "risk_off": 0.4, "neutral": 0.9, "risk_on": 0.9},
+      "volume_exhaustion": {"crisis": 0.0, "risk_off": 0.7, "neutral": 0.8, "risk_on": 0.4},
+      "coil_break": {"crisis": 0.0, "risk_off": 0.5, "neutral": 0.9, "risk_on": 1.0}
+    }
+  },
+  "_comment_exit_logic": "ARCHETYPE-SPECIFIC EXIT LOGIC - Research-backed improvements",
+  "exit_logic": {
+    "trailing_atr_mult": 3.0,
+    "archetypes": {
+      "spring": {
+        "max_hold_hours": 504,
+        "profit_targets": [
+          {"r_multiple": 1.0, "exit_pct": 0.25},
+          {"r_multiple": 2.0, "exit_pct": 0.25},
+          {"r_multiple": 3.0, "exit_pct": 0.25},
+          {"r_multiple": 4.0, "exit_pct": 0.25}
+        ],
+        "_comment": "21 days - Structural Wyckoff setup (optimal: 14-45 days)"
+      },
+      "trap_reversal": {
+        "max_hold_hours": 504,
+        "profit_targets": [
+          {"r_multiple": 1.0, "exit_pct": 0.25},
+          {"r_multiple": 2.0, "exit_pct": 0.25},
+          {"r_multiple": 3.0, "exit_pct": 0.25},
+          {"r_multiple": 4.0, "exit_pct": 0.25}
+        ],
+        "_comment": "21 days - Reversal setup (optimal: 14-45 days)"
+      },
+      "wick_trap": {
+        "max_hold_hours": 240,
+        "profit_targets": [
+          {"r_multiple": 1.0, "exit_pct": 0.25},
+          {"r_multiple": 2.0, "exit_pct": 0.25},
+          {"r_multiple": 3.0, "exit_pct": 0.25},
+          {"r_multiple": 4.0, "exit_pct": 0.25}
+        ],
+        "_comment": "10 days - Fast momentum play (optimal: 3-14 days)"
+      },
+      "liquidity_vacuum": {
+        "max_hold_hours": 1080,
+        "profit_targets": [
+          {"r_multiple": 1.0, "exit_pct": 0.25},
+          {"r_multiple": 2.0, "exit_pct": 0.25},
+          {"r_multiple": 3.0, "exit_pct": 0.25},
+          {"r_multiple": 4.0, "exit_pct": 0.25}
+        ],
+        "_comment": "45 days - Structural/trend setup (optimal: 14-45 days, max range)"
+      },
+      "trap_within_trend": {
+        "max_hold_hours": 720,
+        "profit_targets": [
+          {"r_multiple": 1.0, "exit_pct": 0.25},
+          {"r_multiple": 2.0, "exit_pct": 0.25},
+          {"r_multiple": 3.0, "exit_pct": 0.25},
+          {"r_multiple": 4.0, "exit_pct": 0.25}
+        ],
+        "_comment": "30 days - Trend continuation (optimal: 14-60 days)"
+      },
+      "order_block_retest": {
+        "max_hold_hours": 504,
+        "profit_targets": [
+          {"r_multiple": 1.0, "exit_pct": 0.25},
+          {"r_multiple": 2.0, "exit_pct": 0.25},
+          {"r_multiple": 3.0, "exit_pct": 0.25},
+          {"r_multiple": 4.0, "exit_pct": 0.25}
+        ],
+        "_comment": "21 days - Structural/trend setup (optimal: 14-45 days)"
+      },
+      "funding_divergence": {
+        "max_hold_hours": 720,
+        "profit_targets": [
+          {"r_multiple": 1.0, "exit_pct": 0.25},
+          {"r_multiple": 2.0, "exit_pct": 0.25},
+          {"r_multiple": 3.0, "exit_pct": 0.25},
+          {"r_multiple": 4.0, "exit_pct": 0.25}
+        ],
+        "_comment": "30 days - Counter-trend/crisis play"
+      },
+      "long_squeeze": {
+        "max_hold_hours": 240,
+        "profit_targets": [
+          {"r_multiple": 1.0, "exit_pct": 0.25},
+          {"r_multiple": 2.0, "exit_pct": 0.25},
+          {"r_multiple": 3.0, "exit_pct": 0.25},
+          {"r_multiple": 4.0, "exit_pct": 0.25}
+        ],
+        "_comment": "10 days - Fast counter-trend (optimal: 3-14 days)"
+      },
+      "failed_rally": {
+        "max_hold_hours": 504,
+        "profit_targets": [
+          {"r_multiple": 1.0, "exit_pct": 0.25},
+          {"r_multiple": 2.0, "exit_pct": 0.25},
+          {"r_multiple": 3.0, "exit_pct": 0.25},
+          {"r_multiple": 4.0, "exit_pct": 0.25}
+        ],
+        "_comment": "21 days - Structural/trend setup (optimal: 14-45 days)"
+      },
+      "failed_continuation": {
+        "max_hold_hours": 504,
+        "profit_targets": [
+          {"r_multiple": 1.0, "exit_pct": 0.25},
+          {"r_multiple": 2.0, "exit_pct": 0.25},
+          {"r_multiple": 3.0, "exit_pct": 0.25},
+          {"r_multiple": 4.0, "exit_pct": 0.25}
+        ],
+        "_comment": "21 days - Reversal setup"
+      },
+      "re_accumulate": {
+        "max_hold_hours": 504,
+        "profit_targets": [
+          {"r_multiple": 1.0, "exit_pct": 0.25},
+          {"r_multiple": 2.0, "exit_pct": 0.25},
+          {"r_multiple": 3.0, "exit_pct": 0.25},
+          {"r_multiple": 4.0, "exit_pct": 0.25}
+        ],
+        "_comment": "21 days - Structural Wyckoff setup (optimal: 14-45 days)"
+      },
+      "volume_exhaustion": {
+        "max_hold_hours": 288,
+        "profit_targets": [
+          {"r_multiple": 1.0, "exit_pct": 0.25},
+          {"r_multiple": 2.0, "exit_pct": 0.25},
+          {"r_multiple": 3.0, "exit_pct": 0.25},
+          {"r_multiple": 4.0, "exit_pct": 0.25}
+        ],
+        "_comment": "12 days - Volume climax (optimal: 3-14 days)"
+      },
+      "coil_break": {
+        "max_hold_hours": 504,
+        "profit_targets": [
+          {"r_multiple": 1.0, "exit_pct": 0.25},
+          {"r_multiple": 2.0, "exit_pct": 0.25},
+          {"r_multiple": 3.0, "exit_pct": 0.25},
+          {"r_multiple": 4.0, "exit_pct": 0.25}
+        ],
+        "_comment": "21 days - Breakout setup (optimal: 7-21 days)"
+      }
+    }
+  },
+  "_comment_archetypes": "ARCHETYPE CONFIGURATION - RELAXED THRESHOLDS (p75 = 0.215 for ALL)",
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 10,
+    "enable_A": true,
+    "enable_B": true,
+    "enable_C": true,
+    "enable_H": true,
+    "enable_K": true,
+    "enable_S1": true,
+    "enable_S4": true,
+    "enable_S5": true,
+    "thresholds": {
+      "spring": {
+        "fusion_threshold": 0.215,
+        "pti_score_threshold": 0.15,
+        "disp_atr_multiplier": 0.4,
+        "_comment": "BACKFILLED - Added pti_score_threshold=0.15 (low starting value). PTI now available in runtime. Fusion at p75 baseline (0.215)."
+      },
+      "trap_reversal": {
+        "fusion_threshold": 0.215,
+        "_comment": "RELAXED - Lowered from 0.24 to 0.215 (p75 baseline)"
+      },
+      "wick_trap": {
+        "fusion_threshold": 0.215,
+        "wick_lower_threshold": 0.40,
+        "rsi_threshold": 45,
+        "liquidity_threshold": 0.40,
+        "_comment": "RELAXED - fusion from 0.247→0.215, wick from 0.547→0.40, rsi from 32.33→45, liquidity from 0.29→0.40 (was over-optimized, never fired)"
+      },
+      "liquidity_vacuum": {
+        "fusion_threshold": 0.215,
+        "_comment": "RELAXED - Lowered from 0.24 to 0.215 (p75 baseline)"
+      },
+      "trap_within_trend": {
+        "fusion_threshold": 0.215,
+        "adx_threshold": 15.0,
+        "liquidity_threshold": 0.5,
+        "_comment": "UNCHANGED - Already at p75 baseline with relaxed gates"
+      },
+      "order_block_retest": {
+        "fusion_threshold": 0.215,
+        "boms_strength_min": 0.0,
+        "wyckoff_min": 0.0,
+        "_comment": "DIAGNOSTIC FIX - Set boms_strength_min=0.0 (p75=0.0 in runtime) and wyckoff_min=0.0 (wyckoff_score always 0 due to missing M1/M2 signals). System uses high defaults (0.3, 0.35) if params missing. BOMS available but rarely fires in ranging markets. Wyckoff M1/M2 signals need backfill. Fusion at p75 baseline (0.215)."
+      },
+      "failed_rally": {
+        "fusion_threshold": 0.215,
+        "_comment": "UNCHANGED - Already at p75 baseline"
+      },
+      "failed_continuation": {
+        "fusion_threshold": 0.215,
+        "_comment": "UNCHANGED - Already at p75 baseline"
+      },
+      "re_accumulate": {
+        "fusion_threshold": 0.215,
+        "_comment": "UNCHANGED - Already at p75 baseline"
+      },
+      "volume_exhaustion": {
+        "fusion_threshold": 0.215,
+        "_comment": "UNCHANGED - Already at p75 baseline"
+      },
+      "coil_break": {
+        "fusion_threshold": 0.215,
+        "_comment": "UNCHANGED - Already at p75 baseline"
+      },
+      "long_squeeze": {
+        "fusion_threshold": 0.215,
+        "funding_z_min": 0.5,
+        "rsi_min": 60,
+        "liquidity_max": 0.40,
+        "_comment": "BACKFILLED - Added funding_z_min=0.5 (low starting value, may use proxy if funding unavailable). Lowered rsi from 65→60, raised liquidity from 0.3→0.4."
+      },
+      "funding_divergence": {
+        "fusion_threshold": 0.215,
+        "resilience_min": 0.3,
+        "liquidity_max": 0.40,
+        "_comment": "BACKFILLED - Added resilience_min=0.3 (low starting value). Resilience now available in runtime. Fusion at p75 baseline (0.215)."
+      }
+    }
+  },
+  "_comment_domain_engines": "DOMAIN ENGINES (SOUL) - AMPLIFIED MULTIPLIERS",
+  "temporal_fusion": {
+    "enabled": true,
+    "use_confluence": true,
+    "min_confluence_score": 0.5,
+    "min_multiplier": 0.5,
+    "max_multiplier": 2.0,
+    "_comment": "AMPLIFIED from 0.85-1.25 to 0.50-2.00",
+    "weights": {
+      "fib_time_cluster": 0.4,
+      "volume_time_confluence": 0.25,
+      "regime_time_alignment": 0.2,
+      "wyckoff_pti_confluence": 0.15
+    }
+  },
+  "wyckoff_events": {
+    "enabled": true,
+    "min_confidence": 0.65,
+    "log_events": true,
+    "avoid_longs_if": ["BC", "UTAD"],
+    "boost_longs_if": {
+      "LPS": 1.5,
+      "Spring-A": 2.0,
+      "Spring-B": 1.8,
+      "SOS": 1.5,
+      "PTI_confluence": 2.5
+    },
+    "_comment": "AMPLIFIED from 1.15-1.25 to 1.50-2.50",
+    "veto_longs_if": ["BC", "UTAD"],
+    "reduce_position_size_if": ["LPSY", "UT"]
+  },
+  "smc_engine": {
+    "enabled": true,
+    "min_score": 0.3,
+    "detect_bos": true,
+    "detect_choch": true,
+    "detect_liquidity_sweeps": true,
+    "boost_threshold": 0.5,
+    "boost_multiplier": 1.8,
+    "veto_threshold": 0.2,
+    "_comment": "AMPLIFIED boost from implicit to 1.80x, lowered min_score from 0.5 to 0.3"
+  },
+  "hob_engine": {
+    "enabled": false,
+    "use_demand_zones": true,
+    "use_supply_zones": true,
+    "min_zone_strength": 0.5,
+    "boost_multiplier": 1.5,
+    "veto_opposite_zones": true,
+    "_comment": "PLACEHOLDER - Enable when HOB features available"
+  },
+  "fusion": {
+    "entry_threshold_confidence": 0.4,
+    "weights": {
+      "wyckoff": 0.5,
+      "liquidity": 0.2,
+      "momentum": 0.2,
+      "smc": 0.1
+    }
+  },
+  "ml_filter": {
+    "enabled": false,
+    "_comment": "ML filter disabled for baseline"
+  }
+}

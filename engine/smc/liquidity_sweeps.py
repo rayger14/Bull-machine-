@@ -6,9 +6,8 @@ stop losses and retail orders, then reverses - classic institutional behavior.
 """
 
 import pandas as pd
-import numpy as np
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 import logging
 

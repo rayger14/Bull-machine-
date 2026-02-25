@@ -1,0 +1,599 @@
+{
+  "version": "nautilus_production_full_soul_v1",
+  "description": "NautilusTrader Production Config - Full Bull Machine with Soul Activated",
+  "_comment": "All components integrated: Probabilistic Regime + Exit Logic + Domain Engines + MTF",
+  "nautilus": {
+    "backtest_params": {
+      "initial_cash": 100000.0,
+      "commission_rate": 0.001,
+      "slippage_bps": 2.0
+    },
+    "risk_params": {
+      "risk_per_trade": 0.02,
+      "atr_stop_mult": 2.5,
+      "max_position_pct": 0.12
+    },
+    "logging": {
+      "level": "INFO",
+      "log_signals": true,
+      "log_fills": true,
+      "log_regime_changes": true,
+      "log_domain_boosts": true,
+      "log_exit_logic": true
+    }
+  },
+  "_comment_regime": "PROBABILISTIC REGIME - Smooth transitions, no binary gates",
+  "regime_classifier": {
+    "enabled": true,
+    "mode": "probabilistic",
+    "model_path": "models/logistic_regime_v4_no_funding_stratified.pkl",
+    "crisis_threshold": 0.15,
+    "use_soft_controls": true,
+    "enable_position_scaling": true,
+    "enable_frequency_scaling": true,
+    "enable_event_override": true,
+    "enable_hysteresis": false,
+    "_comment": "Hysteresis disabled for smooth probabilistic transitions"
+  },
+  "_comment_regime_allocator": "PROBABILISTIC ALLOCATOR - All archetypes enabled",
+  "regime_allocator": {
+    "directional_budgets": {
+      "spring": {
+        "crisis": 0.0,
+        "risk_off": 0.3,
+        "neutral": 0.8,
+        "risk_on": 1.0
+      },
+      "trap_reversal": {
+        "crisis": 0.0,
+        "risk_off": 0.3,
+        "neutral": 0.8,
+        "risk_on": 1.0
+      },
+      "wick_trap": {
+        "crisis": 0.0,
+        "risk_off": 0.4,
+        "neutral": 0.9,
+        "risk_on": 1.0
+      },
+      "liquidity_vacuum": {
+        "crisis": 1.0,
+        "risk_off": 0.9,
+        "neutral": 0.4,
+        "risk_on": 0.0
+      },
+      "trap_within_trend": {
+        "crisis": 0.0,
+        "risk_off": 0.5,
+        "neutral": 0.9,
+        "risk_on": 1.0
+      },
+      "order_block_retest": {
+        "crisis": 0.0,
+        "risk_off": 0.4,
+        "neutral": 0.9,
+        "risk_on": 0.8
+      },
+      "funding_divergence": {
+        "crisis": 1.0,
+        "risk_off": 0.9,
+        "neutral": 0.3,
+        "risk_on": 0.0
+      },
+      "long_squeeze": {
+        "crisis": 0.0,
+        "risk_off": 0.4,
+        "neutral": 0.9,
+        "risk_on": 1.0
+      },
+      "failed_rally": {
+        "crisis": 0.0,
+        "risk_off": 0.8,
+        "neutral": 0.6,
+        "risk_on": 0.2
+      },
+      "failed_continuation": {
+        "crisis": 0.0,
+        "risk_off": 0.7,
+        "neutral": 0.5,
+        "risk_on": 0.3
+      },
+      "re_accumulate": {
+        "crisis": 0.0,
+        "risk_off": 0.3,
+        "neutral": 0.7,
+        "risk_on": 1.0
+      },
+      "volume_exhaustion": {
+        "crisis": 0.5,
+        "risk_off": 0.8,
+        "neutral": 0.5,
+        "risk_on": 0.2
+      },
+      "coil_break": {
+        "crisis": 0.0,
+        "risk_off": 0.4,
+        "neutral": 0.8,
+        "risk_on": 1.0
+      }
+    }
+  },
+  "_comment_exit_logic": "OPTIMIZED R-LADDER - Keeps 50% after 2R for extended moves (3R-5R+)",
+  "exit_logic": {
+    "global": {
+      "enable_invalidation_exits": true,
+      "enable_profit_targets": true,
+      "enable_time_based_exits": true,
+      "enable_reason_gone_exits": true,
+      "enable_trailing_stops": true
+    },
+    "archetypes": {
+      "spring": {
+        "max_hold_hours": 120,
+        "profit_targets": [
+          {
+            "r_multiple": 1.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 2.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 3.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 4.0,
+            "exit_pct": 0.25
+          }
+        ]
+      },
+      "trap_within_trend": {
+        "max_hold_hours": 72,
+        "profit_targets": [
+          {
+            "r_multiple": 1.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 2.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 3.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 4.0,
+            "exit_pct": 0.25
+          }
+        ]
+      },
+      "wick_trap": {
+        "max_hold_hours": 96,
+        "profit_targets": [
+          {
+            "r_multiple": 1.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 2.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 3.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 4.0,
+            "exit_pct": 0.25
+          }
+        ]
+      },
+      "liquidity_vacuum": {
+        "max_hold_hours": 48,
+        "profit_targets": [
+          {
+            "r_multiple": 1.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 2.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 3.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 4.0,
+            "exit_pct": 0.25
+          }
+        ]
+      },
+      "order_block_retest": {
+        "max_hold_hours": 96,
+        "profit_targets": [
+          {
+            "r_multiple": 1.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 2.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 3.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 4.0,
+            "exit_pct": 0.25
+          }
+        ]
+      },
+      "failed_rally": {
+        "max_hold_hours": 48,
+        "profit_targets": [
+          {
+            "r_multiple": 1.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 2.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 3.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 4.0,
+            "exit_pct": 0.25
+          }
+        ]
+      },
+      "re_accumulate": {
+        "max_hold_hours": 120,
+        "profit_targets": [
+          {
+            "r_multiple": 1.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 2.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 3.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 4.0,
+            "exit_pct": 0.25
+          }
+        ]
+      },
+      "volume_exhaustion": {
+        "max_hold_hours": 48,
+        "profit_targets": [
+          {
+            "r_multiple": 1.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 2.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 3.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 4.0,
+            "exit_pct": 0.25
+          }
+        ]
+      },
+      "coil_break": {
+        "max_hold_hours": 72,
+        "profit_targets": [
+          {
+            "r_multiple": 1.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 2.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 3.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 4.0,
+            "exit_pct": 0.25
+          }
+        ]
+      },
+      "long_squeeze": {
+        "max_hold_hours": 96,
+        "profit_targets": [
+          {
+            "r_multiple": 1.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 2.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 3.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 4.0,
+            "exit_pct": 0.25
+          }
+        ]
+      },
+      "funding_divergence": {
+        "max_hold_hours": 48,
+        "profit_targets": [
+          {
+            "r_multiple": 1.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 2.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 3.0,
+            "exit_pct": 0.25
+          },
+          {
+            "r_multiple": 4.0,
+            "exit_pct": 0.25
+          }
+        ]
+      }
+    }
+  },
+  "_comment_regime_adaptive": "REGIME-ADAPTIVE THRESHOLDS - Data-driven calibration (2018-2024 fusion distribution)",
+  "gates_regime_profiles": {
+    "risk_on": {
+      "min_liquidity": 0.15,
+      "final_fusion_floor": 0.215,
+      "_comment": "Aggressive - p75 (25% of bars), capture bull run opportunities"
+    },
+    "neutral": {
+      "min_liquidity": 0.18,
+      "final_fusion_floor": 0.24,
+      "_comment": "Moderate - p90 (10% of bars), balanced approach"
+    },
+    "risk_off": {
+      "min_liquidity": 0.22,
+      "final_fusion_floor": 0.254,
+      "_comment": "Conservative - p95 (5% of bars), higher quality setups"
+    },
+    "crisis": {
+      "min_liquidity": 0.28,
+      "final_fusion_floor": 0.275,
+      "_comment": "Very selective - p98 (2% of bars), safety first"
+    }
+  },
+  "archetype_overrides": {
+    "spring": {
+      "risk_on": {
+        "fusion": -0.015
+      },
+      "crisis": {
+        "fusion": 0.02
+      },
+      "_comment": "Rare Wyckoff: more aggressive in bull, selective in crisis"
+    },
+    "wick_trap": {
+      "risk_on": {
+        "fusion": -0.01
+      },
+      "risk_off": {
+        "fusion": 0.01
+      },
+      "_comment": "Reversal: favor bull markets"
+    },
+    "trap_within_trend": {
+      "risk_on": {
+        "fusion": -0.015
+      },
+      "crisis": {
+        "fusion": 0.025
+      },
+      "_comment": "Trend continuation: aggressive in bull, very selective in crisis"
+    },
+    "liquidity_vacuum": {
+      "neutral": {
+        "fusion": -0.01
+      },
+      "crisis": {
+        "fusion": -0.02
+      },
+      "_comment": "Counter-trend: more aggressive in crisis/chop"
+    }
+  },
+  "global_clamps": {
+    "fusion": [
+      0.18,
+      0.35
+    ],
+    "liquidity": [
+      0.1,
+      0.35
+    ],
+    "min_liquidity": [
+      0.1,
+      0.32
+    ]
+  },
+  "_comment_archetypes": "BASE THRESHOLDS - ALL ARCHETYPES ENABLED for full validation",
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 10,
+    "enable_A": true,
+    "enable_B": true,
+    "enable_C": true,
+    "enable_H": true,
+    "enable_K": true,
+    "enable_S1": true,
+    "enable_S4": true,
+    "enable_S5": true,
+    "thresholds": {
+      "spring": {
+        "fusion_threshold": 0.24,
+        "pti_score_threshold": 0.25,
+        "disp_atr_multiplier": 0.4,
+        "_comment": "p90 - Wyckoff spring (PTI lowered from 0.30 to 0.25, displacement from 0.5 to 0.4)"
+      },
+      "trap_reversal": {
+        "fusion_threshold": 0.24,
+        "_comment": "p90 - Trap reversal pattern"
+      },
+      "wick_trap": {
+        "fusion_threshold": 0.215,
+        "wick_lower_threshold": 0.6,
+        "rsi_threshold": 40,
+        "_comment": "p75 - Wick rejection reversal (wick_lower_threshold lowered from 0.75 to 0.60, rsi from 35 to 40)"
+      },
+      "liquidity_vacuum": {
+        "fusion_threshold": 0.24,
+        "_comment": "p90 - Counter-trend (lowered from 0.275)"
+      },
+      "trap_within_trend": {
+        "fusion_threshold": 0.215,
+        "adx_threshold": 15.0,
+        "liquidity_threshold": 0.5,
+        "_comment": "p75 - Trend continuation (ADX lowered from 25 to 15, liquidity relaxed from 0.30 to 0.50)"
+      },
+      "order_block_retest": {
+        "fusion_threshold": 0.215,
+        "boms_strength_min": 0.25,
+        "wyckoff_min": 0.3,
+        "_comment": "p75 - SMC order block (BOMS lowered from 0.30 to 0.25, Wyckoff from 0.35 to 0.30)"
+      },
+      "failed_rally": {
+        "fusion_threshold": 0.215,
+        "_comment": "p75 - Failed rally short setup"
+      },
+      "failed_continuation": {
+        "fusion_threshold": 0.215,
+        "_comment": "p75 - Failed continuation"
+      },
+      "re_accumulate": {
+        "fusion_threshold": 0.215,
+        "_comment": "p75 - Wyckoff re-accumulation"
+      },
+      "volume_exhaustion": {
+        "fusion_threshold": 0.215,
+        "_comment": "p75 - Volume climax exhaustion"
+      },
+      "coil_break": {
+        "fusion_threshold": 0.215,
+        "_comment": "p75 - Coil breakout"
+      },
+      "long_squeeze": {
+        "fusion_threshold": 0.215,
+        "funding_z_min": 1.0,
+        "rsi_min": 65,
+        "liquidity_max": 0.3,
+        "_comment": "p75 - Long squeeze (funding_z from 1.2 to 1.0, RSI from 70 to 65)"
+      },
+      "funding_divergence": {
+        "fusion_threshold": 0.215,
+        "funding_z_max": -1.0,
+        "resilience_min": 0.4,
+        "liquidity_max": 0.35,
+        "_comment": "p75 - Funding divergence (funding_z from -1.2 to -1.0, resilience from 0.5 to 0.4)"
+      }
+    },
+    "long_squeeze": {
+      "fusion_threshold": 0.23508687153691285,
+      "funding_z_min": 1.202181383937657,
+      "rsi_min": 66.2,
+      "liquidity_threshold": 0.3430338954274661
+    }
+  },
+  "_comment_domain_engines": "DOMAIN ENGINES (SOUL) - AMPLIFIED MULTIPLIERS",
+  "temporal_fusion": {
+    "enabled": true,
+    "use_confluence": true,
+    "min_confluence_score": 0.5,
+    "min_multiplier": 0.5,
+    "max_multiplier": 2.0,
+    "_comment": "AMPLIFIED from 0.85-1.25 to 0.50-2.00",
+    "weights": {
+      "fib_time_cluster": 0.4,
+      "volume_time_confluence": 0.25,
+      "regime_time_alignment": 0.2,
+      "wyckoff_pti_confluence": 0.15
+    }
+  },
+  "wyckoff_events": {
+    "enabled": true,
+    "min_confidence": 0.65,
+    "log_events": true,
+    "avoid_longs_if": [
+      "BC",
+      "UTAD"
+    ],
+    "boost_longs_if": {
+      "LPS": 1.5,
+      "Spring-A": 2.0,
+      "Spring-B": 1.8,
+      "SOS": 1.5,
+      "PTI_confluence": 2.5
+    },
+    "_comment": "AMPLIFIED from 1.15-1.25 to 1.50-2.50",
+    "veto_longs_if": [
+      "BC",
+      "UTAD"
+    ],
+    "reduce_position_size_if": [
+      "LPSY",
+      "UT"
+    ]
+  },
+  "smc_engine": {
+    "enabled": true,
+    "min_score": 0.3,
+    "detect_bos": true,
+    "detect_choch": true,
+    "detect_liquidity_sweeps": true,
+    "boost_threshold": 0.5,
+    "boost_multiplier": 1.8,
+    "veto_threshold": 0.2,
+    "_comment": "AMPLIFIED boost from implicit to 1.80x, lowered min_score from 0.5 to 0.3"
+  },
+  "hob_engine": {
+    "enabled": false,
+    "use_demand_zones": true,
+    "use_supply_zones": true,
+    "min_zone_strength": 0.5,
+    "boost_multiplier": 1.5,
+    "veto_opposite_zones": true,
+    "_comment": "PLACEHOLDER - Enable when HOB features available"
+  },
+  "fusion": {
+    "entry_threshold_confidence": 0.4,
+    "weights": {
+      "wyckoff": 0.5,
+      "liquidity": 0.2,
+      "momentum": 0.2,
+      "smc": 0.1
+    }
+  },
+  "ml_filter": {
+    "enabled": false,
+    "_comment": "ML filter disabled for baseline"
+  }
+}

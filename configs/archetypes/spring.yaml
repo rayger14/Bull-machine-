@@ -1,0 +1,65 @@
+name: spring
+display_name: Spring / UTAD
+aliases:
+- A
+- trap_reversal
+- wyckoff_spring_utad
+direction: long
+fusion_weights:
+  wyckoff: 0.6
+  liquidity: 0.2
+  momentum: 0.1
+  smc: 0.1
+thresholds:
+  fusion_threshold: 0.18
+  pti_score_threshold: 0.05
+  disp_atr_multiplier: 0.0
+  pti: 0.05
+  disp_atr: 0.0
+  fusion: 0.18
+  wick_lower_threshold: 0.2
+  cooling_period_bars: 36
+hard_gates:
+- feature: wyckoff_bullish_score
+  op: min
+  value: 0.1
+  nan_policy: skip
+  description: Wyckoff bullish signal
+- feature: tf1h_pti_score
+  op: min
+  value: 0.05
+  nan_policy: skip
+  description: Minimum PTI score
+# NOTE: OI/taker gates removed — at spring detection, selling IS the mechanism.
+# Whale confirmation comes after the spring, not during. Whale conflict penalty handles global conflicts.
+gate_mode: soft
+exit_logic:
+  max_hold_hours: 168
+  scale_out_enabled: true
+  scale_out_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  scale_out_pcts:
+  - 0.2
+  - 0.2
+  - 0.3
+  runner_pct: 0.15
+  runner_trailing_atr: 2.5
+  trailing_start_r: 1.0
+  trailing_atr_mult: 2.0
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 1.3
+  atr_tp_mult: 3.1
+regime_preferences:
+  risk_on: 0.5
+  neutral: 1.0
+  risk_off: 1.5
+  crisis: 2.0
+allowed_regimes: []
+description: PTI-based spring/UTAD detection with displacement confirmation. Counter-trend
+  reversal at accumulation lows.
+priority: 1
+enabled: true

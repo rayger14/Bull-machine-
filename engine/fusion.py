@@ -9,13 +9,13 @@ with intelligent veto logic, macro pulse integration, and explainable deltas.
 
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Tuple, Any, Union
+from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
 import logging
 
 # Import domain-specific signals
-from engine.context.signals import SMTSignal, HPS_Score
+from engine.context.signals import SMTSignal
 from engine.context.macro_pulse import MacroPulseEngine, MacroPulse, MacroRegime
 from engine.liquidity.hob import HOBSignal
 from engine.liquidity.bojan_rules import LiquidityReaction

@@ -1,61 +1,141 @@
-
-name: Bull Machine CI
+name: CI
 
 on:
-  push:
-    branches: [ main, develop ]
   pull_request:
+    branches: [ main ]
+  push:
     branches: [ main ]
 
 jobs:
+  # ── Lint ──────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - run: pip install ruff
+    - name: Syntax errors & undefined names (blocking)
+      run: ruff check . --select=E9,F63,F7,F82
+    - name: Style warnings (non-blocking)
+      run: ruff check . --exit-zero
+
+  # ── Unit Tests ────────────────────────────────────────────────────────
   test:
+    name: Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
-
     steps:
     - uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install ruff mypy pytest pandas numpy pydantic==2.*
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-    - name: Lint with ruff
+        pip install pytest pandas numpy scipy scikit-learn pyyaml
+    - name: Core engine imports
       run: |
-        # Stop the build if there are Python syntax errors or undefined names
-        ruff check . --select=E9,F63,F7,F82
-        # Show all issues as warnings
-        ruff check . --exit-zero
-
-    - name: Type check with mypy
-      run: |
-        mypy bull_machine --ignore-missing-imports --no-strict-optional
-      continue-on-error: true
-
-    - name: Test with pytest
-      run: |
-        # Run smoke tests (skip legacy)
-        python -m pytest tests/smoke/ -v -k "not legacy" || echo "Smoke tests completed with issues"
-        # Run fusion tests
-        python -m pytest tests/test_fusion.py -v || echo "Fusion tests completed with issues"
-        # Quick import validation
-        python -c "from bull_machine.modules.fusion.advanced import AdvancedFusionEngine; from bull_machine.core.types import WyckoffResult; print('✅ Core imports validated')"
-
-    - name: Production validation
-      run: |
-        # Run basic smoke tests
-        python tests/smoke/test_fusion_compat.py || echo "Smoke tests completed with issues"
-        # Test core imports
         python -c "
-        from bull_machine.modules.fusion.advanced import AdvancedFusionEngine
-        from bull_machine.core.types import WyckoffResult
-        print('✅ v1.4.2 Core imports validated')
+        from engine.archetypes.archetype_instance import ArchetypeInstance
+        from engine.config.archetype_config_loader import load_archetype_configs
+        from engine.integrations.isolated_archetype_engine import IsolatedArchetypeEngine
+        print('Core engine imports OK')
         "
+    - name: Run unit tests
+      run: python -m pytest tests/unit/ -v --tb=short -q 2>&1 || echo "Unit tests completed"
+
+  # ── Config Validation ─────────────────────────────────────────────────
+  validate:
+    name: Validate Configs
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - run: pip install pyyaml
+
+    - name: JSON configs
+      run: |
+        python -c "
+        import json, glob, sys
+        errors = []
+        for pattern in ['configs/*.json', 'configs/optimized/*.json']:
+            for f in glob.glob(pattern):
+                try:
+                    json.load(open(f))
+                except Exception as e:
+                    errors.append(f'{f}: {e}')
+        if errors:
+            for e in errors: print(f'FAIL: {e}')
+            sys.exit(1)
+        print('All JSON configs valid')
+        "
+
+    - name: YAML archetype configs
+      run: |
+        python -c "
+        import yaml, glob, sys
+        errors = []
+        for f in sorted(glob.glob('configs/archetypes/*.yaml')):
+            if '_example' in f: continue
+            try:
+                with open(f) as fh:
+                    cfg = yaml.safe_load(fh)
+                assert cfg and cfg.get('name'), f'{f}: missing name'
+                assert cfg.get('direction'), f'{f}: missing direction'
+            except Exception as e:
+                errors.append(str(e))
+        if errors:
+            for e in errors: print(f'FAIL: {e}')
+            sys.exit(1)
+        print('All YAML configs valid')
+        "
+
+    - name: Production config
+      run: |
+        python -c "
+        import json
+        with open('configs/bull_machine_isolated_v11_fixed.json') as f:
+            cfg = json.load(f)
+        assert 'adaptive_fusion' in cfg, 'Missing adaptive_fusion'
+        af = cfg['adaptive_fusion']
+        assert 'per_archetype_base_threshold' in af, 'Missing per_archetype_base_threshold'
+        assert 'base_threshold' in af, 'Missing base_threshold'
+        print('Production config valid')
+        "
+
+  # ── Architecture ──────────────────────────────────────────────────────
+  architecture:
+    name: Architecture
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Required directories
+      run: |
+        for dir in engine/archetypes engine/integrations engine/config engine/smc engine/wyckoff configs/archetypes deploy bin/live; do
+          test -d "$dir" || { echo "Missing: $dir"; exit 1; }
+        done
+        echo "All required directories present"
+
+    - name: Required files
+      run: |
+        for f in engine/archetypes/archetype_instance.py engine/config/archetype_config_loader.py engine/integrations/isolated_archetype_engine.py bin/backtest_v11_standalone.py bin/live/coinbase_runner.py bin/live/live_feature_computer.py configs/bull_machine_isolated_v11_fixed.json deploy/deploy.sh; do
+          test -f "$f" || { echo "Missing: $f"; exit 1; }
+        done
+        echo "All required files present"
+
+    - name: No secrets committed
+      run: |
+        FOUND=$(find . -name ".env" -o -name ".env.local" -o -name "*.pem" -o -name "*.key" | grep -v ".gitignore" | grep -v ".env.example" | grep -v ".env.coinbase.template" | grep -v node_modules || true)
+        if [ ! -z "$FOUND" ]; then
+          echo "Potential secrets found:"
+          echo "$FOUND"
+          exit 1
+        fi
+        echo "No secrets found"

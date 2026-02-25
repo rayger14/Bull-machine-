@@ -1,0 +1,63 @@
+name: liquidity_sweep
+display_name: Liquidity Sweep & Reclaim
+aliases:
+- G
+- sweep
+- liquidity_sweep_reclaim
+direction: long
+fusion_weights:
+  wyckoff: 0.3
+  liquidity: 0.4
+  momentum: 0.15
+  smc: 0.15
+thresholds:
+  fusion_threshold: 0.18
+  wyckoff_phase: B
+  boms_strength_min: 0.0
+  boms_strength: 0.0
+  liq: 0.2
+  fusion: 0.18
+  volume_cluster: true
+  cooling_period_bars: 24
+hard_gates:
+- feature: boms_strength
+  op: min
+  value: 0.01
+  frozen_bypass: true
+  description: BOMS strength (frozen -- bypassed)
+- feature: liquidity_score
+  op: min
+  value: 0.2
+  description: Minimum liquidity for sweep
+# NOTE: OI/taker gates removed — temporal mismatch (sweep detection is concurrent,
+# but OI confirmation comes AFTER the sweep). Whale conflict penalty handles this.
+gate_mode: soft
+exit_logic:
+  max_hold_hours: 168
+  scale_out_enabled: true
+  scale_out_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  scale_out_pcts:
+  - 0.2
+  - 0.2
+  - 0.3
+  runner_pct: 0.15
+  runner_trailing_atr: 2.5
+  trailing_start_r: 1.0
+  trailing_atr_mult: 2.0
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 3.4
+  atr_tp_mult: 5.7
+regime_preferences:
+  risk_on: 1.2
+  neutral: 1.0
+  risk_off: 0.9
+  crisis: 0.8
+allowed_regimes: []
+description: BOMS strength + rising liquidity from oversold. Liquidity grab reversal.
+priority: 7
+enabled: true

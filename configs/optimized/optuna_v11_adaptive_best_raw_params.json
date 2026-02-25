@@ -1,0 +1,15 @@
+{
+  "failed_continuation_base_threshold": 0.11,
+  "failed_continuation_cooling_bars": 24,
+  "liquidity_sweep_base_threshold": 0.16,
+  "liquidity_sweep_cooling_bars": 16,
+  "liquidity_vacuum_base_threshold": 0.21000000000000002,
+  "liquidity_vacuum_cooling_bars": 36,
+  "retest_cluster_base_threshold": 0.22999999999999998,
+  "retest_cluster_cooling_bars": 28,
+  "trap_within_trend_base_threshold": 0.08,
+  "trap_within_trend_cooling_bars": 28,
+  "wick_trap_base_threshold": 0.24,
+  "wick_trap_cooling_bars": 32,
+  "relative_score_percentile": 0.55
+}
