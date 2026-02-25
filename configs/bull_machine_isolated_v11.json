@@ -1,0 +1,46 @@
+{
+  "version": "v11_isolated",
+  "description": "First backtest with archetype isolation architecture - per-archetype fusion, portfolio allocation, correlation filtering",
+
+  "archetype_config_dir": "configs/archetypes/",
+
+  "use_isolated_fusion": true,
+
+  "portfolio_allocation": {
+    "mode": "MULTI_UNCORRELATED",
+    "correlation_threshold": 0.7,
+    "max_simultaneous_positions": 3,
+    "enable_correlation_filter": true,
+    "relative_score_percentile": 0.70,
+    "notes": [
+      "relative_score_percentile: Keep only top 70% of signals by fusion score",
+      "This prevents overtrading when many archetypes fire simultaneously"
+    ]
+  },
+
+  "fusion_thresholds_by_regime": {
+    "crisis": 0.40,
+    "risk_off": 0.30,
+    "neutral": 0.24,
+    "risk_on": 0.18,
+    "notes": [
+      "Higher thresholds in crisis = only high conviction trades",
+      "Lower thresholds in risk_on = capture more alpha in bull markets"
+    ]
+  },
+
+  "regime_classifier": {
+    "enabled": false,
+    "mode": "static",
+    "model_path": "models/logistic_regime_v4_no_funding_stratified.pkl",
+    "use_soft_controls": true
+  },
+
+  "notes": [
+    "This config uses the new v11 isolation architecture",
+    "Each archetype calculates its own fusion score (no shared fusion_total)",
+    "Portfolio allocator filters correlated signals to improve diversification",
+    "Regime classifier disabled for initial test (using static regime from features)",
+    "Start with small test period (Jan 2023) to verify integration works"
+  ]
+}

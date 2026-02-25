@@ -1,0 +1,38 @@
+[Unit]
+Description=Bull Machine Coinbase Paper Trading
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/Bull-machine-
+Environment=PYTHONPATH=/home/ubuntu/Bull-machine-
+Environment=PATH=/home/ubuntu/Bull-machine-/.venv/bin:/usr/local/bin:/usr/bin:/bin
+
+ExecStart=/home/ubuntu/Bull-machine-/.venv/bin/python3 bin/live/coinbase_runner.py \
+    --paper \
+    --initial-cash 100000 \
+    --commission-rate 0.0002 \
+    --slippage-bps 3
+
+# Coinbase API keys (loaded from env file)
+EnvironmentFile=-/home/ubuntu/Bull-machine-/.env.coinbase
+
+# Auto-restart on crash, wait 30s between attempts
+Restart=always
+RestartSec=30
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+# Resource limits (sized for Oracle E2.Micro 1GB RAM)
+MemoryMax=800M
+
+# Logging via journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bull-machine-coinbase
+
+[Install]
+WantedBy=multi-user.target

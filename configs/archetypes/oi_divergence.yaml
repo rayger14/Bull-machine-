@@ -1,0 +1,137 @@
+# OI Divergence Reversal
+#
+# Detects "hollow" price moves where Open Interest is declining despite price
+# making new local extremes. When price pushes to a new high/low but OI drops,
+# it means existing positions are being CLOSED (smart money exiting) rather than
+# new positions being opened. The move lacks conviction and is likely to reverse.
+#
+# REQUIRES: Binance Futures API features in the feature store:
+#   - oi_change_4h        : 4-hour Open Interest % change
+#   - oi_change_24h       : 24-hour Open Interest % change
+#   - oi_price_divergence : Composite OI-vs-price divergence score
+#   - binance_funding_rate: Current Binance perpetual funding rate
+#   - ls_ratio_extreme    : Long/Short ratio extreme flag
+#   - taker_imbalance     : Net taker buy/sell imbalance
+#
+# These features are NaN/0 before ~2020 and in any backtest run without
+# Binance Futures data. All hard gates use nan_policy: skip and
+# frozen_bypass: true so the archetype gracefully degrades when data is
+# unavailable (gates are skipped, fusion score alone decides).
+#
+# This archetype is GENUINELY DIFFERENT from all 16 existing archetypes:
+#   - Only archetype that uses Open Interest data
+#   - Detects positioning-based divergences (not price structure)
+#   - Contrarian signal based on institutional flow
+
+name: oi_divergence
+display_name: "OI Divergence Reversal"
+aliases:
+- S9
+- oi_div
+- open_interest_divergence
+direction: long
+
+# Per-archetype fusion weights
+# Primary: liquidity (0.45) -- OI is a liquidity/positioning metric
+# Secondary: momentum (0.30) -- RSI/price extreme confirmation
+# Tertiary: wyckoff (0.15) -- accumulation/distribution context
+# Supporting: smc (0.10) -- order flow structure
+fusion_weights:
+  wyckoff: 0.15
+  liquidity: 0.45
+  momentum: 0.30
+  smc: 0.10
+
+# Entry thresholds
+thresholds:
+  fusion_threshold: 0.15
+  oi_decline_4h: -0.02
+  oi_decline_24h: -0.03
+  rsi_oversold: 35.0
+  rsi_overbought: 65.0
+  volume_z_min: 0.0
+  funding_rate_threshold: 0.0001
+  price_extreme_lookback: 24
+  price_extreme_percentile: 0.90
+  fusion: 0.15
+  cooling_period_bars: 24
+
+# Hard gates -- ALL must pass before this archetype can fire
+# nan_policy: skip ensures gates are skipped when OI features are NaN (pre-2022)
+# OI features are REAL data since 2022 — no frozen_bypass needed
+hard_gates:
+- feature: oi_change_4h
+  op: max
+  value: -0.02
+  nan_policy: skip
+  description: "OI must be declining >2% over 4h (positions closing)"
+- feature: oi_change_24h
+  op: max
+  value: -0.03
+  nan_policy: skip
+  description: "OI must be declining >3% over 24h (sustained unwind)"
+- feature: volume_zscore
+  op: min
+  value: 0.0
+  description: "Volume must be above average (confirms activity)"
+- feature: rsi_14
+  op: max
+  value: 35.0
+  nan_policy: skip
+  description: "RSI oversold for long entry (contrarian)"
+- feature: taker_imbalance
+  op: max
+  value: 0.1
+  nan_policy: skip
+  description: "Net selling (taker flow confirms smart money exiting)"
+gate_mode: soft
+
+# Exit logic
+exit_logic:
+  max_hold_hours: 48
+  scale_out_enabled: true
+  scale_out_levels:
+  - 1.0
+  - 1.5
+  - 2.5
+  scale_out_pcts:
+  - 0.30
+  - 0.40
+  - 0.30
+  runner_pct: 0.0
+  runner_trailing_atr: 0.0
+  trailing_start_r: 1.5
+  trailing_atr_mult: 2.0
+
+# Position sizing
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 2.0
+  atr_tp_mult: 3.5
+
+# Regime preferences
+# OI divergence is a CONTRARIAN signal, so it thrives in regimes
+# opposite to the signal direction:
+#   - In bull regime, OI divergence shorts (smart money exiting longs) are valuable
+#   - In bear regime, OI divergence longs (shorts unwinding) are valuable
+#   - In crisis, OI data from exchanges may be lagging or unreliable
+regime_preferences:
+  risk_on: 0.8
+  neutral: 1.0
+  risk_off: 1.3
+  crisis: 0.5
+
+# Allowed regimes -- empty means fire in all regimes
+allowed_regimes: []
+
+description: >
+  Open Interest divergence reversal. Price makes new extreme while OI
+  declines, signaling institutional position unwinding. Contrarian smart
+  money signal not derivable from price action alone. Requires Binance
+  Futures API features (oi_change_4h, oi_change_24h, oi_price_divergence,
+  binance_funding_rate). Features are NaN before ~2020; gates use
+  nan_policy: skip for graceful degradation.
+
+priority: 17
+enabled: true

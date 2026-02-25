@@ -1,0 +1,27 @@
+[Unit]
+Description=Bull Machine Live Dashboard
+After=network.target coinbase-paper.service
+Wants=coinbase-paper.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/Bull-machine-
+Environment="PATH=/home/ubuntu/Bull-machine-/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONPATH=/home/ubuntu/Bull-machine-"
+
+ExecStart=/home/ubuntu/Bull-machine-/.venv/bin/python3 \
+    /home/ubuntu/Bull-machine-/bin/live/dashboard.py \
+    --host 0.0.0.0 --port 8081
+
+Restart=on-failure
+RestartSec=10
+MemoryMax=200M
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bull-machine-dashboard
+
+[Install]
+WantedBy=multi-user.target

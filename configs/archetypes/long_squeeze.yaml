@@ -1,0 +1,70 @@
+name: long_squeeze
+display_name: Long Squeeze Cascade
+aliases:
+- S5
+direction: short
+fusion_weights:
+  wyckoff: 0.2
+  liquidity: 0.5
+  momentum: 0.2
+  smc: 0.1
+thresholds:
+  fusion_threshold: 0.15
+  funding_z_min: 0.5
+  rsi_min: 50.0
+  liquidity_max: 0.6
+  funding_max: 0.0
+  oi_min: 0.0
+  vol_min: 0.5
+  fusion: 0.15
+  cooling_period_bars: 24
+hard_gates:
+- feature: funding_Z
+  op: min
+  value: 0.5
+  nan_policy: skip
+  description: Positive funding (real data since 2020)
+- feature: rsi_14
+  op: min
+  value: 50.0
+  description: RSI not oversold
+- feature: ls_ratio_extreme
+  op: min
+  value: 1.5
+  nan_policy: skip
+  description: Longs extremely overcrowded
+- feature: funding_oi_divergence
+  op: eq
+  value: -1
+  nan_policy: skip
+  description: Bearish (funding bullish but OI declining = smart longs exiting)
+gate_mode: soft
+exit_logic:
+  max_hold_hours: 168
+  scale_out_enabled: true
+  scale_out_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  scale_out_pcts:
+  - 0.2
+  - 0.2
+  - 0.3
+  runner_pct: 0.15
+  runner_trailing_atr: 2.5
+  trailing_start_r: 1.0
+  trailing_atr_mult: 2.0
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 1.3
+  atr_tp_mult: 6.0
+regime_preferences:
+  risk_on: 1.2
+  neutral: 1.0
+  risk_off: 0.7
+  crisis: 0.5
+allowed_regimes: []
+description: Positive funding extreme + overheating. Long squeeze cascade (SHORT archetype).
+priority: 15
+enabled: true

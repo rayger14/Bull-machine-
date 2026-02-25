@@ -1,0 +1,73 @@
+{
+  "_comment": "Example configuration for meta-fusion engine weight optimization",
+  "_usage": "Use this config to enable optimized domain weights in production",
+
+  "use_meta_fusion": true,
+
+  "engine_weights": {
+    "structure": 0.35,
+    "liquidity": 0.25,
+    "momentum": 0.15,
+    "wyckoff": 0.15,
+    "macro": 0.10
+  },
+
+  "regime_aware": false,
+
+  "_comment_regime_aware": "Set to true to enable regime-specific weights below",
+
+  "regime_engine_weights": {
+    "risk_on": {
+      "structure": 0.25,
+      "liquidity": 0.35,
+      "momentum": 0.25,
+      "wyckoff": 0.10,
+      "macro": 0.05
+    },
+    "risk_off": {
+      "structure": 0.40,
+      "liquidity": 0.20,
+      "momentum": 0.10,
+      "wyckoff": 0.20,
+      "macro": 0.10
+    },
+    "neutral": {
+      "structure": 0.30,
+      "liquidity": 0.25,
+      "momentum": 0.20,
+      "wyckoff": 0.15,
+      "macro": 0.10
+    },
+    "crisis": {
+      "structure": 0.35,
+      "liquidity": 0.15,
+      "momentum": 0.10,
+      "wyckoff": 0.15,
+      "macro": 0.25
+    }
+  },
+
+  "_optimization_metadata": {
+    "method": "optuna_multiobjective",
+    "trained_on": "2022-2024_BTC_1H",
+    "n_trials": 100,
+    "best_pf": 1.45,
+    "best_trades_per_year": 35.2,
+    "best_max_dd": 0.18,
+    "date_optimized": "2025-11-20",
+    "notes": [
+      "Optimized weights favor structure (Wyckoff+SMC) and liquidity",
+      "Momentum weight reduced to 0.15 (less predictive in bear markets)",
+      "Macro weight at 0.10 (residual risk factor)",
+      "Test on 2024 OOS data before production deployment"
+    ]
+  },
+
+  "_integration_guide": {
+    "step1": "Add 'use_meta_fusion': true to archetypes config",
+    "step2": "Copy 'engine_weights' section from optimized config",
+    "step3": "Optional: Enable 'regime_aware': true for regime-specific weights",
+    "step4": "Test with backtest to verify performance improvement",
+    "step5": "Monitor PF degradation, retrain weights quarterly if PF drops > 10%"
+  }
+}

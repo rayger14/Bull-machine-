@@ -59,7 +59,7 @@ class BOSDetector:
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.swing_lookback = config.get('swing_lookback', 5)  # Bars to look back/forward
+        self.swing_lookback = config.get('swing_lookback', 10)  # Bars to look back/forward (increased from 5 to 10 based on industry research)
         self.min_break_pct = config.get('min_break_pct', 0.001)  # 0.1% minimum break
         self.min_volume_ratio = config.get('min_volume_ratio', 1.2)
         self.follow_through_bars = config.get('follow_through_bars', 3)

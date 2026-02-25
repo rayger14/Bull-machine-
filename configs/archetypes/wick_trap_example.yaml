@@ -1,0 +1,38 @@
+# Wick Trap Archetype Configuration
+# Wick trap reversal - stop hunt with liquidity spike
+
+archetype:
+  name: wick_trap
+  direction: long
+  description: Wick trap reversal - stop hunt with liquidity spike
+
+  # DIFFERENT fusion weights (emphasize liquidity)
+  fusion_weights:
+    wyckoff: 0.20    # Lower Wyckoff emphasis
+    liquidity: 0.60  # Strong liquidity signal required
+    momentum: 0.15   # Moderate momentum
+    smc: 0.05        # Minimal SMC emphasis
+
+  thresholds:
+    entry: 0.28          # Lower threshold (more aggressive)
+    min_liquidity: 0.15  # Higher liquidity requirement
+
+  exits:
+    atr_stop_mult: 3.0    # Wider stops (wick traps need room)
+    atr_tp_mult: 2.5
+    max_hold_hours: 48    # Shorter hold (momentum play)
+    trailing_stop: false  # No trailing (quick in/out)
+
+  position_sizing:
+    max_risk_pct: 0.02
+
+  regime_weights:
+    crisis: 0.05    # Very low in crisis (fake wicks)
+    risk_off: 0.20
+    neutral: 0.70
+    risk_on: 1.00
+
+  pattern_params:
+    min_wick_ratio: 2.0        # Wick must be 2× body
+    require_volume_spike: true
+    max_bars_since_wick: 3

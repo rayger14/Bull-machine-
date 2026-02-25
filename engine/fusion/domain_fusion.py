@@ -100,7 +100,27 @@ def _standardize_df(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _wyckoff_to_score(wyck_result: Dict, config: Dict) -> tuple:
-    """Convert Wyckoff result to normalized 0-1 score"""
+    """
+    Convert Wyckoff phase detection result to normalized 0-1 score.
+
+    Maps Wyckoff accumulation/distribution phases to directional bias with confidence.
+    Bullish phases (accumulation, spring, markup) increase score; bearish phases decrease it.
+
+    Args:
+        wyck_result: Dictionary containing 'phase' and 'confidence' from Wyckoff detector
+        config: Configuration dictionary (unused but kept for consistency)
+
+    Returns:
+        tuple: (score: float 0-1, direction: str 'long'/'short'/'neutral', reasons: list)
+
+    Example:
+        >>> wyck_result = {'phase': 'accumulation', 'confidence': 0.8, 'crt_active': True}
+        >>> score, direction, reasons = _wyckoff_to_score(wyck_result, {})
+        >>> score  # 0.3 + (0.8 * 0.7) + 0.10 = 0.96
+        0.96
+        >>> direction
+        'long'
+    """
     try:
         phase = wyck_result.get('phase')
         conf = wyck_result.get('confidence', 0.0)
@@ -141,7 +161,25 @@ def _wyckoff_to_score(wyck_result: Dict, config: Dict) -> tuple:
 
 
 def _smc_to_score(smc_engine: SMCEngine, df: pd.DataFrame, config: Dict) -> tuple:
-    """Convert SMC signal to normalized 0-1 score"""
+    """
+    Convert Smart Money Concepts (SMC) analysis to normalized 0-1 score.
+
+    Analyzes institutional order flow patterns: BOS (Break of Structure), CHOCH (Change of Character),
+    FVG (Fair Value Gaps), and Order Blocks to determine smart money positioning.
+
+    Args:
+        smc_engine: SMCEngine instance with config
+        df: OHLCV DataFrame (1H recommended)
+        config: Configuration dictionary
+
+    Returns:
+        tuple: (score: float 0-1, direction: str, reasons: list, institutional_bias: str)
+
+    Notes:
+        - Score 0.5-1.0 indicates long bias (smart money buying)
+        - Score 0.0-0.5 indicates short bias (smart money selling)
+        - Hit counters track structure breaks and liquidity sweeps
+    """
     try:
         signal = smc_engine.analyze(df)
         
@@ -268,13 +306,37 @@ def _momentum_to_score(df: pd.DataFrame, config: Dict) -> tuple:
         return 0.5, 'neutral', [], 50.0
 
 
-def _check_mtf_alignment(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame, 
+def _check_mtf_alignment(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame,
                         config: Dict) -> tuple:
     """
-    Check multi-timeframe alignment.
-    
+    Check multi-timeframe (MTF) trend alignment across 1H, 4H, and 1D timeframes.
+
+    Validates that lower timeframes align with higher timeframe trends, ensuring trades
+    are taken in the direction of the larger trend. Supports nested structures where
+    1H pullbacks within 4H trends are considered healthy alignment.
+
+    Args:
+        df_1h: 1H OHLCV DataFrame
+        df_4h: 4H OHLCV DataFrame
+        df_1d: 1D OHLCV DataFrame
+        config: Configuration dictionary with optional 'mtf' section
+
     Returns:
-        (aligned: bool, confidence: float, reasons: list)
+        tuple: (aligned: bool, confidence: float 0-1, reasons: list)
+
+    Alignment Logic:
+        - 4H-1D alignment: Both timeframes in same trend direction
+        - 1H-4H alignment: Lower timeframe confirms higher timeframe
+        - Nested structure: 1H pullback within 2% of 4H SMA20 (healthy retracement)
+        - Confidence ≥ 0.5 required for alignment=True
+
+    Example:
+        >>> # All timeframes in uptrend
+        >>> aligned, conf, reasons = _check_mtf_alignment(df_1h, df_4h, df_1d, {})
+        >>> aligned
+        True
+        >>> conf
+        1.0  # Perfect alignment
     """
     try:
         reasons = []
@@ -379,25 +441,12 @@ def analyze_fusion(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame
             mom_score * weights['momentum']
         )
 
-        # DEBUG: Log domain scores
-        import json
-        from pathlib import Path
-        debug_log = {
-            'timestamp': str(df_1h.index[-1]),
-            'wyck_score': float(wyck_score),
-            'wyck_dir': wyck_dir,
-            'smc_score': float(smc_score),
-            'smc_dir': smc_dir,
-            'hob_score': float(hob_score),
-            'hob_dir': hob_dir,
-            'mom_score': float(mom_score),
-            'mom_dir': mom_dir,
-            'fusion_raw': float(fusion_score),
-            'weights': weights
-        }
-        Path('results').mkdir(exist_ok=True)
-        with open('results/fusion_debug.jsonl', 'a') as f:
-            f.write(json.dumps(debug_log) + '\n')
+        # Log domain scores at debug level
+        logger.debug(
+            f"Fusion domain scores: wyck={wyck_score:.3f}/{wyck_dir}, "
+            f"smc={smc_score:.3f}/{smc_dir}, hob={hob_score:.3f}/{hob_dir}, "
+            f"mom={mom_score:.3f}/{mom_dir}, fusion={fusion_score:.3f}"
+        )
 
         # MTF alignment check
         mtf_aligned, mtf_conf, mtf_reasons = _check_mtf_alignment(df_1h, df_4h, df_1d, config)
@@ -496,6 +545,28 @@ def analyze_fusion(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame
         # END v1.8.6 TEMPORAL ANALYSIS
         # ═══════════════════════════════════════════════════════════════
 
+        # ═══════════════════════════════════════════════════════════════
+        # v1.8.6 MACRO FUSION COMPOSITE
+        # ═══════════════════════════════════════════════════════════════
+
+        macro_fusion_adjustment = 0.0
+        macro_fusion_enabled = config.get('macro_fusion', {}).get('enabled', False)
+
+        if macro_fusion_enabled:
+            # Get macro analysis result from config cache (populated by runner)
+            macro_analysis = config.get('_macro_analysis_cache', {})
+            fusion_composite = macro_analysis.get('fusion_composite')
+
+            if fusion_composite is not None:
+                # Apply fusion composite adjustment (already capped at ±0.10)
+                macro_fusion_adjustment = fusion_composite
+                fusion_score = np.clip(fusion_score + macro_fusion_adjustment, 0.0, 1.0)
+                logger.debug(f"Macro fusion composite: {fusion_composite:+.3f} → new score: {fusion_score:.3f}")
+
+        # ═══════════════════════════════════════════════════════════════
+        # END v1.8.6 MACRO FUSION COMPOSITE
+        # ═══════════════════════════════════════════════════════════════
+
         # Determine overall direction
         directions = [wyck_dir, smc_dir, hob_dir, mom_dir]
         long_votes = sum(1 for d in directions if d == 'long')
@@ -561,8 +632,25 @@ def analyze_fusion(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame
         )
         
     except Exception as e:
-        logger.error(f"Error in fusion analysis: {e}", exc_info=True)
-        # Return neutral signal on error
+        # Log detailed error context for debugging
+        error_context = {
+            'error_type': type(e).__name__,
+            'error_message': str(e),
+            'df_1h_shape': df_1h.shape if df_1h is not None else None,
+            'df_4h_shape': df_4h.shape if df_4h is not None else None,
+            'df_1d_shape': df_1d.shape if df_1d is not None else None,
+            'config_keys': list(config.keys()) if config else None
+        }
+        logger.error(
+            f"CRITICAL: Fusion analysis failed - {type(e).__name__}: {str(e)}\n"
+            f"Context: {error_context}",
+            exc_info=True,
+            extra={'error_context': error_context}
+        )
+
+        # Return neutral signal on error (defensive fallback)
+        # NOTE: This prevents trading on corrupted data, but masks bugs
+        # Consider fail-fast mode for development/testing
         return FusionSignal(
             score=0.5,
             direction='neutral',
@@ -577,6 +665,6 @@ def analyze_fusion(df_1h: pd.DataFrame, df_4h: pd.DataFrame, df_1d: pd.DataFrame
             smc_bias='neutral',
             hob_quality='invalid',
             momentum_bias='neutral',
-            features={},
-            reasons=[f'Fusion error: {str(e)}']
+            features={'error': str(e), 'error_type': type(e).__name__},
+            reasons=[f'FUSION ERROR: {type(e).__name__} - {str(e)[:100]}']
         )

@@ -1,0 +1,160 @@
+{
+  "version": "v11_isolated_fixed",
+  "description": "v11 with overtrading fixes - relative score filtering, cooling periods, regime-adaptive thresholds",
+  "fix_date": "2026-02-05",
+  "fixes_applied": [
+    "Added relative score filtering (top 70% of signals)",
+    "Added per-archetype cooling periods (24H default)",
+    "Added regime-dependent fusion thresholds",
+    "Target: 40-80 trades on Jan 2023 (was 931)"
+  ],
+  "archetype_config_dir": "configs/archetypes/",
+  "use_isolated_fusion": true,
+  "portfolio_allocation": {
+    "mode": "MULTI_UNCORRELATED",
+    "correlation_threshold": 0.7,
+    "max_simultaneous_positions": 3,
+    "enable_correlation_filter": true,
+    "relative_score_percentile": 0.6,
+    "notes": [
+      "relative_score_percentile: Keep only top 70% of signals by fusion score",
+      "This prevents overtrading when many archetypes fire simultaneously"
+    ]
+  },
+  "fusion_thresholds_by_regime": {
+    "crisis": 0.5,
+    "risk_off": 0.4,
+    "neutral": 0.3,
+    "risk_on": 0.15000000000000002
+  },
+  "max_positions_by_regime": {
+    "crisis": 1,
+    "risk_off": 2,
+    "neutral": 3,
+    "risk_on": 3,
+    "notes": [
+      "Regime-dependent position limits to control exposure",
+      "crisis: max 1 position (prevent multi-position drawdown)",
+      "risk_on: full 3 positions allowed for maximum alpha capture"
+    ]
+  },
+  "cooling_periods": {
+    "default_bars": 24,
+    "archetype_overrides": {
+      "confluence_breakout": 54,
+      "exhaustion_reversal": 42,
+      "failed_continuation": 18,
+      "funding_divergence": 66,
+      "fvg_continuation": 66,
+      "liquidity_compression": 36,
+      "liquidity_sweep": 30,
+      "liquidity_vacuum": 42,
+      "long_squeeze": 60,
+      "order_block_retest": 72,
+      "retest_cluster": 18,
+      "spring": 60,
+      "trap_within_trend": 48,
+      "volume_fade_chop": 12,
+      "whipsaw": 24,
+      "wick_trap": 18
+    }
+  },
+  "regime_classifier": {
+    "enabled": true,
+    "mode": "probabilistic",
+    "model_path": "models/logistic_regime_v4_no_funding_stratified.pkl",
+    "use_soft_controls": true,
+    "notes": [
+      "Enabled regime classifier for dynamic threshold adaptation",
+      "Probabilistic mode for smooth regime transitions"
+    ]
+  },
+  "position_sizing": {
+    "risk_per_trade_pct": 0.02,
+    "max_position_size_pct": 0.12,
+    "use_atr_scaling": true
+  },
+  "exit_logic": {
+    "use_archetype_specific": true,
+    "trailing_stop_enabled": true,
+    "scale_out_enabled": true
+  },
+  "notes": [
+    "v11 FIXED - addresses overtrading issue",
+    "Jan 2023 baseline: 931 trades (v11 broken) -> target 40-80 trades (v11 fixed)",
+    "PF target: >1.2 (was 0.89)",
+    "Each archetype calculates its own fusion score (no shared fusion_total)",
+    "Portfolio allocator filters correlated signals AND weak signals",
+    "Cooling periods prevent rapid-fire signals from same archetype"
+  ],
+  "archetype_threshold_overrides": {
+    "confluence_breakout": {
+      "fusion_threshold": 0.22
+    },
+    "exhaustion_reversal": {
+      "fusion_threshold": 0.42000000000000004
+    },
+    "failed_continuation": {
+      "fusion_threshold": 0.38
+    },
+    "funding_divergence": {
+      "fusion_threshold": 0.2
+    },
+    "fvg_continuation": {
+      "fusion_threshold": 0.4
+    },
+    "liquidity_compression": {
+      "fusion_threshold": 0.30000000000000004
+    },
+    "liquidity_sweep": {
+      "fusion_threshold": 0.33999999999999997
+    },
+    "liquidity_vacuum": {
+      "fusion_threshold": 0.2
+    },
+    "long_squeeze": {
+      "fusion_threshold": 0.18
+    },
+    "order_block_retest": {
+      "fusion_threshold": 0.44000000000000006
+    },
+    "retest_cluster": {
+      "fusion_threshold": 0.45999999999999996
+    },
+    "spring": {
+      "fusion_threshold": 0.28
+    },
+    "trap_within_trend": {
+      "fusion_threshold": 0.30000000000000004
+    },
+    "volume_fade_chop": {
+      "fusion_threshold": 0.2
+    },
+    "whipsaw": {
+      "fusion_threshold": 0.36
+    },
+    "wick_trap": {
+      "fusion_threshold": 0.44000000000000006
+    }
+  },
+  "optimization_metadata": {
+    "optimizer": "optuna_v11",
+    "date": "2026-02-05T17:27:13.753742",
+    "best_trial": 20,
+    "n_trials": 30,
+    "objective": "sharpe_ratio",
+    "train_sharpe": -0.41991142386677177,
+    "test_sharpe": -0.07213825942146367,
+    "train_pf": 0.8198644908931066,
+    "test_pf": 0.988855600190094,
+    "train_trades": 745,
+    "test_trades": 692,
+    "train_wr": 52.88590604026846,
+    "test_wr": 63.8728323699422,
+    "wfe": 0.0,
+    "train_dd": -14.236925258333214,
+    "test_dd": -7.417633893812595,
+    "train_period": "2018-01-01 to 2023-06-30",
+    "test_period": "2023-07-01 to 2024-12-31"
+  }
+}

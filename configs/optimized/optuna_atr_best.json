@@ -1,0 +1,88 @@
+{
+  "atr_multipliers": {
+    "confluence_breakout": {
+      "atr_stop_mult": 3.3,
+      "atr_tp_mult": 4.7
+    },
+    "exhaustion_reversal": {
+      "atr_stop_mult": 2.2,
+      "atr_tp_mult": 5.0
+    },
+    "failed_continuation": {
+      "atr_stop_mult": 1.8,
+      "atr_tp_mult": 6.0
+    },
+    "funding_divergence": {
+      "atr_stop_mult": 3.1,
+      "atr_tp_mult": 4.5
+    },
+    "fvg_continuation": {
+      "atr_stop_mult": 1.2,
+      "atr_tp_mult": 5.2
+    },
+    "liquidity_compression": {
+      "atr_stop_mult": 2.7,
+      "atr_tp_mult": 5.2
+    },
+    "liquidity_sweep": {
+      "atr_stop_mult": 3.4,
+      "atr_tp_mult": 5.7
+    },
+    "liquidity_vacuum": {
+      "atr_stop_mult": 3.4,
+      "atr_tp_mult": 5.5
+    },
+    "long_squeeze": {
+      "atr_stop_mult": 1.3,
+      "atr_tp_mult": 6.0
+    },
+    "order_block_retest": {
+      "atr_stop_mult": 1.9,
+      "atr_tp_mult": 4.9
+    },
+    "retest_cluster": {
+      "atr_stop_mult": 3.4,
+      "atr_tp_mult": 5.4
+    },
+    "spring": {
+      "atr_stop_mult": 1.3,
+      "atr_tp_mult": 3.1
+    },
+    "trap_within_trend": {
+      "atr_stop_mult": 2.9,
+      "atr_tp_mult": 3.8
+    },
+    "volume_fade_chop": {
+      "atr_stop_mult": 2.7,
+      "atr_tp_mult": 3.8
+    },
+    "whipsaw": {
+      "atr_stop_mult": 2.9,
+      "atr_tp_mult": 5.5
+    },
+    "wick_trap": {
+      "atr_stop_mult": 3.4,
+      "atr_tp_mult": 4.0
+    }
+  },
+  "optimization_metadata": {
+    "optimizer": "optuna_atr_multipliers",
+    "date": "2026-02-24T02:52:02.945175",
+    "best_trial": 87,
+    "n_trials": 100,
+    "objective": "profit_factor",
+    "train_pf": 1.2282012748482107,
+    "test_pf": 1.31310787675039,
+    "train_sharpe": 0.8903555740188028,
+    "test_sharpe": 1.4452037290724022,
+    "train_trades": 1106,
+    "test_trades": 906,
+    "train_return": 85.83135023317081,
+    "test_return": 70.26276160119312,
+    "train_pnl": 85831.35023317082,
+    "test_pnl": 70262.76160119311,
+    "wfe": 106.91308530946384,
+    "train_period": "2020-01-01 to 2022-12-31",
+    "test_period": "2023-01-01 to 2024-12-31"
+  }
+}

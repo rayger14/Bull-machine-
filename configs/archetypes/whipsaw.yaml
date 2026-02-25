@@ -1,0 +1,58 @@
+name: whipsaw
+display_name: Whipsaw
+aliases:
+- S3
+direction: neutral
+fusion_weights:
+  wyckoff: 0.25
+  liquidity: 0.3
+  momentum: 0.3
+  smc: 0.15
+thresholds:
+  fusion_threshold: 0.18
+  atr_min: 400.0
+  adx_max: 20.0
+  range_compression: 0.5
+  wick_ratio: 1.5
+  vol_max: 0.8
+  fusion: 0.18
+  cooling_period_bars: 24
+hard_gates:
+- feature: derived:upper_wick_body_ratio
+  op: min
+  value: 1.5
+  description: Upper wick rejection > 1.5x body
+- feature: volume_zscore
+  op: max
+  value: 0.5
+  description: Low volume (no conviction)
+gate_mode: soft
+exit_logic:
+  max_hold_hours: 168
+  scale_out_enabled: true
+  scale_out_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  scale_out_pcts:
+  - 0.2
+  - 0.2
+  - 0.3
+  runner_pct: 0.15
+  runner_trailing_atr: 2.5
+  trailing_start_r: 1.0
+  trailing_atr_mult: 2.0
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 2.9
+  atr_tp_mult: 5.5
+regime_preferences:
+  risk_on: 0.7
+  neutral: 1.5
+  risk_off: 0.8
+  crisis: 0.6
+allowed_regimes: []
+description: Range-bound mean reversion. Specialist for choppy, directionless markets.
+priority: 13
+enabled: true

@@ -1,0 +1,53 @@
+name: wick_trap
+display_name: Wick Trap (Moneytaur)
+aliases:
+- K
+- wick_trap_moneytaur
+- moneytaur
+direction: long
+fusion_weights:
+  wyckoff: 0.2
+  liquidity: 0.4
+  momentum: 0.15
+  smc: 0.25
+thresholds:
+  fusion_threshold: 0.18
+  wick_lower_threshold: 0.3
+  rsi_threshold: 41.0
+  adx_threshold: 14.0
+  liquidity_threshold: 0.72
+  cooling_period_bars: 18
+hard_gates:
+- feature: derived:wick_anomaly
+  op: bool_true
+  description: Lower or upper wick > 35% of candle range
+gate_mode: soft
+exit_logic:
+  max_hold_hours: 168
+  scale_out_enabled: true
+  scale_out_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  scale_out_pcts:
+  - 0.2
+  - 0.2
+  - 0.3
+  runner_pct: 0.15
+  runner_trailing_atr: 2.5
+  trailing_start_r: 1.0
+  trailing_atr_mult: 2.0
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 3.4
+  atr_tp_mult: 4.0
+regime_preferences:
+  risk_on: 1.2
+  neutral: 1.0
+  risk_off: 0.8
+  crisis: 0.6
+allowed_regimes: []
+description: Wick anomaly + ADX > 25 + BOS context. Moneytaur wick rejection pattern.
+priority: 4
+enabled: true

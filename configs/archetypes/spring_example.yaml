@@ -1,0 +1,45 @@
+# Spring Archetype Configuration
+# Wyckoff Spring pattern - capitulation reversal
+
+archetype:
+  name: spring
+  direction: long
+  description: Wyckoff Spring pattern - capitulation reversal
+
+  # ARCHETYPE-SPECIFIC fusion calculation
+  # Spring emphasizes Wyckoff (counter-trend) + liquidity vacuum
+  fusion_weights:
+    wyckoff: 0.70    # High weight on Wyckoff phases
+    liquidity: 0.15  # Need liquidity vacuum
+    momentum: 0.10   # Low momentum (reversal setup)
+    smc: 0.05        # Minimal SMC emphasis
+
+  # ARCHETYPE-SPECIFIC thresholds
+  thresholds:
+    entry: 0.35          # Fusion score threshold
+    min_liquidity: 0.12  # Minimum liquidity required
+
+  # ARCHETYPE-SPECIFIC exit logic
+  exits:
+    atr_stop_mult: 2.5    # Stop loss = entry - 2.5×ATR
+    atr_tp_mult: 2.5      # Take profit = entry + 2.5×ATR
+    max_hold_hours: 72    # Max 3 days
+    trailing_stop: true   # Use trailing stop
+
+  # ARCHETYPE-SPECIFIC position sizing
+  position_sizing:
+    max_risk_pct: 0.02  # 2% risk per trade
+
+  # Regime sensitivity (for portfolio allocator)
+  # Spring works in all regimes but strongest in crisis
+  regime_weights:
+    crisis: 0.10    # Minimal weight in crisis (false springs)
+    risk_off: 0.30  # Low weight in risk-off
+    neutral: 0.80   # Good weight in neutral
+    risk_on: 1.00   # Full weight in risk-on
+
+  # Pattern-specific detection parameters
+  pattern_params:
+    min_wyckoff_confidence: 0.65
+    require_spring_event: true
+    allow_lpsy: false

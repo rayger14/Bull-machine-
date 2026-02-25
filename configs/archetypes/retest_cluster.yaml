@@ -1,0 +1,60 @@
+name: retest_cluster
+display_name: Retest Cluster / Fakeout Real Move
+aliases:
+- L
+- frm
+- false_break
+- volume_exhaustion
+- fakeout_real_move
+direction: long
+fusion_weights:
+  wyckoff: 0.25
+  liquidity: 0.3
+  momentum: 0.2
+  smc: 0.25
+thresholds:
+  fusion_threshold: 0.18
+  order_block_distance_max: 600.0
+  rsi_min: 35.0
+  vol_z: 0.5
+  rsi_edge: 65.0
+  fusion: 0.18
+  cooling_period_bars: 24
+hard_gates:
+- feature: volume_zscore
+  op: min
+  value: 0.5
+  description: Volume spike for real move
+- feature: derived:rsi_extreme_65
+  op: bool_true
+  description: RSI at extreme
+gate_mode: soft
+exit_logic:
+  max_hold_hours: 168
+  scale_out_enabled: true
+  scale_out_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  scale_out_pcts:
+  - 0.2
+  - 0.2
+  - 0.3
+  runner_pct: 0.15
+  runner_trailing_atr: 2.5
+  trailing_start_r: 1.0
+  trailing_atr_mult: 2.0
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 3.4
+  atr_tp_mult: 5.4
+regime_preferences:
+  risk_on: 1.2
+  neutral: 1.0
+  risk_off: 0.8
+  crisis: 0.7
+allowed_regimes: []
+description: Fakeout followed by genuine structural move. Multi-level confluence pattern.
+priority: 6
+enabled: true

@@ -1,0 +1,218 @@
+{
+  "version": "v13_penalties",
+  "description": "v13 ALL 16 archetypes ENABLED (7 calibrated + 9 shadow/observation). temp_range=0.38. Calibrated OOS: PF=1.43, Sharpe=1.34, MaxDD=-8.8%",
+  "fix_date": "2026-02-20",
+  "fixes_applied": [
+    "Added relative score filtering (top 70% of signals)",
+    "Added per-archetype cooling periods (24H default)",
+    "Added regime-dependent fusion thresholds",
+    "Target: 40-80 trades on Jan 2023 (was 931)",
+    "CAPITAL OVERHAUL 2026-02-06: max_positions 3->8, dynamic sizing, 2x leverage, runner positions",
+    "CAPITAL OVERHAUL 2026-02-06: Archetype-specific exit logic (trend vs mean-reversion vs hybrid)",
+    "CAPITAL OVERHAUL 2026-02-06: fusion_size_tiers for conviction-based position sizing"
+  ],
+  "archetype_config_dir": "configs/archetypes/",
+  "use_isolated_fusion": true,
+  "use_ml_fusion": false,
+  "ml_fusion_model_path": "models/fusion_scorer_xgb.pkl",
+  "ml_fusion_blend_weight": 0.6,
+  "ml_fusion_notes": "DISABLED 2026-02-06: Trained on old data, hurting performance",
+  "signal_dedup": {
+    "mode": "best_per_direction",
+    "notes": "Modes: best_of_bar | best_per_direction | unique_sl_zone | disabled. Max 1 long + 1 short per bar."
+  },
+  "portfolio_allocation": {
+    "mode": "MULTI_UNCORRELATED",
+    "correlation_threshold": 0.5,
+    "max_simultaneous_positions": 99,
+    "enable_correlation_filter": false,
+    "relative_score_percentile": 0.0,
+    "notes": [
+      "2026-02-20: DATA COLLECTION MODE — no position cap, no correlation filter, no score percentile",
+      "Let all signals through to collect real-world data on which archetypes/fusion levels work",
+      "Will re-enable filters after collecting enough trade data for analysis"
+    ]
+  },
+  "disabled_archetypes": [],
+  "_disabled_archetypes_note": "2026-02-21: ALL 16 archetypes ENABLED for data collection. bypass_threshold=true. Previously disabled: spring (PF=0.94), failed_continuation (PF=0.86), long_squeeze, funding_divergence, fvg_continuation, volume_fade_chop, whipsaw, liquidity_compression, exhaustion_reversal, confluence_breakout, liquidity_sweep.",
+  "_calibrated_archetypes": [
+    "trap_within_trend",
+    "liquidity_vacuum",
+    "retest_cluster",
+    "failed_continuation",
+    "wick_trap",
+    "spring",
+    "order_block_retest"
+  ],
+  "_shadow_uncalibrated_archetypes": [
+    "long_squeeze",
+    "funding_divergence",
+    "fvg_continuation",
+    "volume_fade_chop",
+    "whipsaw",
+    "liquidity_compression",
+    "exhaustion_reversal",
+    "confluence_breakout",
+    "liquidity_sweep"
+  ],
+  "_shadow_notes": [
+    "CALIBRATED (7): Have per-archetype base_threshold, backtest-validated PF>1.0 OOS",
+    "SHADOW (9): Use default base_threshold=0.18, historically unprofitable, enabled for observation only",
+    "long_squeeze: SHADOW \u2014 SHORT archetype, PF<0.7 on 2020-2024 bull data",
+    "funding_divergence: SHADOW \u2014 PF=0.99, regime filter misaligned",
+    "confluence_breakout: SHADOW \u2014 PF=0.93, unprofitable with fixed features",
+    "fvg_continuation: SHADOW \u2014 PF=0.95, net loser (-$3K on 684 trades)",
+    "exhaustion_reversal: SHADOW \u2014 PF=0.89, net loser (-$3.8K on 370 trades)",
+    "liquidity_compression: SHADOW \u2014 PF=0.95, marginal at best",
+    "liquidity_sweep: SHADOW \u2014 PF=0.91 at temp_range=0.38, dropped from calibrated",
+    "volume_fade_chop: SHADOW \u2014 no reliable backtest data",
+    "whipsaw: SHADOW \u2014 no reliable backtest data"
+  ],
+  "adaptive_fusion": {
+    "enabled": true,
+    "crisis_coefficient": 0.50,
+    "base_threshold": 0.18,
+    "per_archetype_base_threshold": {
+      "trap_within_trend": 0.08,
+      "liquidity_vacuum": 0.08,
+      "retest_cluster": 0.06,
+      "failed_continuation": 0.08,
+      "liquidity_sweep": 0.08,
+      "wick_trap": 0.10,
+      "spring": 0.08,
+      "order_block_retest": 0.10,
+      "oi_divergence": 0.15
+    },
+    "_threshold_note": "2026-02-21: BYPASS MODE with DATA-INFORMED weights. bypass_threshold=true lets ALL signals through. Thresholds computed with IC-derived weights (dd_score=50%, trend_strength=5%) for post-hoc analysis to discover per-archetype optimal thresholds.",
+    "bypass_threshold": true,
+    "cmi_weights": {
+      "risk_temp": {"trend_align": 0.30, "trend_strength": 0.05, "sentiment": 0.15, "dd_score": 0.50, "derivatives_heat": 0.0},
+      "instability": {"chop": 0.40, "adx_weakness": 0.10, "wick_score": 0.25, "vol_instab": 0.25},
+      "crisis": {"base_crisis": 0.45, "vol_shock": 0.10, "sentiment_crisis": 0.45}
+    },
+    "cmi_weights_optimized": null,
+    "temp_range": 0.38,
+    "instab_range": 0.15,
+    "base_max_positions": 999,
+    "emergency_crisis_threshold": 0.7,
+    "emergency_size_multiplier": 0.5,
+    "notes": [
+      "UPDATED 2026-02-20: temp_range 0.48\u21920.38. 0.48 blocked ALL live trades (threshold=0.45-0.69 in non-bull). Now threshold ~0.42 in neutral, achievable by strong signals.",
+      "threshold = base_threshold + (1 - risk_temp) * temp_range + instability * instab_range",
+      "crisis penalty: adjusted_fusion = fusion * (1 - crisis_prob * crisis_coefficient)",
+      "risk_temperature: dd_score(50%) + trend_align(30%) + sentiment(15%) + adx(5%) + derivatives_heat(0%) [DATA-INFORMED 2026-02-21, deriv_heat ready but DISABLED pending more data]",
+      "instability: chop(40%) + wick(25%) + vol_z(25%) + adx_weakness(10%) [DATA-INFORMED, instab_range 0.20->0.15]",
+      "crisis_prob: base_crisis(45%) + sentiment_crisis(45%) + vol_shock(10%) [DATA-INFORMED, crisis_coeff 0.40->0.50]",
+      "Position limits: stress-scaled continuous (base=3, scales down with stress, min=1)",
+      "Emergency cap: crisis_prob > 0.7 \u2192 50% sizing multiplier",
+      "Wyckoff/temporal/SMC stay in archetype fusion ONLY \u2014 prevents double-counting",
+      "SMA regime labels kept for logging/diagnostics only"
+    ],
+    "state_machine_enabled": true,
+    "sm_max_structure_bars": 1000,
+    "sm_ar_max_bars": 15,
+    "sm_st_volume_ratio": 0.7,
+    "sm_invalidation_vol_ratio": 0.8,
+    "sm_spring_max_break_pct": 0.05,
+    "sc_range_lookback": 50,
+    "bc_range_lookback": 50,
+    "spring_a_breakdown_margin": 0.015,
+    "spring_a_volume_z_min": 0.5,
+    "ut_breakout_margin": 0.015,
+    "ut_volume_z_min": 0.5
+  },
+  "archetype_allowed_regimes": {
+    "notes": [
+      "UPDATED 2026-02-10: No hard regime blocks \u2014 all archetypes fire in all regimes",
+      "Regime modulation handled by adaptive_fusion (continuous probabilistic scores)"
+    ]
+  },
+  "max_positions_by_regime": {
+    "notes": [
+      "REPLACED 2026-02-11 by stress-scaled continuous limit in adaptive_fusion",
+      "base_max_positions=3, scales down with stress_level=max(crisis_prob, instability*0.5)",
+      "Old values kept for reference: crisis=1, risk_off=1, neutral=3, risk_on=3"
+    ]
+  },
+  "cooling_periods": {
+    "default_bars": 24,
+    "archetype_overrides": {
+      "spring": 36,
+      "wick_trap": 18,
+      "long_squeeze": 48,
+      "notes": [
+        "spring: Rare setup, allow longer cooldown (36H)",
+        "wick_trap: Higher frequency pattern, shorter cooldown (18H)",
+        "long_squeeze: Extreme event, long cooldown (48H)"
+      ]
+    }
+  },
+  "regime_classifier": {
+    "enabled": true,
+    "mode": "probabilistic",
+    "model_path": "models/logistic_regime_v4_no_funding_stratified.pkl",
+    "use_soft_controls": true,
+    "notes": [
+      "Enabled regime classifier for dynamic threshold adaptation",
+      "Probabilistic mode for smooth regime transitions"
+    ]
+  },
+  "position_sizing": {
+    "risk_per_trade_pct": 0.02,
+    "max_position_size_pct": 0.15,
+    "use_atr_scaling": true,
+    "dynamic_sizing_enabled": true,
+    "fusion_size_tiers": [
+      {
+        "min_fusion": 0.6,
+        "size_multiplier": 2.0,
+        "label": "high_conviction"
+      },
+      {
+        "min_fusion": 0.4,
+        "size_multiplier": 1.5,
+        "label": "moderate_conviction"
+      },
+      {
+        "min_fusion": 0.18,
+        "size_multiplier": 1.0,
+        "label": "base_conviction"
+      }
+    ],
+    "notes": [
+      "UPDATED 2026-02-06: max_position_size reduced 0.20->0.15 (76% SL hit rate needs smaller risk)",
+      "dynamic_sizing_enabled: fusion score drives position size multiplier",
+      "fusion >= 0.60: 2x base size (high conviction, rare but impactful)",
+      "fusion >= 0.40: 1.5x base size (moderate conviction)",
+      "fusion >= 0.18: 1x base size (meets threshold, standard sizing)"
+    ]
+  },
+  "leverage": 3.0,
+  "leverage_notes": "UPDATED 2026-02-17: 3.0x = ~half Kelly. 6 archetypes with per-archetype thresholds. Full Kelly=6.4x, half Kelly=3.2x. Crisis protection via CMI v0 dynamic threshold + emergency cap.",
+  "runner_position_enabled": true,
+  "exit_logic": {
+    "use_archetype_specific": true,
+    "trailing_stop_enabled": true,
+    "scale_out_enabled": true,
+    "notes": [
+      "UPDATED 2026-02-06: Moderate exits (76% SL hit rate with old params)",
+      "Trend-following: [1.5R, 3R, 5R] exits, 14-day holds, 15% runner positions",
+      "Mean-reversion: [1R, 2R, 3R] exits, 5-day holds, no runners",
+      "Hybrid: [1.5R, 2.5R, 4R] exits, 10-day holds, 10% runners"
+    ]
+  },
+  "notes": [
+    "v11 FIXED - capital deployment overhaul",
+    "PROBLEM: 35% return over 5 years on BTC (which went 13x) due to idle capital",
+    "ROOT CAUSES: max 3 positions (82% idle), identical 7-day exits, no dynamic sizing",
+    "FIX 1: 8 simultaneous positions (was 3) - deploy more capital",
+    "FIX 2: Archetype-specific exits - trend followers hold 21 days with runners",
+    "FIX 3: Dynamic position sizing based on fusion conviction score",
+    "FIX 4: 2x leverage for capital efficiency",
+    "FIX 5: 20% runner positions to capture extended trends",
+    "FIX 6: Regime position limits expanded (risk_on: 6, neutral: 5, risk_off: 3, crisis: 2)",
+    "Each archetype calculates its own fusion score (no shared fusion_total)",
+    "Portfolio allocator filters correlated signals AND weak signals",
+    "Cooling periods prevent rapid-fire signals from same archetype"
+  ]
+}

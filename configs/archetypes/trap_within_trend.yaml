@@ -1,0 +1,54 @@
+name: trap_within_trend
+display_name: Trap Within Trend
+aliases:
+- H
+- trap
+- trap_legacy
+- htf_trap
+direction: long
+fusion_weights:
+  wyckoff: 0.35
+  liquidity: 0.35
+  momentum: 0.15
+  smc: 0.15
+thresholds:
+  fusion_threshold: 0.18
+  adx_threshold: 14.0
+  liquidity_threshold: 0.72
+  quality_threshold: 0.4
+  wick_multiplier: 1.5
+  cooling_period_bars: 24
+hard_gates:
+- feature: derived:wick_anomaly
+  op: bool_true
+  description: Wick against trend (>35% of candle range)
+gate_mode: soft
+exit_logic:
+  max_hold_hours: 168
+  scale_out_enabled: true
+  scale_out_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  scale_out_pcts:
+  - 0.2
+  - 0.2
+  - 0.3
+  runner_pct: 0.15
+  runner_trailing_atr: 2.5
+  trailing_start_r: 1.0
+  trailing_atr_mult: 2.0
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 2.9
+  atr_tp_mult: 3.8
+regime_preferences:
+  risk_on: 1.3
+  neutral: 1.0
+  risk_off: 0.7
+  crisis: 0.5
+allowed_regimes: []
+description: HTF trend + liquidity drop + wick against trend. False breakdown in uptrend.
+priority: 5
+enabled: true

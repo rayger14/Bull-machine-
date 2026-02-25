@@ -1,0 +1,67 @@
+name: funding_divergence
+display_name: Funding Divergence (Short Squeeze)
+aliases:
+- S4
+- distribution
+direction: long
+fusion_weights:
+  wyckoff: 0.2
+  liquidity: 0.5
+  momentum: 0.2
+  smc: 0.1
+thresholds:
+  fusion_threshold: 0.15
+  funding_z_max: -0.5
+  funding_z_min: 0.5
+  resilience_min: 0.25
+  liquidity_max: 0.65
+  vol_climax: 0.8
+  liq_max: 0.65
+  fusion: 0.15
+  cooling_period_bars: 24
+hard_gates:
+- feature: funding_Z
+  op: max
+  value: -0.5
+  nan_policy: skip
+  description: Negative funding (real data since 2020)
+- feature: funding_oi_divergence
+  op: eq
+  value: 1
+  nan_policy: skip
+  description: Bullish divergence (shorts building = more squeeze fuel)
+- feature: ls_ratio_extreme
+  op: max
+  value: -0.5
+  nan_policy: skip
+  description: Shorts relatively crowded
+gate_mode: soft
+exit_logic:
+  max_hold_hours: 168
+  scale_out_enabled: true
+  scale_out_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  scale_out_pcts:
+  - 0.2
+  - 0.2
+  - 0.3
+  runner_pct: 0.15
+  runner_trailing_atr: 2.5
+  trailing_start_r: 1.0
+  trailing_atr_mult: 2.0
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 3.1
+  atr_tp_mult: 4.5
+regime_preferences:
+  risk_on: 0.8
+  neutral: 1.2
+  risk_off: 1.0
+  crisis: 0.7
+allowed_regimes: []
+description: Negative funding + resilience. Short squeeze setup from funding divergence.
+priority: 14
+enabled: true

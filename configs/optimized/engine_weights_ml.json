@@ -1,0 +1,18 @@
+{
+  "engine_weights": {
+    "structure_score": 0.0,
+    "liquidity_score": 0.6723549663035953,
+    "momentum_score": 0.32764503369640474,
+    "wyckoff_score": 0.0,
+    "macro_score": 0.0
+  },
+  "feature_importances": {
+    "structure_score": 0.0,
+    "liquidity_score": 0.6723549663035953,
+    "momentum_score": 0.32764503369640474,
+    "wyckoff_score": 0.0,
+    "macro_score": 0.0
+  },
+  "model_type": "gbt",
+  "version": "1.0"
+}
