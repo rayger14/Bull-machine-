@@ -112,7 +112,7 @@ export default function ThresholdHero({ hb, oracle }: ThresholdHeroProps) {
               <span className="font-semibold text-slate-300">Crisis Probability</span> (updates hourly, can spike within 1 bar) — Detects acute stress: drawdown severity (60%), realized volatility shocks (20%), and extreme fear sentiment (20%). Above 0.70, an emergency cap halves position sizing. This is the system's circuit breaker.
             </p>
             <p>
-              The threshold ranges from ~0.18 (strong bull, clean trend) to ~0.75 (crisis). This 4.5x variation surgically filters adverse-regime trades — in backtesting, 43 of 58 losers passed with &lt;0.05 margin over the threshold, meaning Variant A's higher bear penalty kills them without affecting bull trades.
+              The threshold ranges from ~0.18 (strong bull, clean trend) to ~0.75 (crisis). This 4.5x variation surgically filters adverse-regime trades — most losing trades pass with thin margins over the threshold, so raising the bear penalty kills marginal entries without affecting high-conviction bull trades.
             </p>
           </div>
         )}

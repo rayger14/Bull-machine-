@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-PR#6A: Rule-Based Archetype Expansion Module
+Archetype Detection and Exit Logic Module
 
-Provides 11 distinct market archetypes (A-H + K, L, M) for clean labeled
-data generation before PyTorch training.
+Provides 16+1 market archetypes with YAML-driven hard gates, isolated fusion
+scoring, whale conflict penalties, and Smart Exits V2 (composite invalidation,
+distress half-exit, chop-aware trailing).
 """
 
 from engine.archetypes.logic_v2_adapter import ArchetypeLogic

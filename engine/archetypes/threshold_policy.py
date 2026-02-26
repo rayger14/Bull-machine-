@@ -132,10 +132,10 @@ class ThresholdPolicy:
             Dict mapping archetype_name -> {param: threshold}
             Example: {'order_block_retest': {'fusion': 0.33, 'liquidity': 0.14}, ...}
         """
-        # PR#6A FIX: Even in 'static' mode, read base archetype params from config
+        # In 'static' mode, read base archetype params from config
         # This allows optimizer-written parameters to be used
         if self.locked_regime == 'static':
-            logger.info("[PR#6A] ThresholdPolicy.resolve() in static mode - returning base archetype params")
+            logger.info("[ThresholdPolicy] ThresholdPolicy.resolve() in static mode - returning base archetype params")
             return self._build_base_map()
 
         # LOCKED MODE: Force specific regime (parity testing)
@@ -164,7 +164,7 @@ class ThresholdPolicy:
         """
         Build base threshold map from config.
 
-        **PR#6A FIX**: Reads from BOTH top-level archetype configs AND thresholds subdirectory.
+        Reads from BOTH top-level archetype configs AND thresholds subdirectory.
         Priority: top-level archetype > thresholds subdirectory (descriptive name) > thresholds subdirectory (letter code) > empty dict
 
         This allows optimizer-written params at config['archetypes']['trap_within_trend']
@@ -174,12 +174,12 @@ class ThresholdPolicy:
         archetypes = self.base.get('archetypes', {})
 
         for arch_name in ARCHETYPE_NAMES:
-            # PR#6A: Try top-level archetype config FIRST (where optimizer writes)
+            # Try top-level archetype config FIRST (where optimizer writes)
             if arch_name in archetypes and isinstance(archetypes[arch_name], dict):
                 # Skip metadata keys that aren't actual archetype configs
                 if arch_name not in ('use_archetypes', 'thresholds', 'exits'):
                     base_map[arch_name] = deepcopy(archetypes[arch_name])
-                    logger.debug(f"[PR#6A] Loaded {arch_name} from top-level config")
+                    logger.debug(f"[ThresholdPolicy] Loaded {arch_name} from top-level config")
                     continue
 
             # Try descriptive name in thresholds subdirectory (LEGACY)

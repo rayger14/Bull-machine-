@@ -1,20 +1,18 @@
 """
 ArchetypeInstance - Self-Contained Archetype with Isolated Fusion Calculation
 
-Solves coupling issue #1: Each archetype calculates its OWN fusion score
-using archetype-specific weights, eliminating shared fusion_total dependency.
+Each archetype calculates its OWN fusion score using archetype-specific weights
+from YAML configs (configs/archetypes/*.yaml), with hard gates evaluated before
+fusion scoring and whale conflict penalties applied after.
 
 Key Properties:
-- Own fusion calculation (archetype-specific weights)
-- Own thresholds (independent entry/exit criteria)
-- Own position sizing (before portfolio scaling)
+- Own fusion calculation (archetype-specific weights from YAML)
+- YAML-driven hard gates (evaluated BEFORE fusion, fail = reject signal)
+- Whale conflict penalty (direction-aware 4-signal OI/funding/LS/taker check)
+- Per-archetype base thresholds (not uniform)
 - Can be backtested in ISOLATION
 
-Example:
-    Spring archetype emphasizes Wyckoff (0.7) + Liquidity (0.15)
-    Wick Trap emphasizes Liquidity (0.6) + Momentum (0.2)
-
-    Optimizing spring's fusion weights does NOT affect wick_trap's results.
+Pipeline: hard_gates → fusion_score → whale_penalty → threshold_check → signal
 """
 
 import logging
@@ -554,9 +552,10 @@ class ArchetypeInstance:
     def _check_hard_gates(self, features: Dict) -> Tuple[bool, Optional[str]]:
         """
         Evaluate hard pattern gates BEFORE computing fusion score.
+        Gate definitions loaded from YAML configs (configs/archetypes/*.yaml).
 
         Returns:
-            (passed, failed_description) - True if all gates pass
+            (passed, reason) - passed=True if all gates pass, reason=None on pass
         """
         passed, reason, _ = self._evaluate_gates(features)
         return passed, reason

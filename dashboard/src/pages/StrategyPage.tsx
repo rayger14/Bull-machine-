@@ -11,7 +11,7 @@ export default function StrategyPage() {
         <div className="text-sm text-slate-300 leading-relaxed space-y-3">
           <p>
             Bull Machine is a systematic BTC trading engine built on <Badge variant="cyan">archetype fusion scoring</Badge> —
-            16 structural patterns (archetypes) each compute a fusion score from 4 weighted factors:
+            17 structural patterns (archetypes) each compute a fusion score from 4 weighted factors:
             Wyckoff accumulation/distribution, liquidity dynamics, momentum indicators, and Smart Money Concepts (SMC).
           </p>
           <p>
@@ -58,12 +58,12 @@ export default function StrategyPage() {
             </div>
           </div>
           <div>
-            <div className="text-slate-500 font-medium mb-2">Config (Variant A)</div>
+            <div className="text-slate-500 font-medium mb-2">Config (v17 Production)</div>
             <div className="space-y-1 text-slate-400">
               <div>base_threshold = 0.18</div>
-              <div>temp_range = 0.48</div>
-              <div>instab_range = 0.20</div>
-              <div>crisis_coeff = 0.40</div>
+              <div>temp_range = 0.38</div>
+              <div>instab_range = 0.15</div>
+              <div>crisis_coeff = 0.50</div>
             </div>
           </div>
         </div>
@@ -80,11 +80,11 @@ export default function StrategyPage() {
             <div>1.5x leverage (1/8 Kelly)</div>
           </div>
           <div>
-            <div className="text-slate-500 font-medium mb-2">Exits (Scale-Out)</div>
-            <div>R1 (0.5R): 30% exit</div>
-            <div>R2 (1.0R): 40% exit</div>
-            <div>R3 (1.5R): 30% exit</div>
-            <div>Stop Loss: 1 ATR below entry</div>
+            <div className="text-slate-500 font-medium mb-2">Smart Exits V2</div>
+            <div>Composite invalidation (4/5 features)</div>
+            <div>Distress half-exit (50% underwater)</div>
+            <div>Chop-aware trailing stops</div>
+            <div>R-multiple scale-out targets</div>
           </div>
           <div>
             <div className="text-slate-500 font-medium mb-2">Cost Model</div>

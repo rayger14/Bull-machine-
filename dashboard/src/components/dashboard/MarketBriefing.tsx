@@ -27,11 +27,11 @@ function buildHeadline(hb: Heartbeat): string {
 
   // Wyckoff phase mapping
   const wyckoffDesc: Record<string, string> = {
-    A: 'accumulation-phase',
-    B: 'markup-phase',
-    C: 'distribution-phase',
-    D: 'markdown-phase',
-    E: 'late-cycle',
+    A: 'stopping-action',
+    B: 'building-cause',
+    C: 'testing-phase',
+    D: 'trend-emerging',
+    E: 'trend-continuation',
   };
   const wyckoffStr = wyckoffDesc[wyPhase] ?? '';
 

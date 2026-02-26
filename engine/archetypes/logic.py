@@ -1,22 +1,31 @@
 #!/usr/bin/env python3
 """
-PR#6A: Rule-Based Archetype Expansion Logic
+Rule-Based Archetype Detection Logic
 
-Implements 11 distinct market archetypes (A-H + K, L, M) using rule-based
-heuristics. These create clean labeled data for future PyTorch training.
+Implements 16+1 market archetypes using rule-based heuristics with YAML-driven
+hard gates, per-archetype fusion weights, and whale conflict penalties.
 
-Archetypes:
-- A: Trap Reversal (PTI-based spring/UTAD)
-- B: Order Block Retest (BOMS + Wyckoff + BOS proximity)
-- C: FVG Continuation (Displacement + momentum + recent BOS)
-- D: Failed Continuation (FVG present + weak RSI + falling ADX)
-- E: Liquidity Compression (Low ATR + narrow range + stable book)
-- F: Expansion Exhaustion (Extreme RSI + high ATR + volume spike)
-- G: Re-Accumulate Base (BOMS strength + rising RSI from sub-40)
-- H: Trap Within Trend (HTF trend + liquidity drop + wick against trend)
-- K: Wick Trap (Moneytaur) (Wick anomaly + ADX > 25 + BOS context)
-- L: Volume Exhaustion (Zeroika) (Volume spike + extreme RSI + falling momentum)
-- M: Ratio Coil Break (Wyckoff Insider) (Low ATR + near POC + BOMS strength)
+Production Archetypes (v17 Whale Footprint Architecture):
+- spring: PTI-based spring/UTAD counter-trend reversal
+- order_block_retest: BOMS + Wyckoff + BOS proximity continuation
+- fvg_continuation: Displacement + momentum + recent BOS breakout
+- failed_continuation: FVG present + weak RSI + falling ADX reversal
+- liquidity_compression: Low ATR + narrow range compression before expansion
+- exhaustion_reversal: Extreme RSI + high ATR + volume spike reversal
+- liquidity_sweep: BOMS + rising liquidity from oversold grab reversal
+- trap_within_trend: HTF trend + liquidity drop + wick against trend
+- wick_trap: Wick anomaly + ADX + BOS context rejection
+- retest_cluster: Multi-level confluence fakeout + structural move
+- confluence_breakout: Low ATR + near POC + BOMS coil breakout
+- liquidity_vacuum: Crisis capitulation reversal at panic lows
+- whipsaw: Range-bound mean reversion in choppy markets
+- funding_divergence: Negative funding + resilience short squeeze
+- long_squeeze: Positive funding extreme + overheating cascade (SHORT)
+- volume_fade_chop: Low-volume fade scalping in neutral regimes
+- oi_divergence: Open interest / price divergence (shadow mode)
+
+Each archetype has YAML config (configs/archetypes/*.yaml) defining hard_gates,
+fusion_weights, regime_preferences, and exit parameters.
 """
 
 import pandas as pd
@@ -25,10 +34,10 @@ from typing import Tuple, Optional
 
 class ArchetypeLogic:
     """
-    Rule-based archetype detection for PR#6A.
+    Rule-based archetype detection engine.
 
     Returns archetype name + scores when pattern matches, otherwise (None, 0, 0).
-    All archetypes require global liquidity_score >= min_liquidity threshold.
+    Gate checks are driven by per-archetype YAML configs (configs/archetypes/*.yaml).
     """
 
     def __init__(self, config: dict):

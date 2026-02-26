@@ -1,8 +1,8 @@
 """
-Observability Utilities - PR#6A
+Observability Utilities
 
 Provides param echo and gate tracing to diagnose wiring issues
-during archetype refactor migration.
+in archetype detection and fusion scoring.
 """
 
 import json

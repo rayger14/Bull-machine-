@@ -1,13 +1,11 @@
 """
-Single source of truth for archetype parameters - PR#6A Refactor.
+Single source of truth for archetype parameters.
 
-This module provides a unified interface for reading archetype parameters,
+Provides a unified interface for reading archetype parameters from config,
 eliminating the disconnect between config['archetypes'][...] and self.thresh_*.
 
-MIGRATION STRATEGY:
-- Legacy: get_archetype_param(config, arch, key, default) - simple dict lookup
-- New (PR#6A): get_param(ctx, slug, key, default) - canonical with fallbacks
-- The new function is migration-safe: checks canonical → legacy → default
+get_param(ctx, slug, key, default) is the canonical accessor with fallbacks:
+checks canonical config → legacy config → default value.
 """
 
 import json
@@ -20,15 +18,15 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# PR#6A: Canonical Parameter Access with Migration Safety
+# Canonical Parameter Access with Migration Safety
 # ============================================================================
 
 def get_param(ctx: Any, slug: str, key: str, default: Any) -> Any:
     """
-    **PR#6A Single Parameter Source** - Migration-safe canonical accessor.
+    Migration-safe canonical parameter accessor.
 
     This is the ONLY function archetypes should use to read parameters.
-    Replaces fragmented `self.thresh_X[...]` hardcoded dict access.
+    Checks canonical config → legacy config → default value.
 
     Args:
         ctx: Context object with .config attribute

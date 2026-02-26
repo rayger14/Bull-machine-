@@ -1,8 +1,8 @@
 """
-Feature Flags - PR#6A Archetype Refactor + Bull/Bear Split
+Feature Flags - Archetype Behavior Controls
 
-Controls progressive migration from legacy letter-code system
-to canonical slug-based archetype registry.
+Controls archetype evaluation behavior with independent settings
+for bull vs bear archetypes (EVALUATE_ALL, SOFT_LIQUIDITY_FILTER).
 
 CRITICAL ARCHITECTURE FIX:
 Global feature flags (EVALUATE_ALL_ARCHETYPES, SOFT_LIQUIDITY_FILTER) broke

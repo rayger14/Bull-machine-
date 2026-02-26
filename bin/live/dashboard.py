@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Bull Machine — Live Monitoring Dashboard v7
+Bull Machine — Live Monitoring Dashboard v7.6
 
 Flask API backend serving React SPA from dashboard/dist/.
-5 tabs: Dashboard, Strategy, Signals, Backtest, Trades.
+5 tabs: Dashboard (WhaleIntelligencePanel + CMI + Wyckoff), Strategy, Signals, Backtest, Trades.
 
 Usage:
     python3 bin/live/dashboard.py                        # Default port 8081
@@ -355,7 +355,7 @@ def main():
     # Ensure backtest output dir exists
     BACKTEST_DIR.mkdir(parents=True, exist_ok=True)
 
-    logger.info("Starting Bull Machine Dashboard v7 on %s:%d", args.host, args.port)
+    logger.info("Starting Bull Machine Dashboard v7.6 on %s:%d", args.host, args.port)
     logger.info("Reading data from: %s", RESULTS_DIR)
     app.run(host=args.host, port=args.port, debug=args.debug)
 

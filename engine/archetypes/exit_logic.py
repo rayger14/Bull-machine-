@@ -1,24 +1,22 @@
 """
-Archetype-Specific Exit Logic System
+Archetype-Specific Exit Logic System (Smart Exits V2)
 
-Implements comprehensive exit rules based on extracted trading knowledge:
-1. Invalidation exits: Pattern/structure breaks
-2. Scale-out exits: Rally targets, previous highs
-3. Profit protection: Moon-bags, trailing stops
-4. Time-based exits: Max hold period per archetype
-5. Reason-gone exits: Funding flip, OI reversal, volume fade
+Implements comprehensive exit rules for the v17 Whale Footprint architecture:
+1. Hard stop-loss (inline, fill-at-stop-level)
+2. Composite invalidation (5-feature scoring, threshold 4/5, wick_trap + retest_cluster)
+3. Distress half-exit (50% exit when underwater + 4/5 distress signals)
+4. R-multiple scale-out targets (per-archetype R-ladders)
+5. Time-based exits (per-archetype max_hold_hours)
+6. Reason-gone exits (funding flip, OI reversal)
+7. Chop-aware trailing stops (0.75x at chop>0.45, 0.88x at chop>0.35)
+8. Runner position (keep remainder for extended moves)
 
-Each archetype has specific exit conditions tailored to its entry logic.
-Exit signals are checked in priority order to prevent double-triggers.
+Priority chain: hard_stop → invalidation → distress → profit_targets →
+               time_exit → reason_gone → trailing_stop → runner
 
-REGIME USAGE:
-- ENTRY: Bypassed (bypass_entry_filtering=true) - all archetypes allowed
-- EXIT: Active - regime adjusts stops, time limits, profit targets
-- SIZING: Active via risk_temperature (probabilistic scaling)
-
-This aligns with research: regime for risk management, not entry filtering.
-Research shows regime lag causes 93% signal waste when used for binary filtering,
-but regime-adaptive exits achieved Sharpe 2.24 in bear markets (2025 study).
+Each archetype has exit config in create_default_exit_config() and per-archetype
+YAML files (configs/archetypes/*.yaml). Regime exit scaling is DISABLED (all
+factors = 1.0) — backtesting showed regime-scaled exits were net negative.
 """
 
 import logging
@@ -36,10 +34,23 @@ from engine.runtime.context import RuntimeContext
 
 logger = logging.getLogger(__name__)
 
+# Canonical name mapping: ExitLogic internal names ↔ YAML names
+# ExitLogic was written with old names; YAMLs use new names
+_ARCHETYPE_ALIASES = {
+    'spring': 'trap_reversal',      # YAML 'spring' → ExitLogic 'trap_reversal'
+    'trap_reversal': 'trap_reversal',  # Already canonical
+}
+
+
+def _resolve_exit_name(archetype: str) -> str:
+    """Resolve archetype name to the canonical name used in ExitLogic exit_rules."""
+    return _ARCHETYPE_ALIASES.get(archetype, archetype)
+
 
 class ExitType(Enum):
     """Exit signal types ordered by priority."""
     INVALIDATION = "invalidation"  # Highest priority - pattern broken
+    DISTRESS = "distress"  # Feature-based early partial exit for underwater positions
     PROFIT_TARGET = "profit_target"  # Scale-out at targets
     TIME_EXIT = "time_exit"  # Max hold period
     REASON_GONE = "reason_gone"  # Entry condition reversed
@@ -87,11 +98,13 @@ class ExitLogic:
     Archetype-specific exit logic coordinator.
 
     Checks exit conditions in priority order:
-    1. Invalidation (pattern/structure breaks)
-    2. Profit targets (scale-outs)
-    3. Time-based (max hold period)
-    4. Reason-gone (entry condition reversed)
-    5. Trailing stops (profit protection)
+    1. Invalidation V2 (composite feature-based structural breakdown)
+    2. Distress half-exit (feature-based early partial exit for underwater positions)
+    3. Profit targets (scale-outs)
+    4. Time-based (max hold period)
+    5. Reason-gone (entry condition reversed)
+    6. Trailing stops (profit protection + chop-aware tightening)
+    7. Runner exit (wider trailing for remaining position after all scale-outs)
     """
 
     def __init__(self, config: Dict):
@@ -101,18 +114,6 @@ class ExitLogic:
         Args:
             config: Full configuration dict with exit rules per archetype
         """
-        # DEBUG: Log what config structure we receive
-        print(f"\n[EXIT_LOGIC INIT DEBUG] Config keys received: {list(config.keys())}")
-        if 'archetypes' in config:
-            print(f"[EXIT_LOGIC INIT DEBUG] archetypes found with {len(config['archetypes'])} entries")
-            print(f"[EXIT_LOGIC INIT DEBUG] archetype keys: {list(config['archetypes'].keys())}")
-            if 'failed_rally' in config['archetypes']:
-                print(f"[EXIT_LOGIC INIT DEBUG] failed_rally config: {config['archetypes']['failed_rally']}")
-        else:
-            print("[EXIT_LOGIC INIT DEBUG] No 'archetypes' key found in config!")
-        if 'exit_rules' in config:
-            print(f"[EXIT_LOGIC INIT DEBUG] exit_rules found with {len(config['exit_rules'])} entries")
-
         self.config = config
         self.exit_rules = self._build_exit_rules()
 
@@ -134,13 +135,7 @@ class ExitLogic:
         # After exit_config.update(user_config), archetype configs are at TOP LEVEL
         exit_config = self.config.get('exit_rules', {})
 
-        logger.info("[EXIT_LOGIC BUILD] Loading exit rules from config")
-        logger.info(f"  Config has 'exit_rules' key: {'exit_rules' in self.config}")
-        logger.info(f"  Config top-level keys: {list(self.config.keys())}")
-
-        print(f"[EXIT_LOGIC BUILD DEBUG] exit_config has {len(exit_config)} archetypes from 'exit_rules'")
-        if 'failed_rally' in exit_config:
-            print(f"[EXIT_LOGIC BUILD DEBUG] failed_rally in exit_config: {exit_config['failed_rally']}")
+        logger.debug(f"[EXIT_LOGIC BUILD] Loading exit rules, {len(exit_config)} archetypes")
 
         # Default exit rules (fallback for archetypes without specific rules)
         default_rules = {
@@ -151,8 +146,8 @@ class ExitLogic:
             'trailing_atr_mult': 2.0,  # Trail 2 ATR behind peak
             'runner_pct': 0.0,  # No runner by default (0 = disabled)
             'runner_trailing_atr': 3.0,  # Runner uses wider trailing stop
-            'invalidation_checks': True,
-            'reason_gone_checks': True
+            'invalidation_checks': False,  # Disabled: -$54K net in backtest (wick/spring invalidation all losers)
+            'reason_gone_checks': False   # Disabled: needs tuning, currently hurts more than helps
         }
 
         rules = {}
@@ -183,58 +178,39 @@ class ExitLogic:
                 config_override_applied = True
                 logger.info(f"  {archetype_key}: loaded from TOP LEVEL config (user override)")
 
-            # DEBUG: Log final rules for failed_rally
-            if archetype_key == 'failed_rally':
-                print(f"[EXIT_LOGIC BUILD DEBUG] Final failed_rally rules keys: {list(archetype_rules.keys())}")
-                print(f"[EXIT_LOGIC BUILD DEBUG] Final failed_rally has profit_targets: {'profit_targets' in archetype_rules}")
-                if 'profit_targets' in archetype_rules:
-                    print(f"[EXIT_LOGIC BUILD DEBUG] profit_targets value: {archetype_rules['profit_targets']}")
-
-            # DEBUG: Log trap_reversal and whipsaw rules at initialization
-            if archetype_key == 'trap_reversal':
-                logger.info("[EXIT_LOGIC INIT] trap_reversal exit rules:")
-                logger.info(f"  max_hold_hours: {archetype_rules.get('max_hold_hours')}")
-                logger.info(f"  scale_out_levels: {archetype_rules.get('scale_out_levels')}")
-                logger.info(f"  trailing_start_r: {archetype_rules.get('trailing_start_r')}")
-                logger.info(f"  trailing_atr_mult: {archetype_rules.get('trailing_atr_mult')}")
-                logger.info(f"  Config override applied: {config_override_applied}")
-
-            if archetype_key == 'whipsaw':
-                logger.info("[EXIT_LOGIC INIT] whipsaw exit rules:")
-                logger.info(f"  max_hold_hours: {archetype_rules.get('max_hold_hours')}")
-                logger.info(f"  scale_out_levels: {archetype_rules.get('scale_out_levels')}")
-                logger.info(f"  trailing_start_r: {archetype_rules.get('trailing_start_r')}")
-                logger.info(f"  trailing_atr_mult: {archetype_rules.get('trailing_atr_mult')}")
-                logger.info(f"  Config override applied: {config_override_applied}")
-
             rules[archetype_key] = archetype_rules
 
         return rules
 
     def _get_all_archetypes(self) -> list:
-        """Get list of all supported archetypes."""
+        """Get list of all supported archetypes (canonical ExitLogic names)."""
         return [
-            # Bear-biased archetypes (short)
-            'liquidity_vacuum',  # S1
-            'failed_rally',  # S2
-            'whipsaw',  # S3
-            'funding_divergence',  # S4
-            'long_squeeze',  # S5
-            'alt_rotation_down',  # S6
-            'curve_inversion',  # S7
-            'volume_fade_chop',  # S8
-            # Bull-biased archetypes (long)
-            'trap_reversal',  # A (Spring)
-            'order_block_retest',  # B
-            'fvg_continuation',  # C
-            'failed_continuation',  # D
-            'liquidity_compression',  # E
-            'expansion_exhaustion',  # F
-            're_accumulate',  # G
-            'trap_within_trend',  # H
-            'wick_trap',  # K
-            'volume_exhaustion',  # L
-            'ratio_coil_break',  # M
+            # Active production archetypes
+            'wick_trap',
+            'liquidity_sweep',
+            'retest_cluster',
+            'liquidity_vacuum',
+            'trap_within_trend',
+            'funding_divergence',
+            'long_squeeze',
+            'order_block_retest',
+            'fvg_continuation',
+            'failed_continuation',
+            'liquidity_compression',
+            'confluence_breakout',
+            'exhaustion_reversal',
+            'oi_divergence',
+            'trap_reversal',  # = spring (alias)
+            'whipsaw',
+            'volume_fade_chop',
+            # Legacy names (for backward compat)
+            'failed_rally',
+            'alt_rotation_down',
+            'curve_inversion',
+            'expansion_exhaustion',
+            're_accumulate',
+            'volume_exhaustion',
+            'ratio_coil_break',
         ]
 
     def check_exit(
@@ -263,35 +239,19 @@ class ExitLogic:
         Returns:
             ExitSignal if exit triggered, None otherwise
         """
-        # Get archetype-specific rules
-        rules = self.exit_rules.get(archetype)
-        if not rules:
-            logger.warning(f"No exit rules for archetype '{archetype}', using defaults")
-            rules = self.exit_rules.get('liquidity_vacuum')  # Use S1 as default
+        # Resolve archetype name (spring → trap_reversal for rule lookup)
+        canonical = _resolve_exit_name(archetype)
 
-        # DEBUG: Log exit rules being used for trap_reversal (every position check)
-        if archetype == 'trap_reversal':
-            if not hasattr(self, '_trap_reversal_rules_logged'):
-                logger.info("[EXIT RULES DEBUG] trap_reversal rules loaded:")
-                logger.info(f"  max_hold_hours: {rules.get('max_hold_hours', 'MISSING')}")
-                logger.info(f"  scale_out_levels: {rules.get('scale_out_levels', 'MISSING')}")
-                logger.info(f"  trailing_start_r: {rules.get('trailing_start_r', 'MISSING')}")
-                logger.info(f"  trailing_atr_mult: {rules.get('trailing_atr_mult', 'MISSING')}")
-                self._trap_reversal_rules_logged = True
+        # Get archetype-specific rules
+        rules = self.exit_rules.get(canonical) or self.exit_rules.get(archetype)
+        if not rules:
+            logger.warning(f"No exit rules for archetype '{archetype}' (canonical: '{canonical}'), using defaults")
+            rules = self.exit_rules.get('wick_trap', {})  # Use wick_trap as default
 
         # Calculate position metrics
         hours_in_position = (bar.name - position.entry_time).total_seconds() / 3600
         atr = bar.get('atr_14', bar.get('atr', bar['close'] * 0.02))
         unrealized_r = self._calculate_unrealized_r(position, bar['close'], atr)
-
-        # DEBUG: Log every 100th check to see if this is being called
-        if not hasattr(self, '_check_counter'):
-            self._check_counter = 0
-        self._check_counter += 1
-
-        if self._check_counter % 100 == 0 or hours_in_position > 72:
-            logger.info(f"[EXIT CHECK #{self._check_counter}] Archetype: {archetype}, Hours: {hours_in_position:.1f}, R: {unrealized_r:.2f}, "
-                       f"enable_time: {self.enable_time_exits}, enable_scale: {self.enable_scale_outs}, max_hold: {rules.get('max_hold_hours', 'N/A')}")
 
         # Store metrics in metadata for all checks
         exit_context = {
@@ -321,31 +281,35 @@ class ExitLogic:
                     for lvl in adjusted_rules['scale_out_levels']
                 ]
 
-        # 1. CHECK INVALIDATION (highest priority)
-        if rules.get('invalidation_checks', True):
+        # 1. CHECK INVALIDATION V2 (highest priority — composite scoring)
+        if rules.get('invalidation_checks', False):
             if invalidation := self._check_invalidation(bar, position, rules, context, exit_context):
                 return invalidation
 
-        # 2. CHECK PROFIT TARGETS / SCALE-OUTS (regime-adjusted levels)
+        # 2. CHECK DISTRESS HALF-EXIT (feature-based early partial exit)
+        if distress := self._check_distress_exit(bar, position, rules, context, exit_context):
+            return distress
+
+        # 3. CHECK PROFIT TARGETS / SCALE-OUTS (regime-adjusted levels)
         if self.enable_scale_outs:
             if profit_target := self._check_profit_targets(bar, position, adjusted_rules, context, exit_context):
                 return profit_target
 
-        # 3. CHECK TIME-BASED EXIT
+        # 4. CHECK TIME-BASED EXIT
         if self.enable_time_exits:
             if time_exit := self._check_time_based(bar, position, rules, context, exit_context):
                 return time_exit
 
-        # 4. CHECK REASON-GONE (entry condition reversed)
-        if rules.get('reason_gone_checks', True):
+        # 5. CHECK REASON-GONE (entry condition reversed)
+        if rules.get('reason_gone_checks', False):
             if reason_gone := self._check_reason_gone(bar, position, rules, context, exit_context):
                 return reason_gone
 
-        # 5. UPDATE TRAILING STOP (no exit, just update)
+        # 6. UPDATE TRAILING STOP (no exit, just update)
         if self.enable_trailing:
             self._update_trailing_stop(bar, position, rules, context, exit_context)
 
-        # 6. CHECK RUNNER EXIT (trailing stop for runner portion after all scale-outs)
+        # 7. CHECK RUNNER EXIT (trailing stop for runner portion after all scale-outs)
         if runner_exit := self._check_runner_exit(bar, position, rules, exit_context):
             return runner_exit
 
@@ -410,60 +374,40 @@ class ExitLogic:
         """
         Adjust exit parameters based on current market regime.
 
-        Research: 2025 study achieved Sharpe 2.24 in bear markets via regime adaptation.
-        Dynamic parameter adjustment prevents premature exits in volatile conditions
-        and protects capital in downturns.
+        NOTE: All regime factors are set to 1.0 (DISABLED). Backtesting showed
+        regime-scaled time exits and trailing multipliers were net negative.
+        The proven per-archetype config values (168h max hold, fixed R-ladders)
+        outperform regime-adaptive scaling. Keeping this method as a no-op
+        hook for future experimentation.
 
         Args:
             base_params: Base exit parameters from config
-                - trailing_atr_mult: Base trailing stop multiplier (e.g., 3.0)
-                - max_hold_hours: Base max hold period in hours (e.g., 168)
             regime: Current regime ('risk_on', 'neutral', 'risk_off', 'crisis')
-            r_multiple: Current R-multiple achieved (for adaptive logic)
+            r_multiple: Current R-multiple achieved
 
         Returns:
-            Adjusted parameters dict with:
-                - trailing_atr_mult: Regime-adjusted trailing multiplier
-                - max_hold_hours: Regime-adjusted max hold period
-
-        Regime Factors:
-            risk_on (bullish):
-                - Tighter trails (0.67x = 2.0 ATR from 3.0 base) - lock in profits faster
-                - Longer holds (1.5x = 67d from 45d base) - let winners run
-
-            neutral (balanced):
-                - Normal parameters (1.0x factors) - standard risk management
-
-            risk_off (bearish):
-                - Wider trails (1.17x = 3.5 ATR from 3.0 base) - avoid whipsaws
-                - Shorter holds (0.5x = 22d from 45d base) - reduce exposure
-
-            crisis (extreme):
-                - Widest trails (1.33x = 4.0 ATR from 3.0 base) - survive volatility
-                - Shortest holds (0.25x = 11d from 45d base) - exit quickly
-
-        Example:
-            Base: trailing_atr_mult=3.0, max_hold_hours=1080 (45 days)
-            Risk-off regime: trailing_atr_mult=3.5, max_hold_hours=540 (22 days)
-            Crisis regime: trailing_atr_mult=4.0, max_hold_hours=270 (11 days)
+            Adjusted parameters dict (currently unchanged from base_params)
         """
-        # Regime adjustment factors based on 2025 research
+        # Regime adjustment factors
+        # NOTE: Regime-adaptive time exits were net negative in backtesting.
+        # The old inline exit code had NO regime time scaling and performed better.
+        # Keeping trailing mult neutral too — per-archetype config is sufficient.
         regime_factors = {
             'risk_on': {
-                'trailing_mult_factor': 0.67,  # Tighter trails (2.0x from 3.0x base)
-                'time_exit_factor': 1.5,       # Longer holds (45d → 67d)
+                'trailing_mult_factor': 1.0,
+                'time_exit_factor': 1.0,
             },
             'neutral': {
-                'trailing_mult_factor': 1.0,   # Normal (3.0x base)
-                'time_exit_factor': 1.0,       # Normal holds
+                'trailing_mult_factor': 1.0,
+                'time_exit_factor': 1.0,
             },
             'risk_off': {
-                'trailing_mult_factor': 1.17,  # Wider trails (3.5x from 3.0x base)
-                'time_exit_factor': 0.5,       # Shorter holds (45d → 22d)
+                'trailing_mult_factor': 1.0,
+                'time_exit_factor': 1.0,
             },
             'crisis': {
-                'trailing_mult_factor': 1.33,  # Widest trails (4.0x from 3.0x base)
-                'time_exit_factor': 0.25,      # Shortest holds (45d → 11d)
+                'trailing_mult_factor': 1.0,
+                'time_exit_factor': 1.0,
             }
         }
 
@@ -499,9 +443,9 @@ class ExitLogic:
         """
         adjustments = {
             'risk_on': {
-                'max_hold_multiplier': 1.5,     # Hold longer in bull
-                'scale_level_multiplier': 1.3,   # Wider targets in bull
-                'trailing_atr_multiplier': 1.2,  # Wider trailing in bull
+                'max_hold_multiplier': 1.0,     # No hold extension (per-archetype config is enough)
+                'scale_level_multiplier': 1.0,   # Scale-out levels are absolute, never adjusted
+                'trailing_atr_multiplier': 1.0,  # No trailing change
             },
             'neutral': {
                 'max_hold_multiplier': 1.0,
@@ -509,14 +453,14 @@ class ExitLogic:
                 'trailing_atr_multiplier': 1.0,
             },
             'risk_off': {
-                'max_hold_multiplier': 0.7,     # Shorter holds in bear
-                'scale_level_multiplier': 0.8,   # Tighter targets
-                'trailing_atr_multiplier': 0.8,
+                'max_hold_multiplier': 0.5,     # Shorter holds in bear
+                'scale_level_multiplier': 1.0,   # Scale-out levels are absolute
+                'trailing_atr_multiplier': 1.0,
             },
             'crisis': {
-                'max_hold_multiplier': 0.5,     # Very short in crisis
-                'scale_level_multiplier': 0.6,
-                'trailing_atr_multiplier': 0.6,
+                'max_hold_multiplier': 0.25,    # Very short in crisis
+                'scale_level_multiplier': 1.0,   # Scale-out levels are absolute
+                'trailing_atr_multiplier': 1.0,
             },
         }
         return adjustments.get(regime, adjustments['neutral'])
@@ -647,6 +591,48 @@ class ExitLogic:
 
         return None
 
+    def _compute_invalidation_score(self, bar: pd.Series) -> float:
+        """
+        Compute composite invalidation score from multiple bearish features.
+
+        Research: Multi-indicator composite exits outperform single-indicator by 20-40%.
+        Uses 5 orthogonal structural signals (BOS + RSI + EMA slope + volume).
+
+        Args:
+            bar: Current bar with feature data
+
+        Returns:
+            Score 0.0-5.0 (higher = more bearish structural breakdown)
+        """
+        score = 0.0
+
+        # 1H Bearish BOS fired
+        bos_bearish = bar.get('tf1h_bos_bearish', 0.0)
+        if bos_bearish is not None and bos_bearish == bos_bearish and bos_bearish > 0:
+            score += 1.0
+
+        # 4H Bearish BOS (stronger timeframe confirmation)
+        tf4h_bos = bar.get('tf4h_bos_bearish', 0.0)
+        if tf4h_bos is not None and tf4h_bos == tf4h_bos and tf4h_bos > 0:
+            score += 1.0
+
+        # RSI collapsed into oversold
+        rsi = bar.get('rsi_14', 50.0)
+        if rsi is not None and rsi == rsi and rsi < 30:
+            score += 1.0
+
+        # EMA slope trending down
+        ema_slope = bar.get('ema_slope_21', 0.0)
+        if ema_slope is not None and ema_slope == ema_slope and ema_slope < -0.001:
+            score += 1.0
+
+        # Volume dried up (no buying interest)
+        vol_ratio = bar.get('volume_ratio', 1.0)
+        if vol_ratio is not None and vol_ratio == vol_ratio and vol_ratio < 0.5:
+            score += 1.0
+
+        return score
+
     def _check_invalidation(
         self,
         bar: pd.Series,
@@ -658,14 +644,11 @@ class ExitLogic:
         """
         Check pattern invalidation conditions.
 
-        Archetype-specific invalidation logic:
-        - S1: Previous low taken out
-        - S4: Funding flip reversal (funding_Z > -1.0 after < -5.0)
-        - S5: OI divergence reversal
-        - A: Spring invalidation (close below spring low)
-        - B: Close under order block support
-        - H: Clean close below support
-        - K: Wick invalidation (close below wick low)
+        V2: Composite feature-based scoring for wick_trap and retest_cluster.
+        Other archetypes use structural checks (funding flip, OI reversal, etc.).
+
+        Research backing: Multi-indicator composite exits outperform single-indicator
+        by 20-40% (LiteFinance 2026, MDPI TP/SL Strategies).
 
         Args:
             bar: Current bar
@@ -677,7 +660,24 @@ class ExitLogic:
         Returns:
             ExitSignal if invalidation detected, None otherwise
         """
-        archetype = exit_context['archetype']
+        archetype = _resolve_exit_name(exit_context['archetype'])
+
+        # --- COMPOSITE INVALIDATION V2 (wick_trap, retest_cluster) ---
+        # Instead of single price-level check (which was 100% losers),
+        # use multi-feature structural breakdown score >= 3/5
+        if archetype in ('wick_trap', 'retest_cluster'):
+            score = self._compute_invalidation_score(bar)
+            if score >= 4.0:
+                return ExitSignal(
+                    exit_type=ExitType.INVALIDATION.value,
+                    exit_pct=1.0,
+                    reason=f"Composite invalidation: {archetype} structural breakdown score={score:.1f}/5.0",
+                    confidence=min(0.7 + score * 0.06, 1.0),
+                    metadata={**exit_context, 'invalidation_score': score}
+                )
+            return None
+
+        # --- STRUCTURAL INVALIDATION (other archetypes) ---
 
         # S1 (Liquidity Vacuum) - Previous low taken out
         if archetype == 'liquidity_vacuum':
@@ -696,7 +696,6 @@ class ExitLogic:
             funding_z = bar.get('funding_z_score', 0.0)
             entry_funding_z = position.metadata.get('entry_funding_z', 0.0)
 
-            # If entered on extreme negative funding (< -5.0), exit if funding normalizes (> -1.0)
             if entry_funding_z < -5.0 and funding_z > -1.0:
                 return ExitSignal(
                     exit_type=ExitType.INVALIDATION.value,
@@ -711,7 +710,6 @@ class ExitLogic:
             oi_delta_pct = bar.get('oi_delta_pct', 0.0)
             entry_oi_delta = position.metadata.get('entry_oi_delta', 0.0)
 
-            # If entered on OI drop (< -10%), exit if OI rebounds (> +5%)
             if entry_oi_delta < -10.0 and oi_delta_pct > 5.0:
                 return ExitSignal(
                     exit_type=ExitType.INVALIDATION.value,
@@ -721,62 +719,117 @@ class ExitLogic:
                     metadata={**exit_context, 'oi_delta_pct': oi_delta_pct}
                 )
 
-        # A (Spring/Trap Reversal) - Spring invalidation
-        elif archetype == 'trap_reversal':
-            spring_low = position.metadata.get('entry_spring_low')
-            if spring_low and bar['close'] < spring_low:
-                return ExitSignal(
-                    exit_type=ExitType.INVALIDATION.value,
-                    exit_pct=1.0,
-                    reason=f"Spring invalidation: close below spring low {spring_low:.2f}",
-                    confidence=1.0,
-                    metadata={**exit_context, 'spring_low': spring_low}
-                )
+        return None
 
-        # B (Order Block Retest) - Close under OB support
-        elif archetype == 'order_block_retest':
-            ob_low = position.metadata.get('entry_ob_low')
-            if ob_low and bar['close'] < ob_low:
-                # Check for rejection confirmation (pin bar)
-                body_size = abs(bar['close'] - bar['open'])
-                lower_wick = min(bar['open'], bar['close']) - bar['low']
-                wick_ratio = lower_wick / (body_size + lower_wick) if (body_size + lower_wick) > 0 else 0
+    def _check_distress_exit(
+        self,
+        bar: pd.Series,
+        position: "Position",
+        rules: Dict,
+        context: RuntimeContext,
+        exit_context: Dict
+    ) -> Optional[ExitSignal]:
+        """
+        Feature-based early partial exit for positions showing distress signals.
 
-                if wick_ratio > 0.5:  # Strong rejection wick
-                    return ExitSignal(
-                        exit_type=ExitType.INVALIDATION.value,
-                        exit_pct=1.0,
-                        reason=f"OB invalidation: rejection at {ob_low:.2f} (wick ratio {wick_ratio:.2f})",
-                        confidence=0.95,
-                        metadata={**exit_context, 'ob_low': ob_low, 'wick_ratio': wick_ratio}
-                    )
+        Research backing:
+        - de Prado triple barrier + feature-based 4th dimension
+        - Lagged features (RSI, MA slope, volatility) reliably predict drawdowns
+        - Our data: 100% of losses are SL exits, losers hit SL 2.8x faster
+        - dd_score < 0.10 = 67% loss rate in our 914-trade backtest
 
-        # H (Trap Within Trend) - Clean close below support
-        elif archetype == 'trap_within_trend':
-            support_level = position.metadata.get('entry_support_level')
-            if support_level and bar['close'] < support_level:
-                # Check for "clean" close (not just a wick)
-                body_close_below = min(bar['open'], bar['close']) < support_level
-                if body_close_below:
-                    return ExitSignal(
-                        exit_type=ExitType.INVALIDATION.value,
-                        exit_pct=1.0,
-                        reason=f"H invalidation: clean close below support {support_level:.2f}",
-                        confidence=1.0,
-                        metadata={**exit_context, 'support_level': support_level}
-                    )
+        Trigger conditions (ALL must be true):
+        1. Trade is underwater (unrealized PnL < -0.2R)
+        2. Position held 3-24 hours (not too early, not near SL)
+        3. Composite distress score >= 3 of 5 features
 
-        # K (Wick Trap) - Wick invalidation
-        elif archetype == 'wick_trap':
-            wick_low = position.metadata.get('entry_wick_low')
-            if wick_low and bar['close'] < wick_low:
-                return ExitSignal(
-                    exit_type=ExitType.INVALIDATION.value,
-                    exit_pct=1.0,
-                    reason=f"Wick invalidation: close below wick low {wick_low:.2f}",
-                    confidence=1.0,
-                    metadata={**exit_context, 'wick_low': wick_low}
-                )
+        Action: Exit 50% at close price. Remaining 50% keeps original SL.
+        Cooldown: Max 1 distress exit per position.
+
+        Args:
+            bar: Current bar with feature data
+            position: Open position
+            rules: Archetype rules
+            context: Runtime context
+            exit_context: Shared exit context
+
+        Returns:
+            ExitSignal with exit_pct=0.5 if distress detected, None otherwise
+        """
+        if not rules.get('distress_exit_enabled', False):
+            return None
+
+        # Already used distress exit on this position
+        if position.metadata.get('distress_exit_used', False):
+            return None
+
+        unrealized_r = exit_context['unrealized_r']
+        hours = exit_context['hours_in_position']
+
+        # Gate 1: Must be underwater (< -0.2R)
+        if unrealized_r >= -0.2:
+            return None
+
+        # Gate 2: Held 3-24 hours (not too early, not near SL already)
+        if hours < 3.0 or hours > 24.0:
+            return None
+
+        # Gate 3: Composite distress score >= 3/5
+        score = 0.0
+        details = []
+
+        # dd_score < 0.10 (deep drawdown regime)
+        # dd_score = max(1 - drawdown_persistence, 0) — computed from feature store
+        dd_persist = bar.get('drawdown_persistence', 0.5)
+        if dd_persist is not None and dd_persist == dd_persist:  # NaN guard
+            dd_score = max(1.0 - dd_persist, 0.0)
+        else:
+            dd_score = 0.5  # neutral default
+        if dd_score < 0.10:
+            score += 1.0
+            details.append(f"dd={dd_score:.2f}")
+
+        # chop_score > 0.40 (choppy market)
+        chop = bar.get('chop_score', 0.3)
+        if chop is not None and chop == chop and chop > 0.40:
+            score += 1.0
+            details.append(f"chop={chop:.2f}")
+
+        # rsi_14 < 35 for longs (momentum collapsed)
+        rsi = bar.get('rsi_14', 50.0)
+        direction = getattr(position, 'direction', 'long')
+        if direction == 'long':
+            if rsi is not None and rsi == rsi and rsi < 35:
+                score += 1.0
+                details.append(f"rsi={rsi:.1f}")
+        else:  # short
+            if rsi is not None and rsi == rsi and rsi > 65:
+                score += 1.0
+                details.append(f"rsi={rsi:.1f}")
+
+        # ema_slope_21 < -0.001 (trend turned against for longs)
+        ema_slope = bar.get('ema_slope_21', 0.0)
+        if ema_slope is not None and ema_slope == ema_slope:
+            if (direction == 'long' and ema_slope < -0.001) or \
+               (direction == 'short' and ema_slope > 0.001):
+                score += 1.0
+                details.append(f"ema_slope={ema_slope:.4f}")
+
+        # volume_ratio < 0.5 (buying dried up)
+        vol_ratio = bar.get('volume_ratio', 1.0)
+        if vol_ratio is not None and vol_ratio == vol_ratio and vol_ratio < 0.5:
+            score += 1.0
+            details.append(f"vol_ratio={vol_ratio:.2f}")
+
+        if score >= 4.0:
+            position.metadata['distress_exit_used'] = True
+            return ExitSignal(
+                exit_type=ExitType.DISTRESS.value,
+                exit_pct=0.5,
+                reason=f"Distress half-exit: score={score:.0f}/5 ({', '.join(details)}), R={unrealized_r:.2f}",
+                confidence=min(0.6 + score * 0.08, 1.0),
+                metadata={**exit_context, 'distress_score': score, 'distress_details': details}
+            )
 
         return None
 
@@ -807,25 +860,14 @@ class ExitLogic:
         """
         unrealized_r = exit_context['unrealized_r']
 
-        # DEBUG: Log what's in rules to understand config loading
-        archetype_name = position.metadata.get('archetype', 'unknown')
-        print(f"\n[EXIT_LOGIC DEBUG] _check_profit_targets called for {archetype_name}")
-        print(f"[EXIT_LOGIC DEBUG] rules keys: {list(rules.keys())}")
-        print(f"[EXIT_LOGIC DEBUG] full rules: {rules}")
-
-        # CRITICAL FIX: Read profit_targets from config, not hardcoded defaults
+        # Read profit_targets from config
         profit_targets = rules.get('profit_targets', [])
         if profit_targets:
-            # Extract from config format: [{"r_multiple": 0.5, "exit_pct": 0.30}, ...]
             scale_levels = [pt['r_multiple'] for pt in profit_targets]
             scale_pcts = [pt['exit_pct'] for pt in profit_targets]
-            print(f"[EXIT_LOGIC DEBUG] Using profit_targets from config: {profit_targets}")
-            print(f"[EXIT_LOGIC DEBUG] scale_levels: {scale_levels}, scale_pcts: {scale_pcts}")
         else:
-            # Fallback to old format or hardcoded defaults
             scale_levels = rules.get('scale_out_levels', [0.5, 1.0, 2.0])
             scale_pcts = rules.get('scale_out_pcts', [0.2, 0.2, 0.3])
-            print(f"[EXIT_LOGIC DEBUG] Using HARDCODED defaults: scale_levels={scale_levels}, scale_pcts={scale_pcts}")
 
         # Track which scale-outs already executed
         executed_scales = position.metadata.get('executed_scale_outs', [])
@@ -846,7 +888,7 @@ class ExitLogic:
                 )
 
         # Check archetype-specific profit targets
-        archetype = exit_context['archetype']
+        archetype = _resolve_exit_name(exit_context['archetype'])
 
         # S1 (Liquidity Vacuum) - Rally to previous high
         if archetype == 'liquidity_vacuum':
@@ -913,7 +955,6 @@ class ExitLogic:
         """
         hours_in_position = exit_context['hours_in_position']
         unrealized_r = exit_context['unrealized_r']
-        archetype = exit_context['archetype']
 
         # Get regime from context
         regime = context.regime_label
@@ -922,21 +963,7 @@ class ExitLogic:
         adjusted_params = self._get_regime_adjusted_params(rules, regime, unrealized_r)
         max_hold = adjusted_params['max_hold_hours']
 
-        # DEBUG: Log trap_reversal time checks
-        if archetype == 'trap_reversal' and hours_in_position > 20:
-            base_max_hold = rules.get('max_hold_hours', 'MISSING')
-            logger.info(f"[TIME EXIT CHECK] trap_reversal: hours={hours_in_position:.1f}, "
-                       f"base_max={base_max_hold}, adjusted_max={max_hold:.0f}, "
-                       f"regime={regime}, R={unrealized_r:.2f}")
-
         if hours_in_position >= max_hold:
-            # DEBUG: Log every trap_reversal time exit
-            if archetype == 'trap_reversal':
-                logger.warning(f"[TIME EXIT TRIGGERED] trap_reversal position closed: "
-                              f"held {hours_in_position:.1f}h >= max {max_hold:.0f}h, "
-                              f"base_max_hold={rules.get('max_hold_hours')}, "
-                              f"R={unrealized_r:.2f}, regime={regime}")
-
             return ExitSignal(
                 exit_type=ExitType.TIME_EXIT.value,
                 exit_pct=1.0,
@@ -973,7 +1000,7 @@ class ExitLogic:
         Returns:
             ExitSignal if reason gone, None otherwise
         """
-        archetype = exit_context['archetype']
+        archetype = _resolve_exit_name(exit_context['archetype'])
 
         # S4 (Funding Divergence) - Already checked in invalidation
         # S5 (Long Squeeze) - Already checked in invalidation
@@ -1061,8 +1088,18 @@ class ExitLogic:
         # Note: We apply progressive tightening to the regime-adjusted base
         trailing_mult = self._get_adjusted_trailing_mult(regime_adjusted_mult, unrealized_r)
 
+        # Chop-aware tightening: reduce trailing width in choppy markets
+        # Research: Clare et al. (2013) — volatility-adaptive stops reduce max DD 45-65%
+        # Choppy markets = higher whipsaw risk → tighter stops capture profit before reversal
+        chop = bar.get('chop_score', 0.3)
+        if chop is not None and chop == chop:  # NaN guard
+            if chop > 0.45:
+                trailing_mult *= 0.75  # 25% tighter in high chop
+            elif chop > 0.35:
+                trailing_mult *= 0.88  # 12% tighter in moderate chop
+
         # Archetype-specific tightening overrides
-        archetype = exit_context['archetype']
+        archetype = _resolve_exit_name(exit_context['archetype'])
 
         # S1 (Liquidity Vacuum) - Extra tightening after 50% rally
         if archetype == 'liquidity_vacuum':
@@ -1112,81 +1149,246 @@ def create_default_exit_config() -> Dict:
         'enable_trailing': True,
 
         'exit_rules': {
-            # S1 (Liquidity Vacuum)
+            # --- Existing 7 archetypes (with unique exit profiles) ---
+
+            # Liquidity Vacuum — structural setup, 5 day hold
             'liquidity_vacuum': {
-                'max_hold_hours': 120,  # 5 days
+                'max_hold_hours': 120,
                 'scale_out_levels': [0.5, 1.0, 2.0],
                 'scale_out_pcts': [0.2, 0.2, 0.3],
                 'trailing_start_r': 0.5,
                 'trailing_atr_mult': 2.0,
-                'invalidation_checks': True,
-                'reason_gone_checks': False
+                'runner_pct': 0.15,
+                'runner_trailing_atr': 3.0,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
             },
 
-            # S4 (Funding Divergence)
+            # Funding Divergence — macro play, 10 day hold, moon-bag
             'funding_divergence': {
-                'max_hold_hours': 240,  # 10 days (macro play)
+                'max_hold_hours': 240,
                 'scale_out_levels': [0.5, 1.0, 2.0, 3.0],
                 'scale_out_pcts': [0.2, 0.2, 0.2, 0.3],
                 'trailing_start_r': 1.0,
                 'trailing_atr_mult': 2.5,
-                'invalidation_checks': True,
-                'reason_gone_checks': True
+                'runner_pct': 0.10,
+                'runner_trailing_atr': 3.5,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
             },
 
-            # S5 (Long Squeeze)
+            # Long Squeeze — fast momentum short, 3 day hold
             'long_squeeze': {
-                'max_hold_hours': 72,  # 3 days (fast momentum)
+                'max_hold_hours': 72,
                 'scale_out_levels': [0.5, 1.0, 1.5],
                 'scale_out_pcts': [0.3, 0.3, 0.3],
                 'trailing_start_r': 0.5,
                 'trailing_atr_mult': 1.5,
-                'invalidation_checks': True,
-                'reason_gone_checks': True
+                'runner_pct': 0.0,
+                'runner_trailing_atr': 2.0,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
             },
 
-            # A (Spring/Trap Reversal)
+            # Spring/Trap Reversal — Wyckoff reversal, 7 day hold
             'trap_reversal': {
-                'max_hold_hours': 168,  # 7 days
+                'max_hold_hours': 168,
                 'scale_out_levels': [1.0, 2.0, 3.0],
                 'scale_out_pcts': [0.3, 0.3, 0.3],
                 'trailing_start_r': 1.0,
                 'trailing_atr_mult': 2.0,
-                'invalidation_checks': True,
-                'reason_gone_checks': False
+                'runner_pct': 0.10,
+                'runner_trailing_atr': 3.0,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
             },
 
-            # B (Order Block Retest)
+            # Order Block Retest — structural, 4 day hold
             'order_block_retest': {
-                'max_hold_hours': 96,  # 4 days
+                'max_hold_hours': 96,
                 'scale_out_levels': [0.5, 1.0, 2.0],
                 'scale_out_pcts': [0.25, 0.25, 0.4],
                 'trailing_start_r': 0.5,
                 'trailing_atr_mult': 1.5,
-                'invalidation_checks': True,
-                'reason_gone_checks': False
+                'runner_pct': 0.0,
+                'runner_trailing_atr': 2.0,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
             },
 
-            # H (Trap Within Trend)
+            # Trap Within Trend — proven config, 7 day hold
             'trap_within_trend': {
-                'max_hold_hours': 120,  # 5 days
+                'max_hold_hours': 168,
+                'scale_out_levels': [0.5, 1.0, 2.0],
+                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.0,
+                'runner_pct': 0.15,
+                'runner_trailing_atr': 2.5,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
+            },
+
+            # Wick Trap — proven config, 7 day hold + composite invalidation V2
+            'wick_trap': {
+                'max_hold_hours': 168,
+                'scale_out_levels': [0.5, 1.0, 2.0],
+                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.0,
+                'runner_pct': 0.15,
+                'runner_trailing_atr': 2.5,
+                'invalidation_checks': True,  # V2 composite scoring (not price-level)
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
+            },
+
+            # --- NEW archetypes (missing from original) ---
+
+            # Liquidity Sweep — proven config, 7 day hold
+            'liquidity_sweep': {
+                'max_hold_hours': 168,
+                'scale_out_levels': [0.5, 1.0, 2.0],
+                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.0,
+                'runner_pct': 0.15,
+                'runner_trailing_atr': 2.5,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
+            },
+
+            # Retest Cluster — proven config, 7 day hold + composite invalidation V2
+            'retest_cluster': {
+                'max_hold_hours': 168,
+                'scale_out_levels': [0.5, 1.0, 2.0],
+                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.0,
+                'runner_pct': 0.15,
+                'runner_trailing_atr': 2.5,
+                'invalidation_checks': True,  # V2 composite scoring (not price-level)
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
+            },
+
+            # FVG Continuation — fast momentum, 3 day hold
+            'fvg_continuation': {
+                'max_hold_hours': 72,
+                'scale_out_levels': [0.5, 1.0, 2.0],
+                'scale_out_pcts': [0.3, 0.3, 0.3],
+                'trailing_start_r': 0.5,
+                'trailing_atr_mult': 1.5,
+                'runner_pct': 0.0,
+                'runner_trailing_atr': 2.0,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
+            },
+
+            # Failed Continuation — medium reversal, 4 day hold
+            'failed_continuation': {
+                'max_hold_hours': 96,
+                'scale_out_levels': [0.5, 1.0, 1.5],
+                'scale_out_pcts': [0.25, 0.35, 0.3],
+                'trailing_start_r': 0.5,
+                'trailing_atr_mult': 1.5,
+                'runner_pct': 0.0,
+                'runner_trailing_atr': 2.0,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
+            },
+
+            # Liquidity Compression — structural buildup, 5 day hold
+            'liquidity_compression': {
+                'max_hold_hours': 120,
                 'scale_out_levels': [0.5, 1.0, 2.0],
                 'scale_out_pcts': [0.2, 0.3, 0.4],
                 'trailing_start_r': 0.5,
                 'trailing_atr_mult': 2.0,
-                'invalidation_checks': True,
-                'reason_gone_checks': True
+                'runner_pct': 0.10,
+                'runner_trailing_atr': 2.5,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
             },
 
-            # K (Wick Trap)
-            'wick_trap': {
-                'max_hold_hours': 48,  # 2 days (fast reversal)
+            # Confluence Breakout — breakout momentum, 4 day hold
+            'confluence_breakout': {
+                'max_hold_hours': 96,
+                'scale_out_levels': [0.5, 1.0, 2.0],
+                'scale_out_pcts': [0.25, 0.25, 0.4],
+                'trailing_start_r': 0.5,
+                'trailing_atr_mult': 1.5,
+                'runner_pct': 0.0,
+                'runner_trailing_atr': 2.0,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
+            },
+
+            # Exhaustion Reversal — fast reversal, 2 day hold
+            'exhaustion_reversal': {
+                'max_hold_hours': 48,
                 'scale_out_levels': [0.5, 1.0, 1.5],
                 'scale_out_pcts': [0.3, 0.4, 0.3],
                 'trailing_start_r': 0.5,
                 'trailing_atr_mult': 1.5,
-                'invalidation_checks': True,
-                'reason_gone_checks': False
+                'runner_pct': 0.0,
+                'runner_trailing_atr': 2.0,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
+            },
+
+            # OI Divergence — whale exit detection, 2 day hold
+            'oi_divergence': {
+                'max_hold_hours': 48,
+                'scale_out_levels': [1.0, 1.5, 2.5],
+                'scale_out_pcts': [0.3, 0.3, 0.3],
+                'trailing_start_r': 0.5,
+                'trailing_atr_mult': 1.5,
+                'runner_pct': 0.0,
+                'runner_trailing_atr': 2.0,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
+            },
+
+            # Whipsaw — fast reversal, 2 day hold
+            'whipsaw': {
+                'max_hold_hours': 48,
+                'scale_out_levels': [0.5, 1.0, 1.5],
+                'scale_out_pcts': [0.3, 0.3, 0.3],
+                'trailing_start_r': 0.5,
+                'trailing_atr_mult': 1.5,
+                'runner_pct': 0.0,
+                'runner_trailing_atr': 2.0,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
+            },
+
+            # Volume Fade Chop — fast mean-reversion, 2 day hold
+            'volume_fade_chop': {
+                'max_hold_hours': 48,
+                'scale_out_levels': [0.5, 1.0, 1.5],
+                'scale_out_pcts': [0.3, 0.4, 0.3],
+                'trailing_start_r': 0.5,
+                'trailing_atr_mult': 1.5,
+                'runner_pct': 0.0,
+                'runner_trailing_atr': 2.0,
+                'invalidation_checks': False,
+                'reason_gone_checks': False,
+                'distress_exit_enabled': True,
             },
         }
     }

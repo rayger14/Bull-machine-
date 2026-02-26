@@ -9,7 +9,7 @@ export default function ArchetypeCards() {
 
   return (
     <div>
-      <div className="text-xs text-slate-500 uppercase tracking-wider mb-3">Archetypes (16)</div>
+      <div className="text-xs text-slate-500 uppercase tracking-wider mb-3">Archetypes (17)</div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {Object.entries(ARCHETYPES).map(([key, arch]) => (
           <GlassCard

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PR#6A: Archetype Telemetry System
+Archetype Telemetry System
 
 Tracks archetype detection counts, distributions, and per-archetype performance
 metrics for monitoring and analysis.

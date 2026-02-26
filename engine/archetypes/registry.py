@@ -1,8 +1,8 @@
 """
-Canonical Archetype Registry - PR#6A
+Canonical Archetype Registry
 
 Single source of truth for archetype identity, aliases, and metadata.
-Replaces fragmented letter-code system with stable slug-based naming.
+Uses stable slug-based naming (letter codes retained as aliases for backward compat).
 
 DESIGN:
 - Each archetype has ONE canonical slug (snake_case, stable forever)

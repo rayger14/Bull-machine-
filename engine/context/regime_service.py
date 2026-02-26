@@ -4,29 +4,31 @@ Regime Service - Single Entry Point for Regime Classification
 
 This is the ONLY module that other components should call for regime detection.
 
-Architecture (3-layer stack):
-    Layer 0: Event Override (flash crash, extreme events) → immediate crisis
-    Layer 1: Regime Model (logistic OR ensemble) → probabilistic classification
-    Layer 2: Hysteresis (stability constraints, dwell time, dual thresholds)
+Architecture: CMI v0 (Composite Market Intelligence)
+    - risk_temperature: trend_align(45%) + ADX(25%) + fear_greed(15%) + drawdown(15%)
+    - instability: chop_score(35%) + ADX_weakness(25%) + wick_ratio(20%) + volume_extremes(20%)
+    - crisis_prob: stress_signals(60%) + vol_shock(20%) + sentiment_extreme(20%)
+    - derivatives_heat: oi_momentum + funding_health + taker_conviction (weight=0%, DISABLED)
+
+    Dynamic threshold = base + (1 - risk_temp) * temp_range + instability * instab_range
+    Config: base=0.18, temp_range=0.38, instab_range=0.15, crisis_coeff=0.50
+
+Regime Labels (CMI-derived, not ML):
+    - bull: risk_temp > 0.6 (permissive threshold ~0.34)
+    - bear: risk_temp < 0.4 (selective threshold ~0.63)
+    - neutral: 0.4 <= risk_temp <= 0.6 (moderate threshold)
+    - crisis: crisis_prob > 0.5 (fusion penalized + high threshold)
 
 Design Principles:
-- Single source of truth for regime classification
-- Clean separation of concerns (model vs stability vs events)
-- Production-ready interface (no ad-hoc logic elsewhere)
-- Backward compatible with existing RegimeClassifier interface
-- Easy to swap underlying model (logistic → XGBoost → ensemble)
-- Feature flag support for A/B testing (static vs dynamic_baseline vs dynamic_ensemble)
+    - CMI must be orthogonal to archetype fusion (no double-counting)
+    - EMA features for risk_temperature (100% coverage, responsive)
+    - SMA features for regime labels (fewer false transitions)
+    - Never let accumulation cancel crisis (catastrophic dip-buying)
 
 Usage:
     from engine.context.regime_service import RegimeService
 
-    # Initialize with ensemble (recommended)
-    service = RegimeService(
-        mode='dynamic_ensemble',
-        model_path='models/ensemble_regime_v1.pkl',
-        enable_event_override=True,
-        enable_hysteresis=True
-    )
+    service = RegimeService(mode='static')
 
     # Single bar classification
     result = service.get_regime(features, timestamp)
@@ -35,11 +37,8 @@ Usage:
     # Batch classification (backtesting)
     df = service.classify_batch(df)
 
-    # Validate integration (for testing)
-    service.validate_integration()
-
 Author: Claude Code (Backend Architect)
-Date: 2025-01-08 (Updated: 2026-01-14 for ensemble integration)
+Date: 2025-01-08 (Updated: 2026-02-25 for CMI v0 architecture)
 """
 
 import numpy as np

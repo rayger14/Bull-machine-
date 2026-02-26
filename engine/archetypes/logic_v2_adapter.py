@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """
-PR#6A: Rule-Based Archetype Expansion Logic (Adapter Layer Version)
-PR#6B: Refactored for RuntimeContext and ThresholdPolicy integration
+Archetype Detection Adapter Layer
 
 ADAPTER LAYER: Maps generic feature names to actual TF-prefixed columns
-and provides fallback calculations for missing scores.
+and provides fallback calculations for missing scores. Bridges the feature
+store (301-col parquet) to the archetype detection engine.
 
-Implements 11 distinct market archetypes (A-H + K, L, M) using rule-based
-heuristics. These create clean labeled data for future PyTorch training.
+Integrates with RuntimeContext and ThresholdPolicy for CMI v0 dynamic
+threshold system (risk_temperature, instability, crisis_prob).
+
+Supports 16+1 archetypes with per-archetype base thresholds and
+YAML-driven hard gates (configs/archetypes/*.yaml).
 """
 
 import logging
@@ -103,11 +106,11 @@ def _norm01(x, lo, hi):
 
 class ArchetypeLogic:
     """
-    Rule-based archetype detection for PR#6A with adapter layer.
+    Rule-based archetype detection with feature adapter layer.
 
-    The adapter layer intelligently maps generic feature names (liquidity_score,
-    wyckoff_score) to actual TF-prefixed columns (tf1d_wyckoff_score, etc.)
-    and provides fallback calculations when fields are missing.
+    Maps generic feature names (liquidity_score, wyckoff_score) to actual
+    TF-prefixed columns (tf1d_wyckoff_score, etc.) and provides fallback
+    calculations when fields are missing in the 301-col feature store.
     """
 
     CLASS_VERSION = "archetypes/logic_v2_adapter@r1"

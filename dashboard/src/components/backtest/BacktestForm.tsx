@@ -10,7 +10,7 @@ interface BacktestFormProps {
 
 export default function BacktestForm({ onSubmit, isRunning }: BacktestFormProps) {
   const [form, setForm] = useState<BacktestParams>({
-    capital: 10000,
+    capital: 100000,
     leverage: 1.5,
     commission: '0.0002',
     slippage: 3,

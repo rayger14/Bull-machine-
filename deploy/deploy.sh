@@ -110,18 +110,11 @@ sync_code() {
         "${LOCAL_DIR}/" "${SERVER_USER}@${SERVER_IP}:${REMOTE_DIR}/"
 }
 
-# ---- Freqtrade config sync ----
+# ---- Freqtrade config sync (DEPRECATED — Freqtrade removed 2026-02-17) ----
+# Kept for reference only. Service file has been deleted from server.
 sync_freqtrade_config() {
-    echo ""
-    echo "--- Syncing Freqtrade config ---"
-    echo "WARNING: This overwrites the SERVER config (which may have API keys)."
-    read -p "Continue? (y/N) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        rsync -avz -e "ssh -i ${SSH_KEY}" \
-            "${LOCAL_DIR}/user_data/freqtrade_config.json" \
-            "${SERVER_USER}@${SERVER_IP}:${REMOTE_DIR}/user_data/freqtrade_config.json"
-    fi
+    echo "WARNING: Freqtrade was removed 2026-02-17. This function is deprecated."
+    return 0
 }
 
 # ---- Models sync ----
@@ -211,46 +204,12 @@ REMOTE_ENV
     ssh -i "${SSH_KEY}" "${SERVER_USER}@${SERVER_IP}" "sudo systemctl status coinbase-paper --no-pager | head -15"
 }
 
-# ---- Switch: disable Freqtrade, enable Coinbase ----
+# ---- Switch to Coinbase (DEPRECATED — Freqtrade removed 2026-02-17) ----
+# Coinbase paper is now the only trading service. Freqtrade service file deleted.
 switch_to_coinbase() {
-    echo ""
-    echo "--- Switching from Freqtrade to Coinbase Paper Trading ---"
-    echo ""
-    echo "This will:"
-    echo "  1. Stop and disable the Freqtrade service"
-    echo "  2. Enable and start the Coinbase paper trading service"
-    echo ""
-    read -p "Continue? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Aborted."
-        exit 0
-    fi
-
-    ssh -i "${SSH_KEY}" "${SERVER_USER}@${SERVER_IP}" << 'REMOTE_SWITCH'
-set -euo pipefail
-
-echo "  Stopping Freqtrade..."
-sudo systemctl stop freqtrade 2>/dev/null || true
-sudo systemctl disable freqtrade 2>/dev/null || true
-echo "  Freqtrade stopped and disabled."
-
-echo ""
-echo "  Starting Coinbase paper trading..."
-sudo systemctl enable coinbase-paper
-sudo systemctl restart coinbase-paper
-echo "  Coinbase paper trading started."
-REMOTE_SWITCH
-
-    sleep 5
-    echo ""
-    echo "--- Service status ---"
-    echo ""
-    echo "Freqtrade:"
-    ssh -i "${SSH_KEY}" "${SERVER_USER}@${SERVER_IP}" "sudo systemctl is-active freqtrade 2>/dev/null || echo '  inactive (disabled)'"
-    echo ""
-    echo "Coinbase Paper:"
-    ssh -i "${SSH_KEY}" "${SERVER_USER}@${SERVER_IP}" "sudo systemctl status coinbase-paper --no-pager | head -15"
+    echo "NOTE: Freqtrade was removed 2026-02-17. Coinbase paper is the only active service."
+    echo "Use './deploy/deploy.sh' for standard deployment."
+    return 0
 }
 
 # ---- Deploy Dashboard ----
