@@ -69,6 +69,10 @@ class TrackedPosition:
     crisis_prob_at_entry: float = 0.0
     threshold_margin: float = 0.0  # fusion_score - threshold (negative = would have been rejected)
     would_have_passed: bool = True  # False if signal only passed due to bypass
+    # Entry metadata for invalidation exits
+    entry_metadata: Dict[str, Any] = field(default_factory=dict)
+    # Runner state
+    runner_trailing_stop: Optional[float] = None
 
     def to_dict(self):
         d = asdict(self)
@@ -88,6 +92,8 @@ class TrackedPosition:
         d.setdefault('crisis_prob_at_entry', 0.0)
         d.setdefault('threshold_margin', 0.0)
         d.setdefault('would_have_passed', True)
+        d.setdefault('entry_metadata', {})
+        d.setdefault('runner_trailing_stop', None)
         return cls(**d)
 
 
@@ -117,6 +123,20 @@ class CompletedTrade:
     stop_loss: float = 0.0
     take_profit: float = 0.0
     atr_at_entry: float = 0.0
+
+
+class _PositionAdapter:
+    """Lightweight adapter wrapping TrackedPosition for ExitLogic's Position interface."""
+
+    def __init__(self, tracked_pos: 'TrackedPosition'):
+        self._pos = tracked_pos
+        self.entry_price = tracked_pos.entry_price
+        self.entry_time = tracked_pos.entry_time
+        self.stop_loss = tracked_pos.stop_loss
+        self.direction = tracked_pos.direction
+        self.runner_trailing_stop = tracked_pos.runner_trailing_stop
+        self.metadata = dict(tracked_pos.entry_metadata)
+        self.metadata['executed_scale_outs'] = list(tracked_pos.executed_scale_outs)
 
 
 # ---------------------------------------------------------------------------
@@ -208,6 +228,9 @@ class V11ShadowRunner:
         self.max_position_pct = sizing_cfg.get('max_position_size_pct', 0.15)
         self.leverage = self.config.get('leverage', 1.0)
 
+        # Initialize per-archetype exit logic
+        self._init_exit_logic()
+
         # State
         self.positions: Dict[str, TrackedPosition] = {}
         self.trades: List[CompletedTrade] = []
@@ -264,6 +287,17 @@ class V11ShadowRunner:
         else:
             with open(self.signal_log_path, 'w') as f:
                 f.write(expected_header)
+
+    def _init_exit_logic(self):
+        """Initialize per-archetype exit logic (mirrors backtester)."""
+        from engine.archetypes.exit_logic import ExitLogic, create_default_exit_config
+
+        exit_config = create_default_exit_config()
+        if 'exit_logic' in self.config:
+            exit_config.update(self.config['exit_logic'])
+
+        self.exit_logic = ExitLogic(exit_config)
+        logger.info("ExitLogic initialized (archetype-specific exit rules)")
 
     # ------------------------------------------------------------------
     # Signal processing (mirrors backtester lines 332-419)
@@ -1200,6 +1234,23 @@ class V11ShadowRunner:
             threshold_margin=threshold_margin,
             would_have_passed=would_have_passed,
         )
+
+        # Capture entry metadata for ExitLogic invalidation checks
+        self.positions[pos_id].entry_metadata = {
+            'entry_prev_low': features.get('tf1h_prev_low', features.get('low', fill_price)) if isinstance(features, dict) else fill_price,
+            'entry_prev_high': features.get('tf1h_prev_high', features.get('high', fill_price)) if isinstance(features, dict) else fill_price,
+            'entry_wick_low': features.get('low', fill_price) if isinstance(features, dict) else fill_price,
+            'entry_spring_low': features.get('low', fill_price) if isinstance(features, dict) else fill_price,
+            'entry_ob_low': features.get('order_block_low', features.get('low', fill_price)) if isinstance(features, dict) else fill_price,
+            'entry_support_level': stop_loss,
+            'entry_funding_z': features.get('funding_Z', 0.0) if isinstance(features, dict) else 0.0,
+            'entry_oi_delta': features.get('oi_change_4h', 0.0) if isinstance(features, dict) else 0.0,
+            'entry_volume': features.get('volume', 0.0) if isinstance(features, dict) else 0.0,
+            'entry_adx': features.get('adx_14', 0.0) if isinstance(features, dict) else 0.0,
+            'archetype': archetype,
+            'executed_scale_outs': [],
+        }
+
         self.signals_allocated += 1
 
         logger.info(
@@ -1294,7 +1345,20 @@ class V11ShadowRunner:
             del self.positions[pos_id]
 
     def _check_all_exits(self, row: pd.Series, ts: pd.Timestamp):
-        """Check exits for all virtual positions (mirrors backtester exactly)."""
+        """Check exits for all virtual positions using ExitLogic."""
+        from engine.runtime.context import RuntimeContext
+
+        # Build RuntimeContext once per bar
+        regime_label = row.get('regime_label', 'neutral') if hasattr(row, 'get') else 'neutral'
+        bar_context = RuntimeContext(
+            ts=ts,
+            row=row,
+            regime_probs={regime_label: 1.0},
+            regime_label=regime_label,
+            adapted_params={},
+            thresholds={},
+        )
+
         for pos_id in list(self.positions.keys()):
             pos = self.positions[pos_id]
             close_price = row['close']
@@ -1302,7 +1366,7 @@ class V11ShadowRunner:
             if pd.isna(atr) or atr <= 0:
                 atr = pos.atr_at_entry
 
-            # 1. Stop loss
+            # 1. Hard stop loss (KEEP INLINE — fill at stop level)
             effective_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
             stop_hit = False
             if pos.direction == 'long' and row['low'] <= effective_stop:
@@ -1316,79 +1380,33 @@ class V11ShadowRunner:
                 self._close_position(pos_id, exit_price, ts, exit_reason="stop_loss", exit_pct=1.0)
                 continue
 
-            # 2. Scale-out profit targets
-            stop_distance = abs(pos.entry_price - pos.stop_loss)
-            if stop_distance <= 0:
-                stop_distance = atr * 2.5
+            # 2. Delegate to ExitLogic for all other exits
+            pos_adapter = _PositionAdapter(pos)
 
-            unrealized_pnl = (close_price - pos.entry_price) if pos.direction == 'long' \
-                else (pos.entry_price - close_price)
-            unrealized_r = unrealized_pnl / stop_distance if stop_distance > 0 else 0.0
+            exit_signal = self.exit_logic.check_exit(
+                bar=row,
+                position=pos_adapter,
+                archetype=pos.archetype,
+                context=bar_context,
+            )
 
-            archetype_name = pos.archetype
-            scale_levels = [0.5, 1.0, 2.0]
-            scale_pcts = [0.20, 0.20, 0.30]
+            if exit_signal is not None:
+                pos.executed_scale_outs = pos_adapter.metadata.get('executed_scale_outs', pos.executed_scale_outs)
 
-            if archetype_name in self.engine.archetypes:
-                arch_cfg = self.engine.archetype_configs.get(archetype_name, {})
-                exit_cfg = arch_cfg.get('exit_logic', {})
-                if 'scale_out_levels' in exit_cfg:
-                    scale_levels = exit_cfg['scale_out_levels']
-                if 'scale_out_pcts' in exit_cfg:
-                    scale_pcts = exit_cfg['scale_out_pcts']
+                if exit_signal.stop_update is not None:
+                    pos.trailing_stop = exit_signal.stop_update
 
-            for level, pct in zip(scale_levels, scale_pcts):
-                if unrealized_r >= level and level not in pos.executed_scale_outs:
-                    pos.executed_scale_outs.append(level)
-                    self._close_position(pos_id, close_price, ts,
-                                         exit_reason=f"scale_out_{level:.1f}R", exit_pct=pct)
-                    break
-
-            if pos_id not in self.positions:
-                continue
-
-            # 3. Time-based exit
-            hours_held = (ts - pos.entry_time).total_seconds() / 3600.0
-            max_hold = 168
-            if archetype_name in self.engine.archetypes:
-                arch_cfg = self.engine.archetype_configs.get(archetype_name, {})
-                exit_cfg = arch_cfg.get('exit_logic', {})
-                max_hold = exit_cfg.get('max_hold_hours', 168)
-
-            if hours_held >= max_hold:
-                self._close_position(pos_id, close_price, ts,
-                                     exit_reason=f"time_exit_{hours_held:.0f}h", exit_pct=1.0)
-                continue
-
-            # 4. Trailing stop update
-            trailing_start_r = 1.0
-            trailing_atr_mult = 2.0
-            if archetype_name in self.engine.archetypes:
-                arch_cfg = self.engine.archetype_configs.get(archetype_name, {})
-                exit_cfg = arch_cfg.get('exit_logic', {})
-                trailing_start_r = exit_cfg.get('trailing_start_r', 1.0)
-                trailing_atr_mult = exit_cfg.get('trailing_atr_mult', 2.0)
-
-            if unrealized_r >= trailing_start_r:
-                if unrealized_r >= 3.0:
-                    effective_mult = trailing_atr_mult * 0.5
-                elif unrealized_r >= 2.0:
-                    effective_mult = trailing_atr_mult * 0.67
-                elif unrealized_r >= 1.0:
-                    effective_mult = trailing_atr_mult * 0.83
-                else:
-                    effective_mult = trailing_atr_mult
-
-                if pos.direction == 'long':
-                    new_trail = close_price - (effective_mult * atr)
-                    current_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
-                    if new_trail > current_stop:
-                        pos.trailing_stop = new_trail
-                else:
-                    new_trail = close_price + (effective_mult * atr)
-                    current_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
-                    if new_trail < current_stop:
-                        pos.trailing_stop = new_trail
+                if exit_signal.exit_pct > 0:
+                    exit_reason = exit_signal.reason or exit_signal.exit_type
+                    self._close_position(
+                        pos_id, close_price, ts,
+                        exit_reason=exit_reason,
+                        exit_pct=exit_signal.exit_pct,
+                    )
+            else:
+                # Sync trailing stop updates from ExitLogic
+                if pos_adapter.stop_loss != pos.stop_loss:
+                    pos.trailing_stop = pos_adapter.stop_loss
 
     # ------------------------------------------------------------------
     # Phantom trade tracker — counterfactual tracking for rejected signals

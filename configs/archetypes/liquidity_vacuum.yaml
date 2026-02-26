@@ -31,7 +31,7 @@ hard_gates:
   description: Above-median volume activity
 gate_mode: hard
 exit_logic:
-  max_hold_hours: 168
+  max_hold_hours: 120
   scale_out_enabled: true
   scale_out_levels:
   - 0.5
@@ -42,8 +42,8 @@ exit_logic:
   - 0.2
   - 0.3
   runner_pct: 0.15
-  runner_trailing_atr: 2.5
-  trailing_start_r: 1.0
+  runner_trailing_atr: 3.0
+  trailing_start_r: 0.5
   trailing_atr_mult: 2.0
 position_sizing:
   risk_per_trade_pct: 0.02

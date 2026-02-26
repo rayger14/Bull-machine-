@@ -37,15 +37,15 @@ exit_logic:
   max_hold_hours: 168
   scale_out_enabled: true
   scale_out_levels:
-  - 0.5
   - 1.0
   - 2.0
+  - 3.0
   scale_out_pcts:
-  - 0.2
-  - 0.2
   - 0.3
-  runner_pct: 0.15
-  runner_trailing_atr: 2.5
+  - 0.3
+  - 0.3
+  runner_pct: 0.10
+  runner_trailing_atr: 3.0
   trailing_start_r: 1.0
   trailing_atr_mult: 2.0
 position_sizing:

@@ -27,20 +27,20 @@ hard_gates:
   description: RSI must be weak
 gate_mode: soft
 exit_logic:
-  max_hold_hours: 168
+  max_hold_hours: 96
   scale_out_enabled: true
   scale_out_levels:
   - 0.5
   - 1.0
-  - 2.0
+  - 1.5
   scale_out_pcts:
-  - 0.2
-  - 0.2
+  - 0.25
+  - 0.35
   - 0.3
-  runner_pct: 0.15
-  runner_trailing_atr: 2.5
-  trailing_start_r: 1.0
-  trailing_atr_mult: 2.0
+  runner_pct: 0.0
+  runner_trailing_atr: 2.0
+  trailing_start_r: 0.5
+  trailing_atr_mult: 1.5
 position_sizing:
   risk_per_trade_pct: 0.02
   max_position_size_pct: 0.1

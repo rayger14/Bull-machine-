@@ -89,6 +89,10 @@ class TrackedPosition:
     sentiment_crisis_at_entry: float = 0.0
     leverage_applied: float = 1.0
     position_size_usd: float = 0.0
+    # Entry metadata for invalidation exits
+    entry_metadata: Dict[str, Any] = field(default_factory=dict)
+    # Runner state
+    runner_trailing_stop: Optional[float] = None
 
 
 @dataclass
@@ -129,6 +133,27 @@ class CompletedTrade:
     sentiment_crisis_at_entry: float = 0.0
     leverage_applied: float = 1.0
     position_size_usd: float = 0.0
+
+
+class _PositionAdapter:
+    """Lightweight adapter wrapping TrackedPosition for ExitLogic's Position interface.
+
+    ExitLogic expects a Position with .metadata, .entry_price, .entry_time,
+    .stop_loss, .direction, .runner_trailing_stop. This adapter bridges
+    TrackedPosition fields to that interface without importing Position.
+    """
+
+    def __init__(self, tracked_pos: 'TrackedPosition'):
+        self._pos = tracked_pos
+        self.entry_price = tracked_pos.entry_price
+        self.entry_time = tracked_pos.entry_time
+        self.stop_loss = tracked_pos.stop_loss
+        self.direction = tracked_pos.direction
+        self.runner_trailing_stop = tracked_pos.runner_trailing_stop
+        # ExitLogic reads/writes metadata for scale-out tracking & invalidation
+        self.metadata = dict(tracked_pos.entry_metadata)
+        # Sync executed_scale_outs into metadata (ExitLogic reads from here)
+        self.metadata['executed_scale_outs'] = list(tracked_pos.executed_scale_outs)
 
 
 # ---------------------------------------------------------------------------
@@ -915,6 +940,22 @@ class StandaloneBacktestEngine:
             atr_at_entry=atr,
         )
 
+        # Capture entry metadata for ExitLogic invalidation checks
+        self.positions[pos_id].entry_metadata = {
+            'entry_prev_low': features.get('tf1h_prev_low', features.get('low', fill_price)) if hasattr(features, 'get') else fill_price,
+            'entry_prev_high': features.get('tf1h_prev_high', features.get('high', fill_price)) if hasattr(features, 'get') else fill_price,
+            'entry_wick_low': features.get('low', fill_price) if hasattr(features, 'get') else fill_price,
+            'entry_spring_low': features.get('low', fill_price) if hasattr(features, 'get') else fill_price,
+            'entry_ob_low': features.get('order_block_low', features.get('low', fill_price)) if hasattr(features, 'get') else fill_price,
+            'entry_support_level': stop_loss,
+            'entry_funding_z': features.get('funding_Z', 0.0) if hasattr(features, 'get') else 0.0,
+            'entry_oi_delta': features.get('oi_change_4h', 0.0) if hasattr(features, 'get') else 0.0,
+            'entry_volume': features.get('volume', 0.0) if hasattr(features, 'get') else 0.0,
+            'entry_adx': features.get('adx_14', 0.0) if hasattr(features, 'get') else 0.0,
+            'archetype': archetype,
+            'executed_scale_outs': [],
+        }
+
         # Store context for trade attribution
         self.positions[pos_id].threshold_at_entry = threshold_at_entry
         self.positions[pos_id].threshold_margin = fusion_score - threshold_at_entry
@@ -1068,7 +1109,20 @@ class StandaloneBacktestEngine:
     # ------------------------------------------------------------------
 
     def _check_all_exits(self, row: pd.Series, ts: pd.Timestamp, bar_idx: int):
-        """Check exits for all open positions."""
+        """Check exits for all open positions using ExitLogic."""
+        from engine.runtime.context import RuntimeContext
+
+        # Build RuntimeContext once per bar (shared across all position checks)
+        regime_label = row.get('regime_label', 'neutral') if hasattr(row, 'get') else 'neutral'
+        bar_context = RuntimeContext(
+            ts=ts,
+            row=row,
+            regime_probs={regime_label: 1.0},
+            regime_label=regime_label,
+            adapted_params={},
+            thresholds={},
+        )
+
         for pos_id in list(self.positions.keys()):
             pos = self.positions[pos_id]
             close_price = row['close']
@@ -1076,13 +1130,13 @@ class StandaloneBacktestEngine:
             if pd.isna(atr) or atr <= 0:
                 atr = pos.atr_at_entry
 
-            # --- 1. Check stop loss (hard stop) ---
+            # --- 1. Check stop loss (hard stop, MUST stay inline for fill-at-stop-level) ---
             stop_hit = False
             if pos.direction == 'long':
                 effective_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
                 if row['low'] <= effective_stop:
                     stop_hit = True
-                    exit_price = effective_stop  # Fill at stop level
+                    exit_price = effective_stop
             else:
                 effective_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
                 if row['high'] >= effective_stop:
@@ -1096,96 +1150,37 @@ class StandaloneBacktestEngine:
                 )
                 continue
 
-            # --- 2. Check ATR-based scale-out profit targets ---
-            # Calculate unrealized R-multiple
-            stop_distance = abs(pos.entry_price - pos.stop_loss)
-            if stop_distance <= 0:
-                stop_distance = atr * 2.5
+            # --- 2. Delegate to ExitLogic for all other exits ---
+            # Build Position-like adapter for ExitLogic
+            pos_adapter = _PositionAdapter(pos)
 
-            if pos.direction == 'long':
-                unrealized_pnl = close_price - pos.entry_price
-            else:
-                unrealized_pnl = pos.entry_price - close_price
+            exit_signal = self.exit_logic.check_exit(
+                bar=row,
+                position=pos_adapter,
+                archetype=pos.archetype,
+                context=bar_context,
+            )
 
-            unrealized_r = unrealized_pnl / stop_distance if stop_distance > 0 else 0.0
+            if exit_signal is not None:
+                # Sync scale-out tracking back from adapter
+                pos.executed_scale_outs = pos_adapter.metadata.get('executed_scale_outs', pos.executed_scale_outs)
 
-            # Get archetype-specific scale-out levels from the archetype config
-            archetype_name = pos.archetype
-            scale_levels = [0.5, 1.0, 2.0]
-            scale_pcts = [0.20, 0.20, 0.30]
+                # Handle trailing stop update (no exit, just stop movement)
+                if exit_signal.stop_update is not None:
+                    pos.trailing_stop = exit_signal.stop_update
 
-            # Try to get from archetype YAML config
-            if archetype_name in self.engine.archetypes:
-                arch_cfg = self.engine.archetype_configs.get(archetype_name, {})
-                exit_cfg = arch_cfg.get('exit_logic', {})
-                if 'scale_out_levels' in exit_cfg:
-                    scale_levels = exit_cfg['scale_out_levels']
-                if 'scale_out_pcts' in exit_cfg:
-                    scale_pcts = exit_cfg['scale_out_pcts']
-
-            # Check scale-out levels
-            for level, pct in zip(scale_levels, scale_pcts):
-                if unrealized_r >= level and level not in pos.executed_scale_outs:
-                    pos.executed_scale_outs.append(level)
+                # Handle exit signal
+                if exit_signal.exit_pct > 0:
+                    exit_reason = exit_signal.reason or exit_signal.exit_type
                     self._close_position(
                         pos_id, close_price, ts,
-                        exit_reason=f"scale_out_{level:.1f}R",
-                        exit_pct=pct
+                        exit_reason=exit_reason,
+                        exit_pct=exit_signal.exit_pct,
                     )
-                    break  # One exit per bar per position
-
-            # Check if position was fully closed in the scale-out
-            if pos_id not in self.positions:
-                continue
-
-            # --- 3. Check time-based exit (max hold period) ---
-            hours_held = (ts - pos.entry_time).total_seconds() / 3600.0
-            max_hold = 168  # Default 7 days
-
-            if archetype_name in self.engine.archetypes:
-                arch_cfg = self.engine.archetype_configs.get(archetype_name, {})
-                exit_cfg = arch_cfg.get('exit_logic', {})
-                max_hold = exit_cfg.get('max_hold_hours', 168)
-
-            if hours_held >= max_hold:
-                self._close_position(
-                    pos_id, close_price, ts,
-                    exit_reason=f"time_exit_{hours_held:.0f}h",
-                    exit_pct=1.0
-                )
-                continue
-
-            # --- 4. Update trailing stop ---
-            trailing_start_r = 1.0
-            trailing_atr_mult = 2.0
-
-            if archetype_name in self.engine.archetypes:
-                arch_cfg = self.engine.archetype_configs.get(archetype_name, {})
-                exit_cfg = arch_cfg.get('exit_logic', {})
-                trailing_start_r = exit_cfg.get('trailing_start_r', 1.0)
-                trailing_atr_mult = exit_cfg.get('trailing_atr_mult', 2.0)
-
-            if unrealized_r >= trailing_start_r:
-                # Progressive tightening
-                if unrealized_r >= 3.0:
-                    effective_mult = trailing_atr_mult * 0.5
-                elif unrealized_r >= 2.0:
-                    effective_mult = trailing_atr_mult * 0.67
-                elif unrealized_r >= 1.0:
-                    effective_mult = trailing_atr_mult * 0.83
-                else:
-                    effective_mult = trailing_atr_mult
-
-                if pos.direction == 'long':
-                    new_trail = close_price - (effective_mult * atr)
-                    current_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
-                    if new_trail > current_stop:
-                        pos.trailing_stop = new_trail
-                else:
-                    new_trail = close_price + (effective_mult * atr)
-                    current_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
-                    if new_trail < current_stop:
-                        pos.trailing_stop = new_trail
+            else:
+                # Sync trailing stop updates from ExitLogic (trailing updates return None)
+                if pos_adapter.stop_loss != pos.stop_loss:
+                    pos.trailing_stop = pos_adapter.stop_loss
 
     # ------------------------------------------------------------------
     # Equity computation
