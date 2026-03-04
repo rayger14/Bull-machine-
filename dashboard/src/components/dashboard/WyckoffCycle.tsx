@@ -700,6 +700,49 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
         {wyckoff.tf1d_m2_signal === 1 && <Badge variant="red">M2 Distrib</Badge>}
       </div>
 
+      {/* HTF Structural Bias Summary — most important at a glance */}
+      {(() => {
+        const bull4h = wyckoff.bullish_4h ?? 0;
+        const bear4h = wyckoff.bearish_4h ?? 0;
+        const bull1d = wyckoff.bullish_1d ?? 0;
+        const bear1d = wyckoff.bearish_1d ?? 0;
+        const htfBull = bull4h * 0.4 + bull1d * 0.6;
+        const htfBear = bear4h * 0.4 + bear1d * 0.6;
+        const netBias = htfBull - htfBear;
+        const biasLabel = netBias > 0.15 ? 'Accumulation' : netBias < -0.15 ? 'Distribution' : 'Neutral';
+        const biasColor = netBias > 0.15 ? 'text-emerald-400' : netBias < -0.15 ? 'text-rose-400' : 'text-slate-400';
+        const biasStrength = Math.abs(netBias);
+        const strengthLabel = biasStrength > 0.4 ? 'Strong' : biasStrength > 0.2 ? 'Moderate' : biasStrength > 0.05 ? 'Weak' : '';
+
+        return (htfBull > 0 || htfBear > 0) ? (
+          <div className="mb-4 p-3 bg-white/[0.03] rounded-lg border border-white/[0.06]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] text-slate-600 uppercase tracking-wider">Structural Bias (4H + 1D weighted)</span>
+              <span className={`text-sm font-semibold ${biasColor}`}>
+                {strengthLabel} {biasLabel}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-2 bg-white/[0.04] rounded-full overflow-hidden relative">
+                <div
+                  className="absolute top-0 left-0 h-full bg-emerald-500/60 rounded-l-full transition-all"
+                  style={{ width: `${Math.min(htfBull * 100, 50)}%` }}
+                />
+                <div
+                  className="absolute top-0 right-0 h-full bg-rose-500/60 rounded-r-full transition-all"
+                  style={{ width: `${Math.min(htfBear * 100, 50)}%` }}
+                />
+              </div>
+            </div>
+            <div className="flex justify-between mt-1 text-[9px]">
+              <span className="text-emerald-600">Bull {(htfBull * 100).toFixed(0)}%</span>
+              <span className="text-slate-700">1D: {bull1d > 0.1 ? 'accum' : bear1d > 0.1 ? 'distrib' : 'quiet'} | 4H: {bull4h > 0.1 ? 'accum' : bear4h > 0.1 ? 'distrib' : 'quiet'}</span>
+              <span className="text-rose-600">Bear {(htfBear * 100).toFixed(0)}%</span>
+            </div>
+          </div>
+        ) : null;
+      })()}
+
       {/* Oracle Market Structure Narrative */}
       {oracle?.market_structure?.summary && (
         <div className="mb-4 p-3 bg-gray-800/50 rounded-lg">
@@ -947,36 +990,13 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
           Multi-Timeframe Peak Event Confidence
         </div>
         <p className="text-[10px] text-slate-700 mb-3">
-          Peak confidence of the strongest detected Wyckoff event at each timeframe. 1H is most sensitive (trade triggers), 4H shows structure, 1D shows the macro cycle. These are NOT holistic scores — they reflect the single highest-confidence event detected in the lookback window.
-          Wyckoff carries 15-35% weight in archetype fusion scoring (varies by archetype).
+          Wyckoff is primarily a higher-timeframe structural tool — 1D and 4H scores matter most for identifying accumulation/distribution phases. 1H events are tactical entry triggers that fire within the HTF context. A 1H score of 0 is normal between events.
         </p>
         <div className="grid grid-cols-3 gap-3">
-          <Gauge
-            value={score1h}
-            label="1H Peak"
-            colorStops={[
-              'bg-rose-500',
-              'bg-amber-400',
-              'bg-emerald-400',
-              'bg-emerald-500',
-              'bg-cyan-500',
-            ]}
-          />
-          <Gauge
-            value={score4h}
-            label="4H Peak"
-            colorStops={[
-              'bg-rose-500',
-              'bg-amber-400',
-              'bg-emerald-400',
-              'bg-emerald-500',
-              'bg-cyan-500',
-            ]}
-          />
           <div>
             <Gauge
               value={score1d}
-              label="1D Peak"
+              label="1D Macro"
               colorStops={[
                 'bg-rose-500',
                 'bg-amber-400',
@@ -991,6 +1011,28 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
               </div>
             )}
           </div>
+          <Gauge
+            value={score4h}
+            label="4H Structure"
+            colorStops={[
+              'bg-rose-500',
+              'bg-amber-400',
+              'bg-emerald-400',
+              'bg-emerald-500',
+              'bg-cyan-500',
+            ]}
+          />
+          <Gauge
+            value={score1h}
+            label="1H Trigger"
+            colorStops={[
+              'bg-rose-500',
+              'bg-amber-400',
+              'bg-emerald-400',
+              'bg-emerald-500',
+              'bg-cyan-500',
+            ]}
+          />
         </div>
       </div>
 
@@ -1005,9 +1047,9 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
           </p>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: '1H', bull: wyckoff.bullish_1h ?? 0, bear: wyckoff.bearish_1h ?? 0 },
-              { label: '4H', bull: wyckoff.bullish_4h ?? 0, bear: wyckoff.bearish_4h ?? 0 },
               { label: '1D', bull: wyckoff.bullish_1d ?? 0, bear: wyckoff.bearish_1d ?? 0 },
+              { label: '4H', bull: wyckoff.bullish_4h ?? 0, bear: wyckoff.bearish_4h ?? 0 },
+              { label: '1H', bull: wyckoff.bullish_1h ?? 0, bear: wyckoff.bearish_1h ?? 0 },
             ].map(({ label, bull, bear }) => (
               <div key={label} className="p-2 bg-white/[0.02] rounded-lg border border-white/[0.04]">
                 <div className="text-[9px] text-slate-600 text-center mb-1">{label}</div>
