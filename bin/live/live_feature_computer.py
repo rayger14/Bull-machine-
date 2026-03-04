@@ -1458,7 +1458,21 @@ class LiveFeatureComputer:
                 vol_mean = pd.Series(vol).rolling(20).mean().values
                 vol_std = pd.Series(vol).rolling(20).std().values
                 buf_copy['volume_z'] = (vol - vol_mean) / (vol_std + 1e-10)
-            buf_copy = detect_all_wyckoff_events(buf_copy, htf_context=htf_context_4h)
+            # Recalibrated 1H thresholds (v2): aligned with feature store patcher
+            _CFG_1H = {
+                'st_lookback': 15,          # consensus 15-bar (was 30)
+                'st_volume_z_max': 0.0,     # below 20-bar mean (was 0.5)
+                'st_low_proximity': 0.03,   # 3% proximity (was 5%)
+                'st_min_spacing': 10,       # 10-bar debounce
+                'spring_b_breakdown_min': 0.002,
+                'spring_b_breakdown_max': 0.015,
+                'spring_b_recovery_bars': 3,
+                'ut_volume_z_min': 0.3,     # relaxed for low-vol fakeouts
+                'sm_st_max_count': 2,       # break ST self-loop
+                'sm_spring_tolerance': 0.01,
+                'sm_ut_tolerance': 0.01,
+            }
+            buf_copy = detect_all_wyckoff_events(buf_copy, cfg=_CFG_1H, htf_context=htf_context_4h)
             last = buf_copy.iloc[-1]
 
             # Extract all Wyckoff columns from the last row
@@ -1535,7 +1549,18 @@ class LiveFeatureComputer:
             'sos_volume_z_min': 1.2,    # 1.5 on 1H
             'sow_volume_z_min': 1.2,
             'spring_a_volume_z_min': 0.3,  # 0.5 on 1H
-            'ut_volume_z_min': 0.3,
+            'ut_volume_z_min': 0.2,     # 0.3 on 1H
+            # Recalibrated v2 params (scaled for 4H)
+            'st_lookback': 8,           # 15 on 1H, ~2 days on 4H
+            'st_volume_z_max': 0.0,
+            'st_low_proximity': 0.04,   # slightly wider on 4H
+            'st_min_spacing': 3,        # 10 on 1H / 4 = ~3
+            'spring_b_breakdown_min': 0.002,
+            'spring_b_breakdown_max': 0.02,  # slightly wider on 4H
+            'spring_b_recovery_bars': 2,
+            'sm_st_max_count': 2,
+            'sm_spring_tolerance': 0.015,
+            'sm_ut_tolerance': 0.015,
         }
         _CFG_1D = {
             'sc_volume_z_min': 1.5,     # Daily bars average 24 hourly candles
@@ -1545,9 +1570,20 @@ class LiveFeatureComputer:
             'sos_volume_z_min': 1.0,
             'sow_volume_z_min': 1.0,
             'spring_a_volume_z_min': 0.2,
-            'ut_volume_z_min': 0.2,
+            'ut_volume_z_min': 0.15,
             'sc_range_lookback': 30,    # ~1 month on daily (vs 50 on 1H)
             'bc_range_lookback': 30,
+            # Recalibrated v2 params (scaled for 1D)
+            'st_lookback': 5,           # 15 on 1H → ~5 days
+            'st_volume_z_max': 0.0,
+            'st_low_proximity': 0.05,   # wider on daily
+            'st_min_spacing': 2,        # ~2 daily bars
+            'spring_b_breakdown_min': 0.003,
+            'spring_b_breakdown_max': 0.025,
+            'spring_b_recovery_bars': 2,
+            'sm_st_max_count': 2,
+            'sm_spring_tolerance': 0.02,
+            'sm_ut_tolerance': 0.02,
         }
 
         try:

@@ -155,6 +155,12 @@ def api_price():
     })
 
 
+@app.route("/api/daily-review")
+def api_daily_review():
+    """Return latest daily quant review report."""
+    return jsonify(_read_json("daily_review.json"))
+
+
 # ---------------------------------------------------------------------------
 # Backtest API
 # ---------------------------------------------------------------------------

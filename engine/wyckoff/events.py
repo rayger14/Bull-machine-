@@ -107,6 +107,7 @@ class RangeReference:
     # Metadata
     bars_since_start: int = 0
     invalidated: bool = False
+    st_count: int = 0  # Track number of STs validated (max 2 per structure)
 
 
 class WyckoffStateMachine:
@@ -197,21 +198,28 @@ class WyckoffStateMachine:
                 self.range_ref.ar_high = row['high']
                 self.range_ref.ar_bar_idx = bar_idx
 
-        # ST: Requires SC+AR, volume < SC_volume * ratio
+        # ST: Requires SC+AR, volume < SC_volume * ratio, max 2 per structure
+        st_max_count = self.cfg.get('sm_st_max_count', 2)
         if raw_events.get('st', False) and self.context == WyckoffContext.ACCUMULATION:
             if self.state in (WyckoffState.ACCUM_AR, WyckoffState.ACCUM_ST):
-                bar_vol = row.get('volume_z', 0)
-                if bar_vol < self.range_ref.sc_volume * self.st_volume_ratio:
-                    validated['st'] = True
-                    self.state = WyckoffState.ACCUM_ST
+                if self.range_ref.st_count < st_max_count:
+                    bar_vol = row.get('volume_z', 0)
+                    if bar_vol < self.range_ref.sc_volume * self.st_volume_ratio:
+                        validated['st'] = True
+                        self.state = WyckoffState.ACCUM_ST
+                        self.range_ref.st_count += 1
 
-        # Spring: Requires established range (SC+AR), price breaks below SC_low
+        # Spring: Requires established range (SC+AR), price near or below SC_low
+        spring_tolerance = self.cfg.get('sm_spring_tolerance', 0.01)  # 1% tolerance for shallow springs
         if raw_events.get('spring_a', False) or raw_events.get('spring_b', False):
             if self.context == WyckoffContext.ACCUMULATION and self.range_ref.ar_high > 0:
-                if row['low'] < self.range_ref.sc_low:
+                # Spring A: must break below SC_low (classic)
+                # Spring B: within tolerance of SC_low (shallow spring)
+                sc_low_with_tolerance = self.range_ref.sc_low * (1 + spring_tolerance)
+                if row['low'] < sc_low_with_tolerance:
                     break_pct = (self.range_ref.sc_low - row['low']) / (self.range_ref.sc_low + 1e-9)
                     if break_pct < self.spring_max_break_pct:
-                        if raw_events.get('spring_a', False):
+                        if raw_events.get('spring_a', False) and row['low'] < self.range_ref.sc_low:
                             validated['spring_a'] = True
                         if raw_events.get('spring_b', False):
                             validated['spring_b'] = True
@@ -259,15 +267,20 @@ class WyckoffStateMachine:
                 self.range_ref.as_low = row['low']
                 self.range_ref.as_bar_idx = bar_idx
 
-        # UT/UTAD: Requires established distribution range (BC+AS)
+        # UT/UTAD: Requires distribution context, within tolerance of bc_high
+        ut_tolerance = self.cfg.get('sm_ut_tolerance', 0.01)  # 1% — "approaches or slightly exceeds"
         if raw_events.get('ut', False) or raw_events.get('utad', False):
             if self.context == WyckoffContext.DISTRIBUTION and self.range_ref.as_low > 0:
-                if row['high'] > self.range_ref.bc_high:
-                    if raw_events.get('ut', False):
-                        validated['ut'] = True
-                    if raw_events.get('utad', False):
-                        validated['utad'] = True
-                    self.state = WyckoffState.DISTRIB_UT
+                bc_high_threshold = self.range_ref.bc_high * (1 - ut_tolerance)
+                if row['high'] > bc_high_threshold:
+                    # Allow UT from more states (not just after AS)
+                    if self.state in (WyckoffState.DISTRIB_AR, WyckoffState.DISTRIB_ST,
+                                     WyckoffState.DISTRIB_SOW, WyckoffState.DISTRIB_UT):
+                        if raw_events.get('ut', False):
+                            validated['ut'] = True
+                        if raw_events.get('utad', False):
+                            validated['utad'] = True
+                        self.state = WyckoffState.DISTRIB_UT
 
         # SOW: Requires distribution context, or fires with reduced confidence when no context
         if raw_events.get('sow', False):
@@ -681,10 +694,11 @@ def detect_secondary_test(df: pd.DataFrame, cfg: dict,
     if 'volume_z' not in df.columns:
         df['volume_z'] = _rolling_z_score(df['volume'], window=20)
 
-    # Config
-    lookback = cfg.get('st_lookback', 30)
-    low_proximity = cfg.get('st_low_proximity', 0.05)  # Within 5% of low
-    volume_z_max = cfg.get('st_volume_z_max', 0.5)
+    # Config — recalibrated v2 (consensus: PyQuantLab VSA, loopofM, QuantVue)
+    lookback = cfg.get('st_lookback', 15)            # was 30, consensus 15-bar
+    low_proximity = cfg.get('st_low_proximity', 0.03)  # was 0.05 (5%), now 3%
+    volume_z_max = cfg.get('st_volume_z_max', 0.0)   # was 0.5, now below 20-bar mean
+    min_spacing = cfg.get('st_min_spacing', 10)       # 10-bar debounce (loopofM)
 
     # Find recent lows
     rolling_low = df['low'].rolling(lookback).min()
@@ -696,6 +710,18 @@ def detect_secondary_test(df: pd.DataFrame, cfg: dict,
     holds_above = df['low'] > rolling_low  # No new low
 
     detected = near_low & lower_volume & holds_above
+
+    # Apply debounce: suppress detections within min_spacing bars of last ST
+    if min_spacing > 0 and detected.any():
+        mask = detected.values.copy()
+        last_fire = -min_spacing - 1  # Allow first detection
+        for i in range(len(mask)):
+            if mask[i]:
+                if (i - last_fire) < min_spacing:
+                    mask[i] = False
+                else:
+                    last_fire = i
+        detected = pd.Series(mask, index=df.index)
 
     # Confidence (higher if closer to low with much lower volume)
     proximity_score = (1 - distance_from_low / low_proximity).clip(0, 1)
@@ -916,30 +942,41 @@ def detect_spring_type_b(df: pd.DataFrame, cfg: dict) -> Tuple[pd.Series, pd.Ser
         df['volume_z'] = _rolling_z_score(df['volume'], window=20)
 
     lookback = cfg.get('spring_b_lookback', 20)
-    breakdown_min = cfg.get('spring_b_breakdown_min', 0.005)
-    breakdown_max = cfg.get('spring_b_breakdown_max', 0.01)
+    breakdown_min = cfg.get('spring_b_breakdown_min', 0.002)   # was 0.005, wider shallow band
+    breakdown_max = cfg.get('spring_b_breakdown_max', 0.015)   # was 0.01, more realistic wicks
+    recovery_bars = cfg.get('spring_b_recovery_bars', 3)       # 3-bar confirmation (QuantVue)
 
     rolling_low = df['low'].rolling(lookback).min().shift(1)
     rolling_high = df['high'].rolling(lookback).max().shift(1)
-    range_mid = (rolling_high + rolling_low) / 2
+    range_lower_quartile = rolling_low + (rolling_high - rolling_low) * 0.25
 
     # Shallow breakdown
     breakdown_pct = (rolling_low - df['low']) / (rolling_low + 1e-9)
     shallow_break = (breakdown_pct > breakdown_min) & (breakdown_pct < breakdown_max)
 
-    # Quick recovery (close above mid-range)
-    quick_recovery = df['close'] > range_mid
+    # Multi-bar recovery: close recovers above lower quartile within recovery_bars
+    # Check if ANY bar in the next recovery_bars window recovers
+    if recovery_bars > 1:
+        recovery_check = pd.Series(False, index=df.index)
+        for offset in range(recovery_bars):
+            shifted_close = df['close'].shift(-offset)
+            recovery_check = recovery_check | (shifted_close > range_lower_quartile)
+        # Shift result back so detection fires on the confirmation bar
+        quick_recovery = recovery_check
+    else:
+        quick_recovery = df['close'] > range_lower_quartile
 
-    # Moderate volume
-    moderate_volume = (df['volume_z'] > 0.5) & (df['volume_z'] < 2.0)
+    # Moderate volume (relaxed lower bound)
+    moderate_volume = (df['volume_z'] > -0.5) & (df['volume_z'] < 2.0)
 
     detected = shallow_break & quick_recovery & moderate_volume
 
     # Confidence
+    range_mid = (rolling_high + rolling_low) / 2
     confidence = (
         (breakdown_pct / breakdown_max).clip(0, 1) * 0.35 +
-        ((df['close'] - range_mid) / (rolling_high - range_mid + 1e-9)).clip(0, 1) * 0.35 +
-        (df['volume_z'] / 3.0).clip(0, 1) * 0.30
+        ((df['close'] - range_lower_quartile) / (rolling_high - range_lower_quartile + 1e-9)).clip(0, 1) * 0.35 +
+        (df['volume_z'].clip(-1, 3) / 4.0 + 0.25).clip(0, 1) * 0.30
     )
     confidence = confidence.fillna(0.0) * detected
 
@@ -978,7 +1015,7 @@ def detect_upthrust(df: pd.DataFrame, cfg: dict) -> Tuple[pd.Series, pd.Series]:
     lookback = cfg.get('ut_lookback', 20)
     breakout_margin = cfg.get('ut_breakout_margin', 0.015)  # 1.5% breakout (was 2%)
     recovery_bars = cfg.get('ut_recovery_bars', 3)
-    volume_z_min = cfg.get('ut_volume_z_min', 0.5)  # Configurable (was hardcoded 1.0)
+    volume_z_min = cfg.get('ut_volume_z_min', 0.3)  # Relaxed: low-vol fakeouts are valid UTs
 
     rolling_high = df['high'].rolling(lookback).max().shift(1)
     rolling_low = df['low'].rolling(lookback).min().shift(1)
@@ -1551,24 +1588,30 @@ def _determine_wyckoff_phase(df: pd.DataFrame) -> pd.Series:
     """
     phase = pd.Series('neutral', index=df.index)
 
-    # Phase A indicators (within last 10 bars)
-    phase_a_events = (
-        df['wyckoff_sc'].rolling(10).sum() +
-        df['wyckoff_bc'].rolling(10).sum() +
-        df['wyckoff_ar'].rolling(10).sum() +
-        df['wyckoff_as'].rolling(10).sum() +
-        df['wyckoff_st'].rolling(10).sum()
+    # Phase A: Require SC/BC confidence > 0.3 in last 20 bars (not just any event > 0)
+    # ST alone (the old over-firer) no longer dominates — need real climax events
+    phase_a_conf = (
+        df['wyckoff_sc_confidence'].rolling(20).max().fillna(0) +
+        df['wyckoff_bc_confidence'].rolling(20).max().fillna(0)
     )
-    phase.loc[phase_a_events > 0] = 'A'
-
-    # Phase B indicators
-    phase_b_events = (
-        df['wyckoff_sos'].rolling(20).sum() +
-        df['wyckoff_sow'].rolling(20).sum()
+    # Also count AR/AS as supporting (but not sufficient alone)
+    phase_a_support = (
+        df['wyckoff_ar'].rolling(20).sum().fillna(0) +
+        df['wyckoff_as'].rolling(20).sum().fillna(0) +
+        df['wyckoff_st'].rolling(20).sum().fillna(0)
     )
-    phase.loc[(phase_b_events > 0) & (phase == 'neutral')] = 'B'
+    # Phase A requires a real climax (SC or BC with confidence > 0.3) OR
+    # multiple supporting events (AR/AS/ST) indicating genuine Phase A structure
+    phase.loc[(phase_a_conf > 0.3) | (phase_a_support >= 2)] = 'A'
 
-    # Phase C indicators (springs/upthrusts override Phase B)
+    # Phase B: SOS/SOW with confidence > 0.3 in last 30 bars
+    phase_b_conf = (
+        df['wyckoff_sos_confidence'].rolling(30).max().fillna(0) +
+        df['wyckoff_sow_confidence'].rolling(30).max().fillna(0)
+    )
+    phase.loc[(phase_b_conf > 0.3) & (phase == 'neutral')] = 'B'
+
+    # Phase C: Springs/upthrusts override Phase B (these are rare, sensitivity is correct)
     phase_c_events = (
         df['wyckoff_spring_a'].rolling(10).sum() +
         df['wyckoff_spring_b'].rolling(10).sum() +

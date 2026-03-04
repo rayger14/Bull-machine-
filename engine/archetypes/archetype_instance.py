@@ -729,6 +729,16 @@ class ArchetypeInstance:
             stop_loss = entry_price + (self.config.atr_stop_mult * atr)
             take_profit = entry_price - (self.config.atr_tp_mult * atr)
 
+        # ATR minimum distance validation: stop must be at least 0.5x ATR from entry
+        min_atr_distance = atr * 0.5
+        actual_distance = abs(entry_price - stop_loss)
+        if actual_distance < min_atr_distance:
+            logger.debug(
+                "[GATE] %s: stop too close (%.2f < %.2f ATR min)",
+                self.name, actual_distance, min_atr_distance
+            )
+            return None
+
         # Compute confidence (fusion score scaled)
         confidence = min(1.0, fusion / max(self.config.entry_threshold, 0.01))
 

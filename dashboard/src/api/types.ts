@@ -81,6 +81,49 @@ export interface Heartbeat {
 
   // Whale / Institutional Intelligence
   whale_intelligence?: WhaleIntelligenceData;
+
+  // Engine health / config fields
+  engine_health?: EngineHealthData;
+
+  // News headlines + sentiment
+  news?: NewsData;
+}
+
+export interface EngineHealthData {
+  bypass_threshold?: boolean;
+  disabled_archetypes?: string[];
+  calibrated_archetypes?: string[];
+  base_max_positions?: number;
+  entry_spacing_bars?: number;
+  gate_mode?: string;
+  per_archetype_base_threshold?: Record<string, number>;
+  temp_range?: number;
+  instab_range?: number;
+  crisis_coefficient?: number;
+  emergency_crisis_threshold?: number;
+  emergency_size_multiplier?: number;
+}
+
+export interface NewsItem {
+  headline: string;
+  source: string;
+  published_at: string;
+  sentiment: 'bullish' | 'bearish' | 'neutral';
+  sentiment_score: number;
+  url: string;
+}
+
+export interface NewsSentiment {
+  bullish_count: number;
+  bearish_count: number;
+  neutral_count: number;
+  avg_score: number;
+  summary: string;
+}
+
+export interface NewsData {
+  headlines: NewsItem[];
+  sentiment: NewsSentiment;
 }
 
 export interface CMIComparisonSide {
@@ -524,6 +567,7 @@ export interface Trade {
   leverage_applied?: number;
   position_size_usd?: number;
   counterfactual?: TradeCounterfactual;
+  position_id?: string;
   [key: string]: unknown;
 }
 

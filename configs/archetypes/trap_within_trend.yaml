@@ -22,7 +22,11 @@ hard_gates:
 - feature: derived:wick_anomaly
   op: bool_true
   description: Wick against trend (>35% of candle range)
-gate_mode: soft
+- feature: volume_zscore
+  op: min
+  value: 0.0
+  description: At least median volume (real traps have volume)
+gate_mode: hard
 exit_logic:
   max_hold_hours: 168
   scale_out_enabled: true

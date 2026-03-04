@@ -131,6 +131,19 @@ const EVENT_META: Record<string, EventMeta> = {
       { label: 'Strong Close', contextKey: 'close_position', direction: 'above', threshold: 0.6, format: (v) => `${(v * 100).toFixed(0)}%`, weight: 0.35 },
     ],
   },
+  st_bc: {
+    short: 'ST-BC',
+    label: 'Secondary Test (Distribution)',
+    type: 'distrib',
+    explanation:
+      'The market retests the BC high on significantly lower volume. Price approaches the high but doesn\'t make a new high — proving that buying pressure is fading. Smart money is distributing into remaining demand.',
+    engineUsage:
+      'Confirms distribution Phase A. Engine requires volume_z < 0.5 (much lower than BC) and no new high. Higher ST-BC confidence = stronger evidence that distribution is genuine.',
+    criteria: [
+      { label: 'Low Volume', contextKey: 'volume_z', direction: 'below', threshold: 0.5, format: (v) => `Z=${v.toFixed(1)}`, weight: 0.40 },
+      { label: 'Near Resistance', contextKey: 'close_position', direction: 'above', threshold: 0.6, format: (v) => `${(v * 100).toFixed(0)}%`, weight: 0.40 },
+    ],
+  },
   // ── Distribution sequence ──
   bc: {
     short: 'BC',
@@ -257,9 +270,9 @@ const PHASE_GROUPS: PhaseGroup[] = [
     sublabel: 'Distribution',
     color: 'text-amber-400',
     borderColor: 'border-amber-500/20',
-    events: ['bc', 'as'],
+    events: ['bc', 'as', 'st_bc'],
     description:
-      'Euphoria peaks and initial supply hits market. BC marks the panic top, AR the relief drop, ST-BC confirms buying pressure is fading.',
+      'Euphoria peaks and initial supply hits market. BC marks the panic top, AS the relief drop, ST-BC confirms buying pressure is fading.',
   },
   {
     label: 'Phase B/C — Building Cause',
@@ -335,7 +348,7 @@ function buildNarrative(
 
   const lines: string[] = [];
   const accumKeys = new Set(['sc', 'ar', 'st', 'sos', 'spring_a', 'spring_b', 'lps']);
-  const distribKeys = new Set(['bc', 'as', 'sow', 'ut', 'utad', 'lpsy']);
+  const distribKeys = new Set(['bc', 'as', 'st_bc', 'sow', 'ut', 'utad', 'lpsy']);
 
   const accumActive = active.filter((a) => accumKeys.has(a.key));
   const distribActive = active.filter((a) => distribKeys.has(a.key));
@@ -392,6 +405,9 @@ function buildNarrative(
         break;
       case 'lpsy':
         lines.push(`**Last Point of Supply** (${pct}) — A weak rally attempt on low volume. This is the final distribution signal before markdown — expect lower prices.`);
+        break;
+      case 'st_bc':
+        lines.push(`**Secondary Test (Distribution)** (${pct}) — Price retests the BC high on dry volume. The fact that buying volume is NOT returning means buyers are exhausted — this confirms the distribution base.`);
         break;
       case 'ut':
         lines.push(`**Upthrust** (${pct}) — False breakout above resistance that reversed quickly. This is a classic bull trap designed to catch breakout traders.`);
@@ -652,7 +668,7 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
   const activeCount = Object.values(events).filter((e) => e?.active).length;
   const activeAccum = ['sc', 'ar', 'st', 'sos', 'spring_a', 'spring_b', 'lps']
     .filter((k) => events[k]?.active).length;
-  const activeDist = ['bc', 'as', 'sow', 'ut', 'utad', 'lpsy']
+  const activeDist = ['bc', 'as', 'st_bc', 'sow', 'ut', 'utad', 'lpsy']
     .filter((k) => events[k]?.active).length;
 
   const phaseInfo = PHASE_INFO[phase] ?? PHASE_INFO.neutral;
@@ -898,7 +914,7 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
           {showEventHistory && (
             <div className="space-y-1 max-h-64 overflow-y-auto">
               {wyckoff.event_history.map((eh, i) => {
-                const isAccum = ['sc', 'ar', 'st', 'spring_a', 'spring_b', 'sos', 'lps'].includes(eh.event ?? '');
+                const isAccum = ['sc', 'ar', 'st', 'spring_a', 'spring_b', 'sos', 'lps'].includes(eh.event ?? '') && eh.event !== 'st_bc';
                 return (
                   <div key={i} className="flex items-center gap-2 text-[10px] px-2 py-1.5 bg-white/[0.02] rounded-lg border border-white/[0.04]">
                     <span className={`font-mono w-12 shrink-0 uppercase ${isAccum ? 'text-emerald-400' : 'text-rose-400'}`}>

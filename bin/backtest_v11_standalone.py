@@ -89,6 +89,13 @@ class TrackedPosition:
     sentiment_crisis_at_entry: float = 0.0
     leverage_applied: float = 1.0
     position_size_usd: float = 0.0
+    margin_used: float = 0.0  # margin locked at exchange (notional / leverage)
+    # Domain scores (for fusion predictiveness analysis)
+    wyckoff_score_at_entry: float = 0.0
+    liquidity_score_at_entry: float = 0.0
+    momentum_score_at_entry: float = 0.0
+    smc_score_at_entry: float = 0.0
+    gate_penalty_at_entry: float = 1.0
     # Entry metadata for invalidation exits
     entry_metadata: Dict[str, Any] = field(default_factory=dict)
     # Runner state
@@ -133,6 +140,13 @@ class CompletedTrade:
     sentiment_crisis_at_entry: float = 0.0
     leverage_applied: float = 1.0
     position_size_usd: float = 0.0
+    # Domain scores (for fusion predictiveness analysis)
+    wyckoff_score_at_entry: float = 0.0
+    liquidity_score_at_entry: float = 0.0
+    momentum_score_at_entry: float = 0.0
+    smc_score_at_entry: float = 0.0
+    gate_penalty_at_entry: float = 1.0
+    position_id: str = ""
 
 
 class _PositionAdapter:
@@ -198,6 +212,11 @@ class StandaloneBacktestEngine:
         self.total_signals = 0
         self.signals_allocated = 0
         self.signals_rejected = 0
+
+        # Same-direction entry spacing (prevent correlated clusters)
+        self._last_long_entry_bar = -999
+        self._last_short_entry_bar = -999
+        self._entry_spacing_bars = 2  # min bars between same-direction entries
 
         # Load feature store (or use pre-loaded DataFrame)
         if features_df is not None:
@@ -380,7 +399,8 @@ class StandaloneBacktestEngine:
         # Position sizing config
         sizing_cfg = self.config.get('position_sizing', {})
         self.risk_per_trade = sizing_cfg.get('risk_per_trade_pct', 0.02)
-        self.max_position_pct = sizing_cfg.get('max_position_size_pct', 0.12)
+        self.max_position_pct = sizing_cfg.get('max_position_size_pct', 0.12)  # legacy, unused
+        self.max_margin_pct = sizing_cfg.get('max_margin_per_position_pct', 0.35)
         self.leverage = self.config.get('leverage', 1.0)
 
         logger.info(
@@ -705,6 +725,19 @@ class StandaloneBacktestEngine:
                         self.signals_rejected += len(signals)
                         signals = []
 
+                # Step 3d: Same-direction entry spacing (prevent correlated clusters)
+                if signals:
+                    spaced_signals = []
+                    for s in signals:
+                        if s.direction == 'long' and (bar_idx - self._last_long_entry_bar) < self._entry_spacing_bars:
+                            self.signals_rejected += 1
+                            continue
+                        if s.direction == 'short' and (bar_idx - self._last_short_entry_bar) < self._entry_spacing_bars:
+                            self.signals_rejected += 1
+                            continue
+                        spaced_signals.append(s)
+                    signals = spaced_signals
+
                 if not signals:
                     equity = self._compute_equity(row['close'])
                     self.equity_curve.append(equity)
@@ -765,6 +798,20 @@ class StandaloneBacktestEngine:
                         vol_shock=vol_shock if self.adaptive_fusion.get('enabled', False) else 0.0,
                         sentiment_crisis=sentiment_crisis if self.adaptive_fusion.get('enabled', False) else 0.0,
                     )
+                    # Capture domain scores from signal metadata
+                    sig_meta = sig.metadata or {}
+                    pos_id = f"{sig.direction}_{sig.archetype_id}_{int(ts.timestamp())}"
+                    if pos_id in self.positions:
+                        self.positions[pos_id].wyckoff_score_at_entry = sig_meta.get('wyckoff_score', 0.0)
+                        self.positions[pos_id].liquidity_score_at_entry = sig_meta.get('liquidity_score', 0.0)
+                        self.positions[pos_id].momentum_score_at_entry = sig_meta.get('momentum_score', 0.0)
+                        self.positions[pos_id].smc_score_at_entry = sig_meta.get('smc_score', 0.0)
+                        self.positions[pos_id].gate_penalty_at_entry = sig_meta.get('gate_penalty', 1.0)
+                    # Track last entry bar per direction for spacing
+                    if sig.direction == 'long':
+                        self._last_long_entry_bar = bar_idx
+                    elif sig.direction == 'short':
+                        self._last_short_entry_bar = bar_idx
 
             # Step 6: Update equity curve
             equity = self._compute_equity(row['close'])
@@ -862,7 +909,7 @@ class StandaloneBacktestEngine:
     ):
         """Open a new position."""
         # Calculate position size
-        portfolio_value = self.cash  # Use cash only (not unrealized PnL)
+        portfolio_value = self.initial_cash  # Use initial capital, not depleted cash
         atr = features.get('atr_14', entry_price * 0.02)
         if pd.isna(atr) or atr <= 0:
             atr = entry_price * 0.02
@@ -890,25 +937,29 @@ class StandaloneBacktestEngine:
             risk_per_trade = kelly_risk
 
         risk_dollars = portfolio_value * risk_per_trade
-        position_size_usd = risk_dollars / stop_distance_pct
+        notional = risk_dollars / stop_distance_pct
 
-        # Scale by allocated percentage from PortfolioAllocator
-        position_size_usd *= (allocated_size_pct / 0.02)  # normalize: 0.02 is baseline
+        # Scale by allocated percentage from PortfolioAllocator (conviction multiplier)
+        notional *= (allocated_size_pct / 0.02)  # normalize: 0.02 is baseline
 
-        # Apply leverage multiplier (e.g., 2x leverage doubles position size)
-        position_size_usd *= self.leverage
+        # Margin = notional / leverage (what the exchange actually locks)
+        margin = notional / self.leverage
 
-        # Cap at max position size (adjusted for leverage)
-        max_size = portfolio_value * self.max_position_pct * self.leverage
-        position_size_usd = min(position_size_usd, max_size)
+        # Cap margin at max_margin_per_position_pct of initial capital
+        max_margin = self.initial_cash * self.max_margin_pct
+        if margin > max_margin:
+            margin = max_margin
+            notional = margin * self.leverage  # scale notional down proportionally
 
-        # Check cash availability
-        commission = position_size_usd * self.commission_rate
-        slippage = position_size_usd * (self.slippage_bps / 10000.0)
-        total_cost = position_size_usd + commission + slippage
+        position_size_usd = notional  # for trade log / PnL calculation
 
-        if total_cost > self.cash:
-            logger.debug(f"[SKIP] Insufficient cash for {archetype} position (${total_cost:,.0f} > ${self.cash:,.0f})")
+        # Check margin availability (not notional)
+        commission = notional * self.commission_rate
+        slippage = notional * (self.slippage_bps / 10000.0)
+        margin_cost = margin + commission + slippage
+
+        if margin_cost > self.cash:
+            logger.debug(f"[SKIP] Insufficient margin for {archetype} position (margin ${margin:,.0f} > cash ${self.cash:,.0f})")
             self.signals_rejected += 1
             return
 
@@ -918,10 +969,10 @@ class StandaloneBacktestEngine:
         else:
             fill_price = entry_price * (1 - self.slippage_bps / 10000.0)
 
-        quantity = position_size_usd / fill_price
+        quantity = notional / fill_price
 
-        # Deduct cash
-        self.cash -= (position_size_usd + commission)
+        # Deduct margin from cash (not full notional — this is a leveraged perp)
+        self.cash -= margin_cost
 
         # Create position
         pos_id = f"{direction}_{archetype}_{int(timestamp.timestamp())}"
@@ -964,6 +1015,7 @@ class StandaloneBacktestEngine:
         self.positions[pos_id].crisis_prob_at_entry = crisis_prob
         self.positions[pos_id].leverage_applied = self.leverage
         self.positions[pos_id].position_size_usd = position_size_usd
+        self.positions[pos_id].margin_used = margin
         # CMI sub-components
         self.positions[pos_id].trend_align_at_entry = trend_align
         self.positions[pos_id].trend_strength_at_entry = trend_strength
@@ -1021,13 +1073,15 @@ class StandaloneBacktestEngine:
         else:
             pnl = (pos.entry_price - fill_exit) * exit_quantity
 
-        # Subtract commission
+        # Commission on exit notional
         exit_value = fill_exit * exit_quantity
         commission = exit_value * self.commission_rate
         pnl -= commission
 
-        # Return cash
-        self.cash += exit_value - commission
+        # Return margin + realized PnL to cash (not full exit notional)
+        exit_fraction = exit_quantity / pos.original_quantity
+        margin_returned = pos.margin_used * exit_fraction
+        self.cash += margin_returned + pnl
 
         # PnL percentage
         entry_value = pos.entry_price * exit_quantity
@@ -1073,6 +1127,13 @@ class StandaloneBacktestEngine:
             sentiment_crisis_at_entry=pos.sentiment_crisis_at_entry,
             leverage_applied=pos.leverage_applied,
             position_size_usd=pos.position_size_usd,
+            # Domain scores
+            wyckoff_score_at_entry=pos.wyckoff_score_at_entry,
+            liquidity_score_at_entry=pos.liquidity_score_at_entry,
+            momentum_score_at_entry=pos.momentum_score_at_entry,
+            smc_score_at_entry=pos.smc_score_at_entry,
+            gate_penalty_at_entry=pos.gate_penalty_at_entry,
+            position_id=pos.position_id,
         ))
 
         # Update position
@@ -1097,11 +1158,15 @@ class StandaloneBacktestEngine:
 
         # Remove if fully closed
         if pos.current_quantity < 1e-10 or pos.total_exits_pct >= 0.99:
-            # Clean up any dust
+            # Clean up any dust — return remaining margin + dust PnL
             if pos.current_quantity > 1e-10:
-                # Close dust position
-                dust_value = pos.current_quantity * fill_exit
-                self.cash += dust_value
+                dust_frac = pos.current_quantity / pos.original_quantity
+                dust_margin = pos.margin_used * dust_frac
+                if pos.direction == 'long':
+                    dust_pnl = (fill_exit - pos.entry_price) * pos.current_quantity
+                else:
+                    dust_pnl = (pos.entry_price - fill_exit) * pos.current_quantity
+                self.cash += dust_margin + dust_pnl
             del self.positions[pos_id]
 
     # ------------------------------------------------------------------
@@ -1187,10 +1252,16 @@ class StandaloneBacktestEngine:
     # ------------------------------------------------------------------
 
     def _compute_equity(self, current_price: float) -> float:
-        """Compute current equity (cash + position value)."""
+        """Compute current equity (cash + locked margin + unrealized PnL)."""
         equity = self.cash
         for pos in self.positions.values():
-            equity += pos.current_quantity * current_price
+            remaining_frac = pos.current_quantity / pos.original_quantity if pos.original_quantity > 0 else 0
+            margin_locked = pos.margin_used * remaining_frac
+            if pos.direction == 'long':
+                unrealized = (current_price - pos.entry_price) * pos.current_quantity
+            else:
+                unrealized = (pos.entry_price - current_price) * pos.current_quantity
+            equity += margin_locked + unrealized
         return equity
 
     # ------------------------------------------------------------------
@@ -1351,6 +1422,13 @@ class StandaloneBacktestEngine:
             'sentiment_crisis': t.sentiment_crisis_at_entry,
             'leverage': t.leverage_applied,
             'position_size_usd': t.position_size_usd,
+            # Domain scores (for fusion predictiveness analysis)
+            'wyckoff_score': t.wyckoff_score_at_entry,
+            'liquidity_score': t.liquidity_score_at_entry,
+            'momentum_score': t.momentum_score_at_entry,
+            'smc_score': t.smc_score_at_entry,
+            'gate_penalty': t.gate_penalty_at_entry,
+            'position_id': t.position_id,
         } for t in self.trades]
 
         df = pd.DataFrame(records)

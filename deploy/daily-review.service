@@ -1,0 +1,28 @@
+[Unit]
+Description=Bull Machine Daily Quant Review
+After=network.target coinbase-paper.service
+Wants=coinbase-paper.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/Bull-machine-
+Environment=PYTHONPATH=/home/ubuntu/Bull-machine-
+Environment=PATH=/home/ubuntu/Bull-machine-/.venv/bin:/usr/local/bin:/usr/bin:/bin
+
+ExecStart=/home/ubuntu/Bull-machine-/.venv/bin/python3 bin/daily_quant_review.py \
+    --data-dir /home/ubuntu/Bull-machine-/results/coinbase_paper/ \
+    --days 1
+
+# Logging via journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bull-machine-daily-review
+
+# Resource limits
+MemoryMax=400M
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target

@@ -29,14 +29,16 @@ function confidenceBarColor(confidence: number): string {
 }
 
 function riskStatusColor(status: string): string {
-  if (status === 'active') return 'text-rose-400';
-  if (status === 'watching') return 'text-amber-400';
+  const s = status.toLowerCase();
+  if (s === 'active') return 'text-rose-400';
+  if (s === 'watching' || s === 'monitoring') return 'text-amber-400';
   return 'text-slate-500';
 }
 
 function riskDotColor(status: string): string {
-  if (status === 'active') return 'bg-rose-400';
-  if (status === 'watching') return 'bg-amber-400';
+  const s = status.toLowerCase();
+  if (s === 'active') return 'bg-rose-400';
+  if (s === 'watching' || s === 'monitoring') return 'bg-amber-400';
   return 'bg-slate-500';
 }
 

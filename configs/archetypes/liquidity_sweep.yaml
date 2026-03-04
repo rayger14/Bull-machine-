@@ -20,15 +20,12 @@ thresholds:
   volume_cluster: true
   cooling_period_bars: 24
 hard_gates:
-- feature: boms_strength
-  op: min
-  value: 0.01
-  frozen_bypass: true
-  description: BOMS strength (frozen -- bypassed)
 - feature: liquidity_score
   op: min
   value: 0.2
   description: Minimum liquidity for sweep
+# NOTE: boms_strength gate removed (frozen at 0, was always bypassed).
+# tf1h_bos_bullish replacement tested but degraded PF 2.02→1.26. Reverted.
 # NOTE: OI/taker gates removed — temporal mismatch (sweep detection is concurrent,
 # but OI confirmation comes AFTER the sweep). Whale conflict penalty handles this.
 gate_mode: soft

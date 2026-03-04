@@ -17,6 +17,8 @@ import WyckoffCycle from '../components/dashboard/WyckoffCycle';
 import SessionInfo from '../components/dashboard/SessionInfo';
 import PhantomTracker from '../components/dashboard/PhantomTracker';
 import WhaleIntelligencePanel from '../components/dashboard/WhaleIntelligencePanel';
+import EngineHealth from '../components/dashboard/EngineHealth';
+import NewsPanel from '../components/dashboard/NewsPanel';
 
 import EquityCurve from '../components/charts/EquityCurve';
 import CMIHistoryChart from '../components/charts/CMIHistoryChart';
@@ -29,13 +31,34 @@ export default function DashboardPage() {
   const perf = status?.performance ?? null;
   const oracle = hb.oracle;
 
+  // Staleness detection — warn when heartbeat is > 5 minutes old
+  const heartbeatTs = hb.updated_at ?? hb.timestamp;
+  const staleMins = heartbeatTs
+    ? Math.floor((Date.now() - new Date(heartbeatTs).getTime()) / 60000)
+    : null;
+  const isStale = staleMins != null && staleMins > 5;
+
   return (
     <div className="space-y-4">
+      {/* Staleness warning */}
+      {isStale && (
+        <div className="px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-2 text-xs text-amber-400">
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          Data is {staleMins >= 60 ? `${Math.floor(staleMins / 60)}h ${staleMins % 60}m` : `${staleMins}m`} old — engine may be offline or restarting.
+        </div>
+      )}
+
       {/* 0. Oracle Panel — master synthesis (top of page) */}
       <OraclePanel oracle={oracle} />
 
       {/* 1. Market Briefing — synthesized intelligence */}
       <MarketBriefing hb={hb} oracle={oracle} />
+
+      {/* 1.5. Engine Health — at-a-glance engine config & status */}
+      <EngineHealth hb={hb} />
+
+      {/* 1.6. News Headlines — crypto news with sentiment */}
+      <NewsPanel news={hb.news} />
 
       {/* 2. Metric Row */}
       <MetricRow hb={hb} performance={perf} />
@@ -67,7 +90,7 @@ export default function DashboardPage() {
       <PhantomTracker
         phantom={hb.phantom_tracker}
         threshold={hb.threshold}
-        winRate={hb.win_rate}
+        winRate={perf?.win_rate_pct}
       />
 
       {/* 7. Capital Flows + Wyckoff Cycle */}

@@ -26,7 +26,7 @@ import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -69,6 +69,9 @@ class TrackedPosition:
     crisis_prob_at_entry: float = 0.0
     threshold_margin: float = 0.0  # fusion_score - threshold (negative = would have been rejected)
     would_have_passed: bool = True  # False if signal only passed due to bypass
+    position_size_usd: float = 0.0  # notional value
+    margin_used: float = 0.0  # margin locked at exchange (notional / leverage)
+    leverage_applied: float = 1.0
     # Entry metadata for invalidation exits
     entry_metadata: Dict[str, Any] = field(default_factory=dict)
     # Runner state
@@ -94,6 +97,9 @@ class TrackedPosition:
         d.setdefault('would_have_passed', True)
         d.setdefault('entry_metadata', {})
         d.setdefault('runner_trailing_stop', None)
+        d.setdefault('position_size_usd', 0.0)
+        d.setdefault('margin_used', 0.0)
+        d.setdefault('leverage_applied', 1.0)
         return cls(**d)
 
 
@@ -123,6 +129,7 @@ class CompletedTrade:
     stop_loss: float = 0.0
     take_profit: float = 0.0
     atr_at_entry: float = 0.0
+    position_id: str = ""
 
 
 class _PositionAdapter:
@@ -225,7 +232,8 @@ class V11ShadowRunner:
         # Position sizing
         sizing_cfg = self.config.get('position_sizing', {})
         self.risk_per_trade = sizing_cfg.get('risk_per_trade_pct', 0.02)
-        self.max_position_pct = sizing_cfg.get('max_position_size_pct', 0.15)
+        self.max_position_pct = sizing_cfg.get('max_position_size_pct', 0.15)  # legacy, unused
+        self.max_margin_pct = sizing_cfg.get('max_margin_per_position_pct', 0.35)
         self.leverage = self.config.get('leverage', 1.0)
 
         # Initialize per-archetype exit logic
@@ -242,6 +250,10 @@ class V11ShadowRunner:
         self.total_signals = 0
         self.signals_allocated = 0
         self.signals_rejected = 0
+        # Same-direction entry spacing (prevent correlated clusters)
+        self._last_long_entry_bar = -999
+        self._last_short_entry_bar = -999
+        self._entry_spacing_bars = 2
         # Rejected signal details for dashboard (cleared each bar, written by runner)
         self.last_bar_signals: List[dict] = []
 
@@ -933,6 +945,27 @@ class V11ShadowRunner:
                 self.signals_rejected += len(signals)
                 signals = []
 
+        # Step 3d: Same-direction entry spacing (prevent correlated clusters)
+        if signals:
+            spaced_signals = []
+            for s in signals:
+                if s.direction == 'long' and (self.bar_index - self._last_long_entry_bar) < self._entry_spacing_bars:
+                    idx = sig_index[id(s)]
+                    self.last_bar_signals[idx]['status'] = 'rejected'
+                    self.last_bar_signals[idx]['rejection_reason'] = f'entry spacing ({self.bar_index - self._last_long_entry_bar}/{self._entry_spacing_bars} bars)'
+                    self.last_bar_signals[idx]['rejection_stage'] = 'entry_spacing'
+                    self.signals_rejected += 1
+                    continue
+                if s.direction == 'short' and (self.bar_index - self._last_short_entry_bar) < self._entry_spacing_bars:
+                    idx = sig_index[id(s)]
+                    self.last_bar_signals[idx]['status'] = 'rejected'
+                    self.last_bar_signals[idx]['rejection_reason'] = f'entry spacing ({self.bar_index - self._last_short_entry_bar}/{self._entry_spacing_bars} bars)'
+                    self.last_bar_signals[idx]['rejection_stage'] = 'entry_spacing'
+                    self.signals_rejected += 1
+                    continue
+                spaced_signals.append(s)
+            signals = spaced_signals
+
         # Mark surviving signals as passed (will become allocated or portfolio-rejected)
         for s in signals:
             idx = sig_index[id(s)]
@@ -1013,6 +1046,11 @@ class V11ShadowRunner:
                 threshold_margin=getattr(sig, '_threshold_margin', 0.0),
                 would_have_passed=getattr(sig, '_would_have_passed', True),
             )
+            # Track last entry bar per direction for spacing
+            if sig.direction == 'long':
+                self._last_long_entry_bar = self.bar_index
+            elif sig.direction == 'short':
+                self._last_short_entry_bar = self.bar_index
             sig_entry = {
                 'timestamp': str(timestamp),
                 'archetype': sig.archetype_id,
@@ -1172,7 +1210,7 @@ class V11ShadowRunner:
         threshold_margin=0.0, would_have_passed=True,
     ):
         """Open a virtual position."""
-        portfolio_value = self.cash
+        portfolio_value = self.initial_cash  # Use initial capital, not depleted cash
         atr = features.get('atr_14', entry_price * 0.02)
         if pd.isna(atr) or atr <= 0:
             atr = entry_price * 0.02
@@ -1188,25 +1226,36 @@ class V11ShadowRunner:
             stop_distance_pct = 0.025
 
         risk_dollars = portfolio_value * self.risk_per_trade
-        position_size_usd = risk_dollars / stop_distance_pct
-        position_size_usd *= (allocated_size_pct / 0.02)
-        position_size_usd *= self.leverage
-        max_size = portfolio_value * self.max_position_pct * self.leverage
-        position_size_usd = min(position_size_usd, max_size)
+        notional = risk_dollars / stop_distance_pct
 
-        commission = position_size_usd * self.commission_rate
-        slippage = position_size_usd * (self.slippage_bps / 10000.0)
-        total_cost = position_size_usd + commission + slippage
+        # Scale by conviction multiplier from PortfolioAllocator
+        notional *= (allocated_size_pct / 0.02)
 
-        if total_cost > self.cash:
+        # Margin = notional / leverage (what the exchange locks)
+        margin = notional / self.leverage
+
+        # Cap margin at max_margin_per_position_pct of initial capital
+        max_margin = self.initial_cash * self.max_margin_pct
+        if margin > max_margin:
+            margin = max_margin
+            notional = margin * self.leverage
+
+        position_size_usd = notional  # for trade log / PnL calc
+
+        # Check margin availability (not notional)
+        commission = notional * self.commission_rate
+        slippage = notional * (self.slippage_bps / 10000.0)
+        margin_cost = margin + commission + slippage
+
+        if margin_cost > self.cash:
             self.signals_rejected += 1
             return
 
         fill_price = entry_price * (1 + self.slippage_bps / 10000.0) if direction == 'long' \
             else entry_price * (1 - self.slippage_bps / 10000.0)
 
-        quantity = position_size_usd / fill_price
-        self.cash -= (position_size_usd + commission)
+        quantity = notional / fill_price
+        self.cash -= margin_cost  # deduct margin, not notional
 
         # Compute factor attribution at entry time
         factor_attribution = self._compute_factor_attribution(archetype, features, regime_label)
@@ -1233,6 +1282,9 @@ class V11ShadowRunner:
             crisis_prob_at_entry=crisis_prob_at_entry,
             threshold_margin=threshold_margin,
             would_have_passed=would_have_passed,
+            position_size_usd=position_size_usd,
+            margin_used=margin,
+            leverage_applied=self.leverage,
         )
 
         # Capture entry metadata for ExitLogic invalidation checks
@@ -1279,7 +1331,11 @@ class V11ShadowRunner:
         exit_value = fill_exit * exit_quantity
         commission = exit_value * self.commission_rate
         pnl -= commission
-        self.cash += exit_value - commission
+
+        # Return margin + realized PnL to cash (not full exit notional)
+        exit_fraction = exit_quantity / pos.original_quantity
+        margin_returned = pos.margin_used * exit_fraction
+        self.cash += margin_returned + pnl
 
         entry_value = pos.entry_price * exit_quantity
         pnl_pct = (pnl / entry_value * 100) if entry_value > 0 else 0.0
@@ -1309,6 +1365,7 @@ class V11ShadowRunner:
             stop_loss=pos.stop_loss,
             take_profit=pos.take_profit,
             atr_at_entry=pos.atr_at_entry,
+            position_id=pos.position_id,
         ))
 
         pos.current_quantity -= exit_quantity
@@ -1341,7 +1398,13 @@ class V11ShadowRunner:
 
         if pos.current_quantity < 1e-10 or pos.total_exits_pct >= 0.99:
             if pos.current_quantity > 1e-10:
-                self.cash += pos.current_quantity * fill_exit
+                dust_frac = pos.current_quantity / pos.original_quantity
+                dust_margin = pos.margin_used * dust_frac
+                if pos.direction == 'long':
+                    dust_pnl = (fill_exit - pos.entry_price) * pos.current_quantity
+                else:
+                    dust_pnl = (pos.entry_price - fill_exit) * pos.current_quantity
+                self.cash += dust_margin + dust_pnl
             del self.positions[pos_id]
 
     def _check_all_exits(self, row: pd.Series, ts: pd.Timestamp):
@@ -1654,10 +1717,13 @@ class V11ShadowRunner:
     def _update_equity(self, current_price: float):
         equity = self.cash
         for pos in self.positions.values():
+            remaining_frac = pos.current_quantity / pos.original_quantity if pos.original_quantity > 0 else 0
+            margin_locked = pos.margin_used * remaining_frac
             if pos.direction == 'long':
-                equity += pos.current_quantity * current_price
+                unrealized = (current_price - pos.entry_price) * pos.current_quantity
             else:
-                equity += pos.current_quantity * (2 * pos.entry_price - current_price)
+                unrealized = (pos.entry_price - current_price) * pos.current_quantity
+            equity += margin_locked + unrealized
         self.equity_curve.append(equity)
 
     def _log_signal(self, sig_dict: dict):
@@ -1719,6 +1785,7 @@ class V11ShadowRunner:
                 'stop_loss': t.stop_loss,
                 'take_profit': t.take_profit,
                 'atr_at_entry': t.atr_at_entry,
+                'position_id': t.position_id,
             }
             trades_data.append(td)
 
@@ -1812,6 +1879,7 @@ class V11ShadowRunner:
                     stop_loss=td.get('stop_loss', 0.0),
                     take_profit=td.get('take_profit', 0.0),
                     atr_at_entry=td.get('atr_at_entry', 0.0),
+                    position_id=td.get('position_id', ''),
                 )
                 self.trades.append(t)
             except (KeyError, TypeError) as e:

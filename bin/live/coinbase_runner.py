@@ -99,6 +99,16 @@ try:
 except ImportError:
     logger.debug("StressSimulator not available (stress_simulator.py missing).")
 
+# ---------------------------------------------------------------------------
+# Import NewsFetcher (optional, for crypto news headlines + sentiment)
+# ---------------------------------------------------------------------------
+NEWS_FETCHER_AVAILABLE = False
+try:
+    from bin.live.news_fetcher import NewsFetcher
+    NEWS_FETCHER_AVAILABLE = True
+except ImportError:
+    logger.debug("NewsFetcher not available (news_fetcher.py missing).")
+
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -213,6 +223,15 @@ class CoinbasePaperRunner:
             except Exception as exc:
                 logger.warning("StressSimulator init failed: %s", exc)
                 self.stress_simulator = None
+
+        # ---- News Fetcher (optional, for crypto news headlines + sentiment) ----
+        self.news_fetcher = None
+        if NEWS_FETCHER_AVAILABLE:
+            try:
+                self.news_fetcher = NewsFetcher()
+                logger.info("NewsFetcher initialized for crypto news headlines.")
+            except Exception as exc:
+                logger.warning("NewsFetcher init failed: %s", exc)
 
         # ---- Last signal narrative (for dashboard display) ----
         self.last_signal_narrative: Optional[dict] = None
@@ -1588,6 +1607,7 @@ class CoinbasePaperRunner:
                 "crisis_prob_at_entry": round(getattr(t, 'crisis_prob_at_entry', 0.0), 4),
                 "leverage_applied": round(getattr(t, 'leverage_applied', 1.0), 2),
                 "position_size_usd": round(pos_size, 2),
+                "position_id": getattr(t, 'position_id', ''),
             }
             trades_data.append(trade_dict)
         path = self.output_dir / "trades.json"
@@ -2529,6 +2549,36 @@ class CoinbasePaperRunner:
             "macro_summary": macro_summary,
         }
 
+    def _build_engine_health(self) -> dict:
+        """Snapshot of engine config for the dashboard Engine Health panel."""
+        af = self.runner.adaptive_fusion if hasattr(self.runner, 'adaptive_fusion') else {}
+        return {
+            "bypass_threshold": getattr(self.runner, 'bypass_threshold', False),
+            "disabled_archetypes": list(getattr(self.runner, 'disabled_archetypes', set())),
+            "calibrated_archetypes": self.runner.config.get('_calibrated_archetypes', []),
+            "base_max_positions": af.get('base_max_positions', 3),
+            "entry_spacing_bars": getattr(self.runner, '_entry_spacing_bars', 2),
+            "gate_mode": "soft",
+            "per_archetype_base_threshold": af.get('per_archetype_base_threshold', {}),
+            "temp_range": af.get('temp_range', 0.38),
+            "instab_range": af.get('instab_range', 0.15),
+            "crisis_coefficient": af.get('crisis_coefficient', 0.50),
+            "emergency_crisis_threshold": af.get('emergency_crisis_threshold', 0.7),
+            "emergency_size_multiplier": af.get('emergency_size_multiplier', 0.5),
+        }
+
+    def _build_news_section(self) -> dict:
+        """Build news headlines + sentiment for dashboard."""
+        if self.news_fetcher is None:
+            return {"headlines": [], "sentiment": {"summary": "N/A"}}
+        try:
+            headlines = self.news_fetcher.get_latest(10)
+            sentiment = self.news_fetcher.get_aggregate_sentiment()
+            return {"headlines": headlines, "sentiment": sentiment}
+        except Exception as exc:
+            logger.debug("News fetch failed: %s", exc)
+            return {"headlines": [], "sentiment": {"summary": "N/A"}}
+
     def _save_heartbeat(self, timestamp, features, acted_signals):
         """Write heartbeat.json + append equity_history.csv for dashboard."""
         close_price = features.get("close", 0.0)
@@ -2599,6 +2649,10 @@ class CoinbasePaperRunner:
             },
             # --- Whale / Institutional Intelligence ---
             "whale_intelligence": self._build_whale_intelligence(features),
+            # --- Engine Health (config snapshot for dashboard) ---
+            "engine_health": self._build_engine_health(),
+            # --- News Headlines + Sentiment ---
+            "news": self._build_news_section(),
         }
 
         # --- Wyckoff enrichment (before building wyckoff dict) ---

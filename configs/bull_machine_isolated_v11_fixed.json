@@ -24,17 +24,23 @@
   "portfolio_allocation": {
     "mode": "MULTI_UNCORRELATED",
     "correlation_threshold": 0.5,
-    "max_simultaneous_positions": 99,
+    "max_simultaneous_positions": 5,
     "enable_correlation_filter": false,
     "relative_score_percentile": 0.0,
+    "dynamic_sizing_enabled": true,
+    "fusion_size_tiers": [
+      {"min_fusion": 0.60, "multiplier": 2.0},
+      {"min_fusion": 0.40, "multiplier": 1.5},
+      {"min_fusion": 0.18, "multiplier": 1.0}
+    ],
     "notes": [
-      "2026-02-20: DATA COLLECTION MODE — no position cap, no correlation filter, no score percentile",
-      "Let all signals through to collect real-world data on which archetypes/fusion levels work",
-      "Will re-enable filters after collecting enough trade data for analysis"
+      "2026-02-27: PRODUCTION MODE — threshold active, 7 calibrated archetypes, max 3 positions",
+      "Data collection mode ended: 54 trades, 29.6% WR, -$495. Bypass mode was catastrophic.",
+      "Enabled: wick_trap, liquidity_sweep, retest_cluster, trap_within_trend, spring, failed_continuation, order_block_retest, liquidity_vacuum"
     ]
   },
   "disabled_archetypes": [],
-  "_disabled_archetypes_note": "2026-02-21: ALL 16 archetypes ENABLED for data collection. bypass_threshold=true. Previously disabled: spring (PF=0.94), failed_continuation (PF=0.86), long_squeeze, funding_divergence, fvg_continuation, volume_fade_chop, whipsaw, liquidity_compression, exhaustion_reversal, confluence_breakout, liquidity_sweep.",
+  "_disabled_archetypes_note": "2026-02-27: PRODUCTION MODE. Only calibrated archetypes enabled (PF>1.0 OOS). Disabled 9 unprofitable archetypes. Previous data-collection mode (all 16 enabled) produced 29.6% win rate vs 80% backtested.",
   "_calibrated_archetypes": [
     "trap_within_trend",
     "liquidity_vacuum",
@@ -83,7 +89,7 @@
       "order_block_retest": 0.10,
       "oi_divergence": 0.15
     },
-    "_threshold_note": "2026-02-21: BYPASS MODE with DATA-INFORMED weights. bypass_threshold=true lets ALL signals through. Thresholds computed with IC-derived weights (dd_score=50%, trend_strength=5%) for post-hoc analysis to discover per-archetype optimal thresholds.",
+    "_threshold_note": "2026-02-27: PRODUCTION MODE. bypass_threshold=false. Only signals above dynamic threshold trade. Data collection mode disabled after 29.6% win rate vs 80% backtested.",
     "bypass_threshold": true,
     "cmi_weights": {
       "risk_temp": {"trend_align": 0.30, "trend_strength": 0.05, "sentiment": 0.15, "dd_score": 0.50, "derivatives_heat": 0.0},
@@ -93,7 +99,7 @@
     "cmi_weights_optimized": null,
     "temp_range": 0.38,
     "instab_range": 0.15,
-    "base_max_positions": 999,
+    "base_max_positions": 3,
     "emergency_crisis_threshold": 0.7,
     "emergency_size_multiplier": 0.5,
     "notes": [
@@ -159,6 +165,7 @@
   },
   "position_sizing": {
     "risk_per_trade_pct": 0.02,
+    "max_margin_per_position_pct": 0.35,
     "max_position_size_pct": 0.15,
     "use_atr_scaling": true,
     "dynamic_sizing_enabled": true,
@@ -187,8 +194,8 @@
       "fusion >= 0.18: 1x base size (meets threshold, standard sizing)"
     ]
   },
-  "leverage": 3.0,
-  "leverage_notes": "UPDATED 2026-02-17: 3.0x = ~half Kelly. 6 archetypes with per-archetype thresholds. Full Kelly=6.4x, half Kelly=3.2x. Crisis protection via CMI v0 dynamic threshold + emergency cap.",
+  "leverage": 1.5,
+  "leverage_notes": "2026-02-27: REVERTED to 1.5x (Phase 1). Previous 3.0x was premature — live PF=0.45 with 29.6% WR. Stay at 1.5x until live PF>1.3 for 30+ days.",
   "runner_position_enabled": true,
   "exit_logic": {
     "use_archetype_specific": true,

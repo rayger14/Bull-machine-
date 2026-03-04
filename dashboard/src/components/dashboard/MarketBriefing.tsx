@@ -92,8 +92,8 @@ function buildImmediateOutlook(hb: Heartbeat): string[] {
   // Wyckoff events
   const wyEvents = hb.wyckoff?.events;
   if (wyEvents) {
-    const accumEvents = ['SC', 'AR', 'ST', 'Spring', 'LPS', 'SOS'];
-    const distribEvents = ['BC', 'UT', 'UTAD', 'SOW', 'LPSY'];
+    const accumEvents = ['sc', 'ar', 'st', 'spring_a', 'spring_b', 'lps', 'sos'];
+    const distribEvents = ['bc', 'as', 'ut', 'utad', 'sow', 'lpsy'];
     let accumCount = 0;
     let distribCount = 0;
     for (const [key, ev] of Object.entries(wyEvents)) {
@@ -349,7 +349,7 @@ export default function MarketBriefing({ hb, oracle }: MarketBriefingProps) {
                   <span className="text-gray-300">{f}</span>
                 </div>
               ))}
-              {oracle.risks?.filter(r => r.status === 'active').slice(0, 2).map((r, i) => (
+              {oracle.risks?.filter(r => r.status?.toLowerCase() === 'active').slice(0, 2).map((r, i) => (
                 <div key={`ri-${i}`} className="flex items-start gap-2 text-xs">
                   <span className="text-red-400 mt-0.5">●</span>
                   <span className="text-gray-300">{r.name}: {r.impact}</span>

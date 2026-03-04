@@ -22,14 +22,14 @@ thresholds:
 hard_gates:
 - feature: wyckoff_bullish_score
   op: min
-  value: 0.1
+  value: 0.15
   nan_policy: skip
-  description: Wyckoff bullish signal
+  description: Wyckoff bullish signal (tightened from 0.10)
 - feature: tf1h_pti_score
   op: min
-  value: 0.05
+  value: 0.10
   nan_policy: skip
-  description: Minimum PTI score
+  description: Minimum PTI score (tightened from 0.05)
 # NOTE: OI/taker gates removed — at spring detection, selling IS the mechanism.
 # Whale confirmation comes after the spring, not during. Whale conflict penalty handles global conflicts.
 gate_mode: soft

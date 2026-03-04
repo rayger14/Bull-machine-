@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Bull Machine Daily Quant Review every day at 00:15 UTC
+
+[Timer]
+# Run 15 minutes after midnight UTC to ensure the last candle of the day is processed
+OnCalendar=*-*-* 00:15:00 UTC
+Persistent=true
+AccuracySec=60
+
+[Install]
+WantedBy=timers.target
