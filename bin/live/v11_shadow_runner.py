@@ -222,9 +222,9 @@ class V11ShadowRunner:
         # Current (hand-tuned) CMI weights — read from config or use defaults
         cmi_w = self.adaptive_fusion.get('cmi_weights', {})
         self.cmi_weights_current = {
-            'risk_temp': cmi_w.get('risk_temp', {'trend_align': 0.45, 'trend_strength': 0.25, 'sentiment': 0.15, 'dd_score': 0.15}),
-            'instability': cmi_w.get('instability', {'chop': 0.35, 'adx_weakness': 0.25, 'wick_score': 0.20, 'vol_instab': 0.20}),
-            'crisis': cmi_w.get('crisis', {'base_crisis': 0.60, 'vol_shock': 0.20, 'sentiment_crisis': 0.20}),
+            'risk_temp': cmi_w.get('risk_temp', {'trend_align': 0.30, 'trend_strength': 0.05, 'sentiment': 0.15, 'dd_score': 0.50}),
+            'instability': cmi_w.get('instability', {'chop': 0.40, 'adx_weakness': 0.10, 'wick_score': 0.25, 'vol_instab': 0.25}),
+            'crisis': cmi_w.get('crisis', {'base_crisis': 0.45, 'vol_shock': 0.10, 'sentiment_crisis': 0.45}),
         }
         raw_allowed = self.config.get('archetype_allowed_regimes', {})
         self.archetype_allowed_regimes = {k: v for k, v in raw_allowed.items() if k != 'notes'}
@@ -353,10 +353,10 @@ class V11ShadowRunner:
 
         # --- risk_temperature using config-driven weights ---
         rt_w = self.cmi_weights_current['risk_temp']
-        risk_temp = (rt_w.get('trend_align', 0.45) * trend_align +
-                     rt_w.get('trend_strength', 0.25) * trend_strength +
+        risk_temp = (rt_w.get('trend_align', 0.30) * trend_align +
+                     rt_w.get('trend_strength', 0.05) * trend_strength +
                      rt_w.get('sentiment', 0.15) * fear_greed +
-                     rt_w.get('dd_score', 0.15) * dd_score)
+                     rt_w.get('dd_score', 0.50) * dd_score)
 
         # --- instability_score [0-1]: 0=stable, 1=choppy ---
         chop = _get('chop_score', 0.5)
@@ -364,10 +364,10 @@ class V11ShadowRunner:
         wick_sc = min(_get('wick_ratio', 1.0) / 5.0, 1.0)
         vol_instab = min(abs(_get('volume_z_7d', 0.0)) / 2.5, 1.0)
         inst_w = self.cmi_weights_current['instability']
-        instability = (inst_w.get('chop', 0.35) * chop +
-                       inst_w.get('adx_weakness', 0.25) * adx_weakness +
-                       inst_w.get('wick_score', 0.20) * wick_sc +
-                       inst_w.get('vol_instab', 0.20) * vol_instab)
+        instability = (inst_w.get('chop', 0.40) * chop +
+                       inst_w.get('adx_weakness', 0.10) * adx_weakness +
+                       inst_w.get('wick_score', 0.25) * wick_sc +
+                       inst_w.get('vol_instab', 0.25) * vol_instab)
 
         # --- crisis_prob [0-1]: pure stress measurement ---
         dd = _get('drawdown_persistence', 0.0)
@@ -384,13 +384,13 @@ class V11ShadowRunner:
         vol_shock = min(max(rv - 0.8, 0.0) / 0.4, 1.0)
         sentiment_crisis = max(0.0, (0.20 - fear_greed) / 0.20)
         cr_w = self.cmi_weights_current['crisis']
-        crisis_prob = (cr_w.get('base_crisis', 0.60) * base_crisis +
-                       cr_w.get('vol_shock', 0.20) * vol_shock +
-                       cr_w.get('sentiment_crisis', 0.20) * sentiment_crisis)
+        crisis_prob = (cr_w.get('base_crisis', 0.45) * base_crisis +
+                       cr_w.get('vol_shock', 0.10) * vol_shock +
+                       cr_w.get('sentiment_crisis', 0.45) * sentiment_crisis)
 
         # Dynamic threshold
         base_threshold = self.adaptive_fusion.get('base_threshold', 0.18)
-        temp_range = self.adaptive_fusion.get('temp_range', 0.35)
+        temp_range = self.adaptive_fusion.get('temp_range', 0.38)
         instab_range = self.adaptive_fusion.get('instab_range', 0.15)
         flat_threshold = base_threshold + (1.0 - risk_temp) * temp_range + instability * instab_range
 
@@ -401,21 +401,21 @@ class V11ShadowRunner:
             opt_params = self.cmi_weights_optimized.get('threshold_params', {})
             # Recompute risk_temp with optimized weights
             ort_w = opt_cmi.get('risk_temp', rt_w)
-            opt_risk_temp = (ort_w.get('trend_align', 0.45) * trend_align +
-                             ort_w.get('trend_strength', 0.25) * trend_strength +
+            opt_risk_temp = (ort_w.get('trend_align', 0.30) * trend_align +
+                             ort_w.get('trend_strength', 0.05) * trend_strength +
                              ort_w.get('sentiment', 0.15) * fear_greed +
-                             ort_w.get('dd_score', 0.15) * dd_score)
+                             ort_w.get('dd_score', 0.50) * dd_score)
             # Recompute instability with optimized weights
             oi_w = opt_cmi.get('instability', inst_w)
-            opt_instability = (oi_w.get('chop', 0.35) * chop +
-                               oi_w.get('adx_weakness', 0.25) * adx_weakness +
-                               oi_w.get('wick_score', 0.20) * wick_sc +
-                               oi_w.get('vol_instab', 0.20) * vol_instab)
+            opt_instability = (oi_w.get('chop', 0.40) * chop +
+                               oi_w.get('adx_weakness', 0.10) * adx_weakness +
+                               oi_w.get('wick_score', 0.25) * wick_sc +
+                               oi_w.get('vol_instab', 0.25) * vol_instab)
             # Recompute crisis_prob with optimized weights
             oc_w = opt_cmi.get('crisis', cr_w)
-            opt_crisis = (oc_w.get('base_crisis', 0.60) * base_crisis +
-                          oc_w.get('vol_shock', 0.20) * vol_shock +
-                          oc_w.get('sentiment_crisis', 0.20) * sentiment_crisis)
+            opt_crisis = (oc_w.get('base_crisis', 0.45) * base_crisis +
+                          oc_w.get('vol_shock', 0.10) * vol_shock +
+                          oc_w.get('sentiment_crisis', 0.45) * sentiment_crisis)
             opt_temp_range = opt_params.get('temp_range', temp_range)
             opt_instab_range = opt_params.get('instab_range', instab_range)
             opt_threshold = base_threshold + (1.0 - opt_risk_temp) * opt_temp_range + opt_instability * opt_instab_range
@@ -837,7 +837,7 @@ class V11ShadowRunner:
             crisis_penalty = 1.0 - crisis_prob * c_coeff
             per_arch_thresholds = self.adaptive_fusion.get('per_archetype_base_threshold', {})
             base_threshold = self.adaptive_fusion.get('base_threshold', 0.18)
-            temp_range = self.adaptive_fusion.get('temp_range', 0.35)
+            temp_range = self.adaptive_fusion.get('temp_range', 0.38)
             instab_range = self.adaptive_fusion.get('instab_range', 0.15)
 
             adjusted_signals = []

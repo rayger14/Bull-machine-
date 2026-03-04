@@ -827,8 +827,8 @@ class LiveFeatureComputer:
         _cp = features.get('crisis_prob', 0.02)
         # Default adaptive_fusion params (matching configs/bull_machine_isolated_v11_fixed.json)
         _base_thr = 0.18
-        _temp_range = 0.48
-        _instab_range = 0.20
+        _temp_range = 0.38
+        _instab_range = 0.15
         _projected_threshold = _base_thr + (1.0 - _rt) * _temp_range + _inst * _instab_range
 
         # EMA alignment state
@@ -1066,8 +1066,8 @@ class LiveFeatureComputer:
             vol_instab = min(abs(vol_z) / 2.5, 1.0)
 
             out['instability_score'] = (
-                0.35 * chop + 0.25 * adx_weakness +
-                0.20 * wick_sc + 0.20 * vol_instab
+                0.40 * chop + 0.10 * adx_weakness +
+                0.25 * wick_sc + 0.25 * vol_instab
             )
 
             # --- CMI v0: crisis_prob [0-1] — pure stress, no Wyckoff ---
@@ -1089,7 +1089,7 @@ class LiveFeatureComputer:
             # Sentiment extreme (20%)
             sentiment_crisis = max(0.0, (0.20 - fear_greed) / 0.20)
 
-            out['crisis_prob'] = 0.60 * base_crisis + 0.20 * vol_shock + 0.20 * sentiment_crisis
+            out['crisis_prob'] = 0.45 * base_crisis + 0.10 * vol_shock + 0.45 * sentiment_crisis
 
             # Derive regime_label from CMI components for logging/display
             out['regime_label'] = self._regime_label_from_risk_temp(
