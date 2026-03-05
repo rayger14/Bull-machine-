@@ -456,25 +456,25 @@ class StandaloneBacktestEngine:
 
         t0 = time.time()
 
-        # CMI weights — config-driven with hand-tuned defaults
+        # CMI weights — config-driven, defaults match config 2026-02-21
         cmi_weights = self.adaptive_fusion.get('cmi_weights', {})
         rt_w = cmi_weights.get('risk_temp', {})
-        w_trend = rt_w.get('trend_align', 0.45)
-        w_strength = rt_w.get('trend_strength', 0.25)
+        w_trend = rt_w.get('trend_align', 0.30)
+        w_strength = rt_w.get('trend_strength', 0.05)
         w_sentiment = rt_w.get('sentiment', 0.15)
-        w_dd = rt_w.get('dd_score', 0.15)
+        w_dd = rt_w.get('dd_score', 0.50)
         w_deriv = rt_w.get('derivatives_heat', 0.0)
 
         inst_w = cmi_weights.get('instability', {})
-        w_chop = inst_w.get('chop', 0.35)
-        w_adx_weak = inst_w.get('adx_weakness', 0.25)
-        w_wick = inst_w.get('wick_score', 0.20)
-        w_vol = inst_w.get('vol_instab', 0.20)
+        w_chop = inst_w.get('chop', 0.40)
+        w_adx_weak = inst_w.get('adx_weakness', 0.10)
+        w_wick = inst_w.get('wick_score', 0.25)
+        w_vol = inst_w.get('vol_instab', 0.25)
 
         crisis_w = cmi_weights.get('crisis', {})
-        w_base_crisis = crisis_w.get('base_crisis', 0.60)
-        w_vol_shock = crisis_w.get('vol_shock', 0.20)
-        w_sent_crisis = crisis_w.get('sentiment_crisis', 0.20)
+        w_base_crisis = crisis_w.get('base_crisis', 0.45)
+        w_vol_shock = crisis_w.get('vol_shock', 0.10)
+        w_sent_crisis = crisis_w.get('sentiment_crisis', 0.45)
 
         # Tracking accumulators for periodic stats logging
         _regime_counts: Dict[str, int] = {}
