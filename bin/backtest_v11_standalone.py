@@ -484,6 +484,10 @@ class StandaloneBacktestEngine:
         _signals_per_period: int = 0
         _entries_per_period: int = 0
 
+        # Cache high/low arrays for prev_high/prev_low lookback in _open_position
+        self._highs = df['high'].values if 'high' in df.columns else None
+        self._lows = df['low'].values if 'low' in df.columns else None
+
         for bar_idx, (ts, row) in enumerate(df.iterrows()):
             # Step 1: Update bars held for all positions
             for pos in self.positions.values():
@@ -781,6 +785,7 @@ class StandaloneBacktestEngine:
                         regime_label=current_regime,
                         features=row,
                         allocated_size_pct=intent.allocated_size_pct,
+                        bar_idx=bar_idx,
                         threshold_at_entry=_arch_threshold,
                         risk_temp=risk_temp if self.adaptive_fusion.get('enabled', False) else 0.0,
                         instability=instability if self.adaptive_fusion.get('enabled', False) else 0.0,
@@ -890,6 +895,7 @@ class StandaloneBacktestEngine:
         regime_label: str,
         features: pd.Series,
         allocated_size_pct: float,
+        bar_idx: int = 0,
         threshold_at_entry: float = 0.0,
         risk_temp: float = 0.0,
         instability: float = 0.0,
@@ -991,10 +997,18 @@ class StandaloneBacktestEngine:
             atr_at_entry=atr,
         )
 
+        # Compute 20-bar lookback swing high/low for ExitLogic S1 target
+        _prev_high = fill_price
+        _prev_low = fill_price
+        if self._highs is not None and bar_idx > 0:
+            lb_start = max(0, bar_idx - 20)
+            _prev_high = float(np.nanmax(self._highs[lb_start:bar_idx]))
+            _prev_low = float(np.nanmin(self._lows[lb_start:bar_idx]))
+
         # Capture entry metadata for ExitLogic invalidation checks
         self.positions[pos_id].entry_metadata = {
-            'entry_prev_low': features.get('tf1h_prev_low', features.get('low', fill_price)) if hasattr(features, 'get') else fill_price,
-            'entry_prev_high': features.get('tf1h_prev_high', features.get('high', fill_price)) if hasattr(features, 'get') else fill_price,
+            'entry_prev_low': _prev_low,
+            'entry_prev_high': _prev_high,
             'entry_wick_low': features.get('low', fill_price) if hasattr(features, 'get') else fill_price,
             'entry_spring_low': features.get('low', fill_price) if hasattr(features, 'get') else fill_price,
             'entry_ob_low': features.get('order_block_low', features.get('low', fill_price)) if hasattr(features, 'get') else fill_price,
@@ -1229,6 +1243,10 @@ class StandaloneBacktestEngine:
             if exit_signal is not None:
                 # Sync scale-out tracking back from adapter
                 pos.executed_scale_outs = pos_adapter.metadata.get('executed_scale_outs', pos.executed_scale_outs)
+                # Persist all ExitLogic flags (scaled_at_prev_high, moon_bag_taken, etc.)
+                for flag_key in ('scaled_at_prev_high', 'moon_bag_taken'):
+                    if pos_adapter.metadata.get(flag_key):
+                        pos.entry_metadata[flag_key] = True
 
                 # Handle trailing stop update (no exit, just stop movement)
                 if exit_signal.stop_update is not None:

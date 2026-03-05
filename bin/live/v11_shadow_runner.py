@@ -1455,6 +1455,10 @@ class V11ShadowRunner:
 
             if exit_signal is not None:
                 pos.executed_scale_outs = pos_adapter.metadata.get('executed_scale_outs', pos.executed_scale_outs)
+                # Persist all ExitLogic flags (scaled_at_prev_high, moon_bag_taken, etc.)
+                for flag_key in ('scaled_at_prev_high', 'moon_bag_taken'):
+                    if pos_adapter.metadata.get(flag_key):
+                        pos.entry_metadata[flag_key] = True
 
                 if exit_signal.stop_update is not None:
                     pos.trailing_stop = exit_signal.stop_update

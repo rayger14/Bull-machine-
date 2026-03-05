@@ -1202,6 +1202,9 @@ class LiveFeatureComputer:
         low = self._buf['low'].values.astype(float)
         prev_high_10 = np.max(high[-11:-1])
         prev_low_10 = np.min(low[-11:-1])
+        # 20-bar swing high/low for ExitLogic S1 target (liquidity_vacuum prev_high exit)
+        out['tf1h_prev_high'] = float(np.max(high[-21:-1])) if len(high) >= 21 else float(np.max(high[:-1]))
+        out['tf1h_prev_low'] = float(np.min(low[-21:-1])) if len(low) >= 21 else float(np.min(low[:-1]))
         out['tf1h_bos_bullish'] = 1 if high[-1] > prev_high_10 else 0
         out['tf1h_bos_bearish'] = 1 if low[-1] < prev_low_10 else 0
         out['tf1h_bos_detected'] = max(out['tf1h_bos_bullish'], out['tf1h_bos_bearish'])
