@@ -34,13 +34,23 @@
       {"min_fusion": 0.18, "multiplier": 1.0}
     ],
     "notes": [
-      "2026-02-27: PRODUCTION MODE — threshold active, 7 calibrated archetypes, max 3 positions",
-      "Data collection mode ended: 54 trades, 29.6% WR, -$495. Bypass mode was catastrophic.",
+      "2026-03-06: PRODUCTION MODE — threshold active, 8 calibrated archetypes, max 3 positions",
+      "Data collection mode ended: 79 trades, 33% WR, -$4,488. Bypass mode was catastrophic.",
       "Enabled: wick_trap, liquidity_sweep, retest_cluster, trap_within_trend, spring, failed_continuation, order_block_retest, liquidity_vacuum"
     ]
   },
-  "disabled_archetypes": [],
-  "_disabled_archetypes_note": "2026-02-27: PRODUCTION MODE. Only calibrated archetypes enabled (PF>1.0 OOS). Disabled 9 unprofitable archetypes. Previous data-collection mode (all 16 enabled) produced 29.6% win rate vs 80% backtested.",
+  "disabled_archetypes": [
+    "long_squeeze",
+    "funding_divergence",
+    "fvg_continuation",
+    "volume_fade_chop",
+    "whipsaw",
+    "liquidity_compression",
+    "exhaustion_reversal",
+    "confluence_breakout",
+    "oi_divergence"
+  ],
+  "_disabled_archetypes_note": "2026-03-06: PRODUCTION MODE. bypass_threshold=false. 8 calibrated archetypes enabled, 9 disabled. Data collection mode (79 trades, 33% WR, -$4.5K) proved bypass is catastrophic.",
   "_calibrated_archetypes": [
     "trap_within_trend",
     "liquidity_vacuum",
@@ -48,7 +58,8 @@
     "failed_continuation",
     "wick_trap",
     "spring",
-    "order_block_retest"
+    "order_block_retest",
+    "liquidity_sweep"
   ],
   "_shadow_uncalibrated_archetypes": [
     "long_squeeze",
@@ -59,7 +70,7 @@
     "liquidity_compression",
     "exhaustion_reversal",
     "confluence_breakout",
-    "liquidity_sweep"
+    "oi_divergence"
   ],
   "_shadow_notes": [
     "CALIBRATED (7): Have per-archetype base_threshold, backtest-validated PF>1.0 OOS",
@@ -89,8 +100,8 @@
       "order_block_retest": 0.10,
       "oi_divergence": 0.15
     },
-    "_threshold_note": "2026-02-27: PRODUCTION MODE. bypass_threshold=false. Only signals above dynamic threshold trade. Data collection mode disabled after 29.6% win rate vs 80% backtested.",
-    "bypass_threshold": true,
+    "_threshold_note": "2026-03-06: PRODUCTION MODE. bypass_threshold=false. Only signals above dynamic threshold trade. Data collection (79 trades, 33% WR, -$4.5K) proved bypass is catastrophic.",
+    "bypass_threshold": false,
     "cmi_weights": {
       "risk_temp": {"trend_align": 0.30, "trend_strength": 0.05, "sentiment": 0.15, "dd_score": 0.50, "derivatives_heat": 0.0},
       "instability": {"chop": 0.40, "adx_weakness": 0.10, "wick_score": 0.25, "vol_instab": 0.25},
