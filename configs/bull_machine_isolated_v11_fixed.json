@@ -39,17 +39,7 @@
       "Enabled: wick_trap, liquidity_sweep, retest_cluster, trap_within_trend, spring, failed_continuation, order_block_retest, liquidity_vacuum"
     ]
   },
-  "disabled_archetypes": [
-    "long_squeeze",
-    "funding_divergence",
-    "fvg_continuation",
-    "volume_fade_chop",
-    "whipsaw",
-    "liquidity_compression",
-    "exhaustion_reversal",
-    "confluence_breakout",
-    "oi_divergence"
-  ],
+  "disabled_archetypes": [],
   "_disabled_archetypes_note": "2026-03-06: PRODUCTION MODE. bypass_threshold=false. 8 calibrated archetypes enabled, 9 disabled. Data collection mode (79 trades, 33% WR, -$4.5K) proved bypass is catastrophic.",
   "_calibrated_archetypes": [
     "trap_within_trend",
@@ -101,7 +91,7 @@
       "oi_divergence": 0.15
     },
     "_threshold_note": "2026-03-06: PRODUCTION MODE. bypass_threshold=false. Only signals above dynamic threshold trade. Data collection (79 trades, 33% WR, -$4.5K) proved bypass is catastrophic.",
-    "bypass_threshold": false,
+    "bypass_threshold": true,
     "cmi_weights": {
       "risk_temp": {"trend_align": 0.30, "trend_strength": 0.05, "sentiment": 0.15, "dd_score": 0.50, "derivatives_heat": 0.0},
       "instability": {"chop": 0.40, "adx_weakness": 0.10, "wick_score": 0.25, "vol_instab": 0.25},
