@@ -1186,6 +1186,13 @@ class LiveFeatureComputer:
         out.setdefault('tf4h_fvg_present', 0)
         out.setdefault('tf4h_choch_flag', 0)
 
+        # 20-bar swing high/low for ExitLogic S1 target (must be in BOTH real + fallback paths)
+        if self._buf is not None and len(self._buf) >= 2:
+            high = self._buf['high'].values.astype(float)
+            low = self._buf['low'].values.astype(float)
+            out['tf1h_prev_high'] = float(np.nanmax(high[-21:-1])) if len(high) >= 21 else float(np.nanmax(high[:-1]))
+            out['tf1h_prev_low'] = float(np.nanmin(low[-21:-1])) if len(low) >= 21 else float(np.nanmin(low[:-1]))
+
         return out
 
     def _smc_features_fallback(self) -> Dict[str, int]:
