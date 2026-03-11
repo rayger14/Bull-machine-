@@ -27,11 +27,9 @@ hard_gates:
   description: Wyckoff bullish signal (tightened from 0.10)
 - feature: tf1h_pti_score
   op: min
-  value: 0.10
+  value: 0.1
   nan_policy: skip
   description: Minimum PTI score (tightened from 0.05)
-# NOTE: OI/taker gates removed — at spring detection, selling IS the mechanism.
-# Whale confirmation comes after the spring, not during. Whale conflict penalty handles global conflicts.
 gate_mode: soft
 exit_logic:
   max_hold_hours: 168
@@ -44,15 +42,15 @@ exit_logic:
   - 0.3
   - 0.3
   - 0.3
-  runner_pct: 0.10
+  runner_pct: 0.1
   runner_trailing_atr: 3.0
   trailing_start_r: 1.0
   trailing_atr_mult: 2.0
 position_sizing:
   risk_per_trade_pct: 0.02
   max_position_size_pct: 0.1
-  atr_stop_mult: 1.3
-  atr_tp_mult: 3.1
+  atr_stop_mult: 1.9
+  atr_tp_mult: 4.5
 regime_preferences:
   risk_on: 0.5
   neutral: 1.0

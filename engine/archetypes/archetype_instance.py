@@ -57,15 +57,11 @@ DERIVED_FEATURES = {
     ),
 }
 
-# Features known to be frozen/broken in V12 feature store
-# NOTE: funding_Z and funding_rate have REAL data since 2020 — do NOT include here
-# NOTE: fusion_smc is always 0.5 (frozen) — use fallback computation
-# NOTE: tf4h_squiggle_confidence is always 0.5 (frozen) — default to 0.0
-FROZEN_FEATURES = {
-    'boms_strength', 'tf1d_boms_strength', 'tf4h_boms_strength',
-    'tf4h_boms_displacement', 'tf1h_frvp_distance_to_poc',
-    'tf4h_fvg_present', 'fusion_smc', 'tf4h_squiggle_confidence',
-}
+# Features previously frozen in V12 feature store — NOW ALL PATCHED with real values.
+# bin/patch_frozen_features.py computed: fusion_smc, tf4h_fvg_present,
+# tf4h_squiggle_confidence, tf1h_frvp_distance_to_poc, tf4h_choch_flag.
+# boms_strength, tf1d_boms_strength, tf4h_boms_displacement already had real values.
+FROZEN_FEATURES: set = set()
 
 
 @dataclass
@@ -397,9 +393,9 @@ class ArchetypeInstance:
         rsi = features.get('rsi_14', 50.0)
         rsi_momentum = abs(rsi - 50.0) / 50.0
 
-        # Squiggle confidence (default 0.0 — frozen at 0.5 in feature store, don't inflate)
+        # Squiggle confidence (real values from feature store)
         squiggle_conf = features.get('tf4h_squiggle_confidence', 0.0)
-        # If frozen value detected, treat as no data
+        # Frozen bypass (no-op when FROZEN_FEATURES is empty)
         if 'tf4h_squiggle_confidence' in FROZEN_FEATURES:
             squiggle_conf = 0.0
 
@@ -412,7 +408,7 @@ class ArchetypeInstance:
         Extract SMC (Smart Money Concepts) domain score.
 
         Uses pre-computed SMC features (BOS, CHOCH, FVG, Order Blocks).
-        fusion_smc is frozen at 0.5 in V12 feature store — always use component fallback.
+        fusion_smc now has real computed values (patched via bin/patch_frozen_features.py).
         """
         # fusion_smc is frozen at 0.5 — skip it, always compute from components
         if 'fusion_smc' not in FROZEN_FEATURES:
@@ -660,7 +656,15 @@ class ArchetypeInstance:
         penalty = 1.0 - (failed_gates / total_gates) if total_gates > 0 else 1.0
         return all_passed, first_failure, penalty
 
-    def detect(self, features: Dict, regime: str, current_bar_idx: Optional[int] = None) -> Optional[Signal]:
+    def detect(
+        self,
+        features: Dict,
+        regime: str,
+        current_bar_idx: Optional[int] = None,
+        prev_row: Optional[pd.Series] = None,
+        lookback_df: Optional[pd.DataFrame] = None,
+        structural_checker=None,
+    ) -> Optional[Signal]:
         """
         Generate entry signal if archetype conditions met.
 
@@ -668,10 +672,28 @@ class ArchetypeInstance:
             features: Feature dict from feature store
             regime: Current regime (for metadata, not filtering)
             current_bar_idx: Current bar index (for cooling period tracking)
+            prev_row: Previous bar's features (for structural checks needing lookback)
+            lookback_df: DataFrame of recent bars (for structural checks needing history)
+            structural_checker: StructuralChecker instance for pattern validation
 
         Returns:
             Signal object or None if no signal
         """
+        # Structural pattern check (BEFORE cooling/gates/fusion)
+        # This makes each archetype a genuine independent strategy
+        if structural_checker is not None:
+            row_series = pd.Series(features) if isinstance(features, dict) else features
+            passed, reason = structural_checker.check_structure(
+                archetype_name=self.name,
+                row=row_series,
+                prev_row=prev_row,
+                lookback_df=lookback_df,
+                bar_index=current_bar_idx or 0,
+            )
+            if not passed:
+                logger.debug(f"[STRUCTURE] {self.name} rejected: {reason}")
+                return None
+
         # Check cooling period (if bar index provided)
         if current_bar_idx is not None and not self.can_signal(current_bar_idx):
             logger.debug(

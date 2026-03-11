@@ -336,6 +336,12 @@ class StandaloneBacktestEngine:
             enable_regime = False
             regime_model_path = None
 
+        # Ensure structural checks run in backtest mode (frozen feature bypass)
+        if 'structural_checks' not in self.config:
+            self.config['structural_checks'] = {}
+        self.config['structural_checks'].setdefault('mode_context', 'backtest')
+        self.config['structural_checks'].setdefault('enabled', True)
+
         self.engine = IsolatedArchetypeEngine(
             archetype_config_dir=archetype_config_dir,
             portfolio_config=portfolio_config,
@@ -497,9 +503,16 @@ class StandaloneBacktestEngine:
             self._check_all_exits(row, ts, bar_idx)
 
             # Step 3: Generate signals from IsolatedArchetypeEngine
+            # Pass prev_row and lookback_df for structural pattern checks (logic.py)
+            prev_row = df.iloc[bar_idx - 1] if bar_idx > 0 else None
+            lookback_start = max(0, bar_idx - 500)
+            lookback_df = df.iloc[lookback_start:bar_idx + 1]
+
             signals = self.engine.get_signals(
                 bar=row,
-                bar_index=bar_idx
+                bar_index=bar_idx,
+                prev_row=prev_row,
+                lookback_df=lookback_df,
             )
 
             if signals:

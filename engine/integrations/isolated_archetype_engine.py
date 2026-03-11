@@ -32,6 +32,7 @@ import pandas as pd
 import numpy as np
 
 from engine.archetypes.archetype_instance import ArchetypeInstance, ArchetypeConfig, _safe_float
+from engine.archetypes.structural_check import StructuralChecker
 from engine.portfolio.archetype_allocator import (
     PortfolioAllocator,
     ArchetypeSignal,
@@ -104,6 +105,10 @@ class IsolatedArchetypeEngine:
         # Global gate_mode override (from main config, overrides per-YAML settings)
         self.global_gate_mode = self.config.get('gate_mode', None)  # None = use per-YAML
 
+        # ATR overrides from config (used by Optuna to test different stop/TP multipliers)
+        # Format: {"wick_trap": {"atr_stop_mult": 3.0, "atr_tp_mult": 5.0}, ...}
+        self.atr_overrides = self.config.get('atr_overrides', {})
+
         # Create ArchetypeInstance for each config
         self.archetypes: Dict[str, ArchetypeInstance] = {}
         for name, config_dict in self.archetype_configs.items():
@@ -111,6 +116,13 @@ class IsolatedArchetypeEngine:
             if self.global_gate_mode is not None:
                 config_dict = dict(config_dict)  # Don't mutate original
                 config_dict['gate_mode'] = self.global_gate_mode
+            # Apply ATR overrides if set (for Optuna optimization)
+            if name in self.atr_overrides:
+                config_dict = dict(config_dict)
+                ps = dict(config_dict.get('position_sizing', {}))
+                for k, v in self.atr_overrides[name].items():
+                    ps[k] = v
+                config_dict['position_sizing'] = ps
             archetype_config = self._convert_to_archetype_config(config_dict)
             self.archetypes[name] = ArchetypeInstance(archetype_config)
             logger.info(
@@ -176,6 +188,31 @@ class IsolatedArchetypeEngine:
         self.kelly_recent_dd = 0.0  # Track recent drawdown for Kelly input
         if self.config.get('use_kelly_sizing', False):
             self._init_kelly_sizer()
+
+        # --- Structural Pattern Checker (logic.py wiring) ---
+        self.structural_checker = None
+        structural_cfg = self.config.get('structural_checks', {})
+        structural_enabled = structural_cfg.get('enabled', True)
+        try:
+            from engine import feature_flags
+            if not feature_flags.ENABLE_STRUCTURAL_CHECKS:
+                structural_enabled = False
+        except (ImportError, AttributeError):
+            pass
+
+        if structural_enabled:
+            mode_context = structural_cfg.get('mode_context', 'backtest')
+            gate_params = structural_cfg.get('gate_params', {})
+            self.structural_checker = StructuralChecker(
+                config={'use_archetypes': True, 'thresholds': {}},
+                mode=mode_context,
+                gate_params=gate_params,
+            )
+            logger.info(
+                f"[STRUCTURAL] Structural pattern checks ENABLED (mode={mode_context})"
+            )
+        else:
+            logger.info("[STRUCTURAL] Structural pattern checks DISABLED")
 
     def _init_ml_fusion_scorer(self):
         """
@@ -586,7 +623,9 @@ class IsolatedArchetypeEngine:
         self,
         bar: pd.Series,
         regime_probs: Optional[Dict[str, float]] = None,
-        bar_index: Optional[int] = None
+        bar_index: Optional[int] = None,
+        prev_row: Optional[pd.Series] = None,
+        lookback_df: Optional[pd.DataFrame] = None,
     ) -> List[ArchetypeSignal]:
         """
         Generate signals from all archetypes for current bar.
@@ -598,6 +637,8 @@ class IsolatedArchetypeEngine:
             bar: Current bar (row from feature store)
             regime_probs: Optional regime probabilities (from RegimeService)
             bar_index: Bar index (for cooling period tracking)
+            prev_row: Previous bar's features (for structural pattern checks)
+            lookback_df: DataFrame of recent bars (for structural checks needing history)
 
         Returns:
             List of ArchetypeSignal objects (one per firing archetype)
@@ -620,8 +661,14 @@ class IsolatedArchetypeEngine:
         signals = []
 
         for name, archetype in self.archetypes.items():
-            # Get signal from archetype (with cooling period check)
-            signal = archetype.detect(features, regime_label, current_bar_idx=bar_index)
+            # Get signal from archetype (with structural check + cooling period)
+            signal = archetype.detect(
+                features, regime_label,
+                current_bar_idx=bar_index,
+                prev_row=prev_row,
+                lookback_df=lookback_df,
+                structural_checker=self.structural_checker,
+            )
 
             if signal is not None:
                 # Convert Signal to ArchetypeSignal

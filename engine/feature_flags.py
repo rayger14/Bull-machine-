@@ -76,6 +76,18 @@ ENABLE_HOB = False            # Higher Order Blocks (demand/supply zones) - PLAC
 ENABLE_MACRO = False          # Macro filters (extreme risk-off penalties)
 ENABLE_FUSION = False         # Meta-fusion layer - PLACEHOLDER
 
+# =============================================================================
+# PHASE 6: Structural Pattern Checks (logic.py wiring)
+# =============================================================================
+
+# Wire logic.py _check_* methods as pre-filter in ArchetypeInstance.detect()
+# Each archetype gets REAL structural pattern recognition (wick anomaly, BOS, BOMS, etc.)
+ENABLE_STRUCTURAL_CHECKS = True
+
+# Skip structural checks for archetypes that depend on frozen features in backtest
+# Frozen: A(spring), B(order_block_retest), C(fvg_continuation), G(liquidity_sweep), M(confluence_breakout)
+STRUCTURAL_CHECK_FROZEN_BYPASS = True
+
 # Observability output paths
 ARTIFACTS_BASE = "artifacts"  # Base path for run artifacts
 PARAM_ECHO_FILE = "params_used.json"  # Per-run param snapshot

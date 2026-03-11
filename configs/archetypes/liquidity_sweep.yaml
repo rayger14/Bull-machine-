@@ -24,10 +24,6 @@ hard_gates:
   op: min
   value: 0.2
   description: Minimum liquidity for sweep
-# NOTE: boms_strength gate removed (frozen at 0, was always bypassed).
-# tf1h_bos_bullish replacement tested but degraded PF 2.02→1.26. Reverted.
-# NOTE: OI/taker gates removed — temporal mismatch (sweep detection is concurrent,
-# but OI confirmation comes AFTER the sweep). Whale conflict penalty handles this.
 gate_mode: soft
 exit_logic:
   max_hold_hours: 168
@@ -47,8 +43,8 @@ exit_logic:
 position_sizing:
   risk_per_trade_pct: 0.02
   max_position_size_pct: 0.1
-  atr_stop_mult: 3.4
-  atr_tp_mult: 5.7
+  atr_stop_mult: 3.0
+  atr_tp_mult: 4.4
 regime_preferences:
   risk_on: 1.2
   neutral: 1.0

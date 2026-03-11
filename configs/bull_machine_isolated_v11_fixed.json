@@ -29,12 +29,21 @@
     "relative_score_percentile": 0.0,
     "dynamic_sizing_enabled": true,
     "fusion_size_tiers": [
-      {"min_fusion": 0.60, "multiplier": 2.0},
-      {"min_fusion": 0.40, "multiplier": 1.5},
-      {"min_fusion": 0.18, "multiplier": 1.0}
+      {
+        "min_fusion": 0.6,
+        "multiplier": 2.0
+      },
+      {
+        "min_fusion": 0.4,
+        "multiplier": 1.5
+      },
+      {
+        "min_fusion": 0.18,
+        "multiplier": 1.0
+      }
     ],
     "notes": [
-      "2026-03-06: PRODUCTION MODE — threshold active, 8 calibrated archetypes, max 3 positions",
+      "2026-03-06: PRODUCTION MODE \u2014 threshold active, 8 calibrated archetypes, max 3 positions",
       "Data collection mode ended: 79 trades, 33% WR, -$4,488. Bypass mode was catastrophic.",
       "Enabled: wick_trap, liquidity_sweep, retest_cluster, trap_within_trend, spring, failed_continuation, order_block_retest, liquidity_vacuum"
     ]
@@ -77,25 +86,44 @@
   ],
   "adaptive_fusion": {
     "enabled": true,
-    "crisis_coefficient": 0.50,
+    "crisis_coefficient": 0.5,
     "base_threshold": 0.18,
     "per_archetype_base_threshold": {
-      "trap_within_trend": 0.08,
-      "liquidity_vacuum": 0.08,
-      "retest_cluster": 0.06,
-      "failed_continuation": 0.08,
-      "liquidity_sweep": 0.08,
-      "wick_trap": 0.10,
-      "spring": 0.08,
-      "order_block_retest": 0.10,
-      "oi_divergence": 0.15
+      "trap_within_trend": 0.11,
+      "liquidity_vacuum": 0.09,
+      "retest_cluster": 0.1,
+      "failed_continuation": 0.05,
+      "liquidity_sweep": 0.09,
+      "wick_trap": 0.18,
+      "spring": 0.05,
+      "order_block_retest": 0.11,
+      "oi_divergence": 0.15,
+      "exhaustion_reversal": 0.14,
+      "funding_divergence": 0.04,
+      "fvg_continuation": 0.08,
+      "long_squeeze": 0.2
     },
     "_threshold_note": "2026-03-06: PRODUCTION MODE. bypass_threshold=false. Only signals above dynamic threshold trade. Data collection (79 trades, 33% WR, -$4.5K) proved bypass is catastrophic.",
     "bypass_threshold": true,
     "cmi_weights": {
-      "risk_temp": {"trend_align": 0.30, "trend_strength": 0.05, "sentiment": 0.15, "dd_score": 0.50, "derivatives_heat": 0.0},
-      "instability": {"chop": 0.40, "adx_weakness": 0.10, "wick_score": 0.25, "vol_instab": 0.25},
-      "crisis": {"base_crisis": 0.45, "vol_shock": 0.10, "sentiment_crisis": 0.45}
+      "risk_temp": {
+        "trend_align": 0.3,
+        "trend_strength": 0.05,
+        "sentiment": 0.15,
+        "dd_score": 0.5,
+        "derivatives_heat": 0.0
+      },
+      "instability": {
+        "chop": 0.4,
+        "adx_weakness": 0.1,
+        "wick_score": 0.25,
+        "vol_instab": 0.25
+      },
+      "crisis": {
+        "base_crisis": 0.45,
+        "vol_shock": 0.1,
+        "sentiment_crisis": 0.45
+      }
     },
     "cmi_weights_optimized": null,
     "temp_range": 0.38,
@@ -196,7 +224,7 @@
     ]
   },
   "leverage": 1.5,
-  "leverage_notes": "2026-02-27: REVERTED to 1.5x (Phase 1). Previous 3.0x was premature — live PF=0.45 with 29.6% WR. Stay at 1.5x until live PF>1.3 for 30+ days.",
+  "leverage_notes": "2026-02-27: REVERTED to 1.5x (Phase 1). Previous 3.0x was premature \u2014 live PF=0.45 with 29.6% WR. Stay at 1.5x until live PF>1.3 for 30+ days.",
   "runner_position_enabled": true,
   "exit_logic": {
     "use_archetype_specific": true,
@@ -222,5 +250,20 @@
     "Each archetype calculates its own fusion score (no shared fusion_total)",
     "Portfolio allocator filters correlated signals AND weak signals",
     "Cooling periods prevent rapid-fire signals from same archetype"
-  ]
+  ],
+  "structural_checks": {
+    "enabled": true,
+    "gate_params": {
+      "bos_atr_B": 2.9912363698443576,
+      "funding_z_S4": -1.8167981029619473,
+      "funding_z_S5": 1.450900520468517,
+      "rsi_lower_F": 24.528581875434863,
+      "rsi_lower_L": 32.968023961114554,
+      "rsi_upper_F": 77.49735985126347,
+      "rsi_upper_L": 65.68071845610109,
+      "vol_z_L": 1.2794004516616884,
+      "wick_pct_G": 0.38184757169438016,
+      "wick_pct_K": 0.4910969436357509
+    }
+  }
 }

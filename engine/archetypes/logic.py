@@ -115,22 +115,28 @@ class ArchetypeLogic:
 
     def _get_liquidity_score(self, row: pd.Series) -> float:
         """
-        PATCH: Compute liquidity_score from available features.
+        Compute liquidity_score from available features.
 
-        Original design expected pre-computed 'liquidity_score', but actual
-        feature store doesn't have this. Compute from available liquidity-related features.
+        Fixed: Removed broken boms_strength dependency (mean=0.013, dominated the
+        score making liquidity gates nearly impossible). Now uses volume, ATR
+        percentile, FVG presence, and OI change.
         """
         # Try direct column first (in case it exists)
         if 'liquidity_score' in row.index:
-            return row.get('liquidity_score', 0.0)
+            val = row.get('liquidity_score', 0.0)
+            if isinstance(val, (int, float)) and val == val:
+                return float(val)
 
-        # Compute composite from available features
-        # Use: BOMS strength, volume zscore, spread indicators
-        boms_strength = row.get('tf1d_boms_strength', 0.0)
-        volume_z = max(0.0, min(row.get('volume_zscore', 0.0) / 2.0, 1.0))  # Normalize
+        # Compute from non-broken components
+        vol_z = max(0.0, min(row.get('volume_zscore', 0.0) / 2.5, 1.0))
+        atr_pct = row.get('atr_percentile', 0.5)
+        if not isinstance(atr_pct, (int, float)) or atr_pct != atr_pct:
+            atr_pct = 0.5
+        fvg = 1.0 if row.get('tf1h_fvg_present', 0) else 0.0
+        oi_raw = row.get('oi_change_4h', 0.0)
+        oi_score = min(abs(oi_raw if isinstance(oi_raw, (int, float)) and oi_raw == oi_raw else 0.0) * 10.0, 1.0)
 
-        # Weighted composite (BOMS is primary liquidity indicator)
-        liquidity = 0.70 * boms_strength + 0.30 * volume_z
+        liquidity = 0.35 * vol_z + 0.25 * float(atr_pct) + 0.20 * fvg + 0.20 * oi_score
         return max(0.0, min(liquidity, 1.0))
 
     def _get_wyckoff_score(self, row: pd.Series) -> float:
@@ -255,26 +261,29 @@ class ArchetypeLogic:
         else:
             return 0
 
-    def _get_wick_anomaly(self, row: pd.Series) -> bool:
+    def _get_wick_anomaly(self, row: pd.Series, wick_threshold: float = 0.35) -> bool:
         """
-        PATCH: Detect wick anomaly from OHLC data.
+        Detect wick anomaly from OHLC data.
 
-        Wick anomaly = wick length > 2× body length
+        Aligned with YAML derived:wick_anomaly definition:
+        wick > threshold of total candle range (default 35%).
         """
-        if 'wick_anomaly' in row.index:
-            return bool(row.get('wick_anomaly', False))
-
         close = row.get('close', 0.0)
         open_price = row.get('open', close)
         high = row.get('high', close)
         low = row.get('low', close)
 
-        body = abs(close - open_price)
-        upper_wick = high - max(close, open_price)
-        lower_wick = min(close, open_price) - low
+        if not all(isinstance(v, (int, float)) for v in [close, open_price, high, low]):
+            return False
 
-        # Anomaly if either wick > 2× body
-        return (upper_wick > 2 * body) or (lower_wick > 2 * body)
+        candle_range = float(high) - float(low)
+        if candle_range <= 0:
+            return False
+
+        lower_wick = (min(float(close), float(open_price)) - float(low)) / candle_range
+        upper_wick = (float(high) - max(float(close), float(open_price))) / candle_range
+
+        return lower_wick > wick_threshold or upper_wick > wick_threshold
 
     def _get_fakeout_score(self, row: pd.Series) -> float:
         """
@@ -532,532 +541,259 @@ class ArchetypeLogic:
     # Archetype Detection Methods
     # =========================================================================
 
-    def _check_A(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_A(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        A - Trap Reversal: PTI-based spring/UTAD detection.
+        A - Spring: PTI-based spring/UTAD trap detection.
 
-        Criteria:
-        - pti_trap_type in {spring, utad, bull_trap, bear_trap}
-        - tf4h_boms_displacement >= 0.80 * ATR
-        - pti_score >= 0.40
-        - fusion_score >= 0.33
-
-        PATCHED: Maps to actual tf1h_pti_trap_type and tf1h_pti_score columns
+        Identity gate: PTI detector fired (trap type detected).
+        Quality filtering (displacement, pti_score, fusion) handled by YAML gates.
         """
-        # PATCH: Use tf1h_pti_trap_type instead of pti_trap_type
         pti_trap = row.get('tf1h_pti_trap_type', '')
-        if pti_trap not in ['spring', 'utad', 'bull_trap', 'bear_trap']:
-            return False
+        if isinstance(pti_trap, str):
+            return pti_trap in ('spring', 'utad', 'bull_trap', 'bear_trap')
+        return False
+
+    def _check_B(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
+        """
+        B - Order Block Retest: Price retesting a recent BOS level.
+
+        Identity gate: Price within bos_atr_B ATR of a BOS level in last 20 bars.
+        Quality filtering (boms_strength, wyckoff, fusion) handled by YAML gates.
+        """
+        gp = gate_params or {}
+        bos_atr_mult = gp.get('bos_atr_B', 1.5)
 
         atr = row.get('atr_20', 1.0)
-        tf4h_disp = row.get('tf4h_boms_displacement', 0.0)
-        if tf4h_disp < self.thresh_A.get('disp_atr', 0.80) * atr:
+        if not isinstance(atr, (int, float)) or atr != atr or atr <= 0:
             return False
-
-        # PATCH: Use tf1h_pti_score instead of pti_score
-        pti_score = row.get('tf1h_pti_score', 0.0)
-        if pti_score < self.thresh_A.get('pti', 0.40):
-            return False
-
-        if fusion_score < self.thresh_A.get('fusion', 0.33):
-            return False
-
-        return True
-
-    def _check_B(self, row, prev_row, df, index, fusion_score) -> bool:
-        """
-        B - Order Block Retest: BOMS strength + Wyckoff + near BOS zone.
-
-        Criteria:
-        - boms_strength >= 0.30
-        - wyckoff_score >= 0.35
-        - Near recent BOS/OB zone (≤ 1× ATR)
-        - fusion_score >= 0.374
-
-        PATCHED: Maps boms_strength and wyckoff_score to actual columns
-        """
-        # PATCH: Use tf1d_boms_strength instead of boms_strength
-        boms_strength = row.get('tf1d_boms_strength', 0.0)
-        if boms_strength < self.thresh_B.get('boms_strength', 0.30):
-            return False
-
-        # PATCH: Use helper method for wyckoff_score
-        wyckoff_score = self._get_wyckoff_score(row)
-        if wyckoff_score < self.thresh_B.get('wyckoff', 0.35):
-            return False
-
-        # Check proximity to recent BOS zone
-        atr = row.get('atr_20', 1.0)
         close = row.get('close', 0.0)
 
-        # Look back up to 20 bars for recent BOS
         lookback = min(20, index)
-        if lookback > 0:
-            recent = df.iloc[index-lookback:index]
-            # Use synthesized BOS flags from helper method
-            bos_bullish = recent.get('tf1h_bos_bullish', pd.Series([False]*lookback))
-            bos_bearish = recent.get('tf1h_bos_bearish', pd.Series([False]*lookback))
-            # Create synthetic bos_flag column: 1 for bullish, -1 for bearish
-            bos_flags = pd.Series([0]*len(recent), index=recent.index)
-            bos_flags[bos_bullish & ~bos_bearish] = 1
-            bos_flags[bos_bearish & ~bos_bullish] = -1
-
-            # Check if any recent BOS zone is within 1× ATR
-            near_bos = False
-            for i in range(len(recent)):
-                if bos_flags.iloc[i] != 0:
-                    bos_price = recent.iloc[i].get('close', 0.0)
-                    if abs(close - bos_price) <= atr:
-                        near_bos = True
-                        break
-
-            if not near_bos:
-                return False
-        else:
+        if lookback <= 0:
             return False
 
-        if fusion_score < self.thresh_B.get('fusion', 0.374):
-            return False
+        recent = df.iloc[index-lookback:index]
+        for i in range(len(recent)):
+            bar = recent.iloc[i]
+            bos_bull = bar.get('tf1h_bos_bullish', False)
+            bos_bear = bar.get('tf1h_bos_bearish', False)
+            if bos_bull or bos_bear:
+                bos_price = bar.get('close', 0.0)
+                if abs(close - bos_price) <= bos_atr_mult * atr:
+                    return True
+        return False
 
-        return True
-
-    def _check_C(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_C(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        C - FVG Continuation: Displacement + momentum + recent BOS.
+        C - FVG Continuation: Fair Value Gap with directional context.
 
-        Criteria:
-        - tf4h_boms_displacement >= 1.0 * ATR
-        - momentum_score >= 0.45
-        - tf4h_fusion_score >= 0.25
-        - Recent BOS same direction (≤ 10 bars)
-        - fusion_score >= 0.42
-
-        PATCHED: Uses helper method for momentum_score
+        Identity gate: FVG present on 1H or 4H AND recent BOS (within 10 bars).
+        CONTINUATION requires both: (1) an FVG to fill, and (2) an established
+        trend direction to continue (evidenced by recent BOS).
+        Quality filtering (displacement, momentum, fusion) handled by YAML gates.
         """
-        atr = row.get('atr_20', 1.0)
-        tf4h_disp = row.get('tf4h_boms_displacement', 0.0)
-        if tf4h_disp < self.thresh_C.get('disp_atr', 1.00) * atr:
+        fvg_1h = row.get('tf1h_fvg_present', 0)
+        fvg_4h = row.get('tf4h_fvg_present', 0)
+        # Handle NaN
+        if isinstance(fvg_1h, float) and fvg_1h != fvg_1h:
+            fvg_1h = 0
+        if isinstance(fvg_4h, float) and fvg_4h != fvg_4h:
+            fvg_4h = 0
+        if not (bool(fvg_1h) or bool(fvg_4h)):
             return False
 
-        # PATCH: Use helper method for momentum_score
-        momentum_score = self._get_momentum_score(row)
-        if momentum_score < self.thresh_C.get('momentum', 0.45):
-            return False
-
-        tf4h_fusion = row.get('tf4h_fusion_score', 0.0)
-        if tf4h_fusion < self.thresh_C.get('tf4h_fusion', 0.25):
-            return False
-
-        # Check for recent BOS in same direction
+        # Check for recent BOS (continuation needs an established trend)
         lookback = min(10, index)
-        if lookback > 0:
-            recent = df.iloc[index-lookback:index]
-            bos_flags = recent.get('tf1h_bos_flag', pd.Series([0]*lookback))
-
-            # Determine current direction from displacement
-            direction = 1 if tf4h_disp > 0 else -1
-
-            # Check if any recent BOS matches direction
-            same_direction_bos = any(
-                (bos_flags.iloc[i] > 0 and direction > 0) or
-                (bos_flags.iloc[i] < 0 and direction < 0)
-                for i in range(len(bos_flags))
-            )
-
-            if not same_direction_bos:
-                return False
-        else:
+        if lookback <= 0:
             return False
 
-        if fusion_score < self.thresh_C.get('fusion', 0.42):
-            return False
+        recent = df.iloc[index-lookback:index]
+        if 'tf1h_bos_bullish' in recent.columns and 'tf1h_bos_bearish' in recent.columns:
+            has_bos = recent['tf1h_bos_bullish'].any() or recent['tf1h_bos_bearish'].any()
+            return bool(has_bos)
 
-        return True
+        return False
 
-    def _check_D(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_D(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        D - Failed Continuation: FVG present + RSI < 50 + falling ADX.
+        D - Failed Continuation: FVG present + momentum dying.
 
-        Criteria:
-        - tf1h_fvg_present == 1
-        - rsi_14 < 50
-        - adx_14 falling (compared to prev bar)
-        - liquidity_score >= 0.35
-        - fusion_score >= 0.42
+        Identity gate: FVG present AND ADX falling vs previous bar.
+        The pattern is a continuation setup that's failing — defined by
+        FVG existing but momentum (ADX) weakening.
+        Quality filtering (RSI, liquidity, fusion) handled by YAML gates.
         """
         fvg_present = row.get('tf1h_fvg_present', 0)
-        if fvg_present != 1:
+        if isinstance(fvg_present, float) and fvg_present != fvg_present:
             return False
+        if not bool(fvg_present):
+            return False
+
+        if prev_row is None:
+            return False
+
+        adx = row.get('adx', row.get('adx_14', 0.0))
+        prev_adx = prev_row.get('adx', prev_row.get('adx_14', 0.0))
+        if not isinstance(adx, (int, float)) or adx != adx:
+            return False
+        if not isinstance(prev_adx, (int, float)) or prev_adx != prev_adx:
+            return False
+        return float(adx) < float(prev_adx)
+
+    def _check_E(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
+        """
+        E - Liquidity Compression: Volatility compressed to low percentile.
+
+        Identity gate: ATR below 25th percentile (compressed market).
+        Quality filtering (range ratio, liquidity band, fusion) handled by YAML gates.
+        """
+        atr_pctile = self._compute_atr_percentile(row, df, index)
+        return atr_pctile < 0.25
+
+    def _check_F(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
+        """
+        F - Exhaustion Reversal: RSI at extreme level.
+
+        Identity gate: RSI > rsi_upper_F or RSI < rsi_lower_F (extreme exhaustion).
+        Quality filtering (ATR percentile, volume, liquidity, fusion) handled by YAML gates.
+        """
+        gp = gate_params or {}
+        rsi_upper = gp.get('rsi_upper_F', 78.0)
+        rsi_lower = gp.get('rsi_lower_F', 22.0)
 
         rsi = row.get('rsi_14', 50.0)
-        if rsi >= self.thresh_D.get('rsi_max', 50.0):
+        if not isinstance(rsi, (int, float)) or rsi != rsi:
             return False
+        return float(rsi) > rsi_upper or float(rsi) < rsi_lower
 
-        # Check if ADX is falling
-        if prev_row is not None:
-            adx = row.get('adx', row.get('adx_14', 0.0))
-            prev_adx = prev_row.get('adx', row.get('adx_14', 0.0))
-            if adx >= prev_adx:
-                return False
-        else:
-            return False
-
-        # PATCH: Use helper method for liquidity_score
-        liquidity = self._get_liquidity_score(row)
-        if liquidity < 0.35:
-            return False
-
-        if fusion_score < self.thresh_D.get('fusion', 0.42):
-            return False
-
-        return True
-
-    def _check_E(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_G(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        E - Liquidity Compression: Low ATR + narrow range + stable book.
+        G - Liquidity Sweep: Lower wick rejection (downward sweep for longs).
 
-        Criteria:
-        - ATR_percentile < 0.25
-        - (high-low)/ATR < 0.5 (narrow range)
-        - liquidity_score in [0.45, 0.60]
-        - fusion_score >= 0.35
-
-        PATCHED: Uses helper methods for liquidity_score and atr_percentile
+        Identity gate: Lower wick > wick_pct_G of candle range.
+        Quality filtering (liquidity, boms, volume) handled by YAML gates.
         """
-        atr_pctile = self._compute_atr_percentile(row, df, index)  # PATCH: Use helper method
-        if atr_pctile >= self.thresh_E.get('atr_pctile', 0.25):
-            return False
+        gp = gate_params or {}
+        wick_threshold = gp.get('wick_pct_G', 0.35)
 
-        atr = row.get('atr_20', 1.0)
-        high = row.get('high', 0.0)
-        low = row.get('low', 0.0)
-        range_ratio = (high - low) / atr if atr > 0 else 999
-        if range_ratio >= 0.5:
-            return False
-
-        # PATCH: Use configurable liquidity band (was hardcoded [0.45, 0.60])
-        from engine.archetypes.param_accessor import get_param
-        liquidity = self._get_liquidity_score(row)
-        liq_min = get_param(self, 'liquidity_compression', 'liquidity_min', 0.25)
-        liq_max = get_param(self, 'liquidity_compression', 'liquidity_max', 0.70)
-        if not (liq_min <= liquidity <= liq_max):
-            return False
-
-        if fusion_score < self.thresh_E.get('fusion', 0.35):
-            return False
-
-        return True
-
-    def _check_F(self, row, prev_row, df, index, fusion_score) -> bool:
-        """
-        F - Expansion Exhaustion: Extreme RSI + high ATR + volume spike.
-
-        Criteria:
-        - RSI > 78 or RSI < 22
-        - ATR_percentile > 0.90
-        - volume_zscore > 1.0
-        - liquidity_score drops or currently < 0.40
-        - fusion_score >= 0.38
-        """
-        rsi = row.get('rsi_14', 50.0)
-        rsi_ext = self.thresh_F.get('rsi_ext', 78.0)
-        if not (rsi > rsi_ext or rsi < (100 - rsi_ext)):
-            return False
-
-        atr_pctile = self._compute_atr_percentile(row, df, index)  # PATCH: Use helper method
-        if atr_pctile <= self.thresh_F.get('atr_pctile', 0.90):
-            return False
-
-        vol_z = row.get('volume_zscore', 0.0)
-        if vol_z <= self.thresh_F.get('vol_z', 1.0):
-            return False
-
-        # PATCH: Use helper method for liquidity_score
-        liquidity = self._get_liquidity_score(row)
-        liquidity_drop = False
-        if prev_row is not None:
-            prev_liq = self._get_liquidity_score(prev_row)
-            if liquidity < prev_liq:
-                liquidity_drop = True
-
-        if not (liquidity_drop or liquidity < 0.40):
-            return False
-
-        if fusion_score < self.thresh_F.get('fusion', 0.38):
-            return False
-
-        return True
-
-    def _check_G(self, row, prev_row, df, index, fusion_score) -> bool:
-        """
-        G - Re-Accumulate Base: BOMS strength + rising RSI from sub-40.
-
-        Criteria:
-        - boms_strength > 0.40
-        - liquidity_score > 0.40
-        - RSI rising from sub-40 to >45
-        - ATR stabilizing (current ATR percentile 0.25-0.75)
-        - fusion_score >= 0.40
-
-        PATCHED: Uses helper method for liquidity_score and maps boms_strength
-        """
-        # PATCH: Use tf1d_boms_strength instead of boms_strength
-        boms_strength = row.get('tf1d_boms_strength', 0.0)
-        if boms_strength <= self.thresh_G.get('boms_strength', 0.40):
-            return False
-
-        # PATCH: Use helper method for liquidity_score
-        liquidity = self._get_liquidity_score(row)
-        if liquidity <= self.thresh_G.get('liq', 0.40):
-            return False
-
-        rsi = row.get('rsi_14', 50.0)
-        if rsi <= 45:
-            return False
-
-        # Check RSI was below 40 recently (within 5 bars)
-        lookback = min(5, index)
-        if lookback > 0:
-            recent = df.iloc[index-lookback:index]
-            rsi_vals = recent.get('rsi_14', pd.Series([50]*lookback))
-            had_sub40 = any(rsi_vals.iloc[i] < 40 for i in range(len(rsi_vals)))
-            if not had_sub40:
-                return False
-        else:
-            return False
-
-        # ATR stabilizing check
-        atr_pctile = self._compute_atr_percentile(row, df, index)  # PATCH: Use helper method
-        if not (0.25 <= atr_pctile <= 0.75):
-            return False
-
-        if fusion_score < self.thresh_G.get('fusion', 0.40):
-            return False
-
-        return True
-
-    def _check_H(self, row, prev_row, df, index, fusion_score) -> bool:
-        """
-        H - Trap Within Trend: HTF trend + liquidity drop + wick against trend.
-
-        **PR#6A WIRED**: Uses get_param() with canonical slug 'trap_within_trend'.
-
-        Configurable parameters:
-        - quality_threshold: HTF fusion minimum (default: 0.55)
-        - liquidity_threshold: Max liquidity score (default: 0.30)
-        - adx_threshold: Minimum ADX (default: 25.0)
-        - fusion_threshold: Minimum fusion score (default: 0.35)
-        - wick_multiplier: Wick size vs body (default: 2.0)
-        """
-        from engine.archetypes.param_accessor import get_param
-
-        # PR#6A: Read from canonical location with migration-safe fallback
-        quality_th = get_param(self, 'trap_within_trend', 'quality_threshold', 0.55)
-        liquidity_th = get_param(self, 'trap_within_trend', 'liquidity_threshold', 0.30)
-        adx_th = get_param(self, 'trap_within_trend', 'adx_threshold', 25.0)
-        fusion_th = get_param(self, 'trap_within_trend', 'fusion_threshold', 0.35)
-        wick_mult = get_param(self, 'trap_within_trend', 'wick_multiplier', 2.0)
-
-        # Check HTF trend (NOW CONFIGURABLE)
-        tf4h_fusion = row.get('tf4h_fusion_score', 0.0)
-        if tf4h_fusion <= quality_th:  # ← WAS HARDCODED 0.5
-            return False
-
-        # Check liquidity (NOW READS FROM CONFIG)
-        liquidity = self._get_liquidity_score(row)
-        if liquidity >= liquidity_th:  # ← WAS self.thresh_H.get(...)
-            return False
-
-        # Check ADX (NOW READS FROM CONFIG)
-        adx = row.get('adx', row.get('adx', row.get('adx_14', 0.0)))  # Fixed: feature store has 'adx' not 'adx_14'
-        if adx <= adx_th:  # ← WAS self.thresh_H.get(...)
-            return False
-
-        # Check for wick against trend
         close = row.get('close', 0.0)
         open_price = row.get('open', close)
         high = row.get('high', close)
         low = row.get('low', close)
 
-        body = abs(close - open_price)
-        upper_wick = high - max(close, open_price)
-        lower_wick = min(close, open_price) - low
-
-        # Check wick significance (NOW CONFIGURABLE MULTIPLIER)
-        wick_against_trend = (lower_wick > wick_mult * body) or (upper_wick > wick_mult * body)
-        if not wick_against_trend:
+        if not all(isinstance(v, (int, float)) for v in [close, open_price, high, low]):
             return False
 
-        # Check BOS flag alignment
-        bos_flag = self._get_bos_flag(row)
-        if bos_flag == 0:
+        candle_range = float(high) - float(low)
+        if candle_range <= 0:
             return False
 
-        # Check fusion score (NOW READS FROM CONFIG)
-        if fusion_score < fusion_th:  # ← WAS self.thresh_H.get(...)
-            return False
+        lower_wick = (min(float(close), float(open_price)) - float(low)) / candle_range
+        return lower_wick > wick_threshold
 
-        return True
-
-    def _check_K(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_H(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        K - Wick Trap (Moneytaur): Wick anomaly + ADX > 25 + BOS context.
+        H - Trap Within Trend: Wick anomaly with prevailing trend context.
 
-        **PR#6A WIRED**: Uses get_param() with canonical slug 'wick_trap_moneytaur'.
-
-        Configurable parameters:
-        - adx_threshold: Minimum ADX (default: 25.0)
-        - liquidity_threshold: Minimum liquidity (default: 0.30)
-        - fusion_threshold: Minimum fusion score (default: 0.36)
+        Identity gate: Wick anomaly AND trend context exists.
+        Differentiates from K (wick_trap) by requiring trend evidence.
+        Quality filtering (ADX, liquidity, BOS, fusion) handled by YAML gates.
         """
-        from engine.archetypes.param_accessor import get_param
-
-        # PR#6A: Read from canonical location with migration-safe fallback
-        adx_th = get_param(self, 'wick_trap_moneytaur', 'adx_threshold', 25.0)
-        liquidity_th = get_param(self, 'wick_trap_moneytaur', 'liquidity_threshold', 0.30)
-        fusion_th = get_param(self, 'wick_trap_moneytaur', 'fusion_threshold', 0.36)
-
-        wick_anomaly = self._get_wick_anomaly(row)  # PATCH: Use helper method
-        if not wick_anomaly:
+        gp = gate_params or {}
+        # H uses K's wick threshold (shared wick anomaly check)
+        wick_threshold = gp.get('wick_pct_K', 0.35)
+        if not self._get_wick_anomaly(row, wick_threshold=wick_threshold):
             return False
 
-        adx = row.get('adx', row.get('adx_14', 0.0))
-        if adx <= adx_th:  # PR#6A: Now reads from config!
-            return False
+        # Check for trend context — what makes this a "trap WITHIN trend"
+        # Either EMA data shows alignment, or HTF fusion shows directional bias
+        price_above_ema = row.get('price_above_ema_50', None)
+        tf4h_fusion = row.get('tf4h_fusion_score', 0.5)
+        if isinstance(tf4h_fusion, float) and tf4h_fusion != tf4h_fusion:
+            tf4h_fusion = 0.5
 
-        # PATCH: Use helper method for liquidity_score
-        liquidity = self._get_liquidity_score(row)
-        if liquidity < liquidity_th:  # PR#6A: Now reads from config!
-            return False
+        has_trend = False
+        # EMA alignment exists (any direction = trend context)
+        if price_above_ema is not None:
+            if isinstance(price_above_ema, (bool, int, float)):
+                if not (isinstance(price_above_ema, float) and price_above_ema != price_above_ema):
+                    has_trend = True  # EMA data exists = trend context present
+        # HTF fusion shows directional bias (not neutral)
+        if not has_trend and (float(tf4h_fusion) > 0.55 or float(tf4h_fusion) < 0.35):
+            has_trend = True
 
-        bos_flag = self._get_bos_flag(row)  # PATCH: Use helper method
-        if bos_flag == 0:
-            return False
+        return has_trend
 
-        if fusion_score < fusion_th:  # PR#6A: Now reads from config!
-            return False
-
-        return True
-
-    def _check_L(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_K(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        L - Volume Exhaustion (Zeroika): Volume spike + extreme RSI + falling momentum.
+        K - Wick Trap: Bar with significant wick rejection.
 
-        Criteria:
-        - volume_zscore > 1.0
-        - RSI > 70 or RSI < 30
-        - momentum_score falling (compared to prev bar)
-        - liquidity_score >= 0.40
-        - fusion_score >= 0.38
-
-        PATCHED: Uses helper methods for momentum_score and liquidity_score
+        Identity gate: Wick > wick_pct_K of candle range (wick anomaly detected).
+        Quality checks handled by YAML gates.
         """
+        gp = gate_params or {}
+        wick_threshold = gp.get('wick_pct_K', 0.35)
+        return self._get_wick_anomaly(row, wick_threshold=wick_threshold)
+
+    def _check_L(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
+        """
+        L - Retest Cluster (Volume Exhaustion): Volume spike at RSI extreme.
+
+        Identity gate: Volume z-score > vol_z_L AND RSI extreme.
+        Quality filtering (momentum falling, liquidity, fusion) handled by YAML gates.
+        """
+        gp = gate_params or {}
+        vol_z_min = gp.get('vol_z_L', 1.0)
+        rsi_upper = gp.get('rsi_upper_L', 70.0)
+        rsi_lower = gp.get('rsi_lower_L', 30.0)
+
         vol_z = row.get('volume_zscore', 0.0)
-        if vol_z <= self.thresh_L.get('vol_z', 1.0):
+        if not isinstance(vol_z, (int, float)) or vol_z != vol_z:
+            return False
+        if float(vol_z) <= vol_z_min:
             return False
 
         rsi = row.get('rsi_14', 50.0)
-        rsi_edge = self.thresh_L.get('rsi_edge', 70.0)
-        if not (rsi > rsi_edge or rsi < (100 - rsi_edge)):
+        if not isinstance(rsi, (int, float)) or rsi != rsi:
             return False
+        return float(rsi) > rsi_upper or float(rsi) < rsi_lower
 
-        # Check if momentum is falling
-        # PATCH: Use helper method for momentum_score
-        if prev_row is not None:
-            momentum = self._get_momentum_score(row)
-            prev_momentum = self._get_momentum_score(prev_row)
-            if momentum >= prev_momentum:
-                return False
-        else:
-            return False
-
-        # PATCH: Use helper method for liquidity_score
-        liquidity = self._get_liquidity_score(row)
-        if liquidity < 0.40:
-            return False
-
-        if fusion_score < self.thresh_L.get('fusion', 0.38):
-            return False
-
-        return True
-
-    def _check_M(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_M(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        M - Ratio Coil Break (Wyckoff Insider): Low ATR + near POC + BOMS strength.
+        M - Confluence Breakout: Compressed volatility near FRVP POC.
 
-        Criteria:
-        - ATR_percentile < 0.30
-        - abs(frvp_poc_distance) < 0.50
-        - tf4h_boms_strength > 0.40
-        - fusion_score >= 0.35
+        Identity gate: ATR < 30th percentile AND price within 5% of POC.
+        The pattern is a coil near the value area center — compressed
+        volatility near a key volume node sets up directional breakout.
+        Quality filtering (boms_strength, fusion) handled by YAML gates.
 
-        PATCHED: Maps to actual tf1h_frvp_distance_to_poc and tf1d_boms_strength columns
+        POC distance threshold tightened from 50% (meaningless — passes everything)
+        to 5% (price within 5% of Point of Control, mean POC distance = 2.7%).
         """
-        atr_pctile = self._compute_atr_percentile(row, df, index)  # PATCH: Use helper method
-        if atr_pctile >= self.thresh_M.get('atr_pctile', 0.30):
+        atr_pctile = self._compute_atr_percentile(row, df, index)
+        if atr_pctile >= 0.30:
             return False
 
-        # PATCH: Use tf1h_frvp_distance_to_poc instead of frvp_poc_distance
-        poc_dist = abs(row.get('tf1h_frvp_distance_to_poc', 999.0))
-        if poc_dist >= self.thresh_M.get('poc_dist', 0.50):
+        poc_dist = row.get('tf1h_frvp_distance_to_poc', 999.0)
+        if not isinstance(poc_dist, (int, float)) or poc_dist != poc_dist:
             return False
+        return abs(float(poc_dist)) < 0.05
 
-        # PATCH: Use tf1d_boms_strength instead of tf4h_boms_strength
-        tf4h_boms = row.get('tf1d_boms_strength', 0.0)
-        if tf4h_boms <= self.thresh_M.get('boms_strength', 0.40):
-            return False
-
-        if fusion_score < self.thresh_M.get('fusion', 0.35):
-            return False
-
-        return True
-
-    def _check_S1(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_S1(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        S1 - Breakdown: Support break with volume confirmation (cascade).
+        S1 - Liquidity Vacuum / Breakdown: Bearish structure break.
 
-        Criteria (short-biased):
-        - Liquidity score < 0.22 (breakdown below support)
-        - Volume spike > 1.2x average (confirmation)
-        - BOS bearish (tf1h_bos_bearish == True or bos_flag < 0)
-        - Fusion score >= 0.38 (regime-tuned in risk_off)
-        - Optional: Chain of 2+ BOS for cascade (Moneytaur)
-
-        Regime tuning (applied in dispatcher):
-        - Risk_off: Fusion floor 0.38, trail_atr 0.85
-        - Crisis: Size 0.3x
+        Identity gate: Bearish BOS detected on 1H timeframe.
+        The pattern is a structural support break — the defining feature is
+        a bearish Break of Structure event.
+        Quality filtering (liquidity, volume, fusion) handled by YAML gates.
         """
-        liquidity = self._get_liquidity_score(row)
-        if liquidity >= self.thresh_S1.get('liq_max', 0.22):
-            return False
-
-        vol_z = row.get('volume_zscore', 0.0)
-        if vol_z <= self.thresh_S1.get('vol_z', 1.2):
-            return False
-
-        # Check for bearish BOS
         bos_bearish = row.get('tf1h_bos_bearish', False)
-        bos_flag = row.get('tf1h_bos_flag', 0)
-        if not (bos_bearish or bos_flag < 0):
+        if isinstance(bos_bearish, float) and bos_bearish != bos_bearish:
             return False
+        return bool(bos_bearish)
 
-        if fusion_score < self.thresh_S1.get('fusion', 0.38):
-            return False
-
-        # Optional cascade check: Look for 2+ recent bearish BOS
-        if self.thresh_S1.get('require_cascade', False):
-            lookback = min(10, index)
-            if lookback >= 2:
-                recent = df.iloc[index-lookback:index]
-                bos_bearish_recent = recent.get('tf1h_bos_bearish', pd.Series([False]*lookback))
-                if bos_bearish_recent.sum() < 2:
-                    return False
-            else:
-                return False
-
-        return True
-
-    def _check_S2(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_S2(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
         S2 - Rejection: Resistance test with divergence (fade highs).
 
@@ -1102,127 +838,78 @@ class ArchetypeLogic:
 
         return True
 
-    def _check_S3(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_S3(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        S3 - Whipsaw: False break + reversal (upthrust rejection).
+        S3 - Whipsaw: False break above resistance (upper wick rejection).
 
-        Criteria (short-biased):
-        - Wick anomaly > 2x body (false break above resistance)
-        - Volume low < 0.5 (no conviction)
-        - MTF trend down (tf4h_bos_bearish or trend indicator)
-        - Fusion score >= 0.35
-
-        Regime tuning:
-        - Risk_off: Wick multiplier 2.5, trail_atr 0.9
-        - Crisis: Veto (too risky)
+        Identity gate: Upper wick > 2x body (false breakout above).
+        The pattern is a failed upside breakout — an upper wick that's
+        significantly larger than the body indicates rejection at highs.
+        Quality filtering (volume, MTF trend, fusion) handled by YAML gates.
         """
-        # Wick anomaly: upper wick much larger than body
         close = row.get('close', 0.0)
         open_price = row.get('open', close)
         high = row.get('high', close)
-        low = row.get('low', close)
 
-        body = abs(close - open_price)
-        upper_wick = high - max(close, open_price)
-        lower_wick = min(close, open_price) - low
-
-        if body == 0:
+        if not all(isinstance(v, (int, float)) for v in [close, open_price, high]):
             return False
 
-        wick_ratio = upper_wick / body
-        if wick_ratio < self.thresh_S3.get('wick_ratio', 2.0):
+        body = abs(float(close) - float(open_price))
+        if body <= 0:
             return False
 
-        vol_z = row.get('volume_zscore', 0.0)
-        if vol_z >= self.thresh_S3.get('vol_max', 0.5):
-            return False
+        upper_wick = float(high) - max(float(close), float(open_price))
+        return upper_wick > 2.0 * body
 
-        # Check MTF downtrend
-        tf4h_bos_bearish = row.get('tf4h_bos_bearish', False)
-        if not tf4h_bos_bearish:
-            # Fallback: Check if tf4h fusion is negative
-            tf4h_fusion = row.get('tf4h_fusion_score', 0.5)
-            if tf4h_fusion >= 0.5:  # Neutral or bullish
-                return False
-
-        if fusion_score < self.thresh_S3.get('fusion', 0.35):
-            return False
-
-        return True
-
-    def _check_S4(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_S4(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        S4 - Distribution: High volume + no follow (exhaustion climax).
+        S4 - Funding Divergence: Negative funding rate (shorts overcrowded).
 
-        Criteria (short-biased):
-        - Volume climax > 1.5x (exhaustion spike)
-        - Momentum fading (current < prev shift)
-        - Liquidity < 0.3 (distribution phase)
-        - Fusion score >= 0.37
-
-        Regime tuning:
-        - Risk_off: Volume threshold 1.6, max_bars 36
-        - Neutral: Require VIX high
+        Identity gate: Funding rate significantly negative.
+        Quality filtering (resilience, liquidity, fusion) handled by YAML gates.
         """
-        vol_z = row.get('volume_zscore', 0.0)
-        if vol_z <= self.thresh_S4.get('vol_climax', 1.5):
-            return False
+        gp = gate_params or {}
+        funding_z_thresh = gp.get('funding_z_S4', -1.0)
 
-        # Check momentum fade
-        if prev_row is not None:
-            momentum = self._get_momentum_score(row)
-            prev_momentum = self._get_momentum_score(prev_row)
-            if momentum >= prev_momentum:  # Not fading
-                return False
-        else:
-            return False
+        # Check binance_funding_rate (in feature store for 2022+)
+        funding_rate = row.get('binance_funding_rate', None)
+        if funding_rate is not None and isinstance(funding_rate, (int, float)) and funding_rate == funding_rate:
+            if float(funding_rate) < -0.0001:  # Negative funding = shorts pay longs
+                return True
 
-        liquidity = self._get_liquidity_score(row)
-        if liquidity >= self.thresh_S4.get('liq_max', 0.3):
-            return False
+        # Fallback: funding_Z score
+        funding_z = row.get('funding_Z', None)
+        if funding_z is not None and isinstance(funding_z, (int, float)) and funding_z == funding_z:
+            if float(funding_z) < funding_z_thresh:
+                return True
 
-        if fusion_score < self.thresh_S4.get('fusion', 0.37):
-            return False
+        return False
 
-        return True
-
-    def _check_S5(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_S5(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        S5 - Short Squeeze Setup: Funding positive + OI spike (inverse squeeze).
+        S5 - Long Squeeze: Extreme positive funding (overcrowded longs).
 
-        NOTE: This is SHORT-biased, so we look for NEGATIVE funding (longs pay shorts)
-        indicating bearish pressure.
-
-        Criteria (short-biased):
-        - Funding rate < -0.05% (longs paying shorts = bearish fuel)
-        - OI change > +10% (position building)
-        - Volume > 1.0x (activity)
-        - Fusion score >= 0.35
-
-        Regime tuning:
-        - Crisis: Size 0.4x, trail_atr 0.8
-        - Risk_off: Require DXY up
+        Identity gate: Funding rate significantly positive.
+        Quality filtering (OI, RSI, volume, fusion) handled by YAML gates.
         """
-        # Check for funding rate (if available)
-        funding = row.get('funding_rate', 0.0)
-        if funding >= self.thresh_S5.get('funding_max', -0.0005):  # Negative funding
-            return False
+        gp = gate_params or {}
+        funding_z_thresh = gp.get('funding_z_S5', 1.0)
 
-        # Check OI spike
-        oi_change = row.get('oi_change_pct', 0.0)
-        if oi_change <= self.thresh_S5.get('oi_min', 0.10):  # 10% increase
-            return False
+        # Check binance_funding_rate (in feature store for 2022+)
+        funding_rate = row.get('binance_funding_rate', None)
+        if funding_rate is not None and isinstance(funding_rate, (int, float)) and funding_rate == funding_rate:
+            if float(funding_rate) > 0.0001:  # Positive funding = longs pay shorts
+                return True
 
-        vol_z = row.get('volume_zscore', 0.0)
-        if vol_z <= self.thresh_S5.get('vol_min', 1.0):
-            return False
+        # Fallback: funding_Z score
+        funding_z = row.get('funding_Z', None)
+        if funding_z is not None and isinstance(funding_z, (int, float)) and funding_z == funding_z:
+            if float(funding_z) > funding_z_thresh:
+                return True
 
-        if fusion_score < self.thresh_S5.get('fusion', 0.35):
-            return False
+        return False
 
-        return True
-
-    def _check_S6(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_S6(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
         S6 - Alt Rotation Down: Altcoin underperformance (TOTAL3 < BTC).
 
@@ -1256,7 +943,7 @@ class ArchetypeLogic:
 
         return True
 
-    def _check_S7(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_S7(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
         S7 - Curve Inversion Breakdown: Yield curve inversion + support break.
 
@@ -1290,34 +977,22 @@ class ArchetypeLogic:
 
         return True
 
-    def _check_S8(self, row, prev_row, df, index, fusion_score) -> bool:
+    def _check_S8(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        S8 - Volume Fade in Chop: Low volume drift + failure (chop filter).
+        S8 - Volume Fade Chop: Low volume in trendless market.
 
-        Criteria (short-biased):
-        - Volume < 0.5x (low conviction)
-        - RSI extreme > 70 or < 30 (overbought/oversold)
-        - ADX < 25 (no trend)
-        - Fusion score >= 0.34
-
-        Regime tuning:
-        - Neutral: Veto if regime neutral
-        - Risk_off: Require volume fade
+        Identity gate: Volume z-score < 0.5 AND ADX < 25 (chop conditions).
+        The pattern is defined by absence of trend (low ADX) with low conviction
+        (low volume) — a choppy, range-bound environment.
+        Quality filtering (RSI, fusion) handled by YAML gates.
         """
         vol_z = row.get('volume_zscore', 0.0)
-        if vol_z >= self.thresh_S8.get('vol_max', 0.5):
+        if not isinstance(vol_z, (int, float)) or vol_z != vol_z:
             return False
-
-        rsi = row.get('rsi_14', 50.0)
-        rsi_threshold = self.thresh_S8.get('rsi_extreme', 70.0)
-        if not (rsi > rsi_threshold or rsi < (100 - rsi_threshold)):
+        if float(vol_z) >= 0.5:
             return False
 
         adx = row.get('adx', row.get('adx_14', 0.0))
-        if adx >= self.thresh_S8.get('adx_max', 25.0):
+        if not isinstance(adx, (int, float)) or adx != adx:
             return False
-
-        if fusion_score < self.thresh_S8.get('fusion', 0.34):
-            return False
-
-        return True
+        return float(adx) < 25.0

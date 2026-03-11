@@ -180,6 +180,12 @@ class V11ShadowRunner:
         self.slippage_bps = slippage_bps
 
         # Initialize IsolatedArchetypeEngine (same as backtester)
+        # Set structural checks to 'live' mode (no frozen feature bypass — real data available)
+        if 'structural_checks' not in self.config:
+            self.config['structural_checks'] = {}
+        self.config['structural_checks']['mode_context'] = 'live'
+        self.config['structural_checks'].setdefault('enabled', True)
+
         regime_cfg = self.config.get('regime_classifier', {})
         self.engine = IsolatedArchetypeEngine(
             archetype_config_dir=str(PROJECT_ROOT / self.config.get('archetype_config_dir', 'configs/archetypes/')),
@@ -188,6 +194,10 @@ class V11ShadowRunner:
             regime_model_path=regime_cfg.get('model_path', None),
             config=self.config,
         )
+
+        # Bar buffer for structural check lookback (prev_row + lookback_df)
+        from collections import deque
+        self.bar_buffer: deque = deque(maxlen=500)
 
         # Adaptive fusion config (replaces fusion_thresholds_by_regime)
         self.adaptive_fusion = self.config.get('adaptive_fusion', {})
@@ -744,6 +754,9 @@ class V11ShadowRunner:
         # Reset per-bar signal tracking for dashboard
         self.last_bar_signals = []
 
+        # Maintain bar buffer for structural check lookback
+        self.bar_buffer.append(features.copy())
+
         # Step 1: Update bars_held for open positions
         for pos in self.positions.values():
             pos.bars_held += 1
@@ -757,10 +770,15 @@ class V11ShadowRunner:
         # Step 2.5: Compute adaptive threshold every bar (for heartbeat + filtering)
         self._compute_adaptive_threshold(features)
 
-        # Step 3: Generate signals
+        # Step 3: Generate signals with structural check lookback data
+        prev_row = self.bar_buffer[-2] if len(self.bar_buffer) >= 2 else None
+        lookback_df = pd.DataFrame(list(self.bar_buffer)) if len(self.bar_buffer) > 1 else None
+
         signals = self.engine.get_signals(
             bar=features,
             bar_index=self.bar_index,
+            prev_row=prev_row,
+            lookback_df=lookback_df,
         )
 
         if not signals:

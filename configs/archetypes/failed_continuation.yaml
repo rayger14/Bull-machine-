@@ -44,8 +44,8 @@ exit_logic:
 position_sizing:
   risk_per_trade_pct: 0.02
   max_position_size_pct: 0.1
-  atr_stop_mult: 1.8
-  atr_tp_mult: 6.0
+  atr_stop_mult: 3.0
+  atr_tp_mult: 5.8
 regime_preferences:
   risk_on: 1.2
   neutral: 1.0
