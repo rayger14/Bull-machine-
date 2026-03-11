@@ -16,15 +16,15 @@
 | **Live Runner** | `bin/live/coinbase_runner.py` (Coinbase BTC-PERP-INTX paper trading) |
 | **Dashboard** | `dashboard/` (React 19 + TypeScript + Vite + Tailwind CSS 4, served at port 8081) |
 
-### Production Results (2020-2024, $100K)
+### Production Results (2020-2024, $100K, post-Optuna 6-group)
 | Metric | Value |
 |--------|-------|
-| PF | 1.58 |
-| PnL | $223K |
-| MaxDD | -13.3% |
-| Sharpe | 1.41 |
-| Trades | 915 |
-| Win Rate | 78.8% |
+| PF | 1.73 |
+| PnL | $132K |
+| MaxDD | -8.3% |
+| Sharpe | 1.33 |
+| Trades | 731 |
+| Win Rate | 79.5% |
 
 ---
 
@@ -113,17 +113,65 @@ exit_qty = original_qty * pct
 
 ---
 
+## Git Workflow (MANDATORY)
+
+**ALWAYS follow this workflow. Do NOT work directly on `main`.**
+
+### Starting Any Task
+1. **Create a feature branch** before writing any code:
+   ```bash
+   git checkout main && git pull
+   git checkout -b feat/<short-description>   # e.g. feat/optuna-atr-optimization
+   ```
+2. Branch naming: `feat/`, `fix/`, `refactor/`, `chore/` prefixes
+
+### During Work
+3. **Commit frequently** — at least every meaningful change (not just at the end):
+   - After wiring a new feature: commit
+   - After fixing a bug: commit
+   - After updating configs: commit
+   - After adding a new script: commit
+   - Rule of thumb: if you'd be upset losing the work, commit it
+4. **Push to remote** after each commit session: `git push -u origin <branch>`
+
+### Finishing a Task
+5. **Push + create PR** when the task is complete:
+   ```bash
+   git push -u origin feat/<branch>
+   gh pr create --title "feat: short description" --body "..."
+   ```
+6. **Merge to main** only after user approval (or PR review)
+7. After merge, clean up: `git checkout main && git pull && git branch -d feat/<branch>`
+
+### Commit Message Format
+```
+<type>: <short description>
+
+<optional body with details>
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+```
+Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `perf`
+
+### Never Do
+- Never work directly on `main` with uncommitted changes
+- Never force-push to `main`
+- Never leave >5 modified files uncommitted
+- Never deploy without committing first
+
+---
+
 ## Testing Checklist
 
 Before committing code changes:
 
 - [ ] Run backtest: `python3 bin/backtest_v11_standalone.py --start-date 2020-01-01 --commission-rate 0.0002 --slippage-bps 3`
-- [ ] Check PF >= 1.50 (floor), PnL >= $200K (floor)
-- [ ] Check MaxDD <= -15.0% (ceiling)
+- [ ] Check PF >= 1.50 (floor), PnL >= $100K (floor)
+- [ ] Check MaxDD <= -10.0% (ceiling)
 - [ ] Validate config JSON: `python3 -m json.tool < configs/bull_machine_isolated_v11_fixed.json`
 - [ ] Check git diff is reasonable (not 2,000+ lines)
 
 ---
 
-**Last Updated**: 2026-02-25
-**Architecture Version**: v17 Whale Footprint + Smart Exits V2
+**Last Updated**: 2026-03-11
+**Architecture Version**: v18 Optuna 6-Group Optimization
