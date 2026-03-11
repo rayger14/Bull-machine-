@@ -755,11 +755,27 @@ class LiveFeatureComputer:
         # G. SMC features (REAL engine: BOS, CHOCH, FVG, Order Blocks + 4H)
         features.update(self._smc_features())
 
-        # H. BOMS / Liquidity (displacement, volume climax, FVG, liquidity score)
+        # H. BOMS / Liquidity (displacement, volume climax, FVG)
         features.update(self._boms_liquidity_features())
 
         # I. 4H Structure (REAL engine: Squiggle 1-2-3 + BOMS 4H/1D)
         features.update(self._structure_4h_features())
+
+        # H2. liquidity_score — MUST match archetype_instance._get_liquidity_score() fallback
+        # BUG FIX: Old formula used BOMS+FVG+disp (all ~0) → liquidity=0 always.
+        # Feature store has mean=0.485 from vol_z/atr_pct formula. This mismatch
+        # caused fusion scores to be ~0.19 points too low in live.
+        # Computed here (not in _boms_liquidity_features) because we need
+        # volume_zscore from step C and atr_percentile from step B.
+        _vol_z = features.get('volume_zscore', 0.0)
+        _vol_score = min(max(_vol_z, 0.0) / 2.5, 1.0)
+        _atr_pct = features.get('atr_percentile', 0.5)
+        _fvg = float(features.get('tf1h_fvg_present', 0.0))
+        _oi_change = features.get('oi_change_4h', 0.0)
+        if _oi_change is None or (isinstance(_oi_change, float) and _oi_change != _oi_change):
+            _oi_change = 0.0
+        _oi_score = min(abs(_oi_change) * 10.0, 1.0)
+        features['liquidity_score'] = 0.35 * _vol_score + 0.25 * _atr_pct + 0.20 * _fvg + 0.20 * _oi_score
 
         # J. Fibonacci (swing detection + retracement + time zones)
         features.update(self._fib_features())
@@ -1283,12 +1299,9 @@ class LiveFeatureComputer:
         out['tf1h_fvg_present'] = self._detect_fvg_1h()
         out['tf4h_fvg_present'] = self._detect_fvg_4h()
 
-        # liquidity_score (combined proxy for archetype_instance._get_liquidity_score)
-        boms_s = out['tf1d_boms_strength']
-        fvg_val = 1.0 if out['tf4h_fvg_present'] else 0.0
-        atr_14 = self._calc_atr(high, low, close, 14)
-        disp_norm = min(out['tf4h_boms_displacement'] / (2.0 * atr_14), 1.0) if atr_14 > 0 else 0.0
-        out['liquidity_score'] = (boms_s + fvg_val + disp_norm) / 3.0
+        # NOTE: liquidity_score is computed in compute_features() after all sub-methods
+        # return, so it has access to volume_zscore, atr_percentile, etc. from earlier steps.
+        # See BUG FIX comment there.
 
         return out
 
@@ -1959,12 +1972,23 @@ class LiveFeatureComputer:
                 logger.warning(f"BOMS 4H failed: {e}")
 
         # BOMS detection (1D)
+        # BUG FIX: Normalize displacement by ATR (like _boms_liquidity_features does).
+        # Old code set tf1d_boms_strength = raw displacement ($500+), overwrote the
+        # normalized 0-1 value from _boms_liquidity_features(). Now both paths agree.
         if BOMS_AVAILABLE:
             try:
                 buf_1d = self._resample_to_tf(self._buf, '1D')
                 if len(buf_1d) >= 15:
                     boms_1d = detect_boms(buf_1d, timeframe='1D')
-                    out['tf1d_boms_strength'] = float(boms_1d.displacement)
+                    # Normalize: displacement / (2 * ATR_14), capped at 1.0
+                    atr_1d = self._calc_atr(
+                        buf_1d['high'].values.astype(float),
+                        buf_1d['low'].values.astype(float),
+                        buf_1d['close'].values.astype(float), 14)
+                    if atr_1d > 0 and boms_1d.displacement > 0:
+                        out['tf1d_boms_strength'] = min(float(boms_1d.displacement) / (2.0 * atr_1d), 1.0)
+                    else:
+                        out['tf1d_boms_strength'] = 0.0
                     dir_map = {'bullish': 1, 'bearish': -1, 'none': 0}
                     out['tf1d_boms_direction'] = dir_map.get(boms_1d.direction, 0)
             except Exception as e:
