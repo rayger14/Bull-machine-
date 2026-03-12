@@ -55,6 +55,12 @@ DERIVED_FEATURES = {
         (_safe_float(f.get('high', 0)) - max(_safe_float(f.get('open', 0)), _safe_float(f.get('close', 0)))) / max(abs(_safe_float(f.get('close', 0)) - _safe_float(f.get('open', 0))), 0.01),
         10.0
     ),
+    # Phase 2: Strategy notebook derived features
+    'wyckoff_in_accumulation': lambda f: str(f.get('wyckoff_context', '')).lower() == 'accumulation',
+    'wyckoff_in_distribution': lambda f: str(f.get('wyckoff_context', '')).lower() == 'distribution',
+    'wyckoff_phase_c': lambda f: str(f.get('wyckoff_phase_abc', '')).upper() == 'C',
+    'lower_wick_dominant': lambda f: _safe_float(f.get('wick_lower_ratio', 0)) > 1.5,
+    'bb_tight_compression': lambda f: _safe_float(f.get('bb_width', 1.0)) < 0.02,
 }
 
 # Features previously frozen in V12 feature store — NOW ALL PATCHED with real values.

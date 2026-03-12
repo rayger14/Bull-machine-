@@ -24,6 +24,11 @@ hard_gates:
   op: min
   value: 0.2
   description: Minimum liquidity for sweep
+- feature: wick_lower_ratio
+  op: min
+  value: 1.0
+  nan_policy: fail
+  description: Sweep direction validation (lower wick > body for long sweep)
 gate_mode: soft
 exit_logic:
   max_hold_hours: 168

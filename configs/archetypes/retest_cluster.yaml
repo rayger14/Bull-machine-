@@ -28,6 +28,11 @@ hard_gates:
 - feature: derived:rsi_extreme_65
   op: bool_true
   description: RSI at extreme
+- feature: temporal_confluence_score
+  op: min
+  value: 0.3
+  nan_policy: skip
+  description: Temporal confluence validates cluster quality
 gate_mode: soft
 exit_logic:
   max_hold_hours: 168

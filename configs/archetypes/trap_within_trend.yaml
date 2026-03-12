@@ -26,6 +26,16 @@ hard_gates:
   op: min
   value: 0.0
   description: At least median volume (real traps have volume)
+- feature: wick_lower_ratio
+  op: min
+  value: 0.3
+  nan_policy: fail
+  description: Wick direction against trend (lower wick dominant for long trap)
+- feature: bars_since_pivot
+  op: max
+  value: 55
+  nan_policy: skip
+  description: Setup recency - stale pivots lose edge
 gate_mode: hard
 exit_logic:
   max_hold_hours: 168

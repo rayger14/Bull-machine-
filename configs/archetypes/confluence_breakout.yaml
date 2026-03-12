@@ -26,6 +26,16 @@ hard_gates:
   value: 0.4
   nan_policy: skip
   description: Low volatility coil
+- feature: tf4h_fusion_score
+  op: min
+  value: 0.2
+  nan_policy: skip
+  description: MTF confluence confirmation
+- feature: volume_zscore
+  op: min
+  value: 0.5
+  nan_policy: fail
+  description: Breakouts need volume confirmation
 gate_mode: soft
 exit_logic:
   max_hold_hours: 96

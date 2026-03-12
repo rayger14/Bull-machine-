@@ -642,13 +642,42 @@ class ArchetypeLogic:
 
     def _check_E(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        E - Liquidity Compression: Volatility compressed to low percentile.
+        E - Volume Exhaustion at Compression: Volume climax at RSI extreme after compression.
 
-        Identity gate: ATR below 25th percentile (compressed market).
-        Quality filtering (range ratio, liquidity band, fusion) handled by YAML gates.
+        Identity gate: (Volume climax OR high vol_z) AND RSI extreme AND low ATR.
+        Old check (ATR < 25th pctile) had no edge — any quiet bar qualified.
+        New check requires climax volume at RSI extremes during compression =
+        institutional exhaustion event, which is a genuine reversal signal.
         """
+        # Still require compression context
         atr_pctile = self._compute_atr_percentile(row, df, index)
-        return atr_pctile < 0.25
+        if atr_pctile >= 0.35:
+            return False
+
+        # Volume exhaustion evidence
+        climax_flag = row.get('climax_volume_flag', 0)
+        vol_climax_3b = row.get('volume_climax_last_3b', 0)
+        vol_z = row.get('volume_zscore', 0.0)
+        # NaN guards
+        if isinstance(climax_flag, float) and climax_flag != climax_flag:
+            climax_flag = 0
+        if isinstance(vol_climax_3b, float) and vol_climax_3b != vol_climax_3b:
+            vol_climax_3b = 0
+        if isinstance(vol_z, float) and vol_z != vol_z:
+            vol_z = 0.0
+
+        has_volume_event = bool(climax_flag) or bool(vol_climax_3b) or float(vol_z) > 2.0
+        if not has_volume_event:
+            return False
+
+        # RSI extreme confirms exhaustion
+        rsi = row.get('rsi_14', 50.0)
+        if not isinstance(rsi, (int, float)) or rsi != rsi:
+            return False
+        if not (float(rsi) > 65 or float(rsi) < 35):
+            return False
+
+        return True
 
     def _check_F(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
@@ -695,8 +724,9 @@ class ArchetypeLogic:
         """
         H - Trap Within Trend: Wick anomaly with prevailing trend context.
 
-        Identity gate: Wick anomaly AND trend context exists.
+        Identity gate: Wick anomaly AND trend context exists AND ADX >= 10.
         Differentiates from K (wick_trap) by requiring trend evidence.
+        ADX < 10 = no trend at all (notebook: ADX check critical for trap-in-trend).
         Quality filtering (ADX, liquidity, BOS, fusion) handled by YAML gates.
         """
         gp = gate_params or {}
@@ -704,6 +734,12 @@ class ArchetypeLogic:
         wick_threshold = gp.get('wick_pct_K', 0.35)
         if not self._get_wick_anomaly(row, wick_threshold=wick_threshold):
             return False
+
+        # ADX minimum — "trap within TREND" requires a trend to exist
+        adx = row.get('adx', row.get('adx_14', 0.0))
+        if isinstance(adx, (int, float)) and adx == adx:
+            if float(adx) < 10.0:
+                return False
 
         # Check for trend context — what makes this a "trap WITHIN trend"
         # Either EMA data shows alignment, or HTF fusion shows directional bias

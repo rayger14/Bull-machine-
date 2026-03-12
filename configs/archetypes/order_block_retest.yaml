@@ -28,6 +28,11 @@ hard_gates:
   value: 0.05
   nan_policy: skip
   description: Wyckoff context
+- feature: fib_time_confluence
+  op: min
+  value: 0.1
+  nan_policy: skip
+  description: Fib time ratio confluence (lowered for better soft gate balance)
 gate_mode: soft
 exit_logic:
   max_hold_hours: 96

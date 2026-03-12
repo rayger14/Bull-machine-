@@ -25,6 +25,16 @@ hard_gates:
   op: max
   value: 55
   description: RSI must be weak
+- feature: volume_zscore
+  op: max
+  value: 2.0
+  nan_policy: fail
+  description: Volume fading (failed continuation needs declining volume)
+- feature: effort_result_ratio
+  op: max
+  value: 1.5
+  nan_policy: skip
+  description: Low effort-to-result confirms failing move
 gate_mode: soft
 exit_logic:
   max_hold_hours: 96

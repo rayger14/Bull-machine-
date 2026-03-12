@@ -26,6 +26,10 @@ hard_gates:
   op: max
   value: 0.5
   description: Low volume (no conviction)
+- feature: wyckoff_sow
+  op: bool_true
+  nan_policy: skip
+  description: Sign of Weakness confirms distribution context
 gate_mode: soft
 exit_logic:
   max_hold_hours: 48
