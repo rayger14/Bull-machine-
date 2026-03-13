@@ -109,6 +109,11 @@ class IsolatedArchetypeEngine:
         # Format: {"wick_trap": {"atr_stop_mult": 3.0, "atr_tp_mult": 5.0}, ...}
         self.atr_overrides = self.config.get('atr_overrides', {})
 
+        # Gate overrides from config (used by Optuna to test different gate threshold values)
+        # Format: {"wick_trap": {"volume_zscore": 0.5}, "retest_cluster": {"temporal_confluence_score": 0.2}, ...}
+        # Overrides the 'value' field of matching gates by feature name
+        self.gate_overrides = self.config.get('gate_overrides', {})
+
         # Create ArchetypeInstance for each config
         self.archetypes: Dict[str, ArchetypeInstance] = {}
         for name, config_dict in self.archetype_configs.items():
@@ -123,6 +128,16 @@ class IsolatedArchetypeEngine:
                 for k, v in self.atr_overrides[name].items():
                     ps[k] = v
                 config_dict['position_sizing'] = ps
+            # Apply gate overrides if set (for Optuna optimization of YAML gate thresholds)
+            if name in self.gate_overrides:
+                config_dict = dict(config_dict)
+                gates = [dict(g) for g in config_dict.get('hard_gates', [])]
+                overrides = self.gate_overrides[name]
+                for i, gate in enumerate(gates):
+                    feat = gate.get('feature', '')
+                    if feat in overrides:
+                        gates[i]['value'] = overrides[feat]
+                config_dict['hard_gates'] = gates
             archetype_config = self._convert_to_archetype_config(config_dict)
             self.archetypes[name] = ArchetypeInstance(archetype_config)
             logger.info(

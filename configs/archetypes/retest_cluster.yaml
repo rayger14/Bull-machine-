@@ -30,7 +30,7 @@ hard_gates:
   description: RSI at extreme
 - feature: temporal_confluence_score
   op: min
-  value: 0.3
+  value: 0.45
   nan_policy: skip
   description: Temporal confluence validates cluster quality
 gate_mode: soft
