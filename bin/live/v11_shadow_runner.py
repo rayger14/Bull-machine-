@@ -237,8 +237,6 @@ class V11ShadowRunner:
             'instability': cmi_w.get('instability', {'chop': 0.40, 'adx_weakness': 0.10, 'wick_score': 0.25, 'vol_instab': 0.25}),
             'crisis': cmi_w.get('crisis', {'base_crisis': 0.45, 'vol_shock': 0.10, 'sentiment_crisis': 0.45}),
         }
-        raw_allowed = self.config.get('archetype_allowed_regimes', {})
-        self.archetype_allowed_regimes = {k: v for k, v in raw_allowed.items() if k != 'notes'}
 
         # Position sizing
         sizing_cfg = self.config.get('position_sizing', {})
@@ -286,7 +284,6 @@ class V11ShadowRunner:
         logger.info(f"  Cash: ${initial_cash:,.0f}")
         logger.info(f"  Commission: {commission_rate*10000:.1f} bps | Slippage: {slippage_bps:.1f} bps")
         logger.info(f"  Disabled: {len(self.disabled_archetypes)} archetypes")
-        logger.info(f"  Regime restrictions: {self.archetype_allowed_regimes}")
 
     def _init_signal_log(self):
         """Initialize signal log CSV with headers."""
@@ -823,21 +820,6 @@ class V11ShadowRunner:
         if not signals:
             self._update_equity(features['close'])
             return acted_signals
-
-        # Step 3a.5: Per-archetype regime restrictions
-        if self.archetype_allowed_regimes and signals:
-            surviving = []
-            for s in signals:
-                allowed = self.archetype_allowed_regimes.get(s.archetype_id)
-                if allowed and current_regime not in allowed:
-                    idx = sig_index[id(s)]
-                    self.last_bar_signals[idx]['status'] = 'rejected'
-                    self.last_bar_signals[idx]['rejection_reason'] = f'regime {current_regime} not in {allowed}'
-                    self.last_bar_signals[idx]['rejection_stage'] = 'regime_filter'
-                    self.signals_rejected += 1
-                else:
-                    surviving.append(s)
-            signals = surviving
 
         if not signals:
             self._update_equity(features['close'])

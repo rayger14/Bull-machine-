@@ -156,12 +156,6 @@
     "ut_breakout_margin": 0.015,
     "ut_volume_z_min": 0.5
   },
-  "archetype_allowed_regimes": {
-    "notes": [
-      "UPDATED 2026-02-10: No hard regime blocks \u2014 all archetypes fire in all regimes",
-      "Regime modulation handled by adaptive_fusion (continuous probabilistic scores)"
-    ]
-  },
   "max_positions_by_regime": {
     "notes": [
       "REPLACED 2026-02-11 by stress-scaled continuous limit in adaptive_fusion",
