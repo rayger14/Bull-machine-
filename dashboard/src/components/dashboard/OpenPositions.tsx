@@ -231,7 +231,25 @@ export default function OpenPositions({ positions }: OpenPositionsProps) {
                         color="text-amber-400"
                       />
 
-                      <DetailCell label="Position Size" value={fmtUsd(p.position_size_usd, 0)} />
+                      <DetailCell
+                        label="Notional Value"
+                        value={fmtUsd(p.position_size_usd, 0)}
+                        color="text-slate-300"
+                      />
+                      <DetailCell
+                        label="Margin (Cash Used)"
+                        value={p.position_size_usd != null && p.leverage != null && p.leverage > 0
+                          ? fmtUsd(p.position_size_usd / p.leverage, 0)
+                          : fmtUsd(p.margin_used, 0)}
+                        color="text-amber-400"
+                      />
+                      <DetailCell
+                        label="Risk (2% Portfolio)"
+                        value={p.position_size_usd != null && p.sl_distance_pct != null
+                          ? fmtUsd(p.position_size_usd * (p.sl_distance_pct / 100), 0)
+                          : '--'}
+                        color="text-rose-400"
+                      />
                       <DetailCell
                         label="Original Qty"
                         value={p.original_quantity != null ? p.original_quantity.toFixed(6) : '--'}

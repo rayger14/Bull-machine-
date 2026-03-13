@@ -525,6 +525,7 @@ class CoinbasePaperRunner:
 
         # Position size in USD
         position_size_usd = entry_p * orig_qty
+        margin_used = position_size_usd / leverage if leverage > 0 else position_size_usd
 
         return {
             "id": pos.position_id,
@@ -539,6 +540,7 @@ class CoinbasePaperRunner:
             "take_profit": round(tp, 2) if tp > 0 else None,
             "position_size_usd": round(position_size_usd, 2),
             "leverage": leverage,
+            "margin_used": round(margin_used, 2),
             "risk_reward": risk_reward,
             "sl_distance_pct": round(sl_distance_pct, 2),
             "tp_distance_pct": round(tp_distance_pct, 2),

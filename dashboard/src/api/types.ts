@@ -215,6 +215,7 @@ export interface OpenPosition {
   take_profit?: number;
   position_size_usd?: number;
   leverage?: number;
+  margin_used?: number;
   risk_reward?: number;
   sl_distance_pct?: number;
   tp_distance_pct?: number;
