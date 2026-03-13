@@ -163,6 +163,33 @@ def generate_cpcv_splits(features_df: pd.DataFrame, k: int = 6, p: int = 2
     return splits
 
 
+def build_backtest_paths(k: int = 6, p: int = 2) -> List[List[Tuple]]:
+    """Find all non-overlapping tilings of k groups into test sets of size p.
+
+    Each "path" is a list of N/p test-group tuples that together cover all k groups
+    exactly once. The number of paths = phi(k,p) = (p/k) * C(k,p).
+
+    For k=6, p=2: returns 5 paths, each containing 3 split indices.
+    """
+    all_combos = list(combinations(range(k), p))
+
+    paths = []
+
+    def _find_tilings(remaining_groups, current_path, combo_start):
+        if not remaining_groups:
+            paths.append(current_path[:])
+            return
+        for i in range(combo_start, len(all_combos)):
+            combo = all_combos[i]
+            if set(combo).issubset(remaining_groups):
+                current_path.append(combo)
+                _find_tilings(remaining_groups - set(combo), current_path, i + 1)
+                current_path.pop()
+
+    _find_tilings(set(range(k)), [], 0)
+    return paths
+
+
 # ── Backtest Runner ───────────────────────────────────────────────────
 
 def run_backtest(config, features_df, start_date=None, end_date=None,
@@ -178,12 +205,19 @@ def run_backtest(config, features_df, start_date=None, end_date=None,
 
 
 def run_backtest_on_indices(config, full_features_df, indices,
-                            initial_cash=100_000.0, commission_rate=0.0002, slippage_bps=3.0):
-    """Run backtest on specific row indices (for CPCV splits)."""
+                            initial_cash=100_000.0, commission_rate=0.0002, slippage_bps=3.0,
+                            return_equity=False):
+    """Run backtest on specific row indices (for CPCV splits).
+
+    If return_equity=True, returns (stats, equity_curve, equity_timestamps).
+    """
     subset = full_features_df.iloc[indices].copy()
+    empty_stats = {'profit_factor': 0, 'total_trades': 0, 'max_drawdown': 0,
+                   'sharpe_ratio': 0, 'total_pnl': 0, 'win_rate': 0}
     if len(subset) < 100:
-        return {'profit_factor': 0, 'total_trades': 0, 'max_drawdown': 0,
-                'sharpe_ratio': 0, 'total_pnl': 0, 'win_rate': 0}
+        if return_equity:
+            return empty_stats, [initial_cash], [subset.index[0] if len(subset) > 0 else pd.Timestamp.now()]
+        return empty_stats
 
     start_date = subset.index[0].strftime('%Y-%m-%d')
     end_date = subset.index[-1].strftime('%Y-%m-%d')
@@ -194,7 +228,12 @@ def run_backtest_on_indices(config, full_features_df, indices,
         features_df=subset,
     )
     engine.run(start_date=start_date, end_date=end_date)
-    return engine.get_performance_stats()
+    stats = engine.get_performance_stats()
+
+    if return_equity:
+        return stats, engine.equity_curve, engine.equity_timestamps
+
+    return stats
 
 
 # ── Gate Override Builders ────────────────────────────────────────────
@@ -517,49 +556,174 @@ def validate_wfo(best_params, base_config, features_df, params_def, windows, bas
     }
 
 
-def validate_cpcv(best_params, base_config, features_df, params_def, all_splits):
-    """Validate final CPCV parameters across all 15 paths."""
+def _compute_sharpe_from_equity(equity_curve: List[float], periods_per_year: float = 8760.0) -> float:
+    """Compute annualized Sharpe ratio from an equity curve.
+
+    Assumes 1H bars (8760 bars/year). Returns 0 if insufficient data.
+    """
+    if len(equity_curve) < 10:
+        return 0.0
+    eq = np.array(equity_curve, dtype=float)
+    returns = np.diff(eq) / eq[:-1]
+    returns = returns[np.isfinite(returns)]
+    if len(returns) < 2 or np.std(returns) < 1e-10:
+        return 0.0
+    return float(np.mean(returns) / np.std(returns) * np.sqrt(periods_per_year))
+
+
+def validate_cpcv(best_params, base_config, features_df, params_def, all_splits, k=6, p=2):
+    """Validate final CPCV parameters across all splits + compute PBO via stitched equity curves.
+
+    PBO (Probability of Backtest Overfitting) = fraction of stitched backtest paths
+    with Sharpe < 0. López de Prado (2018), Chapter 12.
+    """
     config = copy.deepcopy(base_config)
     config['gate_overrides'] = build_gate_overrides_from_dict(best_params, params_def)
 
     print(f"\n{'=' * 90}")
-    print(f"CPCV FULL VALIDATION (all {len(all_splits)} paths)")
+    print(f"CPCV FULL VALIDATION (all {len(all_splits)} splits)")
     print(f"{'=' * 90}")
 
+    # Phase 1: Run all splits and collect per-split OOS stats + equity curves
+    split_results = {}  # keyed by test_groups tuple
     oos_pfs = []
+
     for i, split in enumerate(all_splits):
         try:
-            oos = run_backtest_on_indices(config, features_df, split['test_idx'])
+            oos, equity, timestamps = run_backtest_on_indices(
+                config, features_df, split['test_idx'], return_equity=True)
             pf = oos.get('profit_factor', 0)
             trades = oos.get('total_trades', 0)
+            sharpe = oos.get('sharpe_ratio', 0)
             oos_pfs.append(pf)
+
+            split_results[split['test_groups']] = {
+                'stats': oos,
+                'equity': equity,
+                'timestamps': timestamps,
+                'pf': pf,
+                'trades': trades,
+                'sharpe': sharpe,
+            }
+
             status = "OK" if pf >= 0.8 else "FAIL" if pf < 0.5 else "WARN"
-            print(f"  Path {i:2d} ({split['label']:<35s}): PF={pf:.3f} | trades={trades:4d} [{status}]")
+            print(f"  Split {i:2d} ({split['label']:<35s}): PF={pf:.3f} | trades={trades:4d} | Sharpe={sharpe:.2f} [{status}]")
         except Exception as e:
             oos_pfs.append(0)
-            print(f"  Path {i:2d} ({split['label']:<35s}): ERROR: {e}")
+            split_results[split['test_groups']] = {
+                'stats': {}, 'equity': [100000], 'timestamps': [],
+                'pf': 0, 'trades': 0, 'sharpe': 0,
+            }
+            print(f"  Split {i:2d} ({split['label']:<35s}): ERROR: {e}")
 
     median_pf = float(np.median(oos_pfs))
-    min_pf = min(oos_pfs)
+    min_pf = min(oos_pfs) if oos_pfs else 0
+
+    print(f"\n  Per-Split Summary:")
+    print(f"    Median OOS PF: {median_pf:.3f} {'PASS' if median_pf >= 1.2 else 'FAIL'}")
+    print(f"    Min OOS PF:    {min_pf:.3f} {'PASS' if min_pf >= 0.8 else 'FAIL'}")
     paths_below_08 = sum(1 for pf in oos_pfs if pf < 0.8)
+    print(f"    Splits < 0.8:  {paths_below_08} {'PASS' if paths_below_08 == 0 else 'FAIL'}")
 
-    print(f"\n  Median OOS PF: {median_pf:.3f} {'PASS' if median_pf >= 1.2 else 'FAIL'}")
-    print(f"  Min OOS PF:    {min_pf:.3f} {'PASS' if min_pf >= 0.8 else 'FAIL'}")
-    print(f"  Paths < 0.8:   {paths_below_08} {'PASS' if paths_below_08 == 0 else 'FAIL'}")
+    # Phase 2: Build stitched backtest paths and compute PBO
+    print(f"\n{'─' * 60}")
+    print(f"  STITCHED BACKTEST PATHS (PBO Analysis)")
+    print(f"{'─' * 60}")
 
-    # Full period
+    backtest_paths = build_backtest_paths(k=k, p=p)
+    n_paths = len(backtest_paths)
+    print(f"  phi({k},{p}) = {n_paths} non-overlapping paths\n")
+
+    path_sharpes = []
+    path_pnls = []
+
+    for path_idx, path in enumerate(backtest_paths):
+        # Each path is a list of test-group tuples, e.g. [(0,1), (2,3), (4,5)]
+        # Stitch equity curves in chronological order (sort by group index)
+        sorted_segments = sorted(path, key=lambda tup: tup[0])
+
+        stitched_equity = []
+        stitched_pnl = 0.0
+        segment_details = []
+
+        for seg_groups in sorted_segments:
+            result = split_results.get(seg_groups)
+            if result is None:
+                continue
+
+            eq = result['equity']
+            pnl = result['stats'].get('total_pnl', 0)
+            stitched_pnl += pnl
+
+            if not stitched_equity:
+                # First segment: use raw equity
+                stitched_equity.extend(eq)
+            else:
+                # Subsequent segments: rebase equity to end of previous segment
+                if len(eq) > 1:
+                    prev_end = stitched_equity[-1]
+                    start_val = eq[0] if eq[0] != 0 else 1
+                    scale = prev_end / start_val
+                    stitched_equity.extend([v * scale for v in eq[1:]])
+
+            seg_label = f"G{''.join(str(g) for g in seg_groups)}"
+            segment_details.append(f"{seg_label}(PF={result['pf']:.2f})")
+
+        # Compute Sharpe on stitched equity curve
+        path_sharpe = _compute_sharpe_from_equity(stitched_equity)
+        path_sharpes.append(path_sharpe)
+        path_pnls.append(stitched_pnl)
+
+        total_return = ((stitched_equity[-1] / stitched_equity[0]) - 1) * 100 if stitched_equity else 0
+        status = "OK" if path_sharpe > 0 else "OVERFIT"
+        print(f"  Path {path_idx}: {' + '.join(segment_details)} | "
+              f"PnL=${stitched_pnl:,.0f} | Return={total_return:.1f}% | "
+              f"Sharpe={path_sharpe:.2f} [{status}]")
+
+    # PBO = fraction of paths with Sharpe < 0
+    n_negative = sum(1 for s in path_sharpes if s < 0)
+    pbo = n_negative / n_paths if n_paths > 0 else 1.0
+
+    print(f"\n  {'─' * 40}")
+    print(f"  PBO (Probability of Backtest Overfitting):")
+    print(f"    Paths with Sharpe < 0: {n_negative}/{n_paths}")
+    print(f"    PBO = {pbo:.1%}")
+
+    if pbo == 0:
+        print(f"    Interpretation: EXCELLENT — no path is overfit")
+    elif pbo < 0.2:
+        print(f"    Interpretation: GOOD — low overfitting risk")
+    elif pbo < 0.5:
+        print(f"    Interpretation: CAUTION — moderate overfitting risk")
+    else:
+        print(f"    Interpretation: FAIL — majority of paths are overfit, DO NOT deploy")
+
+    print(f"\n    Path Sharpes: {[f'{s:.2f}' for s in path_sharpes]}")
+    print(f"    Median Path Sharpe: {float(np.median(path_sharpes)):.2f}")
+    print(f"    Min Path Sharpe:    {min(path_sharpes):.2f}")
+
+    # Phase 3: Full period comparison
+    print(f"\n{'─' * 60}")
     full = run_backtest(config, features_df, '2020-01-01', '2024-12-31')
     base_full = run_backtest(base_config, features_df, '2020-01-01', '2024-12-31')
 
-    print(f"\n  Full Period:")
+    print(f"  Full Period (2020-2024):")
     print(f"    Optimized: PF={full.get('profit_factor',0):.3f} | trades={full.get('total_trades',0)} | "
-          f"PnL=${full.get('total_pnl',0):,.0f}")
+          f"PnL=${full.get('total_pnl',0):,.0f} | Sharpe={full.get('sharpe_ratio',0):.2f}")
     print(f"    Baseline:  PF={base_full.get('profit_factor',0):.3f} | trades={base_full.get('total_trades',0)} | "
-          f"PnL=${base_full.get('total_pnl',0):,.0f}")
+          f"PnL=${base_full.get('total_pnl',0):,.0f} | Sharpe={base_full.get('sharpe_ratio',0):.2f}")
 
-    accept = median_pf >= 1.2 and min_pf >= 0.8 and paths_below_08 == 0
+    # Final verdict
+    accept = median_pf >= 1.2 and min_pf >= 0.8 and paths_below_08 == 0 and pbo < 0.5
     print(f"\n{'=' * 90}")
-    print(f"VERDICT: {'PASS — safe to deploy' if accept else 'FAIL — DO NOT deploy'}")
+    if accept and pbo == 0:
+        print("VERDICT: STRONG PASS — all splits profitable, PBO=0%, safe to deploy")
+    elif accept:
+        print(f"VERDICT: PASS — PBO={pbo:.0%}, acceptable overfitting risk")
+    elif pbo >= 0.5:
+        print(f"VERDICT: FAIL — PBO={pbo:.0%}, majority of paths overfit. DO NOT deploy.")
+    else:
+        print(f"VERDICT: FAIL — OOS metrics below threshold. DO NOT deploy.")
     print(f"{'=' * 90}")
 
     return {
@@ -567,6 +731,10 @@ def validate_cpcv(best_params, base_config, features_df, params_def, all_splits)
         'median_pf': median_pf,
         'min_pf': min_pf,
         'paths_below_08': paths_below_08,
+        'pbo': pbo,
+        'path_sharpes': path_sharpes,
+        'path_pnls': path_pnls,
+        'n_stitched_paths': n_paths,
         'accept': accept,
     }
 
@@ -759,9 +927,10 @@ def main():
         except Exception:
             pass
 
-        # Full validation on all 15 paths
+        # Full validation on all 15 paths + PBO via stitched equity curves
         validation = validate_cpcv(best.params, base_config, features_df,
-                                    params_def, all_splits)
+                                    params_def, all_splits,
+                                    k=args.cpcv_k, p=args.cpcv_p)
 
     # Save results
     output_dir = PROJECT_ROOT / f'results/optuna_{args.mode}_{args.group}_{group_def["name"]}'
@@ -785,9 +954,10 @@ def main():
         'name': group_def['name'],
         'best_trial': best.number,
         'best_score': best.value,
-        'best_params': {k: float(v) for k, v in best.params.items()},
-        'user_attrs': {k: v for k, v in best.user_attrs.items()},
-        'validation': validation,
+        'best_params': {k_: float(v) for k_, v in best.params.items()},
+        'user_attrs': {k_: v for k_, v in best.user_attrs.items()},
+        'validation': {k_: v for k_, v in validation.items()
+                       if not isinstance(v, (np.ndarray,))},
         'total_time_s': total_time,
         'trials': args.trials,
         'seed': args.seed,

@@ -46,7 +46,9 @@ For each of 15 combinations:
 
 - Run 30 TPE trials on each of 3 representative paths (not all 15 — too expensive)
 - Validate final parameters on ALL 15 paths
-- **ACCEPT only if**: median OOS PF > 1.2 across all 15 paths AND no path has PF < 0.8
+- **Stitch equity curves** into phi(k,p) = 5 non-overlapping backtest paths
+- **Compute PBO** (Probability of Backtest Overfitting) = fraction of stitched paths with Sharpe < 0
+- **ACCEPT only if**: median OOS PF > 1.2 across all 15 paths AND no path has PF < 0.8 AND PBO < 50%
 
 ### Purge & Embargo Logic (for financial time series)
 
