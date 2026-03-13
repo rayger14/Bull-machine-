@@ -29,6 +29,11 @@ hard_gates:
   op: bool_true
   nan_policy: fail
   description: FVG present
+- feature: rsi_divergence
+  op: min
+  value: 0.05
+  nan_policy: skip
+  description: RSI divergence supports continuation setup
 gate_mode: hard
 exit_logic:
   max_hold_hours: 72

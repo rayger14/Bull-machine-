@@ -19,29 +19,20 @@ thresholds:
   fusion: 0.18
   cooling_period_bars: 24
 hard_gates:
-- feature: atr_percentile
-  op: max
-  value: 0.35
-  nan_policy: skip
-  description: Low ATR (compression before expansion)
-- feature: climax_volume_flag
-  op: eq
-  value: 1
-  nan_policy: skip
-  description: Volume climax confirms exhaustion event
 - feature: volume_zscore
   op: min
-  value: 2.0
-  nan_policy: fail
-  description: High volume validates exhaustion (not quiet market)
+  value: 1.5
+  nan_policy: skip
+  description: Elevated volume confirms exhaustion (not quiet market)
 - feature: derived:rsi_extreme_65
   op: bool_true
-  nan_policy: fail
-  description: RSI at extreme confirms exhaustion reversal
-- feature: derived:bb_tight_compression
-  op: bool_true
   nan_policy: skip
-  description: Tight Bollinger Band compression before expansion
+  description: RSI at extreme confirms exhaustion reversal potential
+- feature: bb_width
+  op: max
+  value: 0.06
+  nan_policy: skip
+  description: Compression before expansion (BB squeeze)
 gate_mode: hard
 exit_logic:
   max_hold_hours: 120
@@ -69,7 +60,7 @@ regime_preferences:
   risk_off: 0.9
   crisis: 0.7
 allowed_regimes: []
-description: Volume exhaustion at RSI extremes after compression. Climax volume + tight
-  BB + extreme RSI = institutional exhaustion reversal.
+description: "Volume exhaustion \u2014 climax volume at RSI extremes after compression.\
+  \ Institutional capitulation signal."
 priority: 10
 enabled: true

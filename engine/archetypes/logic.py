@@ -638,43 +638,49 @@ class ArchetypeLogic:
             return False
         if not isinstance(prev_adx, (int, float)) or prev_adx != prev_adx:
             return False
-        return float(adx) < float(prev_adx)
+        if float(adx) >= float(prev_adx):
+            return False
+
+        # High volume means genuine breakout, not a failed continuation
+        vol_z = row.get('volume_zscore', 0.0)
+        if isinstance(vol_z, (int, float)) and vol_z == vol_z:
+            if float(vol_z) >= 1.5:
+                return False
+
+        return True
 
     def _check_E(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
-        E - Volume Exhaustion at Compression: Volume climax at RSI extreme after compression.
+        E - Volume Exhaustion at Compression: Volume climax at RSI extremes
+        after compression. Institutional capitulation signal.
 
-        Identity gate: (Volume climax OR high vol_z) AND RSI extreme AND low ATR.
+        Identity gate: (Volume climax OR absorption OR high vol_z + RSI extreme).
         Old check (ATR < 25th pctile) had no edge — any quiet bar qualified.
-        New check requires climax volume at RSI extremes during compression =
-        institutional exhaustion event, which is a genuine reversal signal.
+        New check requires climax volume at RSI extremes = institutional
+        exhaustion event, which is a genuine reversal signal.
         """
-        # Still require compression context
-        atr_pctile = self._compute_atr_percentile(row, df, index)
-        if atr_pctile >= 0.35:
-            return False
-
-        # Volume exhaustion evidence
-        climax_flag = row.get('climax_volume_flag', 0)
-        vol_climax_3b = row.get('volume_climax_last_3b', 0)
-        vol_z = row.get('volume_zscore', 0.0)
-        # NaN guards
-        if isinstance(climax_flag, float) and climax_flag != climax_flag:
-            climax_flag = 0
-        if isinstance(vol_climax_3b, float) and vol_climax_3b != vol_climax_3b:
-            vol_climax_3b = 0
-        if isinstance(vol_z, float) and vol_z != vol_z:
-            vol_z = 0.0
-
-        has_volume_event = bool(climax_flag) or bool(vol_climax_3b) or float(vol_z) > 2.0
-        if not has_volume_event:
-            return False
-
-        # RSI extreme confirms exhaustion
+        # Volume exhaustion: climax volume OR (high volume z-score + RSI extreme)
+        volume_climax = row.get('volume_climax_last_3b', 0)
+        absorption = row.get('absorption_flag', 0)
+        volume_zscore = row.get('volume_zscore', 0.0)
         rsi = row.get('rsi_14', 50.0)
-        if not isinstance(rsi, (int, float)) or rsi != rsi:
-            return False
-        if not (float(rsi) > 65 or float(rsi) < 35):
+
+        # NaN guards
+        if volume_climax is None or volume_climax != volume_climax:
+            volume_climax = 0
+        if absorption is None or absorption != absorption:
+            absorption = 0
+        if volume_zscore is None or volume_zscore != volume_zscore:
+            volume_zscore = 0.0
+        if rsi is None or rsi != rsi:
+            rsi = 50.0
+
+        # Need capitulation evidence: volume climax OR (high vol + RSI extreme)
+        rsi_extreme = rsi < 35 or rsi > 65
+        has_climax = volume_climax > 0 or absorption > 0
+        has_vol_exhaustion = volume_zscore > 2.0 and rsi_extreme
+
+        if not (has_climax or has_vol_exhaustion):
             return False
 
         return True
@@ -718,7 +724,20 @@ class ArchetypeLogic:
             return False
 
         lower_wick = (min(float(close), float(open_price)) - float(low)) / candle_range
-        return lower_wick > wick_threshold
+        if lower_wick <= wick_threshold:
+            return False
+
+        # Directional wick check: sweep wick should dominate the opposite wick
+        wick_lower_ratio = row.get('wick_lower_ratio', None)
+        wick_upper_ratio = row.get('wick_upper_ratio', None)
+        lower_valid = wick_lower_ratio is not None and isinstance(wick_lower_ratio, (int, float)) and wick_lower_ratio == wick_lower_ratio
+        upper_valid = wick_upper_ratio is not None and isinstance(wick_upper_ratio, (int, float)) and wick_upper_ratio == wick_upper_ratio
+        if lower_valid and upper_valid:
+            # Long sweep: lower wick must exceed upper wick (downward probe)
+            if float(wick_lower_ratio) <= float(wick_upper_ratio):
+                return False
+
+        return True
 
     def _check_H(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
@@ -792,7 +811,16 @@ class ArchetypeLogic:
         rsi = row.get('rsi_14', 50.0)
         if not isinstance(rsi, (int, float)) or rsi != rsi:
             return False
-        return float(rsi) > rsi_upper or float(rsi) < rsi_lower
+        if not (float(rsi) > rsi_upper or float(rsi) < rsi_lower):
+            return False
+
+        # Cluster requires multi-level convergence — at least one fib level
+        fib_cluster = row.get('fib_time_cluster', 0)
+        if fib_cluster is not None and isinstance(fib_cluster, (int, float)) and fib_cluster == fib_cluster:
+            if float(fib_cluster) <= 0:
+                return False
+
+        return True
 
     def _check_M(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
@@ -827,7 +855,20 @@ class ArchetypeLogic:
         bos_bearish = row.get('tf1h_bos_bearish', False)
         if isinstance(bos_bearish, float) and bos_bearish != bos_bearish:
             return False
-        return bool(bos_bearish)
+        if not bool(bos_bearish):
+            return False
+
+        # Capitulation evidence: vacuum needs volume climax OR absorption
+        vol_climax = row.get('volume_climax_last_3b', 0)
+        absorption = row.get('absorption_flag', 0)
+        if isinstance(vol_climax, float) and vol_climax != vol_climax:
+            vol_climax = 0
+        if isinstance(absorption, float) and absorption != absorption:
+            absorption = 0
+        if not (bool(vol_climax) or bool(absorption)):
+            return False
+
+        return True
 
     def _check_S2(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
@@ -895,7 +936,18 @@ class ArchetypeLogic:
             return False
 
         upper_wick = float(high) - max(float(close), float(open_price))
-        return upper_wick > 2.0 * body
+        if upper_wick <= 2.0 * body:
+            return False
+
+        # Whipsaw needs sign of weakness or climax volume confirmation
+        wyckoff_sow = row.get('wyckoff_sow', False)
+        vol_z = row.get('volume_zscore', 0.0)
+        if isinstance(vol_z, float) and vol_z != vol_z:
+            vol_z = 0.0
+        if not (bool(wyckoff_sow) or float(vol_z) >= 2.0):
+            return False
+
+        return True
 
     def _check_S4(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """

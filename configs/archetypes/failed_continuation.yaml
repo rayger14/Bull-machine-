@@ -35,6 +35,11 @@ hard_gates:
   value: 1.4
   nan_policy: skip
   description: Low effort-to-result confirms failing move
+- feature: rsi_divergence
+  op: min
+  value: 0.1
+  nan_policy: skip
+  description: Bullish RSI divergence confirms failed bearish continuation
 gate_mode: soft
 exit_logic:
   max_hold_hours: 96

@@ -831,6 +831,9 @@ class LiveFeatureComputer:
         # Q. Extra features referenced by archetype_instance.py
         features.update(self._extra_archetype_features(features))
 
+        # R. RSI divergence (price vs RSI direction over 14-bar lookback)
+        features['rsi_divergence'] = self._compute_rsi_divergence()
+
         # D. Regime detection (MOVED AFTER Q: needs rv_20d, drawdown_persistence, etc.)
         # Probabilistic: crisis_prob, risk_temperature, instability_score
         # regime_label derived from CMI components (not SMA crossovers)
@@ -2549,6 +2552,72 @@ class LiveFeatureComputer:
     # ------------------------------------------------------------------
     # Private: FVG Detection
     # ------------------------------------------------------------------
+
+    def _compute_rsi_divergence(self, lookback: int = 14) -> float:
+        """
+        Compute RSI divergence score over N-bar lookback.
+
+        Bullish divergence: price falling + RSI rising -> positive (0 to 1)
+        Bearish divergence: price rising + RSI falling -> negative (-1 to 0)
+        No divergence: same direction -> 0.0
+
+        Magnitude scaled by strength of the divergence.
+        """
+        if self._buf is None or len(self._buf) < lookback:
+            return 0.0
+
+        close = self._buf['close'].values.astype(float)
+        n = len(close)
+
+        # Need at least lookback bars of RSI history
+        if n < lookback + 14:  # RSI-14 needs 14 bars warmup + lookback
+            return 0.0
+
+        # Compute RSI for current bar and lookback-ago bar
+        rsi_now = self._calc_rsi(close, 14)
+        # RSI at lookback bars ago: compute on the truncated series
+        rsi_past = self._calc_rsi(close[:-lookback], 14)
+
+        # NaN guards
+        if rsi_now is None or rsi_past is None:
+            return 0.0
+        if rsi_now != rsi_now or rsi_past != rsi_past:  # NaN check
+            return 0.0
+
+        price_now = close[-1]
+        price_past = close[-1 - lookback]
+
+        if price_past <= 0 or price_now <= 0:
+            return 0.0
+
+        price_change = (price_now - price_past) / price_past  # fractional
+        rsi_change = rsi_now - rsi_past  # absolute RSI points
+
+        # Same direction = no divergence
+        if (price_change > 0 and rsi_change > 0) or (price_change < 0 and rsi_change < 0):
+            return 0.0
+
+        # No movement = no divergence
+        if abs(price_change) < 1e-8 or abs(rsi_change) < 0.5:
+            return 0.0
+
+        # Magnitude: combine normalized price change and RSI change
+        # price_change is fractional (e.g. 0.05 = 5%), scale to 0-1 range
+        price_magnitude = min(abs(price_change) / 0.10, 1.0)  # 10% = max
+        # RSI change is 0-100 scale, normalize
+        rsi_magnitude = min(abs(rsi_change) / 30.0, 1.0)  # 30 RSI points = max
+
+        magnitude = (price_magnitude + rsi_magnitude) / 2.0
+
+        # Bullish divergence: price falling, RSI rising
+        if price_change < 0 and rsi_change > 0:
+            return max(0.0, min(magnitude, 1.0))
+
+        # Bearish divergence: price rising, RSI falling
+        if price_change > 0 and rsi_change < 0:
+            return max(-1.0, min(-magnitude, 0.0))
+
+        return 0.0
 
     def _detect_fvg_1h(self) -> int:
         """3-candle Fair Value Gap detection on 1H."""

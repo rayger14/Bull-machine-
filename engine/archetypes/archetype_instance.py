@@ -61,6 +61,7 @@ DERIVED_FEATURES = {
     'wyckoff_phase_c': lambda f: str(f.get('wyckoff_phase_abc', '')).upper() == 'C',
     'lower_wick_dominant': lambda f: _safe_float(f.get('wick_lower_ratio', 0)) > 1.5,
     'bb_tight_compression': lambda f: _safe_float(f.get('bb_width', 1.0)) < 0.02,
+    'rsi_divergence_bullish': lambda bar: 1 if bar.get('rsi_divergence', 0) > 0.1 else 0,
 }
 
 # Features previously frozen in V12 feature store — NOW ALL PATCHED with real values.

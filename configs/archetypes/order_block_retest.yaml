@@ -33,6 +33,11 @@ hard_gates:
   value: 0.1
   nan_policy: skip
   description: Fib time ratio confluence (lowered for better soft gate balance)
+- feature: rsi_divergence
+  op: min
+  value: 0.05
+  nan_policy: skip
+  description: RSI divergence supports OB retest reversal
 gate_mode: soft
 exit_logic:
   max_hold_hours: 96

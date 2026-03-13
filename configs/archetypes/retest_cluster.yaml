@@ -33,6 +33,11 @@ hard_gates:
   value: 0.45
   nan_policy: skip
   description: Temporal confluence validates cluster quality
+- feature: rsi_divergence
+  op: min
+  value: 0.05
+  nan_policy: skip
+  description: RSI divergence confirms retest reversal potential
 gate_mode: soft
 exit_logic:
   max_hold_hours: 168
