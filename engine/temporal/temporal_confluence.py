@@ -662,7 +662,13 @@ class TemporalConfluenceEngine:
         for sig in self._cycle_signals_cache:
             # Each cycle signal affects bars near its timestamp
             if sig.timestamp in df.index:
-                center = df.index.get_loc(sig.timestamp)
+                loc = df.index.get_loc(sig.timestamp)
+                if isinstance(loc, slice):
+                    center = loc.start if loc.start is not None else 0
+                elif isinstance(loc, np.ndarray):
+                    center = int(np.flatnonzero(loc)[0])
+                else:
+                    center = int(loc)
                 spread = sig.period // 4  # Influence radius based on cycle length
                 for offset in range(-spread, spread + 1):
                     pos = center + offset
