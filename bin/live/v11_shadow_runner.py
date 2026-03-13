@@ -26,6 +26,7 @@ import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -948,8 +949,8 @@ class V11ShadowRunner:
             signals = surviving
             self.last_dynamic_threshold = regime_threshold
 
-        # Step 3c: Apply position limits
-        if signals:
+        # Step 3c: Apply position limits (SKIPPED in bypass/data-collection mode)
+        if signals and not self.bypass_threshold:
             if not self.adaptive_fusion.get('enabled', False):
                 max_pos = self.max_positions_by_regime.get(current_regime, 3) if self.max_positions_by_regime else 3
             if len(self.positions) >= max_pos:
@@ -962,9 +963,15 @@ class V11ShadowRunner:
                     self._open_phantom(s, features, current_regime, rej_reason, 'position_limit')
                 self.signals_rejected += len(signals)
                 signals = []
+        elif signals and self.bypass_threshold:
+            if len(self.positions) >= max_pos:
+                logger.info(
+                    "[BYPASS] position limit (%d/%d) bypassed for %d signals — data collection mode",
+                    len(self.positions), max_pos, len(signals),
+                )
 
-        # Step 3d: Same-direction entry spacing (prevent correlated clusters)
-        if signals:
+        # Step 3d: Same-direction entry spacing (SKIPPED in bypass/data-collection mode)
+        if signals and not self.bypass_threshold:
             spaced_signals = []
             for s in signals:
                 if s.direction == 'long' and (self.bar_index - self._last_long_entry_bar) < self._entry_spacing_bars:
@@ -993,14 +1000,19 @@ class V11ShadowRunner:
             self._update_equity(features['close'])
             return acted_signals
 
-        # Step 4: Portfolio allocation
-        current_position_archetypes = [
-            pos.archetype for pos in self.positions.values()
-        ]
-        intents, rejections = self.engine.allocate(
-            signals,
-            current_positions=current_position_archetypes,
-        )
+        # Step 4: Portfolio allocation (bypass duplicate check in data-collection mode)
+        if self.bypass_threshold:
+            # In data collection mode, treat all signals as intents (skip duplicate filter)
+            intents = [SimpleNamespace(signal=s) for s in signals]
+            rejections = []
+        else:
+            current_position_archetypes = [
+                pos.archetype for pos in self.positions.values()
+            ]
+            intents, rejections = self.engine.allocate(
+                signals,
+                current_positions=current_position_archetypes,
+            )
         self.signals_rejected += len(rejections)
 
         # Update signal tracking for portfolio rejections
