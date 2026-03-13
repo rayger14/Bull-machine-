@@ -173,5 +173,30 @@ Before committing code changes:
 
 ---
 
-**Last Updated**: 2026-03-11
-**Architecture Version**: v18 Optuna 6-Group Optimization
+## Optuna Optimization (MANDATORY)
+
+**ALWAYS use the `/optuna-optimize` skill before running any Optuna optimization.** This skill enforces walk-forward validation, CPCV, and anti-overfit checks. Never run Optuna on the full date range without WFO/CPCV validation.
+
+### Quick Reference
+```bash
+# Walk-Forward mode (recommended)
+python3 bin/optuna_wfo.py --group A --trials 40 --mode wfo
+
+# CPCV mode (rigorous, for production deployment)
+python3 bin/optuna_wfo.py --group A --trials 30 --mode cpcv
+
+# Quick single-window (testing only, NOT for production)
+python3 bin/optuna_optimize_gates.py --group A --trials 60
+```
+
+### Key Rules
+- Never optimize on full date range without WFO/CPCV validation
+- Never optimize more than 15 parameters at once (split into groups of 5-8)
+- Never deploy without comparing to baseline
+- Never ignore trade count drops (>50% = overfit)
+- Always run parameter importance analysis after optimization
+
+---
+
+**Last Updated**: 2026-03-13
+**Architecture Version**: v18 Optuna 6-Group Optimization + WFO/CPCV
