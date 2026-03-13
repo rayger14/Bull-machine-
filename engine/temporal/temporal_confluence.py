@@ -460,7 +460,14 @@ class TemporalConfluenceEngine:
         if self._tpi_signals_cache:
             for sig in self._tpi_signals_cache:
                 if sig.timestamp in df.index:
-                    idx = df.index.get_loc(sig.timestamp)
+                    loc = df.index.get_loc(sig.timestamp)
+                    # get_loc can return slice/array for duplicate timestamps
+                    if isinstance(loc, slice):
+                        idx = loc.start if loc.start is not None else 0
+                    elif isinstance(loc, np.ndarray):
+                        idx = int(np.flatnonzero(loc)[0])
+                    else:
+                        idx = int(loc)
                     # Boost the bar and its neighbors
                     for offset in range(-2, 3):
                         pos = idx + offset
