@@ -74,6 +74,171 @@ class ArchetypeConfirmation:
     confirmations: List[Confirmation]
 
 
+# ═══════════════════════════════════════════════════════════════════════
+# DOMAIN ANTI-SIGNAL VETOES
+#
+# Hard rejections based on specific domain failure modes, independent of
+# composite score. These are binary kills that catch known bad setups.
+# Each veto is an AND combination of feature checks — if ALL conditions
+# in a veto are true, the signal is killed.
+# ═══════════════════════════════════════════════════════════════════════
+
+@dataclass
+class DomainVeto:
+    """A single domain veto: if ALL conditions are met, the signal is killed."""
+    name: str
+    conditions: List[Tuple[str, str, Any]]  # [(feature, op, value), ...]
+    description: str = ''
+
+
+DOMAIN_VETOES: Dict[str, List[DomainVeto]] = {
+    'wick_trap': [
+        DomainVeto(
+            name='choppy_noise',
+            conditions=[('chop_score', 'min', 0.55), ('adx_14', 'max', 15)],
+            description='Wicks in choppy trendless markets are noise, not traps',
+        ),
+        DomainVeto(
+            name='crisis_wick',
+            conditions=[('volume_zscore', 'min', 4.0)],
+            description='Extreme volume wicks in crisis = noise, not reversal',
+        ),
+    ],
+    'trap_within_trend': [
+        DomainVeto(
+            name='actual_downtrend',
+            conditions=[('ema_slope_50', 'max', -0.003), ('rsi_14', 'min', 60)],
+            description='False breakdown in actual downtrend = not a trap',
+        ),
+        DomainVeto(
+            name='no_trend',
+            conditions=[('adx_14', 'max', 10)],
+            description='ADX < 10 means no trend exists to trap within',
+        ),
+    ],
+    'liquidity_sweep': [
+        DomainVeto(
+            name='no_volume_sweep',
+            conditions=[('volume_zscore', 'max', -0.5)],
+            description='Sweep without volume is a random wick',
+        ),
+    ],
+    'spring': [
+        DomainVeto(
+            name='distribution_spring',
+            conditions=[('wyckoff_bearish_score', 'min', 0.3)],
+            description='Spring during distribution = falling knife',
+        ),
+        DomainVeto(
+            name='overbought_spring',
+            conditions=[('rsi_14', 'min', 65)],
+            description='Spring at RSI 65+ is not a real spring',
+        ),
+    ],
+    'retest_cluster': [
+        DomainVeto(
+            name='strong_uptrend_retest',
+            conditions=[('rsi_14', 'min', 70), ('ema_slope_50', 'min', 0.003)],
+            description='Retest in strong uptrend already priced in',
+        ),
+    ],
+    'failed_continuation': [
+        DomainVeto(
+            name='strong_momentum',
+            conditions=[('adx_14', 'min', 35), ('volume_zscore', 'min', 2.0)],
+            description='High ADX + high volume = real continuation, not failed',
+        ),
+    ],
+    'liquidity_vacuum': [
+        DomainVeto(
+            name='no_capitulation',
+            conditions=[('volume_zscore', 'max', -0.3), ('rsi_14', 'min', 45)],
+            description='No volume and RSI not oversold = not real capitulation',
+        ),
+    ],
+    'funding_divergence': [
+        DomainVeto(
+            name='bull_funding',
+            conditions=[('funding_Z', 'min', 0.5)],
+            description='Positive funding = no short squeeze fuel',
+        ),
+    ],
+}
+
+
+def check_domain_vetoes(archetype_name: str, features: Dict) -> Tuple[bool, str]:
+    """Check domain anti-signal vetoes. Returns (vetoed, veto_name)."""
+    vetoes = DOMAIN_VETOES.get(archetype_name, [])
+    for veto in vetoes:
+        all_conditions_met = True
+        for feature, op, value in veto.conditions:
+            val = features.get(feature, None)
+            if val is None or (isinstance(val, float) and val != val):
+                all_conditions_met = False
+                break
+            try:
+                val = float(val)
+            except (TypeError, ValueError):
+                all_conditions_met = False
+                break
+            if op == 'min' and val < value:
+                all_conditions_met = False
+                break
+            elif op == 'max' and val > value:
+                all_conditions_met = False
+                break
+        if all_conditions_met:
+            return True, veto.name
+    return False, ''
+
+
+def compute_continuous_composite(archetype_name: str, features: Dict,
+                                  risk_temp: Optional[float] = None) -> float:
+    """
+    Compute a continuous weighted composite score in [0, 1] for an archetype signal.
+
+    Unlike evaluate_composite (integer N-of-M), this returns a float where each
+    confirmation contributes its normalized weight. Core checks (2pt) get
+    proportionally more weight than supporting checks (1pt).
+
+    Args:
+        archetype_name: Archetype identifier
+        features: Feature dict from the current bar
+        risk_temp: If provided and < 0.4, tighten thresholds by 10%
+
+    Returns:
+        Float in [0, 1] representing weighted confirmation strength
+    """
+    arch_conf = get_confirmation(archetype_name)
+
+    total_points = sum(c.points for c in arch_conf.confirmations)
+    if total_points <= 0:
+        return 0.0
+
+    tighten_factor = 1.10 if (risk_temp is not None and risk_temp < 0.4) else 1.0
+
+    weighted_score = 0.0
+    for conf in arch_conf.confirmations:
+        effective_conf = conf
+        if tighten_factor > 1.0 and conf.op == 'min' and conf.value is not None:
+            effective_conf = Confirmation(
+                name=conf.name, feature=conf.feature, op=conf.op,
+                value=conf.value * tighten_factor, points=conf.points,
+                nan_action=conf.nan_action, description=conf.description,
+            )
+        elif tighten_factor > 1.0 and conf.op == 'max' and conf.value is not None:
+            effective_conf = Confirmation(
+                name=conf.name, feature=conf.feature, op=conf.op,
+                value=conf.value / tighten_factor, points=conf.points,
+                nan_action=conf.nan_action, description=conf.description,
+            )
+
+        if _check_confirmation(effective_conf, features):
+            weighted_score += conf.points
+
+    return weighted_score / total_points
+
+
 def _check_confirmation(conf: Confirmation, features: Dict) -> bool:
     """Evaluate a single confirmation check against feature values."""
     val = features.get(conf.feature, None)
@@ -789,7 +954,8 @@ class CompositeBacktester:
                  mode: str = 'composite',
                  archetype_filter: Optional[List[str]] = None,
                  min_score_override: Optional[int] = None,
-                 max_concurrent: int = 0):
+                 max_concurrent: int = 0,
+                 vetoes_enabled: bool = True):
 
         self.config = config
         self.features_df = features_df
@@ -800,6 +966,7 @@ class CompositeBacktester:
         self.archetype_filter = archetype_filter
         self.min_score_override = min_score_override
         self.max_concurrent = max_concurrent
+        self.vetoes_enabled = vetoes_enabled
 
         # Position sizing
         sizing_cfg = config.get('position_sizing', {})
@@ -820,6 +987,8 @@ class CompositeBacktester:
         # Stats
         self.raw_signals = 0
         self.composite_rejected = 0
+        self.veto_rejected = 0
+        self.veto_counts: Dict[str, Dict[str, int]] = {}  # archetype -> veto_name -> count
         self.signals_traded = 0
         self.composite_score_dist: Dict[str, List[int]] = {}  # archetype -> [scores]
 
@@ -872,6 +1041,122 @@ class CompositeBacktester:
             exit_config.update(self.config['exit_logic'])
         self.exit_logic = ExitLogic(exit_config)
 
+    # ── CMI Computation (for hybrid mode) ──────────────────────────────
+
+    def compute_cmi(self, features: Dict) -> Dict[str, float]:
+        """
+        Compute CMI (Continuous Market Intelligence) from features.
+        Replicates the production CMI computation from backtest_v11_standalone.py.
+        Returns dict with risk_temp, instability, crisis_prob.
+        """
+        adaptive = self.config.get('adaptive_fusion', {})
+        cmi_weights = adaptive.get('cmi_weights', {})
+        rt_w = cmi_weights.get('risk_temp', {})
+        inst_w = cmi_weights.get('instability', {})
+        crisis_w = cmi_weights.get('crisis', {})
+
+        w_trend = rt_w.get('trend_align', 0.30)
+        w_strength = rt_w.get('trend_strength', 0.05)
+        w_sentiment = rt_w.get('sentiment', 0.15)
+        w_dd = rt_w.get('dd_score', 0.50)
+        w_deriv = rt_w.get('derivatives_heat', 0.0)
+
+        w_chop = inst_w.get('chop', 0.40)
+        w_adx_weak = inst_w.get('adx_weakness', 0.10)
+        w_wick = inst_w.get('wick_score', 0.25)
+        w_vol = inst_w.get('vol_instab', 0.25)
+
+        w_base_crisis = crisis_w.get('base_crisis', 0.45)
+        w_vol_shock = crisis_w.get('vol_shock', 0.10)
+        w_sent_crisis = crisis_w.get('sentiment_crisis', 0.45)
+
+        def _get(col, default=0.0):
+            if isinstance(features, dict):
+                val = features.get(col, default)
+            elif hasattr(features, 'get'):
+                val = features.get(col, default)
+            else:
+                return float(default)
+            try:
+                val = float(val)
+                if val != val:
+                    return float(default)
+                return val
+            except (TypeError, ValueError):
+                return float(default)
+
+        # risk_temperature [0-1]: 0=cold/bear, 1=hot/bull
+        p_above_50 = _get('price_above_ema_50', 0)
+        ema_50_200 = _get('ema_50_above_200', 0)
+        if p_above_50 and ema_50_200:
+            trend_align = 1.0
+        elif p_above_50:
+            trend_align = 0.6
+        elif ema_50_200:
+            trend_align = 0.4
+        else:
+            trend_align = 0.0
+
+        adx = _get('adx', _get('adx_14', 20.0))
+        trend_strength = min(adx / 40.0, 1.0)
+        fear_greed = _get('fear_greed_norm', 0.5)
+        sentiment_score = fear_greed
+        dd_persist = _get('drawdown_persistence', 0.5)
+        dd_score = max(1.0 - dd_persist, 0.0)
+
+        derivatives_heat = 0.5
+        if w_deriv > 0:
+            oi_4h = _get('oi_change_4h', 0.0)
+            oi_4h_raw = features.get('oi_change_4h') if isinstance(features, dict) else None
+            has_oi = oi_4h_raw is not None and not (isinstance(oi_4h_raw, float) and oi_4h_raw != oi_4h_raw)
+            if has_oi:
+                oi_momentum = min(max(oi_4h + 0.5, 0.0), 1.0)
+                fund_rate = _get('binance_funding_rate', 0.0)
+                funding_health = max(1.0 - abs(fund_rate) * 5000.0, 0.0)
+                taker = _get('taker_imbalance', 0.0)
+                taker_conviction = min(max(taker + 0.5, 0.0), 1.0)
+                derivatives_heat = 0.40 * oi_momentum + 0.30 * funding_health + 0.30 * taker_conviction
+
+        risk_temp = (w_trend * trend_align + w_strength * trend_strength +
+                     w_sentiment * sentiment_score + w_dd * dd_score +
+                     w_deriv * derivatives_heat)
+
+        # instability [0-1]: 0=stable/trending, 1=choppy
+        chop = _get('chop_score', 0.5)
+        adx_weakness = max(1.0 - adx / 40.0, 0.0)
+        wick_raw = _get('wick_ratio', 1.0)
+        wick_sc = min(wick_raw / 5.0, 1.0)
+        vol_z = _get('volume_z_7d', 0.0)
+        vol_instab = min(abs(vol_z) / 2.5, 1.0)
+
+        instability = (w_chop * chop + w_adx_weak * adx_weakness +
+                       w_wick * wick_sc + w_vol * vol_instab)
+
+        # crisis_prob [0-1]: pure stress measurement
+        dd = _get('drawdown_persistence', 0.0)
+        crash_freq = _get('crash_frequency_7d', 0.0)
+        crisis_persist = _get('crisis_persistence', 0.0)
+        crisis_signals = int(dd > 0.96) + int(crash_freq >= 2) + int(crisis_persist > 0.55)
+        if crisis_signals >= 2:
+            base_crisis = min(0.7 + 0.1 * crisis_signals, 1.0)
+        elif crisis_signals == 1:
+            base_crisis = 0.10
+        else:
+            base_crisis = 0.02
+
+        rv = _get('rv_20d', 0.6)
+        vol_shock = min(max(rv - 0.8, 0.0) / 0.4, 1.0)
+        sentiment_crisis = max(0.0, (0.20 - fear_greed) / 0.20)
+
+        crisis_prob = (w_base_crisis * base_crisis + w_vol_shock * vol_shock +
+                       w_sent_crisis * sentiment_crisis)
+
+        return {
+            'risk_temp': risk_temp,
+            'instability': instability,
+            'crisis_prob': crisis_prob,
+        }
+
     # ── Main Loop ──────────────────────────────────────────────────────
 
     def run(self, start_date: Optional[str] = None, end_date: Optional[str] = None):
@@ -896,6 +1181,13 @@ class CompositeBacktester:
               f"{df.index[0].date()} to {df.index[-1].date()}")
         if self.mode == 'composite':
             print(f"Min score override: {self.min_score_override or 'per-archetype default'}")
+        elif self.mode == 'hybrid':
+            adaptive = self.config.get('adaptive_fusion', {})
+            print(f"CMI dynamic threshold: base={adaptive.get('base_threshold', 0.18)}, "
+                  f"temp_range={adaptive.get('temp_range', 0.38)}, "
+                  f"instab_range={adaptive.get('instab_range', 0.15)}, "
+                  f"crisis_coeff={adaptive.get('crisis_coefficient', 0.50)}")
+        print(f"Domain vetoes: {'ON' if self.vetoes_enabled else 'OFF'}")
         print()
 
         t0 = time.time()
@@ -930,6 +1222,7 @@ class CompositeBacktester:
                       f"positions={len(self.positions)} | "
                       f"trades={len(self.trades)} | "
                       f"signals={self.raw_signals} | "
+                      f"vetoed={self.veto_rejected} | "
                       f"rejected={self.composite_rejected} | "
                       f"{elapsed:.0f}s")
 
@@ -943,8 +1236,13 @@ class CompositeBacktester:
         print(f"\nCompleted in {elapsed:.0f}s ({elapsed/60:.1f}min)")
 
     def _generate_and_trade_signals(self, row, prev_row, lookback_df, ts, bar_idx):
-        """Generate structural signals and apply composite confirmation."""
+        """Generate structural signals and apply composite/hybrid confirmation."""
         features = row.to_dict() if hasattr(row, 'to_dict') else dict(row)
+
+        # Pre-compute CMI for hybrid mode (once per bar, not per archetype)
+        cmi = None
+        if self.mode == 'hybrid':
+            cmi = self.compute_cmi(features)
 
         for name, archetype in self.engine.archetypes.items():
             archetype._cooling_bar = -9999
@@ -961,6 +1259,16 @@ class CompositeBacktester:
                 continue
 
             self.raw_signals += 1
+
+            # Domain anti-signal vetoes (apply in ALL modes)
+            if self.vetoes_enabled:
+                vetoed, veto_name = check_domain_vetoes(name, features)
+                if vetoed:
+                    self.veto_rejected += 1
+                    if name not in self.veto_counts:
+                        self.veto_counts[name] = {}
+                    self.veto_counts[name][veto_name] = self.veto_counts[name].get(veto_name, 0) + 1
+                    continue
 
             # Composite confirmation filter (only in composite mode)
             composite_score = 0
@@ -979,6 +1287,43 @@ class CompositeBacktester:
                 self.composite_score_dist[name].append(score)
 
                 if not passed:
+                    self.composite_rejected += 1
+                    continue
+
+            # Hybrid mode: continuous composite score through CMI dynamic threshold
+            elif self.mode == 'hybrid':
+                adaptive = self.config.get('adaptive_fusion', {})
+                risk_temp = cmi['risk_temp']
+                instability_val = cmi['instability']
+                crisis_prob = cmi['crisis_prob']
+
+                # Compute continuous composite score [0, 1]
+                continuous_score = compute_continuous_composite(
+                    name, features, risk_temp=risk_temp
+                )
+
+                # Track score distribution
+                arch_conf = get_confirmation(name)
+                composite_score = int(round(continuous_score * arch_conf.max_possible))
+                composite_max = arch_conf.max_possible
+                if name not in self.composite_score_dist:
+                    self.composite_score_dist[name] = []
+                self.composite_score_dist[name].append(composite_score)
+
+                # Apply crisis penalty
+                c_coeff = adaptive.get('crisis_coefficient', 0.50)
+                adjusted_score = continuous_score * (1.0 - crisis_prob * c_coeff)
+
+                # Compute dynamic threshold
+                per_arch_thresholds = adaptive.get('per_archetype_base_threshold', {})
+                base_threshold = adaptive.get('base_threshold', 0.18)
+                temp_range = adaptive.get('temp_range', 0.38)
+                instab_range = adaptive.get('instab_range', 0.15)
+
+                arch_base = per_arch_thresholds.get(name, base_threshold)
+                dynamic_threshold = arch_base + (1.0 - risk_temp) * temp_range + instability_val * instab_range
+
+                if adjusted_score < dynamic_threshold:
                     self.composite_rejected += 1
                     continue
 
@@ -1325,7 +1670,7 @@ class CompositeBacktester:
 
         header = (f"{'Archetype':<25s} {'Dir':<6s} {'Trades':>7s} {'Wins':>6s} {'WR%':>7s} "
                   f"{'PF':>7s} {'PnL($)':>10s} {'AvgPnL':>8s} {'MaxDD%':>8s} {'AvgHold':>8s}")
-        if self.mode == 'composite':
+        if self.mode in ('composite', 'hybrid'):
             header += f" {'AvgScore':>9s}"
         print(f"\n{header}")
         print("-" * 120)
@@ -1338,7 +1683,7 @@ class CompositeBacktester:
                     f"{s['win_rate']:>6.1f}% {pf_str:>7s} "
                     f"${s['total_pnl']:>9,.0f} ${s['avg_pnl']:>7,.0f} "
                     f"{s['max_dd']:>7.1f}% {s['avg_hold_hours']:>7.0f}h")
-            if self.mode == 'composite':
+            if self.mode in ('composite', 'hybrid'):
                 conf = get_confirmation(name)
                 line += f" {s['avg_composite_score']:>4.1f}/{conf.max_possible}"
             print(line)
@@ -1351,11 +1696,26 @@ class CompositeBacktester:
               f"{agg['max_drawdown']:>7.1f}% {agg['avg_hold_hours']:>7.0f}h")
         print(f"\nSharpe: {agg['sharpe_ratio']:.2f} | "
               f"Raw signals: {self.raw_signals} | "
+              f"Veto rejected: {self.veto_rejected} | "
               f"Composite rejected: {self.composite_rejected} | "
               f"Traded: {self.signals_traded}")
 
+        # Domain veto statistics
+        if self.veto_counts:
+            print(f"\n{'=' * 120}")
+            print(f"DOMAIN VETO STATISTICS (vetoes={'ON' if self.vetoes_enabled else 'OFF'})")
+            print(f"{'=' * 120}")
+            total_vetoed = 0
+            for arch_name in sorted(self.veto_counts.keys()):
+                veto_map = self.veto_counts[arch_name]
+                arch_total = sum(veto_map.values())
+                total_vetoed += arch_total
+                details = ", ".join(f"{vn}: {vc}" for vn, vc in sorted(veto_map.items(), key=lambda x: -x[1]))
+                print(f"  {arch_name:<25s} {arch_total:>4d} vetoed ({details})")
+            print(f"  {'TOTAL':<25s} {total_vetoed:>4d} vetoed")
+
         # Composite score distribution
-        if self.mode == 'composite' and self.composite_score_dist:
+        if self.mode in ('composite', 'hybrid') and self.composite_score_dist:
             print(f"\n{'=' * 120}")
             print(f"COMPOSITE SCORE DISTRIBUTION (all signals, including rejected)")
             print(f"{'=' * 120}")
@@ -1415,15 +1775,17 @@ def main():
     parser.add_argument('--initial-cash', type=float, default=100_000.0)
     parser.add_argument('--commission-rate', type=float, default=0.0002)
     parser.add_argument('--slippage-bps', type=float, default=3.0)
-    parser.add_argument('--mode', choices=['structural', 'composite', 'production', 'all'],
+    parser.add_argument('--mode', choices=['structural', 'composite', 'hybrid', 'production', 'all'],
                        default='composite',
-                       help='Mode: structural (raw), composite (N-of-M), production (fusion+CMI), all (compare)')
+                       help='Mode: structural (raw), composite (N-of-M), hybrid (continuous+CMI), production (fusion+CMI), all (compare)')
     parser.add_argument('--archetype', type=str, default=None,
                        help='Comma-separated archetype filter')
     parser.add_argument('--min-score-override', type=int, default=None,
                        help='Override min_score for all archetypes (for sweep testing)')
     parser.add_argument('--max-concurrent', type=int, default=0,
                        help='Max concurrent positions per archetype (0=unlimited)')
+    parser.add_argument('--vetoes', choices=['on', 'off'], default='on',
+                       help='Enable/disable domain anti-signal vetoes (default: on)')
     parser.add_argument('--output-dir', default='results/composite')
     args = parser.parse_args()
 
@@ -1432,6 +1794,8 @@ def main():
     arch_filter = None
     if args.archetype:
         arch_filter = [a.strip() for a in args.archetype.split(',')]
+
+    vetoes_on = args.vetoes == 'on'
 
     # Load data
     print("Loading feature store...")
@@ -1445,7 +1809,7 @@ def main():
     print(f"Loaded {len(features_df):,} bars")
 
     # Determine modes to run
-    modes = ['structural', 'composite'] if args.mode == 'all' else [args.mode]
+    modes = ['structural', 'composite', 'hybrid'] if args.mode == 'all' else [args.mode]
 
     # Handle production mode
     if 'production' in modes:
@@ -1480,6 +1844,7 @@ def main():
             archetype_filter=arch_filter,
             min_score_override=args.min_score_override,
             max_concurrent=args.max_concurrent,
+            vetoes_enabled=vetoes_on,
         )
         bt.run(start_date=args.start_date, end_date=args.end_date)
 
