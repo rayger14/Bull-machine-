@@ -161,43 +161,56 @@ def _basic_phase_logic(df: pd.DataFrame, cfg: Dict) -> Tuple[Optional[str], floa
         # Price position in recent range
         range_position = (current_price - recent_data['low'].min()) / max(1e-9, price_range)
 
-        # Enhanced phase classification with trend detection
+        # TREND-CONTEXT-FIRST phase classification (Wyckoff best practice)
+        #
+        # Key insight: Accumulation = consolidation after DOWNTREND.
+        #              Distribution = consolidation after UPTREND.
+        # The PRECEDING trend determines context, not range position.
+        # Range position tells you WHICH phase within the structure.
 
-        # Add trend analysis (SMA crossovers for markup/markdown)
-        if len(df) >= 50:
-            sma_20 = df['close'].rolling(20).mean().iloc[-1]
-            sma_50 = df['close'].rolling(50).mean().iloc[-1]
+        if len(df) < 50:
+            return "transition", 0.3
 
-            # Strong uptrend = markup
-            if sma_20 > sma_50 * 1.02 and current_price > sma_20:
-                return "markup", 0.7
-            # Strong downtrend = markdown
-            elif sma_20 < sma_50 * 0.98 and current_price < sma_20:
-                return "markdown", 0.7
+        # Step 1: Determine preceding trend using EMA(20) vs EMA(50)
+        ema_20 = df['close'].ewm(span=20, adjust=False).mean().iloc[-1]
+        ema_50 = df['close'].ewm(span=50, adjust=False).mean().iloc[-1]
 
-        # High volume phases
-        if vol_ratio > 1.5 and range_position < 0.3:
-            return "accumulation", 0.6
-        elif vol_ratio > 1.5 and range_position > 0.7:
-            return "distribution", 0.6
+        # Also check EMA slope over 30 bars for trend direction
+        ema_20_series = df['close'].ewm(span=20, adjust=False).mean()
+        ema_slope_30 = (ema_20_series.iloc[-1] - ema_20_series.iloc[-30]) / (ema_20_series.iloc[-30] + 1e-9) if len(df) >= 30 else 0.0
 
-        # Springs and upthrusts
-        elif range_position < 0.2 and vol_ratio < 0.8:
-            return "spring", 0.5
-        elif range_position > 0.8 and vol_ratio < 0.8:
-            return "upthrust", 0.5
+        # Step 2: Clear trend → markup or markdown (not consolidation)
+        if ema_20 > ema_50 * 1.02 and current_price > ema_20:
+            return "markup", 0.7
+        elif ema_20 < ema_50 * 0.98 and current_price < ema_20:
+            return "markdown", 0.7
 
-        # Consolidation/reaccumulation
-        elif 0.4 <= range_position <= 0.6:
-            return "B", 0.4
+        # Step 3: Consolidation — determine accumulation vs distribution
+        # by preceding trend (ema_slope_30)
+        is_prior_downtrend = ema_slope_30 < -0.01   # EMA fell >1% over 30 bars
+        is_prior_uptrend = ema_slope_30 > 0.01       # EMA rose >1% over 30 bars
 
-        # Weaker accumulation/distribution signals
-        elif range_position < 0.4 and vol_ratio > 1.0:
-            return "accumulation", 0.4
-        elif range_position > 0.6 and vol_ratio > 1.0:
-            return "distribution", 0.4
+        if is_prior_downtrend:
+            # Range after downtrend = accumulation
+            if range_position < 0.2 and vol_ratio < 0.8:
+                return "spring", 0.5       # Phase C: potential spring
+            elif vol_ratio > 1.5:
+                return "accumulation", 0.6  # Phase A: climax events
+            else:
+                return "accumulation", 0.4  # Phase B: building cause
 
-        # Default: transition (but with low confidence, not None)
+        elif is_prior_uptrend:
+            # Range after uptrend = distribution
+            if range_position > 0.8 and vol_ratio < 0.8:
+                return "upthrust", 0.5     # Phase C: potential upthrust
+            elif vol_ratio > 1.5:
+                return "distribution", 0.6  # Phase A: climax events
+            else:
+                return "distribution", 0.4  # Phase B: building cause
+
+        # Step 4: No clear preceding trend — ambiguous consolidation
+        elif 0.35 <= range_position <= 0.65:
+            return "B", 0.4                 # Mid-range = Phase B (building cause)
         else:
             return "transition", 0.3
 
