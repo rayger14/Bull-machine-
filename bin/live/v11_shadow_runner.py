@@ -985,7 +985,7 @@ class V11ShadowRunner:
         # Step 4: Portfolio allocation (bypass duplicate check in data-collection mode)
         if self.bypass_threshold:
             # In data collection mode, treat all signals as intents (skip duplicate filter)
-            intents = [SimpleNamespace(signal=s) for s in signals]
+            intents = [SimpleNamespace(signal=s, allocated_size_pct=0.02, allocation_reason='bypass') for s in signals]
             rejections = []
         else:
             current_position_archetypes = [
