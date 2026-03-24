@@ -1255,16 +1255,19 @@ class LiveFeatureComputer:
         vol = self._buf['volume'].values.astype(float)
 
         # Real BOMS detection from engine/structure/boms_detector.py
+        dir_map = {'bullish': 1, 'bearish': -1, 'none': 0}
         if BOMS_AVAILABLE and self._buf is not None and n >= 50:
-            # 4H BOMS displacement
+            # 4H BOMS displacement + direction
             buf_4h = self._resample_to_tf(self._buf, '4H')
             if len(buf_4h) >= 30:
                 boms_4h = detect_boms(buf_4h, timeframe='4H')
                 out['tf4h_boms_displacement'] = float(boms_4h.displacement)
+                out['tf4h_boms_direction'] = dir_map.get(boms_4h.direction, 0)
             else:
                 out['tf4h_boms_displacement'] = 0.0
+                out['tf4h_boms_direction'] = 0
 
-            # 1D BOMS strength (displacement / 2*ATR_14, capped at 1.0)
+            # 1D BOMS strength + direction (displacement / 2*ATR_14, capped at 1.0)
             buf_1d = self._resample_to_tf(self._buf, '1D')
             if len(buf_1d) >= 15:
                 boms_1d = detect_boms(buf_1d, timeframe='1D')
@@ -1276,11 +1279,15 @@ class LiveFeatureComputer:
                     out['tf1d_boms_strength'] = min(boms_1d.displacement / (2.0 * atr_1d), 1.0)
                 else:
                     out['tf1d_boms_strength'] = 0.0
+                out['tf1d_boms_direction'] = dir_map.get(boms_1d.direction, 0)
             else:
                 out['tf1d_boms_strength'] = 0.0
+                out['tf1d_boms_direction'] = 0
         else:
             out['tf4h_boms_displacement'] = 0.0
+            out['tf4h_boms_direction'] = 0
             out['tf1d_boms_strength'] = 0.0
+            out['tf1d_boms_direction'] = 0
 
         # boms_strength (1h level, for archetype logic.py _check_G)
         out['boms_strength'] = out['tf1d_boms_strength']
@@ -1940,10 +1947,6 @@ class LiveFeatureComputer:
             'tf4h_squiggle_confidence': 0.0,
             'tf4h_squiggle_direction': 0,
             'tf4h_squiggle_entry_window': 0,
-            'tf4h_boms_displacement': 0.0,
-            'tf4h_boms_direction': 0,
-            'tf1d_boms_strength': 0.0,
-            'tf1d_boms_direction': 0,
         }
 
         if self._buf is None or len(self._buf) < 50:
@@ -1952,50 +1955,18 @@ class LiveFeatureComputer:
         buf_4h = self._resample_to_tf(self._buf, '4H')
 
         # Squiggle pattern detection (4H)
+        # Note: BOMS features (tf4h_boms_*, tf1d_boms_*) are computed in
+        # _boms_liquidity_features() which runs first — no duplication here.
         if SQUIGGLE_AVAILABLE and len(buf_4h) >= 40:
             try:
                 squiggle = detect_squiggle_123(buf_4h, timeframe='4H')
                 out['tf4h_squiggle_stage'] = int(squiggle.stage)
                 out['tf4h_squiggle_confidence'] = float(squiggle.confidence)
-                # Direction encoding: bullish=1, bearish=-1, none=0
                 dir_map = {'bullish': 1, 'bearish': -1, 'none': 0}
                 out['tf4h_squiggle_direction'] = dir_map.get(squiggle.direction, 0)
                 out['tf4h_squiggle_entry_window'] = 1 if squiggle.entry_window else 0
             except Exception as e:
                 logger.warning(f"Squiggle 4H failed: {e}")
-
-        # BOMS detection (4H)
-        if BOMS_AVAILABLE and len(buf_4h) >= 30:
-            try:
-                boms_4h = detect_boms(buf_4h, timeframe='4H')
-                out['tf4h_boms_displacement'] = float(boms_4h.displacement)
-                dir_map = {'bullish': 1, 'bearish': -1, 'none': 0}
-                out['tf4h_boms_direction'] = dir_map.get(boms_4h.direction, 0)
-            except Exception as e:
-                logger.warning(f"BOMS 4H failed: {e}")
-
-        # BOMS detection (1D)
-        # BUG FIX: Normalize displacement by ATR (like _boms_liquidity_features does).
-        # Old code set tf1d_boms_strength = raw displacement ($500+), overwrote the
-        # normalized 0-1 value from _boms_liquidity_features(). Now both paths agree.
-        if BOMS_AVAILABLE:
-            try:
-                buf_1d = self._resample_to_tf(self._buf, '1D')
-                if len(buf_1d) >= 15:
-                    boms_1d = detect_boms(buf_1d, timeframe='1D')
-                    # Normalize: displacement / (2 * ATR_14), capped at 1.0
-                    atr_1d = self._calc_atr(
-                        buf_1d['high'].values.astype(float),
-                        buf_1d['low'].values.astype(float),
-                        buf_1d['close'].values.astype(float), 14)
-                    if atr_1d > 0 and boms_1d.displacement > 0:
-                        out['tf1d_boms_strength'] = min(float(boms_1d.displacement) / (2.0 * atr_1d), 1.0)
-                    else:
-                        out['tf1d_boms_strength'] = 0.0
-                    dir_map = {'bullish': 1, 'bearish': -1, 'none': 0}
-                    out['tf1d_boms_direction'] = dir_map.get(boms_1d.direction, 0)
-            except Exception as e:
-                logger.warning(f"BOMS 1D failed: {e}")
 
         return out
 
