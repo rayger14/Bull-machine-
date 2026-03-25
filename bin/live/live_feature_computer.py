@@ -1628,9 +1628,12 @@ class LiveFeatureComputer:
             if len(buf_1d) >= 20:
                 buf_1d_copy = buf_1d.copy()
                 buf_1d_copy = detect_all_wyckoff_events(buf_1d_copy, cfg=_CFG_1D)
-                ctx_1d = create_wyckoff_context(buf_1d_copy, lookback=3, timeframe="1D")
+                # lookback=14: scan last 14 daily bars (2 weeks) for recent events.
+                # lookback=3 was too narrow — SC/Spring/SOS fire every few weeks,
+                # so 3 days almost always showed 0 even with active structure.
+                ctx_1d = create_wyckoff_context(buf_1d_copy, lookback=14, timeframe="1D")
 
-                tail_1d = buf_1d_copy.iloc[-3:] if len(buf_1d_copy) >= 3 else buf_1d_copy
+                tail_1d = buf_1d_copy.iloc[-14:] if len(buf_1d_copy) >= 14 else buf_1d_copy
 
                 # Graded bullish/bearish scores (replace binary M1/M2)
                 out['tf1d_wyckoff_bullish_score'] = ctx_1d.bullish_score
@@ -1658,9 +1661,11 @@ class LiveFeatureComputer:
             if len(buf_4h) >= 30:
                 buf_4h_copy = buf_4h.copy()
                 buf_4h_copy = detect_all_wyckoff_events(buf_4h_copy, cfg=_CFG_4H, htf_context=ctx_1d)
-                htf_context_4h = create_wyckoff_context(buf_4h_copy, lookback=3, timeframe="4H")
+                # lookback=30: scan last 30 4H bars (5 days) for recent events.
+                # lookback=3 was 12 hours — events fire every few days so this was always 0.
+                htf_context_4h = create_wyckoff_context(buf_4h_copy, lookback=30, timeframe="4H")
 
-                tail_4h = buf_4h_copy.iloc[-3:] if len(buf_4h_copy) >= 3 else buf_4h_copy
+                tail_4h = buf_4h_copy.iloc[-30:] if len(buf_4h_copy) >= 30 else buf_4h_copy
 
                 # 4H scores
                 out['tf4h_wyckoff_bullish_score'] = htf_context_4h.bullish_score
