@@ -243,6 +243,9 @@ class CoinbasePaperRunner:
 
         # ---- Session tracking ----
         self.session_start = datetime.now(timezone.utc)
+        # Structural checks were wired on 2026-03-09; trades before this date
+        # used broken SMC-weight-only logic and should be excluded from metrics.
+        self.valid_trades_from = datetime(2026, 3, 9, tzinfo=timezone.utc)
         self.bars_processed = 0
         self.last_funding_log_time = self.session_start
         self.last_processed_ts: Optional[pd.Timestamp] = None
@@ -251,6 +254,23 @@ class CoinbasePaperRunner:
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
+
+    def _valid_trades(self):
+        """Return trades from after structural checks were wired (valid_trades_from)."""
+        cutoff = self.valid_trades_from
+        result = []
+        for t in self.runner.trades:
+            ts = getattr(t, 'timestamp_entry', None)
+            if ts is None:
+                result.append(t)
+                continue
+            if isinstance(ts, pd.Timestamp):
+                ts_utc = ts.tz_localize('UTC') if ts.tzinfo is None else ts.tz_convert('UTC')
+            else:
+                ts_utc = pd.Timestamp(ts, tz='UTC')
+            if ts_utc >= cutoff:
+                result.append(t)
+        return result
 
     def _build_whale_intelligence(self, features: Dict) -> Dict:
         """Build whale/institutional intelligence payload for heartbeat.
@@ -1663,13 +1683,16 @@ class CoinbasePaperRunner:
             else self.initial_cash
         )
 
-        wins = [t for t in self.runner.trades if t.pnl > 0]
-        losses = [t for t in self.runner.trades if t.pnl <= 0]
-        total_pnl = sum(t.pnl for t in self.runner.trades) if self.runner.trades else 0.0
+        # Filter to trades after structural checks were wired (2026-03-09).
+        # Pre-structural trades used broken SMC-weight-only logic and skew metrics.
+        valid_trades = self._valid_trades()
+        wins = [t for t in valid_trades if t.pnl > 0]
+        losses = [t for t in valid_trades if t.pnl <= 0]
+        total_pnl = sum(t.pnl for t in valid_trades) if valid_trades else 0.0
         gross_profit = sum(t.pnl for t in wins) if wins else 0.0
         gross_loss = abs(sum(t.pnl for t in losses)) if losses else 0.0
         pf = gross_profit / gross_loss if gross_loss > 0 else float("inf")
-        win_rate = len(wins) / len(self.runner.trades) * 100 if self.runner.trades else 0.0
+        win_rate = len(wins) / len(valid_trades) * 100 if valid_trades else 0.0
 
         max_dd = 0.0
         if self.runner.equity_curve:
@@ -1690,7 +1713,9 @@ class CoinbasePaperRunner:
             "current_equity": equity,
             "total_return_pct": (equity - self.initial_cash) / self.initial_cash * 100,
             "total_pnl": total_pnl,
-            "completed_trades": len(self.runner.trades),
+            "completed_trades": len(valid_trades),
+            "completed_trades_all": len(self.runner.trades),
+            "valid_trades_from": self.valid_trades_from.isoformat(),
             "open_positions": len(self.runner.positions),
             "win_rate_pct": win_rate,
             "profit_factor": pf if pf != float("inf") else 999.99,
@@ -2609,7 +2634,8 @@ class CoinbasePaperRunner:
                 self._serialize_position(pos, close_price)
                 for pos in self.runner.positions.values()
             ],
-            "completed_trades": len(self.runner.trades),
+            "completed_trades": len(self._valid_trades()),
+            "completed_trades_all": len(self.runner.trades),
             "signals_this_bar": len(acted_signals),
             "total_signals": self.runner.total_signals,
             "signals_allocated": self.runner.signals_allocated,
@@ -3087,7 +3113,7 @@ class CoinbasePaperRunner:
             else self.initial_cash
         )
         n_positions = len(self.runner.positions)
-        n_trades = len(self.runner.trades)
+        n_trades = len(self._valid_trades())
 
         # Use actual dynamic threshold from adaptive fusion
         threshold = self.runner.last_dynamic_threshold
