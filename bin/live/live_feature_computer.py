@@ -1518,24 +1518,40 @@ class LiveFeatureComputer:
             # BUG FIX: BC is a DISTRIBUTION event — must NOT be in accumulation list
             _BULLISH_EVENTS = ['sc', 'ar', 'st', 'spring_a', 'spring_b', 'sos', 'lps']
             _BEARISH_EVENTS = ['bc', 'as', 'sow', 'ut', 'utad', 'lpsy']
+
+            # Use 24-bar rolling window max for event confidences.
+            # Wyckoff events are sparse (fire on 1-2% of bars). Taking only
+            # `last` gives 0 on 98%+ of bars, starving fusion of wyckoff signal.
+            # A 24H window carries the most recent event's confidence forward.
+            recent_window = buf_copy.tail(24)
             bullish_confs = []
             bearish_confs = []
             for e in _BULLISH_EVENTS:
                 conf_key = f'wyckoff_{e}_confidence'
-                val = last.get(conf_key, 0)
-                if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
-                    bullish_confs.append(float(val))
+                if conf_key in recent_window.columns:
+                    max_val = float(recent_window[conf_key].max())
+                    if max_val > 0:
+                        bullish_confs.append(max_val)
             for e in _BEARISH_EVENTS:
                 conf_key = f'wyckoff_{e}_confidence'
-                val = last.get(conf_key, 0)
-                if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
-                    bearish_confs.append(float(val))
+                if conf_key in recent_window.columns:
+                    max_val = float(recent_window[conf_key].max())
+                    if max_val > 0:
+                        bearish_confs.append(max_val)
             out['wyckoff_bullish_event_confidence'] = max(bullish_confs) if bullish_confs else 0.0
             out['wyckoff_bearish_event_confidence'] = max(bearish_confs) if bearish_confs else 0.0
             # Non-directional composite (backward compat) — max of ALL events
             all_confs = bullish_confs + bearish_confs
             out['wyckoff_event_confidence'] = max(all_confs) if all_confs else 0.0
             out['wyckoff_score'] = out['wyckoff_event_confidence']
+
+            # Override directional scores with 24H rolling max (same carry-forward logic).
+            # Per-row wyckoff_bullish_score is 0 on non-event bars; recent window max
+            # ensures fusion sees the strongest signal from the last 24 hours.
+            if 'wyckoff_bullish_score' in buf_copy.columns:
+                out['wyckoff_bullish_score'] = float(recent_window['wyckoff_bullish_score'].max())
+            if 'wyckoff_bearish_score' in buf_copy.columns:
+                out['wyckoff_bearish_score'] = float(recent_window['wyckoff_bearish_score'].max())
 
             # Event history + conviction
             self.last_wyckoff_event_history = self._wyckoff_event_history(buf_copy, max_events=20)
@@ -1631,9 +1647,11 @@ class LiveFeatureComputer:
                 # lookback=14: scan last 14 daily bars (2 weeks) for recent events.
                 # lookback=3 was too narrow — SC/Spring/SOS fire every few weeks,
                 # so 3 days almost always showed 0 even with active structure.
-                ctx_1d = create_wyckoff_context(buf_1d_copy, lookback=14, timeframe="1D")
+                # lookback=len: scan ALL available daily bars. Wyckoff phases span
+                # weeks-months; a SC from 35 days ago still defines today's structure.
+                ctx_1d = create_wyckoff_context(buf_1d_copy, lookback=len(buf_1d_copy), timeframe="1D")
 
-                tail_1d = buf_1d_copy.iloc[-14:] if len(buf_1d_copy) >= 14 else buf_1d_copy
+                tail_1d = buf_1d_copy
 
                 # Graded bullish/bearish scores (replace binary M1/M2)
                 out['tf1d_wyckoff_bullish_score'] = ctx_1d.bullish_score
@@ -1661,11 +1679,12 @@ class LiveFeatureComputer:
             if len(buf_4h) >= 30:
                 buf_4h_copy = buf_4h.copy()
                 buf_4h_copy = detect_all_wyckoff_events(buf_4h_copy, cfg=_CFG_4H, htf_context=ctx_1d)
-                # lookback=30: scan last 30 4H bars (5 days) for recent events.
-                # lookback=3 was 12 hours — events fire every few days so this was always 0.
-                htf_context_4h = create_wyckoff_context(buf_4h_copy, lookback=30, timeframe="4H")
+                # lookback=len: scan ALL available 4H bars. At 250 bars (~42 days),
+                # 9 total events spread across the dataset — all of them define the
+                # current Wyckoff phase and should feed into the HTF context.
+                htf_context_4h = create_wyckoff_context(buf_4h_copy, lookback=len(buf_4h_copy), timeframe="4H")
 
-                tail_4h = buf_4h_copy.iloc[-30:] if len(buf_4h_copy) >= 30 else buf_4h_copy
+                tail_4h = buf_4h_copy
 
                 # 4H scores
                 out['tf4h_wyckoff_bullish_score'] = htf_context_4h.bullish_score
