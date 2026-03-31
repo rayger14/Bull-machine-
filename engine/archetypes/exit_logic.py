@@ -875,9 +875,35 @@ class ExitLogic:
         # Check each scale level in order
         for level, pct in zip(scale_levels, scale_pcts):
             if unrealized_r >= level and level not in executed_scales:
+                is_first_scaleout = len(executed_scales) == 0
+
                 # Mark this scale level as executed
                 executed_scales.append(level)
                 position.metadata['executed_scale_outs'] = executed_scales
+
+                # BREAK-EVEN STOP: after the first scale-out fires, move stop to entry.
+                # This eliminates the payoff asymmetry: we've locked partial profit, so
+                # the remaining position should never lose more than 0. The trailing stop
+                # only moves UP from here, so break-even becomes a permanent floor.
+                if is_first_scaleout:
+                    entry = position.entry_price
+                    direction = getattr(position, 'direction', 'long')
+                    if direction == 'long' and entry > position.stop_loss:
+                        old_stop = position.stop_loss
+                        position.stop_loss = entry
+                        position.metadata['breakeven_stop_activated'] = True
+                        logger.info(
+                            f"[BREAK-EVEN] First scale-out at {level:.1f}R — stop moved to entry: "
+                            f"{old_stop:.2f} -> {entry:.2f}"
+                        )
+                    elif direction == 'short' and entry < position.stop_loss:
+                        old_stop = position.stop_loss
+                        position.stop_loss = entry
+                        position.metadata['breakeven_stop_activated'] = True
+                        logger.info(
+                            f"[BREAK-EVEN] First scale-out at {level:.1f}R — stop moved to entry: "
+                            f"{old_stop:.2f} -> {entry:.2f}"
+                        )
 
                 return ExitSignal(
                     exit_type=ExitType.PROFIT_TARGET.value,
