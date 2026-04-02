@@ -141,7 +141,7 @@ class ExitLogic:
         default_rules = {
             'max_hold_hours': 168,  # 7 days
             'scale_out_levels': [0.5, 1.0, 2.0],  # R-multiples
-            'scale_out_pcts': [0.2, 0.2, 0.3],  # Exit 20%, 20%, 30% at each level
+            'scale_out_pcts': [0.33, 0.2, 0.3],  # Exit 33%, 20%, 30% at each level (33% at 0.5R locks more profit early)
             'trailing_start_r': 0.5,  # Start trailing after +0.5R (earlier protection)
             'trailing_atr_mult': 2.0,  # Trail 2 ATR behind peak
             'runner_pct': 0.0,  # No runner by default (0 = disabled)
@@ -867,7 +867,7 @@ class ExitLogic:
             scale_pcts = [pt['exit_pct'] for pt in profit_targets]
         else:
             scale_levels = rules.get('scale_out_levels', [0.5, 1.0, 2.0])
-            scale_pcts = rules.get('scale_out_pcts', [0.2, 0.2, 0.3])
+            scale_pcts = rules.get('scale_out_pcts', [0.33, 0.2, 0.3])
 
         # Track which scale-outs already executed
         executed_scales = position.metadata.get('executed_scale_outs', [])
@@ -875,35 +875,9 @@ class ExitLogic:
         # Check each scale level in order
         for level, pct in zip(scale_levels, scale_pcts):
             if unrealized_r >= level and level not in executed_scales:
-                is_first_scaleout = len(executed_scales) == 0
-
                 # Mark this scale level as executed
                 executed_scales.append(level)
                 position.metadata['executed_scale_outs'] = executed_scales
-
-                # BREAK-EVEN STOP: after the first scale-out fires, move stop to entry.
-                # This eliminates the payoff asymmetry: we've locked partial profit, so
-                # the remaining position should never lose more than 0. The trailing stop
-                # only moves UP from here, so break-even becomes a permanent floor.
-                if is_first_scaleout:
-                    entry = position.entry_price
-                    direction = getattr(position, 'direction', 'long')
-                    if direction == 'long' and entry > position.stop_loss:
-                        old_stop = position.stop_loss
-                        position.stop_loss = entry
-                        position.metadata['breakeven_stop_activated'] = True
-                        logger.info(
-                            f"[BREAK-EVEN] First scale-out at {level:.1f}R — stop moved to entry: "
-                            f"{old_stop:.2f} -> {entry:.2f}"
-                        )
-                    elif direction == 'short' and entry < position.stop_loss:
-                        old_stop = position.stop_loss
-                        position.stop_loss = entry
-                        position.metadata['breakeven_stop_activated'] = True
-                        logger.info(
-                            f"[BREAK-EVEN] First scale-out at {level:.1f}R — stop moved to entry: "
-                            f"{old_stop:.2f} -> {entry:.2f}"
-                        )
 
                 return ExitSignal(
                     exit_type=ExitType.PROFIT_TARGET.value,
@@ -1181,7 +1155,7 @@ def create_default_exit_config() -> Dict:
             'liquidity_vacuum': {
                 'max_hold_hours': 120,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'scale_out_pcts': [0.33, 0.2, 0.3],
                 'trailing_start_r': 0.5,
                 'trailing_atr_mult': 2.0,
                 'runner_pct': 0.15,
@@ -1251,7 +1225,7 @@ def create_default_exit_config() -> Dict:
             'trap_within_trend': {
                 'max_hold_hours': 168,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'scale_out_pcts': [0.33, 0.2, 0.3],
                 'trailing_start_r': 1.0,
                 'trailing_atr_mult': 2.0,
                 'runner_pct': 0.15,
@@ -1265,7 +1239,7 @@ def create_default_exit_config() -> Dict:
             'wick_trap': {
                 'max_hold_hours': 168,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'scale_out_pcts': [0.33, 0.2, 0.3],
                 'trailing_start_r': 1.0,
                 'trailing_atr_mult': 2.0,
                 'runner_pct': 0.15,
@@ -1281,7 +1255,7 @@ def create_default_exit_config() -> Dict:
             'liquidity_sweep': {
                 'max_hold_hours': 168,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'scale_out_pcts': [0.33, 0.2, 0.3],
                 'trailing_start_r': 1.0,
                 'trailing_atr_mult': 2.0,
                 'runner_pct': 0.15,
@@ -1295,7 +1269,7 @@ def create_default_exit_config() -> Dict:
             'retest_cluster': {
                 'max_hold_hours': 168,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'scale_out_pcts': [0.33, 0.2, 0.3],
                 'trailing_start_r': 1.0,
                 'trailing_atr_mult': 2.0,
                 'runner_pct': 0.15,
