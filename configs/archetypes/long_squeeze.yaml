@@ -38,6 +38,11 @@ hard_gates:
   value: -1
   nan_policy: skip
   description: Bearish (funding bullish but OI declining = smart longs exiting)
+- feature: vol_shock
+  op: max
+  value: 0.10
+  nan_policy: skip
+  description: No acute vol spike - all 3 historical losses had vol_shock >0.10, all 11 winners had vol_shock <0.10 (LOW CONFIDENCE n=14)
 gate_mode: soft
 exit_logic:
   max_hold_hours: 72

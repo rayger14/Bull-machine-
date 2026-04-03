@@ -40,7 +40,12 @@ hard_gates:
   value: 0.1
   nan_policy: skip
   description: Bullish RSI divergence confirms failed bearish continuation
-gate_mode: soft
+- feature: chop_score
+  op: max
+  value: 0.25
+  nan_policy: skip
+  description: Low chop required - failed continuations in choppy markets stop out (backtest PF 1.94->2.51)
+gate_mode: hard
 exit_logic:
   max_hold_hours: 96
   scale_out_enabled: true
