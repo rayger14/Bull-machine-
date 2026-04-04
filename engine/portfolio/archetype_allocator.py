@@ -189,47 +189,75 @@ class PortfolioAllocator:
 
     def _compute_dynamic_size(self, signal, config: Dict) -> float:
         """
-        Dynamic position sizing based on fusion score conviction.
+        Dynamic position sizing based on CMI confidence signals.
 
-        When dynamic_sizing_enabled is True, scales position size using
-        tiered multipliers based on the signal's fusion_score. Higher
-        conviction signals get larger allocations.
+        Uses the three proven positive predictors from 1,127-trade backtest analysis:
+          - dd_score   (r=+0.167***): drawdown regime health
+          - risk_temp  (r=+0.126***): market temperature
+          - trend_align (r=+0.105***): EMA trend alignment
 
-        Default tiers:
-            fusion >= 0.60 -> 2.0x base size (high conviction)
-            fusion >= 0.40 -> 1.5x base size (medium conviction)
-            fusion >= 0.18 -> 1.0x base size (standard)
+        NOTE: fusion_score (r=-0.102) was the previous input — it is ANTI-predictive
+        and has been removed. Sizing up on high-fusion signals produced worse outcomes.
+
+        Risk scale:
+          - Baseline: 2% risk per trade (config risk_per_trade_pct)
+          - Range: 0.5% (very low confidence) to 4% (high confidence)
+          - Universal good condition (dd>0.20, rt>0.45, ta>0.9): ~3-4%
+          - Universal bad condition (ta<0.5, chop>0.40): ~0.5-1%
+
+        Quality formula:
+          dd_norm   = clamp(dd_score / 0.20,  0.0, 1.5)   # 0.20 = median threshold
+          rt_norm   = clamp(risk_temp / 0.45,  0.0, 1.3)   # 0.45 = median threshold
+          ta_norm   = clamp(trend_align / 0.90, 0.0, 1.2)  # 0.90 = strong alignment
+          quality   = dd_norm * rt_norm * ta_norm           # raw [0, ~2.34]
+          multiplier = clamp(quality / 1.17, 0.25, 2.0)    # normalize: 1.17 = neutral product
 
         Args:
-            signal: ArchetypeSignal with fusion_score attribute
+            signal: ArchetypeSignal with metadata containing dd_score, risk_temp, trend_align
             config: Configuration dict with sizing parameters
 
         Returns:
-            Position size as fraction of portfolio (e.g., 0.02 = 2%)
+            Position size as fraction of portfolio risk (e.g., 0.02 = 2% risk)
         """
         base_size = config.get('risk_per_trade_pct', 0.02)
 
         if not config.get('dynamic_sizing_enabled', False):
             return base_size
 
-        fusion_score = getattr(signal, 'fusion_score', 0.0)
-        tiers = config.get('fusion_size_tiers', [
-            {'min_fusion': 0.60, 'multiplier': 2.0},
-            {'min_fusion': 0.40, 'multiplier': 1.5},
-            {'min_fusion': 0.18, 'multiplier': 1.0},
-        ])
+        metadata = getattr(signal, 'metadata', {}) or {}
+        dd_score = metadata.get('dd_score', None)
+        risk_temp = metadata.get('risk_temp', None)
+        trend_align = metadata.get('trend_align', None)
 
-        multiplier = 1.0
-        for tier in sorted(tiers, key=lambda t: t['min_fusion'], reverse=True):
-            if fusion_score >= tier['min_fusion']:
-                multiplier = tier['multiplier']
-                break
+        # Fall back to base size if CMI values not injected (legacy path / live without CMI)
+        if dd_score is None or risk_temp is None or trend_align is None:
+            logger.debug(
+                f"[PortfolioAllocator] Dynamic size: {signal.archetype_id} "
+                f"CMI values not available — using base_size={base_size:.3%}"
+            )
+            return base_size
+
+        # Normalize each component relative to its "good enough" threshold
+        dd_norm = min(dd_score / 0.20, 1.5)
+        rt_norm = min(risk_temp / 0.45, 1.3)
+        ta_norm = min(trend_align / 0.90, 1.2)
+
+        # Composite quality: product of normalized components
+        # Neutral market (dd=0.20, rt=0.45, ta=0.90) → quality = 1.0 * 1.0 * 1.0 = 1.0
+        # Strong market  (dd=0.35, rt=0.65, ta=1.00) → quality ≈ 1.5*1.3*1.11 ≈ 2.16
+        # Weak market    (dd=0.05, rt=0.25, ta=0.50) → quality ≈ 0.25*0.56*0.56 ≈ 0.08
+        quality = dd_norm * rt_norm * ta_norm
+
+        # Multiplier: neutral (quality=1.0) → 1.0x, scale 0.25x-2.0x
+        # Divide by neutral product (1.0) then clamp
+        multiplier = max(0.25, min(quality, 2.0))
 
         computed_size = base_size * multiplier
 
         logger.debug(
             f"[PortfolioAllocator] Dynamic size: {signal.archetype_id} "
-            f"fusion={fusion_score:.3f}, multiplier={multiplier:.1f}, "
+            f"dd={dd_score:.3f} rt={risk_temp:.3f} ta={trend_align:.3f} "
+            f"quality={quality:.3f} multiplier={multiplier:.2f} "
             f"size={computed_size:.3%}"
         )
 

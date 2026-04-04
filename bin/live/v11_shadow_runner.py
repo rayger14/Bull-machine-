@@ -982,6 +982,14 @@ class V11ShadowRunner:
             self._update_equity(features['close'])
             return acted_signals
 
+        # Step 3e: Inject CMI confidence values into signal metadata for dynamic sizing
+        # dd_score (r=+0.167), risk_temp (r=+0.126), trend_align (r=+0.105) are the
+        # actual positive predictors — allocator uses these instead of fusion_score (r=-0.102)
+        for s in signals:
+            s.metadata['dd_score'] = dd_score
+            s.metadata['risk_temp'] = risk_temp
+            s.metadata['trend_align'] = trend_align
+
         # Step 4: Portfolio allocation (bypass duplicate check in data-collection mode)
         if self.bypass_threshold:
             # In data collection mode, treat all signals as intents (skip duplicate filter)
