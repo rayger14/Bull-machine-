@@ -3190,9 +3190,10 @@ class CoinbasePaperRunner:
         """
         Calculate and accumulate funding costs for all open positions.
 
-        Funding cost per hour = position_size_usd * funding_rate * leverage
-        (Perpetual futures typically charge funding every 8 hours,
-        but we track hourly costs for continuous monitoring.)
+        Funding cost per hour = position_size_usd * funding_rate / 8.0
+        (Perpetual futures funding applies to notional, not margin.
+        Leverage is already embedded in position_size_usd being the notional value,
+        not the margin. Multiplying by leverage again would double-count it.)
         """
         if not self.runner.positions:
             return
@@ -3219,10 +3220,10 @@ class CoinbasePaperRunner:
             # Positive funding rate: longs pay shorts.
             # Negative funding rate: shorts pay longs.
             if pos.direction == "long":
-                hourly_cost = position_size_usd * funding_rate * leverage / 8.0
+                hourly_cost = position_size_usd * funding_rate / 8.0
             else:
                 # Shorts receive funding when rate is positive
-                hourly_cost = -position_size_usd * funding_rate * leverage / 8.0
+                hourly_cost = -position_size_usd * funding_rate / 8.0
 
             total_hourly_cost += hourly_cost
 

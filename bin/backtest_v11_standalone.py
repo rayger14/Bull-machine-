@@ -761,6 +761,15 @@ class StandaloneBacktestEngine:
                     self.equity_timestamps.append(ts)
                     continue
 
+                # Step 3e: Inject CMI confidence values into signal metadata for dynamic sizing
+                # dd_score (r=+0.167), risk_temp (r=+0.126), trend_align (r=+0.105) are the
+                # actual positive predictors — allocator uses these instead of fusion_score (r=-0.102)
+                if self.adaptive_fusion.get('enabled', False):
+                    for s in signals:
+                        s.metadata['dd_score'] = dd_score
+                        s.metadata['risk_temp'] = risk_temp
+                        s.metadata['trend_align'] = trend_align
+
                 # Step 4: Allocate via PortfolioAllocator
                 current_position_archetypes = [
                     pos.archetype for pos in self.positions.values()
@@ -1110,9 +1119,10 @@ class StandaloneBacktestEngine:
         margin_returned = pos.margin_used * exit_fraction
         self.cash += margin_returned + pnl
 
-        # PnL percentage
-        entry_value = pos.entry_price * exit_quantity
-        pnl_pct = (pnl / entry_value * 100) if entry_value > 0 else 0.0
+        # PnL percentage — based on margin deployed (return on capital), not notional
+        exit_fraction = exit_quantity / pos.original_quantity
+        margin_for_exit = pos.margin_used * exit_fraction
+        pnl_pct = (pnl / margin_for_exit * 100) if margin_for_exit > 0 else 0.0
 
         # Duration
         duration_hours = (exit_timestamp - pos.entry_time).total_seconds() / 3600.0
