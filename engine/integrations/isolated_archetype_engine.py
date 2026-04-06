@@ -187,6 +187,26 @@ class IsolatedArchetypeEngine:
             'kelly_sizing_applied': 0
         }
 
+    def reset(self):
+        """Reset all stateful fields for reuse across WFO/CPCV splits.
+
+        Clears per-archetype cooling state and signal counters so the engine
+        can be re-run on a different date range without re-loading YAML configs.
+        """
+        for arch in self.archetypes.values():
+            arch.last_signal_bar = None
+        self.stats = {
+            'total_bars': 0,
+            'total_signals': 0,
+            'signals_by_archetype': {name: 0 for name in self.archetypes},
+            'allocations': 0,
+            'rejections': 0,
+            'signals_filtered_by_score': 0,
+            'signals_blocked_by_cooling': 0,
+            'ml_fusion_applied': 0,
+            'kelly_sizing_applied': 0
+        }
+
         # Signal filtering parameters
         self.relative_score_percentile = self.portfolio_config.get('relative_score_percentile', 0.70)
         logger.info(f"Relative score filtering: keep top {self.relative_score_percentile*100:.0f}% of signals")

@@ -429,6 +429,32 @@ class StandaloneBacktestEngine:
         logger.info("ExitLogic initialized (archetype-specific exit rules)")
 
     # ------------------------------------------------------------------
+    # Reset (enables engine reuse across multiple run() calls)
+    # ------------------------------------------------------------------
+
+    def reset(self):
+        """Reset all stateful fields so the engine can be re-run on a different date range.
+
+        Reuses the already-initialized archetype engine and feature store —
+        only clears position/trade/equity state. This avoids the costly
+        archetype re-initialization (YAML loading, Wyckoff setup, etc.)
+        between sequential WFO/CPCV splits.
+        """
+        self.cash = self.initial_cash
+        self.positions = {}
+        self.trades = []
+        self.equity_curve = [self.initial_cash]
+        self.equity_timestamps = []
+        self.total_signals = 0
+        self.signals_allocated = 0
+        self.signals_rejected = 0
+        self._last_long_entry_bar = -999
+        self._last_short_entry_bar = -999
+        # Reset archetype engine state (cooling, structural memory)
+        if hasattr(self, 'engine') and hasattr(self.engine, 'reset'):
+            self.engine.reset()
+
+    # ------------------------------------------------------------------
     # Core backtest loop
     # ------------------------------------------------------------------
 
