@@ -523,7 +523,6 @@ REPOSITORY_CLEANUP_STRATEGY.md
 bin/analyze_*.py
 bin/backfill_*.py
 bin/train_*.py
-bin/validate_*.py
 bin/optimize_*.py
 bin/backtest_*.py
 bin/test_*.py
