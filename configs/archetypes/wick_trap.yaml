@@ -25,6 +25,11 @@ hard_gates:
   op: min
   value: 0.0
   description: At least median volume (real wicks have volume behind them)
+- feature: instability
+  op: max
+  value: 0.45
+  nan_policy: skip
+  description: Low market instability - above 0.45 wicks are noise not reversal (backtest WR 67% vs 49%, p=0.018)
 gate_mode: hard
 exit_logic:
   max_hold_hours: 168
