@@ -187,6 +187,10 @@ class IsolatedArchetypeEngine:
             'kelly_sizing_applied': 0
         }
 
+        # Initialize all runtime attributes via reset() so they exist before
+        # the first get_signals() call (ml_fusion_scorer, kelly_sizer, structural_checker)
+        self.reset()
+
     def reset(self):
         """Reset all stateful fields for reuse across WFO/CPCV splits.
 

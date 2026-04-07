@@ -62,6 +62,8 @@ DERIVED_FEATURES = {
     'lower_wick_dominant': lambda f: _safe_float(f.get('wick_lower_ratio', 0)) > 1.5,
     'bb_tight_compression': lambda f: _safe_float(f.get('bb_width', 1.0)) < 0.02,
     'rsi_divergence_bullish': lambda bar: 1 if bar.get('rsi_divergence', 0) > 0.1 else 0,
+    # Post-rally exhaustion: reads pre-computed column injected by backtester/live computer
+    'prior_12h_return': lambda f: _safe_float(f.get('prior_12h_return', 0.0)),
 }
 
 # Features previously frozen in V12 feature store — NOW ALL PATCHED with real values.

@@ -884,6 +884,15 @@ class LiveFeatureComputer:
             f"rv_20d={features.get('rv_20d', 0):.3f}"
         )
 
+        # -- Inject derived features needed by archetype gates ----------------
+        # prior_12h_return: 12h price momentum used by liquidity_sweep exhaustion gate
+        close_arr = self._buf['close'].values
+        if len(close_arr) >= 13:
+            c12 = float(close_arr[-13])
+            features['prior_12h_return'] = (float(close_arr[-1]) - c12) / c12 if c12 > 0 else 0.0
+        else:
+            features['prior_12h_return'] = 0.0
+
         # -- Build Series and fill NaN ----------------------------------------
         series = pd.Series(features, name=ts)
         series = self._fill_nans(series)

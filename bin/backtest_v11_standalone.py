@@ -233,6 +233,13 @@ class StandaloneBacktestEngine:
             f"{self.features_df.index.min()} to {self.features_df.index.max()}"
         )
 
+        # Inject derived features needed for archetype gates
+        if 'prior_12h_return' not in self.features_df.columns:
+            self.features_df['prior_12h_return'] = (
+                self.features_df['close'].pct_change(12).fillna(0.0)
+            )
+            logger.info("Injected prior_12h_return into feature store.")
+
         # Derive proper 4-regime labels from probability columns
         self._derive_regime_labels()
 
