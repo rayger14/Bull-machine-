@@ -65,4 +65,4 @@ regime_preferences:
 allowed_regimes: []
 description: Low ATR + near POC + BOMS strength. High-quality coil breakout pattern.
 priority: 11
-enabled: true
+enabled: false
