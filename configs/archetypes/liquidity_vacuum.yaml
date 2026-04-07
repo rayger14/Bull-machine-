@@ -63,4 +63,4 @@ regime_preferences:
 allowed_regimes: []
 description: Crisis capitulation reversal. Liquidity vacuum at panic lows.
 priority: 12
-enabled: false
+enabled: true

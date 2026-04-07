@@ -61,4 +61,4 @@ regime_preferences:
 allowed_regimes: []
 description: Extreme RSI + high ATR + volume spike. Momentum exhaustion reversal.
 priority: 9
-enabled: false
+enabled: true

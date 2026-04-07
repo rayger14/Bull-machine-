@@ -59,4 +59,4 @@ regime_preferences:
 allowed_regimes: []
 description: Range-bound mean reversion. Specialist for choppy, directionless markets.
 priority: 13
-enabled: false
+enabled: true

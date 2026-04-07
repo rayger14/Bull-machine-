@@ -69,4 +69,4 @@ allowed_regimes: []
 description: Low-volume fade in choppy conditions. Scalping specialist for neutral
   regimes.
 priority: 16
-enabled: false
+enabled: true
