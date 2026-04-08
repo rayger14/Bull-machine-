@@ -126,6 +126,33 @@ sync_models() {
         "${LOCAL_DIR}/models/" "${SERVER_USER}@${SERVER_IP}:${REMOTE_DIR}/models/"
 }
 
+# ---- Pre-restart smoke test ----
+# Verifies the engine can instantiate without crashing before killing the live process.
+smoke_test() {
+    echo ""
+    echo "--- Smoke test (engine instantiation) ---"
+    ssh -i "${SSH_KEY}" "${SERVER_USER}@${SERVER_IP}" bash -s << 'SMOKE_EOF'
+set -euo pipefail
+cd /home/ubuntu/Bull-machine-
+source .venv/bin/activate
+python3 - << 'PYEOF'
+import sys
+sys.path.insert(0, '.')
+try:
+    from engine.integrations.isolated_archetype_engine import IsolatedArchetypeEngine
+    engine = IsolatedArchetypeEngine(archetype_config_dir='configs/archetypes/')
+    # Verify critical attributes exist post-init
+    assert hasattr(engine, 'structural_checker'), "structural_checker missing"
+    assert hasattr(engine, 'ml_fusion_scorer'), "ml_fusion_scorer missing"
+    assert hasattr(engine, 'kelly_sizer'), "kelly_sizer missing"
+    print("  Smoke test PASSED — engine instantiates cleanly")
+except Exception as e:
+    print(f"  Smoke test FAILED: {e}", file=sys.stderr)
+    sys.exit(1)
+PYEOF
+SMOKE_EOF
+}
+
 # ---- Restart Coinbase paper + dashboard ----
 restart_services() {
     echo ""
@@ -280,12 +307,14 @@ case "$MODE" in
         build_dashboard
         sync_code
         sync_models
+        smoke_test
         restart_services
         ;;
     default|"")
         build_dashboard
         clean_server_root
         sync_code
+        smoke_test
         restart_services
         ;;
     *)
