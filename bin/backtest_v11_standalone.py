@@ -96,6 +96,13 @@ class TrackedPosition:
     momentum_score_at_entry: float = 0.0
     smc_score_at_entry: float = 0.0
     gate_penalty_at_entry: float = 1.0
+    # Structural health monitoring (for --health-mode)
+    entry_health_score: float = 0.0
+    entry_wyckoff_active: bool = False
+    entry_liquidity_active: bool = False
+    entry_momentum_active: bool = False
+    entry_smc_active: bool = False
+    health_trailing_tightened: bool = False
     # Entry metadata for invalidation exits
     entry_metadata: Dict[str, Any] = field(default_factory=dict)
     # Runner state
@@ -197,6 +204,7 @@ class StandaloneBacktestEngine:
         features_df: 'pd.DataFrame | None' = None,
         signal_mode: str = 'fusion',
         sizing_mode: str = 'fixed',
+        health_mode: str = 'off',
     ):
         self.config = config
         self.initial_cash = initial_cash
@@ -205,6 +213,7 @@ class StandaloneBacktestEngine:
         self.slippage_bps = slippage_bps
         self.signal_mode = signal_mode
         self.sizing_mode = sizing_mode
+        self.health_mode = health_mode
 
         # Position tracking
         self.positions: Dict[str, TrackedPosition] = {}
@@ -878,6 +887,34 @@ class StandaloneBacktestEngine:
                         self.positions[pos_id].momentum_score_at_entry = sig_meta.get('momentum_score', 0.0)
                         self.positions[pos_id].smc_score_at_entry = sig_meta.get('smc_score', 0.0)
                         self.positions[pos_id].gate_penalty_at_entry = sig_meta.get('gate_penalty', 1.0)
+                        # Health monitor baseline (only when health mode is active)
+                        if self.health_mode != 'off':
+                            _pos = self.positions[pos_id]
+                            _inst = self.engine.archetypes.get(sig.archetype_id)
+                            if _inst is not None:
+                                _fw = _inst.config.fusion_weights
+                                _ws = sig_meta.get('wyckoff_score', 0.0)
+                                _ls = sig_meta.get('liquidity_score', 0.0)
+                                _ms = sig_meta.get('momentum_score', 0.0)
+                                _ss = sig_meta.get('smc_score', 0.0)
+                                _pos.entry_wyckoff_active = _ws > 0.0
+                                _pos.entry_liquidity_active = _ls > 0.0
+                                _pos.entry_momentum_active = _ms > 0.0
+                                _pos.entry_smc_active = _ss > 0.0
+                                # Weighted entry health score (active domains only)
+                                _active_w = (
+                                    (_fw.get('wyckoff', 0.25) if _pos.entry_wyckoff_active else 0.0) +
+                                    (_fw.get('liquidity', 0.25) if _pos.entry_liquidity_active else 0.0) +
+                                    (_fw.get('momentum', 0.25) if _pos.entry_momentum_active else 0.0) +
+                                    (_fw.get('smc', 0.25) if _pos.entry_smc_active else 0.0)
+                                )
+                                if _active_w > 0:
+                                    _pos.entry_health_score = (
+                                        (_fw.get('wyckoff', 0.25) * _ws if _pos.entry_wyckoff_active else 0.0) +
+                                        (_fw.get('liquidity', 0.25) * _ls if _pos.entry_liquidity_active else 0.0) +
+                                        (_fw.get('momentum', 0.25) * _ms if _pos.entry_momentum_active else 0.0) +
+                                        (_fw.get('smc', 0.25) * _ss if _pos.entry_smc_active else 0.0)
+                                    ) / _active_w
                     # Track last entry bar per direction for spacing
                     if sig.direction == 'long':
                         self._last_long_entry_bar = bar_idx
@@ -1288,6 +1325,92 @@ class StandaloneBacktestEngine:
     # Exit checking
     # ------------------------------------------------------------------
 
+    def _check_domain_health(
+        self, pos: 'TrackedPosition', pos_id: str, row: pd.Series, ts: pd.Timestamp
+    ) -> Optional[str]:
+        """
+        Check structural domain health — returns exit reason string or None.
+
+        Recomputes domain scores for the active domains at entry, computes weighted
+        delta normalized by active domain weight total, then:
+          - Mild degradation (delta < -0.30): tighten trailing to 2.0x ATR (one-shot)
+          - Severe degradation (delta < -0.50):
+              tighten mode: tighten trailing to 1.5x ATR
+              exit mode: return 'health_severe' to trigger close
+
+        Skips if bars_held < 12 (allow position to mature before monitoring).
+        """
+        if pos.bars_held < 12:
+            return None
+
+        inst = self.engine.archetypes.get(pos.archetype)
+        if inst is None:
+            return None
+
+        features = row.to_dict() if hasattr(row, 'to_dict') else dict(row)
+        fw = inst.config.fusion_weights
+
+        # Recompute only active domains
+        scores: Dict[str, float] = {}
+        weights: Dict[str, float] = {}
+        if pos.entry_wyckoff_active:
+            scores['wyckoff'] = inst._get_wyckoff_score(features)
+            weights['wyckoff'] = fw.get('wyckoff', 0.25)
+        if pos.entry_liquidity_active:
+            scores['liquidity'] = inst._get_liquidity_score(features)
+            weights['liquidity'] = fw.get('liquidity', 0.25)
+        if pos.entry_momentum_active:
+            scores['momentum'] = inst._get_momentum_score(features)
+            weights['momentum'] = fw.get('momentum', 0.25)
+        if pos.entry_smc_active:
+            scores['smc'] = inst._get_smc_score(features)
+            weights['smc'] = fw.get('smc', 0.25)
+
+        total_weight = sum(weights.values())
+        if total_weight <= 0 or not scores:
+            return None
+
+        current_health = sum(weights[d] * scores[d] for d in scores) / total_weight
+        health_delta = current_health - pos.entry_health_score
+
+        atr = float(row.get('atr_14', pos.atr_at_entry))
+        if pd.isna(atr) or atr <= 0:
+            atr = pos.atr_at_entry
+
+        # Severe degradation
+        if health_delta < -0.50:
+            if self.health_mode == 'exit':
+                return 'health_severe'
+            elif self.health_mode == 'tighten':
+                # Tighten trailing to 1.5x ATR from current price
+                if pos.direction == 'long':
+                    new_stop = float(row['close']) - 1.5 * atr
+                    current_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
+                    if new_stop > current_stop:
+                        pos.trailing_stop = new_stop
+                else:
+                    new_stop = float(row['close']) + 1.5 * atr
+                    current_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
+                    if new_stop < current_stop:
+                        pos.trailing_stop = new_stop
+            return None
+
+        # Mild degradation (one-shot flag)
+        if health_delta < -0.30 and not pos.health_trailing_tightened:
+            pos.health_trailing_tightened = True
+            if pos.direction == 'long':
+                new_stop = float(row['close']) - 2.0 * atr
+                current_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
+                if new_stop > current_stop:
+                    pos.trailing_stop = new_stop
+            else:
+                new_stop = float(row['close']) + 2.0 * atr
+                current_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
+                if new_stop < current_stop:
+                    pos.trailing_stop = new_stop
+
+        return None
+
     def _check_all_exits(self, row: pd.Series, ts: pd.Timestamp, bar_idx: int):
         """Check exits for all open positions using ExitLogic."""
         from engine.runtime.context import RuntimeContext
@@ -1365,6 +1488,15 @@ class StandaloneBacktestEngine:
                 # Sync trailing stop updates from ExitLogic (trailing updates return None)
                 if pos_adapter.stop_loss != pos.stop_loss:
                     pos.trailing_stop = pos_adapter.stop_loss
+
+            # --- 3. Domain health monitor (lowest priority, after ExitLogic) ---
+            if self.health_mode != 'off' and pos_id in self.positions:
+                health_reason = self._check_domain_health(pos, pos_id, row, ts)
+                if health_reason and pos_id in self.positions:
+                    self._close_position(
+                        pos_id, float(row['close']), ts,
+                        exit_reason=health_reason, exit_pct=1.0
+                    )
 
     # ------------------------------------------------------------------
     # Equity computation
@@ -1712,6 +1844,13 @@ def main():
              'domain (scale by active domain count: 1=0.75x, 2=1.0x, 3=1.25x, 4=1.5x), '
              'cmi (scale by dd_score quartile: <0.25=0.75x, 0.25-0.75=1.0x, >0.75=1.25x)'
     )
+    parser.add_argument(
+        '--health-mode', type=str, default='off',
+        choices=['off', 'tighten', 'exit'],
+        help='Structural domain health monitor: off (default, disabled), '
+             'tighten (tighten trailing stop on domain score degradation), '
+             'exit (force close on severe domain score degradation: delta < -0.30)'
+    )
 
     args = parser.parse_args()
 
@@ -1743,6 +1882,7 @@ def main():
     print(f"Slippage:      {args.slippage_bps:.1f} bps per side")
     print(f"Signal Mode:   {args.signal_mode}")
     print(f"Sizing Mode:   {args.sizing_mode}")
+    print(f"Health Mode:   {args.health_mode}")
     print(f"Output:        {args.output_dir}")
     print("=" * 80)
 
@@ -1773,6 +1913,7 @@ def main():
         slippage_bps=args.slippage_bps,
         signal_mode=args.signal_mode,
         sizing_mode=args.sizing_mode,
+        health_mode=args.health_mode,
     )
 
     engine.run(
