@@ -416,15 +416,11 @@ class ArchetypeInstance:
         """
         Extract SMC (Smart Money Concepts) domain score.
 
-        Uses pre-computed SMC features (BOS, CHOCH, FVG, Order Blocks).
-        fusion_smc now has real computed values (patched via bin/patch_frozen_features.py).
+        Computed from BOS/CHOCH/FVG component features. The parquet column
+        fusion_smc is frozen at 0.5 (builder.py placeholder, never computed)
+        and is intentionally ignored here.
         """
-        # fusion_smc is frozen at 0.5 — skip it, always compute from components
-        if 'fusion_smc' not in FROZEN_FEATURES:
-            if 'fusion_smc' in features and not pd.isna(features['fusion_smc']):
-                return features['fusion_smc']
-
-        # Compute from SMC component features
+        # Always compute from SMC component features
         # Use directional BOS scores (real data, ~3-4% active)
         if self.direction == 'long':
             bos_score = _safe_float(features.get('tf1h_bos_bullish', 0.0))
@@ -673,6 +669,7 @@ class ArchetypeInstance:
         prev_row: Optional[pd.Series] = None,
         lookback_df: Optional[pd.DataFrame] = None,
         structural_checker=None,
+        signal_mode: str = 'fusion',
     ) -> Optional[Signal]:
         """
         Generate entry signal if archetype conditions met.
@@ -736,9 +733,27 @@ class ArchetypeInstance:
         # Apply gate penalty in soft mode
         fusion *= gate_penalty
 
-        # Check archetype-specific threshold
-        if fusion < self.config.entry_threshold:
-            return None
+        # Signal mode: controls how fusion score is used for trade selection
+        if signal_mode == 'fusion':
+            # Production: weighted fusion score vs dynamic threshold
+            if fusion < self.config.entry_threshold:
+                return None
+        elif signal_mode == 'structural':
+            # Structural: skip fusion threshold — hard gates + cooling are sufficient
+            pass
+        elif signal_mode == 'composite':
+            # N-of-M: count domains with score > 0.25, require >= 3 of 4
+            domain_scores = {
+                'wyckoff': self._get_wyckoff_score(features),
+                'liquidity': self._get_liquidity_score(features),
+                'momentum': self._get_momentum_score(features),
+                'smc': self._get_smc_score(features),
+            }
+            domains_active = sum(1 for s in domain_scores.values() if s > 0.25)
+            if domains_active < 3:
+                return None
+        else:
+            raise ValueError(f"Unknown signal_mode: {signal_mode}")
 
         # Check liquidity requirement
         liquidity = self._get_liquidity_score(features)

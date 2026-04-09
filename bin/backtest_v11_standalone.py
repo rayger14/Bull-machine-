@@ -195,12 +195,16 @@ class StandaloneBacktestEngine:
         commission_rate: float = 0.001,
         slippage_bps: float = 2.0,
         features_df: 'pd.DataFrame | None' = None,
+        signal_mode: str = 'fusion',
+        sizing_mode: str = 'fixed',
     ):
         self.config = config
         self.initial_cash = initial_cash
         self.cash = initial_cash
         self.commission_rate = commission_rate
         self.slippage_bps = slippage_bps
+        self.signal_mode = signal_mode
+        self.sizing_mode = sizing_mode
 
         # Position tracking
         self.positions: Dict[str, TrackedPosition] = {}
@@ -546,6 +550,7 @@ class StandaloneBacktestEngine:
                 bar_index=bar_idx,
                 prev_row=prev_row,
                 lookback_df=lookback_df,
+                signal_mode=self.signal_mode,
             )
 
             if signals:
@@ -857,6 +862,12 @@ class StandaloneBacktestEngine:
                         base_crisis=base_crisis if self.adaptive_fusion.get('enabled', False) else 0.0,
                         vol_shock=vol_shock if self.adaptive_fusion.get('enabled', False) else 0.0,
                         sentiment_crisis=sentiment_crisis if self.adaptive_fusion.get('enabled', False) else 0.0,
+                        domain_scores={
+                            'wyckoff': sig.metadata.get('wyckoff_score', 0.0),
+                            'liquidity': sig.metadata.get('liquidity_score', 0.0),
+                            'momentum': sig.metadata.get('momentum_score', 0.0),
+                            'smc': sig.metadata.get('smc_score', 0.0),
+                        } if sig.metadata else None,
                     )
                     # Capture domain scores from signal metadata
                     sig_meta = sig.metadata or {}
@@ -952,6 +963,7 @@ class StandaloneBacktestEngine:
         allocated_size_pct: float,
         bar_idx: int = 0,
         threshold_at_entry: float = 0.0,
+        domain_scores: dict = None,
         risk_temp: float = 0.0,
         instability: float = 0.0,
         crisis_prob: float = 0.0,
@@ -987,6 +999,39 @@ class StandaloneBacktestEngine:
 
         # Use Kelly-adjusted risk if Kelly sizer is active on the engine
         risk_per_trade = self.risk_per_trade
+
+        # Domain-count sizing: scale risk by how many domains are active (score > 0.25)
+        # Keeps the same trades as fixed mode — only the size changes
+        # 1 active → 0.75x | 2 → 1.0x (baseline) | 3 → 1.25x | 4 → 1.5x
+        if self.sizing_mode == 'domain' and domain_scores:
+            DOMAIN_THRESHOLD = 0.25
+            DOMAIN_MULTIPLIERS = {0: 0.75, 1: 0.75, 2: 1.0, 3: 1.25, 4: 1.5}
+            n_active = sum(1 for s in domain_scores.values() if s > DOMAIN_THRESHOLD)
+            size_mult = DOMAIN_MULTIPLIERS.get(n_active, 1.0)
+            risk_per_trade *= size_mult
+            logger.debug(
+                "[DOMAIN_SIZING] %s: %d/4 domains active → %.2fx size (risk=%.3f%%)",
+                archetype, n_active, size_mult, risk_per_trade * 100
+            )
+
+        # CMI-based sizing: scale risk by dd_score quartile (real predictive signal)
+        # dd_score Q1 (<0.25): 0.75x | Q2-Q3 (0.25-0.75): 1.0x | Q4 (>0.75): 1.25x
+        # Source: quartile analysis showed WR gradient 63.8% → 87.3%, avg_pnl -$5 → $300
+        # dd_score is a CMI parameter passed directly (not from parquet)
+        elif self.sizing_mode == 'cmi':
+            _dd = dd_score if not pd.isna(dd_score) else 0.5
+            if _dd < 0.25:
+                size_mult = 0.75
+            elif _dd > 0.75:
+                size_mult = 1.25
+            else:
+                size_mult = 1.0
+            risk_per_trade *= size_mult
+            logger.debug(
+                "[CMI_SIZING] %s: dd_score=%.3f → %.2fx size (risk=%.3f%%)",
+                archetype, _dd, size_mult, risk_per_trade * 100
+            )
+
         if self.engine.kelly_sizer is not None:
             features_dict = features.to_dict() if hasattr(features, 'to_dict') else dict(features)
             kelly_risk = self.engine.get_kelly_risk_pct(
@@ -1653,6 +1698,20 @@ def main():
     )
     parser.add_argument('--counterfactual', action='store_true', default=False,
                         help='Run counterfactual analysis on completed trades')
+    parser.add_argument(
+        '--signal-mode', type=str, default='fusion',
+        choices=['fusion', 'structural', 'composite'],
+        help='Signal selection mode: fusion (default, weighted score vs threshold), '
+             'structural (skip fusion threshold, hard gates only), '
+             'composite (N-of-M: >=3 of 4 domains must score >0.25)'
+    )
+    parser.add_argument(
+        '--sizing-mode', type=str, default='fixed',
+        choices=['fixed', 'domain', 'cmi'],
+        help='Position sizing mode: fixed (default, flat 2%% risk), '
+             'domain (scale by active domain count: 1=0.75x, 2=1.0x, 3=1.25x, 4=1.5x), '
+             'cmi (scale by dd_score quartile: <0.25=0.75x, 0.25-0.75=1.0x, >0.75=1.25x)'
+    )
 
     args = parser.parse_args()
 
@@ -1682,6 +1741,8 @@ def main():
     print(f"Initial Cash:  ${args.initial_cash:,.0f}")
     print(f"Commission:    {args.commission_rate*10000:.1f} bps per side")
     print(f"Slippage:      {args.slippage_bps:.1f} bps per side")
+    print(f"Signal Mode:   {args.signal_mode}")
+    print(f"Sizing Mode:   {args.sizing_mode}")
     print(f"Output:        {args.output_dir}")
     print("=" * 80)
 
@@ -1710,6 +1771,8 @@ def main():
         initial_cash=args.initial_cash,
         commission_rate=args.commission_rate,
         slippage_bps=args.slippage_bps,
+        signal_mode=args.signal_mode,
+        sizing_mode=args.sizing_mode,
     )
 
     engine.run(

@@ -665,6 +665,7 @@ class IsolatedArchetypeEngine:
         bar_index: Optional[int] = None,
         prev_row: Optional[pd.Series] = None,
         lookback_df: Optional[pd.DataFrame] = None,
+        signal_mode: str = 'fusion',
     ) -> List[ArchetypeSignal]:
         """
         Generate signals from all archetypes for current bar.
@@ -707,6 +708,7 @@ class IsolatedArchetypeEngine:
                 prev_row=prev_row,
                 lookback_df=lookback_df,
                 structural_checker=self.structural_checker,
+                signal_mode=signal_mode,
             )
 
             if signal is not None:
