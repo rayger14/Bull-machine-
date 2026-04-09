@@ -205,6 +205,7 @@ class StandaloneBacktestEngine:
         signal_mode: str = 'fusion',
         sizing_mode: str = 'fixed',
         health_mode: str = 'off',
+        invalidation_mode: bool = False,
     ):
         self.config = config
         self.initial_cash = initial_cash
@@ -214,6 +215,7 @@ class StandaloneBacktestEngine:
         self.signal_mode = signal_mode
         self.sizing_mode = sizing_mode
         self.health_mode = health_mode
+        self.invalidation_mode = invalidation_mode
 
         # Position tracking
         self.positions: Dict[str, TrackedPosition] = {}
@@ -1411,6 +1413,63 @@ class StandaloneBacktestEngine:
 
         return None
 
+    def _check_structural_invalidation(
+        self, pos: 'TrackedPosition', row: pd.Series
+    ) -> Optional[str]:
+        """
+        Price-level structural invalidation — per-archetype thesis checks.
+
+        Unlike domain score monitoring (too noisy), this checks whether a specific
+        price level that DEFINED the setup has been breached. These are hard
+        structural facts: spring low violated = accumulation failed.
+
+        Only fires after bars_held >= 2 (skip entry bar noise).
+        Returns exit reason string or None.
+
+        Archetypes monitored:
+          spring         — close < spring_low * 0.998 (0.2% buffer)
+          wick_trap      — close < wick_low * 0.999 + volume confirmation
+          retest_cluster — close < cluster_low - 0.5 * ATR
+          order_block_retest — close < ob_low * 0.999
+        """
+        if pos.bars_held < 2:
+            return None
+        if pos.direction != 'long':
+            return None  # short-side structural checks not yet calibrated
+
+        close = float(row['close'])
+        meta = pos.entry_metadata
+        archetype = pos.archetype
+
+        if archetype == 'spring':
+            spring_low = meta.get('entry_spring_low', 0.0)
+            if spring_low > 0 and close < spring_low * 0.998:
+                return 'thesis_invalidated'
+
+        elif archetype == 'wick_trap':
+            wick_low = meta.get('entry_wick_low', 0.0)
+            entry_vol = meta.get('entry_volume', 0.0)
+            curr_vol = float(row.get('volume', 0.0))
+            if wick_low > 0 and close < wick_low * 0.999:
+                # Require volume confirmation: breakdown on above-average volume
+                if entry_vol <= 0 or curr_vol >= entry_vol * 0.8:
+                    return 'thesis_invalidated'
+
+        elif archetype == 'retest_cluster':
+            cluster_low = meta.get('entry_support_level', 0.0)
+            atr = float(row.get('atr_14', pos.atr_at_entry))
+            if pd.isna(atr) or atr <= 0:
+                atr = pos.atr_at_entry
+            if cluster_low > 0 and close < cluster_low - 0.5 * atr:
+                return 'thesis_invalidated'
+
+        elif archetype == 'order_block_retest':
+            ob_low = meta.get('entry_ob_low', 0.0)
+            if ob_low > 0 and close < ob_low * 0.999:
+                return 'thesis_invalidated'
+
+        return None
+
     def _check_all_exits(self, row: pd.Series, ts: pd.Timestamp, bar_idx: int):
         """Check exits for all open positions using ExitLogic."""
         from engine.runtime.context import RuntimeContext
@@ -1496,6 +1555,15 @@ class StandaloneBacktestEngine:
                     self._close_position(
                         pos_id, float(row['close']), ts,
                         exit_reason=health_reason, exit_pct=1.0
+                    )
+
+            # --- 4. Structural invalidation (price-level thesis checks) ---
+            if self.invalidation_mode and pos_id in self.positions:
+                inv_reason = self._check_structural_invalidation(pos, row)
+                if inv_reason and pos_id in self.positions:
+                    self._close_position(
+                        pos_id, float(row['close']), ts,
+                        exit_reason=inv_reason, exit_pct=1.0
                     )
 
     # ------------------------------------------------------------------
@@ -1845,6 +1913,11 @@ def main():
              'cmi (scale by dd_score quartile: <0.25=0.75x, 0.25-0.75=1.0x, >0.75=1.25x)'
     )
     parser.add_argument(
+        '--invalidation-mode', action='store_true', default=False,
+        help='Enable price-level structural invalidation exits for spring, wick_trap, '
+             'retest_cluster, order_block_retest (close below thesis level → exit 100%%)'
+    )
+    parser.add_argument(
         '--health-mode', type=str, default='off',
         choices=['off', 'tighten', 'exit'],
         help='Structural domain health monitor: off (default, disabled), '
@@ -1883,6 +1956,7 @@ def main():
     print(f"Signal Mode:   {args.signal_mode}")
     print(f"Sizing Mode:   {args.sizing_mode}")
     print(f"Health Mode:   {args.health_mode}")
+    print(f"Invalidation:  {'on' if args.invalidation_mode else 'off'}")
     print(f"Output:        {args.output_dir}")
     print("=" * 80)
 
@@ -1914,6 +1988,7 @@ def main():
         signal_mode=args.signal_mode,
         sizing_mode=args.sizing_mode,
         health_mode=args.health_mode,
+        invalidation_mode=args.invalidation_mode,
     )
 
     engine.run(
