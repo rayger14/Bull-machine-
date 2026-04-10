@@ -1432,7 +1432,7 @@ class StandaloneBacktestEngine:
           retest_cluster — close < cluster_low - 0.5 * ATR
           order_block_retest — close < ob_low * 0.999
         """
-        if pos.bars_held < 2:
+        if pos.bars_held < 4:
             return None
         if pos.direction != 'long':
             return None  # short-side structural checks not yet calibrated
@@ -1443,16 +1443,18 @@ class StandaloneBacktestEngine:
 
         if archetype == 'spring':
             spring_low = meta.get('entry_spring_low', 0.0)
-            if spring_low > 0 and close < spring_low * 0.998:
+            # 0.4% buffer: normal 1H BTC noise can breach 0.2% without invalidating structure
+            if spring_low > 0 and close < spring_low * 0.996:
                 return 'thesis_invalidated'
 
         elif archetype == 'wick_trap':
             wick_low = meta.get('entry_wick_low', 0.0)
             entry_vol = meta.get('entry_volume', 0.0)
             curr_vol = float(row.get('volume', 0.0))
-            if wick_low > 0 and close < wick_low * 0.999:
-                # Require volume confirmation: breakdown on above-average volume
-                if entry_vol <= 0 or curr_vol >= entry_vol * 0.8:
+            if wick_low > 0 and close < wick_low * 0.997:
+                # Require significant breakdown volume (≥1.2x entry bar volume)
+                # Low-volume breaches are often stop-hunts that recover
+                if entry_vol <= 0 or curr_vol >= entry_vol * 1.2:
                     return 'thesis_invalidated'
 
         elif archetype == 'retest_cluster':
@@ -1465,7 +1467,8 @@ class StandaloneBacktestEngine:
 
         elif archetype == 'order_block_retest':
             ob_low = meta.get('entry_ob_low', 0.0)
-            if ob_low > 0 and close < ob_low * 0.999:
+            # 0.3% buffer for order block retest
+            if ob_low > 0 and close < ob_low * 0.997:
                 return 'thesis_invalidated'
 
         return None
