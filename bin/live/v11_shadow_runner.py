@@ -75,6 +75,8 @@ class TrackedPosition:
     leverage_applied: float = 1.0
     # Entry metadata for invalidation exits
     entry_metadata: Dict[str, Any] = field(default_factory=dict)
+    # Full macro + derivatives state snapshot at entry time
+    macro_at_entry: Dict[str, Any] = field(default_factory=dict)
     # Runner state
     runner_trailing_stop: Optional[float] = None
 
@@ -97,6 +99,7 @@ class TrackedPosition:
         d.setdefault('threshold_margin', 0.0)
         d.setdefault('would_have_passed', True)
         d.setdefault('entry_metadata', {})
+        d.setdefault('macro_at_entry', {})
         d.setdefault('runner_trailing_stop', None)
         d.setdefault('position_size_usd', 0.0)
         d.setdefault('margin_used', 0.0)
@@ -279,6 +282,13 @@ class V11ShadowRunner:
         self.signal_log_path = self.output_dir / 'signals.csv'
         self._init_signal_log()
 
+        # Trade outcome log — one row per fully closed trade, full macro context
+        self.outcome_log_path = self.output_dir / 'trade_outcomes.csv'
+        self._init_outcome_log()
+
+        # Current bar macro snapshot — updated every bar, captured on position open
+        self.last_macro_snapshot: Dict[str, Any] = {}
+
         logger.info("V11ShadowRunner initialized")
         logger.info(f"  Config: {config_path}")
         logger.info(f"  Cash: ${initial_cash:,.0f}")
@@ -307,6 +317,93 @@ class V11ShadowRunner:
         else:
             with open(self.signal_log_path, 'w') as f:
                 f.write(expected_header)
+
+    def _init_outcome_log(self):
+        """Initialize trade_outcomes.csv — append-only, one row per fully closed trade."""
+        header = (
+            # Identity
+            'timestamp_entry,timestamp_exit,archetype,direction,'
+            # Prices + outcome
+            'entry_price,exit_price,pnl,pnl_pct,hold_hours,exit_reason,R_multiple,'
+            # CMI / regime context at entry
+            'regime,fusion_score,threshold,threshold_margin,'
+            'risk_temp,instability,crisis_prob,'
+            # Macro z-scores at entry
+            'vix_z,dxy_z,gold_z,oil_z,move_z,yield_curve,'
+            'btc_dominance_z,usdt_dominance_z,'
+            # Derivatives at entry
+            'funding_z,oi_value,oi_change_4h,taker_imbalance,ls_ratio_extreme,'
+            # Technical at entry
+            'atr_at_entry,chop,adx\n'
+        )
+        if not self.outcome_log_path.exists():
+            with open(self.outcome_log_path, 'w') as f:
+                f.write(header)
+
+    def _extract_macro_snapshot(self, features) -> Dict[str, Any]:
+        """Extract macro + derivatives state from the current bar's features."""
+        def _f(key, default=float('nan')):
+            val = features.get(key, default) if hasattr(features, 'get') else default
+            if val is None or (isinstance(val, float) and val != val):
+                return default
+            try:
+                return float(val)
+            except (TypeError, ValueError):
+                return default
+
+        return {
+            # Macro z-scores (from yfinance / macro parquet)
+            'vix_z':            _f('VIX_Z', _f('vix_z', 0.0)),
+            'dxy_z':            _f('DXY_Z', _f('dxy_z', 0.0)),
+            'gold_z':           _f('GOLD_Z', _f('gold_z', 0.0)),
+            'oil_z':            _f('OIL_Z', _f('oil_z', 0.0)),
+            'move_z':           _f('MOVE_Z', _f('move_z', 0.0)),
+            'yield_curve':      _f('YIELD_CURVE', 0.0),
+            'btc_dominance_z':  _f('BTC.D_Z', 0.0),
+            'usdt_dominance_z': _f('USDT.D_Z', 0.0),
+            # Derivatives (Binance futures)
+            'funding_z':        _f('funding_Z', _f('funding_z', 0.0)),
+            'oi_value':         _f('oi_value', 0.0),
+            'oi_change_4h':     _f('oi_change_4h', 0.0),
+            'taker_imbalance':  _f('taker_imbalance', 0.0),
+            'ls_ratio_extreme': _f('ls_ratio_extreme', 0.0),
+            # Technical context
+            'chop':             _f('chop_score', _f('chop', 0.0)),
+            'adx':              _f('adx_14', 0.0),
+        }
+
+    def _append_outcome_row(self, pos: 'TrackedPosition', pnl: float, pnl_pct: float,
+                             exit_price: float, exit_timestamp, exit_reason: str):
+        """Append one completed-trade row to trade_outcomes.csv."""
+        duration_hours = (exit_timestamp - pos.entry_time).total_seconds() / 3600.0
+        stop_dist = abs(pos.entry_price - pos.stop_loss)
+        R_multiple = (pnl / (stop_dist * pos.original_quantity)) if stop_dist > 0 else 0.0
+
+        m = pos.macro_at_entry
+
+        def _safe(v):
+            if v is None or (isinstance(v, float) and v != v):
+                return ''
+            return f'{v:.6g}'
+
+        row = (
+            f'{pos.entry_time},{exit_timestamp},{pos.archetype},{pos.direction},'
+            f'{pos.entry_price:.4f},{exit_price:.4f},{pnl:.4f},{pnl_pct:.4f},'
+            f'{duration_hours:.2f},{exit_reason},{R_multiple:.4f},'
+            f'{pos.regime_at_entry},{pos.fusion_score:.4f},'
+            f'{pos.threshold_at_entry:.4f},{pos.threshold_margin:.4f},'
+            f'{pos.risk_temp_at_entry:.4f},{pos.instability_at_entry:.4f},{pos.crisis_prob_at_entry:.4f},'
+            f'{_safe(m.get("vix_z"))},{_safe(m.get("dxy_z"))},'
+            f'{_safe(m.get("gold_z"))},{_safe(m.get("oil_z"))},'
+            f'{_safe(m.get("move_z"))},{_safe(m.get("yield_curve"))},'
+            f'{_safe(m.get("btc_dominance_z"))},{_safe(m.get("usdt_dominance_z"))},'
+            f'{_safe(m.get("funding_z"))},{_safe(m.get("oi_value"))},'
+            f'{_safe(m.get("oi_change_4h"))},{_safe(m.get("taker_imbalance"))},'
+            f'{_safe(m.get("ls_ratio_extreme"))},'
+            f'{pos.atr_at_entry:.4f},{_safe(m.get("chop"))},{_safe(m.get("adx"))}\n'
+        )
+        with open(self.outcome_log_path, 'a') as f:
+            f.write(row)
 
     def _init_exit_logic(self):
         """Initialize per-archetype exit logic (mirrors backtester)."""
@@ -751,6 +848,9 @@ class V11ShadowRunner:
         acted_signals = []
         # Reset per-bar signal tracking for dashboard
         self.last_bar_signals = []
+
+        # Refresh macro snapshot — captured on any position opened this bar
+        self.last_macro_snapshot = self._extract_macro_snapshot(features)
 
         # Maintain bar buffer for structural check lookback
         self.bar_buffer.append(features.copy())
@@ -1307,6 +1407,9 @@ class V11ShadowRunner:
             leverage_applied=self.leverage,
         )
 
+        # Capture full macro state at entry for trade_outcomes.csv
+        self.positions[pos_id].macro_at_entry = self.last_macro_snapshot.copy()
+
         # Capture entry metadata for ExitLogic invalidation checks
         self.positions[pos_id].entry_metadata = {
             'entry_prev_low': features.get('tf1h_prev_low', features.get('low', fill_price)) if isinstance(features, dict) else fill_price,
@@ -1390,6 +1493,11 @@ class V11ShadowRunner:
 
         pos.current_quantity -= exit_quantity
         pos.total_exits_pct += exit_pct
+
+        # On final exit: write full context row to trade_outcomes.csv
+        is_final_exit = (pos.current_quantity < 1e-10 or pos.total_exits_pct >= 0.99)
+        if is_final_exit:
+            self._append_outcome_row(pos, pnl, pnl_pct, fill_exit, exit_timestamp, exit_reason)
 
         # Log exit signal
         self._log_signal({
