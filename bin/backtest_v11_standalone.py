@@ -105,6 +105,8 @@ class TrackedPosition:
     health_trailing_tightened: bool = False
     # Entry metadata for invalidation exits
     entry_metadata: Dict[str, Any] = field(default_factory=dict)
+    # 2-bar confirmation for structural invalidation
+    structural_breach_count: int = 0
     # Runner state
     runner_trailing_stop: Optional[float] = None
 
@@ -1433,6 +1435,7 @@ class StandaloneBacktestEngine:
           order_block_retest — close < ob_low * 0.999
         """
         if pos.bars_held < 4:
+            pos.structural_breach_count = 0
             return None
         if pos.direction != 'long':
             return None  # short-side structural checks not yet calibrated
@@ -1441,11 +1444,13 @@ class StandaloneBacktestEngine:
         meta = pos.entry_metadata
         archetype = pos.archetype
 
+        breached = False
+
         if archetype == 'spring':
             spring_low = meta.get('entry_spring_low', 0.0)
             # 0.4% buffer: normal 1H BTC noise can breach 0.2% without invalidating structure
             if spring_low > 0 and close < spring_low * 0.996:
-                return 'thesis_invalidated'
+                breached = True
 
         elif archetype == 'wick_trap':
             wick_low = meta.get('entry_wick_low', 0.0)
@@ -1455,7 +1460,7 @@ class StandaloneBacktestEngine:
                 # Require significant breakdown volume (≥1.2x entry bar volume)
                 # Low-volume breaches are often stop-hunts that recover
                 if entry_vol <= 0 or curr_vol >= entry_vol * 1.2:
-                    return 'thesis_invalidated'
+                    breached = True
 
         elif archetype == 'retest_cluster':
             cluster_low = meta.get('entry_support_level', 0.0)
@@ -1463,13 +1468,22 @@ class StandaloneBacktestEngine:
             if pd.isna(atr) or atr <= 0:
                 atr = pos.atr_at_entry
             if cluster_low > 0 and close < cluster_low - 0.5 * atr:
-                return 'thesis_invalidated'
+                breached = True
 
         elif archetype == 'order_block_retest':
             ob_low = meta.get('entry_ob_low', 0.0)
             # 0.3% buffer for order block retest
             if ob_low > 0 and close < ob_low * 0.997:
+                breached = True
+
+        if breached:
+            pos.structural_breach_count += 1
+            # Require 2 consecutive closes below the level — filters whipsaws that recover
+            if pos.structural_breach_count >= 2:
                 return 'thesis_invalidated'
+        else:
+            # Price recovered above level — reset counter
+            pos.structural_breach_count = 0
 
         return None
 
