@@ -22,8 +22,9 @@ thresholds:
 hard_gates:
 - feature: liquidity_score
   op: min
-  value: 0.2
-  description: Minimum liquidity for sweep
+  value: 0.35
+  nan_policy: fail
+  description: Meaningful liquidity floor (raised from 0.20 — PF 3.04→3.26)
 - feature: wick_lower_ratio
   op: min
   value: 1.3
