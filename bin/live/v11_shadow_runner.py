@@ -319,7 +319,7 @@ class V11ShadowRunner:
                 f.write(expected_header)
 
     def _init_outcome_log(self):
-        """Initialize trade_outcomes.csv — append-only, one row per fully closed trade."""
+        """Initialize trade_outcomes.csv — append-only, one row per exit (including scale-outs)."""
         header = (
             # Identity
             'timestamp_entry,timestamp_exit,archetype,direction,'
@@ -328,17 +328,33 @@ class V11ShadowRunner:
             # CMI / regime context at entry
             'regime,fusion_score,threshold,threshold_margin,'
             'risk_temp,instability,crisis_prob,'
-            # Macro z-scores at entry
-            'vix_z,dxy_z,gold_z,oil_z,move_z,yield_curve,'
-            'btc_dominance_z,usdt_dominance_z,'
-            # Derivatives at entry
-            'funding_z,oi_value,oi_change_4h,taker_imbalance,ls_ratio_extreme,'
+            # Derivatives at entry (OKX live)
+            'funding_z,oi_value,oi_change_4h,oi_change_24h,'
+            'taker_imbalance,ls_ratio_extreme,funding_rate,'
+            # Wyckoff structural context at entry
+            'wyckoff_bullish,wyckoff_bearish,'
+            'wyckoff_4h_bull,wyckoff_4h_bear,'
+            # Sentiment + regime at entry
+            'fear_greed,ema_slope_50,rsi_14,'
             # Technical at entry
-            'atr_at_entry,chop,adx\n'
+            'atr_at_entry,chop,adx,atr_14,volume_zscore,bb_width\n'
         )
+        # Always rewrite header on startup (schema may have changed)
         if not self.outcome_log_path.exists():
             with open(self.outcome_log_path, 'w') as f:
                 f.write(header)
+        else:
+            # Check if header matches; if not, rotate old file and start fresh
+            with open(self.outcome_log_path, 'r') as f:
+                existing_header = f.readline().strip()
+            expected = header.strip()
+            if existing_header != expected:
+                backup = self.outcome_log_path.with_suffix('.csv.v1')
+                import shutil
+                shutil.copy2(self.outcome_log_path, backup)
+                logger.info(f"Rotated old trade_outcomes.csv to {backup} (schema changed)")
+                with open(self.outcome_log_path, 'w') as f:
+                    f.write(header)
 
     def _extract_macro_snapshot(self, features) -> Dict[str, Any]:
         """Extract macro + derivatives state from the current bar's features."""
@@ -352,24 +368,29 @@ class V11ShadowRunner:
                 return default
 
         return {
-            # Macro z-scores (from yfinance / macro parquet)
-            'vix_z':            _f('VIX_Z', _f('vix_z', 0.0)),
-            'dxy_z':            _f('DXY_Z', _f('dxy_z', 0.0)),
-            'gold_z':           _f('GOLD_Z', _f('gold_z', 0.0)),
-            'oil_z':            _f('OIL_Z', _f('oil_z', 0.0)),
-            'move_z':           _f('MOVE_Z', _f('move_z', 0.0)),
-            'yield_curve':      _f('YIELD_CURVE', 0.0),
-            'btc_dominance_z':  _f('BTC.D_Z', 0.0),
-            'usdt_dominance_z': _f('USDT.D_Z', 0.0),
-            # Derivatives (Binance futures)
+            # Derivatives (OKX live data)
             'funding_z':        _f('funding_Z', _f('funding_z', 0.0)),
             'oi_value':         _f('oi_value', 0.0),
             'oi_change_4h':     _f('oi_change_4h', 0.0),
+            'oi_change_24h':    _f('oi_change_24h', 0.0),
             'taker_imbalance':  _f('taker_imbalance', 0.0),
             'ls_ratio_extreme': _f('ls_ratio_extreme', 0.0),
+            'funding_rate':     _f('binance_funding_rate', _f('funding_rate', 0.0)),
+            # Wyckoff structural context (MTF)
+            'wyckoff_bullish':  _f('wyckoff_bullish_score', 0.0),
+            'wyckoff_bearish':  _f('wyckoff_bearish_score', 0.0),
+            'wyckoff_4h_bull':  _f('tf4h_wyckoff_bullish_score', 0.0),
+            'wyckoff_4h_bear':  _f('tf4h_wyckoff_bearish_score', 0.0),
+            # Sentiment & regime
+            'fear_greed':       _f('FEAR_GREED', _f('fear_greed_norm', 0.0)),
+            'ema_slope_50':     _f('ema_slope_50', 0.0),
+            'rsi_14':           _f('rsi_14', 0.0),
             # Technical context
             'chop':             _f('chop_score', _f('chop', 0.0)),
             'adx':              _f('adx_14', 0.0),
+            'atr_14':           _f('atr_14', 0.0),
+            'volume_zscore':    _f('volume_zscore', 0.0),
+            'bb_width':         _f('bb_width', 0.0),
         }
 
     def _append_outcome_row(self, pos: 'TrackedPosition', pnl: float, pnl_pct: float,
@@ -393,14 +414,19 @@ class V11ShadowRunner:
             f'{pos.regime_at_entry},{pos.fusion_score:.4f},'
             f'{pos.threshold_at_entry:.4f},{pos.threshold_margin:.4f},'
             f'{pos.risk_temp_at_entry:.4f},{pos.instability_at_entry:.4f},{pos.crisis_prob_at_entry:.4f},'
-            f'{_safe(m.get("vix_z"))},{_safe(m.get("dxy_z"))},'
-            f'{_safe(m.get("gold_z"))},{_safe(m.get("oil_z"))},'
-            f'{_safe(m.get("move_z"))},{_safe(m.get("yield_curve"))},'
-            f'{_safe(m.get("btc_dominance_z"))},{_safe(m.get("usdt_dominance_z"))},'
+            # Derivatives
             f'{_safe(m.get("funding_z"))},{_safe(m.get("oi_value"))},'
-            f'{_safe(m.get("oi_change_4h"))},{_safe(m.get("taker_imbalance"))},'
-            f'{_safe(m.get("ls_ratio_extreme"))},'
-            f'{pos.atr_at_entry:.4f},{_safe(m.get("chop"))},{_safe(m.get("adx"))}\n'
+            f'{_safe(m.get("oi_change_4h"))},{_safe(m.get("oi_change_24h"))},'
+            f'{_safe(m.get("taker_imbalance"))},{_safe(m.get("ls_ratio_extreme"))},'
+            f'{_safe(m.get("funding_rate"))},'
+            # Wyckoff
+            f'{_safe(m.get("wyckoff_bullish"))},{_safe(m.get("wyckoff_bearish"))},'
+            f'{_safe(m.get("wyckoff_4h_bull"))},{_safe(m.get("wyckoff_4h_bear"))},'
+            # Sentiment
+            f'{_safe(m.get("fear_greed"))},{_safe(m.get("ema_slope_50"))},{_safe(m.get("rsi_14"))},'
+            # Technical
+            f'{pos.atr_at_entry:.4f},{_safe(m.get("chop"))},{_safe(m.get("adx"))},'
+            f'{_safe(m.get("atr_14"))},{_safe(m.get("volume_zscore"))},{_safe(m.get("bb_width"))}\n'
         )
         with open(self.outcome_log_path, 'a') as f:
             f.write(row)
@@ -1494,10 +1520,9 @@ class V11ShadowRunner:
         pos.current_quantity -= exit_quantity
         pos.total_exits_pct += exit_pct
 
-        # On final exit: write full context row to trade_outcomes.csv
+        # Log EVERY exit (including scale-outs) to trade_outcomes.csv
         is_final_exit = (pos.current_quantity < 1e-10 or pos.total_exits_pct >= 0.99)
-        if is_final_exit:
-            self._append_outcome_row(pos, pnl, pnl_pct, fill_exit, exit_timestamp, exit_reason)
+        self._append_outcome_row(pos, pnl, pnl_pct, fill_exit, exit_timestamp, exit_reason)
 
         # Log exit signal
         self._log_signal({
@@ -1948,6 +1973,7 @@ class V11ShadowRunner:
             'last_risk_temp': self.last_risk_temp,
             'last_instability': self.last_instability,
             'last_crisis_prob': self.last_crisis_prob,
+            'last_macro_snapshot': self.last_macro_snapshot,
             'equity_curve': self.equity_curve,
             'trades': trades_data,
             'phantom_positions': {k: v.to_dict() for k, v in self.phantom_positions.items()},
@@ -1979,6 +2005,7 @@ class V11ShadowRunner:
         }
         self.last_cmi_breakdown = state.get('last_cmi_breakdown', {})
         self.last_cmi_comparison = state.get('last_cmi_comparison', {})
+        self.last_macro_snapshot = state.get('last_macro_snapshot', {})
         self.last_dynamic_threshold = state.get('last_dynamic_threshold', 0.18)
         self.last_risk_temp = state.get('last_risk_temp', 0.0)
         self.last_instability = state.get('last_instability', 0.0)
