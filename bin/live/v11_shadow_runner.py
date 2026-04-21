@@ -328,6 +328,8 @@ class V11ShadowRunner:
             # CMI / regime context at entry
             'regime,fusion_score,threshold,threshold_margin,'
             'risk_temp,instability,crisis_prob,'
+            # Macro z-scores at entry (yfinance)
+            'vix_z,dxy_z,gold_z,oil_z,yield_curve,'
             # Derivatives at entry (OKX live)
             'funding_z,oi_value,oi_change_4h,oi_change_24h,'
             'taker_imbalance,ls_ratio_extreme,funding_rate,'
@@ -368,6 +370,12 @@ class V11ShadowRunner:
                 return default
 
         return {
+            # Macro z-scores (yfinance via MacroDataFetcher — 24h cache)
+            'vix_z':            _f('VIX_Z', 0.0),
+            'dxy_z':            _f('DXY_Z', 0.0),
+            'gold_z':           _f('GOLD_Z', 0.0),
+            'oil_z':            _f('OIL_Z', 0.0),
+            'yield_curve':      _f('YIELD_CURVE', 0.0),
             # Derivatives (OKX live data)
             'funding_z':        _f('funding_Z', _f('funding_z', 0.0)),
             'oi_value':         _f('oi_value', 0.0),
@@ -414,6 +422,10 @@ class V11ShadowRunner:
             f'{pos.regime_at_entry},{pos.fusion_score:.4f},'
             f'{pos.threshold_at_entry:.4f},{pos.threshold_margin:.4f},'
             f'{pos.risk_temp_at_entry:.4f},{pos.instability_at_entry:.4f},{pos.crisis_prob_at_entry:.4f},'
+            # Macro
+            f'{_safe(m.get("vix_z"))},{_safe(m.get("dxy_z"))},'
+            f'{_safe(m.get("gold_z"))},{_safe(m.get("oil_z"))},'
+            f'{_safe(m.get("yield_curve"))},'
             # Derivatives
             f'{_safe(m.get("funding_z"))},{_safe(m.get("oi_value"))},'
             f'{_safe(m.get("oi_change_4h"))},{_safe(m.get("oi_change_24h"))},'
