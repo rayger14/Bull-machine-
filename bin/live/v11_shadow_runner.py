@@ -288,6 +288,8 @@ class V11ShadowRunner:
 
         # Current bar macro snapshot — updated every bar, captured on position open
         self.last_macro_snapshot: Dict[str, Any] = {}
+        self.last_dd_score: float = 0.0
+        self.last_trend_align: float = 0.0
 
         logger.info("V11ShadowRunner initialized")
         logger.info(f"  Config: {config_path}")
@@ -584,6 +586,8 @@ class V11ShadowRunner:
         self.last_risk_temp = risk_temp
         self.last_instability = instability
         self.last_crisis_prob = crisis_prob
+        self.last_dd_score = dd_score
+        self.last_trend_align = trend_align
 
         # Store detailed CMI component breakdown for dashboard
         self.last_cmi_breakdown = {
@@ -1124,9 +1128,9 @@ class V11ShadowRunner:
         # dd_score (r=+0.167), risk_temp (r=+0.126), trend_align (r=+0.105) are the
         # actual positive predictors — allocator uses these instead of fusion_score (r=-0.102)
         for s in signals:
-            s.metadata['dd_score'] = dd_score
-            s.metadata['risk_temp'] = risk_temp
-            s.metadata['trend_align'] = trend_align
+            s.metadata['dd_score'] = self.last_dd_score
+            s.metadata['risk_temp'] = self.last_risk_temp
+            s.metadata['trend_align'] = self.last_trend_align
 
         # Step 4: Portfolio allocation (bypass duplicate check in data-collection mode)
         if self.bypass_threshold:
