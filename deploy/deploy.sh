@@ -169,6 +169,54 @@ restart_services() {
     ssh -i "${SSH_KEY}" "${SERVER_USER}@${SERVER_IP}" "sudo systemctl status dashboard --no-pager | head -10"
 }
 
+# ---- Post-deploy health check ----
+# Waits for the engine to process its first bar, then checks for runtime errors
+# that the smoke test can't catch (NameError, AttributeError during process_bar)
+post_deploy_health_check() {
+    echo ""
+    echo "--- Post-deploy health check (waiting up to 90s for first bar) ---"
+    ssh -i "${SSH_KEY}" "${SERVER_USER}@${SERVER_IP}" bash -s << 'HEALTH_EOF'
+set -euo pipefail
+
+MAX_WAIT=90
+WAITED=0
+FOUND_HEARTBEAT=false
+
+# Wait for at least one HEARTBEAT (proves a full bar was processed)
+while [ $WAITED -lt $MAX_WAIT ]; do
+    if sudo journalctl -u coinbase-paper --since "2 minutes ago" --no-pager 2>/dev/null | grep -q 'HEARTBEAT'; then
+        FOUND_HEARTBEAT=true
+        break
+    fi
+    sleep 10
+    WAITED=$((WAITED + 10))
+    echo "  Waiting... (${WAITED}s)"
+done
+
+if [ "$FOUND_HEARTBEAT" = false ]; then
+    echo "  WARNING: No heartbeat after ${MAX_WAIT}s — engine may not have processed a bar yet"
+    echo "  (This is OK if deployed between hourly bars. Check manually later.)"
+    exit 0
+fi
+
+# Check for runtime errors in the last 2 minutes
+ERRORS=$(sudo journalctl -u coinbase-paper --since "2 minutes ago" --no-pager 2>/dev/null | grep -c 'NameError\|AttributeError\|ImportError\|SyntaxError\|TypeError.*process_bar\|process_bar.*failed' || true)
+
+if [ "$ERRORS" -gt 0 ]; then
+    echo ""
+    echo "  !! CRITICAL: Runtime errors detected after deploy !!"
+    echo ""
+    sudo journalctl -u coinbase-paper --since "2 minutes ago" --no-pager 2>/dev/null | grep -A 2 'Error\|failed' | head -20
+    echo ""
+    echo "  !! Engine is BROKEN — signals will crash on entry !!"
+    echo "  !! Fix the code and redeploy immediately !!"
+    exit 1
+else
+    echo "  Health check PASSED — no runtime errors after first bar"
+fi
+HEALTH_EOF
+}
+
 # ---- Deploy Coinbase stack ----
 deploy_coinbase() {
     echo ""
@@ -316,6 +364,7 @@ case "$MODE" in
         sync_code
         smoke_test
         restart_services
+        post_deploy_health_check
         ;;
     *)
         echo "Unknown option: ${MODE}"
