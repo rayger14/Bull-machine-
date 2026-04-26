@@ -1323,13 +1323,13 @@ def create_default_exit_config() -> Dict:
 
             # Confluence Breakout — breakout momentum, 4 day hold
             'confluence_breakout': {
-                'max_hold_hours': 96,
-                'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.25, 0.25, 0.4],
-                'trailing_start_r': 0.5,
-                'trailing_atr_mult': 1.5,
-                'runner_pct': 0.0,
-                'runner_trailing_atr': 2.0,
+                'max_hold_hours': 168,
+                'scale_out_levels': [1.0, 2.0, 3.0],
+                'scale_out_pcts': [0.25, 0.25, 0.35],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.5,
+                'runner_pct': 0.10,
+                'runner_trailing_atr': 3.0,
                 'invalidation_checks': False,
                 'reason_gone_checks': False,
                 'distress_exit_enabled': True,
