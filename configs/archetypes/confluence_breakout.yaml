@@ -7,18 +7,18 @@ aliases:
 - ratio_coil_break
 direction: long
 fusion_weights:
-  wyckoff: 0.3
-  liquidity: 0.25
-  momentum: 0.2
-  smc: 0.25
+  wyckoff: 0.35
+  liquidity: 0.3
+  momentum: 0.25
+  smc: 0.1
 thresholds:
-  fusion_threshold: 0.18
+  fusion_threshold: 0.12
   min_coil_score: 0.25
   require_breakout_flag: false
   atr_pctile: 0.4
   poc_dist: 1.0
   boms_strength: 0.0
-  fusion: 0.18
+  fusion: 0.12
   cooling_period_bars: 24
 hard_gates:
 - feature: atr_percentile
@@ -66,3 +66,4 @@ allowed_regimes: []
 description: Low ATR + near POC + BOMS strength. High-quality coil breakout pattern.
 priority: 11
 enabled: true
+bypass_fusion_threshold: true

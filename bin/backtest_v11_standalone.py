@@ -592,9 +592,31 @@ class StandaloneBacktestEngine:
                 _regime_counts[current_regime] = _regime_counts.get(current_regime, 0) + 1
                 raw_signal_count = len(signals)
                 max_pos = 3  # Default; overridden by adaptive or legacy path below
+                # Defaults for variables computed by adaptive fusion (needed if block is skipped)
+                dd_score = 0.5
+                risk_temp = 0.5
+                trend_align = 0.5
+                trend_strength = 0.0
+                sentiment_score = 0.5
+                instability = 0.3
+                crisis_prob = 0.0
+                crisis_penalty = 1.0
+                flat_threshold = 0.18
+                adx_weakness = 0.0
+                wick_sc = 0.0
+                vol_instab = 0.0
+                base_crisis = 0.0
+                vol_shock = 0.0
+                chop = 0.5
+                sentiment_crisis = 0.0
+                base_threshold = self.adaptive_fusion.get('base_threshold', 0.18) if self.adaptive_fusion else 0.18
+                temp_range = self.adaptive_fusion.get('temp_range', 0.35) if self.adaptive_fusion else 0.35
+                instab_range = self.adaptive_fusion.get('instab_range', 0.15) if self.adaptive_fusion else 0.15
+                per_arch_thresholds = self.adaptive_fusion.get('per_archetype_base_threshold', {}) if self.adaptive_fusion else {}
 
                 # Step 3b: Adaptive fusion — continuous regime modulation
-                if self.adaptive_fusion.get('enabled', False):
+                # In structural mode, skip threshold filtering (hard gates are sufficient)
+                if self.adaptive_fusion.get('enabled', False) and self.signal_mode != 'structural':
                     # Direct scoring from feature store (bypasses ProbabilisticRegimeDetector
                     # which has hardcoded normalizations that don't match our feature store)
                     def _get(col, default=0.0):
@@ -713,7 +735,20 @@ class StandaloneBacktestEngine:
                     # Apply crisis penalty and filter against per-archetype dynamic threshold
                     pre_filter = len(signals)
                     adjusted_signals = []
+                    # Load archetype configs to check for bypass_fusion_threshold flag
+                    _bypass_archetypes = set()
+                    if hasattr(self.engine, 'archetype_configs'):
+                        for aid, acfg in self.engine.archetype_configs.items():
+                            if acfg.get('bypass_fusion_threshold', False):
+                                _bypass_archetypes.add(aid)
+
                     for s in signals:
+                        # Archetypes with bypass_fusion_threshold skip the dynamic threshold
+                        # (their edge comes from hard gates, not fusion scoring)
+                        if s.archetype_id in _bypass_archetypes:
+                            adjusted_signals.append(s)
+                            continue
+
                         # Per-archetype base threshold (falls back to global)
                         arch_base = per_arch_thresholds.get(s.archetype_id, base_threshold)
                         arch_threshold = arch_base + (1.0 - risk_temp) * temp_range + instability * instab_range
@@ -815,11 +850,10 @@ class StandaloneBacktestEngine:
                 # Step 3e: Inject CMI confidence values into signal metadata for dynamic sizing
                 # dd_score (r=+0.167), risk_temp (r=+0.126), trend_align (r=+0.105) are the
                 # actual positive predictors — allocator uses these instead of fusion_score (r=-0.102)
-                if self.adaptive_fusion.get('enabled', False):
-                    for s in signals:
-                        s.metadata['dd_score'] = dd_score
-                        s.metadata['risk_temp'] = risk_temp
-                        s.metadata['trend_align'] = trend_align
+                for s in signals:
+                    s.metadata['dd_score'] = dd_score
+                    s.metadata['risk_temp'] = risk_temp
+                    s.metadata['trend_align'] = trend_align
 
                 # Step 4: Allocate via PortfolioAllocator
                 current_position_archetypes = [
