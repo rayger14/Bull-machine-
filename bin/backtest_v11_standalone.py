@@ -257,6 +257,14 @@ class StandaloneBacktestEngine:
             )
             logger.info("Injected prior_12h_return into feature store.")
 
+        if 'range_position_20' not in self.features_df.columns:
+            high_20 = self.features_df['high'].rolling(20).max()
+            low_20 = self.features_df['low'].rolling(20).min()
+            self.features_df['range_position_20'] = (
+                (self.features_df['close'] - low_20) / (high_20 - low_20 + 1e-10)
+            ).fillna(0.5)
+            logger.info("Injected range_position_20 into feature store.")
+
         # Derive proper 4-regime labels from probability columns
         self._derive_regime_labels()
 

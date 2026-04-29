@@ -84,6 +84,10 @@ hard_gates:
   value: 0.1
   nan_policy: skip
   description: "Net selling (taker flow confirms smart money exiting)"
+- feature: derived:distribution_at_resistance
+  op: bool_false
+  nan_policy: skip
+  description: "Block longs at resistance in 4H distribution (Wyckoff phase context)"
 gate_mode: soft
 
 # Exit logic

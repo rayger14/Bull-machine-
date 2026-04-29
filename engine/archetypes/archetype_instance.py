@@ -64,6 +64,16 @@ DERIVED_FEATURES = {
     'rsi_divergence_bullish': lambda bar: 1 if bar.get('rsi_divergence', 0) > 0.1 else 0,
     # Post-rally exhaustion: reads pre-computed column injected by backtester/live computer
     'prior_12h_return': lambda f: _safe_float(f.get('prior_12h_return', 0.0)),
+    # Wyckoff phase + price position context gates
+    # "Don't long at resistance in distribution, don't short at support in accumulation"
+    'distribution_at_resistance': lambda f: (
+        _safe_float(f.get('tf4h_wyckoff_bearish_score', 0.0)) > 0.5
+        and _safe_float(f.get('range_position_20', f.get('range_position', 0.5))) > 0.70
+    ),
+    'accumulation_at_support': lambda f: (
+        _safe_float(f.get('tf4h_wyckoff_bullish_score', 0.0)) > 0.5
+        and _safe_float(f.get('range_position_20', f.get('range_position', 0.5))) < 0.30
+    ),
 }
 
 # Features previously frozen in V12 feature store — NOW ALL PATCHED with real values.

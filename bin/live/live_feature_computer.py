@@ -2457,6 +2457,14 @@ class LiveFeatureComputer:
         # New: ADX>=50 = strong trend (chop=0), ADX=25 = moderate (chop=0.5), ADX=0 = chop=1.0
         out['chop_score'] = max(0.0, 1.0 - features.get('adx', 20.0) / 50.0)
 
+        # Range position: 0.0 = at 20-bar low (support), 1.0 = at 20-bar high (resistance)
+        if n >= 20:
+            high_20 = float(np.max(high[-20:]))
+            low_20 = float(np.min(low[-20:]))
+            out['range_position_20'] = (float(close[-1]) - low_20) / (high_20 - low_20 + 1e-10)
+        else:
+            out['range_position_20'] = 0.5
+
         # EMA alignment flags
         out['ema_21_above_50'] = 1 if features.get('ema_21', 0) > features.get('ema_50', 0) else 0
         out['ema_50_above_200'] = 1 if features.get('ema_50', 0) > features.get('ema_200', 0) else 0

@@ -36,6 +36,10 @@ hard_gates:
   value: 0.5
   nan_policy: fail
   description: Breakouts need volume confirmation
+- feature: derived:distribution_at_resistance
+  op: bool_false
+  nan_policy: skip
+  description: Block longs at resistance in 4H distribution (Wyckoff phase context)
 gate_mode: soft
 exit_logic:
   max_hold_hours: 96
