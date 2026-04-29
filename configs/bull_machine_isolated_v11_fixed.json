@@ -101,7 +101,8 @@
       "exhaustion_reversal": 0.14,
       "funding_divergence": 0.04,
       "fvg_continuation": 0.08,
-      "long_squeeze": 0.2
+      "long_squeeze": 0.2,
+      "confluence_breakout": 0.05
     },
     "_threshold_note": "2026-03-06: PRODUCTION MODE. bypass_threshold=false. Only signals above dynamic threshold trade. Data collection (79 trades, 33% WR, -$4.5K) proved bypass is catastrophic.",
     "bypass_threshold": true,
