@@ -247,6 +247,7 @@ class CoinbasePaperRunner:
         # used broken SMC-weight-only logic and should be excluded from metrics.
         self.valid_trades_from = datetime(2026, 3, 9, tzinfo=timezone.utc)
         self.bars_processed = 0
+        self.consecutive_bar_errors = 0  # Watchdog: exit after N consecutive failures
         self.last_funding_log_time = self.session_start
         self.last_processed_ts: Optional[pd.Timestamp] = None
         self.adapter_source = "coinbase" if not use_binance_fallback else "binance"
@@ -3071,8 +3072,19 @@ class CoinbasePaperRunner:
         # Run the signal engine
         try:
             acted_signals = self.runner.process_bar(features, timestamp)
+            self.consecutive_bar_errors = 0  # Reset watchdog on success
         except Exception as exc:
-            logger.error("process_bar() failed for %s: %s", timestamp, exc, exc_info=True)
+            self.consecutive_bar_errors += 1
+            logger.error(
+                "process_bar() failed for %s: %s (consecutive errors: %d)",
+                timestamp, exc, self.consecutive_bar_errors, exc_info=True
+            )
+            if self.consecutive_bar_errors >= 5:
+                logger.critical(
+                    "WATCHDOG: %d consecutive bar failures — exiting so systemd can restart.",
+                    self.consecutive_bar_errors
+                )
+                sys.exit(1)
             return []
 
         # Generate narratives for allocated (ENTRY) signals

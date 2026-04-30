@@ -33,6 +33,11 @@ hard_gates:
   value: 0.06
   nan_policy: skip
   description: Compression before expansion (BB squeeze)
+- feature: chop_score
+  op: max
+  value: 0.50
+  nan_policy: skip
+  description: Avoid mid-chop dead zone (0.5-0.7 = PF 0.93 historically)
 gate_mode: hard
 exit_logic:
   max_hold_hours: 120

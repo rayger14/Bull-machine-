@@ -55,40 +55,17 @@ DERIVED_FEATURES = {
         (_safe_float(f.get('high', 0)) - max(_safe_float(f.get('open', 0)), _safe_float(f.get('close', 0)))) / max(abs(_safe_float(f.get('close', 0)) - _safe_float(f.get('open', 0))), 0.01),
         10.0
     ),
-    # Phase 2: Strategy notebook derived features
-    'wyckoff_in_accumulation': lambda f: str(f.get('wyckoff_context', '')).lower() == 'accumulation',
-    'wyckoff_in_distribution': lambda f: str(f.get('wyckoff_context', '')).lower() == 'distribution',
-    'wyckoff_phase_c': lambda f: str(f.get('wyckoff_phase_abc', '')).upper() == 'C',
-    'lower_wick_dominant': lambda f: _safe_float(f.get('wick_lower_ratio', 0)) > 1.5,
-    'bb_tight_compression': lambda f: _safe_float(f.get('bb_width', 1.0)) < 0.02,
-    'rsi_divergence_bullish': lambda bar: 1 if bar.get('rsi_divergence', 0) > 0.1 else 0,
-    # Post-rally exhaustion: reads pre-computed column injected by backtester/live computer
-    'prior_12h_return': lambda f: _safe_float(f.get('prior_12h_return', 0.0)),
-    # Wyckoff phase + price position context gates
-    # "Don't long at resistance in distribution, don't short at support in accumulation"
-    'distribution_at_resistance': lambda f: (
-        _safe_float(f.get('tf4h_wyckoff_bearish_score', 0.0)) > 0.5
-        and _safe_float(f.get('range_position_20', f.get('range_position', 0.5))) > 0.70
-    ),
-    'accumulation_at_support': lambda f: (
-        _safe_float(f.get('tf4h_wyckoff_bullish_score', 0.0)) > 0.5
-        and _safe_float(f.get('range_position_20', f.get('range_position', 0.5))) < 0.30
-    ),
-    # Distribution exhaustion: the highest-conviction long entry signal
-    # 4H bearish (distribution) + OI declining (capitulation) + price at support (bounce zone)
-    # Walk-forward validated: PF 3.74 at bearish 0.6+, OI declining p<0.0001 (+2.3% fwd)
-    'distribution_exhaustion': lambda f: (
-        _safe_float(f.get('tf4h_wyckoff_bearish_score', 0.0)) >= 0.6
-        and _safe_float(f.get('oi_change_24h', 0.0)) < -0.02
-        and _safe_float(f.get('range_position_20', f.get('range_position', 0.5))) < 0.40
-    ),
 }
 
-# Features previously frozen in V12 feature store — NOW ALL PATCHED with real values.
-# bin/patch_frozen_features.py computed: fusion_smc, tf4h_fvg_present,
-# tf4h_squiggle_confidence, tf1h_frvp_distance_to_poc, tf4h_choch_flag.
-# boms_strength, tf1d_boms_strength, tf4h_boms_displacement already had real values.
-FROZEN_FEATURES: set = set()
+# Features known to be frozen/broken in V12 feature store
+# NOTE: funding_Z and funding_rate have REAL data since 2020 — do NOT include here
+# NOTE: fusion_smc is always 0.5 (frozen) — use fallback computation
+# NOTE: tf4h_squiggle_confidence is always 0.5 (frozen) — default to 0.0
+FROZEN_FEATURES = {
+    'boms_strength', 'tf1d_boms_strength', 'tf4h_boms_strength',
+    'tf4h_boms_displacement', 'tf1h_frvp_distance_to_poc',
+    'tf4h_fvg_present', 'fusion_smc', 'tf4h_squiggle_confidence',
+}
 
 
 @dataclass
@@ -420,9 +397,9 @@ class ArchetypeInstance:
         rsi = features.get('rsi_14', 50.0)
         rsi_momentum = abs(rsi - 50.0) / 50.0
 
-        # Squiggle confidence (real values from feature store)
+        # Squiggle confidence (default 0.0 — frozen at 0.5 in feature store, don't inflate)
         squiggle_conf = features.get('tf4h_squiggle_confidence', 0.0)
-        # Frozen bypass (no-op when FROZEN_FEATURES is empty)
+        # If frozen value detected, treat as no data
         if 'tf4h_squiggle_confidence' in FROZEN_FEATURES:
             squiggle_conf = 0.0
 
@@ -434,11 +411,15 @@ class ArchetypeInstance:
         """
         Extract SMC (Smart Money Concepts) domain score.
 
-        Computed from BOS/CHOCH/FVG component features. The parquet column
-        fusion_smc is frozen at 0.5 (builder.py placeholder, never computed)
-        and is intentionally ignored here.
+        Uses pre-computed SMC features (BOS, CHOCH, FVG, Order Blocks).
+        fusion_smc is frozen at 0.5 in V12 feature store — always use component fallback.
         """
-        # Always compute from SMC component features
+        # fusion_smc is frozen at 0.5 — skip it, always compute from components
+        if 'fusion_smc' not in FROZEN_FEATURES:
+            if 'fusion_smc' in features and not pd.isna(features['fusion_smc']):
+                return features['fusion_smc']
+
+        # Compute from SMC component features
         # Use directional BOS scores (real data, ~3-4% active)
         if self.direction == 'long':
             bos_score = _safe_float(features.get('tf1h_bos_bullish', 0.0))
@@ -679,16 +660,7 @@ class ArchetypeInstance:
         penalty = 1.0 - (failed_gates / total_gates) if total_gates > 0 else 1.0
         return all_passed, first_failure, penalty
 
-    def detect(
-        self,
-        features: Dict,
-        regime: str,
-        current_bar_idx: Optional[int] = None,
-        prev_row: Optional[pd.Series] = None,
-        lookback_df: Optional[pd.DataFrame] = None,
-        structural_checker=None,
-        signal_mode: str = 'fusion',
-    ) -> Optional[Signal]:
+    def detect(self, features: Dict, regime: str, current_bar_idx: Optional[int] = None) -> Optional[Signal]:
         """
         Generate entry signal if archetype conditions met.
 
@@ -696,28 +668,10 @@ class ArchetypeInstance:
             features: Feature dict from feature store
             regime: Current regime (for metadata, not filtering)
             current_bar_idx: Current bar index (for cooling period tracking)
-            prev_row: Previous bar's features (for structural checks needing lookback)
-            lookback_df: DataFrame of recent bars (for structural checks needing history)
-            structural_checker: StructuralChecker instance for pattern validation
 
         Returns:
             Signal object or None if no signal
         """
-        # Structural pattern check (BEFORE cooling/gates/fusion)
-        # This makes each archetype a genuine independent strategy
-        if structural_checker is not None:
-            row_series = pd.Series(features) if isinstance(features, dict) else features
-            passed, reason = structural_checker.check_structure(
-                archetype_name=self.name,
-                row=row_series,
-                prev_row=prev_row,
-                lookback_df=lookback_df,
-                bar_index=current_bar_idx or 0,
-            )
-            if not passed:
-                logger.debug(f"[STRUCTURE] {self.name} rejected: {reason}")
-                return None
-
         # Check cooling period (if bar index provided)
         if current_bar_idx is not None and not self.can_signal(current_bar_idx):
             logger.debug(
@@ -751,27 +705,9 @@ class ArchetypeInstance:
         # Apply gate penalty in soft mode
         fusion *= gate_penalty
 
-        # Signal mode: controls how fusion score is used for trade selection
-        if signal_mode == 'fusion':
-            # Production: weighted fusion score vs dynamic threshold
-            if fusion < self.config.entry_threshold:
-                return None
-        elif signal_mode == 'structural':
-            # Structural: skip fusion threshold — hard gates + cooling are sufficient
-            pass
-        elif signal_mode == 'composite':
-            # N-of-M: count domains with score > 0.25, require >= 3 of 4
-            domain_scores = {
-                'wyckoff': self._get_wyckoff_score(features),
-                'liquidity': self._get_liquidity_score(features),
-                'momentum': self._get_momentum_score(features),
-                'smc': self._get_smc_score(features),
-            }
-            domains_active = sum(1 for s in domain_scores.values() if s > 0.25)
-            if domains_active < 3:
-                return None
-        else:
-            raise ValueError(f"Unknown signal_mode: {signal_mode}")
+        # Check archetype-specific threshold
+        if fusion < self.config.entry_threshold:
+            return None
 
         # Check liquidity requirement
         liquidity = self._get_liquidity_score(features)
@@ -792,16 +728,6 @@ class ArchetypeInstance:
         else:  # short
             stop_loss = entry_price + (self.config.atr_stop_mult * atr)
             take_profit = entry_price - (self.config.atr_tp_mult * atr)
-
-        # ATR minimum distance validation: stop must be at least 0.5x ATR from entry
-        min_atr_distance = atr * 0.5
-        actual_distance = abs(entry_price - stop_loss)
-        if actual_distance < min_atr_distance:
-            logger.debug(
-                "[GATE] %s: stop too close (%.2f < %.2f ATR min)",
-                self.name, actual_distance, min_atr_distance
-            )
-            return None
 
         # Compute confidence (fusion score scaled)
         confidence = min(1.0, fusion / max(self.config.entry_threshold, 0.01))

@@ -259,6 +259,10 @@ export default function OpenPositions({ positions }: OpenPositionsProps) {
                         value={p.current_quantity != null ? p.current_quantity.toFixed(6) : '--'}
                       />
                       <DetailCell label="Bars Held" value={formatBarsHeld(p.bars_held)} />
+                      <DetailCell
+                        label="Entry Time"
+                        value={p.entry_time ? new Date(p.entry_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : '--'}
+                      />
                     </div>
                     {/* Trailing stop */}
                     <div className="mt-2">

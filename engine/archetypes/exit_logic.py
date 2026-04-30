@@ -141,7 +141,7 @@ class ExitLogic:
         default_rules = {
             'max_hold_hours': 168,  # 7 days
             'scale_out_levels': [0.5, 1.0, 2.0],  # R-multiples
-            'scale_out_pcts': [0.2, 0.2, 0.3],  # Exit 20%, 20%, 30% at each level
+            'scale_out_pcts': [0.33, 0.2, 0.3],  # Exit 33%, 20%, 30% at each level (33% at 0.5R locks more profit early)
             'trailing_start_r': 0.5,  # Start trailing after +0.5R (earlier protection)
             'trailing_atr_mult': 2.0,  # Trail 2 ATR behind peak
             'runner_pct': 0.0,  # No runner by default (0 = disabled)
@@ -867,7 +867,7 @@ class ExitLogic:
             scale_pcts = [pt['exit_pct'] for pt in profit_targets]
         else:
             scale_levels = rules.get('scale_out_levels', [0.5, 1.0, 2.0])
-            scale_pcts = rules.get('scale_out_pcts', [0.2, 0.2, 0.3])
+            scale_pcts = rules.get('scale_out_pcts', [0.33, 0.2, 0.3])
 
         # Track which scale-outs already executed
         executed_scales = position.metadata.get('executed_scale_outs', [])
@@ -1155,7 +1155,7 @@ def create_default_exit_config() -> Dict:
             'liquidity_vacuum': {
                 'max_hold_hours': 120,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'scale_out_pcts': [0.33, 0.2, 0.3],
                 'trailing_start_r': 0.5,
                 'trailing_atr_mult': 2.0,
                 'runner_pct': 0.15,
@@ -1225,7 +1225,7 @@ def create_default_exit_config() -> Dict:
             'trap_within_trend': {
                 'max_hold_hours': 168,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'scale_out_pcts': [0.33, 0.2, 0.3],
                 'trailing_start_r': 1.0,
                 'trailing_atr_mult': 2.0,
                 'runner_pct': 0.15,
@@ -1239,7 +1239,7 @@ def create_default_exit_config() -> Dict:
             'wick_trap': {
                 'max_hold_hours': 168,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'scale_out_pcts': [0.33, 0.2, 0.3],
                 'trailing_start_r': 1.0,
                 'trailing_atr_mult': 2.0,
                 'runner_pct': 0.15,
@@ -1255,7 +1255,7 @@ def create_default_exit_config() -> Dict:
             'liquidity_sweep': {
                 'max_hold_hours': 168,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'scale_out_pcts': [0.33, 0.2, 0.3],
                 'trailing_start_r': 1.0,
                 'trailing_atr_mult': 2.0,
                 'runner_pct': 0.15,
@@ -1269,7 +1269,7 @@ def create_default_exit_config() -> Dict:
             'retest_cluster': {
                 'max_hold_hours': 168,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.2, 0.2, 0.3],
+                'scale_out_pcts': [0.33, 0.2, 0.3],
                 'trailing_start_r': 1.0,
                 'trailing_atr_mult': 2.0,
                 'runner_pct': 0.15,
@@ -1323,13 +1323,13 @@ def create_default_exit_config() -> Dict:
 
             # Confluence Breakout — breakout momentum, 4 day hold
             'confluence_breakout': {
-                'max_hold_hours': 96,
-                'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.25, 0.25, 0.4],
-                'trailing_start_r': 0.5,
-                'trailing_atr_mult': 1.5,
-                'runner_pct': 0.0,
-                'runner_trailing_atr': 2.0,
+                'max_hold_hours': 168,
+                'scale_out_levels': [1.0, 2.0, 3.0],
+                'scale_out_pcts': [0.25, 0.25, 0.35],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.5,
+                'runner_pct': 0.10,
+                'runner_trailing_atr': 3.0,
                 'invalidation_checks': False,
                 'reason_gone_checks': False,
                 'distress_exit_enabled': True,

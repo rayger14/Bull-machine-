@@ -884,6 +884,15 @@ class LiveFeatureComputer:
             f"rv_20d={features.get('rv_20d', 0):.3f}"
         )
 
+        # -- Inject derived features needed by archetype gates ----------------
+        # prior_12h_return: 12h price momentum used by liquidity_sweep exhaustion gate
+        close_arr = self._buf['close'].values
+        if len(close_arr) >= 13:
+            c12 = float(close_arr[-13])
+            features['prior_12h_return'] = (float(close_arr[-1]) - c12) / c12 if c12 > 0 else 0.0
+        else:
+            features['prior_12h_return'] = 0.0
+
         # -- Build Series and fill NaN ----------------------------------------
         series = pd.Series(features, name=ts)
         series = self._fill_nans(series)
@@ -1943,11 +1952,12 @@ class LiveFeatureComputer:
             pos_map = {'above_va': 1.0, 'in_va': 0.0, 'below_va': -1.0}
             out['tf1h_frvp_position'] = pos_map.get(pos_str, 0.0)
 
-            # Distance to POC
-            frvp_dict = frvp.to_dict()
-            out['tf1h_frvp_distance_to_poc'] = float(
-                frvp_dict.get('frvp_distance_to_poc', 0)
-            )
+            # Distance to POC (as fraction of price, e.g. 0.02 = 2%)
+            current_price = self._buf['close'].iloc[-1]
+            if frvp.poc > 0:
+                out['tf1h_frvp_distance_to_poc'] = abs(float(current_price) - frvp.poc) / frvp.poc
+            else:
+                out['tf1h_frvp_distance_to_poc'] = 0.0
 
         except Exception as e:
             logger.warning(f"FRVP failed: {e}")
@@ -2446,6 +2456,14 @@ class LiveFeatureComputer:
         # Old formula (1-ADX/100) gave median 0.74, creating permanent instability floor
         # New: ADX>=50 = strong trend (chop=0), ADX=25 = moderate (chop=0.5), ADX=0 = chop=1.0
         out['chop_score'] = max(0.0, 1.0 - features.get('adx', 20.0) / 50.0)
+
+        # Range position: 0.0 = at 20-bar low (support), 1.0 = at 20-bar high (resistance)
+        if n >= 20:
+            high_20 = float(np.max(high[-20:]))
+            low_20 = float(np.min(low[-20:]))
+            out['range_position_20'] = (float(close[-1]) - low_20) / (high_20 - low_20 + 1e-10)
+        else:
+            out['range_position_20'] = 0.5
 
         # EMA alignment flags
         out['ema_21_above_50'] = 1 if features.get('ema_21', 0) > features.get('ema_50', 0) else 0
