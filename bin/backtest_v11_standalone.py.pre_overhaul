@@ -89,24 +89,8 @@ class TrackedPosition:
     sentiment_crisis_at_entry: float = 0.0
     leverage_applied: float = 1.0
     position_size_usd: float = 0.0
-    margin_used: float = 0.0  # margin locked at exchange (notional / leverage)
-    # Domain scores (for fusion predictiveness analysis)
-    wyckoff_score_at_entry: float = 0.0
-    liquidity_score_at_entry: float = 0.0
-    momentum_score_at_entry: float = 0.0
-    smc_score_at_entry: float = 0.0
-    gate_penalty_at_entry: float = 1.0
-    # Structural health monitoring (for --health-mode)
-    entry_health_score: float = 0.0
-    entry_wyckoff_active: bool = False
-    entry_liquidity_active: bool = False
-    entry_momentum_active: bool = False
-    entry_smc_active: bool = False
-    health_trailing_tightened: bool = False
     # Entry metadata for invalidation exits
     entry_metadata: Dict[str, Any] = field(default_factory=dict)
-    # 2-bar confirmation for structural invalidation
-    structural_breach_count: int = 0
     # Runner state
     runner_trailing_stop: Optional[float] = None
 
@@ -149,13 +133,6 @@ class CompletedTrade:
     sentiment_crisis_at_entry: float = 0.0
     leverage_applied: float = 1.0
     position_size_usd: float = 0.0
-    # Domain scores (for fusion predictiveness analysis)
-    wyckoff_score_at_entry: float = 0.0
-    liquidity_score_at_entry: float = 0.0
-    momentum_score_at_entry: float = 0.0
-    smc_score_at_entry: float = 0.0
-    gate_penalty_at_entry: float = 1.0
-    position_id: str = ""
 
 
 class _PositionAdapter:
@@ -204,20 +181,12 @@ class StandaloneBacktestEngine:
         commission_rate: float = 0.001,
         slippage_bps: float = 2.0,
         features_df: 'pd.DataFrame | None' = None,
-        signal_mode: str = 'fusion',
-        sizing_mode: str = 'fixed',
-        health_mode: str = 'off',
-        invalidation_mode: bool = False,
     ):
         self.config = config
         self.initial_cash = initial_cash
         self.cash = initial_cash
         self.commission_rate = commission_rate
         self.slippage_bps = slippage_bps
-        self.signal_mode = signal_mode
-        self.sizing_mode = sizing_mode
-        self.health_mode = health_mode
-        self.invalidation_mode = invalidation_mode
 
         # Position tracking
         self.positions: Dict[str, TrackedPosition] = {}
@@ -229,11 +198,6 @@ class StandaloneBacktestEngine:
         self.total_signals = 0
         self.signals_allocated = 0
         self.signals_rejected = 0
-
-        # Same-direction entry spacing (prevent correlated clusters)
-        self._last_long_entry_bar = -999
-        self._last_short_entry_bar = -999
-        self._entry_spacing_bars = 2  # min bars between same-direction entries
 
         # Load feature store (or use pre-loaded DataFrame)
         if features_df is not None:
@@ -249,21 +213,6 @@ class StandaloneBacktestEngine:
             f"{len(self.features_df.columns)} columns, "
             f"{self.features_df.index.min()} to {self.features_df.index.max()}"
         )
-
-        # Inject derived features needed for archetype gates
-        if 'prior_12h_return' not in self.features_df.columns:
-            self.features_df['prior_12h_return'] = (
-                self.features_df['close'].pct_change(12).fillna(0.0)
-            )
-            logger.info("Injected prior_12h_return into feature store.")
-
-        if 'range_position_20' not in self.features_df.columns:
-            high_20 = self.features_df['high'].rolling(20).max()
-            low_20 = self.features_df['low'].rolling(20).min()
-            self.features_df['range_position_20'] = (
-                (self.features_df['close'] - low_20) / (high_20 - low_20 + 1e-10)
-            ).fillna(0.5)
-            logger.info("Injected range_position_20 into feature store.")
 
         # Derive proper 4-regime labels from probability columns
         self._derive_regime_labels()
@@ -368,12 +317,6 @@ class StandaloneBacktestEngine:
             enable_regime = False
             regime_model_path = None
 
-        # Ensure structural checks run in backtest mode (frozen feature bypass)
-        if 'structural_checks' not in self.config:
-            self.config['structural_checks'] = {}
-        self.config['structural_checks'].setdefault('mode_context', 'backtest')
-        self.config['structural_checks'].setdefault('enabled', True)
-
         self.engine = IsolatedArchetypeEngine(
             archetype_config_dir=archetype_config_dir,
             portfolio_config=portfolio_config,
@@ -437,8 +380,7 @@ class StandaloneBacktestEngine:
         # Position sizing config
         sizing_cfg = self.config.get('position_sizing', {})
         self.risk_per_trade = sizing_cfg.get('risk_per_trade_pct', 0.02)
-        self.max_position_pct = sizing_cfg.get('max_position_size_pct', 0.12)  # legacy, unused
-        self.max_margin_pct = sizing_cfg.get('max_margin_per_position_pct', 0.35)
+        self.max_position_pct = sizing_cfg.get('max_position_size_pct', 0.12)
         self.leverage = self.config.get('leverage', 1.0)
 
         logger.info(
@@ -459,32 +401,6 @@ class StandaloneBacktestEngine:
 
         self.exit_logic = ExitLogic(exit_config)
         logger.info("ExitLogic initialized (archetype-specific exit rules)")
-
-    # ------------------------------------------------------------------
-    # Reset (enables engine reuse across multiple run() calls)
-    # ------------------------------------------------------------------
-
-    def reset(self):
-        """Reset all stateful fields so the engine can be re-run on a different date range.
-
-        Reuses the already-initialized archetype engine and feature store —
-        only clears position/trade/equity state. This avoids the costly
-        archetype re-initialization (YAML loading, Wyckoff setup, etc.)
-        between sequential WFO/CPCV splits.
-        """
-        self.cash = self.initial_cash
-        self.positions = {}
-        self.trades = []
-        self.equity_curve = [self.initial_cash]
-        self.equity_timestamps = []
-        self.total_signals = 0
-        self.signals_allocated = 0
-        self.signals_rejected = 0
-        self._last_long_entry_bar = -999
-        self._last_short_entry_bar = -999
-        # Reset archetype engine state (cooling, structural memory)
-        if hasattr(self, 'engine') and hasattr(self.engine, 'reset'):
-            self.engine.reset()
 
     # ------------------------------------------------------------------
     # Core backtest loop
@@ -520,25 +436,25 @@ class StandaloneBacktestEngine:
 
         t0 = time.time()
 
-        # CMI weights — config-driven, defaults match config 2026-02-21
+        # CMI weights — config-driven with hand-tuned defaults
         cmi_weights = self.adaptive_fusion.get('cmi_weights', {})
         rt_w = cmi_weights.get('risk_temp', {})
-        w_trend = rt_w.get('trend_align', 0.30)
-        w_strength = rt_w.get('trend_strength', 0.05)
+        w_trend = rt_w.get('trend_align', 0.45)
+        w_strength = rt_w.get('trend_strength', 0.25)
         w_sentiment = rt_w.get('sentiment', 0.15)
-        w_dd = rt_w.get('dd_score', 0.50)
+        w_dd = rt_w.get('dd_score', 0.15)
         w_deriv = rt_w.get('derivatives_heat', 0.0)
 
         inst_w = cmi_weights.get('instability', {})
-        w_chop = inst_w.get('chop', 0.40)
-        w_adx_weak = inst_w.get('adx_weakness', 0.10)
-        w_wick = inst_w.get('wick_score', 0.25)
-        w_vol = inst_w.get('vol_instab', 0.25)
+        w_chop = inst_w.get('chop', 0.35)
+        w_adx_weak = inst_w.get('adx_weakness', 0.25)
+        w_wick = inst_w.get('wick_score', 0.20)
+        w_vol = inst_w.get('vol_instab', 0.20)
 
         crisis_w = cmi_weights.get('crisis', {})
-        w_base_crisis = crisis_w.get('base_crisis', 0.45)
-        w_vol_shock = crisis_w.get('vol_shock', 0.10)
-        w_sent_crisis = crisis_w.get('sentiment_crisis', 0.45)
+        w_base_crisis = crisis_w.get('base_crisis', 0.60)
+        w_vol_shock = crisis_w.get('vol_shock', 0.20)
+        w_sent_crisis = crisis_w.get('sentiment_crisis', 0.20)
 
         # Tracking accumulators for periodic stats logging
         _regime_counts: Dict[str, int] = {}
@@ -547,10 +463,6 @@ class StandaloneBacktestEngine:
         _instability_values: List[float] = []
         _signals_per_period: int = 0
         _entries_per_period: int = 0
-
-        # Cache high/low arrays for prev_high/prev_low lookback in _open_position
-        self._highs = df['high'].values if 'high' in df.columns else None
-        self._lows = df['low'].values if 'low' in df.columns else None
 
         for bar_idx, (ts, row) in enumerate(df.iterrows()):
             # Step 1: Update bars held for all positions
@@ -561,17 +473,9 @@ class StandaloneBacktestEngine:
             self._check_all_exits(row, ts, bar_idx)
 
             # Step 3: Generate signals from IsolatedArchetypeEngine
-            # Pass prev_row and lookback_df for structural pattern checks (logic.py)
-            prev_row = df.iloc[bar_idx - 1] if bar_idx > 0 else None
-            lookback_start = max(0, bar_idx - 500)
-            lookback_df = df.iloc[lookback_start:bar_idx + 1]
-
             signals = self.engine.get_signals(
                 bar=row,
-                bar_index=bar_idx,
-                prev_row=prev_row,
-                lookback_df=lookback_df,
-                signal_mode=self.signal_mode,
+                bar_index=bar_idx
             )
 
             if signals:
@@ -600,31 +504,9 @@ class StandaloneBacktestEngine:
                 _regime_counts[current_regime] = _regime_counts.get(current_regime, 0) + 1
                 raw_signal_count = len(signals)
                 max_pos = 3  # Default; overridden by adaptive or legacy path below
-                # Defaults for variables computed by adaptive fusion (needed if block is skipped)
-                dd_score = 0.5
-                risk_temp = 0.5
-                trend_align = 0.5
-                trend_strength = 0.0
-                sentiment_score = 0.5
-                instability = 0.3
-                crisis_prob = 0.0
-                crisis_penalty = 1.0
-                flat_threshold = 0.18
-                adx_weakness = 0.0
-                wick_sc = 0.0
-                vol_instab = 0.0
-                base_crisis = 0.0
-                vol_shock = 0.0
-                chop = 0.5
-                sentiment_crisis = 0.0
-                base_threshold = self.adaptive_fusion.get('base_threshold', 0.18) if self.adaptive_fusion else 0.18
-                temp_range = self.adaptive_fusion.get('temp_range', 0.35) if self.adaptive_fusion else 0.35
-                instab_range = self.adaptive_fusion.get('instab_range', 0.15) if self.adaptive_fusion else 0.15
-                per_arch_thresholds = self.adaptive_fusion.get('per_archetype_base_threshold', {}) if self.adaptive_fusion else {}
 
                 # Step 3b: Adaptive fusion — continuous regime modulation
-                # In structural mode, skip threshold filtering (hard gates are sufficient)
-                if self.adaptive_fusion.get('enabled', False) and self.signal_mode != 'structural':
+                if self.adaptive_fusion.get('enabled', False):
                     # Direct scoring from feature store (bypasses ProbabilisticRegimeDetector
                     # which has hardcoded normalizations that don't match our feature store)
                     def _get(col, default=0.0):
@@ -743,20 +625,7 @@ class StandaloneBacktestEngine:
                     # Apply crisis penalty and filter against per-archetype dynamic threshold
                     pre_filter = len(signals)
                     adjusted_signals = []
-                    # Load archetype configs to check for bypass_fusion_threshold flag
-                    _bypass_archetypes = set()
-                    if hasattr(self.engine, 'archetype_configs'):
-                        for aid, acfg in self.engine.archetype_configs.items():
-                            if acfg.get('bypass_fusion_threshold', False):
-                                _bypass_archetypes.add(aid)
-
                     for s in signals:
-                        # Archetypes with bypass_fusion_threshold skip the dynamic threshold
-                        # (their edge comes from hard gates, not fusion scoring)
-                        if s.archetype_id in _bypass_archetypes:
-                            adjusted_signals.append(s)
-                            continue
-
                         # Per-archetype base threshold (falls back to global)
                         arch_base = per_arch_thresholds.get(s.archetype_id, base_threshold)
                         arch_threshold = arch_base + (1.0 - risk_temp) * temp_range + instability * instab_range
@@ -836,36 +705,11 @@ class StandaloneBacktestEngine:
                         self.signals_rejected += len(signals)
                         signals = []
 
-                # Step 3d: Same-direction entry spacing (prevent correlated clusters)
-                if signals:
-                    spaced_signals = []
-                    for s in signals:
-                        if s.direction == 'long' and (bar_idx - self._last_long_entry_bar) < self._entry_spacing_bars:
-                            self.signals_rejected += 1
-                            continue
-                        if s.direction == 'short' and (bar_idx - self._last_short_entry_bar) < self._entry_spacing_bars:
-                            self.signals_rejected += 1
-                            continue
-                        spaced_signals.append(s)
-                    signals = spaced_signals
-
                 if not signals:
                     equity = self._compute_equity(row['close'])
                     self.equity_curve.append(equity)
                     self.equity_timestamps.append(ts)
                     continue
-
-                # Step 3e: Inject CMI confidence values into signal metadata for dynamic sizing
-                # dd_score (r=+0.167), risk_temp (r=+0.126), trend_align (r=+0.105) are the
-                # actual positive predictors — allocator uses these instead of fusion_score (r=-0.102)
-                for s in signals:
-                    s.metadata['dd_score'] = dd_score
-                    s.metadata['risk_temp'] = risk_temp
-                    s.metadata['trend_align'] = trend_align
-                    # Wyckoff 4H bearish score for sizing multiplier
-                    wyck_bear = row.get('tf4h_wyckoff_bearish_score', 0.0) if hasattr(row, 'get') else 0.0
-                    if wyck_bear is not None and wyck_bear == wyck_bear:
-                        s.metadata['tf4h_wyckoff_bearish_score'] = float(wyck_bear)
 
                 # Step 4: Allocate via PortfolioAllocator
                 current_position_archetypes = [
@@ -877,12 +721,6 @@ class StandaloneBacktestEngine:
                 )
 
                 self.signals_rejected += len(rejections)
-
-                # Step 4b: Wyckoff 4H sizing boost (walk-forward validated: PF 3.74 at bearish 0.6+)
-                for intent in intents:
-                    wyck_bear = getattr(intent.signal, 'metadata', {}).get('tf4h_wyckoff_bearish_score', 0.0)
-                    if wyck_bear and wyck_bear >= 0.6:
-                        intent.allocated_size_pct *= 1.25
 
                 # Step 5: Execute allocations
                 for intent in intents:
@@ -910,7 +748,6 @@ class StandaloneBacktestEngine:
                         regime_label=current_regime,
                         features=row,
                         allocated_size_pct=intent.allocated_size_pct,
-                        bar_idx=bar_idx,
                         threshold_at_entry=_arch_threshold,
                         risk_temp=risk_temp if self.adaptive_fusion.get('enabled', False) else 0.0,
                         instability=instability if self.adaptive_fusion.get('enabled', False) else 0.0,
@@ -927,55 +764,7 @@ class StandaloneBacktestEngine:
                         base_crisis=base_crisis if self.adaptive_fusion.get('enabled', False) else 0.0,
                         vol_shock=vol_shock if self.adaptive_fusion.get('enabled', False) else 0.0,
                         sentiment_crisis=sentiment_crisis if self.adaptive_fusion.get('enabled', False) else 0.0,
-                        domain_scores={
-                            'wyckoff': sig.metadata.get('wyckoff_score', 0.0),
-                            'liquidity': sig.metadata.get('liquidity_score', 0.0),
-                            'momentum': sig.metadata.get('momentum_score', 0.0),
-                            'smc': sig.metadata.get('smc_score', 0.0),
-                        } if sig.metadata else None,
                     )
-                    # Capture domain scores from signal metadata
-                    sig_meta = sig.metadata or {}
-                    pos_id = f"{sig.direction}_{sig.archetype_id}_{int(ts.timestamp())}"
-                    if pos_id in self.positions:
-                        self.positions[pos_id].wyckoff_score_at_entry = sig_meta.get('wyckoff_score', 0.0)
-                        self.positions[pos_id].liquidity_score_at_entry = sig_meta.get('liquidity_score', 0.0)
-                        self.positions[pos_id].momentum_score_at_entry = sig_meta.get('momentum_score', 0.0)
-                        self.positions[pos_id].smc_score_at_entry = sig_meta.get('smc_score', 0.0)
-                        self.positions[pos_id].gate_penalty_at_entry = sig_meta.get('gate_penalty', 1.0)
-                        # Health monitor baseline (only when health mode is active)
-                        if self.health_mode != 'off':
-                            _pos = self.positions[pos_id]
-                            _inst = self.engine.archetypes.get(sig.archetype_id)
-                            if _inst is not None:
-                                _fw = _inst.config.fusion_weights
-                                _ws = sig_meta.get('wyckoff_score', 0.0)
-                                _ls = sig_meta.get('liquidity_score', 0.0)
-                                _ms = sig_meta.get('momentum_score', 0.0)
-                                _ss = sig_meta.get('smc_score', 0.0)
-                                _pos.entry_wyckoff_active = _ws > 0.0
-                                _pos.entry_liquidity_active = _ls > 0.0
-                                _pos.entry_momentum_active = _ms > 0.0
-                                _pos.entry_smc_active = _ss > 0.0
-                                # Weighted entry health score (active domains only)
-                                _active_w = (
-                                    (_fw.get('wyckoff', 0.25) if _pos.entry_wyckoff_active else 0.0) +
-                                    (_fw.get('liquidity', 0.25) if _pos.entry_liquidity_active else 0.0) +
-                                    (_fw.get('momentum', 0.25) if _pos.entry_momentum_active else 0.0) +
-                                    (_fw.get('smc', 0.25) if _pos.entry_smc_active else 0.0)
-                                )
-                                if _active_w > 0:
-                                    _pos.entry_health_score = (
-                                        (_fw.get('wyckoff', 0.25) * _ws if _pos.entry_wyckoff_active else 0.0) +
-                                        (_fw.get('liquidity', 0.25) * _ls if _pos.entry_liquidity_active else 0.0) +
-                                        (_fw.get('momentum', 0.25) * _ms if _pos.entry_momentum_active else 0.0) +
-                                        (_fw.get('smc', 0.25) * _ss if _pos.entry_smc_active else 0.0)
-                                    ) / _active_w
-                    # Track last entry bar per direction for spacing
-                    if sig.direction == 'long':
-                        self._last_long_entry_bar = bar_idx
-                    elif sig.direction == 'short':
-                        self._last_short_entry_bar = bar_idx
 
             # Step 6: Update equity curve
             equity = self._compute_equity(row['close'])
@@ -1054,9 +843,7 @@ class StandaloneBacktestEngine:
         regime_label: str,
         features: pd.Series,
         allocated_size_pct: float,
-        bar_idx: int = 0,
         threshold_at_entry: float = 0.0,
-        domain_scores: dict = None,
         risk_temp: float = 0.0,
         instability: float = 0.0,
         crisis_prob: float = 0.0,
@@ -1075,7 +862,7 @@ class StandaloneBacktestEngine:
     ):
         """Open a new position."""
         # Calculate position size
-        portfolio_value = self.initial_cash  # Use initial capital, not depleted cash
+        portfolio_value = self.cash  # Use cash only (not unrealized PnL)
         atr = features.get('atr_14', entry_price * 0.02)
         if pd.isna(atr) or atr <= 0:
             atr = entry_price * 0.02
@@ -1092,39 +879,6 @@ class StandaloneBacktestEngine:
 
         # Use Kelly-adjusted risk if Kelly sizer is active on the engine
         risk_per_trade = self.risk_per_trade
-
-        # Domain-count sizing: scale risk by how many domains are active (score > 0.25)
-        # Keeps the same trades as fixed mode — only the size changes
-        # 1 active → 0.75x | 2 → 1.0x (baseline) | 3 → 1.25x | 4 → 1.5x
-        if self.sizing_mode == 'domain' and domain_scores:
-            DOMAIN_THRESHOLD = 0.25
-            DOMAIN_MULTIPLIERS = {0: 0.75, 1: 0.75, 2: 1.0, 3: 1.25, 4: 1.5}
-            n_active = sum(1 for s in domain_scores.values() if s > DOMAIN_THRESHOLD)
-            size_mult = DOMAIN_MULTIPLIERS.get(n_active, 1.0)
-            risk_per_trade *= size_mult
-            logger.debug(
-                "[DOMAIN_SIZING] %s: %d/4 domains active → %.2fx size (risk=%.3f%%)",
-                archetype, n_active, size_mult, risk_per_trade * 100
-            )
-
-        # CMI-based sizing: scale risk by dd_score quartile (real predictive signal)
-        # dd_score Q1 (<0.25): 0.75x | Q2-Q3 (0.25-0.75): 1.0x | Q4 (>0.75): 1.25x
-        # Source: quartile analysis showed WR gradient 63.8% → 87.3%, avg_pnl -$5 → $300
-        # dd_score is a CMI parameter passed directly (not from parquet)
-        elif self.sizing_mode == 'cmi':
-            _dd = dd_score if not pd.isna(dd_score) else 0.5
-            if _dd < 0.25:
-                size_mult = 0.75
-            elif _dd > 0.75:
-                size_mult = 1.25
-            else:
-                size_mult = 1.0
-            risk_per_trade *= size_mult
-            logger.debug(
-                "[CMI_SIZING] %s: dd_score=%.3f → %.2fx size (risk=%.3f%%)",
-                archetype, _dd, size_mult, risk_per_trade * 100
-            )
-
         if self.engine.kelly_sizer is not None:
             features_dict = features.to_dict() if hasattr(features, 'to_dict') else dict(features)
             kelly_risk = self.engine.get_kelly_risk_pct(
@@ -1136,29 +890,25 @@ class StandaloneBacktestEngine:
             risk_per_trade = kelly_risk
 
         risk_dollars = portfolio_value * risk_per_trade
-        notional = risk_dollars / stop_distance_pct
+        position_size_usd = risk_dollars / stop_distance_pct
 
-        # Scale by allocated percentage from PortfolioAllocator (conviction multiplier)
-        notional *= (allocated_size_pct / 0.02)  # normalize: 0.02 is baseline
+        # Scale by allocated percentage from PortfolioAllocator
+        position_size_usd *= (allocated_size_pct / 0.02)  # normalize: 0.02 is baseline
 
-        # Margin = notional / leverage (what the exchange actually locks)
-        margin = notional / self.leverage
+        # Apply leverage multiplier (e.g., 2x leverage doubles position size)
+        position_size_usd *= self.leverage
 
-        # Cap margin at max_margin_per_position_pct of initial capital
-        max_margin = self.initial_cash * self.max_margin_pct
-        if margin > max_margin:
-            margin = max_margin
-            notional = margin * self.leverage  # scale notional down proportionally
+        # Cap at max position size (adjusted for leverage)
+        max_size = portfolio_value * self.max_position_pct * self.leverage
+        position_size_usd = min(position_size_usd, max_size)
 
-        position_size_usd = notional  # for trade log / PnL calculation
+        # Check cash availability
+        commission = position_size_usd * self.commission_rate
+        slippage = position_size_usd * (self.slippage_bps / 10000.0)
+        total_cost = position_size_usd + commission + slippage
 
-        # Check margin availability (not notional)
-        commission = notional * self.commission_rate
-        slippage = notional * (self.slippage_bps / 10000.0)
-        margin_cost = margin + commission + slippage
-
-        if margin_cost > self.cash:
-            logger.debug(f"[SKIP] Insufficient margin for {archetype} position (margin ${margin:,.0f} > cash ${self.cash:,.0f})")
+        if total_cost > self.cash:
+            logger.debug(f"[SKIP] Insufficient cash for {archetype} position (${total_cost:,.0f} > ${self.cash:,.0f})")
             self.signals_rejected += 1
             return
 
@@ -1168,10 +918,10 @@ class StandaloneBacktestEngine:
         else:
             fill_price = entry_price * (1 - self.slippage_bps / 10000.0)
 
-        quantity = notional / fill_price
+        quantity = position_size_usd / fill_price
 
-        # Deduct margin from cash (not full notional — this is a leveraged perp)
-        self.cash -= margin_cost
+        # Deduct cash
+        self.cash -= (position_size_usd + commission)
 
         # Create position
         pos_id = f"{direction}_{archetype}_{int(timestamp.timestamp())}"
@@ -1190,18 +940,10 @@ class StandaloneBacktestEngine:
             atr_at_entry=atr,
         )
 
-        # Compute 20-bar lookback swing high/low for ExitLogic S1 target
-        _prev_high = fill_price
-        _prev_low = fill_price
-        if self._highs is not None and bar_idx > 0:
-            lb_start = max(0, bar_idx - 20)
-            _prev_high = float(np.nanmax(self._highs[lb_start:bar_idx]))
-            _prev_low = float(np.nanmin(self._lows[lb_start:bar_idx]))
-
         # Capture entry metadata for ExitLogic invalidation checks
         self.positions[pos_id].entry_metadata = {
-            'entry_prev_low': _prev_low,
-            'entry_prev_high': _prev_high,
+            'entry_prev_low': features.get('tf1h_prev_low', features.get('low', fill_price)) if hasattr(features, 'get') else fill_price,
+            'entry_prev_high': features.get('tf1h_prev_high', features.get('high', fill_price)) if hasattr(features, 'get') else fill_price,
             'entry_wick_low': features.get('low', fill_price) if hasattr(features, 'get') else fill_price,
             'entry_spring_low': features.get('low', fill_price) if hasattr(features, 'get') else fill_price,
             'entry_ob_low': features.get('order_block_low', features.get('low', fill_price)) if hasattr(features, 'get') else fill_price,
@@ -1222,7 +964,6 @@ class StandaloneBacktestEngine:
         self.positions[pos_id].crisis_prob_at_entry = crisis_prob
         self.positions[pos_id].leverage_applied = self.leverage
         self.positions[pos_id].position_size_usd = position_size_usd
-        self.positions[pos_id].margin_used = margin
         # CMI sub-components
         self.positions[pos_id].trend_align_at_entry = trend_align
         self.positions[pos_id].trend_strength_at_entry = trend_strength
@@ -1280,20 +1021,17 @@ class StandaloneBacktestEngine:
         else:
             pnl = (pos.entry_price - fill_exit) * exit_quantity
 
-        # Commission on exit notional
+        # Subtract commission
         exit_value = fill_exit * exit_quantity
         commission = exit_value * self.commission_rate
         pnl -= commission
 
-        # Return margin + realized PnL to cash (not full exit notional)
-        exit_fraction = exit_quantity / pos.original_quantity
-        margin_returned = pos.margin_used * exit_fraction
-        self.cash += margin_returned + pnl
+        # Return cash
+        self.cash += exit_value - commission
 
-        # PnL percentage — based on margin deployed (return on capital), not notional
-        exit_fraction = exit_quantity / pos.original_quantity
-        margin_for_exit = pos.margin_used * exit_fraction
-        pnl_pct = (pnl / margin_for_exit * 100) if margin_for_exit > 0 else 0.0
+        # PnL percentage
+        entry_value = pos.entry_price * exit_quantity
+        pnl_pct = (pnl / entry_value * 100) if entry_value > 0 else 0.0
 
         # Duration
         duration_hours = (exit_timestamp - pos.entry_time).total_seconds() / 3600.0
@@ -1335,13 +1073,6 @@ class StandaloneBacktestEngine:
             sentiment_crisis_at_entry=pos.sentiment_crisis_at_entry,
             leverage_applied=pos.leverage_applied,
             position_size_usd=pos.position_size_usd,
-            # Domain scores
-            wyckoff_score_at_entry=pos.wyckoff_score_at_entry,
-            liquidity_score_at_entry=pos.liquidity_score_at_entry,
-            momentum_score_at_entry=pos.momentum_score_at_entry,
-            smc_score_at_entry=pos.smc_score_at_entry,
-            gate_penalty_at_entry=pos.gate_penalty_at_entry,
-            position_id=pos.position_id,
         ))
 
         # Update position
@@ -1366,178 +1097,16 @@ class StandaloneBacktestEngine:
 
         # Remove if fully closed
         if pos.current_quantity < 1e-10 or pos.total_exits_pct >= 0.99:
-            # Clean up any dust — return remaining margin + dust PnL
+            # Clean up any dust
             if pos.current_quantity > 1e-10:
-                dust_frac = pos.current_quantity / pos.original_quantity
-                dust_margin = pos.margin_used * dust_frac
-                if pos.direction == 'long':
-                    dust_pnl = (fill_exit - pos.entry_price) * pos.current_quantity
-                else:
-                    dust_pnl = (pos.entry_price - fill_exit) * pos.current_quantity
-                self.cash += dust_margin + dust_pnl
+                # Close dust position
+                dust_value = pos.current_quantity * fill_exit
+                self.cash += dust_value
             del self.positions[pos_id]
 
     # ------------------------------------------------------------------
     # Exit checking
     # ------------------------------------------------------------------
-
-    def _check_domain_health(
-        self, pos: 'TrackedPosition', pos_id: str, row: pd.Series, ts: pd.Timestamp
-    ) -> Optional[str]:
-        """
-        Check structural domain health — returns exit reason string or None.
-
-        Recomputes domain scores for the active domains at entry, computes weighted
-        delta normalized by active domain weight total, then:
-          - Mild degradation (delta < -0.30): tighten trailing to 2.0x ATR (one-shot)
-          - Severe degradation (delta < -0.50):
-              tighten mode: tighten trailing to 1.5x ATR
-              exit mode: return 'health_severe' to trigger close
-
-        Skips if bars_held < 12 (allow position to mature before monitoring).
-        """
-        if pos.bars_held < 12:
-            return None
-
-        inst = self.engine.archetypes.get(pos.archetype)
-        if inst is None:
-            return None
-
-        features = row.to_dict() if hasattr(row, 'to_dict') else dict(row)
-        fw = inst.config.fusion_weights
-
-        # Recompute only active domains
-        scores: Dict[str, float] = {}
-        weights: Dict[str, float] = {}
-        if pos.entry_wyckoff_active:
-            scores['wyckoff'] = inst._get_wyckoff_score(features)
-            weights['wyckoff'] = fw.get('wyckoff', 0.25)
-        if pos.entry_liquidity_active:
-            scores['liquidity'] = inst._get_liquidity_score(features)
-            weights['liquidity'] = fw.get('liquidity', 0.25)
-        if pos.entry_momentum_active:
-            scores['momentum'] = inst._get_momentum_score(features)
-            weights['momentum'] = fw.get('momentum', 0.25)
-        if pos.entry_smc_active:
-            scores['smc'] = inst._get_smc_score(features)
-            weights['smc'] = fw.get('smc', 0.25)
-
-        total_weight = sum(weights.values())
-        if total_weight <= 0 or not scores:
-            return None
-
-        current_health = sum(weights[d] * scores[d] for d in scores) / total_weight
-        health_delta = current_health - pos.entry_health_score
-
-        atr = float(row.get('atr_14', pos.atr_at_entry))
-        if pd.isna(atr) or atr <= 0:
-            atr = pos.atr_at_entry
-
-        # Severe degradation
-        if health_delta < -0.50:
-            if self.health_mode == 'exit':
-                return 'health_severe'
-            elif self.health_mode == 'tighten':
-                # Tighten trailing to 1.5x ATR from current price
-                if pos.direction == 'long':
-                    new_stop = float(row['close']) - 1.5 * atr
-                    current_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
-                    if new_stop > current_stop:
-                        pos.trailing_stop = new_stop
-                else:
-                    new_stop = float(row['close']) + 1.5 * atr
-                    current_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
-                    if new_stop < current_stop:
-                        pos.trailing_stop = new_stop
-            return None
-
-        # Mild degradation (one-shot flag)
-        if health_delta < -0.30 and not pos.health_trailing_tightened:
-            pos.health_trailing_tightened = True
-            if pos.direction == 'long':
-                new_stop = float(row['close']) - 2.0 * atr
-                current_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
-                if new_stop > current_stop:
-                    pos.trailing_stop = new_stop
-            else:
-                new_stop = float(row['close']) + 2.0 * atr
-                current_stop = pos.trailing_stop if pos.trailing_stop is not None else pos.stop_loss
-                if new_stop < current_stop:
-                    pos.trailing_stop = new_stop
-
-        return None
-
-    def _check_structural_invalidation(
-        self, pos: 'TrackedPosition', row: pd.Series
-    ) -> Optional[str]:
-        """
-        Price-level structural invalidation — per-archetype thesis checks.
-
-        Unlike domain score monitoring (too noisy), this checks whether a specific
-        price level that DEFINED the setup has been breached. These are hard
-        structural facts: spring low violated = accumulation failed.
-
-        Only fires after bars_held >= 2 (skip entry bar noise).
-        Returns exit reason string or None.
-
-        Archetypes monitored:
-          spring         — close < spring_low * 0.998 (0.2% buffer)
-          wick_trap      — close < wick_low * 0.999 + volume confirmation
-          retest_cluster — close < cluster_low - 0.5 * ATR
-          order_block_retest — close < ob_low * 0.999
-        """
-        if pos.bars_held < 4:
-            pos.structural_breach_count = 0
-            return None
-        if pos.direction != 'long':
-            return None  # short-side structural checks not yet calibrated
-
-        close = float(row['close'])
-        meta = pos.entry_metadata
-        archetype = pos.archetype
-
-        breached = False
-
-        if archetype == 'spring':
-            spring_low = meta.get('entry_spring_low', 0.0)
-            # 0.4% buffer: normal 1H BTC noise can breach 0.2% without invalidating structure
-            if spring_low > 0 and close < spring_low * 0.996:
-                breached = True
-
-        elif archetype == 'wick_trap':
-            wick_low = meta.get('entry_wick_low', 0.0)
-            entry_vol = meta.get('entry_volume', 0.0)
-            curr_vol = float(row.get('volume', 0.0))
-            if wick_low > 0 and close < wick_low * 0.997:
-                # Require significant breakdown volume (≥1.2x entry bar volume)
-                # Low-volume breaches are often stop-hunts that recover
-                if entry_vol <= 0 or curr_vol >= entry_vol * 1.2:
-                    breached = True
-
-        elif archetype == 'retest_cluster':
-            cluster_low = meta.get('entry_support_level', 0.0)
-            atr = float(row.get('atr_14', pos.atr_at_entry))
-            if pd.isna(atr) or atr <= 0:
-                atr = pos.atr_at_entry
-            if cluster_low > 0 and close < cluster_low - 0.5 * atr:
-                breached = True
-
-        elif archetype == 'order_block_retest':
-            ob_low = meta.get('entry_ob_low', 0.0)
-            # 0.3% buffer for order block retest
-            if ob_low > 0 and close < ob_low * 0.997:
-                breached = True
-
-        if breached:
-            pos.structural_breach_count += 1
-            # Require 2 consecutive closes below the level — filters whipsaws that recover
-            if pos.structural_breach_count >= 2:
-                return 'thesis_invalidated'
-        else:
-            # Price recovered above level — reset counter
-            pos.structural_breach_count = 0
-
-        return None
 
     def _check_all_exits(self, row: pd.Series, ts: pd.Timestamp, bar_idx: int):
         """Check exits for all open positions using ExitLogic."""
@@ -1595,10 +1164,6 @@ class StandaloneBacktestEngine:
             if exit_signal is not None:
                 # Sync scale-out tracking back from adapter
                 pos.executed_scale_outs = pos_adapter.metadata.get('executed_scale_outs', pos.executed_scale_outs)
-                # Persist all ExitLogic flags (scaled_at_prev_high, moon_bag_taken, etc.)
-                for flag_key in ('scaled_at_prev_high', 'moon_bag_taken'):
-                    if pos_adapter.metadata.get(flag_key):
-                        pos.entry_metadata[flag_key] = True
 
                 # Handle trailing stop update (no exit, just stop movement)
                 if exit_signal.stop_update is not None:
@@ -1617,39 +1182,15 @@ class StandaloneBacktestEngine:
                 if pos_adapter.stop_loss != pos.stop_loss:
                     pos.trailing_stop = pos_adapter.stop_loss
 
-            # --- 3. Domain health monitor (lowest priority, after ExitLogic) ---
-            if self.health_mode != 'off' and pos_id in self.positions:
-                health_reason = self._check_domain_health(pos, pos_id, row, ts)
-                if health_reason and pos_id in self.positions:
-                    self._close_position(
-                        pos_id, float(row['close']), ts,
-                        exit_reason=health_reason, exit_pct=1.0
-                    )
-
-            # --- 4. Structural invalidation (price-level thesis checks) ---
-            if self.invalidation_mode and pos_id in self.positions:
-                inv_reason = self._check_structural_invalidation(pos, row)
-                if inv_reason and pos_id in self.positions:
-                    self._close_position(
-                        pos_id, float(row['close']), ts,
-                        exit_reason=inv_reason, exit_pct=1.0
-                    )
-
     # ------------------------------------------------------------------
     # Equity computation
     # ------------------------------------------------------------------
 
     def _compute_equity(self, current_price: float) -> float:
-        """Compute current equity (cash + locked margin + unrealized PnL)."""
+        """Compute current equity (cash + position value)."""
         equity = self.cash
         for pos in self.positions.values():
-            remaining_frac = pos.current_quantity / pos.original_quantity if pos.original_quantity > 0 else 0
-            margin_locked = pos.margin_used * remaining_frac
-            if pos.direction == 'long':
-                unrealized = (current_price - pos.entry_price) * pos.current_quantity
-            else:
-                unrealized = (pos.entry_price - current_price) * pos.current_quantity
-            equity += margin_locked + unrealized
+            equity += pos.current_quantity * current_price
         return equity
 
     # ------------------------------------------------------------------
@@ -1810,13 +1351,6 @@ class StandaloneBacktestEngine:
             'sentiment_crisis': t.sentiment_crisis_at_entry,
             'leverage': t.leverage_applied,
             'position_size_usd': t.position_size_usd,
-            # Domain scores (for fusion predictiveness analysis)
-            'wyckoff_score': t.wyckoff_score_at_entry,
-            'liquidity_score': t.liquidity_score_at_entry,
-            'momentum_score': t.momentum_score_at_entry,
-            'smc_score': t.smc_score_at_entry,
-            'gate_penalty': t.gate_penalty_at_entry,
-            'position_id': t.position_id,
         } for t in self.trades]
 
         df = pd.DataFrame(records)
@@ -1967,32 +1501,6 @@ def main():
     )
     parser.add_argument('--counterfactual', action='store_true', default=False,
                         help='Run counterfactual analysis on completed trades')
-    parser.add_argument(
-        '--signal-mode', type=str, default='fusion',
-        choices=['fusion', 'structural', 'composite'],
-        help='Signal selection mode: fusion (default, weighted score vs threshold), '
-             'structural (skip fusion threshold, hard gates only), '
-             'composite (N-of-M: >=3 of 4 domains must score >0.25)'
-    )
-    parser.add_argument(
-        '--sizing-mode', type=str, default='fixed',
-        choices=['fixed', 'domain', 'cmi'],
-        help='Position sizing mode: fixed (default, flat 2%% risk), '
-             'domain (scale by active domain count: 1=0.75x, 2=1.0x, 3=1.25x, 4=1.5x), '
-             'cmi (scale by dd_score quartile: <0.25=0.75x, 0.25-0.75=1.0x, >0.75=1.25x)'
-    )
-    parser.add_argument(
-        '--invalidation-mode', action='store_true', default=False,
-        help='Enable price-level structural invalidation exits for spring, wick_trap, '
-             'retest_cluster, order_block_retest (close below thesis level → exit 100%%)'
-    )
-    parser.add_argument(
-        '--health-mode', type=str, default='off',
-        choices=['off', 'tighten', 'exit'],
-        help='Structural domain health monitor: off (default, disabled), '
-             'tighten (tighten trailing stop on domain score degradation), '
-             'exit (force close on severe domain score degradation: delta < -0.30)'
-    )
 
     args = parser.parse_args()
 
@@ -2022,10 +1530,6 @@ def main():
     print(f"Initial Cash:  ${args.initial_cash:,.0f}")
     print(f"Commission:    {args.commission_rate*10000:.1f} bps per side")
     print(f"Slippage:      {args.slippage_bps:.1f} bps per side")
-    print(f"Signal Mode:   {args.signal_mode}")
-    print(f"Sizing Mode:   {args.sizing_mode}")
-    print(f"Health Mode:   {args.health_mode}")
-    print(f"Invalidation:  {'on' if args.invalidation_mode else 'off'}")
     print(f"Output:        {args.output_dir}")
     print("=" * 80)
 
@@ -2054,10 +1558,6 @@ def main():
         initial_cash=args.initial_cash,
         commission_rate=args.commission_rate,
         slippage_bps=args.slippage_bps,
-        signal_mode=args.signal_mode,
-        sizing_mode=args.sizing_mode,
-        health_mode=args.health_mode,
-        invalidation_mode=args.invalidation_mode,
     )
 
     engine.run(

@@ -26,7 +26,6 @@ import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -70,13 +69,8 @@ class TrackedPosition:
     crisis_prob_at_entry: float = 0.0
     threshold_margin: float = 0.0  # fusion_score - threshold (negative = would have been rejected)
     would_have_passed: bool = True  # False if signal only passed due to bypass
-    position_size_usd: float = 0.0  # notional value
-    margin_used: float = 0.0  # margin locked at exchange (notional / leverage)
-    leverage_applied: float = 1.0
     # Entry metadata for invalidation exits
     entry_metadata: Dict[str, Any] = field(default_factory=dict)
-    # Full macro + derivatives state snapshot at entry time
-    macro_at_entry: Dict[str, Any] = field(default_factory=dict)
     # Runner state
     runner_trailing_stop: Optional[float] = None
 
@@ -99,11 +93,7 @@ class TrackedPosition:
         d.setdefault('threshold_margin', 0.0)
         d.setdefault('would_have_passed', True)
         d.setdefault('entry_metadata', {})
-        d.setdefault('macro_at_entry', {})
         d.setdefault('runner_trailing_stop', None)
-        d.setdefault('position_size_usd', 0.0)
-        d.setdefault('margin_used', 0.0)
-        d.setdefault('leverage_applied', 1.0)
         return cls(**d)
 
 
@@ -133,7 +123,6 @@ class CompletedTrade:
     stop_loss: float = 0.0
     take_profit: float = 0.0
     atr_at_entry: float = 0.0
-    position_id: str = ""
 
 
 class _PositionAdapter:
@@ -184,12 +173,6 @@ class V11ShadowRunner:
         self.slippage_bps = slippage_bps
 
         # Initialize IsolatedArchetypeEngine (same as backtester)
-        # Set structural checks to 'live' mode (no frozen feature bypass — real data available)
-        if 'structural_checks' not in self.config:
-            self.config['structural_checks'] = {}
-        self.config['structural_checks']['mode_context'] = 'live'
-        self.config['structural_checks'].setdefault('enabled', True)
-
         regime_cfg = self.config.get('regime_classifier', {})
         self.engine = IsolatedArchetypeEngine(
             archetype_config_dir=str(PROJECT_ROOT / self.config.get('archetype_config_dir', 'configs/archetypes/')),
@@ -198,10 +181,6 @@ class V11ShadowRunner:
             regime_model_path=regime_cfg.get('model_path', None),
             config=self.config,
         )
-
-        # Bar buffer for structural check lookback (prev_row + lookback_df)
-        from collections import deque
-        self.bar_buffer: deque = deque(maxlen=500)
 
         # Adaptive fusion config (replaces fusion_thresholds_by_regime)
         self.adaptive_fusion = self.config.get('adaptive_fusion', {})
@@ -236,16 +215,17 @@ class V11ShadowRunner:
         # Current (hand-tuned) CMI weights — read from config or use defaults
         cmi_w = self.adaptive_fusion.get('cmi_weights', {})
         self.cmi_weights_current = {
-            'risk_temp': cmi_w.get('risk_temp', {'trend_align': 0.30, 'trend_strength': 0.05, 'sentiment': 0.15, 'dd_score': 0.50}),
-            'instability': cmi_w.get('instability', {'chop': 0.40, 'adx_weakness': 0.10, 'wick_score': 0.25, 'vol_instab': 0.25}),
-            'crisis': cmi_w.get('crisis', {'base_crisis': 0.45, 'vol_shock': 0.10, 'sentiment_crisis': 0.45}),
+            'risk_temp': cmi_w.get('risk_temp', {'trend_align': 0.45, 'trend_strength': 0.25, 'sentiment': 0.15, 'dd_score': 0.15}),
+            'instability': cmi_w.get('instability', {'chop': 0.35, 'adx_weakness': 0.25, 'wick_score': 0.20, 'vol_instab': 0.20}),
+            'crisis': cmi_w.get('crisis', {'base_crisis': 0.60, 'vol_shock': 0.20, 'sentiment_crisis': 0.20}),
         }
+        raw_allowed = self.config.get('archetype_allowed_regimes', {})
+        self.archetype_allowed_regimes = {k: v for k, v in raw_allowed.items() if k != 'notes'}
 
         # Position sizing
         sizing_cfg = self.config.get('position_sizing', {})
         self.risk_per_trade = sizing_cfg.get('risk_per_trade_pct', 0.02)
-        self.max_position_pct = sizing_cfg.get('max_position_size_pct', 0.15)  # legacy, unused
-        self.max_margin_pct = sizing_cfg.get('max_margin_per_position_pct', 0.35)
+        self.max_position_pct = sizing_cfg.get('max_position_size_pct', 0.15)
         self.leverage = self.config.get('leverage', 1.0)
 
         # Initialize per-archetype exit logic
@@ -262,10 +242,6 @@ class V11ShadowRunner:
         self.total_signals = 0
         self.signals_allocated = 0
         self.signals_rejected = 0
-        # Same-direction entry spacing (prevent correlated clusters)
-        self._last_long_entry_bar = -999
-        self._last_short_entry_bar = -999
-        self._entry_spacing_bars = 2
         # Rejected signal details for dashboard (cleared each bar, written by runner)
         self.last_bar_signals: List[dict] = []
 
@@ -282,20 +258,12 @@ class V11ShadowRunner:
         self.signal_log_path = self.output_dir / 'signals.csv'
         self._init_signal_log()
 
-        # Trade outcome log — one row per fully closed trade, full macro context
-        self.outcome_log_path = self.output_dir / 'trade_outcomes.csv'
-        self._init_outcome_log()
-
-        # Current bar macro snapshot — updated every bar, captured on position open
-        self.last_macro_snapshot: Dict[str, Any] = {}
-        self.last_dd_score: float = 0.0
-        self.last_trend_align: float = 0.0
-
         logger.info("V11ShadowRunner initialized")
         logger.info(f"  Config: {config_path}")
         logger.info(f"  Cash: ${initial_cash:,.0f}")
         logger.info(f"  Commission: {commission_rate*10000:.1f} bps | Slippage: {slippage_bps:.1f} bps")
         logger.info(f"  Disabled: {len(self.disabled_archetypes)} archetypes")
+        logger.info(f"  Regime restrictions: {self.archetype_allowed_regimes}")
 
     def _init_signal_log(self):
         """Initialize signal log CSV with headers."""
@@ -319,131 +287,6 @@ class V11ShadowRunner:
         else:
             with open(self.signal_log_path, 'w') as f:
                 f.write(expected_header)
-
-    def _init_outcome_log(self):
-        """Initialize trade_outcomes.csv — append-only, one row per exit (including scale-outs)."""
-        header = (
-            # Identity
-            'timestamp_entry,timestamp_exit,archetype,direction,'
-            # Prices + outcome
-            'entry_price,exit_price,pnl,pnl_pct,hold_hours,exit_reason,R_multiple,'
-            # CMI / regime context at entry
-            'regime,fusion_score,threshold,threshold_margin,'
-            'risk_temp,instability,crisis_prob,'
-            # Macro z-scores at entry (yfinance)
-            'vix_z,dxy_z,gold_z,oil_z,yield_curve,'
-            # Derivatives at entry (OKX live)
-            'funding_z,oi_value,oi_change_4h,oi_change_24h,'
-            'taker_imbalance,ls_ratio_extreme,funding_rate,'
-            # Wyckoff structural context at entry
-            'wyckoff_bullish,wyckoff_bearish,'
-            'wyckoff_4h_bull,wyckoff_4h_bear,'
-            # Sentiment + regime at entry
-            'fear_greed,ema_slope_50,rsi_14,'
-            # Technical at entry
-            'atr_at_entry,chop,adx,atr_14,volume_zscore,bb_width\n'
-        )
-        # Always rewrite header on startup (schema may have changed)
-        if not self.outcome_log_path.exists():
-            with open(self.outcome_log_path, 'w') as f:
-                f.write(header)
-        else:
-            # Check if header matches; if not, rotate old file and start fresh
-            with open(self.outcome_log_path, 'r') as f:
-                existing_header = f.readline().strip()
-            expected = header.strip()
-            if existing_header != expected:
-                backup = self.outcome_log_path.with_suffix('.csv.v1')
-                import shutil
-                shutil.copy2(self.outcome_log_path, backup)
-                logger.info(f"Rotated old trade_outcomes.csv to {backup} (schema changed)")
-                with open(self.outcome_log_path, 'w') as f:
-                    f.write(header)
-
-    def _extract_macro_snapshot(self, features) -> Dict[str, Any]:
-        """Extract macro + derivatives state from the current bar's features."""
-        def _f(key, default=float('nan')):
-            val = features.get(key, default) if hasattr(features, 'get') else default
-            if val is None or (isinstance(val, float) and val != val):
-                return default
-            try:
-                return float(val)
-            except (TypeError, ValueError):
-                return default
-
-        return {
-            # Macro z-scores (yfinance via MacroDataFetcher — 24h cache)
-            'vix_z':            _f('VIX_Z', 0.0),
-            'dxy_z':            _f('DXY_Z', 0.0),
-            'gold_z':           _f('GOLD_Z', 0.0),
-            'oil_z':            _f('OIL_Z', 0.0),
-            'yield_curve':      _f('YIELD_CURVE', 0.0),
-            # Derivatives (OKX live data)
-            'funding_z':        _f('funding_Z', _f('funding_z', 0.0)),
-            'oi_value':         _f('oi_value', 0.0),
-            'oi_change_4h':     _f('oi_change_4h', 0.0),
-            'oi_change_24h':    _f('oi_change_24h', 0.0),
-            'taker_imbalance':  _f('taker_imbalance', 0.0),
-            'ls_ratio_extreme': _f('ls_ratio_extreme', 0.0),
-            'funding_rate':     _f('binance_funding_rate', _f('funding_rate', 0.0)),
-            # Wyckoff structural context (MTF)
-            'wyckoff_bullish':  _f('wyckoff_bullish_score', 0.0),
-            'wyckoff_bearish':  _f('wyckoff_bearish_score', 0.0),
-            'wyckoff_4h_bull':  _f('tf4h_wyckoff_bullish_score', 0.0),
-            'wyckoff_4h_bear':  _f('tf4h_wyckoff_bearish_score', 0.0),
-            # Sentiment & regime
-            'fear_greed':       _f('FEAR_GREED', _f('fear_greed_norm', 0.0)),
-            'ema_slope_50':     _f('ema_slope_50', 0.0),
-            'rsi_14':           _f('rsi_14', 0.0),
-            # Technical context
-            'chop':             _f('chop_score', _f('chop', 0.0)),
-            'adx':              _f('adx_14', 0.0),
-            'atr_14':           _f('atr_14', 0.0),
-            'volume_zscore':    _f('volume_zscore', 0.0),
-            'bb_width':         _f('bb_width', 0.0),
-        }
-
-    def _append_outcome_row(self, pos: 'TrackedPosition', pnl: float, pnl_pct: float,
-                             exit_price: float, exit_timestamp, exit_reason: str):
-        """Append one completed-trade row to trade_outcomes.csv."""
-        duration_hours = (exit_timestamp - pos.entry_time).total_seconds() / 3600.0
-        stop_dist = abs(pos.entry_price - pos.stop_loss)
-        R_multiple = (pnl / (stop_dist * pos.original_quantity)) if stop_dist > 0 else 0.0
-
-        m = pos.macro_at_entry
-
-        def _safe(v):
-            if v is None or (isinstance(v, float) and v != v):
-                return ''
-            return f'{v:.6g}'
-
-        row = (
-            f'{pos.entry_time},{exit_timestamp},{pos.archetype},{pos.direction},'
-            f'{pos.entry_price:.4f},{exit_price:.4f},{pnl:.4f},{pnl_pct:.4f},'
-            f'{duration_hours:.2f},{exit_reason},{R_multiple:.4f},'
-            f'{pos.regime_at_entry},{pos.fusion_score:.4f},'
-            f'{pos.threshold_at_entry:.4f},{pos.threshold_margin:.4f},'
-            f'{pos.risk_temp_at_entry:.4f},{pos.instability_at_entry:.4f},{pos.crisis_prob_at_entry:.4f},'
-            # Macro
-            f'{_safe(m.get("vix_z"))},{_safe(m.get("dxy_z"))},'
-            f'{_safe(m.get("gold_z"))},{_safe(m.get("oil_z"))},'
-            f'{_safe(m.get("yield_curve"))},'
-            # Derivatives
-            f'{_safe(m.get("funding_z"))},{_safe(m.get("oi_value"))},'
-            f'{_safe(m.get("oi_change_4h"))},{_safe(m.get("oi_change_24h"))},'
-            f'{_safe(m.get("taker_imbalance"))},{_safe(m.get("ls_ratio_extreme"))},'
-            f'{_safe(m.get("funding_rate"))},'
-            # Wyckoff
-            f'{_safe(m.get("wyckoff_bullish"))},{_safe(m.get("wyckoff_bearish"))},'
-            f'{_safe(m.get("wyckoff_4h_bull"))},{_safe(m.get("wyckoff_4h_bear"))},'
-            # Sentiment
-            f'{_safe(m.get("fear_greed"))},{_safe(m.get("ema_slope_50"))},{_safe(m.get("rsi_14"))},'
-            # Technical
-            f'{pos.atr_at_entry:.4f},{_safe(m.get("chop"))},{_safe(m.get("adx"))},'
-            f'{_safe(m.get("atr_14"))},{_safe(m.get("volume_zscore"))},{_safe(m.get("bb_width"))}\n'
-        )
-        with open(self.outcome_log_path, 'a') as f:
-            f.write(row)
 
     def _init_exit_logic(self):
         """Initialize per-archetype exit logic (mirrors backtester)."""
@@ -498,10 +341,10 @@ class V11ShadowRunner:
 
         # --- risk_temperature using config-driven weights ---
         rt_w = self.cmi_weights_current['risk_temp']
-        risk_temp = (rt_w.get('trend_align', 0.30) * trend_align +
-                     rt_w.get('trend_strength', 0.05) * trend_strength +
+        risk_temp = (rt_w.get('trend_align', 0.45) * trend_align +
+                     rt_w.get('trend_strength', 0.25) * trend_strength +
                      rt_w.get('sentiment', 0.15) * fear_greed +
-                     rt_w.get('dd_score', 0.50) * dd_score)
+                     rt_w.get('dd_score', 0.15) * dd_score)
 
         # --- instability_score [0-1]: 0=stable, 1=choppy ---
         chop = _get('chop_score', 0.5)
@@ -509,10 +352,10 @@ class V11ShadowRunner:
         wick_sc = min(_get('wick_ratio', 1.0) / 5.0, 1.0)
         vol_instab = min(abs(_get('volume_z_7d', 0.0)) / 2.5, 1.0)
         inst_w = self.cmi_weights_current['instability']
-        instability = (inst_w.get('chop', 0.40) * chop +
-                       inst_w.get('adx_weakness', 0.10) * adx_weakness +
-                       inst_w.get('wick_score', 0.25) * wick_sc +
-                       inst_w.get('vol_instab', 0.25) * vol_instab)
+        instability = (inst_w.get('chop', 0.35) * chop +
+                       inst_w.get('adx_weakness', 0.25) * adx_weakness +
+                       inst_w.get('wick_score', 0.20) * wick_sc +
+                       inst_w.get('vol_instab', 0.20) * vol_instab)
 
         # --- crisis_prob [0-1]: pure stress measurement ---
         dd = _get('drawdown_persistence', 0.0)
@@ -529,13 +372,13 @@ class V11ShadowRunner:
         vol_shock = min(max(rv - 0.8, 0.0) / 0.4, 1.0)
         sentiment_crisis = max(0.0, (0.20 - fear_greed) / 0.20)
         cr_w = self.cmi_weights_current['crisis']
-        crisis_prob = (cr_w.get('base_crisis', 0.45) * base_crisis +
-                       cr_w.get('vol_shock', 0.10) * vol_shock +
-                       cr_w.get('sentiment_crisis', 0.45) * sentiment_crisis)
+        crisis_prob = (cr_w.get('base_crisis', 0.60) * base_crisis +
+                       cr_w.get('vol_shock', 0.20) * vol_shock +
+                       cr_w.get('sentiment_crisis', 0.20) * sentiment_crisis)
 
         # Dynamic threshold
         base_threshold = self.adaptive_fusion.get('base_threshold', 0.18)
-        temp_range = self.adaptive_fusion.get('temp_range', 0.38)
+        temp_range = self.adaptive_fusion.get('temp_range', 0.35)
         instab_range = self.adaptive_fusion.get('instab_range', 0.15)
         flat_threshold = base_threshold + (1.0 - risk_temp) * temp_range + instability * instab_range
 
@@ -546,21 +389,21 @@ class V11ShadowRunner:
             opt_params = self.cmi_weights_optimized.get('threshold_params', {})
             # Recompute risk_temp with optimized weights
             ort_w = opt_cmi.get('risk_temp', rt_w)
-            opt_risk_temp = (ort_w.get('trend_align', 0.30) * trend_align +
-                             ort_w.get('trend_strength', 0.05) * trend_strength +
+            opt_risk_temp = (ort_w.get('trend_align', 0.45) * trend_align +
+                             ort_w.get('trend_strength', 0.25) * trend_strength +
                              ort_w.get('sentiment', 0.15) * fear_greed +
-                             ort_w.get('dd_score', 0.50) * dd_score)
+                             ort_w.get('dd_score', 0.15) * dd_score)
             # Recompute instability with optimized weights
             oi_w = opt_cmi.get('instability', inst_w)
-            opt_instability = (oi_w.get('chop', 0.40) * chop +
-                               oi_w.get('adx_weakness', 0.10) * adx_weakness +
-                               oi_w.get('wick_score', 0.25) * wick_sc +
-                               oi_w.get('vol_instab', 0.25) * vol_instab)
+            opt_instability = (oi_w.get('chop', 0.35) * chop +
+                               oi_w.get('adx_weakness', 0.25) * adx_weakness +
+                               oi_w.get('wick_score', 0.20) * wick_sc +
+                               oi_w.get('vol_instab', 0.20) * vol_instab)
             # Recompute crisis_prob with optimized weights
             oc_w = opt_cmi.get('crisis', cr_w)
-            opt_crisis = (oc_w.get('base_crisis', 0.45) * base_crisis +
-                          oc_w.get('vol_shock', 0.10) * vol_shock +
-                          oc_w.get('sentiment_crisis', 0.45) * sentiment_crisis)
+            opt_crisis = (oc_w.get('base_crisis', 0.60) * base_crisis +
+                          oc_w.get('vol_shock', 0.20) * vol_shock +
+                          oc_w.get('sentiment_crisis', 0.20) * sentiment_crisis)
             opt_temp_range = opt_params.get('temp_range', temp_range)
             opt_instab_range = opt_params.get('instab_range', instab_range)
             opt_threshold = base_threshold + (1.0 - opt_risk_temp) * opt_temp_range + opt_instability * opt_instab_range
@@ -586,8 +429,6 @@ class V11ShadowRunner:
         self.last_risk_temp = risk_temp
         self.last_instability = instability
         self.last_crisis_prob = crisis_prob
-        self.last_dd_score = dd_score
-        self.last_trend_align = trend_align
 
         # Store detailed CMI component breakdown for dashboard
         self.last_cmi_breakdown = {
@@ -891,12 +732,6 @@ class V11ShadowRunner:
         # Reset per-bar signal tracking for dashboard
         self.last_bar_signals = []
 
-        # Refresh macro snapshot — captured on any position opened this bar
-        self.last_macro_snapshot = self._extract_macro_snapshot(features)
-
-        # Maintain bar buffer for structural check lookback
-        self.bar_buffer.append(features.copy())
-
         # Step 1: Update bars_held for open positions
         for pos in self.positions.values():
             pos.bars_held += 1
@@ -910,15 +745,10 @@ class V11ShadowRunner:
         # Step 2.5: Compute adaptive threshold every bar (for heartbeat + filtering)
         self._compute_adaptive_threshold(features)
 
-        # Step 3: Generate signals with structural check lookback data
-        prev_row = self.bar_buffer[-2] if len(self.bar_buffer) >= 2 else None
-        lookback_df = pd.DataFrame(list(self.bar_buffer)) if len(self.bar_buffer) > 1 else None
-
+        # Step 3: Generate signals
         signals = self.engine.get_signals(
             bar=features,
             bar_index=self.bar_index,
-            prev_row=prev_row,
-            lookback_df=lookback_df,
         )
 
         if not signals:
@@ -963,6 +793,21 @@ class V11ShadowRunner:
             self._update_equity(features['close'])
             return acted_signals
 
+        # Step 3a.5: Per-archetype regime restrictions
+        if self.archetype_allowed_regimes and signals:
+            surviving = []
+            for s in signals:
+                allowed = self.archetype_allowed_regimes.get(s.archetype_id)
+                if allowed and current_regime not in allowed:
+                    idx = sig_index[id(s)]
+                    self.last_bar_signals[idx]['status'] = 'rejected'
+                    self.last_bar_signals[idx]['rejection_reason'] = f'regime {current_regime} not in {allowed}'
+                    self.last_bar_signals[idx]['rejection_stage'] = 'regime_filter'
+                    self.signals_rejected += 1
+                else:
+                    surviving.append(s)
+            signals = surviving
+
         if not signals:
             self._update_equity(features['close'])
             return acted_signals
@@ -980,7 +825,7 @@ class V11ShadowRunner:
             crisis_penalty = 1.0 - crisis_prob * c_coeff
             per_arch_thresholds = self.adaptive_fusion.get('per_archetype_base_threshold', {})
             base_threshold = self.adaptive_fusion.get('base_threshold', 0.18)
-            temp_range = self.adaptive_fusion.get('temp_range', 0.38)
+            temp_range = self.adaptive_fusion.get('temp_range', 0.35)
             instab_range = self.adaptive_fusion.get('instab_range', 0.15)
 
             adjusted_signals = []
@@ -1073,8 +918,8 @@ class V11ShadowRunner:
             signals = surviving
             self.last_dynamic_threshold = regime_threshold
 
-        # Step 3c: Apply position limits (SKIPPED in bypass/data-collection mode)
-        if signals and not self.bypass_threshold:
+        # Step 3c: Apply position limits
+        if signals:
             if not self.adaptive_fusion.get('enabled', False):
                 max_pos = self.max_positions_by_regime.get(current_regime, 3) if self.max_positions_by_regime else 3
             if len(self.positions) >= max_pos:
@@ -1087,33 +932,6 @@ class V11ShadowRunner:
                     self._open_phantom(s, features, current_regime, rej_reason, 'position_limit')
                 self.signals_rejected += len(signals)
                 signals = []
-        elif signals and self.bypass_threshold:
-            if len(self.positions) >= max_pos:
-                logger.info(
-                    "[BYPASS] position limit (%d/%d) bypassed for %d signals — data collection mode",
-                    len(self.positions), max_pos, len(signals),
-                )
-
-        # Step 3d: Same-direction entry spacing (SKIPPED in bypass/data-collection mode)
-        if signals and not self.bypass_threshold:
-            spaced_signals = []
-            for s in signals:
-                if s.direction == 'long' and (self.bar_index - self._last_long_entry_bar) < self._entry_spacing_bars:
-                    idx = sig_index[id(s)]
-                    self.last_bar_signals[idx]['status'] = 'rejected'
-                    self.last_bar_signals[idx]['rejection_reason'] = f'entry spacing ({self.bar_index - self._last_long_entry_bar}/{self._entry_spacing_bars} bars)'
-                    self.last_bar_signals[idx]['rejection_stage'] = 'entry_spacing'
-                    self.signals_rejected += 1
-                    continue
-                if s.direction == 'short' and (self.bar_index - self._last_short_entry_bar) < self._entry_spacing_bars:
-                    idx = sig_index[id(s)]
-                    self.last_bar_signals[idx]['status'] = 'rejected'
-                    self.last_bar_signals[idx]['rejection_reason'] = f'entry spacing ({self.bar_index - self._last_short_entry_bar}/{self._entry_spacing_bars} bars)'
-                    self.last_bar_signals[idx]['rejection_stage'] = 'entry_spacing'
-                    self.signals_rejected += 1
-                    continue
-                spaced_signals.append(s)
-            signals = spaced_signals
 
         # Mark surviving signals as passed (will become allocated or portfolio-rejected)
         for s in signals:
@@ -1124,40 +942,15 @@ class V11ShadowRunner:
             self._update_equity(features['close'])
             return acted_signals
 
-        # Step 3e: Inject CMI confidence values into signal metadata for dynamic sizing
-        # dd_score (r=+0.167), risk_temp (r=+0.126), trend_align (r=+0.105) are the
-        # actual positive predictors — allocator uses these instead of fusion_score (r=-0.102)
-        for s in signals:
-            s.metadata['dd_score'] = self.last_dd_score
-            s.metadata['risk_temp'] = self.last_risk_temp
-            s.metadata['trend_align'] = self.last_trend_align
-            # Wyckoff 4H bearish score for sizing multiplier (validated: PF 3.74 at 0.6+)
-            wyck_bear = features.get('tf4h_wyckoff_bearish_score', 0.0)
-            if wyck_bear is not None and wyck_bear == wyck_bear:  # NaN check
-                s.metadata['tf4h_wyckoff_bearish_score'] = float(wyck_bear)
-
-        # Step 4: Portfolio allocation (bypass duplicate check in data-collection mode)
-        if self.bypass_threshold:
-            # In data collection mode, treat all signals as intents (skip duplicate filter)
-            intents = [SimpleNamespace(signal=s, allocated_size_pct=0.02, allocation_reason='bypass') for s in signals]
-            rejections = []
-        else:
-            current_position_archetypes = [
-                pos.archetype for pos in self.positions.values()
-            ]
-            intents, rejections = self.engine.allocate(
-                signals,
-                current_positions=current_position_archetypes,
-            )
+        # Step 4: Portfolio allocation
+        current_position_archetypes = [
+            pos.archetype for pos in self.positions.values()
+        ]
+        intents, rejections = self.engine.allocate(
+            signals,
+            current_positions=current_position_archetypes,
+        )
         self.signals_rejected += len(rejections)
-
-        # Step 4b: Wyckoff 4H sizing boost (walk-forward validated: PF 3.74 at bearish 0.6+)
-        for intent in intents:
-            wyck_bear = getattr(intent.signal, 'metadata', {}).get('tf4h_wyckoff_bearish_score', 0.0)
-            if wyck_bear and wyck_bear >= 0.6:
-                intent.allocated_size_pct *= 1.25
-                logger.info(f"[WYCKOFF_BOOST] {intent.signal.archetype_id}: "
-                           f"4H bearish={wyck_bear:.3f} → 1.25x sizing ({intent.allocated_size_pct:.3f})")
 
         # Update signal tracking for portfolio rejections
         for rej in rejections:
@@ -1220,11 +1013,6 @@ class V11ShadowRunner:
                 threshold_margin=getattr(sig, '_threshold_margin', 0.0),
                 would_have_passed=getattr(sig, '_would_have_passed', True),
             )
-            # Track last entry bar per direction for spacing
-            if sig.direction == 'long':
-                self._last_long_entry_bar = self.bar_index
-            elif sig.direction == 'short':
-                self._last_short_entry_bar = self.bar_index
             sig_entry = {
                 'timestamp': str(timestamp),
                 'archetype': sig.archetype_id,
@@ -1384,7 +1172,7 @@ class V11ShadowRunner:
         threshold_margin=0.0, would_have_passed=True,
     ):
         """Open a virtual position."""
-        portfolio_value = self.initial_cash  # Use initial capital, not depleted cash
+        portfolio_value = self.cash
         atr = features.get('atr_14', entry_price * 0.02)
         if pd.isna(atr) or atr <= 0:
             atr = entry_price * 0.02
@@ -1400,36 +1188,25 @@ class V11ShadowRunner:
             stop_distance_pct = 0.025
 
         risk_dollars = portfolio_value * self.risk_per_trade
-        notional = risk_dollars / stop_distance_pct
+        position_size_usd = risk_dollars / stop_distance_pct
+        position_size_usd *= (allocated_size_pct / 0.02)
+        position_size_usd *= self.leverage
+        max_size = portfolio_value * self.max_position_pct * self.leverage
+        position_size_usd = min(position_size_usd, max_size)
 
-        # Scale by conviction multiplier from PortfolioAllocator
-        notional *= (allocated_size_pct / 0.02)
+        commission = position_size_usd * self.commission_rate
+        slippage = position_size_usd * (self.slippage_bps / 10000.0)
+        total_cost = position_size_usd + commission + slippage
 
-        # Margin = notional / leverage (what the exchange locks)
-        margin = notional / self.leverage
-
-        # Cap margin at max_margin_per_position_pct of initial capital
-        max_margin = self.initial_cash * self.max_margin_pct
-        if margin > max_margin:
-            margin = max_margin
-            notional = margin * self.leverage
-
-        position_size_usd = notional  # for trade log / PnL calc
-
-        # Check margin availability (not notional)
-        commission = notional * self.commission_rate
-        slippage = notional * (self.slippage_bps / 10000.0)
-        margin_cost = margin + commission + slippage
-
-        if margin_cost > self.cash:
+        if total_cost > self.cash:
             self.signals_rejected += 1
             return
 
         fill_price = entry_price * (1 + self.slippage_bps / 10000.0) if direction == 'long' \
             else entry_price * (1 - self.slippage_bps / 10000.0)
 
-        quantity = notional / fill_price
-        self.cash -= margin_cost  # deduct margin, not notional
+        quantity = position_size_usd / fill_price
+        self.cash -= (position_size_usd + commission)
 
         # Compute factor attribution at entry time
         factor_attribution = self._compute_factor_attribution(archetype, features, regime_label)
@@ -1456,13 +1233,7 @@ class V11ShadowRunner:
             crisis_prob_at_entry=crisis_prob_at_entry,
             threshold_margin=threshold_margin,
             would_have_passed=would_have_passed,
-            position_size_usd=position_size_usd,
-            margin_used=margin,
-            leverage_applied=self.leverage,
         )
-
-        # Capture full macro state at entry for trade_outcomes.csv
-        self.positions[pos_id].macro_at_entry = self.last_macro_snapshot.copy()
 
         # Capture entry metadata for ExitLogic invalidation checks
         self.positions[pos_id].entry_metadata = {
@@ -1508,11 +1279,7 @@ class V11ShadowRunner:
         exit_value = fill_exit * exit_quantity
         commission = exit_value * self.commission_rate
         pnl -= commission
-
-        # Return margin + realized PnL to cash (not full exit notional)
-        exit_fraction = exit_quantity / pos.original_quantity
-        margin_returned = pos.margin_used * exit_fraction
-        self.cash += margin_returned + pnl
+        self.cash += exit_value - commission
 
         entry_value = pos.entry_price * exit_quantity
         pnl_pct = (pnl / entry_value * 100) if entry_value > 0 else 0.0
@@ -1542,15 +1309,10 @@ class V11ShadowRunner:
             stop_loss=pos.stop_loss,
             take_profit=pos.take_profit,
             atr_at_entry=pos.atr_at_entry,
-            position_id=pos.position_id,
         ))
 
         pos.current_quantity -= exit_quantity
         pos.total_exits_pct += exit_pct
-
-        # Log EVERY exit (including scale-outs) to trade_outcomes.csv
-        is_final_exit = (pos.current_quantity < 1e-10 or pos.total_exits_pct >= 0.99)
-        self._append_outcome_row(pos, pnl, pnl_pct, fill_exit, exit_timestamp, exit_reason)
 
         # Log exit signal
         self._log_signal({
@@ -1579,13 +1341,7 @@ class V11ShadowRunner:
 
         if pos.current_quantity < 1e-10 or pos.total_exits_pct >= 0.99:
             if pos.current_quantity > 1e-10:
-                dust_frac = pos.current_quantity / pos.original_quantity
-                dust_margin = pos.margin_used * dust_frac
-                if pos.direction == 'long':
-                    dust_pnl = (fill_exit - pos.entry_price) * pos.current_quantity
-                else:
-                    dust_pnl = (pos.entry_price - fill_exit) * pos.current_quantity
-                self.cash += dust_margin + dust_pnl
+                self.cash += pos.current_quantity * fill_exit
             del self.positions[pos_id]
 
     def _check_all_exits(self, row: pd.Series, ts: pd.Timestamp):
@@ -1636,10 +1392,6 @@ class V11ShadowRunner:
 
             if exit_signal is not None:
                 pos.executed_scale_outs = pos_adapter.metadata.get('executed_scale_outs', pos.executed_scale_outs)
-                # Persist all ExitLogic flags (scaled_at_prev_high, moon_bag_taken, etc.)
-                for flag_key in ('scaled_at_prev_high', 'moon_bag_taken'):
-                    if pos_adapter.metadata.get(flag_key):
-                        pos.entry_metadata[flag_key] = True
 
                 if exit_signal.stop_update is not None:
                     pos.trailing_stop = exit_signal.stop_update
@@ -1902,13 +1654,10 @@ class V11ShadowRunner:
     def _update_equity(self, current_price: float):
         equity = self.cash
         for pos in self.positions.values():
-            remaining_frac = pos.current_quantity / pos.original_quantity if pos.original_quantity > 0 else 0
-            margin_locked = pos.margin_used * remaining_frac
             if pos.direction == 'long':
-                unrealized = (current_price - pos.entry_price) * pos.current_quantity
+                equity += pos.current_quantity * current_price
             else:
-                unrealized = (pos.entry_price - current_price) * pos.current_quantity
-            equity += margin_locked + unrealized
+                equity += pos.current_quantity * (2 * pos.entry_price - current_price)
         self.equity_curve.append(equity)
 
     def _log_signal(self, sig_dict: dict):
@@ -1970,7 +1719,6 @@ class V11ShadowRunner:
                 'stop_loss': t.stop_loss,
                 'take_profit': t.take_profit,
                 'atr_at_entry': t.atr_at_entry,
-                'position_id': t.position_id,
             }
             trades_data.append(td)
 
@@ -2001,7 +1749,6 @@ class V11ShadowRunner:
             'last_risk_temp': self.last_risk_temp,
             'last_instability': self.last_instability,
             'last_crisis_prob': self.last_crisis_prob,
-            'last_macro_snapshot': self.last_macro_snapshot,
             'equity_curve': self.equity_curve,
             'trades': trades_data,
             'phantom_positions': {k: v.to_dict() for k, v in self.phantom_positions.items()},
@@ -2033,7 +1780,6 @@ class V11ShadowRunner:
         }
         self.last_cmi_breakdown = state.get('last_cmi_breakdown', {})
         self.last_cmi_comparison = state.get('last_cmi_comparison', {})
-        self.last_macro_snapshot = state.get('last_macro_snapshot', {})
         self.last_dynamic_threshold = state.get('last_dynamic_threshold', 0.18)
         self.last_risk_temp = state.get('last_risk_temp', 0.0)
         self.last_instability = state.get('last_instability', 0.0)
@@ -2066,7 +1812,6 @@ class V11ShadowRunner:
                     stop_loss=td.get('stop_loss', 0.0),
                     take_profit=td.get('take_profit', 0.0),
                     atr_at_entry=td.get('atr_at_entry', 0.0),
-                    position_id=td.get('position_id', ''),
                 )
                 self.trades.append(t)
             except (KeyError, TypeError) as e:
