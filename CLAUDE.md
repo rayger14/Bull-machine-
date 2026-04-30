@@ -200,3 +200,17 @@ python3 bin/optuna_optimize_gates.py --group A --trials 60
 
 **Last Updated**: 2026-03-13
 **Architecture Version**: v18 Optuna 6-Group Optimization + WFO/CPCV
+
+---
+
+## Project Knowledge Base
+
+All learned knowledge, findings, and feedback are stored in `docs/knowledge/`. This directory is version-controlled and travels with the repo.
+
+- **MEMORY.md** — Index of all knowledge files
+- **project_emergent_knowledge.md** — Validated trading hypotheses (EMA/Wyckoff divergence REJECTED, OI during distribution CONFIRMED inverted)
+- **project_confluence_breakout_investigation.md** — FRVP bug, bypass_fusion_threshold, gate tightening TODO
+- **feedback_never_sed_patch.md** — Never patch server directly, always commit first
+- **feedback_backtest_output.md** — Always show date range, starting equity, avg risk per trade
+
+Read `docs/knowledge/MEMORY.md` at the start of any session for full context.
