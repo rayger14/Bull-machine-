@@ -391,6 +391,8 @@ class V11ShadowRunner:
             'wyckoff_bearish':  _f('wyckoff_bearish_score', 0.0),
             'wyckoff_4h_bull':  _f('tf4h_wyckoff_bullish_score', 0.0),
             'wyckoff_4h_bear':  _f('tf4h_wyckoff_bearish_score', 0.0),
+            # Structural context
+            'range_position_20': _f('range_position_20', 0.5),
             # Sentiment & regime
             'fear_greed':       _f('FEAR_GREED', _f('fear_greed_norm', 0.0)),
             'ema_slope_50':     _f('ema_slope_50', 0.0),
