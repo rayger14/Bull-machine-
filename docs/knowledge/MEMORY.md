@@ -249,6 +249,7 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 ## Experiment Results
 - [Structural embed experiments](feedback_structural_embeds.md) — momentum gates regress, don't use on reversal archetypes
 - [Wyckoff fix status](project_wyckoff_fix_status.md) — live fix committed, feature store rebuild pending
+- [Feature store 4H Wyckoff rebuild](feature_store_4h_wyckoff_rebuild.md) — `scripts/rebuild_4h_wyckoff_features.py` rebuilds tf4h_wyckoff_*_score columns, look-ahead-safe, ADD/UPDATE-only (no other columns touched)
 
 ## Next Priorities
 1. **Feature store rebuild** — fix scoring for sparse events + Optuna re-optimize (see wyckoff fix status)
