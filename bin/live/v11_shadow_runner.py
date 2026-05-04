@@ -286,6 +286,10 @@ class V11ShadowRunner:
         self.outcome_log_path = self.output_dir / 'trade_outcomes.csv'
         self._init_outcome_log()
 
+        # Rejected signal log — one row per fired-then-rejected signal (full feature snapshot)
+        self.rejected_log_path = self.output_dir / 'rejected_signals.csv'
+        self._init_rejected_log()
+
         # Current bar macro snapshot — updated every bar, captured on position open
         self.last_macro_snapshot: Dict[str, Any] = {}
         self.last_dd_score: float = 0.0
@@ -359,6 +363,41 @@ class V11ShadowRunner:
         'range_position_20',           # float — 20-bar range position [0..1]
     ]
 
+    # ------------------------------------------------------------------
+    # Canonical rejected_signals.csv schema
+    # ------------------------------------------------------------------
+    # Same per-bar feature snapshot as trade_outcomes (so ML can compare
+    # accepted vs rejected on identical features), with rejection metadata
+    # in place of exit metadata.
+    REJECTED_COLUMNS: List[str] = [
+        # Identity (3) — no exit fields, signal-time only
+        'timestamp_signal', 'archetype', 'direction',
+        # Signal pricing (3)
+        'entry_price', 'stop_loss', 'take_profit',
+        # Rejection metadata (2)
+        'rejection_stage', 'rejection_reason',
+        # CMI / regime context at signal (7)
+        'regime', 'fusion_score', 'threshold', 'threshold_margin',
+        'risk_temp', 'instability', 'crisis_prob',
+        # Macro z-scores (5)
+        'vix_z', 'dxy_z', 'gold_z', 'oil_z', 'yield_curve',
+        # Derivatives (7)
+        'funding_z', 'oi_value', 'oi_change_4h', 'oi_change_24h',
+        'taker_imbalance', 'ls_ratio_extreme', 'funding_rate',
+        # Wyckoff (4)
+        'wyckoff_bullish', 'wyckoff_bearish',
+        'wyckoff_4h_bull', 'wyckoff_4h_bear',
+        # Sentiment (3)
+        'fear_greed', 'ema_slope_50', 'rsi_14',
+        # Technical (6)
+        'atr_at_signal', 'chop', 'adx', 'atr_14', 'volume_zscore', 'bb_width',
+        # Structural (v2) (8)
+        'bos_active', 'fvg_present',
+        'distribution_at_resistance', 'distribution_exhaustion',
+        'poc_dist_norm', 'recent_sos_count_4h',
+        'phantom_dedup_winner', 'range_position_20',
+    ]
+
     def _init_outcome_log(self):
         """Initialize trade_outcomes.csv — append-only, one row per exit (including scale-outs)."""
         header = ','.join(self.OUTCOME_COLUMNS) + '\n'
@@ -377,6 +416,23 @@ class V11ShadowRunner:
                 shutil.copy2(self.outcome_log_path, backup)
                 logger.info(f"Rotated old trade_outcomes.csv to {backup} (schema changed)")
                 with open(self.outcome_log_path, 'w') as f:
+                    f.write(header)
+
+    def _init_rejected_log(self):
+        """Initialize rejected_signals.csv — append-only, one row per rejected signal."""
+        header = ','.join(self.REJECTED_COLUMNS) + '\n'
+        if not self.rejected_log_path.exists():
+            with open(self.rejected_log_path, 'w') as f:
+                f.write(header)
+        else:
+            with open(self.rejected_log_path, 'r') as f:
+                existing_header = f.readline().strip()
+            if existing_header != header.strip():
+                backup = self.rejected_log_path.with_suffix('.csv.v1')
+                import shutil
+                shutil.copy2(self.rejected_log_path, backup)
+                logger.info(f"Rotated old rejected_signals.csv to {backup} (schema changed)")
+                with open(self.rejected_log_path, 'w') as f:
                     f.write(header)
 
     def _extract_macro_snapshot(self, features) -> Dict[str, Any]:
@@ -611,6 +667,138 @@ class V11ShadowRunner:
             return
         with open(self.outcome_log_path, 'a') as f:
             f.write(','.join(row) + '\n')
+
+    @staticmethod
+    def _build_rejected_row(
+        timestamp,
+        signal,
+        macro_snapshot: Dict[str, Any],
+        regime_label: str,
+        rejection_stage: str,
+        rejection_reason: str,
+        threshold: float,
+        threshold_margin: float,
+        risk_temp: float,
+        instability: float,
+        crisis_prob: float,
+    ) -> List[str]:
+        """
+        Build a rejected_signals.csv row as a list of strings, ordered to match
+        REJECTED_COLUMNS exactly. Same defensive contract as _build_outcome_row.
+        """
+        m = macro_snapshot or {}
+
+        def _safe(v):
+            if v is None or (isinstance(v, float) and v != v):
+                return ''
+            try:
+                return f'{float(v):.6g}'
+            except (TypeError, ValueError):
+                return ''
+
+        def _bool_str(v):
+            if v is None:
+                return '0'
+            try:
+                return '1' if bool(v) else '0'
+            except Exception:
+                return '0'
+
+        # Pull dedup_losers from the rejected signal's own metadata (rare, but possible
+        # if dedup ran first and only later filters rejected it).
+        dedup_loser = ''
+        sig_meta = getattr(signal, 'metadata', None) or {}
+        if isinstance(sig_meta, dict):
+            v = sig_meta.get('dedup_losers') or sig_meta.get('dedup_loser')
+            if isinstance(v, (list, tuple)):
+                dedup_loser = '|'.join(str(x) for x in v if x)
+            elif v:
+                dedup_loser = str(v)
+        dedup_loser = dedup_loser.replace(',', ';').replace('\n', ' ')
+
+        # CSV-safe rejection reason
+        rej_reason_safe = (rejection_reason or '').replace(',', ';').replace('\n', ' ')
+        rej_stage_safe = (rejection_stage or '').replace(',', ';').replace('\n', ' ')
+
+        row: List[str] = [
+            str(timestamp),
+            str(getattr(signal, 'archetype_id', '')),
+            str(getattr(signal, 'direction', '')),
+            f'{float(getattr(signal, "entry_price", 0.0) or 0.0):.4f}',
+            f'{float(getattr(signal, "stop_loss", 0.0) or 0.0):.4f}',
+            f'{float(getattr(signal, "take_profit", 0.0) or 0.0):.4f}',
+            rej_stage_safe,
+            rej_reason_safe,
+            str(regime_label),
+            f'{float(getattr(signal, "fusion_score", 0.0) or 0.0):.4f}',
+            f'{float(threshold):.4f}',
+            f'{float(threshold_margin):.4f}',
+            f'{float(risk_temp):.4f}',
+            f'{float(instability):.4f}',
+            f'{float(crisis_prob):.4f}',
+            # Macro
+            _safe(m.get('vix_z')), _safe(m.get('dxy_z')),
+            _safe(m.get('gold_z')), _safe(m.get('oil_z')),
+            _safe(m.get('yield_curve')),
+            # Derivatives
+            _safe(m.get('funding_z')), _safe(m.get('oi_value')),
+            _safe(m.get('oi_change_4h')), _safe(m.get('oi_change_24h')),
+            _safe(m.get('taker_imbalance')), _safe(m.get('ls_ratio_extreme')),
+            _safe(m.get('funding_rate')),
+            # Wyckoff
+            _safe(m.get('wyckoff_bullish')), _safe(m.get('wyckoff_bearish')),
+            _safe(m.get('wyckoff_4h_bull')), _safe(m.get('wyckoff_4h_bear')),
+            # Sentiment
+            _safe(m.get('fear_greed')), _safe(m.get('ema_slope_50')), _safe(m.get('rsi_14')),
+            # Technical
+            _safe(m.get('atr_14')),  # atr_at_signal — same as atr_14 at signal time
+            _safe(m.get('chop')), _safe(m.get('adx')),
+            _safe(m.get('atr_14')), _safe(m.get('volume_zscore')), _safe(m.get('bb_width')),
+            # Structural (v2)
+            _bool_str(m.get('bos_active')),
+            _bool_str(m.get('fvg_present')),
+            _bool_str(m.get('distribution_at_resistance')),
+            _bool_str(m.get('distribution_exhaustion')),
+            _safe(m.get('poc_dist_norm')),
+            str(int(m.get('recent_sos_count_4h') or 0)),
+            dedup_loser,
+            _safe(m.get('range_position_20')),
+        ]
+        return row
+
+    def _append_rejected_row(self, signal, macro_snapshot, regime_label,
+                              rejection_stage, rejection_reason, timestamp=None):
+        """Append a rejected-signal row to rejected_signals.csv."""
+        if timestamp is None:
+            timestamp = getattr(signal, 'timestamp', pd.Timestamp.now(tz='UTC'))
+        try:
+            row = self._build_rejected_row(
+                timestamp=timestamp,
+                signal=signal,
+                macro_snapshot=macro_snapshot,
+                regime_label=regime_label,
+                rejection_stage=rejection_stage,
+                rejection_reason=rejection_reason,
+                threshold=getattr(signal, '_threshold_at_entry', self.last_dynamic_threshold),
+                threshold_margin=getattr(signal, '_threshold_margin', 0.0),
+                risk_temp=getattr(signal, '_risk_temp_at_entry', self.last_risk_temp),
+                instability=getattr(signal, '_instability_at_entry', self.last_instability),
+                crisis_prob=getattr(signal, '_crisis_prob_at_entry', self.last_crisis_prob),
+            )
+        except Exception as e:
+            logger.warning("[rejected_signals] build_rejected_row failed: %s", e)
+            return
+        if len(row) != len(self.REJECTED_COLUMNS):
+            logger.error(
+                "[rejected_signals] schema mismatch — got %d values for %d columns; row dropped",
+                len(row), len(self.REJECTED_COLUMNS),
+            )
+            return
+        try:
+            with open(self.rejected_log_path, 'a') as f:
+                f.write(','.join(row) + '\n')
+        except Exception as e:
+            logger.warning("[rejected_signals] write failed: %s", e)
 
     def _init_exit_logic(self):
         """Initialize per-archetype exit logic (mirrors backtester)."""
@@ -1122,6 +1310,8 @@ class V11ShadowRunner:
                     self.last_bar_signals[idx]['rejection_reason'] = 'archetype disabled'
                     self.last_bar_signals[idx]['rejection_stage'] = 'disabled'
                     self.signals_rejected += 1
+                    self._append_rejected_row(s, self.last_macro_snapshot, current_regime,
+                                               'disabled', 'archetype disabled', timestamp)
                 else:
                     surviving.append(s)
             signals = surviving
@@ -1233,10 +1423,13 @@ class V11ShadowRunner:
                     surviving.append(s)
                 else:
                     idx = sig_index[id(s)]
+                    rej_reason = f'fusion {s.fusion_score:.3f} < regime threshold {regime_threshold:.3f}'
                     self.last_bar_signals[idx]['status'] = 'rejected'
-                    self.last_bar_signals[idx]['rejection_reason'] = f'fusion {s.fusion_score:.3f} < regime threshold {regime_threshold:.3f}'
+                    self.last_bar_signals[idx]['rejection_reason'] = rej_reason
                     self.last_bar_signals[idx]['rejection_stage'] = 'regime_threshold'
                     self.signals_rejected += 1
+                    self._append_rejected_row(s, self.last_macro_snapshot, current_regime,
+                                               'regime_threshold', rej_reason, timestamp)
             signals = surviving
             self.last_dynamic_threshold = regime_threshold
 
@@ -1267,17 +1460,23 @@ class V11ShadowRunner:
             for s in signals:
                 if s.direction == 'long' and (self.bar_index - self._last_long_entry_bar) < self._entry_spacing_bars:
                     idx = sig_index[id(s)]
+                    rej_reason = f'entry spacing ({self.bar_index - self._last_long_entry_bar}/{self._entry_spacing_bars} bars)'
                     self.last_bar_signals[idx]['status'] = 'rejected'
-                    self.last_bar_signals[idx]['rejection_reason'] = f'entry spacing ({self.bar_index - self._last_long_entry_bar}/{self._entry_spacing_bars} bars)'
+                    self.last_bar_signals[idx]['rejection_reason'] = rej_reason
                     self.last_bar_signals[idx]['rejection_stage'] = 'entry_spacing'
                     self.signals_rejected += 1
+                    self._append_rejected_row(s, self.last_macro_snapshot, current_regime,
+                                               'entry_spacing', rej_reason, timestamp)
                     continue
                 if s.direction == 'short' and (self.bar_index - self._last_short_entry_bar) < self._entry_spacing_bars:
                     idx = sig_index[id(s)]
+                    rej_reason = f'entry spacing ({self.bar_index - self._last_short_entry_bar}/{self._entry_spacing_bars} bars)'
                     self.last_bar_signals[idx]['status'] = 'rejected'
-                    self.last_bar_signals[idx]['rejection_reason'] = f'entry spacing ({self.bar_index - self._last_short_entry_bar}/{self._entry_spacing_bars} bars)'
+                    self.last_bar_signals[idx]['rejection_reason'] = rej_reason
                     self.last_bar_signals[idx]['rejection_stage'] = 'entry_spacing'
                     self.signals_rejected += 1
+                    self._append_rejected_row(s, self.last_macro_snapshot, current_regime,
+                                               'entry_spacing', rej_reason, timestamp)
                     continue
                 spaced_signals.append(s)
             signals = spaced_signals
@@ -1875,6 +2074,20 @@ class V11ShadowRunner:
             },
         )
         self.phantom_signals_total += 1
+
+        # Mirror this rejection into rejected_signals.csv with the full feature
+        # snapshot, so ML can compare accepted vs rejected on identical inputs.
+        try:
+            self._append_rejected_row(
+                signal=signal,
+                macro_snapshot=self.last_macro_snapshot,
+                regime_label=regime_label,
+                rejection_stage=rejection_stage,
+                rejection_reason=rejection_reason,
+                timestamp=ts,
+            )
+        except Exception as e:
+            logger.warning("[rejected_signals] failed to log rejection: %s", e)
 
     def _close_phantom(self, pos_id, exit_price, exit_timestamp, exit_reason="unknown"):
         """Close a phantom position and record the counterfactual outcome."""

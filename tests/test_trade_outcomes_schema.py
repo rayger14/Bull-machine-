@@ -305,3 +305,122 @@ def test_build_outcome_row_handles_nan_safely():
     assert rec['adx'] == ''
     # bb_width is still present (downstream column)
     assert rec['bb_width'] != ''
+
+
+# ---------------------------------------------------------------------------
+# rejected_signals.csv tests
+# ---------------------------------------------------------------------------
+
+def _make_signal(**overrides):
+    """Lightweight stand-in for ArchetypeSignal — we only need attribute access."""
+    sig = SimpleNamespace(
+        archetype_id='confluence_breakout',
+        direction='long',
+        entry_price=77000.0,
+        stop_loss=76000.0,
+        take_profit=79000.0,
+        fusion_score=0.32,
+        timestamp=pd.Timestamp('2026-04-23 14:00:00+00:00'),
+        metadata={},
+    )
+    for k, v in overrides.items():
+        setattr(sig, k, v)
+    return sig
+
+
+def test_rejected_columns_unique_and_match_outcome_features():
+    """REJECTED_COLUMNS shares the macro/feature subset with OUTCOME_COLUMNS."""
+    rcols = V11ShadowRunner.REJECTED_COLUMNS
+    assert len(rcols) > 0
+    assert len(set(rcols)) == len(rcols), "duplicate in REJECTED_COLUMNS"
+    # Must include the v2 structural additions
+    for c in ('bos_active', 'fvg_present', 'distribution_at_resistance',
+              'distribution_exhaustion', 'poc_dist_norm', 'recent_sos_count_4h',
+              'phantom_dedup_winner', 'range_position_20'):
+        assert c in rcols, f"missing v2 column {c!r} in REJECTED_COLUMNS"
+    # Must include rejection metadata
+    assert 'rejection_stage' in rcols
+    assert 'rejection_reason' in rcols
+
+
+def test_build_rejected_row_length_matches_header():
+    sig = _make_signal()
+    row = V11ShadowRunner._build_rejected_row(
+        timestamp=sig.timestamp,
+        signal=sig,
+        macro_snapshot=_make_macro_snapshot(),
+        regime_label='neutral',
+        rejection_stage='adaptive_threshold',
+        rejection_reason='fusion 0.32 < threshold 0.45 (gap: -0.13)',
+        threshold=0.45,
+        threshold_margin=-0.13,
+        risk_temp=0.55,
+        instability=0.22,
+        crisis_prob=0.01,
+    )
+    assert isinstance(row, list)
+    assert len(row) == len(V11ShadowRunner.REJECTED_COLUMNS)
+
+
+def test_build_rejected_row_handles_csv_unsafe_reason():
+    """Rejection reason with commas/newlines must not corrupt the CSV."""
+    sig = _make_signal()
+    bad_reason = 'fusion 0.3, threshold 0.5\nnewline'
+    row = V11ShadowRunner._build_rejected_row(
+        timestamp=sig.timestamp,
+        signal=sig,
+        macro_snapshot=_make_macro_snapshot(),
+        regime_label='neutral',
+        rejection_stage='adaptive_threshold,oops',
+        rejection_reason=bad_reason,
+        threshold=0.45, threshold_margin=-0.15,
+        risk_temp=0.5, instability=0.2, crisis_prob=0.0,
+    )
+    rec = dict(zip(V11ShadowRunner.REJECTED_COLUMNS, row))
+    assert ',' not in rec['rejection_reason']
+    assert '\n' not in rec['rejection_reason']
+    assert ',' not in rec['rejection_stage']
+
+
+def test_build_rejected_row_logs_dedup_winner_from_signal_metadata():
+    sig = _make_signal()
+    sig.metadata = {'dedup_losers': ['order_block_retest']}
+    row = V11ShadowRunner._build_rejected_row(
+        timestamp=sig.timestamp,
+        signal=sig,
+        macro_snapshot=_make_macro_snapshot(),
+        regime_label='neutral',
+        rejection_stage='adaptive_threshold',
+        rejection_reason='gap',
+        threshold=0.5, threshold_margin=-0.18,
+        risk_temp=0.5, instability=0.2, crisis_prob=0.0,
+    )
+    rec = dict(zip(V11ShadowRunner.REJECTED_COLUMNS, row))
+    assert rec['phantom_dedup_winner'] == 'order_block_retest'
+
+
+def test_round_trip_rejected_csv_via_pandas(tmp_path):
+    """Header + one rejection row must round-trip through pandas.read_csv."""
+    out = tmp_path / 'rejected_signals.csv'
+    out.write_text(','.join(V11ShadowRunner.REJECTED_COLUMNS) + '\n')
+
+    sig = _make_signal()
+    row = V11ShadowRunner._build_rejected_row(
+        timestamp=sig.timestamp,
+        signal=sig,
+        macro_snapshot=_make_macro_snapshot(),
+        regime_label='neutral',
+        rejection_stage='position_limit',
+        rejection_reason='position limit (3/3)',
+        threshold=0.45, threshold_margin=-0.13,
+        risk_temp=0.55, instability=0.22, crisis_prob=0.01,
+    )
+    with out.open('a') as f:
+        f.write(','.join(row) + '\n')
+
+    df = pd.read_csv(out)
+    assert list(df.columns) == V11ShadowRunner.REJECTED_COLUMNS
+    assert len(df) == 1
+    assert df.iloc[0]['rejection_stage'] == 'position_limit'
+    assert df.iloc[0]['archetype'] == 'confluence_breakout'
+    assert df.iloc[0]['recent_sos_count_4h'] == 3
