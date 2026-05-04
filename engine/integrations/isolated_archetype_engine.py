@@ -601,6 +601,12 @@ class IsolatedArchetypeEngine:
             if removed > 0:
                 self.stats.setdefault('dedup_removed', 0)
                 self.stats['dedup_removed'] += removed
+                # Record losers in winner metadata for downstream logging (trade_outcomes)
+                losers = [s.archetype_id for s in signals if s is not best]
+                if losers:
+                    if best.metadata is None:
+                        best.metadata = {}
+                    best.metadata['dedup_losers'] = losers
                 logger.info(
                     f"[DEDUP] best_of_bar: kept {best.archetype_id} "
                     f"(fusion={best.fusion_score:.3f}), removed {removed}"
@@ -611,12 +617,22 @@ class IsolatedArchetypeEngine:
             longs = [s for s in signals if s.direction == 'long']
             shorts = [s for s in signals if s.direction == 'short']
             result = []
-            if longs:
-                best_long = max(longs, key=lambda s: s.fusion_score)
+            best_long = max(longs, key=lambda s: s.fusion_score) if longs else None
+            best_short = max(shorts, key=lambda s: s.fusion_score) if shorts else None
+            if best_long:
                 result.append(best_long)
-            if shorts:
-                best_short = max(shorts, key=lambda s: s.fusion_score)
+                losers = [s.archetype_id for s in longs if s is not best_long]
+                if losers:
+                    if best_long.metadata is None:
+                        best_long.metadata = {}
+                    best_long.metadata['dedup_losers'] = losers
+            if best_short:
                 result.append(best_short)
+                losers = [s.archetype_id for s in shorts if s is not best_short]
+                if losers:
+                    if best_short.metadata is None:
+                        best_short.metadata = {}
+                    best_short.metadata['dedup_losers'] = losers
             removed = len(signals) - len(result)
             if removed > 0:
                 self.stats.setdefault('dedup_removed', 0)
@@ -631,20 +647,29 @@ class IsolatedArchetypeEngine:
         elif mode == 'unique_sl_zone':
             sorted_sigs = sorted(signals, key=lambda s: s.fusion_score, reverse=True)
             kept = []
-            used_zones = []  # list of (direction, sl_level)
+            used_zones = []  # list of (direction, sl_level, winner_signal)
+            losers_by_winner: Dict[int, List[str]] = {}
             for sig in sorted_sigs:
-                is_dup = False
-                for (d, sl) in used_zones:
+                winner = None
+                for (d, sl, w) in used_zones:
                     if d != sig.direction:
                         continue
                     if sig.entry_price > 0:
                         sl_diff_pct = abs(sig.stop_loss - sl) / sig.entry_price
                         if sl_diff_pct < 0.02:  # within 2% = same zone
-                            is_dup = True
+                            winner = w
                             break
-                if not is_dup:
+                if winner is None:
                     kept.append(sig)
-                    used_zones.append((sig.direction, sig.stop_loss))
+                    used_zones.append((sig.direction, sig.stop_loss, sig))
+                else:
+                    losers_by_winner.setdefault(id(winner), []).append(sig.archetype_id)
+            for w in kept:
+                losers = losers_by_winner.get(id(w))
+                if losers:
+                    if w.metadata is None:
+                        w.metadata = {}
+                    w.metadata['dedup_losers'] = losers
             removed = len(signals) - len(kept)
             if removed > 0:
                 self.stats.setdefault('dedup_removed', 0)

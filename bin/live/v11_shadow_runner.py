@@ -320,29 +320,48 @@ class V11ShadowRunner:
             with open(self.signal_log_path, 'w') as f:
                 f.write(expected_header)
 
+    # ------------------------------------------------------------------
+    # Canonical trade_outcomes.csv schema (single source of truth)
+    # ------------------------------------------------------------------
+    # IMPORTANT: All new columns MUST be appended at the END to keep the
+    # CSV backwards-compatible with downstream consumers. Reordering or
+    # deleting columns will rotate the historical file (see _init_outcome_log).
+    OUTCOME_COLUMNS: List[str] = [
+        # --- v1 schema (frozen, do not reorder) ---
+        # Identity (4)
+        'timestamp_entry', 'timestamp_exit', 'archetype', 'direction',
+        # Prices + outcome (7)
+        'entry_price', 'exit_price', 'pnl', 'pnl_pct',
+        'hold_hours', 'exit_reason', 'R_multiple',
+        # CMI / regime context at entry (7)
+        'regime', 'fusion_score', 'threshold', 'threshold_margin',
+        'risk_temp', 'instability', 'crisis_prob',
+        # Macro z-scores at entry (5)
+        'vix_z', 'dxy_z', 'gold_z', 'oil_z', 'yield_curve',
+        # Derivatives at entry (7)
+        'funding_z', 'oi_value', 'oi_change_4h', 'oi_change_24h',
+        'taker_imbalance', 'ls_ratio_extreme', 'funding_rate',
+        # Wyckoff structural context at entry (4)
+        'wyckoff_bullish', 'wyckoff_bearish',
+        'wyckoff_4h_bull', 'wyckoff_4h_bear',
+        # Sentiment + regime at entry (3)
+        'fear_greed', 'ema_slope_50', 'rsi_14',
+        # Technical at entry (6)
+        'atr_at_entry', 'chop', 'adx', 'atr_14', 'volume_zscore', 'bb_width',
+        # --- v2 schema additions (2026-04-30): structural state at entry ---
+        'bos_active',                  # bool — BOS event in last 4 bars (1H or 4H)
+        'fvg_present',                 # bool — FVG present at entry (1H or 4H)
+        'distribution_at_resistance',  # bool — derived: 4H bearish + range_pos>0.70
+        'distribution_exhaustion',     # bool — derived: 4H bearish>=0.6 + OI declining + range_pos<0.40
+        'poc_dist_norm',               # float — tf1h_frvp_distance_to_poc
+        'recent_sos_count_4h',         # int — count of wyckoff_sos==True in last 24 bars (~24h on 1H)
+        'phantom_dedup_winner',        # str|"" — archetype this signal lost to in same-bar dedup ("" if none)
+        'range_position_20',           # float — 20-bar range position [0..1]
+    ]
+
     def _init_outcome_log(self):
         """Initialize trade_outcomes.csv — append-only, one row per exit (including scale-outs)."""
-        header = (
-            # Identity
-            'timestamp_entry,timestamp_exit,archetype,direction,'
-            # Prices + outcome
-            'entry_price,exit_price,pnl,pnl_pct,hold_hours,exit_reason,R_multiple,'
-            # CMI / regime context at entry
-            'regime,fusion_score,threshold,threshold_margin,'
-            'risk_temp,instability,crisis_prob,'
-            # Macro z-scores at entry (yfinance)
-            'vix_z,dxy_z,gold_z,oil_z,yield_curve,'
-            # Derivatives at entry (OKX live)
-            'funding_z,oi_value,oi_change_4h,oi_change_24h,'
-            'taker_imbalance,ls_ratio_extreme,funding_rate,'
-            # Wyckoff structural context at entry
-            'wyckoff_bullish,wyckoff_bearish,'
-            'wyckoff_4h_bull,wyckoff_4h_bear,'
-            # Sentiment + regime at entry
-            'fear_greed,ema_slope_50,rsi_14,'
-            # Technical at entry
-            'atr_at_entry,chop,adx,atr_14,volume_zscore,bb_width\n'
-        )
+        header = ','.join(self.OUTCOME_COLUMNS) + '\n'
         # Always rewrite header on startup (schema may have changed)
         if not self.outcome_log_path.exists():
             with open(self.outcome_log_path, 'w') as f:
@@ -371,6 +390,69 @@ class V11ShadowRunner:
             except (TypeError, ValueError):
                 return default
 
+        def _b(key, default=False):
+            val = features.get(key, default) if hasattr(features, 'get') else default
+            if val is None or (isinstance(val, float) and val != val):
+                return bool(default)
+            try:
+                return bool(float(val)) if not isinstance(val, bool) else val
+            except (TypeError, ValueError):
+                return bool(default)
+
+        # --- v2 structural state at entry ---
+        # bos_active: BOS event in any of last 4 bars on 1H or 4H
+        bos_active = False
+        try:
+            buf = list(self.bar_buffer)[-4:] if hasattr(self, 'bar_buffer') else []
+            if not buf and features is not None:
+                buf = [features]
+            for b in buf:
+                getter = b.get if hasattr(b, 'get') else (lambda k, d=0.0: d)
+                if (bool(getter('tf1h_bos_bullish', 0)) or bool(getter('tf1h_bos_bearish', 0))
+                        or bool(getter('tf4h_bos_bullish', 0)) or bool(getter('tf4h_bos_bearish', 0))):
+                    bos_active = True
+                    break
+        except Exception:
+            bos_active = False
+
+        # fvg_present: FVG present at entry (1H or 4H or generic)
+        fvg_present = bool(_f('tf1h_fvg_present', 0.0) > 0
+                           or _f('tf4h_fvg_present', 0.0) > 0
+                           or _b('fvg_present', False))
+
+        # Derived feature flags (from engine.archetypes.archetype_instance.DERIVED_FEATURES)
+        wyck_4h_bear = _f('tf4h_wyckoff_bearish_score', 0.0)
+        range_pos_20 = _f('range_position_20', _f('range_position', 0.5))
+        oi_24h = _f('oi_change_24h', 0.0)
+        distribution_at_resistance = bool(wyck_4h_bear > 0.5 and range_pos_20 > 0.70)
+        distribution_exhaustion = bool(
+            wyck_4h_bear >= 0.6 and oi_24h < -0.02 and range_pos_20 < 0.40
+        )
+
+        # poc_dist_norm: tf1h_frvp_distance_to_poc (post-FRVP fix, real values)
+        poc_dist_norm = _f('tf1h_frvp_distance_to_poc', 0.0)
+
+        # recent_sos_count_4h: count of wyckoff_sos events in last 24 bars (~24h on 1H frame)
+        sos_count = 0
+        try:
+            buf = list(self.bar_buffer)[-24:] if hasattr(self, 'bar_buffer') else []
+            for b in buf:
+                getter = b.get if hasattr(b, 'get') else (lambda k, d=0.0: d)
+                v = getter('wyckoff_sos', getter('tf4h_wyckoff_bullish_score', 0.0))
+                if v is None:
+                    continue
+                if isinstance(v, bool):
+                    if v:
+                        sos_count += 1
+                else:
+                    try:
+                        if float(v) > 0.5:
+                            sos_count += 1
+                    except (TypeError, ValueError):
+                        pass
+        except Exception:
+            sos_count = 0
+
         return {
             # Macro z-scores (yfinance via MacroDataFetcher — 24h cache)
             'vix_z':            _f('VIX_Z', 0.0),
@@ -382,7 +464,7 @@ class V11ShadowRunner:
             'funding_z':        _f('funding_Z', _f('funding_z', 0.0)),
             'oi_value':         _f('oi_value', 0.0),
             'oi_change_4h':     _f('oi_change_4h', 0.0),
-            'oi_change_24h':    _f('oi_change_24h', 0.0),
+            'oi_change_24h':    oi_24h,
             'taker_imbalance':  _f('taker_imbalance', 0.0),
             'ls_ratio_extreme': _f('ls_ratio_extreme', 0.0),
             'funding_rate':     _f('binance_funding_rate', _f('funding_rate', 0.0)),
@@ -390,9 +472,9 @@ class V11ShadowRunner:
             'wyckoff_bullish':  _f('wyckoff_bullish_score', 0.0),
             'wyckoff_bearish':  _f('wyckoff_bearish_score', 0.0),
             'wyckoff_4h_bull':  _f('tf4h_wyckoff_bullish_score', 0.0),
-            'wyckoff_4h_bear':  _f('tf4h_wyckoff_bearish_score', 0.0),
+            'wyckoff_4h_bear':  wyck_4h_bear,
             # Structural context
-            'range_position_20': _f('range_position_20', 0.5),
+            'range_position_20': range_pos_20,
             # Sentiment & regime
             'fear_greed':       _f('FEAR_GREED', _f('fear_greed_norm', 0.0)),
             'ema_slope_50':     _f('ema_slope_50', 0.0),
@@ -403,49 +485,132 @@ class V11ShadowRunner:
             'atr_14':           _f('atr_14', 0.0),
             'volume_zscore':    _f('volume_zscore', 0.0),
             'bb_width':         _f('bb_width', 0.0),
+            # --- v2 structural state at entry ---
+            'bos_active':                 bool(bos_active),
+            'fvg_present':                bool(fvg_present),
+            'distribution_at_resistance': bool(distribution_at_resistance),
+            'distribution_exhaustion':    bool(distribution_exhaustion),
+            'poc_dist_norm':              poc_dist_norm,
+            'recent_sos_count_4h':        int(sos_count),
         }
 
-    def _append_outcome_row(self, pos: 'TrackedPosition', pnl: float, pnl_pct: float,
-                             exit_price: float, exit_timestamp, exit_reason: str):
-        """Append one completed-trade row to trade_outcomes.csv."""
+    @staticmethod
+    def _build_outcome_row(pos: 'TrackedPosition', pnl: float, pnl_pct: float,
+                            exit_price: float, exit_timestamp, exit_reason: str) -> List[str]:
+        """
+        Build the trade_outcomes.csv row as a list of stringified values, in the
+        exact order of OUTCOME_COLUMNS. Returning a list (rather than a pre-joined
+        string) lets callers/tests assert len(row) == len(OUTCOME_COLUMNS) — which
+        is what prevents the historical 43-vs-44 off-by-one drift.
+        """
         duration_hours = (exit_timestamp - pos.entry_time).total_seconds() / 3600.0
         stop_dist = abs(pos.entry_price - pos.stop_loss)
         R_multiple = (pnl / (stop_dist * pos.original_quantity)) if stop_dist > 0 else 0.0
 
-        m = pos.macro_at_entry
+        m = pos.macro_at_entry or {}
 
         def _safe(v):
             if v is None or (isinstance(v, float) and v != v):
                 return ''
             return f'{v:.6g}'
 
-        row = (
-            f'{pos.entry_time},{exit_timestamp},{pos.archetype},{pos.direction},'
-            f'{pos.entry_price:.4f},{exit_price:.4f},{pnl:.4f},{pnl_pct:.4f},'
-            f'{duration_hours:.2f},{exit_reason},{R_multiple:.4f},'
-            f'{pos.regime_at_entry},{pos.fusion_score:.4f},'
-            f'{pos.threshold_at_entry:.4f},{pos.threshold_margin:.4f},'
-            f'{pos.risk_temp_at_entry:.4f},{pos.instability_at_entry:.4f},{pos.crisis_prob_at_entry:.4f},'
-            # Macro
-            f'{_safe(m.get("vix_z"))},{_safe(m.get("dxy_z"))},'
-            f'{_safe(m.get("gold_z"))},{_safe(m.get("oil_z"))},'
-            f'{_safe(m.get("yield_curve"))},'
+        def _bool_str(v):
+            if v is None:
+                return '0'
+            try:
+                return '1' if bool(v) else '0'
+            except Exception:
+                return '0'
+
+        # Pull dedup loser metadata if present (set by IsolatedArchetypeEngine._deduplicate_signals)
+        dedup_loser = ''
+        meta = getattr(pos, 'entry_metadata', {}) or {}
+        if isinstance(meta, dict):
+            v = meta.get('dedup_losers') or meta.get('dedup_loser')
+            if isinstance(v, (list, tuple)):
+                dedup_loser = '|'.join(str(x) for x in v if x)
+            elif v:
+                dedup_loser = str(v)
+        # CSV-safe: forbid commas/newlines in this freeform field
+        dedup_loser = dedup_loser.replace(',', ';').replace('\n', ' ')
+
+        row: List[str] = [
+            # Identity
+            str(pos.entry_time),
+            str(exit_timestamp),
+            str(pos.archetype),
+            str(pos.direction),
+            # Prices + outcome
+            f'{pos.entry_price:.4f}',
+            f'{exit_price:.4f}',
+            f'{pnl:.4f}',
+            f'{pnl_pct:.4f}',
+            f'{duration_hours:.2f}',
+            str(exit_reason),
+            f'{R_multiple:.4f}',
+            # CMI / regime context
+            str(pos.regime_at_entry),
+            f'{pos.fusion_score:.4f}',
+            f'{pos.threshold_at_entry:.4f}',
+            f'{pos.threshold_margin:.4f}',
+            f'{pos.risk_temp_at_entry:.4f}',
+            f'{pos.instability_at_entry:.4f}',
+            f'{pos.crisis_prob_at_entry:.4f}',
+            # Macro z-scores
+            _safe(m.get('vix_z')),
+            _safe(m.get('dxy_z')),
+            _safe(m.get('gold_z')),
+            _safe(m.get('oil_z')),
+            _safe(m.get('yield_curve')),
             # Derivatives
-            f'{_safe(m.get("funding_z"))},{_safe(m.get("oi_value"))},'
-            f'{_safe(m.get("oi_change_4h"))},{_safe(m.get("oi_change_24h"))},'
-            f'{_safe(m.get("taker_imbalance"))},{_safe(m.get("ls_ratio_extreme"))},'
-            f'{_safe(m.get("funding_rate"))},'
+            _safe(m.get('funding_z')),
+            _safe(m.get('oi_value')),
+            _safe(m.get('oi_change_4h')),
+            _safe(m.get('oi_change_24h')),
+            _safe(m.get('taker_imbalance')),
+            _safe(m.get('ls_ratio_extreme')),
+            _safe(m.get('funding_rate')),
             # Wyckoff
-            f'{_safe(m.get("wyckoff_bullish"))},{_safe(m.get("wyckoff_bearish"))},'
-            f'{_safe(m.get("wyckoff_4h_bull"))},{_safe(m.get("wyckoff_4h_bear"))},'
+            _safe(m.get('wyckoff_bullish')),
+            _safe(m.get('wyckoff_bearish')),
+            _safe(m.get('wyckoff_4h_bull')),
+            _safe(m.get('wyckoff_4h_bear')),
             # Sentiment
-            f'{_safe(m.get("fear_greed"))},{_safe(m.get("ema_slope_50"))},{_safe(m.get("rsi_14"))},'
+            _safe(m.get('fear_greed')),
+            _safe(m.get('ema_slope_50')),
+            _safe(m.get('rsi_14')),
             # Technical
-            f'{pos.atr_at_entry:.4f},{_safe(m.get("chop"))},{_safe(m.get("adx"))},'
-            f'{_safe(m.get("atr_14"))},{_safe(m.get("volume_zscore"))},{_safe(m.get("bb_width"))}\n'
-        )
+            f'{pos.atr_at_entry:.4f}',
+            _safe(m.get('chop')),
+            _safe(m.get('adx')),
+            _safe(m.get('atr_14')),
+            _safe(m.get('volume_zscore')),
+            _safe(m.get('bb_width')),
+            # --- v2 structural state ---
+            _bool_str(m.get('bos_active')),
+            _bool_str(m.get('fvg_present')),
+            _bool_str(m.get('distribution_at_resistance')),
+            _bool_str(m.get('distribution_exhaustion')),
+            _safe(m.get('poc_dist_norm')),
+            str(int(m.get('recent_sos_count_4h') or 0)),
+            dedup_loser,
+            _safe(m.get('range_position_20')),
+        ]
+        return row
+
+    def _append_outcome_row(self, pos: 'TrackedPosition', pnl: float, pnl_pct: float,
+                             exit_price: float, exit_timestamp, exit_reason: str):
+        """Append one completed-trade row to trade_outcomes.csv."""
+        row = self._build_outcome_row(pos, pnl, pnl_pct, exit_price, exit_timestamp, exit_reason)
+        # Hard guarantee: row length == header length, or do not write at all.
+        if len(row) != len(self.OUTCOME_COLUMNS):
+            logger.error(
+                "[trade_outcomes] schema mismatch — got %d values for %d columns; row dropped",
+                len(row), len(self.OUTCOME_COLUMNS),
+            )
+            return
         with open(self.outcome_log_path, 'a') as f:
-            f.write(row)
+            f.write(','.join(row) + '\n')
 
     def _init_exit_logic(self):
         """Initialize per-archetype exit logic (mirrors backtester)."""
@@ -1221,6 +1386,7 @@ class V11ShadowRunner:
                 crisis_prob_at_entry=getattr(sig, '_crisis_prob_at_entry', self.last_crisis_prob),
                 threshold_margin=getattr(sig, '_threshold_margin', 0.0),
                 would_have_passed=getattr(sig, '_would_have_passed', True),
+                signal_metadata=getattr(sig, 'metadata', None) or {},
             )
             # Track last entry bar per direction for spacing
             if sig.direction == 'long':
@@ -1384,6 +1550,7 @@ class V11ShadowRunner:
         threshold_at_entry=0.0, risk_temp_at_entry=0.0,
         instability_at_entry=0.0, crisis_prob_at_entry=0.0,
         threshold_margin=0.0, would_have_passed=True,
+        signal_metadata=None,
     ):
         """Open a virtual position."""
         portfolio_value = self.initial_cash  # Use initial capital, not depleted cash
@@ -1467,7 +1634,7 @@ class V11ShadowRunner:
         self.positions[pos_id].macro_at_entry = self.last_macro_snapshot.copy()
 
         # Capture entry metadata for ExitLogic invalidation checks
-        self.positions[pos_id].entry_metadata = {
+        entry_meta = {
             'entry_prev_low': features.get('tf1h_prev_low', features.get('low', fill_price)) if isinstance(features, dict) else fill_price,
             'entry_prev_high': features.get('tf1h_prev_high', features.get('high', fill_price)) if isinstance(features, dict) else fill_price,
             'entry_wick_low': features.get('low', fill_price) if isinstance(features, dict) else fill_price,
@@ -1481,6 +1648,13 @@ class V11ShadowRunner:
             'archetype': archetype,
             'executed_scale_outs': [],
         }
+        # Forward dedup_losers from signal metadata so trade_outcomes.csv can log
+        # which archetypes lost in same-bar deduplication.
+        if signal_metadata and isinstance(signal_metadata, dict):
+            losers = signal_metadata.get('dedup_losers')
+            if losers:
+                entry_meta['dedup_losers'] = list(losers)
+        self.positions[pos_id].entry_metadata = entry_meta
 
         self.signals_allocated += 1
 
