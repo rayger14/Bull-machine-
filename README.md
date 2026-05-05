@@ -42,6 +42,18 @@
 
 *"Temporal cycles meet institutional domain analysis."* - v1.8.6 Philosophy
 
+
+## 🖥️ Frontend Strategy Workbench
+
+A lightweight UI is available to visualize the fusion decision flow (domain consensus, macro vetoes, threshold gating), now with config snapshot loading, presets, and decision trace output:
+
+```bash
+python -m http.server 8080
+# open http://localhost:8080/ui/trader_dashboard.html
+```
+
+See `docs/frontend/FRONTEND_UI_GUIDE.md` for details.
+
 ---
 
 ## 🚀 What's New in v1.7.3: Live Feeds + Macro Context Integration
