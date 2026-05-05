@@ -684,12 +684,17 @@ class V11ShadowRunner:
         chop = round(_g('chop_score', 0.5), 3)
         fvg = int(_g('tf1h_fvg_present', 0))
         fg_raw = round(_g('fear_greed_norm', 0.5) * 100, 0)
+        bb_width = round(_g('bb_width', 0), 4)
+        atr_pct = round(_g('atr_percentile', 0), 3)
+        rsi_extreme = int(_g('derived:rsi_extreme_65', _g('rsi_extreme_65', 0)))
 
         gate_values = {
             'rsi_14': rsi, 'adx': adx, 'atr_14': atr, 'wick_ratio': wick,
             'boms_strength': boms, 'bos_bullish': bos_bull, 'bos_bearish': bos_bear,
             'volume_z': vol_z, 'funding_z': fz, 'chop_score': chop,
             'fvg_present': fvg, 'fear_greed': fg_raw,
+            'bb_width': bb_width, 'atr_percentile': atr_pct,
+            'rsi_extreme_65': rsi_extreme,
         }
 
         # --- Per-archetype headline: what actually happened ---
