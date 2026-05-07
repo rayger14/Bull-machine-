@@ -53,7 +53,7 @@ export default function FactorAttribution({ summary }: FactorAttributionProps) {
           <YAxis tick={{ fill: '#6b7a8d', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `${v.toFixed(0)}%`} />
           <Tooltip
             contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 11 }}
-            formatter={(v: number | undefined) => `${(v ?? 0).toFixed(1)}%`}
+            formatter={(v) => `${(typeof v === 'number' ? v : 0).toFixed(1)}%`}
           />
           <Legend wrapperStyle={{ fontSize: 11, color: '#6b7a8d' }} />
           <Bar dataKey="technical" stackId="a" fill={factorColors.technical} name="Technical" radius={[0, 0, 0, 0]} />
