@@ -244,7 +244,7 @@ export default function OpenPositions({ positions }: OpenPositionsProps) {
                         color="text-amber-400"
                       />
                       <DetailCell
-                        label="Risk (2% Portfolio)"
+                        label="Risk Amount"
                         value={p.position_size_usd != null && p.sl_distance_pct != null
                           ? fmtUsd(p.position_size_usd * (p.sl_distance_pct / 100), 0)
                           : '--'}
@@ -317,6 +317,21 @@ export default function OpenPositions({ positions }: OpenPositionsProps) {
                           <MiniGauge label="SMC" value={p.narrative.domain_scores.smc} color="bg-emerald-400" />
                         </div>
                       )}
+
+                      {/* Hard Gate Values — what features actually triggered the entry */}
+                      {p.narrative?.gate_values && Object.keys(p.narrative.gate_values).length > 0 && (
+                        <div className="mt-3">
+                          <div className="text-[9px] text-slate-600 uppercase tracking-wider mb-1">Hard Gates at Entry</div>
+                          <div className="grid grid-cols-3 gap-x-3 gap-y-1">
+                            {Object.entries(p.narrative.gate_values).map(([k, v]) => (
+                              <div key={k} className="flex justify-between text-[10px] font-mono">
+                                <span className="text-slate-500">{k}</span>
+                                <span className="text-slate-300">{typeof v === 'number' ? v.toFixed(v < 1 && v > -1 ? 3 : 2) : String(v)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -353,9 +368,9 @@ export default function OpenPositions({ positions }: OpenPositionsProps) {
                           )}
                           {p.would_have_passed != null && (
                             <span className="text-slate-500">
-                              Bypass:{' '}
-                              <span className={p.would_have_passed ? 'text-emerald-400' : 'text-rose-400'}>
-                                {p.would_have_passed ? 'Yes' : 'No'}
+                              Threshold:{' '}
+                              <span className={p.would_have_passed ? 'text-emerald-400' : 'text-amber-400'}>
+                                {p.would_have_passed ? 'Passed' : 'Bypassed'}
                               </span>
                             </span>
                           )}
