@@ -249,6 +249,7 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 ## Experiment Results
 - [Structural embed experiments](feedback_structural_embeds.md) — momentum gates regress, don't use on reversal archetypes
 - [Wyckoff fix status](project_wyckoff_fix_status.md) — live fix committed, feature store rebuild pending
+- [Master findings: 5-study quant investigation (May 2026)](quant_study_master_findings_2026_05.md) — gates+dedup are NOT the bottleneck; fusion-weight asymmetry is. Status quo dedup wins OOS.
 
 ## Next Priorities
 1. **Feature store rebuild** — fix scoring for sparse events + Optuna re-optimize (see wyckoff fix status)
