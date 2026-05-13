@@ -1,0 +1,37 @@
+{
+  "total_dedup_pairs": 936,
+  "unique_archetypes_involved": 11,
+  "top_blockers": [
+    "wick_trap",
+    "liquidity_sweep",
+    "oi_divergence",
+    "exhaustion_reversal",
+    "confluence_breakout"
+  ],
+  "wins_by_archetype": {
+    "wick_trap": 490,
+    "liquidity_sweep": 109,
+    "oi_divergence": 89,
+    "liquidity_compression": 18,
+    "exhaustion_reversal": 34,
+    "trap_within_trend": 5,
+    "funding_divergence": 13,
+    "confluence_breakout": 23,
+    "liquidity_vacuum": 3,
+    "retest_cluster": 2,
+    "spring": 0
+  },
+  "losses_by_archetype": {
+    "trap_within_trend": 478,
+    "oi_divergence": 149,
+    "liquidity_sweep": 104,
+    "exhaustion_reversal": 25,
+    "retest_cluster": 52,
+    "wick_trap": 13,
+    "spring": 13,
+    "confluence_breakout": 95,
+    "liquidity_compression": 1,
+    "funding_divergence": 2,
+    "liquidity_vacuum": 4
+  }
+}

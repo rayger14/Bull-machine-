@@ -1,0 +1,190 @@
+{
+  "meta": {
+    "events_csv": "results/dedup_investigation/baseline_2018_2024/dedup_events.csv",
+    "tp_r_multiple": 1.5,
+    "max_bars": 240,
+    "n_skipped": 0
+  },
+  "by_archetype": {
+    "trap_within_trend": {
+      "n_phantom_trades": 617,
+      "wins": 302,
+      "losses": 315,
+      "win_rate": 0.48946515397082657,
+      "gross_win_pct": 1893.192,
+      "gross_loss_pct": 1560.934,
+      "net_pct": 332.258,
+      "phantom_pf": 1.213,
+      "mean_pnl_pct_bp": 53.9,
+      "reasons": {
+        "stop": 299,
+        "tp": 245,
+        "time": 73
+      }
+    },
+    "oi_divergence": {
+      "n_phantom_trades": 195,
+      "wins": 88,
+      "losses": 107,
+      "win_rate": 0.4512820512820513,
+      "gross_win_pct": 238.159,
+      "gross_loss_pct": 173.655,
+      "net_pct": 64.503,
+      "phantom_pf": 1.371,
+      "mean_pnl_pct_bp": 33.1,
+      "reasons": {
+        "stop": 107,
+        "tp": 88,
+        "time": 0
+      }
+    },
+    "liquidity_sweep": {
+      "n_phantom_trades": 135,
+      "wins": 63,
+      "losses": 72,
+      "win_rate": 0.4666666666666667,
+      "gross_win_pct": 279.558,
+      "gross_loss_pct": 250.482,
+      "net_pct": 29.076,
+      "phantom_pf": 1.116,
+      "mean_pnl_pct_bp": 21.5,
+      "reasons": {
+        "stop": 72,
+        "tp": 61,
+        "time": 2
+      }
+    },
+    "spring": {
+      "n_phantom_trades": 20,
+      "wins": 7,
+      "losses": 13,
+      "win_rate": 0.35,
+      "gross_win_pct": 25.647,
+      "gross_loss_pct": 42.963,
+      "net_pct": -17.316,
+      "phantom_pf": 0.597,
+      "mean_pnl_pct_bp": -86.6,
+      "reasons": {
+        "stop": 13,
+        "tp": 7,
+        "time": 0
+      }
+    },
+    "retest_cluster": {
+      "n_phantom_trades": 70,
+      "wins": 27,
+      "losses": 43,
+      "win_rate": 0.38571428571428573,
+      "gross_win_pct": 135.136,
+      "gross_loss_pct": 137.054,
+      "net_pct": -1.918,
+      "phantom_pf": 0.986,
+      "mean_pnl_pct_bp": -2.7,
+      "reasons": {
+        "stop": 43,
+        "tp": 26,
+        "time": 1
+      }
+    },
+    "exhaustion_reversal": {
+      "n_phantom_trades": 47,
+      "wins": 18,
+      "losses": 29,
+      "win_rate": 0.3829787234042553,
+      "gross_win_pct": 53.294,
+      "gross_loss_pct": 67.04,
+      "net_pct": -13.745,
+      "phantom_pf": 0.795,
+      "mean_pnl_pct_bp": -29.2,
+      "reasons": {
+        "stop": 29,
+        "tp": 17,
+        "time": 1
+      }
+    },
+    "wick_trap": {
+      "n_phantom_trades": 16,
+      "wins": 9,
+      "losses": 7,
+      "win_rate": 0.5625,
+      "gross_win_pct": 47.987,
+      "gross_loss_pct": 27.488,
+      "net_pct": 20.499,
+      "phantom_pf": 1.746,
+      "mean_pnl_pct_bp": 128.1,
+      "reasons": {
+        "stop": 7,
+        "tp": 5,
+        "time": 4
+      }
+    },
+    "confluence_breakout": {
+      "n_phantom_trades": 95,
+      "wins": 33,
+      "losses": 62,
+      "win_rate": 0.3473684210526316,
+      "gross_win_pct": 92.289,
+      "gross_loss_pct": 126.954,
+      "net_pct": -34.665,
+      "phantom_pf": 0.727,
+      "mean_pnl_pct_bp": -36.5,
+      "reasons": {
+        "stop": 62,
+        "tp": 32,
+        "time": 1
+      }
+    },
+    "liquidity_compression": {
+      "n_phantom_trades": 1,
+      "wins": 0,
+      "losses": 1,
+      "win_rate": 0.0,
+      "gross_win_pct": 0,
+      "gross_loss_pct": 2.763,
+      "net_pct": -2.763,
+      "phantom_pf": 0.0,
+      "mean_pnl_pct_bp": -276.3,
+      "reasons": {
+        "stop": 1,
+        "tp": 0,
+        "time": 0
+      }
+    },
+    "funding_divergence": {
+      "n_phantom_trades": 2,
+      "wins": 2,
+      "losses": 0,
+      "win_rate": 1.0,
+      "gross_win_pct": 7.45,
+      "gross_loss_pct": 0,
+      "net_pct": 7.45,
+      "phantom_pf": "inf",
+      "mean_pnl_pct_bp": 372.5,
+      "reasons": {
+        "stop": 0,
+        "tp": 2,
+        "time": 0
+      }
+    },
+    "liquidity_vacuum": {
+      "n_phantom_trades": 4,
+      "wins": 2,
+      "losses": 2,
+      "win_rate": 0.5,
+      "gross_win_pct": 5.798,
+      "gross_loss_pct": 3.639,
+      "net_pct": 2.159,
+      "phantom_pf": 1.593,
+      "mean_pnl_pct_bp": 54.0,
+      "reasons": {
+        "stop": 2,
+        "tp": 2,
+        "time": 0
+      }
+    }
+  },
+  "aggregate": {
+    "n_phantom_trades": 1202,
+    "sum_net_pct": 385.538
+  }
+}

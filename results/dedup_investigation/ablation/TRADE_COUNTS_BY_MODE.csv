@@ -1,0 +1,26 @@
+== TRAIN ==,,,,,,
+archetype,status_quo,normalized,unique_sl_zone,round_robin,hybrid_rr_fusion,pass_through
+confluence_breakout,169,193,169,194,184,198
+exhaustion_reversal,7,7,7,7,7,3
+funding_divergence,30,26,30,30,30,30
+fvg_continuation,0,0,0,0,0,0
+liquidity_compression,8,4,8,8,8,8
+liquidity_sweep,33,46,37,46,46,46
+long_squeeze,22,22,22,22,22,18
+oi_divergence,3,3,3,2,3,3
+trap_within_trend,3,12,4,12,3,22
+wick_trap,27,11,27,15,23,27
+
+== TEST ==,,,,,,
+archetype,status_quo,normalized,unique_sl_zone,round_robin,hybrid_rr_fusion,pass_through
+confluence_breakout,320,351,320,358,347,365
+exhaustion_reversal,14,14,14,14,14,14
+funding_divergence,23,23,23,23,23,23
+fvg_continuation,10,10,10,10,10,10
+liquidity_compression,26,19,26,23,26,26
+liquidity_sweep,20,28,20,21,28,28
+long_squeeze,12,12,12,12,12,12
+oi_divergence,7,7,7,6,7,7
+trap_within_trend,3,7,3,11,5,17
+wick_trap,29,24,29,19,26,29
+

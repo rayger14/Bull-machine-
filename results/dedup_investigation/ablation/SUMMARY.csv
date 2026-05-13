@@ -1,0 +1,13 @@
+mode,phase,total_trades,profit_factor,net_pnl,max_drawdown_pct,sharpe_ratio,win_rate,elapsed_sec
+status_quo,train,302.0,1.55,27715.69,-11.84,0.94,63.25,29.7
+status_quo,test,464.0,1.79,57837.29,-8.6,1.67,68.53,20.1
+normalized,train,324.0,1.25,14803.47,-15.95,0.47,58.02,29.0
+normalized,test,495.0,1.65,53775.2,-7.29,1.52,67.68,20.0
+unique_sl_zone,train,307.0,1.49,26332.2,-11.97,0.81,63.52,29.1
+unique_sl_zone,test,464.0,1.79,57837.29,-8.6,1.67,68.53,20.3
+round_robin,train,336.0,1.4,23689.8,-14.75,0.78,60.12,29.4
+round_robin,test,497.0,1.69,56042.09,-8.86,1.57,67.2,19.7
+hybrid_rr_fusion,train,326.0,1.43,24179.22,-14.1,0.79,61.04,29.0
+hybrid_rr_fusion,test,498.0,1.73,58447.88,-9.77,1.64,68.07,19.8
+pass_through,train,355.0,1.48,29949.97,-16.72,0.79,60.56,28.7
+pass_through,test,531.0,1.78,64799.78,-8.53,1.7,68.74,19.6

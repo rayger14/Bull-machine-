@@ -255,6 +255,14 @@ def _patched_deduplicate_signals(self, signals, mode='best_per_direction'):
                 ])
         _CSV_FILE.flush()
 
+    # Trade-count bookkeeping for round_robin / hybrid_rr_fusion modes.
+    # We don't have a hook into actual trade execution from here, so we
+    # increment on every winning signal as a proxy. This means a winner that
+    # is later rejected by the portfolio allocator still bumps the counter —
+    # the round-robin will still rotate, just on a slightly looser basis.
+    for s in result:
+        _TRADE_COUNT[s.archetype_id] += 1
+
     # Stats bookkeeping (matches original engine).
     removed = len(signals) - len(result)
     if removed > 0:
