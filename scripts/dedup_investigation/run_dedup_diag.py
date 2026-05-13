@@ -104,29 +104,26 @@ def main():
 
 
 def parse_backtest_summary(stdout: str) -> dict:
-    """Extract key metrics from the backtester stdout (line-based)."""
+    """Extract key metrics from the backtester stdout."""
+    import re
     summary = {}
-    for line in stdout.splitlines():
-        line = line.strip()
-        # Match lines like "Profit Factor:       1.66" or "Total Trades: 755"
-        for key, label in [
-            ('total_trades', 'Total Trades'),
-            ('profit_factor', 'Profit Factor'),
-            ('net_pnl', 'Net PnL'),
-            ('net_pnl', 'Net P&L'),
-            ('max_drawdown_pct', 'Max Drawdown'),
-            ('sharpe_ratio', 'Sharpe Ratio'),
-            ('win_rate', 'Win Rate'),
-        ]:
-            if label.lower() in line.lower():
-                parts = line.split(':', 1)
-                if len(parts) == 2:
-                    raw = parts[1].strip().split()[0]
-                    raw = raw.replace('$', '').replace(',', '').replace('%', '')
-                    try:
-                        summary[key] = float(raw)
-                    except ValueError:
-                        pass
+    patterns = {
+        'total_trades':       r'Total Trades:\s+(\d+)',
+        'profit_factor':      r'Profit Factor:\s+([0-9.]+|inf)',
+        'net_pnl':            r'(?:Net PnL|Net P&L|Total PnL):\s+\$?([\-0-9.,]+)',
+        'max_drawdown_pct':   r'Max Drawdown:\s+([\-0-9.,]+)%',
+        'max_drawdown_usd':   r'Max Drawdown \$:\s+\$?([\-0-9.,]+)',
+        'sharpe_ratio':       r'Sharpe Ratio:\s+([\-0-9.,]+)',
+        'win_rate':           r'Win Rate:\s+([0-9.]+)%',
+    }
+    for key, pat in patterns.items():
+        m = re.search(pat, stdout)
+        if m:
+            v = m.group(1).replace(',', '').replace('$', '')
+            try:
+                summary[key] = float(v)
+            except ValueError:
+                summary[key] = v
     return summary
 
 
