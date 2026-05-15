@@ -1,0 +1,7 @@
+split,concurrency,n_firings,mean_fwd_72h_%,win_rate_72h_%,mean_fwd_168h_%
+TRAIN 2018-2022,1_alone,1654,0.561,54.6,0.777
+TRAIN 2018-2022,2_with_1_other,692,0.158,54.9,0.414
+TRAIN 2018-2022,3plus,259,-0.22,51.7,-0.352
+OOS 2023-2024,1_alone,730,0.817,54.9,2.328
+OOS 2023-2024,2_with_1_other,394,1.077,61.9,3.022
+OOS 2023-2024,3plus,92,2.717,70.7,5.062

@@ -1,0 +1,4 @@
+concurrency,n_firings,n_unique_bars,mean_fwd_24h_%,mean_fwd_72h_%,mean_fwd_168h_%,median_fwd_72h_%,win_rate_72h_%,win_rate_168h_%
+1_alone,2384,2384,0.18,0.639,1.25,0.44,54.7,54.2
+2_with_1_other,1086,543,0.443,0.492,1.357,0.518,57.5,54.9
+3plus,351,115,-0.296,0.55,1.067,0.527,56.7,60.4

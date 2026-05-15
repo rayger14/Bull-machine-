@@ -1,0 +1,13 @@
+regime,concurrency,n_firings,mean_fwd_72h_%,win_rate_72h_%,mean_fwd_168h_%
+crisis,1_alone,182,0.743,57.1,1.806
+crisis,2_with_1_other,130,0.1,50.8,1.438
+crisis,3plus,54,-1.323,44.4,0.508
+neutral,1_alone,303,0.686,54.5,1.124
+neutral,2_with_1_other,116,0.795,62.1,1.032
+neutral,3plus,44,0.695,50.0,-1.131
+risk_off,1_alone,1015,0.282,53.1,0.409
+risk_off,2_with_1_other,334,-0.409,55.1,-0.265
+risk_off,3plus,163,-0.491,53.4,-0.494
+risk_on,1_alone,884,1.013,56.1,2.141
+risk_on,2_with_1_other,506,1.117,59.7,2.482
+risk_on,3plus,90,3.489,73.3,5.303
