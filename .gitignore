@@ -562,3 +562,7 @@ GIT_COMMIT_MESSAGE.txt
 # Log archives
 logs/archive/
 *.log
+
+# Local agent worktrees + transient harness files
+.claude/worktrees/
+.claude/scheduled_tasks.lock
