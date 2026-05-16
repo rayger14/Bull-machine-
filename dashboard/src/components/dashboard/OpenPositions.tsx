@@ -160,7 +160,7 @@ export default function OpenPositions({ positions }: OpenPositionsProps) {
                 className="flex items-center justify-between p-3 bg-white/[0.02] cursor-pointer hover:bg-white/[0.04] transition-colors duration-200"
                 onClick={() => toggle(i)}
               >
-                {/* Left: archetype + direction */}
+                {/* Left: archetype + direction + boost badge */}
                 <div className="flex items-center gap-2 min-w-0">
                   <Badge variant={dirVariant}>
                     {p.archetype?.replace(/_/g, ' ') ?? 'unknown'}
@@ -168,6 +168,14 @@ export default function OpenPositions({ positions }: OpenPositionsProps) {
                   {p.direction && (
                     <span className={`text-[10px] uppercase font-semibold tracking-wide ${dirVariant === 'green' ? 'text-emerald-400' : dirVariant === 'red' ? 'text-rose-400' : 'text-slate-400'}`}>
                       {p.direction}
+                    </span>
+                  )}
+                  {(p.sizing_boosts?.multiplier ?? 1) > 1 && (
+                    <span
+                      className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-400/15 text-amber-300 border border-amber-400/30"
+                      title={p.sizing_boosts?.reasons?.join(' · ') ?? ''}
+                    >
+                      ⚡ {(p.sizing_boosts!.multiplier!).toFixed(2)}× boost
                     </span>
                   )}
                 </div>
@@ -272,6 +280,26 @@ export default function OpenPositions({ positions }: OpenPositionsProps) {
                         color={p.trailing_stop != null ? 'text-amber-400' : 'text-slate-600'}
                       />
                     </div>
+
+                    {/* Sizing boosts at entry — only shown if any boost applied */}
+                    {(p.sizing_boosts?.multiplier ?? 1) > 1 && (
+                      <div className="mt-3 p-2.5 rounded-lg bg-amber-400/[0.06] border border-amber-400/20">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="text-[10px] text-amber-300 uppercase tracking-wider font-semibold">⚡ Sizing Boost Applied</div>
+                          <div className="text-xs font-mono font-bold text-amber-300">{p.sizing_boosts!.multiplier!.toFixed(2)}×</div>
+                        </div>
+                        {p.sizing_boosts?.reasons && p.sizing_boosts.reasons.length > 0 && (
+                          <ul className="space-y-0.5 mt-1">
+                            {p.sizing_boosts.reasons.map((reason, ri) => (
+                              <li key={ri} className="text-[10px] font-mono text-amber-200/80 flex items-start gap-1.5">
+                                <span className="text-amber-400 mt-0.5">·</span>
+                                <span>{reason}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Section 2: Entry Logic */}

@@ -582,6 +582,7 @@ class CoinbasePaperRunner:
             "crisis_prob_at_entry": round(pos.crisis_prob_at_entry, 4),
             "narrative": self._enrich_legacy_narrative(pos) if not (pos.entry_narrative or {}).get('domain_scores') else pos.entry_narrative,
             "factor_attribution": pos.entry_factor_attribution,
+            "sizing_boosts": (pos.entry_metadata or {}).get('sizing_boosts', {'multiplier': 1.0, 'reasons': []}),
         }
 
     def _build_wyckoff_context(self, features) -> Dict:

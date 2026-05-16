@@ -1158,11 +1158,20 @@ class V11ShadowRunner:
             )
         self.signals_rejected += len(rejections)
 
-        # Step 4b: Wyckoff 4H sizing boost (walk-forward validated: PF 3.74 at bearish 0.6+)
+        # Step 4b: Sizing boosts (track multiplier + reasons for dashboard visibility)
+        # All boosts here are walk-forward validated; new boosts must follow the same WFO discipline.
         for intent in intents:
-            wyck_bear = getattr(intent.signal, 'metadata', {}).get('tf4h_wyckoff_bearish_score', 0.0)
+            sig_meta = intent.signal.metadata = intent.signal.metadata or {}
+            sig_meta.setdefault('sizing_boosts', {'multiplier': 1.0, 'reasons': []})
+
+            # Boost 1: Wyckoff 4H bearish (commit 5059285 — WFO validated PF 3.74 at bearish ≥ 0.6)
+            wyck_bear = sig_meta.get('tf4h_wyckoff_bearish_score', 0.0)
             if wyck_bear and wyck_bear >= 0.6:
                 intent.allocated_size_pct *= 1.25
+                sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                sig_meta['sizing_boosts']['reasons'].append(
+                    f'wyckoff_4h_bearish={wyck_bear:.2f} (1.25x)'
+                )
                 logger.info(f"[WYCKOFF_BOOST] {intent.signal.archetype_id}: "
                            f"4H bearish={wyck_bear:.3f} → 1.25x sizing ({intent.allocated_size_pct:.3f})")
 
@@ -1220,6 +1229,7 @@ class V11ShadowRunner:
                 features=features,
                 allocated_size_pct=intent.allocated_size_pct,
                 entry_narrative=narrative,
+                signal_metadata=sig.metadata,
                 threshold_at_entry=getattr(sig, '_threshold_at_entry', self.last_dynamic_threshold),
                 risk_temp_at_entry=getattr(sig, '_risk_temp_at_entry', self.last_risk_temp),
                 instability_at_entry=getattr(sig, '_instability_at_entry', self.last_instability),
@@ -1386,6 +1396,7 @@ class V11ShadowRunner:
         timestamp, archetype, direction, entry_price,
         stop_loss, take_profit, fusion_score, regime_label,
         features, allocated_size_pct, entry_narrative=None,
+        signal_metadata=None,
         threshold_at_entry=0.0, risk_temp_at_entry=0.0,
         instability_at_entry=0.0, crisis_prob_at_entry=0.0,
         threshold_margin=0.0, would_have_passed=True,
@@ -1485,6 +1496,8 @@ class V11ShadowRunner:
             'entry_adx': features.get('adx_14', 0.0) if isinstance(features, dict) else 0.0,
             'archetype': archetype,
             'executed_scale_outs': [],
+            # Sizing boost tracking (set by Step 4b in process_bar; falls back to no-boost default)
+            'sizing_boosts': (signal_metadata or {}).get('sizing_boosts', {'multiplier': 1.0, 'reasons': []}),
         }
 
         self.signals_allocated += 1
