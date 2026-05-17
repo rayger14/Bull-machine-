@@ -141,7 +141,7 @@ class ExitLogic:
         default_rules = {
             'max_hold_hours': 168,  # 7 days
             'scale_out_levels': [0.5, 1.0, 2.0],  # R-multiples
-            'scale_out_pcts': [0.33, 0.2, 0.3],  # Exit 33%, 20%, 30% at each level (33% at 0.5R locks more profit early)
+            'scale_out_pcts': [0.1, 0.3, 0.5],  # Exit 33%, 20%, 30% at each level (33% at 0.5R locks more profit early)
             'trailing_start_r': 0.5,  # Start trailing after +0.5R (earlier protection)
             'trailing_atr_mult': 2.0,  # Trail 2 ATR behind peak
             'runner_pct': 0.0,  # No runner by default (0 = disabled)
@@ -1183,9 +1183,9 @@ def create_default_exit_config() -> Dict:
             'long_squeeze': {
                 'max_hold_hours': 72,
                 'scale_out_levels': [0.5, 1.0, 1.5],
-                'scale_out_pcts': [0.3, 0.3, 0.3],
-                'trailing_start_r': 0.5,
-                'trailing_atr_mult': 1.5,
+                'scale_out_pcts': [0.1, 0.3, 0.5],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.0,
                 'runner_trailing_atr': 2.0,
                 'invalidation_checks': False,
@@ -1197,9 +1197,9 @@ def create_default_exit_config() -> Dict:
             'trap_reversal': {
                 'max_hold_hours': 168,
                 'scale_out_levels': [1.0, 2.0, 3.0],
-                'scale_out_pcts': [0.3, 0.3, 0.3],
+                'scale_out_pcts': [0.1, 0.3, 0.5],
                 'trailing_start_r': 1.0,
-                'trailing_atr_mult': 2.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.10,
                 'runner_trailing_atr': 3.0,
                 'invalidation_checks': False,
@@ -1211,9 +1211,9 @@ def create_default_exit_config() -> Dict:
             'order_block_retest': {
                 'max_hold_hours': 96,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.25, 0.25, 0.4],
-                'trailing_start_r': 0.5,
-                'trailing_atr_mult': 1.5,
+                'scale_out_pcts': [0.1, 0.3, 0.5],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.0,
                 'runner_trailing_atr': 2.0,
                 'invalidation_checks': False,
@@ -1225,9 +1225,9 @@ def create_default_exit_config() -> Dict:
             'trap_within_trend': {
                 'max_hold_hours': 168,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.33, 0.2, 0.3],
+                'scale_out_pcts': [0.1, 0.3, 0.5],
                 'trailing_start_r': 1.0,
-                'trailing_atr_mult': 2.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.15,
                 'runner_trailing_atr': 2.5,
                 'invalidation_checks': False,
@@ -1239,9 +1239,9 @@ def create_default_exit_config() -> Dict:
             'wick_trap': {
                 'max_hold_hours': 168,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.33, 0.2, 0.3],
+                'scale_out_pcts': [0.1, 0.3, 0.5],
                 'trailing_start_r': 1.0,
-                'trailing_atr_mult': 2.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.15,
                 'runner_trailing_atr': 2.5,
                 'invalidation_checks': True,  # V2 composite scoring (not price-level)
@@ -1255,9 +1255,9 @@ def create_default_exit_config() -> Dict:
             'liquidity_sweep': {
                 'max_hold_hours': 168,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.33, 0.2, 0.3],
+                'scale_out_pcts': [0.1, 0.3, 0.5],
                 'trailing_start_r': 1.0,
-                'trailing_atr_mult': 2.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.15,
                 'runner_trailing_atr': 2.5,
                 'invalidation_checks': False,
@@ -1269,9 +1269,9 @@ def create_default_exit_config() -> Dict:
             'retest_cluster': {
                 'max_hold_hours': 168,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.33, 0.2, 0.3],
+                'scale_out_pcts': [0.1, 0.3, 0.5],
                 'trailing_start_r': 1.0,
-                'trailing_atr_mult': 2.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.15,
                 'runner_trailing_atr': 2.5,
                 'invalidation_checks': True,  # V2 composite scoring (not price-level)
@@ -1283,9 +1283,9 @@ def create_default_exit_config() -> Dict:
             'fvg_continuation': {
                 'max_hold_hours': 72,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.3, 0.3, 0.3],
-                'trailing_start_r': 0.5,
-                'trailing_atr_mult': 1.5,
+                'scale_out_pcts': [0.1, 0.3, 0.5],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.0,
                 'runner_trailing_atr': 2.0,
                 'invalidation_checks': False,
@@ -1297,9 +1297,9 @@ def create_default_exit_config() -> Dict:
             'failed_continuation': {
                 'max_hold_hours': 96,
                 'scale_out_levels': [0.5, 1.0, 1.5],
-                'scale_out_pcts': [0.25, 0.35, 0.3],
-                'trailing_start_r': 0.5,
-                'trailing_atr_mult': 1.5,
+                'scale_out_pcts': [0.1, 0.3, 0.5],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.0,
                 'runner_trailing_atr': 2.0,
                 'invalidation_checks': False,
@@ -1311,9 +1311,9 @@ def create_default_exit_config() -> Dict:
             'liquidity_compression': {
                 'max_hold_hours': 120,
                 'scale_out_levels': [0.5, 1.0, 2.0],
-                'scale_out_pcts': [0.2, 0.3, 0.4],
-                'trailing_start_r': 0.5,
-                'trailing_atr_mult': 2.0,
+                'scale_out_pcts': [0.1, 0.3, 0.5],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.10,
                 'runner_trailing_atr': 2.5,
                 'invalidation_checks': False,
@@ -1339,9 +1339,9 @@ def create_default_exit_config() -> Dict:
             'exhaustion_reversal': {
                 'max_hold_hours': 48,
                 'scale_out_levels': [0.5, 1.0, 1.5],
-                'scale_out_pcts': [0.3, 0.4, 0.3],
-                'trailing_start_r': 0.5,
-                'trailing_atr_mult': 1.5,
+                'scale_out_pcts': [0.1, 0.3, 0.5],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.0,
                 'runner_trailing_atr': 2.0,
                 'invalidation_checks': False,
@@ -1353,9 +1353,9 @@ def create_default_exit_config() -> Dict:
             'oi_divergence': {
                 'max_hold_hours': 48,
                 'scale_out_levels': [1.0, 1.5, 2.5],
-                'scale_out_pcts': [0.3, 0.3, 0.3],
-                'trailing_start_r': 0.5,
-                'trailing_atr_mult': 1.5,
+                'scale_out_pcts': [0.1, 0.3, 0.5],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.0,
                 'runner_trailing_atr': 2.0,
                 'invalidation_checks': False,
@@ -1367,9 +1367,9 @@ def create_default_exit_config() -> Dict:
             'whipsaw': {
                 'max_hold_hours': 48,
                 'scale_out_levels': [0.5, 1.0, 1.5],
-                'scale_out_pcts': [0.3, 0.3, 0.3],
-                'trailing_start_r': 0.5,
-                'trailing_atr_mult': 1.5,
+                'scale_out_pcts': [0.1, 0.3, 0.5],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.0,
                 'runner_trailing_atr': 2.0,
                 'invalidation_checks': False,
@@ -1381,9 +1381,9 @@ def create_default_exit_config() -> Dict:
             'volume_fade_chop': {
                 'max_hold_hours': 48,
                 'scale_out_levels': [0.5, 1.0, 1.5],
-                'scale_out_pcts': [0.3, 0.4, 0.3],
-                'trailing_start_r': 0.5,
-                'trailing_atr_mult': 1.5,
+                'scale_out_pcts': [0.1, 0.3, 0.5],
+                'trailing_start_r': 1.0,
+                'trailing_atr_mult': 2.5,
                 'runner_pct': 0.0,
                 'runner_trailing_atr': 2.0,
                 'invalidation_checks': False,
