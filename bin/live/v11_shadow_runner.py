@@ -1165,32 +1165,40 @@ class V11ShadowRunner:
             )
         self.signals_rejected += len(rejections)
 
-        # Step 4b: Wyckoff 4H sizing boost (walk-forward validated: PF 3.74 at bearish 0.6+)
+        # Step 4b/4c: Sizing boosts with structured dict tracking (for dashboard badge + trade log)
+        # All boosts here are walk-forward validated; new boosts must follow the same WFO discipline.
+        # Per quant-analyst Rule 8 (May 2026): boosts have 100% accept rate vs filters 0% — prefer boosts.
         for intent in intents:
-            wyck_bear = getattr(intent.signal, 'metadata', {}).get('tf4h_wyckoff_bearish_score', 0.0)
+            sig_meta = intent.signal.metadata = intent.signal.metadata or {}
+            sig_meta.setdefault('sizing_boosts', {'multiplier': 1.0, 'reasons': []})
+
+            # Boost 1: Wyckoff 4H bearish (commit 5059285 — WFO validated PF 3.74 at bearish ≥ 0.6)
+            wyck_bear = sig_meta.get('tf4h_wyckoff_bearish_score', 0.0)
             if wyck_bear and wyck_bear >= 0.6:
                 intent.allocated_size_pct *= 1.25
+                sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                sig_meta['sizing_boosts']['reasons'].append(
+                    f'wyckoff_4h_bearish={wyck_bear:.2f} (1.25x)'
+                )
                 logger.info(f"[WYCKOFF_BOOST] {intent.signal.archetype_id}: "
                            f"4H bearish={wyck_bear:.3f} → 1.25x sizing ({intent.allocated_size_pct:.3f})")
 
-        # Step 4c: distribution_exhaustion 3-of-3 sizing boost
-        # WFO validated 2026-05-18: +2.26% OOS PnL at X=1.5 (n=128 OOS boost-triggered trades).
-        # Stacks on top of Wyckoff 4H boost when both conditions met (effective ~1.875x).
-        for intent in intents:
-            if intent.signal.direction != 'long':
-                continue
-            meta = getattr(intent.signal, 'metadata', {}) or {}
-            bearish = meta.get('tf4h_wyckoff_bearish_score', 0.0)
-            oi24 = meta.get('oi_change_24h', None)
-            rpos = meta.get('range_position_20', None)
-            # All three must be present and non-NaN for the boost to fire
-            if oi24 is None or rpos is None: continue
-            if bearish != bearish or oi24 != oi24 or rpos != rpos: continue  # NaN check
-            if bearish >= 0.6 and oi24 <= -0.02 and rpos < 0.40:
-                intent.allocated_size_pct *= 1.5
-                logger.info(f"[DIST_EX_BOOST] {intent.signal.archetype_id}: 3-of-3 "
-                           f"(bear={bearish:.3f}, oi24={oi24:.3f}, rp={rpos:.3f}) "
-                           f"→ 1.5x sizing ({intent.allocated_size_pct:.3f})")
+            # Boost 2: distribution_exhaustion 3-of-3 (commit on feat/dist-exhaustion-3of3-boost; WFO May 18: +2.26% OOS PnL at X=1.5, n=128).
+            # Stacks on top of Wyckoff 4H boost when both conditions met (effective ~1.875x).
+            if intent.signal.direction == 'long':
+                oi24 = sig_meta.get('oi_change_24h', None)
+                rpos = sig_meta.get('range_position_20', None)
+                if oi24 is not None and rpos is not None \
+                   and wyck_bear == wyck_bear and oi24 == oi24 and rpos == rpos \
+                   and wyck_bear >= 0.6 and oi24 <= -0.02 and rpos < 0.40:
+                    intent.allocated_size_pct *= 1.5
+                    sig_meta['sizing_boosts']['multiplier'] *= 1.5
+                    sig_meta['sizing_boosts']['reasons'].append(
+                        f'distribution_exhaustion_3of3 (bear={wyck_bear:.2f}, oi24={oi24:.3f}, rp={rpos:.2f}) (1.5x)'
+                    )
+                    logger.info(f"[DIST_EX_BOOST] {intent.signal.archetype_id}: 3-of-3 "
+                               f"(bear={wyck_bear:.3f}, oi24={oi24:.3f}, rp={rpos:.3f}) "
+                               f"→ 1.5x sizing ({intent.allocated_size_pct:.3f})")
 
         # Update signal tracking for portfolio rejections
         for rej in rejections:
@@ -1246,6 +1254,7 @@ class V11ShadowRunner:
                 features=features,
                 allocated_size_pct=intent.allocated_size_pct,
                 entry_narrative=narrative,
+                signal_metadata=sig.metadata,
                 threshold_at_entry=getattr(sig, '_threshold_at_entry', self.last_dynamic_threshold),
                 risk_temp_at_entry=getattr(sig, '_risk_temp_at_entry', self.last_risk_temp),
                 instability_at_entry=getattr(sig, '_instability_at_entry', self.last_instability),
@@ -1412,6 +1421,7 @@ class V11ShadowRunner:
         timestamp, archetype, direction, entry_price,
         stop_loss, take_profit, fusion_score, regime_label,
         features, allocated_size_pct, entry_narrative=None,
+        signal_metadata=None,
         threshold_at_entry=0.0, risk_temp_at_entry=0.0,
         instability_at_entry=0.0, crisis_prob_at_entry=0.0,
         threshold_margin=0.0, would_have_passed=True,
@@ -1511,6 +1521,7 @@ class V11ShadowRunner:
             'entry_adx': features.get('adx_14', 0.0) if isinstance(features, dict) else 0.0,
             'archetype': archetype,
             'executed_scale_outs': [],
+            'sizing_boosts': (signal_metadata or {}).get('sizing_boosts', {'multiplier': 1.0, 'reasons': []}),
         }
 
         self.signals_allocated += 1

@@ -885,26 +885,33 @@ class StandaloneBacktestEngine:
 
                 self.signals_rejected += len(rejections)
 
-                # Step 4b: Wyckoff 4H sizing boost (walk-forward validated: PF 3.74 at bearish 0.6+)
+                # Step 4b/4c: Sizing boosts with structured dict tracking (parity with live runner)
+                # Per quant-analyst Rule 8 (May 2026): boosts have 100% accept rate vs filters 0% — prefer boosts.
                 for intent in intents:
-                    wyck_bear = getattr(intent.signal, 'metadata', {}).get('tf4h_wyckoff_bearish_score', 0.0)
+                    sig_meta = intent.signal.metadata = intent.signal.metadata or {}
+                    sig_meta.setdefault('sizing_boosts', {'multiplier': 1.0, 'reasons': []})
+
+                    # Boost 1: Wyckoff 4H bearish (commit 5059285)
+                    wyck_bear = sig_meta.get('tf4h_wyckoff_bearish_score', 0.0)
                     if wyck_bear and wyck_bear >= 0.6:
                         intent.allocated_size_pct *= 1.25
+                        sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                        sig_meta['sizing_boosts']['reasons'].append(
+                            f'wyckoff_4h_bearish={wyck_bear:.2f} (1.25x)'
+                        )
 
-                # Step 4c: distribution_exhaustion 3-of-3 sizing boost
-                # WFO validated 2026-05-18: +2.26% OOS PnL at X=1.5 (n=128 OOS).
-                # Stacks on top of Wyckoff 4H boost when both fire (effective ~1.875x).
-                for intent in intents:
-                    if intent.signal.direction != 'long':
-                        continue
-                    meta = getattr(intent.signal, 'metadata', {}) or {}
-                    bearish = meta.get('tf4h_wyckoff_bearish_score', 0.0)
-                    oi24 = meta.get('oi_change_24h', None)
-                    rpos = meta.get('range_position_20', None)
-                    if oi24 is None or rpos is None: continue
-                    if bearish != bearish or oi24 != oi24 or rpos != rpos: continue
-                    if bearish >= 0.6 and oi24 <= -0.02 and rpos < 0.40:
-                        intent.allocated_size_pct *= 1.5
+                    # Boost 2: distribution_exhaustion 3-of-3 (WFO validated May 18 2026: +2.26% OOS at X=1.5, n=128)
+                    if intent.signal.direction == 'long':
+                        oi24 = sig_meta.get('oi_change_24h', None)
+                        rpos = sig_meta.get('range_position_20', None)
+                        if oi24 is not None and rpos is not None \
+                           and wyck_bear == wyck_bear and oi24 == oi24 and rpos == rpos \
+                           and wyck_bear >= 0.6 and oi24 <= -0.02 and rpos < 0.40:
+                            intent.allocated_size_pct *= 1.5
+                            sig_meta['sizing_boosts']['multiplier'] *= 1.5
+                            sig_meta['sizing_boosts']['reasons'].append(
+                                f'distribution_exhaustion_3of3 (bear={wyck_bear:.2f}, oi24={oi24:.3f}, rp={rpos:.2f}) (1.5x)'
+                            )
 
                 # Step 5: Execute allocations
                 for intent in intents:
@@ -932,6 +939,7 @@ class StandaloneBacktestEngine:
                         regime_label=current_regime,
                         features=row,
                         allocated_size_pct=intent.allocated_size_pct,
+                        signal_metadata=sig.metadata,
                         bar_idx=bar_idx,
                         threshold_at_entry=_arch_threshold,
                         risk_temp=risk_temp if self.adaptive_fusion.get('enabled', False) else 0.0,
@@ -1076,6 +1084,7 @@ class StandaloneBacktestEngine:
         regime_label: str,
         features: pd.Series,
         allocated_size_pct: float,
+        signal_metadata: dict = None,
         bar_idx: int = 0,
         threshold_at_entry: float = 0.0,
         domain_scores: dict = None,
@@ -1234,6 +1243,7 @@ class StandaloneBacktestEngine:
             'entry_adx': features.get('adx_14', 0.0) if hasattr(features, 'get') else 0.0,
             'archetype': archetype,
             'executed_scale_outs': [],
+            'sizing_boosts': (signal_metadata or {}).get('sizing_boosts', {'multiplier': 1.0, 'reasons': []}),
         }
 
         # Store context for trade attribution

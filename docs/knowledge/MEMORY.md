@@ -186,6 +186,24 @@ Config: base=0.18, temp_range=0.38, instab_range=0.15, crisis_coeff=0.50
 58. **Perp position sizing must be margin-based, not notional-based** — 3 bugs fixed: (a) leverage was double-applied to notional (risk/stop already gives correct notional), (b) cash deduction was full notional instead of margin (notional/leverage), (c) position cap was on notional % instead of margin %. Leverage determines MARGIN requirement, NOT risk. Risk = notional × stop_distance. Correct: `notional = risk / stop` (no leverage multiply), `margin = notional / leverage`, `cash -= margin`.
 59. **max_margin_per_position_pct = 0.35** — At 1.5x leverage: max notional = $52.5K, margin = $35K. At 2.5% stop: risk = $1,312 (1.3%). Can run ~3 concurrent positions. Reference correct impl: `pnl_tracker_v2.py:138-152`.
 
+60. **Boost vs Filter empirical accept rate (May 2026)** — across 10+ quant studies this cycle:
+
+   | Change type | Tested | Accepted | Rate |
+   |-------------|-------:|---------:|-----:|
+   | Sizing/exit boosts (Type A) | 2 | 2 | **100%** |
+   | Hard/soft gates (Type B) | 3 | 0 | 0% |
+   | Mode flips (Type C) | 1 | 0 | 0% |
+   | CMI/regime tuning (Type D) | 3 | 0 | 0% |
+   | Direction flips (Type E) | 1 | 0 | 0% |
+
+   **Only sizing boosts** (TP Tier 1 +7.19%, 3-of-3 dist_exhaustion +2.26%) survived WFO. Filters/gates/mode-flips/CMI-tuning all failed via one of: **(a) dedup-reshuffling** (gate shrinks target archetype, dedup re-routes bars, system PnL rises but target loses); **(b) selection asymmetry** (regime gates filter the WINS, not losses — long_squeeze gates this 3 times); **(c) gate-immune architecture** (soft+bypass coexistence makes hard-gate tightening inert — CB-specific).
+
+   Codified in `.claude/agents/quant-analyst.md` as Zero-Tolerance Rules 7-10 (May 18, 2026). When proposing any new gate, always also propose the BOOST equivalent and test both. Default to boost.
+
+61. **Dedup-reshuffling false signal** — system PnL gain WITHOUT target-archetype PnL gain = false signal. Validated May 18 with LC + `oi_change_24h ≤ -0.02` hard gate: system +$2,595, target archetype −$5,465. The system gain was just dedup re-routing bars to OTHER archetypes — the rule did NOT do what we intended. Auto-reject codified as Rule 7.
+
+62. **Train regression + OOS gain = overfit signature** — derivatives_heat at 10% weight produced +$1,221 OOS but −$25,954 train on May 18. Often happens when the OOS window has a regime tailwind aligning with noise the variant happened to pick up. Codified as Rule 9: both train AND OOS must move in the same direction.
+
 ## Structural Overhaul (2026-03-02)
 
 ### What Was Done
