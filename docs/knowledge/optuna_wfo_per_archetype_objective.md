@@ -73,7 +73,7 @@ Ran `python3 bin/optuna_wfo.py --group A --trials 2 --mode wfo --target-archetyp
 - `target_liquidity_compression_oos_trades: 38` ✓
 - `target_liquidity_compression_oos_pf_mean: 2.77` ✓
 
-### CPCV mode
+### CPCV mode — happy path
 
 Ran `python3 bin/optuna_wfo.py --mode cpcv --group A --trials 3 --cpcv-k 4 --cpcv-p 1 --cpcv-train-paths 2 --target-archetype liquidity_compression`:
 - Baseline computed correctly: `baseline OOS liquidity_compression: $3,962`
@@ -82,7 +82,33 @@ Ran `python3 bin/optuna_wfo.py --mode cpcv --group A --trials 3 --cpcv-k 4 --cpc
 - `target_liquidity_compression_oos_pf_mean: 1.38` ✓
 - All 3 trials passed without penalty (none regressed below 80% of baseline)
 
-The trial attrs populate correctly in both modes. Penalty path wasn't exercised in these smoke runs (no regression). Deeper production runs with wider param ranges will exercise it.
+### CPCV mode — penalty path (synthetic baseline, May 19)
+
+A natural 8-trial sweep with `--target-archetype failed_continuation` didn't trip the penalty either (FC barely fires; baseline was −$439, so the negative-baseline branch needed a drop below −$939, which no trial produced). To prove the penalty path executes, ran a focused harness pinning `baseline_target_pnl['trap_within_trend'] = $100,000` (vs real ~$30k) and 1 trial on 1 CPCV path:
+
+```
+Synthetic baseline: trap_within_trend OOS PnL = $100,000
+Penalty threshold (80%): $80,000
+
+  Trial   0 | P0: PF=1.26(867tr) | med=1.26 min=1.26 | score=0.629 | RULE7-PENALTY *** BEST | 67s
+
+TRIAL 0 ATTRS
+  score:                        0.6288   (= raw 1.258 × 0.5 penalty multiplier)
+  target_archetype_penalty:     True
+  penalty_reasons:              ['trap_within_trend: $20757 < 0.80×baseline ($100000)']
+  target_TWT_oos_pnl:           $20,757
+  target_TWT_oos_trades:        155
+  target_TWT_oos_pf_mean:       1.949
+```
+
+All checkpoints verified:
+- ✓ `RULE7-PENALTY` console tag on the trial line
+- ✓ Score correctly halved (raw 1.258 → final 0.629)
+- ✓ `target_archetype_penalty=True` persisted to `trial.user_attrs`
+- ✓ `target_archetype_penalty_reasons` populated with specific archetype + numeric comparison
+- ✓ Per-archetype OOS pnl/trades/pf_mean stored on the trial
+
+The penalty path is verified to fire and halve the score when target archetype regresses below 80% of baseline. Harness lives at `/tmp/test_rule7_penalty.py` for re-use (not committed; reproduce by copying the snippet above).
 
 ## Files
 
