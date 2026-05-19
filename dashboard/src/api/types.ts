@@ -239,6 +239,11 @@ export interface OpenPosition {
   // Entry reasoning
   narrative?: SignalNarrative;
   factor_attribution?: Record<string, number>;
+  // Sizing boosts applied at entry (1.0 = no boost; >1.0 = boosted)
+  sizing_boosts?: {
+    multiplier?: number;
+    reasons?: string[];
+  };
 }
 
 export interface StressScenario {
