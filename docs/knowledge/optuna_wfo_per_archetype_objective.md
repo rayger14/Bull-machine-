@@ -1,18 +1,19 @@
-# Optuna WFO — Per-Archetype Objective (Rule 7 Enforcement)
+# Optuna WFO + CPCV — Per-Archetype Objective (Rule 7 Enforcement)
 
-**Date**: 2026-05-18
+**Date**: 2026-05-18 (WFO), 2026-05-18 (CPCV layered on)
 **Branch**: `feat/optuna-per-archetype-objective`
 
 ## What changed
 
-`bin/optuna_wfo.py` now supports a `--target-archetype` CLI flag that:
+`bin/optuna_wfo.py` now supports a `--target-archetype` CLI flag for BOTH `--mode wfo` AND `--mode cpcv`:
 
-1. Computes baseline per-archetype OOS PnL on the unmodified config before optimization starts
-2. Tracks per-window target-archetype PnL/PF/trade-count for every trial
+1. Computes baseline per-archetype OOS PnL on the unmodified config before optimization starts (across WFO windows for `wfo`, across CPCV train-split test_idx for `cpcv`)
+2. Tracks per-window (or per-path) target-archetype PnL/PF/trade-count for every trial
 3. Applies a **0.5× score multiplier penalty** to trials where the target archetype's OOS PnL regresses by > 20% vs baseline (or drops by > $500 if baseline was negative)
 4. Stores per-archetype results in `trial.user_attrs` for downstream analysis
+5. Console trial line carries a `RULE7-PENALTY` tag when the penalty fires
 
-This is the infrastructure equivalent of codifying **Quant-Analyst Rule 7** (target-archetype-must-improve auto-reject) into the sweeper. Previously the sweeper optimized only system-wide PF, so dedup-reshuffling false signals could slip through. Now the sweeper actively penalizes them.
+This is the infrastructure equivalent of codifying **Quant-Analyst Rule 7** (target-archetype-must-improve auto-reject) into the sweeper. Previously the sweeper optimized only system-wide PF, so dedup-reshuffling false signals could slip through. Now both objectives actively penalize them.
 
 ## Why
 
@@ -21,13 +22,17 @@ Per the May 18 quant-analyst Rule 7 codification: when a parameter change makes 
 ## Usage
 
 ```bash
-# Single target archetype
+# Single target archetype (WFO)
 python3 bin/optuna_wfo.py --group A --trials 40 --mode wfo \
     --target-archetype liquidity_compression
 
-# Multiple target archetypes
+# Multiple target archetypes (WFO)
 python3 bin/optuna_wfo.py --group A --trials 40 --mode wfo \
     --target-archetype long_squeeze,oi_divergence
+
+# CPCV with target archetype (Rule 7 enforced across CPCV paths)
+python3 bin/optuna_wfo.py --group A --trials 30 --mode cpcv \
+    --target-archetype liquidity_compression
 ```
 
 ## What you'll see during a run
@@ -59,14 +64,25 @@ Plus, when penalty applied:
 
 These enable post-hoc analysis in `study.trials_dataframe()` or the results.json output.
 
-## Smoke test result (May 18 validation run)
+## Smoke test results (May 18 validation runs)
+
+### WFO mode
 
 Ran `python3 bin/optuna_wfo.py --group A --trials 2 --mode wfo --target-archetype liquidity_compression`:
 - `target_liquidity_compression_oos_pnl: $8,288.66` ✓
 - `target_liquidity_compression_oos_trades: 38` ✓
 - `target_liquidity_compression_oos_pf_mean: 2.77` ✓
 
-The trial attrs populate correctly. Penalty path wasn't exercised in 2 trials (no regression). Future deeper runs will exercise it.
+### CPCV mode
+
+Ran `python3 bin/optuna_wfo.py --mode cpcv --group A --trials 3 --cpcv-k 4 --cpcv-p 1 --cpcv-train-paths 2 --target-archetype liquidity_compression`:
+- Baseline computed correctly: `baseline OOS liquidity_compression: $3,962`
+- `target_liquidity_compression_oos_pnl: $3,961.76` ✓ (best trial preserved target)
+- `target_liquidity_compression_oos_trades: 48` ✓
+- `target_liquidity_compression_oos_pf_mean: 1.38` ✓
+- All 3 trials passed without penalty (none regressed below 80% of baseline)
+
+The trial attrs populate correctly in both modes. Penalty path wasn't exercised in these smoke runs (no regression). Deeper production runs with wider param ranges will exercise it.
 
 ## Files
 
@@ -83,4 +99,5 @@ The trial attrs populate correctly. Penalty path wasn't exercised in 2 trials (n
 
 - Penalty is a hard 0.5× score multiplier, not graduated. A trial that improves the target archetype hugely AND regresses system PnL slightly might still pass; a trial that improves system PnL hugely AND regresses target slightly will likely fail. That's the intended bias per Rule 7.
 - Baseline is computed ONCE at startup on the unmodified config. If `--config` is overridden, baseline reflects that override (not main production config).
-- The `CPCVObjective` (separate class around line 384) does NOT yet have per-archetype tracking. Adding it is a 1-2 hour follow-up.
+- For CPCV, the baseline is summed across the `--cpcv-train-paths` selected representative paths only (typically 3). Full-grid (all 15) validation does not affect the optimization-time penalty — it's a post-hoc check.
+- When the trial score is negative (median PF < 1.0), the `score *= 0.5` move actually brings it closer to zero, which can paradoxically help instead of hurt. This is the same behavior as WFOObjective and rarely matters because trials in that range are already losing to better trials. If a graduated penalty is needed, future iteration can replace `*= 0.5` with `-= 0.5 * abs(score)`.

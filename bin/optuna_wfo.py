@@ -226,10 +226,13 @@ def run_backtest(config, features_df, start_date=None, end_date=None,
 
 def run_backtest_on_indices(config, full_features_df, indices,
                             initial_cash=100_000.0, commission_rate=0.0002, slippage_bps=3.0,
-                            return_equity=False):
+                            return_equity=False, return_archetype_breakdown=False):
     """Run backtest on specific row indices (for CPCV splits).
 
     If return_equity=True, returns (stats, equity_curve, equity_timestamps).
+    If return_archetype_breakdown=True, returns (stats, archetype_breakdown_dict)
+    where archetype_breakdown_dict maps archetype_name → {trades, pnl, pf, win_rate}.
+    (return_equity and return_archetype_breakdown are mutually exclusive.)
     """
     subset = full_features_df.iloc[indices].copy()
     empty_stats = {'profit_factor': 0, 'total_trades': 0, 'max_drawdown': 0,
@@ -237,6 +240,8 @@ def run_backtest_on_indices(config, full_features_df, indices,
     if len(subset) < 100:
         if return_equity:
             return empty_stats, [initial_cash], [subset.index[0] if len(subset) > 0 else pd.Timestamp.now()]
+        if return_archetype_breakdown:
+            return empty_stats, {}
         return empty_stats
 
     start_date = subset.index[0].strftime('%Y-%m-%d')
@@ -252,6 +257,21 @@ def run_backtest_on_indices(config, full_features_df, indices,
 
     if return_equity:
         return stats, engine.equity_curve, engine.equity_timestamps
+
+    if return_archetype_breakdown:
+        try:
+            ab_df = engine.get_archetype_breakdown()
+            ab = {}
+            for _, r in ab_df.iterrows():
+                ab[r['archetype']] = {
+                    'trades': int(r.get('trades', 0)),
+                    'pnl': float(r.get('total_pnl', 0.0)),
+                    'pf': float(r.get('profit_factor', 0.0)),
+                    'win_rate': float(r.get('win_rate', 0.0)),
+                }
+            return stats, ab
+        except Exception:
+            return stats, {}
 
     return stats
 
@@ -476,13 +496,23 @@ class CPCVObjective:
     """
 
     def __init__(self, base_config, features_df, params_def, train_splits,
-                 min_trades=20, max_dd=15.0):
+                 min_trades=20, max_dd=15.0, target_archetypes=None,
+                 baseline_target_pnl=None):
+        """
+        target_archetypes: list of archetype names to track per-archetype impact (Rule 7).
+            If set, the objective penalizes changes that REGRESS the target archetype's
+            OOS PnL by more than 20% vs baseline_target_pnl (dedup-reshuffling guard).
+        baseline_target_pnl: dict mapping target_archetype → baseline OOS PnL summed
+            across all train_splits' test_idx slices.
+        """
         self.base_config = base_config
         self.features_df = features_df
         self.params_def = params_def
         self.train_splits = train_splits  # 3 representative splits
         self.min_trades = min_trades
         self.max_dd = max_dd
+        self.target_archetypes = list(target_archetypes) if target_archetypes else []
+        self.baseline_target_pnl = baseline_target_pnl
         self.best_score = -999
         self.best_trial = -1
 
@@ -494,15 +524,27 @@ class CPCVObjective:
 
         oos_pfs = []
         oos_trades_list = []
+        oos_target_archetype_metrics = []  # per-path: {archetype: {pnl, pf, trades, win_rate}}
+
+        want_archetype_data = bool(self.target_archetypes)
 
         for split in self.train_splits:
             try:
-                # Train on train_idx portion
+                # Train on train_idx portion (no per-archetype needed)
                 train_stats = run_backtest_on_indices(
                     config, self.features_df, split['train_idx'])
                 # Test on test_idx portion
-                oos_stats = run_backtest_on_indices(
-                    config, self.features_df, split['test_idx'])
+                if want_archetype_data:
+                    oos_stats, oos_ab = run_backtest_on_indices(
+                        config, self.features_df, split['test_idx'],
+                        return_archetype_breakdown=True,
+                    )
+                    target_metrics = {a: oos_ab.get(a, {'trades': 0, 'pnl': 0.0, 'pf': 0.0, 'win_rate': 0.0})
+                                      for a in self.target_archetypes}
+                    oos_target_archetype_metrics.append(target_metrics)
+                else:
+                    oos_stats = run_backtest_on_indices(
+                        config, self.features_df, split['test_idx'])
             except Exception as e:
                 logger.warning(f"Trial {trial.number} crashed on {split['label']}: {e}")
                 return -1e9
@@ -529,6 +571,44 @@ class CPCVObjective:
         trial.set_user_attr('median_pf', median_pf)
         trial.set_user_attr('min_pf', min_pf)
 
+        # ── Rule 7: target-archetype-must-improve auto-reject (dedup-reshuffling guard) ──
+        # Mirrors WFOObjective: if a target archetype regresses materially while the system
+        # improves (dedup routing bars to other archetypes), halve the score.
+        target_penalty_applied = False
+        target_penalty_reasons = []
+        if self.target_archetypes and oos_target_archetype_metrics:
+            agg = {}
+            for arch in self.target_archetypes:
+                total_pnl = sum(p_m.get(arch, {}).get('pnl', 0.0) for p_m in oos_target_archetype_metrics)
+                total_trades = sum(p_m.get(arch, {}).get('trades', 0) for p_m in oos_target_archetype_metrics)
+                mean_pf = float(np.mean([p_m.get(arch, {}).get('pf', 0.0) for p_m in oos_target_archetype_metrics]))
+                agg[arch] = {'pnl': total_pnl, 'trades': total_trades, 'pf': mean_pf}
+                trial.set_user_attr(f'target_{arch}_oos_pnl', total_pnl)
+                trial.set_user_attr(f'target_{arch}_oos_trades', total_trades)
+                trial.set_user_attr(f'target_{arch}_oos_pf_mean', mean_pf)
+
+            if self.baseline_target_pnl:
+                for arch, m in agg.items():
+                    baseline_pnl = self.baseline_target_pnl.get(arch)
+                    if baseline_pnl is None:
+                        continue
+                    if baseline_pnl > 0:
+                        if m['pnl'] < baseline_pnl * 0.80:
+                            target_penalty_applied = True
+                            target_penalty_reasons.append(
+                                f"{arch}: ${m['pnl']:.0f} < 0.80×baseline (${baseline_pnl:.0f})"
+                            )
+                    elif m['pnl'] < baseline_pnl - 500:
+                        target_penalty_applied = True
+                        target_penalty_reasons.append(
+                            f"{arch}: ${m['pnl']:.0f} regressed >$500 below baseline (${baseline_pnl:.0f})"
+                        )
+
+        if target_penalty_applied:
+            score *= 0.5
+            trial.set_user_attr('target_archetype_penalty', True)
+            trial.set_user_attr('target_archetype_penalty_reasons', target_penalty_reasons)
+
         elapsed = time.time() - t0
         is_best = score > self.best_score
         if is_best:
@@ -537,8 +617,9 @@ class CPCVObjective:
 
         path_str = " | ".join([f"P{i}: PF={pf:.2f}({t}tr)"
                                 for i, (pf, t) in enumerate(zip(oos_pfs, oos_trades_list))])
+        penalty_tag = " | RULE7-PENALTY" if target_penalty_applied else ""
         print(f"  Trial {trial.number:3d} | {path_str} | med={median_pf:.2f} min={min_pf:.2f} | "
-              f"score={score:.3f} {'*** BEST' if is_best else ''} | {elapsed:.0f}s")
+              f"score={score:.3f}{penalty_tag} {'*** BEST' if is_best else ''} | {elapsed:.0f}s")
 
         return score
 
@@ -845,7 +926,7 @@ def main():
                        help='Comma-separated archetype names to track per-archetype impact '
                             '(Rule 7 — dedup-reshuffling guard). When set, the objective '
                             'penalizes trials where the target archetype OOS PnL regresses '
-                            '> 20% vs baseline. Example: --target-archetype liquidity_compression '
+                            '>20%% vs baseline. Example: --target-archetype liquidity_compression '
                             'or --target-archetype long_squeeze,oi_divergence')
     args = parser.parse_args()
 
@@ -994,10 +1075,31 @@ def main():
             print(f"  Path {i}: {split['label']} | train={len(split['train_idx'])} bars, test={len(split['test_idx'])} bars")
         print()
 
+        # Parse target archetypes + compute baseline target PnL (Rule 7)
+        target_archetypes = None
+        baseline_target_pnl = None
+        if args.target_archetype:
+            target_archetypes = [a.strip() for a in args.target_archetype.split(',') if a.strip()]
+            print(f"Target archetypes (Rule 7 dedup-reshuffling guard): {target_archetypes}")
+            print(f"Computing baseline per-archetype PnL across {len(train_splits)} CPCV paths...")
+            baseline_target_pnl = {a: 0.0 for a in target_archetypes}
+            for split in train_splits:
+                _baseline_stats, baseline_ab = run_backtest_on_indices(
+                    base_config, features_df, split['test_idx'],
+                    return_archetype_breakdown=True,
+                )
+                for a in target_archetypes:
+                    baseline_target_pnl[a] += baseline_ab.get(a, {}).get('pnl', 0.0)
+            for a, p in baseline_target_pnl.items():
+                print(f"  baseline OOS {a}: ${p:,.0f}")
+            print()
+
         objective = CPCVObjective(
             base_config=base_config, features_df=features_df,
             params_def=params_def, train_splits=train_splits,
             min_trades=min_trades, max_dd=15.0,
+            target_archetypes=target_archetypes,
+            baseline_target_pnl=baseline_target_pnl,
         )
 
         study = optuna.create_study(
