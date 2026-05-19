@@ -259,6 +259,13 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 ## Data Infrastructure
 - [Derivatives data backfill method](derivatives_data_backfill_method.md) — `data.binance.vision` is the ONLY working source for historical OI/funding/LS/taker. Binance REST API and OKX are geo-blocked or 30-day-limited. CDN is geo-unblocked. Script at `scripts/data/backfill_binance_vision_derivatives.py`. Coverage 2020-09 onwards (62%).
 
+## Validated Decisions to Hold (May 2026)
+- **`derivatives_heat` stays at 0%** — Validated as net-negative at 5/10/15% weights on May 18 with full 4+ years of backfilled OI data. OI/funding/taker signals add noise as first-order regime inputs; they work as second-order structural gates instead (3-of-3 distribution_exhaustion boost). See `loser_features_and_derivatives_heat_2026_05_18.md`. The old "DISABLED pending more data" note in CMI config is OBSOLETE.
+- **`distribution_exhaustion` 3-of-3 sizing boost (X=1.5) is shipped** — `feat/dist-exhaustion-3of3-boost` merged + deployed May 18. +2.26% OOS PnL validated. See `distribution_exhaustion_3of3_wfo.md`.
+- **`oi_divergence` stays as `direction: long`** — Now profitable OOS with real OI data + 3-of-3 boost (PF 1.38, +$2,254). Direction-flip variants both made it WORSE. See `oi_divergence_retest_with_real_oi.md`.
+- **TP Tier 1 exit defaults shipped** — trailing 2.5×, trailing_start 1.0R, scale_out_pcts [0.10, 0.30, 0.50]. +7.19% OOS validated. See `four_fixes_validation_2026_05_16.md`.
+- **Dedup-reshuffling false signal** — When a gate shrinks the target archetype's footprint, dedup re-routes bars to other archetypes. System PnL gain WITHOUT target-archetype PnL gain = false signal. Documented after failed LC + OI gate test (May 18).
+
 ## Python/System Notes
 - Use `python3` not `python` on this system
 - Always guard against NaN in stop_loss, take_profit, and position sizing
