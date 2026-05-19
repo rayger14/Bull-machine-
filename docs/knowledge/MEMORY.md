@@ -256,6 +256,9 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 3. **Enable derivatives_heat when OI data reaches 3+ years** — currently 2 years (2022-2024)
 4. **Implement Oracle synthesis** — `_build_oracle_synthesis()` method in coinbase_runner.py
 
+## Data Infrastructure
+- [Derivatives data backfill method](derivatives_data_backfill_method.md) — `data.binance.vision` is the ONLY working source for historical OI/funding/LS/taker. Binance REST API and OKX are geo-blocked or 30-day-limited. CDN is geo-unblocked. Script at `scripts/data/backfill_binance_vision_derivatives.py`. Coverage 2020-09 onwards (62%).
+
 ## Python/System Notes
 - Use `python3` not `python` on this system
 - Always guard against NaN in stop_loss, take_profit, and position sizing
