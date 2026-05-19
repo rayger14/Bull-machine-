@@ -866,6 +866,13 @@ class StandaloneBacktestEngine:
                     wyck_bear = row.get('tf4h_wyckoff_bearish_score', 0.0) if hasattr(row, 'get') else 0.0
                     if wyck_bear is not None and wyck_bear == wyck_bear:
                         s.metadata['tf4h_wyckoff_bearish_score'] = float(wyck_bear)
+                    # OI change + range position for distribution_exhaustion 3-of-3 boost
+                    oi24 = row.get('oi_change_24h', None) if hasattr(row, 'get') else None
+                    if oi24 is not None and oi24 == oi24:
+                        s.metadata['oi_change_24h'] = float(oi24)
+                    rpos = row.get('range_position_20', None) if hasattr(row, 'get') else None
+                    if rpos is not None and rpos == rpos:
+                        s.metadata['range_position_20'] = float(rpos)
 
                 # Step 4: Allocate via PortfolioAllocator
                 current_position_archetypes = [
@@ -883,6 +890,21 @@ class StandaloneBacktestEngine:
                     wyck_bear = getattr(intent.signal, 'metadata', {}).get('tf4h_wyckoff_bearish_score', 0.0)
                     if wyck_bear and wyck_bear >= 0.6:
                         intent.allocated_size_pct *= 1.25
+
+                # Step 4c: distribution_exhaustion 3-of-3 sizing boost
+                # WFO validated 2026-05-18: +2.26% OOS PnL at X=1.5 (n=128 OOS).
+                # Stacks on top of Wyckoff 4H boost when both fire (effective ~1.875x).
+                for intent in intents:
+                    if intent.signal.direction != 'long':
+                        continue
+                    meta = getattr(intent.signal, 'metadata', {}) or {}
+                    bearish = meta.get('tf4h_wyckoff_bearish_score', 0.0)
+                    oi24 = meta.get('oi_change_24h', None)
+                    rpos = meta.get('range_position_20', None)
+                    if oi24 is None or rpos is None: continue
+                    if bearish != bearish or oi24 != oi24 or rpos != rpos: continue
+                    if bearish >= 0.6 and oi24 <= -0.02 and rpos < 0.40:
+                        intent.allocated_size_pct *= 1.5
 
                 # Step 5: Execute allocations
                 for intent in intents:
