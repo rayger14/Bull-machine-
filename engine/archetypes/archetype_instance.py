@@ -828,6 +828,8 @@ class ArchetypeInstance:
                 'archetype': self.name,
                 'fusion_score': fusion,
                 'gate_penalty': gate_penalty,
+                'hard_gates_passed': gate_passed,
+                'hard_gates_failed_reason': gate_failed,
                 'wyckoff_score': wyckoff_score,
                 'liquidity_score': liquidity,
                 'momentum_score': momentum_score,

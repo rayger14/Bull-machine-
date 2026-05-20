@@ -1012,6 +1012,29 @@ class V11ShadowRunner:
                     s.fusion_score = adjusted_fusion
                     adjusted_signals.append(s)
                 elif self.bypass_threshold:
+                    # Path A: bypass would let this through despite low fusion.
+                    # If hard_gates failed, do NOT let it through. The gate_mode: soft
+                    # + bypass combo is what historically created the gate-immune state.
+                    enforce_under_bypass = self.adaptive_fusion.get(
+                        'enforce_gates_under_bypass', True
+                    )
+                    if enforce_under_bypass and s.metadata.get(
+                        'hard_gates_passed', True
+                    ) is False:
+                        rej_reason = (
+                            f'hard_gates failed under bypass: '
+                            f'{s.metadata.get("hard_gates_failed_reason", "unknown")}'
+                        )
+                        self.last_bar_signals[idx]['status'] = 'rejected'
+                        self.last_bar_signals[idx]['rejection_reason'] = rej_reason
+                        self.last_bar_signals[idx]['rejection_stage'] = 'bypass_gate_block'
+                        self.signals_rejected += 1
+                        self._open_phantom(s, features, current_regime, rej_reason, 'bypass_gate_block')
+                        logger.info(
+                            "[BYPASS_GATE_BLOCK] %s rejected: %s (would have bypassed but hard_gates failed)",
+                            s.archetype_id, rej_reason,
+                        )
+                        continue
                     # BYPASS MODE: let signal through but mark it
                     s.fusion_score = adjusted_fusion
                     adjusted_signals.append(s)

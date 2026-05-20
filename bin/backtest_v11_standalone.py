@@ -750,10 +750,29 @@ class StandaloneBacktestEngine:
                             if acfg.get('bypass_fusion_threshold', False):
                                 _bypass_archetypes.add(aid)
 
+                    # Path A: when a signal is about to skip the fusion threshold
+                    # (either via per-archetype bypass_fusion_threshold or global
+                    # bypass_threshold), its hard_gates MUST have passed. Otherwise
+                    # the gate_mode: soft + bypass combo silently disables gates.
+                    _enforce_gates_under_bypass = self.adaptive_fusion.get(
+                        'enforce_gates_under_bypass', True
+                    ) if hasattr(self, 'adaptive_fusion') else True
+
                     for s in signals:
                         # Archetypes with bypass_fusion_threshold skip the dynamic threshold
                         # (their edge comes from hard gates, not fusion scoring)
                         if s.archetype_id in _bypass_archetypes:
+                            if _enforce_gates_under_bypass and s.metadata.get(
+                                'hard_gates_passed', True
+                            ) is False:
+                                # Gate-immune state would have let this through.
+                                # Drop it instead — hard_gates exist for a reason.
+                                logger.debug(
+                                    f"[BYPASS_GATE_BLOCK] {s.archetype_id} rejected at bypass: "
+                                    f"{s.metadata.get('hard_gates_failed_reason', 'unknown')}"
+                                )
+                                self.bypass_gate_blocks = getattr(self, 'bypass_gate_blocks', 0) + 1
+                                continue
                             adjusted_signals.append(s)
                             continue
 
