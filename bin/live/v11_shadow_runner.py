@@ -1015,9 +1015,15 @@ class V11ShadowRunner:
                     # Path A: bypass would let this through despite low fusion.
                     # If hard_gates failed, do NOT let it through. The gate_mode: soft
                     # + bypass combo is what historically created the gate-immune state.
+                    # Per-archetype opt-out via YAML enforce_gates_under_bypass: false
+                    # (e.g., CB whose hard_gates are known mis-calibrated).
                     enforce_under_bypass = self.adaptive_fusion.get(
                         'enforce_gates_under_bypass', True
                     )
+                    arch_cfg = self.engine.archetype_configs.get(s.archetype_id, {}) \
+                        if hasattr(self.engine, 'archetype_configs') else {}
+                    if arch_cfg.get('enforce_gates_under_bypass') is False:
+                        enforce_under_bypass = False
                     if enforce_under_bypass and s.metadata.get(
                         'hard_gates_passed', True
                     ) is False:

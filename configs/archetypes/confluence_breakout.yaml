@@ -71,3 +71,7 @@ description: Low ATR + near POC + BOMS strength. High-quality coil breakout patt
 priority: 11
 enabled: true
 bypass_fusion_threshold: true
+# Path A opt-out — CB's hard_gates are known mis-calibrated (volume_zscore min 0.5
+# filters OUT winners; Lesson #54 territory). Keep bypass behavior until gates
+# are recalibrated to match what CB winners actually look like.
+enforce_gates_under_bypass: false
