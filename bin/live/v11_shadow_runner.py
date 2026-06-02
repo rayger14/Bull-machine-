@@ -1032,12 +1032,53 @@ class V11ShadowRunner:
             temp_range = self.adaptive_fusion.get('temp_range', 0.38)
             instab_range = self.adaptive_fusion.get('instab_range', 0.15)
 
+            # --- NEW (feat/regime-weights-as-threshold): opt-in threshold mode ---
+            # Default "fusion_multiplier" preserves legacy behavior. When set to
+            # "threshold_adjustment", per-archetype regime_weights raise the
+            # dynamic threshold (1/weight) instead of scaling fusion.
+            _regime_weight_mode = self.adaptive_fusion.get(
+                'regime_weight_mode', 'fusion_multiplier'
+            )
+            _regime_weight_hard_block_floor = float(self.adaptive_fusion.get(
+                'regime_weight_hard_block_floor', 0.2
+            ))
+
             adjusted_signals = []
             for s in signals:
                 adjusted_fusion = s.fusion_score * crisis_penalty
                 # Per-archetype dynamic threshold
                 arch_base = per_arch_thresholds.get(s.archetype_id, base_threshold)
                 arch_threshold = arch_base + (1.0 - risk_temp) * temp_range + instability * instab_range
+
+                # Apply regime-weight threshold adjustment (opt-in)
+                if _regime_weight_mode == 'threshold_adjustment':
+                    _inst = self.engine.archetypes.get(s.archetype_id) \
+                        if hasattr(self.engine, 'archetypes') else None
+                    if _inst is not None:
+                        rw_mult, rw_blocked, rw_meta = _inst.compute_regime_threshold_multiplier(
+                            current_regime,
+                            hard_block_floor=_regime_weight_hard_block_floor,
+                        )
+                        if rw_blocked:
+                            idx = sig_index[id(s)]
+                            self.last_bar_signals[idx]['status'] = 'rejected'
+                            self.last_bar_signals[idx]['rejection_reason'] = (
+                                f"regime_weight {rw_meta.get('regime_weight')} < "
+                                f"hard_block_floor {_regime_weight_hard_block_floor} "
+                                f"in regime={current_regime}"
+                            )
+                            self.last_bar_signals[idx]['rejection_stage'] = 'regime_weight_block'
+                            self.signals_rejected += 1
+                            logger.info(
+                                "[REGIME_BLOCK] %s rejected: weight=%s < floor=%s in %s",
+                                s.archetype_id,
+                                rw_meta.get('regime_weight'),
+                                _regime_weight_hard_block_floor,
+                                current_regime,
+                            )
+                            continue
+                        arch_threshold = arch_threshold * rw_mult
+
                 idx = sig_index[id(s)]
                 self.last_bar_signals[idx]['fusion_score'] = round(adjusted_fusion, 4)
                 margin = adjusted_fusion - arch_threshold

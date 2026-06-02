@@ -280,14 +280,98 @@ class ArchetypeInstance:
             fusion *= 0.80  # Heavy decay: stale setup past fib-89 window
 
         # NOTE: regime_preferences (self.config.regime_weights) are NOT applied as
-        # fusion multipliers. The soft regime system works through
+        # fusion multipliers in legacy mode. The soft regime system works through
         # fusion_thresholds_by_regime in the backtester/strategy, which requires
         # higher fusion scores in crisis/risk_off. Applying regime_preferences ON TOP
         # of varying thresholds double-gates and hurts archetypes that perform well
         # across regimes (e.g., trap_within_trend PF=2.19 in neutral was killed by 0.7x).
+        #
+        # See compute_regime_threshold_multiplier() for the opt-in alternative that
+        # consumes regime_weights as a THRESHOLD ADJUSTMENT instead of a fusion
+        # multiplier (adaptive_fusion.regime_weight_mode == "threshold_adjustment").
 
         # Clip to [0, 1]
         return max(0.0, min(1.0, fusion))
+
+    def compute_regime_threshold_multiplier(
+        self,
+        regime_label: str,
+        hard_block_floor: float = 0.2,
+    ) -> Tuple[float, bool, Dict]:
+        """
+        Convert this archetype's regime_weights into a THRESHOLD multiplier.
+
+        New mode (adaptive_fusion.regime_weight_mode == "threshold_adjustment"):
+        Instead of multiplying the fusion score by regime_weight (legacy soft
+        gating / fusion_multiplier), we RAISE the per-archetype dynamic
+        threshold by the inverse weight.
+
+            effective_threshold = base_threshold / regime_weights[current_regime]
+
+        Examples:
+            regime_weight = 1.0  → multiplier 1.0  → no threshold change
+            regime_weight = 0.5  → multiplier 2.0  → threshold doubles
+            regime_weight = 0.1  → multiplier 10.0 → threshold ~unreachable
+            regime_weight = 2.0  → multiplier 0.5  → threshold halves (boost)
+
+        Hard-block floor: if the configured weight is BELOW `hard_block_floor`
+        (default 0.2), we skip threshold math entirely and return blocked=True.
+        Saves CPU and makes "barely allowed" deterministically equivalent to
+        "not allowed". A weight of exactly 0.0 always blocks.
+
+        Returns:
+            (multiplier, blocked, metadata)
+              multiplier: float to multiply the base threshold by.
+                          1.0 when the archetype defines no regime_weights or
+                          the regime is unknown (legacy-safe default).
+              blocked:    True iff weight < hard_block_floor (caller MUST drop
+                          the signal without further evaluation).
+              metadata:   diagnostic dict
+        """
+        regime_weights = self.config.regime_weights or {}
+        weight = regime_weights.get(regime_label)
+
+        # Unknown regime or no regime_weights configured → no adjustment
+        if weight is None:
+            return 1.0, False, {
+                "regime": regime_label,
+                "regime_weight": None,
+                "multiplier": 1.0,
+                "blocked": False,
+                "reason": "no_regime_weight_for_regime",
+            }
+
+        # NaN / non-finite guard
+        if weight != weight or weight in (float("inf"), float("-inf")):
+            return 1.0, False, {
+                "regime": regime_label,
+                "regime_weight": weight,
+                "multiplier": 1.0,
+                "blocked": False,
+                "reason": "regime_weight_non_finite",
+            }
+
+        # Hard block floor — deterministic veto for "barely allowed" regimes.
+        # weight == 0.0 always blocks (division by zero would also blow up).
+        if weight < hard_block_floor:
+            return float("inf"), True, {
+                "regime": regime_label,
+                "regime_weight": weight,
+                "multiplier": float("inf"),
+                "blocked": True,
+                "hard_block_floor": hard_block_floor,
+                "reason": "weight_below_hard_block_floor",
+            }
+
+        multiplier = 1.0 / weight
+        return multiplier, False, {
+            "regime": regime_label,
+            "regime_weight": weight,
+            "multiplier": multiplier,
+            "blocked": False,
+            "hard_block_floor": hard_block_floor,
+            "reason": "ok",
+        }
 
     def _get_wyckoff_score(self, features: Dict) -> float:
         """

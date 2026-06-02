@@ -849,6 +849,19 @@ class StandaloneBacktestEngine:
                         'enforce_gates_under_bypass', True
                     ) if hasattr(self, 'adaptive_fusion') else True
 
+                    # NEW (feat/regime-weights-as-threshold): opt-in mode that
+                    # converts per-archetype regime_weights into a THRESHOLD
+                    # adjustment instead of (or in addition to) the legacy
+                    # fusion-multiplier behavior. Default "fusion_multiplier"
+                    # preserves exact bit-parity with prior runs.
+                    _regime_weight_mode = self.adaptive_fusion.get(
+                        'regime_weight_mode', 'fusion_multiplier'
+                    )
+                    _regime_weight_hard_block_floor = float(self.adaptive_fusion.get(
+                        'regime_weight_hard_block_floor', 0.2
+                    ))
+                    _regime_weight_blocks = 0
+
                     for s in signals:
                         # Archetypes with bypass_fusion_threshold skip the dynamic threshold
                         # (their edge comes from hard gates, not fusion scoring)
@@ -874,6 +887,29 @@ class StandaloneBacktestEngine:
                         # Per-archetype base threshold (falls back to global)
                         arch_base = per_arch_thresholds.get(s.archetype_id, base_threshold)
                         arch_threshold = arch_base + (1.0 - risk_temp) * temp_range + instability * instab_range
+
+                        # --- NEW: regime_weights as THRESHOLD adjustment (opt-in) ---
+                        # Default mode "fusion_multiplier" is a no-op here so the
+                        # fusion-multiplier branch is bit-exact with prior runs.
+                        if _regime_weight_mode == 'threshold_adjustment':
+                            _inst = self.engine.archetypes.get(s.archetype_id) \
+                                if hasattr(self.engine, 'archetypes') else None
+                            if _inst is not None:
+                                rw_mult, rw_blocked, rw_meta = _inst.compute_regime_threshold_multiplier(
+                                    current_regime,
+                                    hard_block_floor=_regime_weight_hard_block_floor,
+                                )
+                                if rw_blocked:
+                                    _regime_weight_blocks += 1
+                                    logger.debug(
+                                        f"[REGIME_BLOCK] {s.archetype_id} hard-blocked in "
+                                        f"{current_regime}: regime_weight="
+                                        f"{rw_meta.get('regime_weight')} < floor="
+                                        f"{_regime_weight_hard_block_floor}"
+                                    )
+                                    continue
+                                arch_threshold = arch_threshold * rw_mult
+
                         adjusted_fusion = s.fusion_score * crisis_penalty
                         if adjusted_fusion >= arch_threshold:
                             s.fusion_score = adjusted_fusion
@@ -888,6 +924,11 @@ class StandaloneBacktestEngine:
                     filtered_by_regime = pre_filter - len(signals)
                     if filtered_by_regime > 0:
                         self.signals_rejected += filtered_by_regime
+                    if _regime_weight_blocks > 0:
+                        # Roll-up counter for the new threshold_adjustment hard-block
+                        self.regime_weight_hard_blocks = getattr(
+                            self, 'regime_weight_hard_blocks', 0
+                        ) + _regime_weight_blocks
 
                     # Track threshold stats for periodic logging
                     _threshold_values.append(flat_threshold)
