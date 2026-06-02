@@ -10,6 +10,21 @@ Architecture: CMI v0 (Composite Market Intelligence)
     - crisis_prob: stress_signals(60%) + vol_shock(20%) + sentiment_extreme(20%)
     - derivatives_heat: oi_momentum + funding_health + taker_conviction (weight=0%, DISABLED)
 
+NOTE (2026-06-02): The active CMI computation (risk_temp / instability / crisis_prob)
+runs inline in ``bin/backtest_v11_standalone.py`` and ``bin/live/v11_shadow_runner.py``,
+which both honor the ``adaptive_fusion.crisis_prob_source`` config flag:
+    - ``"original"`` (default): base_crisis(45%) + sentiment_crisis(45%) + vol_shock(10%)
+      → broken in 2026-05/06 because base_crisis depends on derivatives_heat-adjacent
+      features (drawdown_persistence + crash_frequency + crisis_persistence) that
+      stay near zero during the current trend regime, freezing crisis_prob ≈ 0.009.
+    - ``"substitute_no_derivatives"``: macro_stress(25%) + sentiment_stress(35%) +
+      structural_stress(30%) + vol_shock(10%). Built from features the engine has
+      TODAY (DXY_Z, VIX_Z, fear_greed, ema_slope_50, tf4h_wyckoff_bullish_score,
+      rv_20d) so regime_weights can detect hostile regimes without OI history.
+
+The substitute is opt-in via config so the original code path stays bit-exact and
+``derivatives_heat`` re-enablement work is untouched.
+
     Dynamic threshold = base + (1 - risk_temp) * temp_range + instability * instab_range
     Config: base=0.18, temp_range=0.38, instab_range=0.15, crisis_coeff=0.50
 
