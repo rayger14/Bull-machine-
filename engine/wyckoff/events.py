@@ -1195,7 +1195,9 @@ _DISTRIB_EVENTS = ['bc', 'as', 'sow', 'ut', 'utad', 'lpsy']
 
 
 def create_wyckoff_context(df: pd.DataFrame, lookback: int = 3,
-                           timeframe: str = "unknown") -> WyckoffHTFContext:
+                           timeframe: str = "unknown",
+                           mutual_exclusion: bool = True,
+                           mutual_exclusion_strength: float = 2.0) -> WyckoffHTFContext:
     """
     Create a WyckoffHTFContext from a DataFrame that has been through detect_all_wyckoff_events().
 
@@ -1207,6 +1209,13 @@ def create_wyckoff_context(df: pd.DataFrame, lookback: int = 3,
         df: DataFrame with wyckoff_*_confidence columns (output of detect_all_wyckoff_events)
         lookback: Number of recent bars to scan for events (default: 3)
         timeframe: Label for logging ("1D", "4H", etc.)
+        mutual_exclusion: If True (default), damp the weaker score by the dominance
+            margin so bullish/bearish behave as a direction signal. If False, both
+            scores are returned as raw maxes (LEGACY behavior — known bug, kept for
+            opt-out / rollback).
+        mutual_exclusion_strength: Damping coefficient. With strength=2.0, a margin
+            of 0.5 fully suppresses the weaker score; margin of 0 keeps both intact
+            (transition phase).
 
     Returns:
         WyckoffHTFContext with graded scores and phase determination
@@ -1221,7 +1230,7 @@ def create_wyckoff_context(df: pd.DataFrame, lookback: int = 3,
             vals = tail[col].dropna()
             if len(vals) > 0:
                 bullish_confs.append(float(vals.max()))
-    bullish_score = max(bullish_confs) if bullish_confs else 0.0
+    raw_bullish_score = max(bullish_confs) if bullish_confs else 0.0
 
     # Graded bearish score: max confidence across recent distribution events
     bearish_confs = []
@@ -1231,7 +1240,37 @@ def create_wyckoff_context(df: pd.DataFrame, lookback: int = 3,
             vals = tail[col].dropna()
             if len(vals) > 0:
                 bearish_confs.append(float(vals.max()))
-    bearish_score = max(bearish_confs) if bearish_confs else 0.0
+    raw_bearish_score = max(bearish_confs) if bearish_confs else 0.0
+
+    # --- Direction arbitration (fix for 2026-06-02 mutual-exclusion bug) ---
+    # Without this, raw_bullish and raw_bearish are independent maxes over
+    # disjoint event families, so both can be > 0.8 simultaneously (28/94 live
+    # trades in trade_outcomes_live_jun2.csv had this). Downstream archetype
+    # gates treat them as direction signals — that's broken without arbitration.
+    if mutual_exclusion:
+        margin = abs(raw_bullish_score - raw_bearish_score)
+        damp = max(0.0, 1.0 - mutual_exclusion_strength * margin)
+        if raw_bullish_score >= raw_bearish_score:
+            bullish_score = raw_bullish_score
+            bearish_score = raw_bearish_score * damp
+        else:
+            bearish_score = raw_bearish_score
+            bullish_score = raw_bullish_score * damp
+
+        # Regression guard: after damping, both > 0.5 should be impossible.
+        # Worst case: tie at 1.0 / 1.0 (margin=0, damp=1) — but then neither
+        # exceeds the other so the loser is the lower one (still both 1.0).
+        # We flag this as a true tie and demote phase to "transition" below.
+        if bullish_score > 0.5 and bearish_score > 0.5:
+            logger.warning(
+                f"WyckoffHTFContext({timeframe}): mutual_exclusion failed to separate scores "
+                f"(bull={bullish_score:.3f}, bear={bearish_score:.3f}, raw_bull={raw_bullish_score:.3f}, "
+                f"raw_bear={raw_bearish_score:.3f}) — likely true tie; treating as transition."
+            )
+    else:
+        # Legacy / opt-out: raw maxes (known bug, kept for rollback)
+        bullish_score = raw_bullish_score
+        bearish_score = raw_bearish_score
 
     # Determine phase from score comparison
     if bullish_score > 0.3 and bullish_score > bearish_score * 1.5:
