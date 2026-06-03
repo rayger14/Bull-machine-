@@ -531,9 +531,51 @@ class V11ShadowRunner:
         vol_shock = min(max(rv - 0.8, 0.0) / 0.4, 1.0)
         sentiment_crisis = max(0.0, (0.20 - fear_greed) / 0.20)
         cr_w = self.cmi_weights_current['crisis']
-        crisis_prob = (cr_w.get('base_crisis', 0.45) * base_crisis +
-                       cr_w.get('vol_shock', 0.10) * vol_shock +
-                       cr_w.get('sentiment_crisis', 0.45) * sentiment_crisis)
+
+        # --- crisis_prob source switch (2026-06-02) ---
+        crisis_prob_source = self.adaptive_fusion.get('crisis_prob_source', 'original')
+        if crisis_prob_source == 'substitute_no_derivatives':
+            sub_w = self.adaptive_fusion.get('crisis_prob_substitute', {}) or {}
+            sub_w_macro = sub_w.get('w_macro', 0.25)
+            sub_w_sent = sub_w.get('w_sentiment', 0.35)
+            sub_w_struct = sub_w.get('w_structural', 0.30)
+            sub_w_vol = sub_w.get('w_vol_shock', 0.10)
+            sub_a1 = sub_w.get('a_dxy', 0.60)
+            sub_a2 = sub_w.get('a_vix', 0.40)
+            sub_b1 = sub_w.get('b_ema_slope', 15.0)
+            sub_b2 = sub_w.get('b_wyckoff_breakdown', 1.0)
+            sub_fear_thresh = sub_w.get('fear_threshold', 35.0)
+            sub_rv_floor = sub_w.get('rv_floor', 0.75)
+            sub_rv_range = sub_w.get('rv_range', 0.50)
+            sub_macro_offset = sub_w.get('macro_offset', 1.0)
+            sub_struct_offset = sub_w.get('struct_offset', 0.5)
+
+            dxy_z = _get('DXY_Z', 0.0)
+            vix_z = _get('VIX_Z', 0.0)
+            fg_raw = _get('fear_greed', fear_greed * 100.0)
+            if fg_raw <= 1.0:
+                fg_raw = fg_raw * 100.0
+            ema_slope = _get('ema_slope_50', 0.0)
+            bull_score = _get('tf4h_wyckoff_bullish_score', 0.5)
+            rv_for_sub = _get('rv_20d', 0.6)
+
+            import math
+            z_macro = sub_a1 * dxy_z + sub_a2 * vix_z - sub_macro_offset
+            macro_stress = 1.0 / (1.0 + math.exp(-z_macro))
+            sentiment_stress = max(0.0, min(1.0, (sub_fear_thresh - fg_raw) / sub_fear_thresh))
+            z_struct = -sub_b1 * ema_slope + sub_b2 * (1.0 - bull_score) - sub_struct_offset
+            structural_stress = 1.0 / (1.0 + math.exp(-z_struct))
+            vol_shock_sub = max(0.0, min(1.0, (rv_for_sub - sub_rv_floor) / sub_rv_range))
+
+            crisis_prob = (sub_w_macro * macro_stress +
+                           sub_w_sent * sentiment_stress +
+                           sub_w_struct * structural_stress +
+                           sub_w_vol * vol_shock_sub)
+            crisis_prob = max(0.0, min(1.0, crisis_prob))
+        else:
+            crisis_prob = (cr_w.get('base_crisis', 0.45) * base_crisis +
+                           cr_w.get('vol_shock', 0.10) * vol_shock +
+                           cr_w.get('sentiment_crisis', 0.45) * sentiment_crisis)
 
         # Dynamic threshold
         base_threshold = self.adaptive_fusion.get('base_threshold', 0.18)

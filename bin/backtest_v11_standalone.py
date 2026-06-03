@@ -540,6 +540,39 @@ class StandaloneBacktestEngine:
         w_vol_shock = crisis_w.get('vol_shock', 0.10)
         w_sent_crisis = crisis_w.get('sentiment_crisis', 0.45)
 
+        # --- crisis_prob source switch (2026-06-02) ---
+        # 'original'                       — base_crisis(45) + sentiment_crisis(45) + vol_shock(10)
+        # 'substitute_no_derivatives'      — macro/sentiment/structural/vol-shock composite, no OI
+        # Substitute uses features the engine has TODAY so regime_weights can detect
+        # hostile regimes when OI-based derivatives_heat is still disabled.
+        crisis_prob_source = self.adaptive_fusion.get('crisis_prob_source', 'original')
+        sub_w = self.adaptive_fusion.get('crisis_prob_substitute', {}) or {}
+        sub_w_macro = sub_w.get('w_macro', 0.25)
+        sub_w_sent = sub_w.get('w_sentiment', 0.35)
+        sub_w_struct = sub_w.get('w_structural', 0.30)
+        sub_w_vol = sub_w.get('w_vol_shock', 0.10)
+        sub_a1 = sub_w.get('a_dxy', 0.60)
+        sub_a2 = sub_w.get('a_vix', 0.40)
+        sub_b1 = sub_w.get('b_ema_slope', 15.0)
+        sub_b2 = sub_w.get('b_wyckoff_breakdown', 1.0)
+        sub_fear_thresh = sub_w.get('fear_threshold', 35.0)
+        sub_rv_floor = sub_w.get('rv_floor', 0.75)
+        sub_rv_range = sub_w.get('rv_range', 0.50)
+        sub_macro_offset = sub_w.get('macro_offset', 1.0)
+        sub_struct_offset = sub_w.get('struct_offset', 0.5)
+        if crisis_prob_source == 'substitute_no_derivatives':
+            logger.info(
+                f"CMI crisis_prob_source='substitute_no_derivatives' "
+                f"(weights macro={sub_w_macro:.2f}/sent={sub_w_sent:.2f}/"
+                f"struct={sub_w_struct:.2f}/vol={sub_w_vol:.2f}, "
+                f"fear_threshold={sub_fear_thresh:.0f})"
+            )
+        else:
+            logger.info(
+                f"CMI crisis_prob_source='original' "
+                f"(base={w_base_crisis:.2f}, sent={w_sent_crisis:.2f}, vol={w_vol_shock:.2f})"
+            )
+
         # Tracking accumulators for periodic stats logging
         _regime_counts: Dict[str, int] = {}
         _threshold_values: List[float] = []
@@ -703,7 +736,7 @@ class StandaloneBacktestEngine:
 
                     # --- CMI v0: crisis_prob [0-1]: pure stress measurement ---
                     # NO Wyckoff/accumulation offset — crisis stays as safety, never weakened
-                    # Core stress signals (60%)
+                    # Core stress signals (60%) — original (OI-aware via crash_freq/crisis_persist)
                     dd = _get('drawdown_persistence', 0.0)
                     crash_freq = _get('crash_frequency_7d', 0.0)
                     crisis_persist = _get('crisis_persistence', 0.0)
@@ -722,7 +755,58 @@ class StandaloneBacktestEngine:
                     # Sentiment extreme (20%) — extreme fear amplifies crisis
                     sentiment_crisis = max(0.0, (0.20 - fear_greed) / 0.20)  # F&G < 20 → crisis
 
-                    crisis_prob = w_base_crisis * base_crisis + w_vol_shock * vol_shock + w_sent_crisis * sentiment_crisis
+                    if crisis_prob_source == 'substitute_no_derivatives':
+                        # --- Substitute crisis_prob using features the engine has TODAY ---
+                        # Composition (default weights):
+                        #   25% macro_stress     = sigmoid(0.60*DXY_Z + 0.40*VIX_Z - 1.0)
+                        #   35% sentiment_stress = clamp((35 - fear_greed_raw)/35, 0, 1)
+                        #   30% structural_stress = sigmoid(-15*ema_slope_50 + 1.0*(1 - bull_score) - 0.5)
+                        #   10% vol_shock         = clamp((rv_20d - 0.75)/0.50, 0, 1)
+                        dxy_z = _get('DXY_Z', 0.0)
+                        vix_z = _get('VIX_Z', 0.0)
+                        # fear_greed_raw: feature store uses 0-100 ('fear_greed'), normalized is fear_greed_norm
+                        fg_raw = _get('fear_greed', _get('fear_greed_norm', 0.5) * 100.0)
+                        # If somehow we got fear_greed_norm (0-1) into 'fear_greed', rescale
+                        if fg_raw <= 1.0:
+                            fg_raw = fg_raw * 100.0
+                        ema_slope = _get('ema_slope_50', 0.0)
+                        bull_score = _get('tf4h_wyckoff_bullish_score', 0.5)
+                        rv = _get('rv_20d', 0.6)
+
+                        # Component computations
+                        z_macro = sub_a1 * dxy_z + sub_a2 * vix_z - sub_macro_offset
+                        macro_stress = 1.0 / (1.0 + np.exp(-z_macro))
+
+                        sentiment_stress = max(0.0, min(1.0, (sub_fear_thresh - fg_raw) / sub_fear_thresh))
+
+                        z_struct = -sub_b1 * ema_slope + sub_b2 * (1.0 - bull_score) - sub_struct_offset
+                        structural_stress = 1.0 / (1.0 + np.exp(-z_struct))
+
+                        vol_shock_sub = max(0.0, min(1.0, (rv - sub_rv_floor) / sub_rv_range))
+
+                        crisis_prob = (
+                            sub_w_macro * macro_stress
+                            + sub_w_sent * sentiment_stress
+                            + sub_w_struct * structural_stress
+                            + sub_w_vol * vol_shock_sub
+                        )
+                        crisis_prob = max(0.0, min(1.0, crisis_prob))
+                        # Preserve original component fields for logging compatibility,
+                        # but record substitute components in metadata accumulators below.
+                        # Keep base_crisis/vol_shock/sentiment_crisis variables non-zero for
+                        # downstream code that records them — store substitute parts in
+                        # base_crisis (= macro_stress) for live ops dashboards that look at it.
+                        # (We keep originals untouched in 'original' branch.)
+                        base_crisis = macro_stress
+                        sentiment_crisis = sentiment_stress
+                        vol_shock = vol_shock_sub  # repurpose vol_shock to substitute's component
+                    else:
+                        # Original formula (CLAUDE.md): base_crisis(45) + sent_crisis(45) + vol_shock(10)
+                        crisis_prob = (
+                            w_base_crisis * base_crisis
+                            + w_vol_shock * vol_shock
+                            + w_sent_crisis * sentiment_crisis
+                        )
 
                     # Dynamic threshold approach: threshold varies with market conditions
                     # This replicates the old system's behavior (low threshold in bull, high in bear)
