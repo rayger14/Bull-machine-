@@ -267,6 +267,7 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 ## Experiment Results
 - [Structural embed experiments](feedback_structural_embeds.md) — momentum gates regress, don't use on reversal archetypes
 - [Wyckoff fix status](project_wyckoff_fix_status.md) — live fix committed, feature store rebuild pending
+- [Champion strategy: wick_trap + exhaustion_reversal pair](champion_strategy_pair_2026_06_10.md) — only configuration passing the full battery (positive every year 2020-24, OOS PF 1.85/1.79, MaxDD 5.1%); regime-complementary pair with 200-DAY macro sizing overlay (engine regime labels are 200-HOUR and called 2022 bear rallies "risk_on" — quantified oracle gap); NO single archetype passes standalone; pending 2025-26 pristine holdout + live shadow
 
 ## Next Priorities
 1. **Feature store rebuild** — fix scoring for sparse events + Optuna re-optimize (see wyckoff fix status)

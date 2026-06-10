@@ -54,6 +54,32 @@ VARIANTS = {
         "wick_trap":           {"k": 0.50, "when": "macro_bear"},
         "exhaustion_reversal": {"k": 0.50, "when": "macro_bull"},
     }},
+    # --- Adjudication sensitivity battery (2026-06-10) ---
+    # pair_k100 = no-overlay PAIR baseline (k=1.0 is identity) for Rule 9 deltas.
+    "pair_k100": {"macro_sma_days": 200, "rules": {
+        "wick_trap":           {"k": 1.00, "when": "macro_bear"},
+        "exhaustion_reversal": {"k": 1.00, "when": "macro_bull"},
+    }},
+    "pair_k020": {"macro_sma_days": 200, "rules": {
+        "wick_trap":           {"k": 0.20, "when": "macro_bear"},
+        "exhaustion_reversal": {"k": 0.20, "when": "macro_bull"},
+    }},
+    "pair_k030": {"macro_sma_days": 200, "rules": {
+        "wick_trap":           {"k": 0.30, "when": "macro_bear"},
+        "exhaustion_reversal": {"k": 0.30, "when": "macro_bull"},
+    }},
+    "pair_k035": {"macro_sma_days": 200, "rules": {
+        "wick_trap":           {"k": 0.35, "when": "macro_bear"},
+        "exhaustion_reversal": {"k": 0.35, "when": "macro_bull"},
+    }},
+    "pair_k025_150d": {"macro_sma_days": 150, "rules": {
+        "wick_trap":           {"k": 0.25, "when": "macro_bear"},
+        "exhaustion_reversal": {"k": 0.25, "when": "macro_bull"},
+    }},
+    "pair_k025_250d": {"macro_sma_days": 250, "rules": {
+        "wick_trap":           {"k": 0.25, "when": "macro_bear"},
+        "exhaustion_reversal": {"k": 0.25, "when": "macro_bull"},
+    }},
 }
 
 OUT_ROOT = REPO / "results/champion_overlay"
