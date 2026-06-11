@@ -35,7 +35,7 @@ sys.path.insert(0, str(REPO / "scripts/data"))
 
 KLINES = REPO / "data/cache/binance_vision/klines/BTCUSDT_1h.parquet"
 MACRO_CACHE = REPO / "data/cache/macro_daily_history.parquet"
-DERIV_CACHE = REPO / "data/cache/derivatives_hourly_2024_2026.parquet"
+DERIV_CACHE = REPO / "data/cache/derivatives_hourly_full.parquet"
 OUT_DIR = REPO / "results/rebuild"
 OUT = OUT_DIR / "segment_lfc.parquet"
 WARMUP = 1000  # == WARMUP_CANDLES in coinbase_runner.py (live parity)
@@ -59,7 +59,7 @@ def build_macro_history() -> pd.DataFrame:
                "YIELD_5Y": "^FVX", "GOLD": "GC=F", "OIL": "CL=F"}
     frames = {}
     for name, tk in tickers.items():
-        h = yf.download(tk, start="2023-10-01", progress=False, auto_adjust=True)
+        h = yf.download(tk, start="2017-06-01", progress=False, auto_adjust=True)
         s = h["Close"]
         if isinstance(s, pd.DataFrame):
             s = s.iloc[:, 0]
@@ -100,10 +100,10 @@ def build_derivatives_history(btc_close: pd.Series) -> pd.DataFrame:
 
     import backfill_binance_vision_derivatives as bf
 
-    start, end = date(2024, 4, 1), date.today()
+    start, end = date(2020, 9, 1), date.today()
     log.info("downloading binance.vision metrics %s → %s (cached files skipped)", start, end)
     mpaths = bf.download_metrics(start, end)
-    fpaths = bf.download_funding(date(2024, 1, 1), end)
+    fpaths = bf.download_funding(date(2020, 1, 1), end)
     metrics = bf.aggregate_metrics(mpaths)
     funding = bf.aggregate_funding(fpaths)
     close = btc_close.copy()
