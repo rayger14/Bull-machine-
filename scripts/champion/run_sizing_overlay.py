@@ -83,6 +83,7 @@ VARIANTS = {
 }
 
 OUT_ROOT = REPO / "results/champion_overlay"
+STORE = {"path": REPO / "data/features_mtf/BTC_1H_FEATURES_V12_ENHANCED.parquet"}
 
 
 _MACRO_BEAR_CACHE = {}
@@ -96,10 +97,9 @@ def macro_bear_series(days: int):
     """
     if days not in _MACRO_BEAR_CACHE:
         import pandas as pd
-        close = pd.read_parquet(
-            REPO / "data/features_mtf/BTC_1H_FEATURES_V12_ENHANCED.parquet",
-            columns=["close"],
-        )["close"]
+        close = pd.read_parquet(STORE["path"], columns=["close"])["close"]
+        if getattr(close.index, "tz", None) is not None:
+            close.index = close.index.tz_localize(None)
         bars = days * 24
         _MACRO_BEAR_CACHE[days] = close < close.rolling(bars, min_periods=bars // 2).mean()
     return _MACRO_BEAR_CACHE[days]
@@ -178,7 +178,7 @@ def run_window_inproc(config_path: Path, start: str, end: str, out_dir: Path) ->
     engine = StandaloneBacktestEngine(
         config=config, initial_cash=100_000.0,
         commission_rate=0.0002, slippage_bps=3.0,
-        feature_store_path=str(REPO / "data/features_mtf/BTC_1H_FEATURES_V12_ENHANCED.parquet"),
+        feature_store_path=str(STORE["path"]),
     )
     engine.run(start_date=start, end_date=end)
     stats = engine.get_performance_stats()
@@ -203,7 +203,14 @@ def main():
     ap.add_argument("--candidate", nargs="+", required=True,
                     help="one archetype, or several for a pair/portfolio test")
     ap.add_argument("--variants", nargs="+", default=list(VARIANTS))
+    ap.add_argument("--feature-store", type=str, default=None,
+                    help="override feature store parquet (e.g. V13_EXTENDED for holdout)")
+    ap.add_argument("--window", nargs=3, metavar=("NAME", "START", "END"), default=None,
+                    help="run a single custom window instead of the standard battery")
     args = ap.parse_args()
+    if args.feature_store:
+        STORE["path"] = Path(args.feature_store).resolve()
+        _MACRO_BEAR_CACHE.clear()
 
     logging.basicConfig(level=logging.WARNING)
 
@@ -222,9 +229,10 @@ def main():
         print(f"\n=== {label} + {vname} ({desc}) ===")
         state, restore = install_overlay(v.get("k"), v.get("regimes"),
                                          v.get("macro_sma_days"), v.get("rules"))
+        windows = {args.window[0]: (args.window[1], args.window[2])} if args.window else WINDOWS
         try:
             results = {}
-            for w, (s, e) in WINDOWS.items():
+            for w, (s, e) in windows.items():
                 out_dir = OUT_ROOT / label / vname / w
                 print(f"  [run ] {w}", flush=True)
                 results[w] = run_window_inproc(cfg, s, e, out_dir)
@@ -241,13 +249,10 @@ def main():
             print(f"    {'PASS' if vv else 'FAIL'}  {kk}")
         print(f"  OVERALL: {'PASS' if card['pass'] else 'FAIL'} | scaled {state['scaled']}/{state['entries']} entries")
 
-    print(f"\n{'variant':<16}{'pass':<6}{'2020':>8}{'2021':>8}{'2022':>8}{'2023':>8}{'2024':>8}{'full_pf':>8}{'mdd':>6}")
     for c in cards:
-        d = c["detail"]
-        print(f"{c['overlay']['variant']:<16}{str(c['pass']):<6}"
-              f"{d['y2020']['pnl']:>8}{d['y2021']['pnl']:>8}{d['y2022']['pnl']:>8}"
-              f"{d['y2023']['pnl']:>8}{d['y2024']['pnl']:>8}"
-              f"{d['full']['pf']:>8}{d['full']['maxdd_pct']:>6}")
+        print(f"\n=== {c['overlay']['variant']} ===")
+        for w, r in c["detail"].items():
+            print(f"  {w:<14} pnl={r['pnl']:>8} pf={r['pf']:>6} n={r['trades']:>5} mdd={r['maxdd_pct']:>5}%")
 
 
 if __name__ == "__main__":
