@@ -268,6 +268,7 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 - [Structural embed experiments](feedback_structural_embeds.md) — momentum gates regress, don't use on reversal archetypes
 - [Wyckoff fix status](project_wyckoff_fix_status.md) — live fix committed, feature store rebuild pending
 - [Champion strategy: wick_trap + exhaustion_reversal pair](champion_strategy_pair_2026_06_10.md) — passed the full V12 battery (positive every year 2020-24) but FAILED the 2025-26 holdout; 200-HOUR vs 200-DAY regime-label gap remains a valid finding
+- [liquidity_score root cause](liquidity_score_root_cause_2026_06_10.md) — wick_trap + trap_within_trend (the #2/#3 backtest earners) are STRUCTURALLY DEAD in live: their liquidity_threshold 0.72 is unreachable on live-path features (live max 0.675 vs V12 q90 0.72). Fix = full live-path rebuild 2018→2026 + re-quantile all thresholds
 - [Holdout verdict + pipeline divergence](holdout_verdict_2026_06_10.md) — CRITICAL: wick_trap fires 0 trades on live-pipeline features (bridge test: 17 on V12 vs 0 on live-path, same market; 0 in 158 real live trades). V12 backtests overstate what live can express. V13_EXTENDED store (2018→2026-06, live-path 2025+) is the new validation substrate; scripts/rebuild/ is the reusable pipeline
 
 ## Next Priorities
