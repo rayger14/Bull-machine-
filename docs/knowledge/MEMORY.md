@@ -267,7 +267,8 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 ## Experiment Results
 - [Structural embed experiments](feedback_structural_embeds.md) — momentum gates regress, don't use on reversal archetypes
 - [Wyckoff fix status](project_wyckoff_fix_status.md) — live fix committed, feature store rebuild pending
-- [Champion strategy: wick_trap + exhaustion_reversal pair](champion_strategy_pair_2026_06_10.md) — only configuration passing the full battery (positive every year 2020-24, OOS PF 1.85/1.79, MaxDD 5.1%); regime-complementary pair with 200-DAY macro sizing overlay (engine regime labels are 200-HOUR and called 2022 bear rallies "risk_on" — quantified oracle gap); NO single archetype passes standalone; pending 2025-26 pristine holdout + live shadow
+- [Champion strategy: wick_trap + exhaustion_reversal pair](champion_strategy_pair_2026_06_10.md) — passed the full V12 battery (positive every year 2020-24) but FAILED the 2025-26 holdout; 200-HOUR vs 200-DAY regime-label gap remains a valid finding
+- [Holdout verdict + pipeline divergence](holdout_verdict_2026_06_10.md) — CRITICAL: wick_trap fires 0 trades on live-pipeline features (bridge test: 17 on V12 vs 0 on live-path, same market; 0 in 158 real live trades). V12 backtests overstate what live can express. V13_EXTENDED store (2018→2026-06, live-path 2025+) is the new validation substrate; scripts/rebuild/ is the reusable pipeline
 
 ## Next Priorities
 1. **Feature store rebuild** — fix scoring for sparse events + Optuna re-optimize (see wyckoff fix status)

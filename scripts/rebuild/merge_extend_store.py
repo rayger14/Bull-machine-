@@ -110,6 +110,13 @@ def main():
     v13 = pd.concat([v12, aligned]).sort_index()
     v13 = v13[~v13.index.duplicated(keep="first")]  # V12 wins on any overlap
 
+    # mixed-type object columns (e.g. str labels in V12, ints/NaN in segment)
+    # break pyarrow — normalize to str, preserving NaN
+    for c in v13.columns:
+        if v13[c].dtype == object:
+            mask = v13[c].notna()
+            v13.loc[mask, c] = v13.loc[mask, c].astype(str)
+
     # Boundary continuity check
     pre = v13.loc["2024-12-30":"2024-12-31", "close"].iloc[-1]
     post = v13.loc["2025-01-01":"2025-01-02", "close"].iloc[0]

@@ -1,7 +1,7 @@
 # Champion Strategy: wick_trap + exhaustion_reversal Regime-Complementary Pair
 
 **Date**: 2026-06-10
-**Status**: PASSES full backtest battery (2020–2024). PENDING: 2025–26 pristine holdout + 2-week live shadow.
+**Status**: FAILED the 2025–26 pristine holdout (2026-06-10) — see [[holdout_verdict_2026_06_10]]. Root cause: wick_trap cannot fire on live-pipeline features (0 trades in holdout, bridge test, AND real live). NOT promoted.
 **Harness**: `scripts/champion/run_battery.py` + `scripts/champion/run_sizing_overlay.py`
 **Artifacts**: `results/champion/` (standalone baselines), `results/champion_overlay/wick_trap__exhaustion_reversal/` (overlay variants)
 
