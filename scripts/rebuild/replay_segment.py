@@ -117,9 +117,15 @@ def build_derivatives_history(btc_close: pd.Series) -> pd.DataFrame:
 # ----------------------------------------------------------------------------
 # Replay
 # ----------------------------------------------------------------------------
+OVERLAP = 168  # bars re-computed at each chunk start and discarded — absorbs
+               # update-accumulated state (funding_Z history, detector smoothing)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=None, help="bars to process (smoke test)")
+    ap.add_argument("--chunk", type=str, default=None, metavar="I/N",
+                    help="process chunk i of n in parallel (e.g. 2/8); writes segment_chunk_i.parquet")
     args = ap.parse_args()
 
     klines = pd.read_parquet(KLINES)
@@ -184,20 +190,43 @@ def main():
 
     # ---- Warmup + resume ----------------------------------------------------
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    done = None
-    if OUT.exists():
-        done = pd.read_parquet(OUT)
-        log.info("resuming: %d rows already computed (last %s)", len(done), done.index[-1])
-
-    warmup_df = klines.iloc[:WARMUP]
-    lfc.ingest_candles(warmup_df)
-    todo = klines.iloc[WARMUP:]
-    if done is not None and len(done):
-        last = done.index[-1]
-        # rebuild buffer up to last computed bar, then continue after it
-        upto = klines.loc[:last]
-        lfc.ingest_candles(upto.tail(WARMUP))
-        todo = klines.loc[klines.index > last]
+    global OUT
+    discard_before = None
+    if args.chunk:
+        i, n = (int(x) for x in args.chunk.split("/"))
+        OUT = OUT_DIR / f"segment_chunk_{i}.parquet"
+        all_todo = klines.index[WARMUP:]
+        size = (len(all_todo) + n - 1) // n
+        chunk_idx = all_todo[(i - 1) * size: i * size]
+        if len(chunk_idx) == 0:
+            log.info("chunk %s empty — nothing to do", args.chunk)
+            return
+        discard_before = chunk_idx[0]
+        # start OVERLAP bars early (discarded later); warm buffer on prior WARMUP bars
+        start_pos = max(0, klines.index.get_loc(chunk_idx[0]) - OVERLAP)
+        todo = klines.iloc[start_pos: klines.index.get_loc(chunk_idx[-1]) + 1]
+        lfc.ingest_candles(klines.iloc[max(0, start_pos - WARMUP): start_pos])
+        done = None
+        if OUT.exists():
+            done = pd.read_parquet(OUT)
+            last = done.index[-1]
+            lfc.ingest_candles(klines.loc[:last].tail(WARMUP))
+            todo = todo.loc[todo.index > last]
+        log.info("chunk %s: %d bars (%s → %s), discard before %s",
+                 args.chunk, len(todo), todo.index[0], todo.index[-1], discard_before)
+    else:
+        done = None
+        if OUT.exists():
+            done = pd.read_parquet(OUT)
+            log.info("resuming: %d rows already computed (last %s)", len(done), done.index[-1])
+        warmup_df = klines.iloc[:WARMUP]
+        lfc.ingest_candles(warmup_df)
+        todo = klines.iloc[WARMUP:]
+        if done is not None and len(done):
+            last = done.index[-1]
+            upto = klines.loc[:last]
+            lfc.ingest_candles(upto.tail(WARMUP))
+            todo = klines.loc[klines.index > last]
     if args.limit:
         todo = todo.iloc[:args.limit]
     log.info("replaying %d bars (%s → %s)", len(todo), todo.index[0], todo.index[-1])
@@ -226,6 +255,8 @@ def main():
             _checkpoint(done, rows)
 
     final = pd.read_parquet(OUT)
+    if discard_before is not None:
+        OUT.with_suffix(".discard_before.txt").write_text(str(discard_before))
     log.info("DONE: %d rows, %d cols, %s → %s", len(final), final.shape[1],
              final.index[0], final.index[-1])
 
