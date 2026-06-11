@@ -33,15 +33,27 @@ def main():
     seg = pd.concat(frames).sort_index()
     dupes = seg.index.duplicated().sum()
     seg = seg[~seg.index.duplicated(keep="last")]
+    # Drop non-hour-aligned stragglers (e.g. Binance's 2018-02-09 09:28 post-outage bar)
+    misaligned = seg.index[(seg.index.minute != 0) | (seg.index.second != 0)]
+    if len(misaligned):
+        print(f"dropping {len(misaligned)} non-hour-aligned bars: {list(misaligned[:3])}")
+        seg = seg[(seg.index.minute == 0) & (seg.index.second == 0)]
 
-    # Gap check: hourly continuity
-    diffs = seg.index.to_series().diff().dropna()
-    gaps = diffs[diffs != pd.Timedelta(hours=1)]
+    # Completeness check: the segment must cover every RAW kline bar after the
+    # global warmup. Gaps inherited from the exchange (Binance outages) are
+    # expected and fine — V12 has 13 of its own; the backtester tolerates them.
+    klines = pd.read_parquet(
+        OUT_DIR.parents[1] / "data/cache/binance_vision/klines/BTCUSDT_1h.parquet")
+    kidx = klines.index.tz_localize(None)
+    kidx = kidx[(kidx.minute == 0) & (kidx.second == 0)]
+    expected = kidx[kidx >= seg.index[0]]
+    missing = expected.difference(seg.index)
+    extra = seg.index.difference(expected)
     print(f"\nstitched: {len(seg)} rows, {seg.shape[1]} cols, {seg.index[0]} → {seg.index[-1]}")
-    print(f"duplicates removed: {dupes}; non-hourly gaps: {len(gaps)}")
-    if len(gaps):
-        print(gaps.head(10).to_string())
-        raise SystemExit("ABORT: gaps in stitched segment")
+    print(f"duplicates removed: {dupes}; missing vs raw klines: {len(missing)}; extra: {len(extra)}")
+    if len(missing) or len(extra):
+        print("missing:", list(missing[:5]), "extra:", list(extra[:5]))
+        raise SystemExit("ABORT: stitched segment does not match raw kline coverage")
 
     seg.to_parquet(OUT)
     print(f"WROTE {OUT}")

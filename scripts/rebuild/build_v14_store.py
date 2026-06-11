@@ -82,10 +82,11 @@ def main():
     # --- Sanity gates ---------------------------------------------------
     diffs = v14.index.to_series().diff().dropna()
     gaps = diffs[diffs != pd.Timedelta(hours=1)]
-    print(f"rows: {len(v14)}, gaps: {len(gaps)}")
-    if len(gaps):
-        print(gaps.head(10).to_string())
-        raise SystemExit("ABORT: gaps in V14 index")
+    # Exchange-outage gaps are expected (V12 has 13); only abort on excessive loss
+    missing_bars = int(((gaps - pd.Timedelta(hours=1)).sum()) / pd.Timedelta(hours=1)) if len(gaps) else 0
+    print(f"rows: {len(v14)}, gaps: {len(gaps)} ({missing_bars} missing bars, {100*missing_bars/max(len(v14),1):.2f}%)")
+    if missing_bars > 0.01 * len(v14):
+        raise SystemExit("ABORT: >1% of bars missing")
 
     crit_bad = []
     for c in CRITICAL:
