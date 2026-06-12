@@ -36,6 +36,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 BASE_CONFIG = REPO / "configs/bull_machine_isolated_v11_fixed.json"
 OUT_ROOT = REPO / "results/champion"
+STORE = {"path": None}  # None -> backtester default (V12 symlink)
 CONFIG_DIR = REPO / "configs/champion"
 
 ALL_ARCHETYPES = [
@@ -94,6 +95,8 @@ def run_window(candidate: str, config_path: Path, window: str,
            "--config", str(config_path),
            "--start-date", start, "--end-date", end,
            "--output-dir", str(out_dir)] + BACKTEST_ARGS
+    if STORE["path"]:
+        cmd += ["--feature-store", str(STORE["path"])]
     print(f"  [run ] {candidate}/{window} ({start} → {end})")
     res = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO)
     if res.returncode != 0:
@@ -113,16 +116,25 @@ def metric(stats: dict, *names, default=None):
     return default
 
 
+def _num(v, default=0.0):
+    """Coerce stats values that may be serialized as 'inf'/'nan' strings."""
+    try:
+        f = float(v)
+        return default if f != f else f
+    except (TypeError, ValueError):
+        return default
+
+
 def score(candidate: str, results: dict) -> dict:
     """Apply C1–C5 to one candidate's window results."""
-    def pnl(w):    return metric(results.get(w, {}), "total_pnl", "net_pnl", default=0.0)
-    def pf(w):     return metric(results.get(w, {}), "profit_factor", default=0.0)
-    def n(w):      return metric(results.get(w, {}), "total_trades", "num_trades", default=0)
+    def pnl(w):    return _num(metric(results.get(w, {}), "total_pnl", "net_pnl", default=0.0))
+    def pf(w):     return _num(metric(results.get(w, {}), "profit_factor", default=0.0))
+    def n(w):      return int(_num(metric(results.get(w, {}), "total_trades", "num_trades", default=0)))
     def mdd(w):
-        v = metric(results.get(w, {}), "max_drawdown_pct", "max_drawdown", default=0.0)
+        v = _num(metric(results.get(w, {}), "max_drawdown_pct", "max_drawdown", default=0.0))
         return abs(v)
 
-    years = ["y2020", "y2021", "y2022", "y2023", "y2024"]
+    years = [y for y in ["y2018", "y2019", "y2020", "y2021", "y2022", "y2023", "y2024"] if y in results]
     c1 = bool(all(pnl(y) > 0 for y in years))
     c2 = bool(pf("y2023") >= 1.3 and pf("y2024") >= 1.3)
     c3 = bool(pf("wfo_train") >= 1.3 and pnl("wfo_train") > 0 and pnl("y2023") > 0 and pnl("y2024") > 0)
@@ -151,7 +163,30 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--candidates", nargs="+", default=DEFAULT_CANDIDATES)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--feature-store", type=str, default=None)
+    ap.add_argument("--out-root", type=str, default=None)
+    ap.add_argument("--v14-windows", action="store_true",
+                    help="extended windows incl. 2018-2019 + 2025-26 holdout")
     args = ap.parse_args()
+    global OUT_ROOT
+    if args.feature_store:
+        STORE["path"] = Path(args.feature_store).resolve()
+    if args.out_root:
+        OUT_ROOT = Path(args.out_root).resolve()
+    if args.v14_windows:
+        WINDOWS.clear()
+        WINDOWS.update({
+            "full":       ("2018-01-01", "2024-12-31"),
+            "y2018":      ("2018-01-01", "2018-12-31"),
+            "y2019":      ("2019-01-01", "2019-12-31"),
+            "y2020":      ("2020-01-01", "2020-12-31"),
+            "y2021":      ("2021-01-01", "2021-12-31"),
+            "y2022":      ("2022-01-01", "2022-12-31"),
+            "y2023":      ("2023-01-01", "2023-12-31"),
+            "y2024":      ("2024-01-01", "2024-12-31"),
+            "wfo_train":  ("2018-01-01", "2022-12-31"),
+            "holdout_2025_26": ("2025-01-01", "2026-06-10"),
+        })
 
     scorecards = []
     for cand in args.candidates:

@@ -207,16 +207,35 @@ def main():
                     help="override feature store parquet (e.g. V13_EXTENDED for holdout)")
     ap.add_argument("--window", nargs=3, metavar=("NAME", "START", "END"), default=None,
                     help="run a single custom window instead of the standard battery")
+    ap.add_argument("--v14-windows", action="store_true")
     args = ap.parse_args()
     if args.feature_store:
         STORE["path"] = Path(args.feature_store).resolve()
         _MACRO_BEAR_CACHE.clear()
+    if args.v14_windows:
+        global OUT_ROOT
+        OUT_ROOT = REPO / "results/champion_v14_overlay"
+        WINDOWS.clear()
+        WINDOWS.update({
+            "full": ("2018-01-01", "2024-12-31"),
+            "y2018": ("2018-01-01", "2018-12-31"), "y2019": ("2019-01-01", "2019-12-31"),
+            "y2020": ("2020-01-01", "2020-12-31"), "y2021": ("2021-01-01", "2021-12-31"),
+            "y2022": ("2022-01-01", "2022-12-31"), "y2023": ("2023-01-01", "2023-12-31"),
+            "y2024": ("2024-01-01", "2024-12-31"),
+            "wfo_train": ("2018-01-01", "2022-12-31"),
+            "holdout_2025_26": ("2025-01-01", "2026-06-10"),
+        })
 
     logging.basicConfig(level=logging.WARNING)
 
     candidate = args.candidate[0] if len(args.candidate) == 1 else args.candidate
     label = "__".join(args.candidate)
     cfg = make_variant_config(candidate)
+    if STORE["path"] and "V14" in str(STORE["path"]):
+        import json as _json
+        _c = _json.loads(Path(cfg).read_text())
+        _c["archetype_config_dir"] = "configs/champion/archetypes_v14rq/"
+        Path(cfg).write_text(_json.dumps(_c, indent=2))
     cards = []
     for vname in args.variants:
         v = VARIANTS[vname]
