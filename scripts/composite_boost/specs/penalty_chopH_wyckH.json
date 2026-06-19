@@ -1,0 +1,23 @@
+{
+  "name": "penalty_chopH_wyckH",
+  "description": "chop_score HIGH & wyckoff_4h_bull HIGH",
+  "boost_x": 0.3,
+  "direction_filter": null,
+  "conditions": [
+    {
+      "feature": "chop_score",
+      "op": "min",
+      "value": 0.7897822450731685
+    },
+    {
+      "feature": "tf4h_wyckoff_bullish_score",
+      "op": "min",
+      "value": 0.9493132766514145
+    }
+  ],
+  "live_evidence": {
+    "n_trades": 12,
+    "pnl": -8724
+  },
+  "cutoff_basis": "backtest_relative_terciles_2020_2024"
+}

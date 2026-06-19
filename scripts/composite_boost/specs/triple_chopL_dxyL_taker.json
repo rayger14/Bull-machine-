@@ -1,0 +1,28 @@
+{
+  "name": "triple_chopL_dxyL_taker",
+  "description": "chop L & DXY_Z L & taker H",
+  "boost_x": 1.75,
+  "direction_filter": null,
+  "conditions": [
+    {
+      "feature": "chop_score",
+      "op": "max",
+      "value": 0.6833065271734381
+    },
+    {
+      "feature": "DXY_Z",
+      "op": "max",
+      "value": -0.7202428789466743
+    },
+    {
+      "feature": "taker_imbalance",
+      "op": "min",
+      "value": 0.06482149166978911
+    }
+  ],
+  "live_evidence": {
+    "n_trades": -1,
+    "pnl": -1
+  },
+  "cutoff_basis": "backtest_relative_terciles_2020_2024"
+}

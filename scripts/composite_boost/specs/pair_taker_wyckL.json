@@ -1,0 +1,23 @@
+{
+  "name": "pair_taker_wyckL",
+  "description": "taker_imbalance HIGH & wyckoff_4h_bull LOW",
+  "boost_x": 1.5,
+  "direction_filter": null,
+  "conditions": [
+    {
+      "feature": "taker_imbalance",
+      "op": "min",
+      "value": 0.06482149166978911
+    },
+    {
+      "feature": "tf4h_wyckoff_bullish_score",
+      "op": "max",
+      "value": 0.8814203412211449
+    }
+  ],
+  "live_evidence": {
+    "n_trades": 17,
+    "pnl": 3814
+  },
+  "cutoff_basis": "backtest_relative_terciles_2020_2024"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "pair_taker_yield",
+  "description": "taker_imbalance HIGH & YIELD_CURVE HIGH",
+  "boost_x": 1.5,
+  "direction_filter": null,
+  "conditions": [
+    {
+      "feature": "taker_imbalance",
+      "op": "min",
+      "value": 0.06482149166978911
+    },
+    {
+      "feature": "YIELD_CURVE",
+      "op": "min",
+      "value": 0.2089998722076416
+    }
+  ],
+  "live_evidence": {
+    "n_trades": -1,
+    "pnl": -1
+  },
+  "cutoff_basis": "backtest_relative_terciles_2020_2024"
+}
