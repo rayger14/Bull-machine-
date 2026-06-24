@@ -1,0 +1,29 @@
+[Unit]
+Description=Bull Machine Backtest/Live Feature-Parity Check
+After=network.target coinbase-paper.service
+Wants=coinbase-paper.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/Bull-machine-
+Environment=PYTHONPATH=/home/ubuntu/Bull-machine-
+Environment=PATH=/home/ubuntu/Bull-machine-/.venv/bin:/usr/local/bin:/usr/bin:/bin
+
+# Runs on the server: live_features is local, so no --pull. Compares the live
+# feature stream against the local V14 store. Exit 0/1/2 = OK/WARN/FAIL; a
+# non-zero exit surfaces in `systemctl status parity-check` and journald.
+ExecStart=/home/ubuntu/Bull-machine-/.venv/bin/python3 scripts/rebuild/parity_check.py
+
+# Logging via journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bull-machine-parity-check
+
+# Resource limits (memory-optimized load peaks ~15MB, but leave headroom)
+MemoryMax=300M
+TimeoutStartSec=180
+
+[Install]
+WantedBy=multi-user.target

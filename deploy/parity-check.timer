@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Bull Machine feature-parity check nightly at 00:45 UTC
+
+[Timer]
+# 00:45 UTC — after the 00:15 daily quant review, so the day's last candle and
+# its logged feature row are in place.
+OnCalendar=*-*-* 00:45:00 UTC
+Persistent=true
+AccuracySec=60
+
+[Install]
+WantedBy=timers.target
