@@ -141,7 +141,12 @@ def main():
         pull_from_server()
 
     live = load_live()
-    base = pd.read_parquet(V14)
+    # Memory-safe load: only the columns we actually compare (VM has 1GB RAM —
+    # loading all 295 cols of V14 would peak ~400MB; this keeps it under ~15MB).
+    import pyarrow.parquet as _pq
+    avail = set(_pq.ParquetFile(V14).schema.names)
+    need = [c for c in MONITOR if c in avail]
+    base = pd.read_parquet(V14, columns=need) if need else pd.read_parquet(V14)
     if getattr(base.index, "tz", None) is None:
         base.index = base.index.tz_localize("UTC")
 
