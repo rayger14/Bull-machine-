@@ -1,0 +1,23 @@
+{
+  "name": "pair_taker_funding",
+  "description": "taker_imbalance HIGH & funding_Z HIGH",
+  "boost_x": 1.5,
+  "direction_filter": null,
+  "conditions": [
+    {
+      "feature": "taker_imbalance",
+      "op": "min",
+      "value": 0.06482149166978911
+    },
+    {
+      "feature": "funding_Z",
+      "op": "min",
+      "value": 0.16502794262704432
+    }
+  ],
+  "live_evidence": {
+    "n_trades": 16,
+    "pnl": 3907
+  },
+  "cutoff_basis": "backtest_relative_terciles_2020_2024"
+}

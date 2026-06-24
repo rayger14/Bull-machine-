@@ -1,0 +1,23 @@
+{
+  "name": "pair_chopL_dxyL",
+  "description": "chop_score LOW & DXY_Z LOW",
+  "boost_x": 1.5,
+  "direction_filter": null,
+  "conditions": [
+    {
+      "feature": "chop_score",
+      "op": "max",
+      "value": 0.6833065271734381
+    },
+    {
+      "feature": "DXY_Z",
+      "op": "max",
+      "value": -0.7202428789466743
+    }
+  ],
+  "live_evidence": {
+    "n_trades": 13,
+    "pnl": 2396
+  },
+  "cutoff_basis": "backtest_relative_terciles_2020_2024"
+}

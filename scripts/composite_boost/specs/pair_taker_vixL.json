@@ -1,0 +1,23 @@
+{
+  "name": "pair_taker_vixL",
+  "description": "taker_imbalance HIGH & VIX_Z LOW",
+  "boost_x": 1.5,
+  "direction_filter": null,
+  "conditions": [
+    {
+      "feature": "taker_imbalance",
+      "op": "min",
+      "value": 0.06482149166978911
+    },
+    {
+      "feature": "VIX_Z",
+      "op": "max",
+      "value": -0.9128359016935856
+    }
+  ],
+  "live_evidence": {
+    "n_trades": -1,
+    "pnl": -1
+  },
+  "cutoff_basis": "backtest_relative_terciles_2020_2024"
+}

@@ -1,0 +1,149 @@
+{
+  "version": "archetype_s3_production_v1",
+  "profile": "Archetype S3 - Whipsaw (Production)",
+  "description": "Neutral archetype - Range-bound mean reversion trades",
+  "_comment_overview": "============ ARCHETYPE S3 - WHIPSAW ============",
+  "_comment_strategy": "Detects tight range conditions with rapid mean reversion opportunities",
+  "adaptive_fusion": false,
+  "regime_classifier": {
+    "model_path": "models/regime_classifier_gmm.pkl",
+    "feature_order": [
+      "VIX", "DXY", "MOVE", "YIELD_2Y", "YIELD_10Y",
+      "USDT.D", "BTC.D", "TOTAL", "TOTAL2",
+      "funding", "oi", "rv_20d", "rv_60d"
+    ],
+    "zero_fill_missing": false,
+    "regime_override": {}
+  },
+  "ml_filter": {
+    "enabled": false,
+    "_comment": "ML filter disabled for initial production"
+  },
+  "fusion": {
+    "entry_threshold_confidence": 0.99,
+    "weights": {
+      "wyckoff": 0.20,
+      "liquidity": 0.30,
+      "momentum": 0.30,
+      "smc": 0.20
+    }
+  },
+  "risk": {
+    "base_risk_pct": 0.015,
+    "max_position_size_pct": 0.15,
+    "max_portfolio_risk_pct": 0.08
+  },
+  "archetypes": {
+    "use_archetypes": true,
+    "max_trades_per_day": 6,
+    "enable_A": false, "enable_B": false, "enable_C": false, "enable_D": false, "enable_E": false,
+    "enable_F": false, "enable_G": false, "enable_H": false, "enable_K": false, "enable_L": false,
+    "enable_M": false, "enable_S1": false, "enable_S2": false, "enable_S3": true, "enable_S4": false,
+    "enable_S5": false, "enable_S6": false, "enable_S7": false, "enable_S8": false,
+    "thresholds": {
+      "min_liquidity": 0.1,
+      "whipsaw": {
+        "direction": "neutral",
+        "_note_direction": "S3 can take LONG or SHORT based on range position",
+        "archetype_weight": 1.2,
+        "fusion_threshold": 0.25,
+        "min_confidence": 0.30,
+        "range_tightness_min": 0.6,
+        "atr_compression_min": 0.5,
+        "range_boundary_proximity_max": 0.02,
+        "mean_reversion_speed_min": 0.7,
+        "volume_decline_required": true,
+        "quick_scalp_mode": true,
+        "max_risk_pct": 0.01,
+        "atr_stop_mult": 1.5,
+        "cooldown_bars": 4
+      }
+    },
+    "exits": {
+      "whipsaw": {
+        "trail_atr": 1.2,
+        "time_limit_hours": 12
+      }
+    },
+    "routing": {
+      "risk_on": {
+        "weights": { "whipsaw": 0.3 },
+        "final_gate_delta": 0.0
+      },
+      "neutral": {
+        "weights": { "whipsaw": 2.0 },
+        "final_gate_delta": 0.0
+      },
+      "risk_off": {
+        "weights": { "whipsaw": 0.5 },
+        "final_gate_delta": 0.0
+      },
+      "crisis": {
+        "weights": { "whipsaw": 0.1 },
+        "final_gate_delta": 0.0
+      }
+    }
+  },
+  "_production_metadata": {
+    "created": "2025-12-15",
+    "archetype_code": "S3",
+    "archetype_name": "Whipsaw",
+    "market_regime": "neutral",
+    "direction": "neutral",
+    "enabled_domain_engines": ["wyckoff", "smc", "temporal", "hob", "fusion", "macro"],
+    "expected_behavior": "Higher frequency range-bound scalping in neutral regime"
+  },
+  "feature_flags": {
+    "enable_wyckoff": true,
+    "enable_smc": true,
+    "enable_temporal": true,
+    "enable_hob": true,
+    "enable_fusion": true,
+    "enable_macro": true,
+    "use_temporal_confluence": true,
+    "use_fusion_layer": true,
+    "use_macro_regime": true,
+    "_comment": "All 6 engines enabled - production setup"
+  },
+  "temporal_fusion": {
+    "enabled": true,
+    "use_confluence": true,
+    "min_confluence_score": 0.5,
+    "time_window_hours": 24,
+    "weights": {
+      "fib_time_cluster": 0.30,
+      "volume_time_confluence": 0.25,
+      "regime_time_alignment": 0.25,
+      "wyckoff_pti_confluence": 0.20
+    },
+    "min_multiplier": 0.85,
+    "max_multiplier": 1.25
+  },
+  "wyckoff_events": {
+    "enabled": true,
+    "min_confidence": 0.65,
+    "log_events": true,
+    "avoid_longs_if": ["BC", "UTAD"],
+    "boost_longs_if": {
+      "LPS": 1.15,
+      "Spring-A": 1.20,
+      "SOS": 1.15,
+      "PTI_confluence": 1.25
+    },
+    "reduce_position_size_if": ["LPSY", "UT"]
+  },
+  "smc_engine": {
+    "enabled": true,
+    "min_score": 0.5,
+    "detect_bos": true,
+    "detect_choch": true,
+    "detect_liquidity_sweeps": true,
+    "boost_threshold": 0.6
+  },
+  "hob_engine": {
+    "enabled": true,
+    "use_demand_zones": true,
+    "use_supply_zones": true,
+    "min_zone_strength": 0.5
+  }
+}

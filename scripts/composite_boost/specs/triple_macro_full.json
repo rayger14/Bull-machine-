@@ -1,0 +1,28 @@
+{
+  "name": "triple_macro_full",
+  "description": "taker H & YIELD_CURVE H & funding_Z H",
+  "boost_x": 1.75,
+  "direction_filter": null,
+  "conditions": [
+    {
+      "feature": "taker_imbalance",
+      "op": "min",
+      "value": 0.06482149166978911
+    },
+    {
+      "feature": "YIELD_CURVE",
+      "op": "min",
+      "value": 0.2089998722076416
+    },
+    {
+      "feature": "funding_Z",
+      "op": "min",
+      "value": 0.16502794262704432
+    }
+  ],
+  "live_evidence": {
+    "n_trades": 14,
+    "pnl": 3378
+  },
+  "cutoff_basis": "backtest_relative_terciles_2020_2024"
+}

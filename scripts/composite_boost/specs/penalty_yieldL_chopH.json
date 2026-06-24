@@ -1,0 +1,23 @@
+{
+  "name": "penalty_yieldL_chopH",
+  "description": "YIELD_CURVE LOW & chop_score HIGH",
+  "boost_x": 0.3,
+  "direction_filter": null,
+  "conditions": [
+    {
+      "feature": "YIELD_CURVE",
+      "op": "max",
+      "value": 0.07699966430664062
+    },
+    {
+      "feature": "chop_score",
+      "op": "min",
+      "value": 0.7897822450731685
+    }
+  ],
+  "live_evidence": {
+    "n_trades": 11,
+    "pnl": -8184
+  },
+  "cutoff_basis": "backtest_relative_terciles_2020_2024"
+}

@@ -2608,6 +2608,36 @@ class CoinbasePaperRunner:
             logger.debug("News fetch failed: %s", exc)
             return {"headlines": [], "sentiment": {"summary": "N/A"}}
 
+    def _log_feature_row(self, timestamp, features):
+        """Append the full per-bar feature vector as one JSON line per bar.
+
+        This is the backtest/live PARITY substrate: it captures exactly what the
+        live engine computed each bar, so any strategy/threshold can be replayed
+        offline against the real live feature stream and diffed vs the backtest
+        store. Non-trading and crash-safe — JSON-lines is append-only and immune
+        to feature-schema drift (a new column just appears in later rows, no
+        header to misalign). Read with pd.read_json(path, lines=True).
+        See docs/knowledge/industry_study_backtest_live_parity_2026_06_11.
+        """
+        try:
+            feat_dir = self.output_dir / "live_features"
+            feat_dir.mkdir(parents=True, exist_ok=True)
+            month_path = feat_dir / f"{pd.Timestamp(timestamp).strftime('%Y-%m')}.jsonl"
+
+            row = features.to_dict() if isinstance(features, pd.Series) else dict(features)
+            clean = {"timestamp": str(timestamp)}
+            for k, v in row.items():
+                if isinstance(v, float):
+                    clean[k] = None if (v != v or v in (float("inf"), float("-inf"))) else v
+                elif isinstance(v, (int, str, bool)) or v is None:
+                    clean[k] = v
+                else:
+                    clean[k] = str(v)
+            with open(month_path, "a") as f:
+                f.write(json.dumps(clean) + "\n")
+        except Exception as exc:
+            logger.warning("Feature-row logging failed for %s: %s", timestamp, exc)
+
     def _save_heartbeat(self, timestamp, features, acted_signals):
         """Write heartbeat.json + append equity_history.csv for dashboard."""
         close_price = features.get("close", 0.0)
@@ -3066,6 +3096,9 @@ class CoinbasePaperRunner:
             features["funding_rate"] = funding_rate
             self.funding_costs["last_funding_rate"] = funding_rate
             self.funding_costs["last_funding_timestamp"] = str(timestamp)
+
+        # Persist the full per-bar feature vector (parity substrate; non-trading)
+        self._log_feature_row(timestamp, features)
 
         # Track feature snapshot for rolling macro correlations
         self._append_feature_snapshot(features)

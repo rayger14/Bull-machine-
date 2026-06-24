@@ -1,0 +1,28 @@
+{
+  "name": "triple_taker_yield_dxyL",
+  "description": "taker H & YIELD_CURVE H & DXY_Z L",
+  "boost_x": 1.75,
+  "direction_filter": null,
+  "conditions": [
+    {
+      "feature": "taker_imbalance",
+      "op": "min",
+      "value": 0.06482149166978911
+    },
+    {
+      "feature": "YIELD_CURVE",
+      "op": "min",
+      "value": 0.2089998722076416
+    },
+    {
+      "feature": "DXY_Z",
+      "op": "max",
+      "value": -0.7202428789466743
+    }
+  ],
+  "live_evidence": {
+    "n_trades": -1,
+    "pnl": -1
+  },
+  "cutoff_basis": "backtest_relative_terciles_2020_2024"
+}
