@@ -17,11 +17,17 @@ Three layers (industry_study_backtest_live_parity_2026_06_11.md):
        actually SPAN the gate value? A gate the live data can never satisfy is a
        structural lockout (exactly the wick_trap 0.72 failure).
 
-Exit code: 0 all-clear, 1 WARN, 2 FAIL. Writes results/rebuild/parity_report.json + .md.
+The lockout check is sample-independent and runs always; drift/range wait for
+~30 days of live data (--min-bars) and run only on FAST per-bar features.
+
+Exit code: 0 OK / 1 WARN / 2 FAIL (or always 0 with --exit-zero, for the timer
+where 'failed' should mean the check crashed). Writes parity_report.{json,md}.
 
 Usage:
-  python3 scripts/rebuild/parity_check.py [--pull] [--min-bars 100]
-    --pull   scp the live_features dir from the server first
+  python3 scripts/rebuild/parity_check.py [--pull] [--baseline-days 90] [--exit-zero]
+    --pull           scp the live_features dir from the server first (local runs)
+    --baseline-days  drift baseline = last N days of V14 (regime-comparable)
+    --exit-zero      always exit 0 on a successful run (for the systemd timer)
 """
 from __future__ import annotations
 
@@ -55,16 +61,18 @@ GATE_FEATURE_MAP = {
     "atr_percentile_min": "atr_percentile",
 }
 
-# Features worth drift-monitoring: STATIONARY decision inputs only.
-# Raw price levels (close, ema, sma, atr-absolute) are excluded — they are
-# non-stationary (BTC rises over years) so they always "drift" vs a multi-year
-# baseline, which is meaningless for parity. Only bounded/z-scored/ratio features
-# whose distribution should be regime-comparable belong here.
+# Drift/range monitoring applies ONLY to FAST per-bar engine features — those
+# recomputed fresh every hour, whose hourly distribution is meaningful.
+# EXCLUDED on purpose:
+#  - raw price levels (close/ema/sma): non-stationary, always "drift" over years
+#  - slow MACRO/derivative series (DXY_Z, VIX_Z, funding_Z, fear_greed,
+#    oi_change_4h, ls_ratio_extreme): daily-or-slower values forward-filled to
+#    hourly, so their hourly "distribution" is autocorrelation-dominated and a
+#    short live window sits at one point in their slow cycle — drift/scale on them
+#    is noise, not signal. (Macro is better watched via the heartbeat/macro_outlook.)
 MONITOR = [
     "rsi_14", "adx", "atr_percentile", "volume_zscore", "liquidity_score",
-    "wyckoff_score", "fusion_smc", "chop_score", "instability",
-    "oi_change_4h", "taker_imbalance", "ls_ratio_extreme", "funding_Z",
-    "fear_greed", "VIX_Z", "DXY_Z",
+    "wyckoff_score", "fusion_smc", "chop_score", "instability", "taker_imbalance",
 ]
 
 
@@ -133,8 +141,15 @@ def pull_from_server():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pull", action="store_true")
-    ap.add_argument("--min-bars", type=int, default=100,
-                    help="min live bars before distribution metrics are trusted")
+    ap.add_argument("--min-bars", type=int, default=720,
+                    help="min live bars (~30d) before drift/range metrics run; below "
+                         "this only the sample-independent lockout check runs")
+    ap.add_argument("--baseline-days", type=int, default=90,
+                    help="compare live drift against the most recent N days of V14 "
+                         "(regime-comparable) rather than all history; 0 = full store")
+    ap.add_argument("--exit-zero", action="store_true",
+                    help="always exit 0 on a successful run (verdict still in report/log); "
+                         "for the systemd timer, where 'failed' should mean the check crashed")
     args = ap.parse_args()
 
     if args.pull:
@@ -146,34 +161,30 @@ def main():
     import pyarrow.parquet as _pq
     avail = set(_pq.ParquetFile(V14).schema.names)
     need = [c for c in MONITOR if c in avail]
-    base = pd.read_parquet(V14, columns=need) if need else pd.read_parquet(V14)
-    if getattr(base.index, "tz", None) is None:
-        base.index = base.index.tz_localize("UTC")
+    base_full = pd.read_parquet(V14, columns=need) if need else pd.read_parquet(V14)
+    if getattr(base_full.index, "tz", None) is None:
+        base_full.index = base_full.index.tz_localize("UTC")
+    # Drift/range baseline = recent regime-comparable window (default last 90d).
+    # Comparing a few live days against all 8 years conflates pipeline divergence
+    # (what we want) with current-regime-differs-from-history (expected, not a bug).
+    # base_full is still used for the sample-independent lockout check below.
+    if args.baseline_days and len(base_full):
+        cutoff = base_full.index.max() - pd.Timedelta(days=args.baseline_days)
+        base = base_full.loc[base_full.index >= cutoff]
+    else:
+        base = base_full
 
     n_live = len(live)
-    # Sample floors: a feature's max/spread is only meaningful with enough bars.
-    RANGE_MIN, COVERAGE_MIN = 30, 50
     report = {"n_live_bars": int(n_live), "min_bars": args.min_bars,
               "drift": {}, "range": {}, "coverage": [], "status": "OK"}
     worst = 0  # 0 ok, 1 warn, 2 fail
 
-    if n_live == 0:
-        report["status"] = "NO_DATA"
-        _write(report)
-        print("No live feature logs yet — nothing to check.")
-        return 0
-    if n_live < RANGE_MIN:
-        report["status"] = "ACCUMULATING"
-        report["note"] = f"only {n_live} live bars (<{RANGE_MIN}); accumulating — no checks run yet"
-        _write(report)
-        print(f"Accumulating: {n_live} live bars (need {RANGE_MIN} before checks are meaningful).")
-        return 0
-
-    # --- Layer 1+2: drift + range, per monitored feature ---
-    insufficient = n_live < args.min_bars
+    # --- Layer 1+2: drift + range — only once enough live data accumulates ---
+    # The lockout check (Layer 3) is sample-independent and runs always, below.
+    drift_ready = n_live >= args.min_bars
     _errctx = np.errstate(all="ignore")
     _errctx.__enter__()
-    for feat in MONITOR:
+    for feat in (MONITOR if drift_ready else []):
         if feat not in live.columns or feat not in base.columns:
             continue
         lv = pd.to_numeric(live[feat], errors="coerce").to_numpy(dtype=float)
@@ -195,21 +206,25 @@ def main():
             "base_q01": round(float(bq[0]), 4), "base_q50": round(float(bq[2]), 4),
             "base_q99": round(float(bq[4]), 4), "status": rstat}
 
-        # Distribution drift (only trustworthy at n>=min_bars)
-        if not insufficient:
-            p = psi(bv, lv)
-            j = js_distance(bv, lv)
-            dstat = "ok"
-            if (p == p and p >= 0.25) or (j == j and j >= 0.20):
-                dstat = "FAIL"; worst = max(worst, 2)
-            elif (p == p and p >= 0.10) or (j == j and j >= 0.10):
-                dstat = "WARN"; worst = max(worst, 1)
-            report["drift"][feat] = {
-                "psi": None if p != p else round(p, 4),
-                "js": None if j != j else round(j, 4), "status": dstat}
+        # Distribution drift
+        p = psi(bv, lv)
+        j = js_distance(bv, lv)
+        dstat = "ok"
+        if (p == p and p >= 0.25) or (j == j and j >= 0.20):
+            dstat = "FAIL"; worst = max(worst, 2)
+        elif (p == p and p >= 0.10) or (j == j and j >= 0.10):
+            dstat = "WARN"; worst = max(worst, 1)
+        report["drift"][feat] = {
+            "psi": None if p != p else round(p, 4),
+            "js": None if j != j else round(j, 4), "status": dstat}
 
-    # --- Layer 3: threshold coverage (needs enough bars to observe each feature's max) ---
-    coverage_ready = n_live >= COVERAGE_MIN
+    # --- Layer 3: threshold coverage — SAMPLE-INDEPENDENT structural lockout ---
+    # A gate is a true lockout only if the feature can't reach it in the HONEST
+    # FULL STORE (V14, 8 years of live-path values) — not merely if a small live
+    # sample hasn't hit it yet. base_full max is the best estimate of the live
+    # ceiling; live frac is reported as info. This is the liquidity_score 0.72
+    # (V14 max 0.675) class, immune to small-n false positives like a quiet week
+    # never sampling high atr_percentile.
     for yml in sorted(ARCH_DIR.glob("*.yaml")):
         try:
             cfg = yaml.safe_load(yml.read_text())
@@ -219,34 +234,33 @@ def main():
             continue
         arch = cfg.get("name", yml.stem)
         for tkey, feat in GATE_FEATURE_MAP.items():
-            if tkey not in cfg["thresholds"] or feat not in live.columns:
+            if tkey not in cfg["thresholds"] or feat not in base_full.columns:
                 continue
             val = cfg["thresholds"][tkey]
-            lv = pd.to_numeric(live[feat], errors="coerce").to_numpy(dtype=float)
+            fullv = pd.to_numeric(base_full[feat], errors="coerce").to_numpy(dtype=float)
+            full_max = float(np.nanmax(fullv))
+            lv = pd.to_numeric(live[feat], errors="coerce").to_numpy(dtype=float) if feat in live.columns else np.array([])
             lv = lv[~np.isnan(lv)]
-            if len(lv) == 0:
-                continue
-            reachable = bool(np.nanmax(lv) >= val)
-            frac = float(np.mean(lv >= val))
-            if not coverage_ready:
-                status = "insufficient"
-            elif reachable:
-                status = "ok"
-            else:
+            live_frac = float(np.mean(lv >= val)) if len(lv) else None
+            if full_max < val:
                 status = "FAIL_LOCKOUT"
                 worst = max(worst, 2)
+            else:
+                status = "ok"
             report["coverage"].append({
                 "archetype": arch, "gate": tkey, "feature": feat,
-                "threshold": val, "live_max": round(float(np.nanmax(lv)), 4),
-                "frac_passing": round(frac, 4), "status": status})
+                "threshold": val, "store_max": round(full_max, 4),
+                "live_frac_passing": None if live_frac is None else round(live_frac, 4),
+                "status": status})
 
     report["status"] = {0: "OK", 1: "WARN", 2: "FAIL"}[worst]
-    if insufficient:
-        report["note"] = (f"only {n_live} live bars (<{args.min_bars}); drift metrics "
-                          "skipped, range + coverage still checked")
+    if not drift_ready:
+        report["note"] = (f"{n_live}/{args.min_bars} live bars — lockout check ran "
+                          "(sample-independent); drift/range accumulating until ~30d of data")
+    report["baseline_days"] = args.baseline_days
     _write(report)
     _print(report)
-    return worst
+    return 0 if args.exit_zero else worst
 
 
 def _write(report):
@@ -257,7 +271,7 @@ def _write(report):
         lines += [f"_{report['note']}_", ""]
     fails = [f"- **{k}**: {v}" for k, v in report.get("range", {}).items() if v["status"] == "FAIL"]
     fails += [f"- **{k}** drift: {v}" for k, v in report.get("drift", {}).items() if v["status"] == "FAIL"]
-    fails += [f"- **{c['archetype']}.{c['gate']}** lockout: live_max {c['live_max']} < {c['threshold']} ({c['feature']})"
+    fails += [f"- **{c['archetype']}.{c['gate']}** lockout: store_max {c['store_max']} < {c['threshold']} ({c['feature']})"
               for c in report.get("coverage", []) if c["status"] == "FAIL_LOCKOUT"]
     if fails:
         lines += ["## FAILURES", *fails, ""]
@@ -273,7 +287,7 @@ def _print(report):
         print(report["note"])
     for c in report.get("coverage", []):
         if c["status"] == "FAIL_LOCKOUT":
-            print(f"  LOCKOUT {c['archetype']}.{c['gate']}: live_max {c['live_max']} < {c['threshold']} ({c['feature']})")
+            print(f"  LOCKOUT {c['archetype']}.{c['gate']}: store_max {c['store_max']} < {c['threshold']} ({c['feature']})")
     for k, v in report.get("range", {}).items():
         if v["status"] == "FAIL":
             print(f"  SCALE {k}: live[{v['live_min']},{v['live_max']}] vs base q01/q99 [{v['base_q01']},{v['base_q99']}]")

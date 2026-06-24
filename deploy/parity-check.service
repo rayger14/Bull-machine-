@@ -12,9 +12,10 @@ Environment=PYTHONPATH=/home/ubuntu/Bull-machine-
 Environment=PATH=/home/ubuntu/Bull-machine-/.venv/bin:/usr/local/bin:/usr/bin:/bin
 
 # Runs on the server: live_features is local, so no --pull. Compares the live
-# feature stream against the local V14 store. Exit 0/1/2 = OK/WARN/FAIL; a
-# non-zero exit surfaces in `systemctl status parity-check` and journald.
-ExecStart=/home/ubuntu/Bull-machine-/.venv/bin/python3 scripts/rebuild/parity_check.py
+# feature stream against the local V14 store. --exit-zero so systemd "failed"
+# means the check CRASHED, not that it found drift/lockouts (the verdict lives in
+# the journald log + results/rebuild/parity_report.{json,md}).
+ExecStart=/home/ubuntu/Bull-machine-/.venv/bin/python3 scripts/rebuild/parity_check.py --exit-zero
 
 # Logging via journald
 StandardOutput=journal
