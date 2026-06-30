@@ -13,6 +13,7 @@ Environment=PATH=/home/ubuntu/Bull-machine-/.venv/bin:/usr/local/bin:/usr/bin:/b
 
 ExecStart=/home/ubuntu/Bull-machine-/.venv/bin/python3 bin/live/coinbase_runner.py \
     --paper \
+    --config configs/champion_paper.json \
     --initial-cash 100000 \
     --commission-rate 0.0002 \
     --slippage-bps 3
