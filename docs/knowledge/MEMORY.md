@@ -264,6 +264,9 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 - **NEVER disable archetypes** — all 16 stay enabled to collect maximum live signal data
 - **NEVER make production config changes** (bypass, disabled_archetypes, thresholds) without explicit user approval
 
+## Live Deployment
+- **2026-06-30 LEAN PAPER DEPLOY**: live coinbase-paper switched from 16-archetype bypass mode to `configs/champion_paper.json` — core2 (wick_trap_v14rq @0.43 + liquidity_sweep), thresholds ENFORCED, 15 archetypes disabled. Backtest-verified = core2 exactly (full PF 1.41/$63.6K, holdout PF 1.30/$6.8K). Service `--config champion_paper.json` (note: deploy.sh excludes deploy/, so the service file is installed MANUALLY via scp+systemctl). State NOT reset — measure forward from switch. Breakeven-1R exit on wick_trap = phase 2 (ExitLogic code change, not yet deployed).
+
 ## Experiment Results
 - [Structural embed experiments](feedback_structural_embeds.md) — momentum gates regress, don't use on reversal archetypes
 - [Wyckoff fix status](project_wyckoff_fix_status.md) — live fix committed, feature store rebuild pending
