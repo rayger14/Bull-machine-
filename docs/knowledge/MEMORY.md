@@ -265,7 +265,7 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 - **NEVER make production config changes** (bypass, disabled_archetypes, thresholds) without explicit user approval
 
 ## Live Deployment
-- **2026-06-30 LEAN PAPER DEPLOY**: live coinbase-paper switched from 16-archetype bypass mode to `configs/champion_paper.json` — core2 (wick_trap_v14rq @0.43 + liquidity_sweep), thresholds ENFORCED, 15 archetypes disabled. Backtest-verified = core2 exactly (full PF 1.41/$63.6K, holdout PF 1.30/$6.8K). Service `--config champion_paper.json` (note: deploy.sh excludes deploy/, so the service file is installed MANUALLY via scp+systemctl). State NOT reset — measure forward from switch. Breakeven-1R exit on wick_trap = phase 2 (ExitLogic code change, not yet deployed).
+- **2026-06-30 LIVE PAPER CONFIG** (`configs/champion_paper.json`, service `--config`): FULL BOOK — all 16 archetypes enabled, bypass_threshold=True (data collection), archetype_config_dir=archetypes_v14rq so wick_trap + trap_within_trend now FIRE at re-quantiled 0.43 (were locked out at 0.72). [History: briefly deployed lean core2-only, then user reverted to full-book-plus-unlocked.] deploy.sh excludes deploy/ so the service file installs MANUALLY (scp+systemctl). Breakeven-1R exit = phase 2 (not deployed).
 
 ## Experiment Results
 - [Structural embed experiments](feedback_structural_embeds.md) — momentum gates regress, don't use on reversal archetypes
