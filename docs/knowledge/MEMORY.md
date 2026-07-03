@@ -267,6 +267,9 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 ## Live Deployment
 - **2026-06-30 LIVE PAPER CONFIG** (`configs/champion_paper.json`, service `--config`): FULL BOOK — all 16 archetypes enabled, bypass_threshold=True (data collection), archetype_config_dir=archetypes_v14rq so wick_trap + trap_within_trend now FIRE at re-quantiled 0.43 (were locked out at 0.72). [History: briefly deployed lean core2-only, then user reverted to full-book-plus-unlocked.] deploy.sh excludes deploy/ so the service file installs MANUALLY (scp+systemctl). Breakeven-1R exit = phase 2 (not deployed).
 
+## Direction Fix
+- [Downtrend study 2026-07-02](downtrend_study_2026_07_02.md) — DEFENSIVE SKIP works, naive SHORT does not. skip longs when price < 200-day mean: 2022 -$43K->$0, MaxDD 51%->16.4%, full PnL $163K->$198K, PF 1.16->1.29 (holdout -$14K->-$8.4K, still neg = bleed-STOP not profit engine). SHORT feasibility: fwd returns during downtrends are ~coin flip (49% neg, ~0% mean) — being below 200d does NOT predict imminent downside; naive regime-short has NO edge, would lose to fees. DEPLOY the skip; do NOT build a blind short (needs a precise setup, unproven).
+
 ## Live Trade Forensics
 - [Last-30 live forensic 2026-07-02](live_trade_forensic_2026_07_02.md) — net -$10,362 (9W/21L), ALL long into a -22.8% BTC decline. AT ENTRY effectively RANDOM: no feature predicts win/loss; fusion is INVERTED (the 5 trades clearing the enforced threshold were ALL losers, -$5,886). Dominant failure mode: 18 longs straight to stop (-$18.2K). 6 real runners (+$7.9K) prove triggers work when market cooperates. Good archetypes (wick_trap/liq_sweep) ABSENT (locked out live-path). Turning bypass OFF would delete all 9 winners + keep 5 worst losers. Lever = direction/regime SKIP in downtrends + fix live-path; exits minor (only 3 gave back a +1R winner).
 
