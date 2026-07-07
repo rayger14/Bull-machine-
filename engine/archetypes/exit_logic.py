@@ -147,7 +147,11 @@ class ExitLogic:
             'runner_pct': 0.0,  # No runner by default (0 = disabled)
             'runner_trailing_atr': 3.0,  # Runner uses wider trailing stop
             'invalidation_checks': False,  # Disabled: -$54K net in backtest (wick/spring invalidation all losers)
-            'reason_gone_checks': False   # Disabled: needs tuning, currently hurts more than helps
+            'reason_gone_checks': False,  # Disabled: needs tuning, currently hurts more than helps
+            'breakeven_trigger_r': None,  # Move stop to breakeven after +N R (None = disabled).
+                                          # OFF by default everywhere; enabled per-archetype via
+                                          # config override only (validated for wick_trap 2026-06-29).
+            'breakeven_buffer_r': 0.0,    # Stop placed at entry + buffer*R (0 = exact breakeven)
         }
 
         rules = {}
@@ -166,17 +170,19 @@ class ExitLogic:
             # Priority: exit_rules > top-level config
             config_override_applied = False
 
-            # Check nested exit_rules first (from create_default_exit_config)
+            # Layer 1: nested exit_rules (from create_default_exit_config)
             if archetype_key in exit_config:
                 archetype_rules.update(exit_config[archetype_key])
                 config_override_applied = True
                 logger.debug(f"  {archetype_key}: loaded from exit_rules")
 
-            # Check top-level config (from user config after update())
-            elif archetype_key in self.config:
+            # Layer 2: top-level user config (from user JSON after update()) wins.
+            # Previously an `elif`, which silently ignored user overrides for any
+            # archetype present in the defaults (all of them) — dead-config bug.
+            if archetype_key in self.config and isinstance(self.config[archetype_key], dict):
                 archetype_rules.update(self.config[archetype_key])
                 config_override_applied = True
-                logger.info(f"  {archetype_key}: loaded from TOP LEVEL config (user override)")
+                logger.info(f"  {archetype_key}: user override applied from top-level config")
 
             rules[archetype_key] = archetype_rules
 
@@ -281,6 +287,14 @@ class ExitLogic:
                     for lvl in adjusted_rules['scale_out_levels']
                 ]
 
+        # 0. BREAKEVEN STOP (pure ratchet mutation, never returns a signal).
+        # Runs FIRST so a same-bar scale-out cannot starve it: once the trade has
+        # shown +trigger R, the stop rises to entry (+ optional buffer) and a
+        # winner can no longer round-trip into a full loser. Disabled unless the
+        # archetype's rules set breakeven_trigger_r (validated wick_trap 2026-06-29;
+        # MFE forensic: 14% of losers were +1R before reversing).
+        self._apply_breakeven_stop(position, rules, exit_context)
+
         # 1. CHECK INVALIDATION V2 (highest priority — composite scoring)
         if rules.get('invalidation_checks', False):
             if invalidation := self._check_invalidation(bar, position, rules, context, exit_context):
@@ -314,6 +328,37 @@ class ExitLogic:
             return runner_exit
 
         return None
+
+    def _apply_breakeven_stop(self, position: "Position", rules: Dict, exit_context: Dict) -> None:
+        """Raise the stop to entry (+ optional buffer) once unrealized R reaches
+        breakeven_trigger_r. Pure ratchet mutation — never loosens a stop, never
+        returns a signal; propagates to both engines via the existing adapter sync.
+        Disabled (no-op) unless the archetype's rules set breakeven_trigger_r.
+        """
+        be_trigger = rules.get('breakeven_trigger_r')
+        if be_trigger is None:
+            return
+        unrealized_r = exit_context['unrealized_r']
+        if unrealized_r < be_trigger:
+            return
+        initial_risk = abs(position.entry_price - position.stop_loss)
+        be_buffer = rules.get('breakeven_buffer_r', 0.0) or 0.0
+        if position.direction == 'long':
+            be_stop = position.entry_price + be_buffer * initial_risk
+            if be_stop > position.stop_loss:
+                logger.debug(
+                    f"Breakeven stop set: {position.stop_loss:.2f} -> {be_stop:.2f} "
+                    f"(R={unrealized_r:.2f} >= trigger {be_trigger})"
+                )
+                position.stop_loss = be_stop
+        else:
+            be_stop = position.entry_price - be_buffer * initial_risk
+            if be_stop < position.stop_loss:
+                logger.debug(
+                    f"Breakeven stop set: {position.stop_loss:.2f} -> {be_stop:.2f} "
+                    f"(R={unrealized_r:.2f} >= trigger {be_trigger})"
+                )
+                position.stop_loss = be_stop
 
     def _calculate_unrealized_r(self, position: "Position", current_price: float, atr: float) -> float:
         """
