@@ -74,6 +74,7 @@ COINBASE_PRODUCT_ID = "BTC-PERP-INTX"      # Coinbase perpetual futures
 COINBASE_SPOT_PRODUCT = "BTC-USD"           # Spot fallback if perps unavailable
 DEFAULT_TIMEFRAME = "1h"
 GRANULARITY_ONE_HOUR = "ONE_HOUR"
+GRANULARITY_ONE_DAY = "ONE_DAY"            # daily candles (downtrend detector)
 MAX_RETRIES = 3
 RETRY_DELAYS = [2, 4, 8]                   # seconds -- exponential backoff
 CANDLE_DURATION_MS = 3600 * 1000            # 1 hour in milliseconds
@@ -510,6 +511,67 @@ class CoinbaseAdapter:
         if len(df) < n_before:
             logger.info("SANITY: Kept %d of %d candles after validation", len(df), n_before)
 
+        return df
+
+    def fetch_ohlcv_1d(self, limit: int = 220) -> pd.DataFrame:
+        """
+        Fetch DAILY OHLCV candles (for macro-horizon state, e.g. the 200-day
+        downtrend detector). Single request — limit <= 300 fits Coinbase's cap.
+
+        Returns pd.DataFrame with DatetimeIndex (UTC) and columns
+        open, high, low, close, volume; the in-progress day is excluded.
+        """
+        limit = min(int(limit), MAX_CANDLES_PER_REQUEST - 1)
+        if self._using_sdk:
+            now_s = int(time.time())
+            start_s = now_s - (limit + 1) * 86400
+
+            def _fetch(s=str(start_s), e=str(now_s)):
+                _method = (self.client.get_candles if self._authenticated
+                           else self.client.get_public_candles)
+                return _method(product_id=self.product_id, start=s, end=e,
+                               granularity=GRANULARITY_ONE_DAY)
+
+            try:
+                response = self._retry(_fetch, "fetch_ohlcv_1d")
+            except Exception as exc:
+                logger.warning("fetch_ohlcv_1d failed for %s, trying spot %s: %s",
+                               self.product_id, COINBASE_SPOT_PRODUCT, exc)
+
+                def _fetch_spot(s=str(start_s), e=str(now_s)):
+                    _method = (self.client.get_candles if self._authenticated
+                               else self.client.get_public_candles)
+                    return _method(product_id=COINBASE_SPOT_PRODUCT, start=s, end=e,
+                                   granularity=GRANULARITY_ONE_DAY)
+                response = self._retry(_fetch_spot, "fetch_ohlcv_1d (spot fallback)")
+
+            candles_raw = getattr(response, "candles", None) or []
+            candles = [c if isinstance(c, dict) else c.__dict__ for c in candles_raw]
+            if not candles:
+                logger.warning("fetch_ohlcv_1d returned no data")
+                return pd.DataFrame(columns=["open", "high", "low", "close", "volume"])
+            df = self._candles_to_dataframe(candles)
+        else:
+            def _fetch():
+                return self.exchange.fetch_ohlcv(symbol=self.symbol,
+                                                 timeframe="1d", limit=limit + 1)
+            raw = self._retry(_fetch, "fetch_ohlcv_1d (ccxt)")
+            if not raw:
+                return pd.DataFrame(columns=["open", "high", "low", "close", "volume"])
+            df = pd.DataFrame(raw, columns=["ts", "open", "high", "low", "close", "volume"])
+            df["ts"] = pd.to_datetime(df["ts"], unit="ms", utc=True)
+            df = df.set_index("ts")
+
+        df = df[~df.index.duplicated(keep="last")].sort_index()
+        # Drop the in-progress day
+        now_ms = int(time.time() * 1000)
+        if len(df) and int(df.index[-1].timestamp() * 1000) + 86400_000 > now_ms:
+            df = df.iloc[:-1]
+        if len(df) > limit:
+            df = df.tail(limit)
+        logger.info("fetch_ohlcv_1d: %d completed daily candles [%s .. %s]",
+                    len(df), df.index[0] if len(df) else "N/A",
+                    df.index[-1] if len(df) else "N/A")
         return df
 
     def _fetch_ohlcv_ccxt(self, limit: int) -> pd.DataFrame:

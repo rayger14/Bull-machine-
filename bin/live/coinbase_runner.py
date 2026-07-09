@@ -2608,6 +2608,35 @@ class CoinbasePaperRunner:
             logger.debug("News fetch failed: %s", exc)
             return {"headlines": [], "sentiment": {"summary": "N/A"}}
 
+    def _refresh_downtrend_state(self, timestamp):
+        """Once per UTC day, recompute the N-day downtrend state from daily
+        candles and hand it to the shadow runner. No-op when downtrend_skip is
+        disabled in config. On fetch failure the previous state is kept (or None
+        = unknown -> runner takes no skips), and we retry next bar.
+        """
+        if not getattr(self.runner, "downtrend_skip_enabled", False):
+            return
+        day = pd.Timestamp(timestamp).strftime("%Y-%m-%d")
+        if getattr(self, "_downtrend_state_day", None) == day and self.runner.downtrend_active is not None:
+            return
+        try:
+            sma_days = self.runner.downtrend_sma_days
+            daily = self.adapter.fetch_ohlcv_1d(limit=sma_days + 10)
+            if len(daily) < sma_days // 2:
+                logger.warning("[DOWNTREND_SKIP] only %d daily candles (<%d) — state unknown",
+                               len(daily), sma_days // 2)
+                return
+            closes = daily["close"].astype(float)
+            mean = closes.tail(sma_days).mean()
+            last_close = float(closes.iloc[-1])
+            self.runner.downtrend_active = bool(last_close < mean)
+            self._downtrend_state_day = day
+            logger.info("[DOWNTREND_SKIP] state refreshed: close=%.0f vs %dd mean=%.0f -> %s",
+                        last_close, sma_days,
+                        mean, "DOWNTREND (skipping longs)" if self.runner.downtrend_active else "ok")
+        except Exception as exc:
+            logger.warning("[DOWNTREND_SKIP] daily refresh failed (%s) — keeping previous state", exc)
+
     def _log_feature_row(self, timestamp, features):
         """Append the full per-bar feature vector as one JSON line per bar.
 
@@ -3102,6 +3131,10 @@ class CoinbasePaperRunner:
 
         # Track feature snapshot for rolling macro correlations
         self._append_feature_snapshot(features)
+
+        # Refresh the downtrend-skip state once per UTC day (no-op unless the
+        # config enables downtrend_skip; state=None means "unknown -> no skip")
+        self._refresh_downtrend_state(timestamp)
 
         # Run the signal engine
         try:

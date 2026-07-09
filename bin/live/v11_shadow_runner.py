@@ -214,6 +214,23 @@ class V11ShadowRunner:
         self.max_positions_by_regime = self.config.get('max_positions_by_regime', {})
         self.disabled_archetypes = set(self.config.get('disabled_archetypes', []))
 
+        # Downtrend skip (validated 2026-07-02: 2022 -$43K->$0, MaxDD 51%->16.4%).
+        # Blocks REAL entries in the configured direction while BTC close < N-day
+        # mean, routing them to phantom tracking so data collection continues.
+        # State (self.downtrend_active) is refreshed by the host runner from
+        # daily candles (coinbase_client.fetch_ohlcv_1d). Disabled by default.
+        dts_cfg = self.config.get('downtrend_skip', {}) or {}
+        self.downtrend_skip_enabled = bool(dts_cfg.get('enabled', False))
+        self.downtrend_skip_direction = dts_cfg.get('direction', 'long')
+        self.downtrend_sma_days = int(dts_cfg.get('sma_days', 200))
+        self.downtrend_active = None  # None = state unknown -> no skip
+        self.downtrend_skips = 0
+        if self.downtrend_skip_enabled:
+            logger.info(
+                f"[CONFIG] downtrend_skip ENABLED: {self.downtrend_skip_direction} "
+                f"entries -> phantoms while close < {self.downtrend_sma_days}-day mean"
+            )
+
         # Track last computed dynamic threshold for heartbeat reporting
         self.last_dynamic_threshold = 0.18
         self.last_risk_temp = 0.0
@@ -1008,9 +1025,29 @@ class V11ShadowRunner:
                     surviving.append(s)
             signals = surviving
 
-        if not signals:
-            self._update_equity(features['close'])
-            return acted_signals
+        # Step 3a2: Downtrend skip — counter-trend entries become PHANTOMS while
+        # BTC close < the N-day mean (state refreshed daily by the host runner).
+        # Data collection continues via phantom tracking; only real capital skips.
+        if signals and self.downtrend_skip_enabled and self.downtrend_active:
+            surviving = []
+            for s in signals:
+                if s.direction == self.downtrend_skip_direction:
+                    idx = sig_index[id(s)]
+                    self.last_bar_signals[idx]['status'] = 'rejected'
+                    self.last_bar_signals[idx]['rejection_reason'] = (
+                        f'downtrend_skip (close < {self.downtrend_sma_days}d mean)')
+                    self.last_bar_signals[idx]['rejection_stage'] = 'downtrend_skip'
+                    self.signals_rejected += 1
+                    self.downtrend_skips += 1
+                    logger.info(
+                        f"[DOWNTREND_SKIP] {s.archetype_id} {s.direction} -> phantom "
+                        f"(close < {self.downtrend_sma_days}d mean)")
+                    self._open_phantom(s, features, current_regime,
+                                       rejection_reason='downtrend_skip',
+                                       rejection_stage='downtrend_skip')
+                else:
+                    surviving.append(s)
+            signals = surviving
 
         if not signals:
             self._update_equity(features['close'])

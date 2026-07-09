@@ -426,6 +426,27 @@ class StandaloneBacktestEngine:
                 logger.warning("ProbabilisticRegimeDetector not available. Using legacy thresholds.")
         # Disabled archetypes (e.g., long_squeeze loses in all regimes on bull data)
         self.disabled_archetypes = set(self.config.get('disabled_archetypes', []))
+
+        # Downtrend skip: block entries (default: longs) while close < N-day rolling
+        # mean. Validated 2026-07-02: 2022 -$43K -> $0, MaxDD 51% -> 16.4%. Disabled
+        # by default; enabled via config {"downtrend_skip": {"enabled": true, ...}}.
+        dts_cfg = self.config.get('downtrend_skip', {}) or {}
+        self.downtrend_skip_enabled = bool(dts_cfg.get('enabled', False))
+        self.downtrend_skip_direction = dts_cfg.get('direction', 'long')
+        self.downtrend_skips = 0
+        self._downtrend_state = None
+        if self.downtrend_skip_enabled:
+            sma_days = int(dts_cfg.get('sma_days', 200))
+            bars = sma_days * 24
+            close = self.features_df['close']
+            self._downtrend_state = close < close.rolling(
+                bars, min_periods=bars // 2).mean()
+            logger.info(
+                f"Downtrend skip ENABLED: {self.downtrend_skip_direction} entries "
+                f"blocked while close < {sma_days}-day mean "
+                f"({100 * self._downtrend_state.mean():.0f}% of loaded bars flagged)"
+            )
+
         # Per-archetype regime restrictions — NOW SOFT (via regime_preferences multiplier)
         # archetype_allowed_regimes no longer contains hard blocks, only notes
         # Kept for backwards compatibility with configs that still have entries
@@ -1003,6 +1024,22 @@ class StandaloneBacktestEngine:
                             continue
                         spaced_signals.append(s)
                     signals = spaced_signals
+
+                # Step 3d2: Downtrend skip — no counter-trend entries while close is
+                # below the configured N-day mean (see __init__; disabled by default)
+                if signals and self.downtrend_skip_enabled:
+                    try:
+                        in_downtrend = bool(self._downtrend_state.at[ts])
+                    except KeyError:
+                        in_downtrend = False
+                    if in_downtrend:
+                        kept = [s for s in signals
+                                if s.direction != self.downtrend_skip_direction]
+                        n_skipped = len(signals) - len(kept)
+                        if n_skipped:
+                            self.downtrend_skips += n_skipped
+                            self.signals_rejected += n_skipped
+                        signals = kept
 
                 if not signals:
                     equity = self._compute_equity(row['close'])

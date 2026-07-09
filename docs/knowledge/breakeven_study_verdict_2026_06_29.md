@@ -1,5 +1,7 @@
 # Breakeven-Stop-After-1R Study — Adversarial Verdict (2026-06-29)
 
+> **RETRACTED 2026-07-08 — implementation artifact.** The monkey-patch mutated `pos.stop_loss` directly, zeroing the R denominator (`_calculate_unrealized_r` stop_distance → 0) from the next bar, which silently DISABLED scale-outs and trailing for every post-BE trade. The measured "BE gains" were an accidental different exit policy (ride-to-target with entry-floor stop), not breakeven protection: be10_b0 max_win 2.5x baseline ($4,595→$11,427), WR 77.5%→61.3% — impossible for a pure stop-ratchet. The honest production implementation (`_apply_breakeven_stop`, adapter rebuilt per bar, R denominator intact) changes **1 trade / +$15** across ~337 wick_trap trades: trailing activation (+1.0R, 2 ATR ≈ entry+2.9 ATR) dominates BE@1R by construction. Section 1's "NOT an accounting artifact" claim conflated internal PF consistency with mechanism validity; the section 2/7 "different trade populations" caveat was the entire result. Applies equally to `breakeven_fullsystem.py` (same patch) — the "core2+BE deployable" result is retracted too. See `stack_validation_verdict_2026_07_08.md`.
+
 **Adjudicator:** quant-analyst (rails-on)
 **Artifacts:** `results/champion_v14_breakeven/<arch>/<variant>/{scorecard,performance_stats}.json`
 **Harness:** `scripts/champion/breakeven_study.py` (V14 store, monkey-patched `_check_all_exits`)
