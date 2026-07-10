@@ -1614,8 +1614,16 @@ class V11ShadowRunner:
         margin_cost = margin + commission + slippage
 
         if margin_cost > self.cash:
-            self.signals_rejected += 1
-            return
+            # PAPER ACCOUNT: never block a signal on margin (user directive
+            # 2026-07-10, after a valid wick_trap signal was silently crowded
+            # out by open junk-book positions). Cash may go negative — this is
+            # unlimited paper margin; PnL accounting is unaffected. Loud log so
+            # capital pressure remains visible.
+            logger.warning(
+                "[PAPER_MARGIN] %s %s needs $%.0f margin but only $%.0f cash free "
+                "— allowing anyway (paper account, cash goes negative)",
+                direction, archetype, margin_cost, self.cash,
+            )
 
         fill_price = entry_price * (1 + self.slippage_bps / 10000.0) if direction == 'long' \
             else entry_price * (1 - self.slippage_bps / 10000.0)
