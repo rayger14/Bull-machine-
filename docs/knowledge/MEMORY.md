@@ -267,6 +267,9 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 ## Live Deployment
 - **2026-06-30 LIVE PAPER CONFIG** (`configs/champion_paper.json`, service `--config`): FULL BOOK — all 16 archetypes enabled, bypass_threshold=True (data collection), archetype_config_dir=archetypes_v14rq so wick_trap + trap_within_trend now FIRE at re-quantiled 0.43 (were locked out at 0.72). [History: briefly deployed lean core2-only, then user reverted to full-book-plus-unlocked.] deploy.sh excludes deploy/ so the service file installs MANUALLY (scp+systemctl). Breakeven-1R exit = phase 2 (not deployed).
 
+## Validated Champion
+- [wick_trap CPCV 2026-07-09](wick_trap_cpcv_2026_07_09.md) — PASS 15/15 combinations positive, median PF 1.41, WORST alternate history +$2,421. wick_trap_v14rq standalone (unstacked) has now cleared EVERY offline gate: battery, pristine holdout (PF 1.43), stacking adjudication, CPCV. Remaining evidence = LIVE (already unlocked in full book @0.43). Satellite strategy: bleeds modestly in deep bears; no overlay improves it
+
 ## Direction Fix
 - [Downtrend study 2026-07-02](downtrend_study_2026_07_02.md) — DEFENSIVE SKIP works, naive SHORT does not. skip longs when price < 200-day mean: 2022 -$43K->$0, MaxDD 51%->16.4%, full PnL $163K->$198K, PF 1.16->1.29 (holdout -$14K->-$8.4K, still neg = bleed-STOP not profit engine). SHORT feasibility: fwd returns during downtrends are ~coin flip (49% neg, ~0% mean) — being below 200d does NOT predict imminent downside; naive regime-short has NO edge, would lose to fees. DEPLOY the skip; do NOT build a blind short (needs a precise setup, unproven).
 
