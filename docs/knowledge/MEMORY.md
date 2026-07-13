@@ -267,6 +267,9 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 ## Live Deployment
 - **2026-06-30 LIVE PAPER CONFIG** (`configs/champion_paper.json`, service `--config`): FULL BOOK — all 16 archetypes enabled, bypass_threshold=True (data collection), archetype_config_dir=archetypes_v14rq so wick_trap + trap_within_trend now FIRE at re-quantiled 0.43 (were locked out at 0.72). [History: briefly deployed lean core2-only, then user reverted to full-book-plus-unlocked.] deploy.sh excludes deploy/ so the service file installs MANUALLY (scp+systemctl). Breakeven-1R exit = phase 2 (not deployed).
 
+## Unified Strategy 2026-07-13
+- [Unified strategy verdict](unified_strategy_verdict_2026_07_13.md) — level anchoring FAILS the pre-registered bar (U1 sweep starves to n=3; U2 quality violates co-move; U3 near-support intriguing but n=23). THE UNIFIED STRATEGY IS WICK_TRAP, by proof: all knowledge already converged into it. V14L store + live level features = permanent infra; U3 = watch item at n>=30
+
 ## Audit-1 Repairs 2026-07-13
 - [Repair batch + re-baseline](audit1_repair_batch_2026_07_13.md) — BOS emitters FIXED (attr mismatch, 0%->4% fire rate; V14 stored columns still 0 until rebuild); impossible thresholds rescaled; never-validated live-only gates removed; instability gate activated; ls_ratio true z-score. RE-BASELINE: wick_trap validation HOLDS IDENTICALLY (holdout PF 1.43); liquidity_sweep DOWNGRADED (broken-gate penalty was accidentally protective — repaired holdout PF 0.61, edge was artifact). wick_trap = the book's ONLY validated edge
 

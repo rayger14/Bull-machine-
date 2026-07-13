@@ -1,0 +1,65 @@
+name: liquidity_sweep
+display_name: Liquidity Sweep & Reclaim
+aliases:
+- G
+- sweep
+- liquidity_sweep_reclaim
+direction: long
+fusion_weights:
+  wyckoff: 0.3
+  liquidity: 0.4
+  momentum: 0.15
+  smc: 0.15
+thresholds:
+  fusion_threshold: 0.18
+  wyckoff_phase: B
+  boms_strength_min: 0.0
+  boms_strength: 0.0
+  liq: 0.2
+  fusion: 0.18
+  volume_cluster: true
+  cooling_period_bars: 24
+hard_gates:
+- feature: liquidity_score
+  op: min
+  value: 0.35
+  nan_policy: fail
+  description: "Meaningful liquidity floor (raised from 0.20 \u2014 PF 3.04\u2192\
+    3.26)"
+- feature: wick_lower_ratio
+  op: min
+  value: 0.5
+  nan_policy: fail
+  description: 'Sweep direction validation (lower wick > body for long sweep) [FIXED
+    2026-07-13: 1.3 assumed wick/body scale; feature is wick/range (bounded <=1).
+    intent "wick>body" ~= 0.5 of range]'
+gate_mode: soft
+exit_logic:
+  max_hold_hours: 168
+  scale_out_enabled: true
+  scale_out_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  scale_out_pcts:
+  - 0.2
+  - 0.2
+  - 0.3
+  runner_pct: 0.15
+  runner_trailing_atr: 2.5
+  trailing_start_r: 1.0
+  trailing_atr_mult: 2.0
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 3.0
+  atr_tp_mult: 4.4
+regime_preferences:
+  risk_on: 1.2
+  neutral: 1.0
+  risk_off: 0.9
+  crisis: 0.8
+allowed_regimes: []
+description: BOMS strength + rising liquidity from oversold. Liquidity grab reversal.
+priority: 7
+enabled: true
