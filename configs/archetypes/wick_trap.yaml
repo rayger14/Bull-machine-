@@ -15,7 +15,7 @@ thresholds:
   wick_lower_threshold: 0.3
   rsi_threshold: 41.0
   adx_threshold: 14.0
-  liquidity_threshold: 0.72
+  liquidity_threshold: 0.43
   cooling_period_bars: 18
 hard_gates:
 - feature: derived:wick_anomaly
@@ -25,11 +25,13 @@ hard_gates:
   op: min
   value: 0.0
   description: At least median volume (real wicks have volume behind them)
-- feature: instability
+- feature: instability_score
   op: max
   value: 0.45
   nan_policy: skip
-  description: Low market instability - above 0.45 wicks are noise not reversal (backtest WR 67% vs 49%, p=0.018)
+  description: 'Low market instability - above 0.45 wicks are noise not reversal (backtest
+    WR 67% vs 49%, p=0.018) [FIXED 2026-07-13: engine emits instability_score; was
+    inert via nan_policy skip]'
 gate_mode: hard
 exit_logic:
   max_hold_hours: 168

@@ -48,7 +48,24 @@
       "Enabled: wick_trap, liquidity_sweep, retest_cluster, trap_within_trend, spring, failed_continuation, order_block_retest, liquidity_vacuum"
     ]
   },
-  "disabled_archetypes": [],
+  "disabled_archetypes": [
+    "confluence_breakout",
+    "exhaustion_reversal",
+    "failed_continuation",
+    "funding_divergence",
+    "fvg_continuation",
+    "liquidity_compression",
+    "liquidity_sweep",
+    "long_squeeze",
+    "oi_divergence",
+    "order_block_retest",
+    "retest_cluster",
+    "spring",
+    "trap_within_trend",
+    "volume_fade_chop",
+    "whipsaw",
+    "wick_trap"
+  ],
   "_disabled_archetypes_note": "2026-03-06: PRODUCTION MODE. bypass_threshold=false. 8 calibrated archetypes enabled, 9 disabled. Data collection mode (79 trades, 33% WR, -$4.5K) proved bypass is catastrophic.",
   "_calibrated_archetypes": [
     "trap_within_trend",
@@ -123,7 +140,7 @@
       "confluence_breakout": 0.05
     },
     "_threshold_note": "2026-03-06: PRODUCTION MODE. bypass_threshold=false. Only signals above dynamic threshold trade. Data collection (79 trades, 33% WR, -$4.5K) proved bypass is catastrophic.",
-    "bypass_threshold": true,
+    "bypass_threshold": false,
     "cmi_weights": {
       "risk_temp": {
         "trend_align": 0.3,
@@ -278,6 +295,5 @@
       "wick_pct_G": 0.38184757169438016,
       "wick_pct_K": 0.4910969436357509
     }
-  },
-  "_champion_paper_note": "2026-07-13 v3 FULL BOOK + UNLOCKED + AUDIT-1 REPAIRS: all 16 archetypes, bypass_threshold=True (data collection BY DESIGN \u2014 sub-threshold signals trade), archetype_config_dir=archetypes_v14rq (0.43 requantiled thresholds + 2026-07-13 gate repairs: BOS emitters fixed, impossible thresholds rescaled, never-validated live-only gates removed, instability gate activated, ls_ratio z-score fixed)."
+  }
 }

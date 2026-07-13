@@ -24,12 +24,15 @@ hard_gates:
   op: min
   value: 0.35
   nan_policy: fail
-  description: Meaningful liquidity floor (raised from 0.20 — PF 3.04→3.26)
+  description: "Meaningful liquidity floor (raised from 0.20 \u2014 PF 3.04\u2192\
+    3.26)"
 - feature: wick_lower_ratio
   op: min
-  value: 1.3
+  value: 0.5
   nan_policy: fail
-  description: Sweep direction validation (lower wick > body for long sweep)
+  description: 'Sweep direction validation (lower wick > body for long sweep) [FIXED
+    2026-07-13: 1.3 assumed wick/body scale; feature is wick/range (bounded <=1).
+    intent "wick>body" ~= 0.5 of range]'
 gate_mode: soft
 exit_logic:
   max_hold_hours: 168

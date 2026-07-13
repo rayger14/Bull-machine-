@@ -123,7 +123,7 @@
       "confluence_breakout": 0.05
     },
     "_threshold_note": "2026-03-06: PRODUCTION MODE. bypass_threshold=false. Only signals above dynamic threshold trade. Data collection (79 trades, 33% WR, -$4.5K) proved bypass is catastrophic.",
-    "bypass_threshold": true,
+    "bypass_threshold": false,
     "cmi_weights": {
       "risk_temp": {
         "trend_align": 0.3,
@@ -279,5 +279,9 @@
       "wick_pct_K": 0.4910969436357509
     }
   },
-  "_champion_paper_note": "2026-07-13 v3 FULL BOOK + UNLOCKED + AUDIT-1 REPAIRS: all 16 archetypes, bypass_threshold=True (data collection BY DESIGN \u2014 sub-threshold signals trade), archetype_config_dir=archetypes_v14rq (0.43 requantiled thresholds + 2026-07-13 gate repairs: BOS emitters fixed, impossible thresholds rescaled, never-validated live-only gates removed, instability gate activated, ls_ratio z-score fixed)."
+  "downtrend_skip": {
+    "enabled": true,
+    "sma_days": 200,
+    "direction": "long"
+  }
 }

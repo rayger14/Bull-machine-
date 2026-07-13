@@ -583,6 +583,7 @@ class LiveFeatureComputer:
         self._buf: Optional[pd.DataFrame] = None
         # Funding rate history for z-score
         self._funding_history: List[float] = []
+        self._ls_history: List[float] = []  # L/S ratio history for true rolling z (audit fix 2026-07-13)
         # Wyckoff enrichment (stored outside pd.Series — lists/dicts)
         self.last_wyckoff_event_history: list = []
         self.last_wyckoff_conviction: dict = {}
@@ -1164,22 +1165,34 @@ class LiveFeatureComputer:
             out['smc_strength'] = float(signal.strength)
             out['smc_confidence'] = float(signal.confidence)
 
-            # BOS detection
+            # BOS detection (FIXED 2026-07-13, engine-integrity audit #2):
+            # BreakOfStructure has NO 'direction' attr — it carries bos_type
+            # (BOSType.BULLISH/BEARISH); getattr(sb, 'direction', '') returned
+            # '' forever, so these flags were 0 on every live bar since
+            # inception. Flags are SPARSE EVENTS: only breaks on the CURRENT
+            # bar count (a break anywhere in the 1000-bar buffer is history).
+            recent = self._recent_breaks(signal.structure_breaks, self._buf.index[-1])
             has_bull_bos = any(
-                getattr(sb, 'direction', '') == 'bullish'
-                for sb in (signal.structure_breaks or [])
+                str(getattr(getattr(sb, 'bos_type', None), 'value', '')) == 'bullish'
+                for sb in recent
             )
             has_bear_bos = any(
-                getattr(sb, 'direction', '') == 'bearish'
-                for sb in (signal.structure_breaks or [])
+                str(getattr(getattr(sb, 'bos_type', None), 'value', '')) == 'bearish'
+                for sb in recent
             )
             out['tf1h_bos_bullish'] = 1 if has_bull_bos else 0
             out['tf1h_bos_bearish'] = 1 if has_bear_bos else 0
             out['tf1h_bos_detected'] = 1 if (has_bull_bos or has_bear_bos) else 0
 
-            # CHOCH detection
-            trend_name = getattr(signal.trend_state, 'name', '') if signal.trend_state else ''
-            out['tf1h_choch_detected'] = 1 if 'CHOCH' in str(trend_name).upper() else 0
+            # CHOCH detection (FIXED 2026-07-13): the SMC module has no CHoCH
+            # concept and trend_state names are UPTREND/DOWNTREND/SIDEWAYS —
+            # the old "'CHOCH' in name" test could never fire. A change of
+            # character IS derivable: a current-bar break whose new_trend
+            # differs from its previous_trend.
+            out['tf1h_choch_detected'] = 1 if any(
+                str(getattr(sb, 'new_trend', '')) != str(getattr(sb, 'previous_trend', ''))
+                for sb in recent
+            ) else 0
 
             # FVG detection
             out['tf1h_fvg_present'] = 1 if signal.fair_value_gaps else 0
@@ -1194,17 +1207,22 @@ class LiveFeatureComputer:
                 buf_4h = self._resample_to_tf(self._buf, '4H')
                 if len(buf_4h) >= 50:
                     sig_4h = self._smc_engine.analyze_smc(buf_4h)
+                    # Same fixes as 1H (bos_type attr + current-bar recency + derived CHoCH)
+                    recent_4h = self._recent_breaks(sig_4h.structure_breaks, buf_4h.index[-1],
+                                                    bar_seconds=4 * 3600)
                     out['tf4h_bos_bullish'] = 1 if any(
-                        getattr(sb, 'direction', '') == 'bullish'
-                        for sb in (sig_4h.structure_breaks or [])
+                        str(getattr(getattr(sb, 'bos_type', None), 'value', '')) == 'bullish'
+                        for sb in recent_4h
                     ) else 0
                     out['tf4h_bos_bearish'] = 1 if any(
-                        getattr(sb, 'direction', '') == 'bearish'
-                        for sb in (sig_4h.structure_breaks or [])
+                        str(getattr(getattr(sb, 'bos_type', None), 'value', '')) == 'bearish'
+                        for sb in recent_4h
                     ) else 0
                     out['tf4h_fvg_present'] = 1 if sig_4h.fair_value_gaps else 0
-                    out['tf4h_choch_flag'] = 1 if 'CHOCH' in str(
-                        getattr(sig_4h.trend_state, 'name', '')).upper() else 0
+                    out['tf4h_choch_flag'] = 1 if any(
+                        str(getattr(sb, 'new_trend', '')) != str(getattr(sb, 'previous_trend', ''))
+                        for sb in recent_4h
+                    ) else 0
         except Exception as e:
             logger.warning(f"SMC 4H failed: {e}")
 
@@ -1221,6 +1239,27 @@ class LiveFeatureComputer:
             out['tf1h_prev_high'] = float(np.nanmax(high[-21:-1])) if len(high) >= 21 else float(np.nanmax(high[:-1]))
             out['tf1h_prev_low'] = float(np.nanmin(low[-21:-1])) if len(low) >= 21 else float(np.nanmin(low[:-1]))
 
+        return out
+
+    @staticmethod
+    def _recent_breaks(breaks, last_bar_ts, bar_seconds: int = 3600):
+        """Filter structure breaks to those on the CURRENT (last) bar.
+
+        BOS flags are sparse per-bar events (V12 base rate ~1% of bars); a
+        break that happened anywhere in the rolling buffer is history, not a
+        signal for this bar. Breaks without a comparable timestamp are dropped.
+        """
+        out = []
+        for sb in (breaks or []):
+            ts = getattr(sb, 'timestamp', None)
+            if ts is None:
+                continue
+            try:
+                delta = (pd.Timestamp(last_bar_ts) - pd.Timestamp(ts)).total_seconds()
+            except (TypeError, ValueError):
+                continue
+            if 0 <= delta < bar_seconds:
+                out.append(sb)
         return out
 
     def _smc_features_fallback(self) -> Dict[str, int]:
@@ -2242,11 +2281,25 @@ class LiveFeatureComputer:
             elif fr < 0 and oi_chg > 0.01:
                 result['funding_oi_divergence'] = 1   # bullish: shorts paying but OI rising
 
-            # ls_ratio_extreme (Z-score approximation from current value)
+            # ls_ratio_extreme — TRUE rolling z-score of the L/S ratio, matching
+            # the feature store's definition (7d rolling z in the backfill).
+            # FIXED 2026-07-13 (engine-integrity audit #8): the old fixed
+            # approximation (ls-1.1)/0.3 was never negative live (0.2..5.8)
+            # while the store's z is symmetric (±5, median 0) — so
+            # funding_divergence's <=-0.5 gate passed 0% live vs 26% in store.
             ls = data.get('ls_ratio', 1.0)
-            # Historical mean L/S ratio for BTC is ~1.0-1.2
-            # Z-score approximation: (value - 1.1) / 0.3
-            result['ls_ratio_extreme'] = (ls - 1.1) / 0.3 if ls else 0.0
+            if ls:
+                self._ls_history.append(float(ls))
+                if len(self._ls_history) > 168:  # 7d of hourly readings
+                    self._ls_history = self._ls_history[-168:]
+                if len(self._ls_history) >= 24:
+                    arr = np.array(self._ls_history)
+                    result['ls_ratio_extreme'] = float(
+                        (arr[-1] - arr.mean()) / (arr.std() + 1e-10))
+                else:
+                    result['ls_ratio_extreme'] = 0.0  # warming up (<24h history)
+            else:
+                result['ls_ratio_extreme'] = 0.0
 
             # taker_imbalance
             taker = data.get('taker_buy_sell_ratio', 1.0)

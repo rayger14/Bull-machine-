@@ -20,11 +20,6 @@ thresholds:
   wick_lower_threshold: 0.2
   cooling_period_bars: 36
 hard_gates:
-- feature: wyckoff_bullish_score
-  op: min
-  value: 0.15
-  nan_policy: skip
-  description: Wyckoff bullish signal (tightened from 0.10)
 - feature: tf1h_pti_score
   op: min
   value: 0.1

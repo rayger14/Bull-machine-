@@ -31,9 +31,10 @@ hard_gates:
   description: Above-median volume activity
 - feature: wick_exhaustion_last_3b
   op: min
-  value: 1.4
+  value: 0.47
   nan_policy: skip
-  description: Wick exhaustion validates vacuum (94% pass - mild veto)
+  description: 'Wick exhaustion validates vacuum (94% pass - mild veto) [FIXED 2026-07-13:
+    1.4 was sum-scale; feature is mean of 3 wick fractions (bounded <1). 1.4/3=0.47]'
 gate_mode: hard
 exit_logic:
   max_hold_hours: 120
