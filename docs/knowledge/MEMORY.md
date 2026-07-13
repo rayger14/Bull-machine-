@@ -268,6 +268,7 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 - **2026-06-30 LIVE PAPER CONFIG** (`configs/champion_paper.json`, service `--config`): FULL BOOK — all 16 archetypes enabled, bypass_threshold=True (data collection), archetype_config_dir=archetypes_v14rq so wick_trap + trap_within_trend now FIRE at re-quantiled 0.43 (were locked out at 0.72). [History: briefly deployed lean core2-only, then user reverted to full-book-plus-unlocked.] deploy.sh excludes deploy/ so the service file installs MANUALLY (scp+systemctl). Breakeven-1R exit = phase 2 (not deployed).
 
 ## Unified Strategy 2026-07-13
+- [Edge-within-the-edge hunt](wick_trap_edge_within_2026_07_13.md) — NO exploitable entry-state discriminator inside wick_trap (4th independent confirmation; level features don't discriminate; strong train AUCs evaporate OOS). Only convergent candidate (low-chop+high-adx, also seen in live-50) REJECTED by sizing co-move test (train down/holdout up). Remaining dimensions: exit-side (trailing_start_r sweep) + U3 watch item
 - [Unified strategy verdict](unified_strategy_verdict_2026_07_13.md) — level anchoring FAILS the pre-registered bar (U1 sweep starves to n=3; U2 quality violates co-move; U3 near-support intriguing but n=23). THE UNIFIED STRATEGY IS WICK_TRAP, by proof: all knowledge already converged into it. V14L store + live level features = permanent infra; U3 = watch item at n>=30
 
 ## Audit-1 Repairs 2026-07-13
