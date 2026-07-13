@@ -14,7 +14,7 @@ fusion_weights:
 thresholds:
   fusion_threshold: 0.18
   adx_threshold: 14.0
-  liquidity_threshold: 0.72
+  liquidity_threshold: 0.43
   quality_threshold: 0.4
   wick_multiplier: 1.5
   cooling_period_bars: 24

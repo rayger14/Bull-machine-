@@ -26,6 +26,7 @@ hard_gates:
   op: max
   value: 25.0
   description: No strong trend
+  nan_policy: skip
 - feature: derived:rsi_extreme_65
   op: bool_true
   description: RSI at extreme
@@ -34,11 +35,6 @@ hard_gates:
   value: 1.5
   nan_policy: skip
   description: Low effort validates chop (fading conviction)
-- feature: rsi_divergence
-  op: min
-  value: 0.05
-  nan_policy: skip
-  description: RSI divergence confirms fade exhaustion
 gate_mode: soft
 exit_logic:
   max_hold_hours: 48
