@@ -1,0 +1,66 @@
+name: wick_trap
+display_name: Wick Trap (Moneytaur)
+aliases:
+- K
+- wick_trap_moneytaur
+- moneytaur
+direction: long
+fusion_weights:
+  wyckoff: 0.2
+  liquidity: 0.4
+  momentum: 0.15
+  smc: 0.25
+thresholds:
+  fusion_threshold: 0.18
+  wick_lower_threshold: 0.3
+  rsi_threshold: 41.0
+  adx_threshold: 14.0
+  liquidity_threshold: 0.43
+  cooling_period_bars: 18
+hard_gates:
+- feature: derived:wick_anomaly
+  op: bool_true
+  description: Lower or upper wick > 35% of candle range
+- feature: volume_zscore
+  op: min
+  value: 0.0
+  description: At least median volume (real wicks have volume behind them)
+- feature: instability_score
+  op: max
+  value: 0.45
+  nan_policy: skip
+  description: 'Low market instability - above 0.45 wicks are noise not reversal (backtest
+    WR 67% vs 49%, p=0.018) [FIXED 2026-07-13: engine emits instability_score; was
+    inert via nan_policy skip]'
+gate_mode: hard
+exit_logic:
+  max_hold_hours: 168
+  scale_out_enabled: true
+  scale_out_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  scale_out_pcts:
+  - 0.2
+  - 0.2
+  - 0.3
+  runner_pct: 0.15
+  runner_trailing_atr: 2.5
+  trailing_start_r: 1.0
+  trailing_atr_mult: 2.0
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 4.9
+  atr_tp_mult: 5.3
+regime_preferences:
+  risk_on: 1.2
+  neutral: 1.0
+  risk_off: 0.8
+  crisis: 0.6
+allowed_regimes: []
+description: 'Wick anomaly + ADX > 25 + BOS context. Moneytaur wick rejection pattern.
+  [V14-REQUANTILED 2026-06-11: liquidity_threshold 0.72->0.43 = identical percentile
+  (q90.3) on live-path distribution]'
+priority: 4
+enabled: true

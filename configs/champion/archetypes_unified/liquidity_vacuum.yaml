@@ -1,0 +1,67 @@
+name: liquidity_vacuum
+display_name: Liquidity Vacuum Reversal
+aliases:
+- S1
+- breakdown
+- capitulation
+direction: long
+fusion_weights:
+  wyckoff: 0.35
+  liquidity: 0.45
+  momentum: 0.1
+  smc: 0.1
+thresholds:
+  fusion_threshold: 0.15
+  liquidity_score_min: 0.15
+  wyckoff_confidence_min: 0.25
+  volume_spike_threshold: 0.25
+  crisis_threshold: 0.03
+  liq_max: 0.3
+  vol_z: 0.8
+  fusion: 0.15
+  cooling_period_bars: 36
+hard_gates:
+- feature: liquidity_score
+  op: max
+  value: 0.45
+  description: Low liquidity (capitulation) -- 0.30 was too strict (16.8% of bars)
+- feature: volume_zscore
+  op: min
+  value: 0.0
+  description: Above-median volume activity
+- feature: wick_exhaustion_last_3b
+  op: min
+  value: 0.47
+  nan_policy: skip
+  description: 'Wick exhaustion validates vacuum (94% pass - mild veto) [FIXED 2026-07-13:
+    1.4 was sum-scale; feature is mean of 3 wick fractions (bounded <1). 1.4/3=0.47]'
+gate_mode: hard
+exit_logic:
+  max_hold_hours: 120
+  scale_out_enabled: true
+  scale_out_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  scale_out_pcts:
+  - 0.2
+  - 0.2
+  - 0.3
+  runner_pct: 0.15
+  runner_trailing_atr: 3.0
+  trailing_start_r: 0.5
+  trailing_atr_mult: 2.0
+position_sizing:
+  risk_per_trade_pct: 0.02
+  max_position_size_pct: 0.1
+  atr_stop_mult: 3.4
+  atr_tp_mult: 5.5
+regime_preferences:
+  risk_on: 0.5
+  neutral: 0.8
+  risk_off: 1.5
+  crisis: 2.5
+allowed_regimes: []
+description: Crisis capitulation reversal. Liquidity vacuum at panic lows.
+priority: 12
+enabled: true

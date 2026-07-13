@@ -835,6 +835,16 @@ class LiveFeatureComputer:
         # R. RSI divergence (price vs RSI direction over 14-bar lookback)
         features['rsi_divergence'] = self._compute_rsi_divergence()
 
+        # S. Level-awareness features (2026-07-13, unified-strategy build):
+        # prior-day/week levels, confirmed swings + touch counts, sweep/reclaim
+        # events, acceptance counter, day_type. Single shared implementation
+        # with the batch store path (engine/features/level_features.py) —
+        # backtest/live parity by construction. Additive: fails soft to absent.
+        try:
+            features.update(self._compute_level_features())
+        except Exception as exc:
+            logger.warning("Level features failed: %s", exc)
+
         # D. Regime detection (MOVED AFTER Q: needs rv_20d, drawdown_persistence, etc.)
         # Probabilistic: crisis_prob, risk_temperature, instability_score
         # regime_label derived from CMI components (not SMA crossovers)
@@ -2618,6 +2628,21 @@ class LiveFeatureComputer:
     # ------------------------------------------------------------------
     # Private: FVG Detection
     # ------------------------------------------------------------------
+
+    def _compute_level_features(self) -> Dict[str, float]:
+        """Compute level-awareness features on the current buffer via the SAME
+        vectorized module the batch store uses (parity by construction). The
+        buffer tail is sufficient: all level features need only trailing data.
+        """
+        from engine.features.level_features import compute_level_features
+        if self._buf is None or len(self._buf) < 60:
+            return {}
+        buf = self._buf[['open', 'high', 'low', 'close', 'volume']].copy()
+        if getattr(buf.index, 'tz', None) is not None:
+            buf.index = buf.index.tz_localize(None)
+        lf = compute_level_features(buf)
+        row = lf.iloc[-1]
+        return {k: (float(v) if v == v else float('nan')) for k, v in row.items()}
 
     def _compute_rsi_divergence(self, lookback: int = 14) -> float:
         """
