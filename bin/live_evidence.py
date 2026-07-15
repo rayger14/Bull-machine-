@@ -269,6 +269,30 @@ def timecut_ledger(positions: list[dict], no_network: bool) -> None:
     print(f"  status: {status}")
 
 
+def maker_shadow_report(ledger_path: Path) -> None:
+    if not ledger_path.exists():
+        print("  maker-shadow ledger: not started yet (deploys with the runner)")
+        return
+    recs = [json.loads(l) for l in ledger_path.read_text().splitlines() if l.strip()]
+    if not recs:
+        print("  maker-shadow ledger: empty (no entries resolved yet)")
+        return
+    by_arch: dict[str, list[dict]] = defaultdict(list)
+    for r in recs:
+        by_arch[r["archetype"]].append(r)
+    print(f"\n  MAKER-SHADOW LEDGER ({len(recs)} resolved entries):")
+    print(f"  {'archetype':<24}{'n':>4}{'fill rate':>10}{'avg chase on miss':>19}")
+    for arch, rs in sorted(by_arch.items(), key=lambda kv: -len(kv[1])):
+        fills = [r for r in rs if r["filled"]]
+        misses = [r for r in rs if not r["filled"]]
+        chase = (sum(r["chase_bps"] for r in misses) / len(misses)) if misses else 0.0
+        print(f"  {arch:<24}{len(rs):>4}{len(fills)/len(rs):>10.0%}"
+              f"{chase:>17.0f}bp")
+    fills = sum(1 for r in recs if r["filled"])
+    print(f"  overall fill rate: {fills/len(recs):.0%} — flip an archetype to "
+          f"maker-first only if its fill rate is high AND misses chase small")
+
+
 def execution_costs(positions: list[dict]) -> None:
     print("\n" + "=" * 78)
     print("4. EXECUTION COSTS — simulated fees/slippage on paper fills")
@@ -307,6 +331,7 @@ def main() -> None:
     counterfactual(positions, sl, ph)
     timecut_ledger(positions, args.no_network)
     execution_costs(positions)
+    maker_shadow_report(d / "maker_shadow.jsonl")
 
 
 if __name__ == "__main__":

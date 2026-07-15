@@ -295,6 +295,10 @@ class V11ShadowRunner:
         self.output_dir = PROJECT_ROOT / 'results' / 'live_signals'
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
+        # Maker-first shadow fill ledger (measurement only; lazy — output_dir
+        # may be re-pointed by CoinbasePaperRunner after construction)
+        self._maker_ledger = None
+
         # Signal log file
         self.signal_log_path = self.output_dir / 'signals.csv'
         self._init_signal_log()
@@ -947,6 +951,13 @@ class V11ShadowRunner:
             },
         }
 
+    def _maker_shadow(self):
+        """Lazy maker-shadow ledger bound to the CURRENT output_dir."""
+        if self._maker_ledger is None or self._maker_ledger.dir != self.output_dir:
+            from bin.live.maker_shadow import MakerShadowLedger
+            self._maker_ledger = MakerShadowLedger(self.output_dir)
+        return self._maker_ledger
+
     def process_bar(self, features: pd.Series, timestamp: pd.Timestamp) -> List[dict]:
         """
         Process a single bar through the full signal pipeline.
@@ -969,6 +980,13 @@ class V11ShadowRunner:
 
         # Step 2: Check exits on virtual positions
         self._check_all_exits(features, timestamp)
+
+        # Step 2b: resolve maker-shadow pending entries (prior bars only —
+        # entries recorded later this bar are never resolved against it)
+        self._maker_shadow().on_bar(
+            features.get('high'), features.get('low'), features.get('close'),
+            timestamp,
+        )
 
         # Step 2a: Check exits on phantom positions (counterfactual tracking)
         self._check_phantom_exits(features, timestamp)
@@ -1660,6 +1678,14 @@ class V11ShadowRunner:
             margin_used=margin,
             leverage_applied=self.leverage,
         )
+
+        # Maker-first shadow: would a limit at the signal price have filled?
+        # (measurement only — the real fill above stays taker + slippage)
+        try:
+            self._maker_shadow().record_entry(
+                pos_id, archetype, direction, entry_price, timestamp)
+        except Exception as e:
+            logger.warning("[MAKER_SHADOW] record_entry failed: %s", e)
 
         # Capture full macro state at entry for trade_outcomes.csv
         self.positions[pos_id].macro_at_entry = self.last_macro_snapshot.copy()
