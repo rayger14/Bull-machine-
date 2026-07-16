@@ -2571,9 +2571,12 @@ class LiveFeatureComputer:
         # Previous close (for event override detector)
         out['prev_close'] = float(close[-2]) if n >= 2 else float(close[-1])
 
-        # CHOCH (Change of Character) -- simplified
-        out['tf1h_choch_detected'] = 0
-        out['tf4h_choch_flag'] = 0
+        # CHOCH: real values are computed by _smc_features, which runs EARLIER
+        # in update(). This function's output is merged on top, so writing 0
+        # here would clobber them (that regression hid the 2026-07-13 CHoCH
+        # fix until 2026-07-16). Preserve; default 0 only if SMC never ran.
+        out['tf1h_choch_detected'] = features.get('tf1h_choch_detected', 0)
+        out['tf4h_choch_flag'] = features.get('tf4h_choch_flag', 0)
 
         # Liquidity imbalance (simplified)
         if n >= 20:
