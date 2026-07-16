@@ -68,7 +68,8 @@ def compute_rows(ohlcv: pd.DataFrame, start: int, end: int,
 
     lfc = LiveFeatureComputer(buffer_size=WARMUP)
     warm_lo = max(0, start - WARMUP)
-    lfc.ingest_candles(ohlcv.iloc[warm_lo:start])
+    if start > warm_lo:  # chunk 1 starts at row 0: no warmup exists (cold start)
+        lfc.ingest_candles(ohlcv.iloc[warm_lo:start])
 
     rows, t0 = [], time.time()
     idx = ohlcv.index
