@@ -29,10 +29,13 @@ import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
-# Offline-validated holdout expectations (2025-01-01 -> 2026-06-10, V14L store)
+# Offline-validated holdout expectations (2025-01-01 -> 2026-06-10)
+# wick_trap/LC on V14L; order_block_retest validated 2026-07-17 on V15
+# (post BOS/CHoCH/index repairs): holdout PF 2.08 n=31, CPCV 15/15 med 1.39.
 VALIDATED = {
     "wick_trap": {"pf": 1.43, "note": "CPCV 15/15, holdout n=70"},
     "liquidity_compression": {"pf": 1.14, "note": "co-move 1.14/1.14"},
+    "order_block_retest": {"pf": 2.08, "note": "V15 CPCV 15/15, holdout n=31 — small n, expect regression toward CPCV median 1.39"},
 }
 COMMISSION_RATE = 0.0002   # per side, taker (matches backtest & paper sim)
 SLIPPAGE_BPS = 3
