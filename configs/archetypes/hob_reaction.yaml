@@ -1,0 +1,27 @@
+name: hob_reaction
+display_name: HOB Demand Reaction (Bojan founding spec)
+aliases:
+- S9
+- hob
+- bojan_hob
+direction: long
+# PRE-REGISTERED 2026-07-17 — resurrection of the original v1.x HOB/Bojan
+# demand-reaction system (engine/liquidity/hob.py), untouched detector
+# defaults. NEUTRAL fusion weights (no tuning), NO hard gates: the identity
+# check IS the original detector, exactly as the founding design intended.
+# One shot: battery (V15, all windows incl. 2025-26 holdout) + CPCV k=6.
+# Acceptance bar identical to order_block_retest's. No grid, no extensions.
+fusion_weights:
+  wyckoff: 0.25
+  liquidity: 0.25
+  momentum: 0.25
+  smc: 0.25
+thresholds:
+  fusion_threshold: 0.18
+  fusion: 0.18
+  cooling_period_bars: 24
+hard_gates: []
+gate_mode: hard
+exit_logic:
+  max_hold_hours: 168
+  scale_out_enabled: true

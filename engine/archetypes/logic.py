@@ -1084,3 +1084,37 @@ class ArchetypeLogic:
         if not isinstance(adx, (int, float)) or adx != adx:
             return False
         return float(adx) < 25.0
+
+    def _check_S9(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
+        """
+        S9 - HOB Demand Reaction (Bojan founding spec, resurrected 2026-07-17).
+
+        Identity gate: the ORIGINAL HOBDetector (engine/liquidity/hob.py,
+        untouched defaults) reports a BULLISH_HOB — price reacting off a
+        validated support level with the full 5-component quality score
+        (volume surge 30%, level strength 25%, reaction speed 20%,
+        wick presence 15%, MTF confluence 10%; INVALID quality filtered
+        by the detector itself).
+
+        PRE-REGISTERED, no tuning: detector defaults, last 200 bars,
+        long side only, quality RETAIL-or-better (the detector's own floor).
+        Errors return False (identity must be affirmative, never permissive).
+        """
+        try:
+            needed = {'open', 'high', 'low', 'close', 'volume'}
+            if df is None or len(df) < 50 or not needed.issubset(df.columns):
+                return False
+            from engine.liquidity.hob import HOBDetector, HOBType
+            window = df[['open', 'high', 'low', 'close', 'volume']].tail(200)
+            window = window.astype(float)
+            if not isinstance(window.index, pd.DatetimeIndex):
+                # Live path passes a buffer with a positional index; the
+                # detector only uses RELATIVE ages, so synthesize a
+                # deterministic hourly index (anchor is arbitrary).
+                window = window.copy()
+                window.index = pd.date_range(
+                    end=pd.Timestamp('2100-01-01'), periods=len(window), freq='h')
+            signals = HOBDetector({}).detect_hob_patterns({'1H': window}, '1H')
+            return any(s.hob_type == HOBType.BULLISH_HOB for s in signals)
+        except Exception:
+            return False

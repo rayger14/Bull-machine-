@@ -44,6 +44,7 @@ NAME_TO_LETTER: Dict[str, str] = {
     'funding_divergence': 'S4',
     'long_squeeze': 'S5',
     'volume_fade_chop': 'S8',
+    'hob_reaction': 'S9',
 }
 
 # Archetypes whose structural checks depend on frozen features.
@@ -91,7 +92,7 @@ class StructuralChecker:
         # Enable all archetypes by default (structural check is opt-out via frozen bypass)
         for letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'K', 'L', 'M']:
             config.setdefault(f'enable_{letter}', True)
-        for s in ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8']:
+        for s in ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9']:
             config.setdefault(f'enable_{s}', True)
 
         self.logic = ArchetypeLogic(config)
