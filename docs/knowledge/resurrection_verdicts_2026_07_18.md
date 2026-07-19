@@ -47,3 +47,22 @@ wider stops, breakeven, early protection. The 84% capture ratio explains it:
 exits are already near-optimal; every "protective" tweak sells the holdout's
 winners early. Exit-modification studies are now 0-for-5 with this exact
 shape — future exit proposals need an extraordinary prior to justify a run.
+
+## #8/#12 Fib time + hidden-fib price zones — descriptive study, DOCTRINE INVERTED
+Split V15 champion positions by store fib features (entry-time). wick_trap
+(n=85 train / 35 holdout positions):
+- **fib_in_discount: PF 0.12 train / 0.45 holdout** (n=9/8) vs base 1.10/1.72
+  — buying the flush in fib DISCOUNT is consistently terrible in BOTH windows.
+  Premium-zone flushes: 1.13/4.67. Fib doctrine ("buy discount") is INVERTED
+  for the washout-reversal champion: flushes near highs reverse, flushes in
+  discount keep falling.
+- temporal_confluence>=0.6: 0.67/1.01 vs base — high time-confluence also
+  consistently WORSE for wick_trap. Explains retest_cluster's (fib-time-gated
+  identity) rejection.
+- OBR: train positives (time_cluster PF 2.28, temporal 5.71) but holdout
+  n=1-5 — no conclusion possible.
+**Status: WATCH-ITEM, not action** (filters 0-for-8 house rule; combined
+discount n=17 < 30 floor). Pre-registered trigger: wick_trap discount-skip
+becomes a deploy candidate at n>=30 combined discount entries with PF still
+<0.7 in both windows. Note: the production ×0.92 premium PENALTY points the
+wrong way for wick_trap per this data — do not extend it.
