@@ -34,3 +34,16 @@ Remaining queue items (#3 reclaim-speed, #4 equal-cluster magnets,
 #5 PO3 sequencing, #7 dynamic risk, #8 wick-magnet targets) keep their
 pre-registrations but with tempered priors; test opportunistically, one
 at a time, cheap overlay studies first.
+
+## #10 Moneytaur structure trailing — REJECTED (5th exit-mod with same signature)
+Config-gated `structure_trail` in exit_logic (OFF by default, kept in code
+like breakeven): after +1R, stop = max(entry+0.5R, tf1h_prev_low − 1×ATR).
+| | train | holdout |
+|---|---|---|
+| wick_trap | 1.10 → 1.17 ✓ | 1.71 → 1.37 ✗ |
+| order_block_retest | 1.29 → 1.60 ✓ | 2.08 → 0.86 ✗ |
+Monotone train-up/holdout-down — identical gradient to trailing-start sweep,
+wider stops, breakeven, early protection. The 84% capture ratio explains it:
+exits are already near-optimal; every "protective" tweak sells the holdout's
+winners early. Exit-modification studies are now 0-for-5 with this exact
+shape — future exit proposals need an extraordinary prior to justify a run.
