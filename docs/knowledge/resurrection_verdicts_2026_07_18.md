@@ -66,3 +66,18 @@ discount n=17 < 30 floor). Pre-registered trigger: wick_trap discount-skip
 becomes a deploy candidate at n>=30 combined discount entries with PF still
 <0.7 in both windows. Note: the production ×0.92 premium PENALTY points the
 wrong way for wick_trap per this data — do not extend it.
+
+## Deep daily context (V16) — REJECTED at the deployment gate (2026-07-20)
+300 real daily candles into the 1D Wyckoff layer (90d horizon) vs the
+shallow 42-bar resample. Champion re-baseline on V16:
+| | V15 train | V16 train | V15 holdout | V16 holdout |
+|---|---|---|---|---|
+| wick_trap | 1.10 | 1.20 | **1.71** | **1.05** (+$11.3K → +$1.2K) |
+| order_block_retest | 1.29 | 0.99 | **2.08** | **0.70** |
+The deep feature becomes a near-constant quarter-scale signal (smoke: 0.869
+for 12 straight days) — it erases the per-bar variation the shallow feature
+carried into fusion, and reshapes trade populations destructively. "More
+context" ≠ better; the flickering 6-week daily read was load-bearing.
+Live activation is config-gated OFF (deep_daily_context.enabled, absent from
+champion_paper.json); the LFC capability + V16 store remain for research.
+V15 stays the validation store of record.

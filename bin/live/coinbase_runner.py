@@ -2642,6 +2642,20 @@ class CoinbasePaperRunner:
         """Feed ~300 real daily candles into the feature computer's deep
         daily buffer (2026-07-20 upgrade). Once per UTC day; failure keeps
         the previous buffer (or falls back to 42-bar resample if never fed)."""
+        # VERDICT 2026-07-20: V16 re-baseline FAILED (wick_trap holdout
+        # 1.71 -> 1.05; OBR degraded both eras). Deep daily context must NOT
+        # activate live. Config-gated OFF; enable only via
+        # deep_daily_context.enabled after a passing re-validation.
+        enabled = getattr(self, "_deep_daily_enabled", None)
+        if enabled is None:  # resolve once from the config file
+            try:
+                cfg = json.loads(Path(self.config_path).read_text())
+                enabled = bool((cfg.get("deep_daily_context") or {}).get("enabled", False))
+            except Exception:
+                enabled = False
+            self._deep_daily_enabled = enabled
+        if not enabled:
+            return
         day = pd.Timestamp(timestamp).strftime("%Y-%m-%d") if timestamp is not None else "warmup"
         if not force and getattr(self, "_daily_context_day", None) == day:
             return
