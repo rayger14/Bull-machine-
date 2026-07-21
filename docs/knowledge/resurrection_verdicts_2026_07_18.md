@@ -81,3 +81,21 @@ context" ≠ better; the flickering 6-week daily read was load-bearing.
 Live activation is config-gated OFF (deep_daily_context.enabled, absent from
 champion_paper.json); the LFC capability + V16 store remain for research.
 V15 stays the validation store of record.
+
+## Deep daily context, PROPER retest (additive, 2026-07-21) — still REJECTED, now trustworthy
+V16's methodology errors (measured): feature REPLACEMENT shifted tf1d
+distribution (corr 0.14 with old, mean 0.31->0.85) AND cascaded through the
+1D->4H->1H chain (tf4h changed 54-75% of bars, 1H 20-40%) AND delivered via
+fusion. Redesign per plan: additive split study on UNCHANGED V15 champion
+populations, pre-registered (aligned = deep bull>bear at entry; bar =
+aligned>=opposed in train AND holdout, n>=30).
+Result: 0/3 champions pass. wick_trap shows the consistent INVERSE
+(opposed 1.22/2.01 vs aligned 1.04/1.62 in train/holdout) — third
+independent confirmation that our reversal edges profit AGAINST the big
+picture (skip200 washout-winners, fib-discount inversion, now deep-daily
+alignment). OBR and LC sign-flip between windows (no signal).
+Campaign closed per kill condition: deep_daily_context gate stays OFF;
+V16/V17 reserved for a future HTF-native trade engine only.
+Methodology lesson codified: HTF/context feature changes must be tested
+ADDITIVELY on unchanged populations via pre-registered splits -> boost slot;
+never by replacing inputs under configs calibrated to the old distribution.
