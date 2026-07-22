@@ -52,3 +52,14 @@ fear_greed entry deltas (|d|<=0.11).
 
 Artifacts documented: position_size_usd is per-fill (sum per position_id);
 trade_outcomes.csv is fill-level (65% "WR" = scale-out inflation).
+
+## CORRECTION (2026-07-22): exit-capture "gap" was a measurement artifact
+The "live 59% vs backtest 84%" comparison was apples-to-oranges (84% = June
+V14-era study, wick_trap-heavy mix, different accounting). Like-for-like
+(same code, same metric, per archetype): BT holdout vs LIVE median winner
+capture — LC 50% vs 58%, CB 50% vs 58%, wick_trap 58% vs 72%(n=1). LIVE
+EXITS CAPTURE SLIGHTLY MORE THAN BACKTEST. Also verified: exit configs
+byte-identical (max_hold both dirs), exit-reason distributions match
+(LC scale-out 56%/59%, stop 44%/40%). Exits are NOT broken; the true
+system-wide winner capture is ~50-58% on this metric, both sides. Do not
+launch exit-tuning campaigns off the 84% number (exit mods remain 0-for-5).
