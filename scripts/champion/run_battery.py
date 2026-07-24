@@ -44,7 +44,7 @@ ALL_ARCHETYPES = [
     "funding_divergence", "fvg_continuation", "liquidity_compression",
     "liquidity_sweep", "liquidity_vacuum", "long_squeeze", "oi_divergence",
     "order_block_retest", "retest_cluster", "spring", "trap_within_trend",
-    "volume_fade_chop", "whipsaw", "wick_trap",
+    "volume_fade_chop", "whipsaw", "wick_trap", "hob_reaction",
 ]
 
 DEFAULT_CANDIDATES = ["liquidity_sweep", "trap_within_trend", "wick_trap", "spring"]

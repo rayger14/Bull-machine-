@@ -1158,6 +1158,36 @@ class ExitLogic:
             if adx < 25:
                 trailing_mult = min(trailing_mult, 1.5)  # Cap at 1.5 ATR
 
+        # STRUCTURE TRAIL (Moneytaur founding spec, study 2026-07-18; OFF by
+        # default — enable via JSON exit_logic override 'structure_trail').
+        # After trailing activates: stop = max(entry + 0.5*R_init,
+        # 20-bar structure low - 1*ATR) instead of the ATR-multiple trail.
+        # Deviations from the original spec, pre-registered: pivot = the
+        # engine's canonical tf1h_prev_low (20-bar, parity-safe) vs 10-bar;
+        # ratchet updates every bar vs every 3.
+        if rules.get('structure_trail', False) and position.direction == 'long':
+            if unrealized_r < 1.0:  # spec: activate after +1R
+                return
+            structure_low = bar.get('tf1h_prev_low')
+            if structure_low is None or structure_low != structure_low:
+                return
+            # cache initial risk on first activation — stop_loss may already
+            # have been ratcheted by this rule on a prior bar
+            meta = getattr(position, 'metadata', None)
+            if meta is None:
+                meta = position.metadata = {}
+            r_init = meta.get('_structure_trail_r_init')
+            if r_init is None:
+                r_init = abs(position.entry_price - position.stop_loss)
+                meta['_structure_trail_r_init'] = r_init
+            if r_init <= 0:
+                return
+            new_stop = max(position.entry_price + 0.5 * r_init,
+                           float(structure_low) - 1.0 * atr)
+            if new_stop > position.stop_loss:
+                position.stop_loss = new_stop
+            return
+
         # Calculate new trailing stop
         if position.direction == 'long':
             new_stop = bar['close'] - (trailing_mult * atr)

@@ -44,6 +44,7 @@ NAME_TO_LETTER: Dict[str, str] = {
     'funding_divergence': 'S4',
     'long_squeeze': 'S5',
     'volume_fade_chop': 'S8',
+    'hob_reaction': 'S9',
 }
 
 # Archetypes whose structural checks depend on frozen features.
@@ -91,7 +92,7 @@ class StructuralChecker:
         # Enable all archetypes by default (structural check is opt-out via frozen bypass)
         for letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'K', 'L', 'M']:
             config.setdefault(f'enable_{letter}', True)
-        for s in ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8']:
+        for s in ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9']:
             config.setdefault(f'enable_{s}', True)
 
         self.logic = ArchetypeLogic(config)
@@ -160,6 +161,15 @@ class StructuralChecker:
             # Create minimal DataFrame from just the current row
             lookback_df = pd.DataFrame([row])
             bar_index = 0
+        else:
+            # Normalize to a FRAME-LOCAL index. Callers pass a rolling window
+            # (backtester: df.iloc[bar_idx-500:bar_idx+1]; live: bar buffer)
+            # whose LAST row is the current bar, but bar_index is the global
+            # counter. History checks (_check_B/_check_C) slice
+            # df.iloc[index-lookback:index], which on a rolling window with a
+            # global index is empty/garbage — that kept the SMC archetypes
+            # structurally dead even after the BOS feature repair (2026-07-17).
+            bar_index = len(lookback_df) - 1
 
         try:
             # Call the structural check with fusion_score=1.0 (bypass internal fusion gate)

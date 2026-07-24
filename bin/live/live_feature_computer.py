@@ -590,6 +590,7 @@ class LiveFeatureComputer:
 
         # Engine instances (initialized once, reused per bar)
         self._smc_engine = SMCEngine({}) if SMC_AVAILABLE else None
+        self._daily_buf: Optional[pd.DataFrame] = None  # deep daily context (2026-07-20)
         self._temporal_engine = TemporalConfluenceEngine() if TEMPORAL_AVAILABLE else None
         self._macro_fetcher = MacroDataFetcher()
 
@@ -685,6 +686,30 @@ class LiveFeatureComputer:
             f"Ingested {len(self._buf)} candles "
             f"({self._buf.index[0]} to {self._buf.index[-1]})"
         )
+
+    def ingest_daily_candles(self, df: pd.DataFrame) -> None:
+        """Seed/refresh the DEEP daily buffer (real daily candles, ~300 days).
+
+        Deep-daily-context upgrade 2026-07-20: the 1H buffer only resamples to
+        ~42 daily bars, so the daily Wyckoff detectors ran with garbage rolling
+        warmup and six weeks of memory. This buffer supplies real market
+        memory; _wyckoff_multi_tf_hierarchical splices it with the current
+        partial day from the 1H buffer. Safe no-op if never called.
+        """
+        required = {'open', 'high', 'low', 'close', 'volume'}
+        col_map = {c: c.lower() for c in df.columns if c.lower() in required}
+        df = df.rename(columns=col_map)
+        if not required.issubset(df.columns):
+            logger.warning("ingest_daily_candles: missing OHLCV columns, ignored")
+            return
+        buf = df[['open', 'high', 'low', 'close', 'volume']].copy()
+        if not isinstance(buf.index, pd.DatetimeIndex):
+            buf.index = pd.to_datetime(buf.index)
+        buf.index = buf.index.normalize()
+        buf = buf[~buf.index.duplicated(keep='last')].sort_index().tail(320)
+        self._daily_buf = buf
+        logger.info(f"Ingested {len(buf)} daily candles "
+                    f"({buf.index[0].date()} to {buf.index[-1].date()})")
 
     def update(self, candle: dict) -> pd.Series:
         """
@@ -1697,7 +1722,16 @@ class LiveFeatureComputer:
             # ---- Step 1: 1D Wyckoff (independent, no HTF context) ----
             ctx_1d = None
             buf_1d = self._resample_to_tf(self._buf, '1D')
-            logger.info(f"Wyckoff 1D resample: {len(buf_1d)} daily bars from {len(self._buf)} 1H bars")
+            # DEEP DAILY CONTEXT (2026-07-20): splice real daily history under
+            # the current partial day. Without it the detectors see ~42 days
+            # (and their 20-30 bar rolling stats burn most of that as warmup).
+            if self._daily_buf is not None and len(self._daily_buf) > len(buf_1d):
+                cur_day = buf_1d.index[-1].normalize()
+                hist = self._daily_buf[self._daily_buf.index < cur_day]
+                buf_1d = pd.concat([hist, buf_1d[buf_1d.index.normalize() >= cur_day]])
+                buf_1d = buf_1d.tail(300)
+            logger.info(f"Wyckoff 1D resample: {len(buf_1d)} daily bars from {len(self._buf)} 1H bars"
+                        + (" (deep)" if self._daily_buf is not None else ""))
             out['tf1d_daily_bars'] = len(buf_1d)
             if len(buf_1d) >= 20:
                 buf_1d_copy = buf_1d.copy()
@@ -1705,11 +1739,15 @@ class LiveFeatureComputer:
                 # lookback=14: scan last 14 daily bars (2 weeks) for recent events.
                 # lookback=3 was too narrow — SC/Spring/SOS fire every few weeks,
                 # so 3 days almost always showed 0 even with active structure.
-                # lookback=len: scan ALL available daily bars. Wyckoff phases span
-                # weeks-months; a SC from 35 days ago still defines today's structure.
-                ctx_1d = create_wyckoff_context(buf_1d_copy, lookback=len(buf_1d_copy), timeframe="1D")
+                # lookback: Wyckoff phases span weeks-months — scan up to 90
+                # daily bars (one quarter). With the shallow 42-bar buffer this
+                # equals the old lookback=len behavior (backward compatible);
+                # with the deep buffer it prevents year-old events from
+                # defining today's structure.
+                ctx_1d = create_wyckoff_context(buf_1d_copy, lookback=min(len(buf_1d_copy), 90), timeframe="1D")
 
-                tail_1d = buf_1d_copy
+                # score horizon matches the context lookback (90d cap)
+                tail_1d = buf_1d_copy.tail(90)
 
                 # Graded bullish/bearish scores (replace binary M1/M2)
                 out['tf1d_wyckoff_bullish_score'] = ctx_1d.bullish_score
@@ -2571,9 +2609,12 @@ class LiveFeatureComputer:
         # Previous close (for event override detector)
         out['prev_close'] = float(close[-2]) if n >= 2 else float(close[-1])
 
-        # CHOCH (Change of Character) -- simplified
-        out['tf1h_choch_detected'] = 0
-        out['tf4h_choch_flag'] = 0
+        # CHOCH: real values are computed by _smc_features, which runs EARLIER
+        # in update(). This function's output is merged on top, so writing 0
+        # here would clobber them (that regression hid the 2026-07-13 CHoCH
+        # fix until 2026-07-16). Preserve; default 0 only if SMC never ran.
+        out['tf1h_choch_detected'] = features.get('tf1h_choch_detected', 0)
+        out['tf4h_choch_flag'] = features.get('tf4h_choch_flag', 0)
 
         # Liquidity imbalance (simplified)
         if n >= 20:

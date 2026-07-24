@@ -1385,6 +1385,7 @@ class CoinbasePaperRunner:
             )
 
         self.feature_computer.ingest_candles(candles)
+        self._refresh_daily_context(force=True)
 
         # Backfill feature_history from warmup candles + historical macro
         # data so correlation and cointegration are ready immediately.
@@ -2637,6 +2638,38 @@ class CoinbasePaperRunner:
         except Exception as exc:
             logger.warning("[DOWNTREND_SKIP] daily refresh failed (%s) — keeping previous state", exc)
 
+    def _refresh_daily_context(self, timestamp=None, force=False):
+        """Feed ~300 real daily candles into the feature computer's deep
+        daily buffer (2026-07-20 upgrade). Once per UTC day; failure keeps
+        the previous buffer (or falls back to 42-bar resample if never fed)."""
+        # VERDICT 2026-07-20: V16 re-baseline FAILED (wick_trap holdout
+        # 1.71 -> 1.05; OBR degraded both eras). Deep daily context must NOT
+        # activate live. Config-gated OFF; enable only via
+        # deep_daily_context.enabled after a passing re-validation.
+        enabled = getattr(self, "_deep_daily_enabled", None)
+        if enabled is None:  # resolve once from the config file
+            try:
+                cfg = json.loads(Path(self.config_path).read_text())
+                enabled = bool((cfg.get("deep_daily_context") or {}).get("enabled", False))
+            except Exception:
+                enabled = False
+            self._deep_daily_enabled = enabled
+        if not enabled:
+            return
+        day = pd.Timestamp(timestamp).strftime("%Y-%m-%d") if timestamp is not None else "warmup"
+        if not force and getattr(self, "_daily_context_day", None) == day:
+            return
+        try:
+            daily = self.adapter.fetch_ohlcv_1d(limit=299)
+            if daily is not None and len(daily) >= 100:
+                self.feature_computer.ingest_daily_candles(daily)
+                self._daily_context_day = day
+            else:
+                logger.warning("[DAILY_CONTEXT] only %s daily candles — keeping previous buffer",
+                               0 if daily is None else len(daily))
+        except Exception as exc:
+            logger.warning("[DAILY_CONTEXT] refresh failed (%s) — keeping previous buffer", exc)
+
     def _log_feature_row(self, timestamp, features):
         """Append the full per-bar feature vector as one JSON line per bar.
 
@@ -3101,6 +3134,9 @@ class CoinbasePaperRunner:
         except Exception as exc:
             logger.warning("Failed to save candle history: %s", exc)
 
+
+        # Deep daily context: refresh once per UTC day (cheap single request)
+        self._refresh_daily_context(timestamp=timestamp)
 
         # Compute features (~240 columns)
         try:
