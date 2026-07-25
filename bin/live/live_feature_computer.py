@@ -875,6 +875,12 @@ class LiveFeatureComputer:
         # regime_label derived from CMI components (not SMA crossovers)
         features.update(self._regime_detection(features))
 
+        # macro_regime mirrors regime_label, but _extra_archetype_features (Q)
+        # reads it BEFORE regime detection (D) has run — so it was pinned to
+        # 'neutral' on every live bar (caught by the 2026-07-21 feature-health
+        # sweep). Re-derive here, after the label actually exists.
+        features['macro_regime'] = features.get('regime_label', 'neutral')
+
         # -- Diagnostic logging ------------------------------------------------
         # Compute what the dynamic threshold WOULD be given current conditions
         _rt = features.get('risk_temperature', 0.5)
