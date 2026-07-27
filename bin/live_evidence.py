@@ -272,6 +272,37 @@ def timecut_ledger(positions: list[dict], no_network: bool) -> None:
     print(f"  status: {status}")
 
 
+def concurrency_ledger(positions: list[dict]) -> None:
+    """Pre-registered concurrency-governor tripwire (2026-07-21): entries made
+    with 2+ positions already open ran PF 0.42 vs 0.87 (n=43). Accept the
+    governor if the deficit persists at n>=60 in the 2+ bucket. Era-restricted
+    to 2026-03-04+ (flat-sizing era)."""
+    print("\n" + "=" * 78)
+    print("5. CONCURRENCY LEDGER — governor tripwire (accept at n>=60 in 2+ bucket)")
+    print("=" * 78)
+    era = [p for p in positions if p["entry_ts"] >= "2026-03-04"]
+    buckets: dict[str, list[float]] = {"0-1 open": [], "2+ open": []}
+    for p in era:
+        n_open = sum(1 for q in era if q is not p
+                     and q["entry_ts"] <= p["entry_ts"] < q["exit_ts"])
+        buckets["2+ open" if n_open >= 2 else "0-1 open"].append(p["pnl"])
+    for name, pnls in buckets.items():
+        if not pnls:
+            continue
+        pf_v = profit_factor(pnls)
+        pf_s = f"{pf_v:.2f}" if math.isfinite(pf_v) else "inf"
+        print(f"  {name:10s} n={len(pnls):>4}  PF {pf_s:>5}  PnL ${sum(pnls):>9,.0f}")
+    n2 = len(buckets["2+ open"])
+    pf2 = profit_factor(buckets["2+ open"]) if buckets["2+ open"] else float("nan")
+    pf1 = profit_factor(buckets["0-1 open"]) if buckets["0-1 open"] else float("nan")
+    if n2 >= 60:
+        verdict = ("TRIGGERED — deficit persists, governor is a deploy candidate"
+                   if pf2 < pf1 else "trigger reached but deficit NOT persistent — archive")
+    else:
+        verdict = f"accumulating ({n2}/60)"
+    print(f"  status: {verdict}")
+
+
 def maker_shadow_report(ledger_path: Path) -> None:
     if not ledger_path.exists():
         print("  maker-shadow ledger: not started yet (deploys with the runner)")
@@ -292,8 +323,11 @@ def maker_shadow_report(ledger_path: Path) -> None:
         print(f"  {arch:<24}{len(rs):>4}{len(fills)/len(rs):>10.0%}"
               f"{chase:>17.0f}bp")
     fills = sum(1 for r in recs if r["filled"])
-    print(f"  overall fill rate: {fills/len(recs):.0%} — flip an archetype to "
-          f"maker-first only if its fill rate is high AND misses chase small")
+    print(f"  overall fill rate: {fills/len(recs):.0%}")
+    print("  NOTE (audit 2026-07-27): baseline fill rate for this rule is 98.4%"
+          " on ALL bars — fill rate alone proves nothing. Decide at n>=100 with"
+          " observed misses; missed entries run 7x hotter (+0.69% vs +0.10%"
+          " fwd-24h), so net savings ~ half the naive fee estimate.")
 
 
 def execution_costs(positions: list[dict]) -> None:
@@ -335,6 +369,7 @@ def main() -> None:
     timecut_ledger(positions, args.no_network)
     execution_costs(positions)
     maker_shadow_report(d / "maker_shadow.jsonl")
+    concurrency_ledger(positions)
 
 
 if __name__ == "__main__":
