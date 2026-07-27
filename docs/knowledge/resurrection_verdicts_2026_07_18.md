@@ -99,3 +99,16 @@ V16/V17 reserved for a future HTF-native trade engine only.
 Methodology lesson codified: HTF/context feature changes must be tested
 ADDITIVELY on unchanged populations via pre-registered splits -> boost slot;
 never by replacing inputs under configs calibrated to the old distribution.
+
+## H4b spring direction-purity (2026-07-27) — DEFECT CONFIRMED + FIXED; concept still thin
+Spring (LONG) accepted utad AND bull_trap — bearish trap signatures — as buy
+triggers its whole life. Pure variant (spring + bear_trap only), V15:
+| | impure | pure |
+|---|---|---|
+| train | 0.84, −$19,363 (n=308) | **1.31, +$18,789** (n=202) |
+| holdout | 0.68, −$5,333 | 0.92, −$1,166 |
+Both windows improve (+$38K train swing, holdout losses −78%) → genuine
+defect repair, purity now the DEFAULT in _check_A (legacy via
+gate_params spring_pure_A=0). But purified holdout still 0.92 < 1.0:
+spring stays REJECTED — now for the honest reason (concept thin at 1H),
+not because it bought bearish patterns as bullish. 7th engine repair.

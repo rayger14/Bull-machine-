@@ -549,9 +549,19 @@ class ArchetypeLogic:
         Quality filtering (displacement, pti_score, fusion) handled by YAML gates.
         """
         pti_trap = row.get('tf1h_pti_trap_type', '')
-        if isinstance(pti_trap, str):
-            return pti_trap in ('spring', 'utad', 'bull_trap', 'bear_trap')
-        return False
+        if not isinstance(pti_trap, str):
+            return False
+        # H4b direction-purity study (2026-07-27, pre-registered 2026-07-17):
+        # spring is a LONG archetype but historically accepted utad/bull_trap —
+        # BEARISH trap signatures (2,686 bearish vs 826 spring events in-store).
+        # gate_params {'spring_pure_A': 1} restricts to direction-correct
+        # bullish traps. Default unchanged (legacy behavior).
+        # DEFAULT = PURE as of 2026-07-27: both windows improved (train
+        # 0.84->1.31 +$38K swing; holdout 0.68->0.92). Legacy impure behavior
+        # reproducible via gate_params {'spring_pure_A': 0}.
+        if (gate_params or {}).get('spring_pure_A', 1):
+            return pti_trap in ('spring', 'bear_trap')
+        return pti_trap in ('spring', 'utad', 'bull_trap', 'bear_trap')
 
     def _check_B(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
