@@ -126,3 +126,29 @@ skips disabled archetypes BEFORE detect/dedup (isolated_archetype_engine
 get_signals). Live unaffected (champion_paper disables nothing). Full clean
 re-baseline of champions + A1/A2 verdicts required and running; validated
 holdout numbers will shift (wick_trap ~1.55 expected).
+
+## Clean re-baseline under defect-#8 fix (2026-07-27) — the semantics earthquake
+True-standalone (V15, clean engine) vs old contaminated numbers:
+| archetype | clean train | clean holdout | old holdout |
+|---|---|---|---|
+| wick_trap | 1.28, +$31.7K (n=304) | **1.16, +$4.2K (n=104)** | 1.71 (n=81) |
+| order_block_retest | 1.32 | **0.89, −$975 (n=62)** | 2.08 (n=31) |
+| liquidity_compression | 1.45 | **1.30, +$6.0K (n=151)** | 1.23 |
+INTERPRETATION: the contamination acted as a hidden competitor-outbid filter
+(bars where another archetype's fusion outscored the candidate produced NO
+trade). Removing it adds those bars back — mostly losers. So wick_trap/OBR's
+validated numbers describe BOOK-CONTEXT performance (their trade subset when
+the full book runs and competitors take contested bars) — which is what LIVE
+actually is (live disables nothing). LC validates under BOTH semantics =
+the book's most robust edge. wick_trap/OBR remain live with book-context
+expectations; their SOLO edge is thinner (1.16 / 0.89). Future validations
+must report both semantics. CPCV numbers inherit the same context caveat.
+
+## A1 + A2 re-verdicts under clean semantics — BOTH PASS STRICT CO-MOVE
+A1 trap_within_trend: legacy 1.11/+$14.0K train, 0.89/−$2.9K holdout →
+repaired 1.14/+$17.5K, 0.95/−$1.2K. Both windows improve. SHIPPED.
+A2 confluence_breakout: legacy 0.99/−$3.2K train, 0.81/−$14.7K holdout →
+repaired **1.59/+$13.7K train, 1.11/+$985 holdout** (n=96/39). Both windows
+improve massively — and repaired CB is PROFITABLE in both. Not champion-bar
+(holdout <1.3, n=39) but a genuine sleeper candidate: WATCH via live
+evidence; consider full battery+CPCV at live n>=15. SHIPPED (user-approved).
