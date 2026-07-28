@@ -700,7 +700,18 @@ class IsolatedArchetypeEngine:
         # Collect signals from all archetypes
         signals = []
 
+        # DEFECT #8 FIX (2026-07-27): disabled archetypes must not detect at
+        # all. Previously the backtester filtered them AFTER this method's
+        # dedup, so disabled archetypes' signals competed for the
+        # best-per-direction slot and then vanished — silently deleting the
+        # enabled candidate's trades. Every "standalone" battery result was
+        # contaminated by this; filtering here restores true standalone
+        # semantics (and skips their detect() cost).
+        disabled = set(self.config.get('disabled_archetypes', []) or [])
+
         for name, archetype in self.archetypes.items():
+            if name in disabled:
+                continue
             # Get signal from archetype (with structural check + cooling period)
             signal = archetype.detect(
                 features, regime_label,

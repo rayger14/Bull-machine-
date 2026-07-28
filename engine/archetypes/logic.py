@@ -869,7 +869,11 @@ class ArchetypeLogic:
         # (entry narratives log "BOMS 0.000 weak breakout"; biggest live
         # bleeder, -$16.2K entry-fail losses). gate_params
         # {'cb_boms_confirm_M': 1} restores the confirmation requirement.
-        if (gate_params or {}).get('cb_boms_confirm_M'):
+        # DEFAULT ON as of 2026-07-27 (A2 verdict, user-approved: holdout
+        # -$17,656 -> -$250, DD cut 5x both eras, PF up both; train PnL -$1.8K
+        # noted as the anti-overfit-direction trade-off. Legacy via
+        # cb_boms_confirm_M=0.)
+        if (gate_params or {}).get('cb_boms_confirm_M', 1):
             disp = row.get('tf4h_boms_displacement', 0.0)
             bstr = row.get('boms_strength', 0.0)
             disp = float(disp) if isinstance(disp, (int, float)) and disp == disp else 0.0

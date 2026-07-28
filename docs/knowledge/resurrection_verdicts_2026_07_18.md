@@ -112,3 +112,17 @@ defect repair, purity now the DEFAULT in _check_A (legacy via
 gate_params spring_pure_A=0). But purified holdout still 0.92 < 1.0:
 spring stays REJECTED — now for the honest reason (concept thin at 1H),
 not because it bought bearish patterns as bullish. 7th engine repair.
+
+## ENGINE DEFECT #8 (2026-07-27): standalone batteries were never standalone
+Caught by the champion bit-identical guard during the A1/A2 repair campaign.
+The backtester filtered `disabled_archetypes` AFTER IsolatedArchetypeEngine's
+best-per-direction dedup — so disabled archetypes' signals competed for the
+per-bar slot and were then discarded, silently DELETING the enabled
+candidate's trades on contested bars. Every battery/CPCV result ever produced
+carries this contamination; changing ANY archetype's firing behavior
+perturbed every other archetype's "standalone" numbers (how A1/A2 repairs
+leaked into wick_trap: 81→84 holdout trades, PF 1.71→1.55). Fixed: engine
+skips disabled archetypes BEFORE detect/dedup (isolated_archetype_engine
+get_signals). Live unaffected (champion_paper disables nothing). Full clean
+re-baseline of champions + A1/A2 verdicts required and running; validated
+holdout numbers will shift (wick_trap ~1.55 expected).

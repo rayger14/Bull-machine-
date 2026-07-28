@@ -41,3 +41,19 @@ def test_twt_real_trend_default_on():
     row_up = row_dn.copy(); row_up['price_above_ema_50'] = 1
     r = logic._check_H(row_up, None, pd.DataFrame([row_up]), 0, 1.0, None)
     assert isinstance(r, bool)
+
+
+def test_cb_boms_confirmation_default_on():
+    """A2 (2026-07-27): confluence_breakout requires BOMS confirmation by
+    default — an unconfirmed coil pop (disp=0, strength=0) must NOT pass."""
+    logic = ArchetypeLogic({'use_archetypes': True})
+    base = {'tf1h_frvp_distance_to_poc': 0.01, 'atr_20': 100.0,
+            'tf4h_boms_displacement': 0.0, 'boms_strength': 0.0}
+    import numpy as np
+    df = pd.DataFrame([{**base, 'atr_20': v} for v in np.linspace(50, 500, 40)])
+    row = pd.Series({**base, 'atr_20': 51.0})  # low ATR -> percentile < 0.30
+    assert logic._check_M(row, None, df, 39, 1.0, None) is False
+    row2 = row.copy(); row2['tf4h_boms_displacement'] = 120.0
+    assert logic._check_M(row2, None, df, 39, 1.0, None) is True
+    # legacy reproducible
+    assert logic._check_M(row, None, df, 39, 1.0, {'cb_boms_confirm_M': 0}) is True
