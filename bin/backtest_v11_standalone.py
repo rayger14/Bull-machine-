@@ -1117,8 +1117,13 @@ class StandaloneBacktestEngine:
                         if ti is not None and ti == ti and float(ti) <= 0.0:
                             intent.allocated_size_pct *= 1.25
                             sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                            # scoped cap-exemption: ONLY this boost may exceed
+                            # the per-position cap (legacy boosts validated
+                            # under the cap stay capped — capex'ing them cost
+                            # the holdout -$1.3K in the 2026-07-28 isolation)
+                            sig_meta['sizing_boosts']['capex_mult'] = 1.25
                             sig_meta['sizing_boosts']['reasons'].append(
-                                f'wick_trap_seller_flow ti={float(ti):.3f} (1.25x)')
+                                f'wick_trap_seller_flow ti={float(ti):.3f} (1.25x capex)')
 
                 # Step 5: Execute allocations
                 for intent in intents:
@@ -1382,8 +1387,18 @@ class StandaloneBacktestEngine:
         # Margin = notional / leverage (what the exchange actually locks)
         margin = notional / self.leverage
 
-        # Cap margin at max_margin_per_position_pct of initial capital
+        # Cap margin at max_margin_per_position_pct of initial capital.
+        # CAP-EXEMPT BOOSTS (2026-07-28, user-approved): validated sizing
+        # boosts may scale the cap by their multiplier — otherwise positions
+        # already at the cap clip the boost to nothing (observed: 24/94
+        # seller-flow boosts expressed, effect ~2% of expectation).
         max_margin = self.initial_cash * self.max_margin_pct
+        _boost_mult = 1.0
+        if signal_metadata:
+            _boost_mult = float((signal_metadata.get('sizing_boosts') or {})
+                                .get('capex_mult', 1.0) or 1.0)
+        if _boost_mult > 1.0:
+            max_margin *= _boost_mult
         if margin > max_margin:
             margin = max_margin
             notional = margin * self.leverage  # scale notional down proportionally

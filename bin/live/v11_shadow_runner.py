@@ -951,6 +951,13 @@ class V11ShadowRunner:
             },
         }
 
+    def _get_seller_flow_enabled(self):
+        if not hasattr(self, '_seller_flow_enabled'):
+            root = getattr(self, 'config', None) or {}
+            self._seller_flow_enabled = bool(
+                (root.get('seller_flow_boost') or {}).get('enabled', False))
+        return self._seller_flow_enabled
+
     def _maker_shadow(self):
         """Lazy maker-shadow ledger bound to the CURRENT output_dir."""
         if self._maker_ledger is None or self._maker_ledger.dir != self.output_dir:
@@ -1367,6 +1374,21 @@ class V11ShadowRunner:
                                f"(bear={wyck_bear:.3f}, oi24={oi24:.3f}, rp={rpos:.3f}) "
                                f"→ 1.5x sizing ({intent.allocated_size_pct:.3f})")
 
+            # Boost 3: wick_trap seller-flow (validated 2026-07-28: train
+            # 1.28->1.34 +$12.4K, holdout 1.16->1.18 +$566, DD flat; scoped
+            # cap-exemption). Seller-aggressed flush = true panic into bids.
+            if (self._get_seller_flow_enabled()
+                    and intent.signal.archetype_id == 'wick_trap'):
+                ti = sig_meta.get('taker_imbalance', None)
+                if ti is not None and ti == ti and float(ti) <= 0.0:
+                    intent.allocated_size_pct *= 1.25
+                    sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                    sig_meta['sizing_boosts']['capex_mult'] = 1.25
+                    sig_meta['sizing_boosts']['reasons'].append(
+                        f'wick_trap_seller_flow ti={float(ti):.3f} (1.25x capex)')
+                    logger.info(f"[SELLER_FLOW_BOOST] wick_trap ti={float(ti):.3f} "
+                                f"→ 1.25x capex sizing ({intent.allocated_size_pct:.3f})")
+
         # Update signal tracking for portfolio rejections
         for rej in rejections:
             rej_id = id(rej.signal)
@@ -1618,8 +1640,16 @@ class V11ShadowRunner:
         # Margin = notional / leverage (what the exchange locks)
         margin = notional / self.leverage
 
-        # Cap margin at max_margin_per_position_pct of initial capital
+        # Cap margin at max_margin_per_position_pct of initial capital.
+        # Scoped cap-exemption (2026-07-28): only boosts that set capex_mult
+        # (seller-flow) may exceed the cap; legacy boosts stay capped.
         max_margin = self.initial_cash * self.max_margin_pct
+        _capex = 1.0
+        if signal_metadata:
+            _capex = float((signal_metadata.get('sizing_boosts') or {})
+                           .get('capex_mult', 1.0) or 1.0)
+        if _capex > 1.0:
+            max_margin *= _capex
         if margin > max_margin:
             margin = max_margin
             notional = margin * self.leverage

@@ -162,3 +162,16 @@ n=6; train 0.99). Third doctrine inversion (fib discount, HTF alignment,
 now RSI oversold). Spec-restoration scorecard: 3 shipped (spring, TWT, CB),
 1 rejected (ER) — the harness discriminates, as designed. ER remains
 rejected in both forms.
+
+## SELLER-FLOW BOOST — VALIDATED + SHIPPED (2026-07-28); boosts now 3/3
+wick_trap 1.25x sizing with SCOPED cap-exemption when entry-flush
+taker_imbalance <= 0 (seller-aggressed = true panic). Isolation journey:
+capped version passed but clipped (24/94 expressed, +$600); full capex
+polluted by legacy-boost exemption (their capex cost holdout -$1.3K —
+legacy boosts stay capped); scoped final: guard bit-identical, train
+1.28->1.34 (+$12.4K), holdout 1.16->1.18 (+$566), DD flat/better, same
+trade population. Triple-sourced: data discovery + Bojan absorption
+concept + verified trader playbook (flush-qualification study signal #2).
+Live: enabled in champion_paper.json, mirrored in v11_shadow_runner
+(Boost 3). NEXT: Bojan wick-majority boost (wick_lower_ratio>=0.5) tested
+ON TOP of this config, incremental-lift bar.
