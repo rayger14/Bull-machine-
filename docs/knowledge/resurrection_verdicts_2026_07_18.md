@@ -175,3 +175,15 @@ concept + verified trader playbook (flush-qualification study signal #2).
 Live: enabled in champion_paper.json, mirrored in v11_shadow_runner
 (Boost 3). NEXT: Bojan wick-majority boost (wick_lower_ratio>=0.5) tested
 ON TOP of this config, incremental-lift bar.
+
+## BOJAN WICK-MAJORITY BOOST — VALIDATED + SHIPPED (2026-07-28); boosts 4/4
+Second conviction boost, incremental ON TOP of seller-flow: wick_trap 1.25x
+capex when entry-bar wick_lower_ratio >= 0.5 (Bojan magnet-grade flush,
+= flush-qualification study signal #1). Train 1.34->1.35 (+$5.6K), holdout
+1.18->1.19 (+$831), DD ~flat. Stacked max: 1.5625x capex on a seller-
+aggressed wick-majority flush. Ship included the near-miss catch: live
+Signal metadata did NOT carry taker_imbalance/wick_lower_ratio — enrichment
+added at Step 3e (both boosts would have silently never fired live);
+regression test pins it. wick_trap now carries the founding knowledge's
+top-2 flush confirmations as conviction sizing — fusion's original intent,
+rebuilt on evidence.

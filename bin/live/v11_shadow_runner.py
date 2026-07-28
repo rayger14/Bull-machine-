@@ -1323,6 +1323,13 @@ class V11ShadowRunner:
             rpos = features.get('range_position_20', None)
             if rpos is not None and rpos == rpos:
                 s.metadata['range_position_20'] = float(rpos)
+            # Seller-flow + Bojan wick boosts (validated 2026-07-28)
+            ti = features.get('taker_imbalance', None)
+            if ti is not None and ti == ti:
+                s.metadata['taker_imbalance'] = float(ti)
+            wlr = features.get('wick_lower_ratio', None)
+            if wlr is not None and wlr == wlr:
+                s.metadata['wick_lower_ratio'] = float(wlr)
 
         # Step 4: Portfolio allocation (bypass duplicate check in data-collection mode)
         if self.bypass_threshold:
@@ -1387,6 +1394,22 @@ class V11ShadowRunner:
                     sig_meta['sizing_boosts']['reasons'].append(
                         f'wick_trap_seller_flow ti={float(ti):.3f} (1.25x capex)')
                     logger.info(f"[SELLER_FLOW_BOOST] wick_trap ti={float(ti):.3f} "
+                                f"→ 1.25x capex sizing ({intent.allocated_size_pct:.3f})")
+
+            # Boost 4: Bojan wick-majority (validated 2026-07-28 incremental
+            # on top of seller-flow: train +$5.6K, holdout +$831, PF up both).
+            if (self._get_seller_flow_enabled()
+                    and (self.config.get('bojan_wick_boost') or {}).get('enabled')
+                    and intent.signal.archetype_id == 'wick_trap'):
+                wlr = sig_meta.get('wick_lower_ratio', None)
+                if wlr is not None and wlr == wlr and float(wlr) >= 0.5:
+                    intent.allocated_size_pct *= 1.25
+                    sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                    sig_meta['sizing_boosts']['capex_mult'] = \
+                        sig_meta['sizing_boosts'].get('capex_mult', 1.0) * 1.25
+                    sig_meta['sizing_boosts']['reasons'].append(
+                        f'bojan_wick_majority wlr={float(wlr):.2f} (1.25x capex)')
+                    logger.info(f"[BOJAN_WICK_BOOST] wick_trap wlr={float(wlr):.2f} "
                                 f"→ 1.25x capex sizing ({intent.allocated_size_pct:.3f})")
 
         # Update signal tracking for portfolio rejections

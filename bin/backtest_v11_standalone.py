@@ -1125,6 +1125,21 @@ class StandaloneBacktestEngine:
                             sig_meta['sizing_boosts']['reasons'].append(
                                 f'wick_trap_seller_flow ti={float(ti):.3f} (1.25x capex)')
 
+                    # Boost 4 (pre-registered study 2026-07-28, config-gated OFF):
+                    # Bojan wick-majority ("magnet-grade flush") — entry bar's
+                    # lower wick >= 50% of range (intra-bar rejection visible).
+                    # Bar: INCREMENTAL lift on top of seller-flow, both eras.
+                    if (self.config.get('bojan_wick_boost') or {}).get('enabled') \
+                       and intent.signal.archetype_id == 'wick_trap':
+                        wlr = row.get('wick_lower_ratio', None)
+                        if wlr is not None and wlr == wlr and float(wlr) >= 0.5:
+                            intent.allocated_size_pct *= 1.25
+                            sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                            sig_meta['sizing_boosts']['capex_mult'] = \
+                                sig_meta['sizing_boosts'].get('capex_mult', 1.0) * 1.25
+                            sig_meta['sizing_boosts']['reasons'].append(
+                                f'bojan_wick_majority wlr={float(wlr):.2f} (1.25x capex)')
+
                 # Step 5: Execute allocations
                 for intent in intents:
                     sig = intent.signal

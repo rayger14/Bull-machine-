@@ -33,3 +33,21 @@ def test_live_config_enabled_and_parses():
 def test_condition_is_seller_aggressed():
     for src in (BT, LV):
         assert "float(ti) <= 0.0" in src
+
+
+def test_bojan_wick_boost_parity():
+    """Boost 4 (2026-07-28): wick-majority >= 0.5 lower-wick, capex-scoped,
+    present in both engines and enabled live."""
+    for src in (BT, LV):
+        assert "bojan_wick_majority" in src
+        assert "0.5" in src[src.index("bojan_wick_boost"):src.index("bojan_wick_majority")]
+    cfg = json.loads((REPO / "configs/champion_paper.json").read_text())
+    assert cfg["bojan_wick_boost"]["enabled"] is True
+
+
+def test_live_metadata_enrichment():
+    """Live signals must carry taker_imbalance + wick_lower_ratio into
+    metadata BEFORE Step 4b, else the boosts silently never fire live."""
+    enrich = LV[LV.index("Step 3e"):LV.index("Step 4:")]
+    assert "s.metadata['taker_imbalance']" in enrich
+    assert "s.metadata['wick_lower_ratio']" in enrich

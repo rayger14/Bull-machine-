@@ -283,5 +283,9 @@
   "seller_flow_boost": {
     "enabled": true,
     "_note": "validated 2026-07-28: wick_trap 1.25x capex on taker_imbalance<=0 flushes (train 1.28->1.34, holdout 1.16->1.18)"
+  },
+  "bojan_wick_boost": {
+    "enabled": true,
+    "_note": "validated 2026-07-28 incremental on SF: train +$5.6K, holdout +$831"
   }
 }
