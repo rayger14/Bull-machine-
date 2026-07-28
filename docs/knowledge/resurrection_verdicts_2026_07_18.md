@@ -152,3 +152,13 @@ repaired **1.59/+$13.7K train, 1.11/+$985 holdout** (n=96/39). Both windows
 improve massively — and repaired CB is PROFITABLE in both. Not champion-bar
 (holdout <1.3, n=39) but a genuine sleeper candidate: WATCH via live
 evidence; consider full battery+CPCV at live n>=15. SHIPPED (user-approved).
+
+## ER direction-purity study (2026-07-27) — REJECTED; RSI-oversold doctrine INVERTED
+Oversold-only ER: train 1.31->0.99 (-$13.8K swing), holdout PF 0.38->0.01.
+Both windows WORSE -> not shipped (er_oversold_F stays default 0). Finding:
+ER's profitable trades were the OVERBOUGHT blow-off entries (momentum), and
+RSI<22 capitulation buys are near-total losers on 1H BTC (holdout PF 0.01,
+n=6; train 0.99). Third doctrine inversion (fib discount, HTF alignment,
+now RSI oversold). Spec-restoration scorecard: 3 shipped (spring, TWT, CB),
+1 rejected (ER) — the harness discriminates, as designed. ER remains
+rejected in both forms.

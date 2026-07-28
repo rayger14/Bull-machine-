@@ -709,6 +709,12 @@ class ArchetypeLogic:
         rsi = row.get('rsi_14', 50.0)
         if not isinstance(rsi, (int, float)) or rsi != rsi:
             return False
+        # Direction-purity study (2026-07-27, spring/A2 template): ER is a
+        # LONG reversal archetype but historically fired on overbought
+        # blow-off tops (RSI > 78) as often as capitulation bottoms.
+        # gate_params {'er_oversold_F': 1} restricts to the oversold branch.
+        if gp.get('er_oversold_F'):
+            return float(rsi) < rsi_lower
         return float(rsi) > rsi_upper or float(rsi) < rsi_lower
 
     def _check_G(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
