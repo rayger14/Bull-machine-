@@ -1105,6 +1105,21 @@ class StandaloneBacktestEngine:
                                 f'distribution_exhaustion_3of3 (bear={wyck_bear:.2f}, oi24={oi24:.3f}, rp={rpos:.2f}) (1.5x)'
                             )
 
+                    # Boost 3 (pre-registered study 2026-07-28, config-gated OFF):
+                    # wick_trap seller-flow. Flushes whose volume was SELLER-
+                    # aggressed (taker_imbalance <= 0 = true panic into bids)
+                    # ran PF 1.79/1.51 train/holdout vs 0.62/1.09 for buyer-
+                    # aggressed (distribution into dip-buyers). First entry-time
+                    # feature ever to split wick_trap consistently across eras.
+                    if (self.config.get('seller_flow_boost') or {}).get('enabled') \
+                       and intent.signal.archetype_id == 'wick_trap':
+                        ti = row.get('taker_imbalance', None)
+                        if ti is not None and ti == ti and float(ti) <= 0.0:
+                            intent.allocated_size_pct *= 1.25
+                            sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                            sig_meta['sizing_boosts']['reasons'].append(
+                                f'wick_trap_seller_flow ti={float(ti):.3f} (1.25x)')
+
                 # Step 5: Execute allocations
                 for intent in intents:
                     sig = intent.signal
