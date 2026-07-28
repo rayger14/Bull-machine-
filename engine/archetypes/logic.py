@@ -778,11 +778,20 @@ class ArchetypeLogic:
             tf4h_fusion = 0.5
 
         has_trend = False
-        # EMA alignment exists (any direction = trend context)
+        # A1 repair study (2026-07-27): the legacy test passed merely because
+        # the EMA column EXISTED — a trap-within-TREND archetype with no trend
+        # requirement. gate_params {'twt_real_trend_H': 1} requires ACTUAL
+        # up-alignment (long archetype). Legacy default until validated.
+        # DEFAULT ON as of 2026-07-27 (A1 verdict: train 1.34->1.39, holdout
+        # PnL -5,649->-5,219 — both improve; legacy via twt_real_trend_H=0).
+        real_trend = bool((gate_params or {}).get('twt_real_trend_H', 1))
         if price_above_ema is not None:
             if isinstance(price_above_ema, (bool, int, float)):
                 if not (isinstance(price_above_ema, float) and price_above_ema != price_above_ema):
-                    has_trend = True  # EMA data exists = trend context present
+                    if real_trend:
+                        has_trend = float(price_above_ema) >= 1.0  # genuine uptrend
+                    else:
+                        has_trend = True  # legacy: EMA data exists = "trend context"
         # HTF fusion shows directional bias (not neutral)
         if not has_trend and (float(tf4h_fusion) > 0.55 or float(tf4h_fusion) < 0.35):
             has_trend = True
@@ -851,7 +860,22 @@ class ArchetypeLogic:
         poc_dist = row.get('tf1h_frvp_distance_to_poc', 999.0)
         if not isinstance(poc_dist, (int, float)) or poc_dist != poc_dist:
             return False
-        return abs(float(poc_dist)) < 0.05
+        if abs(float(poc_dist)) >= 0.05:
+            return False
+
+        # A2 repair study (2026-07-27): the FOUNDING spec required a
+        # volume-confirmed structural break (BOMS) to validate the coil
+        # breakout; production zeroed that gate and enters on any coil pop
+        # (entry narratives log "BOMS 0.000 weak breakout"; biggest live
+        # bleeder, -$16.2K entry-fail losses). gate_params
+        # {'cb_boms_confirm_M': 1} restores the confirmation requirement.
+        if (gate_params or {}).get('cb_boms_confirm_M'):
+            disp = row.get('tf4h_boms_displacement', 0.0)
+            bstr = row.get('boms_strength', 0.0)
+            disp = float(disp) if isinstance(disp, (int, float)) and disp == disp else 0.0
+            bstr = float(bstr) if isinstance(bstr, (int, float)) and bstr == bstr else 0.0
+            return disp > 0.0 or bstr >= 0.3
+        return True
 
     def _check_S1(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
