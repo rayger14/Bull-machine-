@@ -187,3 +187,17 @@ added at Step 3e (both boosts would have silently never fired live);
 regression test pins it. wick_trap now carries the founding knowledge's
 top-2 flush confirmations as conviction sizing — fusion's original intent,
 rebuilt on evidence.
+
+## Phase-1 tick-flow verdict (2026-07-29) — 0/3, Phase-2 collector NOT justified
+Full aggTrades backfill (102 months, ~2.5B trades -> hourly true-flow
+features, results/rebuild/aggtrades_flow/). All three pre-registered splits
+sign-flip between eras on clean wick_trap populations: S1 true-CVD
+divergence (train 0.91 worse / holdout n=3), S2 sellers-at-the-low (1.41
+vs 0.91 train, INVERTS 1.03 vs 1.73 holdout), S3 recovery-flip (flat train,
+dramatic holdout). Conclusion: tick-level flush anatomy adds NO consistent
+entry discriminator beyond the shipped hourly futures taker_imbalance boost
+(which remains validated — different measure: whole-hour futures taker
+flow, not spot at-the-low delta). Live tick collector (Phase 2) closed
+unless new evidence emerges. Cost of answer: one day, zero live risk —
+the test-before-build pattern working as designed. The backfilled flow
+data remains permanent research infrastructure.
