@@ -201,3 +201,15 @@ flow, not spot at-the-low delta). Live tick collector (Phase 2) closed
 unless new evidence emerges. Cost of answer: one day, zero live risk —
 the test-before-build pattern working as designed. The backfilled flow
 data remains permanent research infrastructure.
+
+## OI-DIVERGENCE GATE REPAIR — PHANTOM-TRIGGERED, VALIDATED, SHIPPED (2026-07-30)
+First fully phantom-driven repair: blocked-signal phantoms reached n=33 at
+42% WR vs taken 12.5% (pre-registered tripwire), indicting the deep-crash
+magnitude requirement (-2%/4h AND -3%/24h). Sign-only repair (<=0 both):
+train n=13->81, PnL +$3,804->+$7,676; holdout n=17->27, +$2,195->+$3,225.
+Both eras' PnL improve; PF dilutes 2.57->1.37 / 2.08->1.91 as n triples
+(added class profitable, less concentrated). Shipped to both config dirs.
+NOTE: relaxed oi_div holdout PF 1.91 n=27 — first-ever validation-candidate
+shape for this archetype; add to live-evidence watch, full battery+CPCV if
+live tracks. The phantom system's founding purpose (learn from alternate
+outcomes) delivered its first shipped repair.

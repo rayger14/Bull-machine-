@@ -62,12 +62,12 @@ thresholds:
 hard_gates:
 - feature: oi_change_4h
   op: max
-  value: -0.02
+  value: 0.0
   nan_policy: skip
-  description: "OI must be declining >2% over 4h (positions closing)"
+  description: "OI declining (sign-only; deep-crash magnitude REMOVED 2026-07-30 — phantom-driven repair: blocked class won 42% vs taken 12.5%; both eras PnL improve)"
 - feature: oi_change_24h
   op: max
-  value: -0.03
+  value: 0.0
   nan_policy: skip
   description: "OI must be declining >3% over 24h (sustained unwind)"
 - feature: volume_zscore
