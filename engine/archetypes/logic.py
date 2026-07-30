@@ -1129,6 +1129,32 @@ class ArchetypeLogic:
             return False
         return float(adx) < 25.0
 
+    def _check_S11(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
+        """
+        S11 - OI Divergence price-extreme identity (design completion 2026-07-30).
+
+        The archetype's ORIGINAL spec (config: price_extreme_lookback 24,
+        price_extreme_percentile 0.90) required price AT a local extreme for
+        a true divergence — never implemented; the archetype traded
+        "oversold + OI declining" only. This completes it: close must sit in
+        the bottom (1-0.90)=10% of the trailing 24-bar high-low range.
+        Study-gated: only active when gate_params {'oid_price_extreme_S11': 1}.
+        """
+        if not (gate_params or {}).get('oid_price_extreme_S11'):
+            return True  # legacy behavior: no structural identity
+        try:
+            if df is None or len(df) < 24:
+                return False
+            w = df.iloc[-24:]
+            hi = float(w['high'].max()); lo = float(w['low'].min())
+            if hi <= lo:
+                return False
+            close = float(row.get('close', 0.0))
+            pos = (close - lo) / (hi - lo)
+            return pos <= 0.10
+        except Exception:
+            return False
+
     def _check_S9(self, row, prev_row, df, index, fusion_score, gate_params=None) -> bool:
         """
         S9 - HOB Demand Reaction (Bojan founding spec, resurrected 2026-07-17).

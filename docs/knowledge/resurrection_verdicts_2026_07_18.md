@@ -213,3 +213,13 @@ NOTE: relaxed oi_div holdout PF 1.91 n=27 — first-ever validation-candidate
 shape for this archetype; add to live-evidence watch, full battery+CPCV if
 live tracks. The phantom system's founding purpose (learn from alternate
 outcomes) delivered its first shipped repair.
+
+## OI-DIV DESIGN COMPLETION (price-extreme identity) — REJECTED (2026-07-30)
+The never-built price_extreme condition (close in bottom 10% of 24h range,
+config's own verbatim params) implemented as study-gated _check_S11:
+train 1.37->2.49 (+$5.3K) but 2023 1.22->0.45, 2024 2.90->1.08, holdout
+1.91->0.63 — train-up/everything-else-down. The half-design ships; the
+full design is overfit-shaped. FOURTH extremity-requirement rejection
+(deep OI crash, RSI<22, fib discount, 24h price extreme) — "wait for the
+true extreme" doctrine consistently fails OOS on 1H BTC. S11 stays in
+code default-off for reproducibility.
