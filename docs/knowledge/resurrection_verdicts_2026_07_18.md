@@ -223,3 +223,17 @@ full design is overfit-shaped. FOURTH extremity-requirement rejection
 (deep OI crash, RSI<22, fib discount, 24h price extreme) — "wait for the
 true extreme" doctrine consistently fails OOS on 1H BTC. S11 stays in
 code default-off for reproducibility.
+
+## Macro/positioning audit of the wick_trap losers (2026-08-01) — NO STABLE RULE
+Live tape looked damning (winner entered shorts-crowded fz -0.71; worst
+loser longs-crowded fz +1.85, slid all day). 8.5yr test: funding-crowding
+SIGN-FLIPS (train: crowded-longs PF 0.56 toxic / shorts-crowded 2.00;
+holdout: crowded-longs 1.96 BEST / shorts-crowded 0.96). DXY flips too
+(holdout strong-dollar 7.54 is n=6). FIFTH unstable dimension (after 4
+extremity doctrines). Deduction: macro/positioning context explains losses
+in hindsight but predicts nothing stable at 1H entry level — acting on the
+live tape would have been fitting the last data point. funding_z watch
+stays (n>=200 stratified). The already-shipped defense (minimum size on
+unconfirmed entries) is the evidence-optimal response; all three July
+losers were auto-assigned minimum stake. Cosmetic defect logged: narrative
+mislabeled 07-31 upper wick as "lower wick anomaly".
