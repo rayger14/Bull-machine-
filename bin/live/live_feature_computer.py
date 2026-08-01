@@ -766,6 +766,11 @@ class LiveFeatureComputer:
         # A. OHLCV
         features.update(self._ohlcv(candle, ts))
 
+        # Cross-market breadth (validated 2026-08-01): supplied by the runner
+        abr = candle.get('alt_basket_ret_4h')
+        if abr is not None and abr == abr:
+            features['alt_basket_ret_4h'] = float(abr)
+
         # B. Technical indicators (RSI, ADX, ATR, SMA, EMA, BB, MACD)
         features.update(self._technical_indicators())
 

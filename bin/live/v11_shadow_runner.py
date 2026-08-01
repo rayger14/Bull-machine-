@@ -1330,6 +1330,9 @@ class V11ShadowRunner:
             wlr = features.get('wick_lower_ratio', None)
             if wlr is not None and wlr == wlr:
                 s.metadata['wick_lower_ratio'] = float(wlr)
+            abr = features.get('alt_basket_ret_4h', None)
+            if abr is not None and abr == abr:
+                s.metadata['alt_basket_ret_4h'] = float(abr)
 
         # Step 4: Portfolio allocation (bypass duplicate check in data-collection mode)
         if self.bypass_threshold:
@@ -1410,6 +1413,22 @@ class V11ShadowRunner:
                     sig_meta['sizing_boosts']['reasons'].append(
                         f'bojan_wick_majority wlr={float(wlr):.2f} (1.25x capex)')
                     logger.info(f"[BOJAN_WICK_BOOST] wick_trap wlr={float(wlr):.2f} "
+                                f"→ 1.25x capex sizing ({intent.allocated_size_pct:.3f})")
+
+            # Boost 5: LOCAL-flush breadth (validated 2026-08-01: train
+            # +$11.3K, holdout +$3.1K/+56% on the stack; LOCAL 1.33/1.82 vs
+            # GLOBAL 1.15/0.38).
+            if ((self.config.get('breadth_boost') or {}).get('enabled')
+                    and intent.signal.archetype_id == 'wick_trap'):
+                abr = sig_meta.get('alt_basket_ret_4h', None)
+                if abr is not None and abr == abr and float(abr) > -0.01:
+                    intent.allocated_size_pct *= 1.25
+                    sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                    sig_meta['sizing_boosts']['capex_mult'] = \
+                        sig_meta['sizing_boosts'].get('capex_mult', 1.0) * 1.25
+                    sig_meta['sizing_boosts']['reasons'].append(
+                        f'local_flush_breadth alt4h={float(abr):+.3f} (1.25x capex)')
+                    logger.info(f"[BREADTH_BOOST] wick_trap alt4h={float(abr):+.3f} "
                                 f"→ 1.25x capex sizing ({intent.allocated_size_pct:.3f})")
 
         # Update signal tracking for portfolio rejections

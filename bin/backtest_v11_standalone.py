@@ -1140,6 +1140,21 @@ class StandaloneBacktestEngine:
                             sig_meta['sizing_boosts']['reasons'].append(
                                 f'bojan_wick_majority wlr={float(wlr):.2f} (1.25x capex)')
 
+                    # Boost 5 (pre-registered study 2026-08-01, config-gated OFF):
+                    # LOCAL-flush breadth (Moneytaur/Wyckoff-Insider cross-market
+                    # insight): alts holding while BTC flushes = engineered trap.
+                    # LOCAL PF 1.33/1.82 vs GLOBAL 1.15/0.38 train/holdout.
+                    if (self.config.get('breadth_boost') or {}).get('enabled') \
+                       and intent.signal.archetype_id == 'wick_trap':
+                        abr = row.get('alt_basket_ret_4h', None)
+                        if abr is not None and abr == abr and float(abr) > -0.01:
+                            intent.allocated_size_pct *= 1.25
+                            sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                            sig_meta['sizing_boosts']['capex_mult'] = \
+                                sig_meta['sizing_boosts'].get('capex_mult', 1.0) * 1.25
+                            sig_meta['sizing_boosts']['reasons'].append(
+                                f'local_flush_breadth alt4h={float(abr):+.3f} (1.25x capex)')
+
                 # Step 5: Execute allocations
                 for intent in intents:
                     sig = intent.signal

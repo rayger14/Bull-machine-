@@ -2638,6 +2638,26 @@ class CoinbasePaperRunner:
         except Exception as exc:
             logger.warning("[DOWNTREND_SKIP] daily refresh failed (%s) — keeping previous state", exc)
 
+    def _refresh_alt_breadth(self, candle_dict):
+        """Fetch ETH/BNB/XRP hourly closes (binance.us spot, single request
+        each) and inject alt_basket_ret_4h into the candle dict so the
+        feature computer emits it. Failure -> feature absent (boost skips)."""
+        try:
+            import urllib.request
+            rets = []
+            for sym in ("ETHUSD", "BNBUSD", "XRPUSD"):
+                url = (f"https://api.binance.us/api/v3/klines?symbol={sym}"
+                       f"&interval=1h&limit=6")
+                with urllib.request.urlopen(url, timeout=10) as r:
+                    ks = json.loads(r.read())
+                closes = [float(k[4]) for k in ks]
+                if len(closes) >= 5 and closes[-5] > 0:
+                    rets.append(closes[-1] / closes[-5] - 1.0)
+            if rets:
+                candle_dict["alt_basket_ret_4h"] = sum(rets) / len(rets)
+        except Exception as exc:
+            logger.warning("[BREADTH] alt fetch failed (%s) — feature absent", exc)
+
     def _refresh_daily_context(self, timestamp=None, force=False):
         """Feed ~300 real daily candles into the feature computer's deep
         daily buffer (2026-07-20 upgrade). Once per UTC day; failure keeps
@@ -3134,6 +3154,10 @@ class CoinbasePaperRunner:
         except Exception as exc:
             logger.warning("Failed to save candle history: %s", exc)
 
+
+        # Cross-market breadth (Moneytaur/Wyckoff-Insider insight, validated
+        # 2026-08-01): alt-basket 4h return -> alt_basket_ret_4h feature.
+        self._refresh_alt_breadth(candle_dict)
 
         # Deep daily context: refresh once per UTC day (cheap single request)
         self._refresh_daily_context(timestamp=timestamp)

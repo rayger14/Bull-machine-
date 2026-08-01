@@ -287,5 +287,9 @@
   "bojan_wick_boost": {
     "enabled": true,
     "_note": "validated 2026-07-28 incremental on SF: train +$5.6K, holdout +$831"
+  },
+  "breadth_boost": {
+    "enabled": true,
+    "_note": "validated 2026-08-01: LOCAL-flush 1.25x capex (train +$11.3K, holdout +$3.1K on stack)"
   }
 }

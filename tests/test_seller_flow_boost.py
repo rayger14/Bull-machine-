@@ -51,3 +51,14 @@ def test_live_metadata_enrichment():
     enrich = LV[LV.index("Step 3e"):LV.index("Step 4:")]
     assert "s.metadata['taker_imbalance']" in enrich
     assert "s.metadata['wick_lower_ratio']" in enrich
+
+
+def test_breadth_boost_parity():
+    """Boost 5 (2026-08-01): LOCAL-flush breadth, capex-scoped, both engines,
+    enabled live, metadata enrichment present."""
+    for src in (BT, LV):
+        assert "local_flush_breadth" in src
+    enrich = LV[LV.index("Step 3e"):LV.index("Step 4:")]
+    assert "alt_basket_ret_4h" in enrich
+    cfg = json.loads((REPO / "configs/champion_paper.json").read_text())
+    assert cfg["breadth_boost"]["enabled"] is True

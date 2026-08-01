@@ -237,3 +237,20 @@ stays (n>=200 stratified). The already-shipped defense (minimum size on
 unconfirmed entries) is the evidence-optimal response; all three July
 losers were auto-assigned minimum stake. Cosmetic defect logged: narrative
 mislabeled 07-31 upper wick as "lower wick anomaly".
+
+## BREADTH BOOST — VALIDATED + SHIPPED (2026-08-01); boosts 5/5
+Moneytaur/Wyckoff-Insider cross-market insight (dormant in trap_detector.py
+since birth) resurrected as alt-basket breadth: LOCAL flush (ETH/BNB/XRP
+4h ret > -1% while BTC flushes = engineered trap) vs GLOBAL (all bleeding =
+knife). wick_trap split: LOCAL 1.33/1.82 vs GLOBAL 1.15/0.38 train/holdout
+— no sign-flip, holdout GLOBAL class = -$7,147 (most of holdout losses).
+Boost (LOCAL 1.25x capex, stacked): train +$11.3K, holdout +$3.1K (+56%),
+V15 parity exact. Full stack: wick_trap holdout $4.2K bare -> $8.7K
+(+109%), zero population change. Infra: V17 store (+alt_basket_ret_4h),
+live alt feed via binance.us spot (ETH/BNB/XRP hourly), LFC passthrough,
+runner injection. Honest notes: July live entries all classified LOCAL
+(breadth does NOT explain the July losers); historical alt source is
+binance global spot vs live binance.us (minor price-source mismatch);
+GLOBAL de-boost rejected (profitable in train, fails co-move). wick_trap
+conviction stack now: candle (Bojan) x flow (ZeroIka-school) x breadth
+(Moneytaur/Wyckoff-Insider) — three founding schools, all as sizing.
