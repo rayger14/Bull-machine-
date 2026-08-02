@@ -914,20 +914,61 @@ class ExitLogic:
             scale_levels = rules.get('scale_out_levels', [0.5, 1.0, 2.0])
             scale_pcts = rules.get('scale_out_pcts', [0.33, 0.2, 0.3])
 
+        # ------------------------------------------------------------------
+        # MANCINI LEVEL-LADDER STUDY (study-gated; default absent = legacy)
+        #
+        # PRE-REGISTERED RULE (committed BEFORE any battery run; ONE design,
+        # no grids, no post-hoc tuning of any constant below):
+        #   - Active only when rules['level_ladder'] is truthy AND the
+        #     position is LONG. Shorts and all other archetypes: legacy.
+        #   - On the FIRST exit-check bar of a position (entry + 1 bar,
+        #     point-in-time trailing features only), build a FROZEN ladder:
+        #       initial_risk = entry_price - stop_loss
+        #       candidates   = {prior_day_high, swing_high_50,
+        #                       round_number_above} from that bar, kept only
+        #       if finite AND price >= entry + 0.25 * initial_risk.
+        #   - For each rung k in legacy order (R-multiple L_k, R-distance
+        #     D_k = L_k * initial_risk): among UNUSED candidates whose
+        #     distance d = (price - entry) lies within [0.7*D_k, 1.5*D_k],
+        #     pick the one minimizing |d - D_k|. If found, that candidate is
+        #     consumed and the rung's trigger becomes R'_k = d/initial_risk
+        #     (i.e. the rung fires at the LEVEL price). Else R'_k = L_k
+        #     (legacy R-price).
+        #   - Everything else is unchanged: rung fires when unrealized_r >=
+        #     trigger (close-based evaluation, close-price fill), exit_pct
+        #     unchanged, executed_scale_outs still records the LEGACY key
+        #     L_k (keeps runner/trailing bookkeeping identical), one rung
+        #     per bar, rungs evaluated in legacy order.
+        #   - If level features are missing from the bar, fall back to
+        #     legacy triggers for that position.
+        # ------------------------------------------------------------------
+        ll_map = None
+        if rules.get('level_ladder') and position.direction == 'long':
+            ll_map = self._get_level_ladder_triggers(bar, position, scale_levels, exit_context)
+
         # Track which scale-outs already executed
         executed_scales = position.metadata.get('executed_scale_outs', [])
 
         # Check each scale level in order
-        for level, pct in zip(scale_levels, scale_pcts):
-            if unrealized_r >= level and level not in executed_scales:
-                # Mark this scale level as executed
+        for i, (level, pct) in enumerate(zip(scale_levels, scale_pcts)):
+            trigger_r = level
+            ll_tag = ""
+            if ll_map is not None:
+                trigger_r, src_name, src_price = ll_map[i]
+                if src_name is not None:
+                    ll_tag = f" [LL:mapped {src_name}@{src_price:.0f} r={trigger_r:.2f}]"
+                else:
+                    ll_tag = " [LL:legacy]"
+
+            if unrealized_r >= trigger_r and level not in executed_scales:
+                # Mark this scale level as executed (legacy key for bookkeeping)
                 executed_scales.append(level)
                 position.metadata['executed_scale_outs'] = executed_scales
 
                 return ExitSignal(
                     exit_type=ExitType.PROFIT_TARGET.value,
                     exit_pct=pct,
-                    reason=f"Scale-out at {level:.1f}R (exit {pct*100:.0f}%)",
+                    reason=f"Scale-out at {level:.1f}R (exit {pct*100:.0f}%){ll_tag}",
                     confidence=1.0,
                     metadata={**exit_context, 'scale_level': level}
                 )
@@ -965,6 +1006,79 @@ class ExitLogic:
                     )
 
         return None
+
+    def _get_level_ladder_triggers(
+        self,
+        bar: pd.Series,
+        position: "Position",
+        scale_levels: list,
+        exit_context: Dict,
+    ):
+        """MANCINI LEVEL-LADDER STUDY helper (see pre-registered rule in
+        _check_profit_targets). Builds the frozen rung->trigger map for a LONG
+        position on its first exit-check bar and caches it on the ExitLogic
+        instance (position adapters are rebuilt every bar, so instance-level
+        caching keyed by position identity is the persistence mechanism).
+
+        Returns:
+            List of (trigger_r, src_name_or_None, src_price) per rung, or
+            None if the ladder cannot be built (missing features / zero risk)
+            — caller then uses pure legacy triggers.
+        """
+        cache = getattr(self, '_ll_ladder_cache', None)
+        if cache is None:
+            cache = self._ll_ladder_cache = {}
+
+        key = (position.entry_time, position.entry_price,
+               exit_context.get('archetype'))
+        if key in cache:
+            cached = cache[key]
+            # Guard against ladder-length mismatch (config change mid-run: impossible in practice)
+            return cached if (cached is None or len(cached) == len(scale_levels)) else None
+
+        entry = position.entry_price
+        initial_risk = abs(entry - position.stop_loss)
+        if not (initial_risk > 0):
+            cache[key] = None
+            return None
+
+        # Candidate levels from the current (first-check) bar — frozen hereafter
+        candidates = []
+        for name in ('prior_day_high', 'swing_high_50', 'round_number_above'):
+            val = bar.get(name) if hasattr(bar, 'get') else None
+            if val is not None and val == val:  # NaN guard
+                price = float(val)
+                if price >= entry + 0.25 * initial_risk:
+                    candidates.append([name, price, False])  # [name, price, used]
+
+        if not candidates:
+            # No usable level features / no level above the floor: legacy triggers
+            result = [(float(lvl), None, 0.0) for lvl in scale_levels]
+            cache[key] = result
+            return result
+
+        result = []
+        for lvl in scale_levels:
+            d_k = float(lvl) * initial_risk
+            best = None
+            best_dev = None
+            for cand in candidates:
+                if cand[2]:
+                    continue  # already consumed by a lower rung
+                d = cand[1] - entry
+                if 0.7 * d_k <= d <= 1.5 * d_k:
+                    dev = abs(d - d_k)
+                    if best_dev is None or dev < best_dev:
+                        best = cand
+                        best_dev = dev
+            if best is not None:
+                best[2] = True  # consume
+                result.append(((best[1] - entry) / initial_risk, best[0], best[1]))
+            else:
+                result.append((float(lvl), None, 0.0))
+
+        cache[key] = result
+        return result
 
     def _check_time_based(
         self,
