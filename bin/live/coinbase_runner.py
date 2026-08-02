@@ -2638,6 +2638,52 @@ class CoinbasePaperRunner:
         except Exception as exc:
             logger.warning("[DOWNTREND_SKIP] daily refresh failed (%s) — keeping previous state", exc)
 
+    def _refresh_stables_rotation(self, candle_dict):
+        """Once per UTC day: fetch real stables circulation (DefiLlama) +
+        daily closes, compute the validated rotation flag via the shared
+        module (engine/features/stables_rotation.py). Injects
+        stables_rot_rising into the candle dict; failure -> feature absent
+        (the refusal gate NaN-safes to pass)."""
+        import datetime as _dt
+        day = _dt.datetime.utcnow().strftime("%Y-%m-%d")
+        if getattr(self, "_stables_rot_day", None) == day:
+            if getattr(self, "_stables_rot_flag", None) is not None:
+                candle_dict["stables_rot_rising"] = self._stables_rot_flag
+            return
+        try:
+            import urllib.request
+            import pandas as pd
+            from engine.features.stables_rotation import stables_dominance, rotation_rising
+
+            def llama(sid):
+                url = f"https://stablecoins.llama.fi/stablecoincharts/all?stablecoin={sid}"
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    data = json.loads(r.read())
+                return pd.Series({pd.Timestamp(int(d["date"]), unit="s").normalize():
+                                  float(d["totalCirculating"]["peggedUSD"])
+                                  for d in data[-30:] if d.get("totalCirculating", {}).get("peggedUSD")})
+
+            stables = llama(1).add(llama(2), fill_value=0.0)
+
+            def closes(sym):
+                url = (f"https://api.binance.us/api/v3/klines?symbol={sym}"
+                       f"&interval=1d&limit=10")
+                with urllib.request.urlopen(url, timeout=15) as r:
+                    ks = json.loads(r.read())
+                return pd.Series({pd.Timestamp(int(k[0]), unit="ms").normalize(): float(k[4]) for k in ks})
+
+            btc = closes("BTCUSD"); eth = closes("ETHUSD")
+            bnb = closes("BNBUSD"); xrp = closes("XRPUSD")
+            dom = stables_dominance(btc, eth, bnb, xrp, stables)
+            flag = float(rotation_rising(dom).dropna().iloc[-1])
+            self._stables_rot_flag = flag
+            self._stables_rot_day = day
+            candle_dict["stables_rot_rising"] = flag
+            logger.info("[STABLES_ROT] dominance flag refreshed: %s", flag)
+        except Exception as exc:
+            logger.warning("[STABLES_ROT] refresh failed (%s) — feature absent", exc)
+
     def _refresh_alt_breadth(self, candle_dict):
         """Fetch ETH/BNB/XRP hourly closes (binance.us spot, single request
         each) and inject alt_basket_ret_4h into the candle dict so the
@@ -3154,6 +3200,9 @@ class CoinbasePaperRunner:
         except Exception as exc:
             logger.warning("Failed to save candle history: %s", exc)
 
+
+        # Stables-rotation flag (validated 2026-08-02, refusal rule):
+        self._refresh_stables_rotation(candle_dict)
 
         # Cross-market breadth (Moneytaur/Wyckoff-Insider insight, validated
         # 2026-08-01): alt-basket 4h return -> alt_basket_ret_4h feature.

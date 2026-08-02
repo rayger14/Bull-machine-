@@ -770,6 +770,9 @@ class LiveFeatureComputer:
         abr = candle.get('alt_basket_ret_4h')
         if abr is not None and abr == abr:
             features['alt_basket_ret_4h'] = float(abr)
+        srr = candle.get('stables_rot_rising')
+        if srr is not None and srr == srr:
+            features['stables_rot_rising'] = float(srr)
 
         # B. Technical indicators (RSI, ADX, ATR, SMA, EMA, BB, MACD)
         features.update(self._technical_indicators())

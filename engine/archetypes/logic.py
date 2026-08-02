@@ -790,6 +790,12 @@ class ArchetypeLogic:
         # up-alignment (long archetype). Legacy default until validated.
         # DEFAULT ON as of 2026-07-27 (A1 verdict: train 1.34->1.39, holdout
         # PnL -5,649->-5,219 — both improve; legacy via twt_real_trend_H=0).
+        # Rung-2 identity study (2026-08-01): GLOBAL-flush TWT entries
+        # net-negative both eras (train -$58 / holdout -$6,929).
+        if (gate_params or {}).get('twt_local_breadth_H'):
+            _abr = row.get('alt_basket_ret_4h', None)
+            if _abr is not None and _abr == _abr and float(_abr) <= -0.01:
+                return False
         real_trend = bool((gate_params or {}).get('twt_real_trend_H', 1))
         if price_above_ema is not None:
             if isinstance(price_above_ema, (bool, int, float)):
@@ -812,6 +818,16 @@ class ArchetypeLogic:
         Quality checks handled by YAML gates.
         """
         gp = gate_params or {}
+        # Rotation-refusal study (2026-08-02, pre-registered): refuse entries
+        # when the whole market bleeds AND capital measurably rotates into
+        # stables (real DefiLlama supply data) — that class is PF 0.70/0.04
+        # train/holdout. gate_params {'wt_no_exodus_K': 1}; NaN-safe (pass).
+        if gp.get('wt_no_exodus_K'):
+            _abr = row.get('alt_basket_ret_4h', None)
+            _rot = row.get('stables_rot_rising', None)
+            if (_abr is not None and _abr == _abr and float(_abr) <= -0.01
+                    and _rot is not None and _rot == _rot and float(_rot) >= 1.0):
+                return False
         wick_threshold = gp.get('wick_pct_K', 0.35)
         return self._get_wick_anomaly(row, wick_threshold=wick_threshold)
 
@@ -879,6 +895,15 @@ class ArchetypeLogic:
         # -$17,656 -> -$250, DD cut 5x both eras, PF up both; train PnL -$1.8K
         # noted as the anti-overfit-direction trade-off. Legacy via
         # cb_boms_confirm_M=0.)
+        # Rung-2 identity study (2026-08-01): LOCAL-breadth requirement.
+        # GLOBAL-flush CB entries are net-negative in BOTH eras
+        # (train -$4,150 / holdout -$294) — a coil breakout during systemic
+        # bleed is fake. gate_params {'cb_local_breadth_M': 1} requires the
+        # alt basket holding (> -1% 4h); NaN-safe (missing feature = pass).
+        if (gate_params or {}).get('cb_local_breadth_M'):
+            abr = row.get('alt_basket_ret_4h', None)
+            if abr is not None and abr == abr and float(abr) <= -0.01:
+                return False
         if (gate_params or {}).get('cb_boms_confirm_M', 1):
             disp = row.get('tf4h_boms_displacement', 0.0)
             bstr = row.get('boms_strength', 0.0)

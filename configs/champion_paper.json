@@ -276,7 +276,8 @@
       "rsi_upper_L": 65.68071845610109,
       "vol_z_L": 1.2794004516616884,
       "wick_pct_G": 0.38184757169438016,
-      "wick_pct_K": 0.4910969436357509
+      "wick_pct_K": 0.4910969436357509,
+      "wt_no_exodus_K": 1
     }
   },
   "_champion_paper_note": "2026-07-13 v3 FULL BOOK + UNLOCKED + AUDIT-1 REPAIRS: all 16 archetypes, bypass_threshold=True (data collection BY DESIGN \u2014 sub-threshold signals trade), archetype_config_dir=archetypes_v14rq (0.43 requantiled thresholds + 2026-07-13 gate repairs: BOS emitters fixed, impossible thresholds rescaled, never-validated live-only gates removed, instability gate activated, ls_ratio z-score fixed).",
@@ -291,5 +292,6 @@
   "breadth_boost": {
     "enabled": true,
     "_note": "validated 2026-08-01: LOCAL-flush 1.25x capex (train +$11.3K, holdout +$3.1K on stack)"
-  }
+  },
+  "_exodus_note": "validated 2026-08-02: wick_trap refuses GLOBAL-flush + stables-rotation entries (train 1.36->1.56, holdout 1.26->1.51, DD down both)"
 }

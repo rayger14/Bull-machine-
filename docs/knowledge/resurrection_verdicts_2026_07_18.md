@@ -254,3 +254,16 @@ binance global spot vs live binance.us (minor price-source mismatch);
 GLOBAL de-boost rejected (profitable in train, fails co-move). wick_trap
 conviction stack now: candle (Bojan) x flow (ZeroIka-school) x breadth
 (Moneytaur/Wyckoff-Insider) — three founding schools, all as sizing.
+
+## EXODUS-REFUSAL RULE — FIRST VALIDATED ENTRY FILTER, SHIPPED (2026-08-02)
+Wyckoff Insider's rotation thesis on REAL data (DefiLlama USDT+USDC
+circulating, 2017+): GLOBAL flush + stables-dominance rising 3d = true
+capital exodus (wick_trap class PF 0.70/0.04 train/holdout). Refusal gate
+(wt_no_exodus_K, _check_K): train 1.36->1.56 +$20.5K DD -15.1->-11.6;
+holdout 1.26->1.51 +$5.9K (+68%) DD -7.9->-6.1 — EVERY metric improves
+both eras. First entry-refusal to pass in project history (filters were
+0-for-9; this one carried real new data + a mechanism). Cumulative
+wick_trap holdout: bare 1.16/$4.2K -> boosts 1.26/$8.7K -> +refusal
+1.51/$14.6K (3.5x). Infra: V18 store (+stables_rot_rising), shared module
+engine/features/stables_rotation.py, daily DefiLlama live feed, LFC
+passthrough. Deployed with explicit user approval.

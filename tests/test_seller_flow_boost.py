@@ -62,3 +62,16 @@ def test_breadth_boost_parity():
     assert "alt_basket_ret_4h" in enrich
     cfg = json.loads((REPO / "configs/champion_paper.json").read_text())
     assert cfg["breadth_boost"]["enabled"] is True
+
+
+def test_exodus_refusal_parity():
+    """Refusal rule (2026-08-02): identity gate in logic.py, live feed +
+    passthrough present, gate enabled in champion_paper."""
+    LG = (REPO / "engine/archetypes/logic.py").read_text()
+    assert "wt_no_exodus_K" in LG and "stables_rot_rising" in LG
+    RN = (REPO / "bin/live/coinbase_runner.py").read_text()
+    assert "_refresh_stables_rotation" in RN
+    LF = (REPO / "bin/live/live_feature_computer.py").read_text()
+    assert "stables_rot_rising" in LF
+    cfg = json.loads((REPO / "configs/champion_paper.json").read_text())
+    assert cfg["structural_checks"]["gate_params"]["wt_no_exodus_K"] == 1
