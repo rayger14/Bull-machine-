@@ -102,3 +102,49 @@
 - Before: tf1d_wyckoff_score=0.5 constant, M1/M2=0, tf4h missing
 - After: Real computed values from resampled 4H/1D Wyckoff detection
 - Impact: PF 1.28→1.38, Return +44.9%→+78.8%, Sharpe 1.39→1.59
+
+---
+
+## 2026-08-04 — spring_b look-ahead fix + no-context fallback + directional phase (V20)
+
+**Bug (fixed):** `detect_spring_type_b` read future closes (`close.shift(-offset)`,
+offset 0..2) with a "shift result back" comment whose shift was never written —
+batch runs repainted; live could not reproduce (future bars absent → NaN). Fixed to
+the spring_a/UT candidate/confirm pattern: fires on the confirmation bar, causal.
+Guard: `tests/test_wyckoff_causality.py` (batch-vs-truncated-walk agreement for all
+event columns — failed on old code exactly at wyckoff_spring_b; 4/4 pass post-fix).
+
+**Sparsity root cause (fixed):** the state machine discarded any spring/UT without a
+previously validated SC→AR structure, and SC's triple-extreme gate (volume_z>2.5 AND
+range_pos<0.2 AND range_z>1.5) almost never validates one. Springs: 9 events / 8.5y.
+Fix: extended the sanctioned SOS/SOW no-context fallback (fire at 0.5x confidence,
+`sm_no_context_fallback`, default ON) to spring_a/spring_b/UT/UTAD.
+Batch counts: spring_a 9→77, spring_b 54→169 (now causal), ut/utad 6→19; all other
+detectors bit-unchanged. ~29 springs/year — populated, no explosion.
+
+**Directional phase (new):** `wyckoff_phase_dir` ('C_accum'/'C_distrib'/...) +
+`wyckoff_context` exported — the bare letter conflates accumulation/distribution
+(both ACCUM_SPRING and DISTRIB_UT map to 'C'; only ~37% of C/D bars were
+accumulation-direction). mutual_exclusion was already default-on (2026-06 fix).
+
+**Consensus-14 harness (honesty):** label-level recall 0/14 → 0/14. The curated
+events are DAILY-scale structures; on 1H the engine correctly labels e.g. the
+2024-08-05 crash low ($49,000) as SC, not Spring. Even V12's columns score only
+4/14 today. Harness has a granularity mismatch — needs 1H-scale ground truth.
+Event-agnostic: 8/14 windows contain validated events (unchanged), with new
+spring/UT detections inside 2 of them.
+
+**V20 store:** `BTC_1H_FEATURES_V20_WYCKOFF.parquet` = V18_ROTATION + wyckoff
+family regenerated via live replay (`scripts/rebuild/patch_v20_wyckoff.py`, 6
+chunks; store==live parity by construction). Store validator: 8 PASS / 0 FAIL.
+NOTE: the v15-pattern stitch dropped object-dtype event bools — meaning V15/V18's
+event booleans were V14-era values all along; v20 stitch coerces them properly.
+
+**Champion co-move (V18 vs V20, champion_paper.json, position-level):**
+- TRAIN 2018-22: 796→794 pos, PF 1.193→1.192, $98,535→$97,566 (−1.0%, noise), DD −29.8→−30.7%
+- HOLDOUT 2025-26: 255→263 pos, PF 1.028→1.114, $2,867→**$12,159** (+$9.3K), DD −16.8→−16.9%
+- VERDICT: PASS (train within noise, holdout strongly improved) → fallback ships ON.
+- Composition caveat: holdout gain is bleeders bleeding less (liquidity_sweep +$4.9K,
+  TWT +$4.1K, LC +$2.7K, FC +$1.8K) while wick_trap gives back −$5.0K and spring
+  −$1.9K (fusion/dedup reshuffle from repopulated wyckoff scores). Book-level and
+  validated-side net positive; watch wick_trap live share after any deploy.
