@@ -169,3 +169,37 @@ event booleans were V14-era values all along; v20 stitch coerces them properly.
 5. **Ground truth**: his labels exist only as chart images. Transcribing 20-30
    (spring bar + range + outcome) = highest-leverage addition — would replace the
    granularity-mismatched consensus-14 harness.
+
+### 2026-08-04 addendum 2 — M2 DECODED + first real ground-truth recall test
+
+**CORRECTION to addendum 1 item 4: Model 2 IS publicly mechanizable.** His chart insets
+are the canonical **Accumulation Schematic #2 (Bogomazov/Pruden, WyckoffAnalytics)**:
+Phase A: PS → SC → AR → ST | Phase B: "ST in Phase B" (undercuts SC support = his
+"ST-B") | Phase C: **LPS above support — NO SPRING** | Phase D: LPS → SOS → BU/LPS |
+Phase E: markup. M1 = Schematic #1 (spring in phase C). His caption: "Not every
+accumulation has a spring. In Schematic #2, smart money absorbs supply more quietly."
+He confirms M2 usage with: SMT on the low, return-to-zone, LPS+Bojan, MSS on LPS.
+Fractal: same schematic on 15m BTC (8-day range), 3D/4D USDT.D (2-year range), 45m alts.
+
+**Ground truth v0 — transcribed from his BTC M2 chart (posted Jul 03 2026, Bybit 15m):**
+PS 06-25 ~$59.0K | SC 06-26 ~$57.9K | AR 06-26 ~$60.8K | ST 06-27 ~$58.3K |
+ST-B 07-01 ~$57.7K (undercuts SC) | LPS 07-01 ~$58.25K (Bojan 58,217-58,523) |
+SOS 07-02 ~$60.8K | BU/LPS 07-03 ~$59.6K. (Chart images archived from pbs.twimg.com;
+more transcribable M2 charts listed in the source thread.)
+
+**Recall test (fixed detector, production _CFG_1H, real Binance klines):**
+- 1H bars: ~0/8 — detector effectively blind at 1H to an 8-day structure (windows
+  are 15-50 bars; the range is 120+ 1H bars). phase_dir neutral throughout.
+- **4H bars: front half CAUGHT** — SC 06-25 conf 0.66 (his SC 06-26), AR conf 0.90,
+  ST twice, and phase_dir = A_accum for the ENTIRE structure (correct direction!).
+  Back half (ST-B / LPS / SOS): NOTHING.
+- **Structural cause of the back-half miss: our sequencer has NO phase-C LPS path** —
+  it only allows LPS *after* SOS (BU/LPS). In Schematic #2 the LPS comes BEFORE the
+  SOS. M2's signature moment is literally unrepresentable in the current state machine.
+
+**Next-upgrade queue (pre-registered studies, in order of evidence):**
+1. **M2 sequencer path**: allow ST-in-B (undercut without invalidation), phase-C LPS
+   from AR/ST states, SOS following LPS. All constituent detectors already exist.
+2. **HTF-native detection**: his structures live at 4H+ scale; 1H windows are myopic.
+   4H already catches phase A/B — supports the HTF-permission hierarchy (addendum 1).
+3. Expand ground truth from the remaining archived M2 charts (USDT.D 3D/4D series).
