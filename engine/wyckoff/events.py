@@ -224,6 +224,19 @@ class WyckoffStateMachine:
                         if raw_events.get('spring_b', False):
                             validated['spring_b'] = True
                         self.state = WyckoffState.ACCUM_SPRING
+            elif (self.context == WyckoffContext.NONE
+                  and self.cfg.get('sm_no_context_fallback', True)):
+                # No validated SC->AR structure exists — SC's triple-extreme gate
+                # makes that the norm, which starved springs to near-zero. Mirror
+                # the SOS/SOW no-context fallback: keep the raw detector event at
+                # half confidence instead of discarding it. State is NOT advanced
+                # (no structure to advance).
+                if raw_events.get('spring_a', False):
+                    validated['spring_a'] = True
+                    modifiers['spring_a'] = 0.5
+                if raw_events.get('spring_b', False):
+                    validated['spring_b'] = True
+                    modifiers['spring_b'] = 0.5
 
         # SOS: Requires accumulation context, or fires with reduced confidence when no context
         if raw_events.get('sos', False):
@@ -281,6 +294,15 @@ class WyckoffStateMachine:
                         if raw_events.get('utad', False):
                             validated['utad'] = True
                         self.state = WyckoffState.DISTRIB_UT
+            elif (self.context == WyckoffContext.NONE
+                  and self.cfg.get('sm_no_context_fallback', True)):
+                # Mirror of the spring no-context fallback (see accumulation path).
+                if raw_events.get('ut', False):
+                    validated['ut'] = True
+                    modifiers['ut'] = 0.5
+                if raw_events.get('utad', False):
+                    validated['utad'] = True
+                    modifiers['utad'] = 0.5
 
         # SOW: Requires distribution context, or fires with reduced confidence when no context
         if raw_events.get('sow', False):
@@ -330,6 +352,22 @@ class WyckoffStateMachine:
     def get_context_str(self) -> str:
         """Return context string"""
         return self.context.value
+
+    def get_phase_dir(self) -> str:
+        """Directional phase label: phase letter + structure direction.
+
+        The plain letter conflates accumulation and distribution — e.g. both
+        ACCUM_SPRING and DISTRIB_UT map to 'C' in get_phase(). Consumers that
+        need direction should read this (or pair phase with wyckoff_context).
+        """
+        phase = self.get_phase()
+        if phase == 'neutral':
+            return 'neutral'
+        if self.context == WyckoffContext.ACCUMULATION:
+            return f"{phase}_accum"
+        if self.context == WyckoffContext.DISTRIBUTION:
+            return f"{phase}_distrib"
+        return phase
 
 
 @dataclass
@@ -954,29 +992,36 @@ def detect_spring_type_b(df: pd.DataFrame, cfg: dict) -> Tuple[pd.Series, pd.Ser
     breakdown_pct = (rolling_low - df['low']) / (rolling_low + 1e-9)
     shallow_break = (breakdown_pct > breakdown_min) & (breakdown_pct < breakdown_max)
 
-    # Multi-bar recovery: close recovers above lower quartile within recovery_bars
-    # Check if ANY bar in the next recovery_bars window recovers
-    if recovery_bars > 1:
-        recovery_check = pd.Series(False, index=df.index)
-        for offset in range(recovery_bars):
-            shifted_close = df['close'].shift(-offset)
-            recovery_check = recovery_check | (shifted_close > range_lower_quartile)
-        # Shift result back so detection fires on the confirmation bar
-        quick_recovery = recovery_check
-    else:
-        quick_recovery = df['close'] > range_lower_quartile
-
-    # Moderate volume (relaxed lower bound)
+    # Moderate volume (relaxed lower bound) — evaluated on the candidate bar
     moderate_volume = (df['volume_z'] > -0.5) & (df['volume_z'] < 2.0)
 
-    detected = shallow_break & quick_recovery & moderate_volume
+    # Candidate spring: shallow breakdown + moderate volume (no future data)
+    candidate = shallow_break & moderate_volume
 
-    # Confidence
-    range_mid = (rolling_high + rolling_low) / 2
+    # Confirmation-based recovery (same pattern as detect_spring_type_a /
+    # detect_upthrust): a candidate existed recovery_bars ago AND the current
+    # close is back above that candidate's lower quartile. Fires on the
+    # CONFIRMATION bar with zero lookahead — a recovery that did not HOLD
+    # through the confirmation bar does not fire.
+    if recovery_bars > 1:
+        detected = (
+            candidate.shift(recovery_bars).fillna(False).astype(bool) &
+            (df['close'] > range_lower_quartile.shift(recovery_bars))
+        )
+        conf_shift = recovery_bars
+    else:
+        detected = candidate & (df['close'] > range_lower_quartile)
+        conf_shift = 0
+
+    # Confidence: breakdown depth + volume from the CANDIDATE bar (shifted to
+    # the confirmation bar); recovery strength from the CURRENT close measured
+    # against the candidate's range.
+    quart_c = range_lower_quartile.shift(conf_shift)
+    high_c = rolling_high.shift(conf_shift)
     confidence = (
-        (breakdown_pct / breakdown_max).clip(0, 1) * 0.35 +
-        ((df['close'] - range_lower_quartile) / (rolling_high - range_lower_quartile + 1e-9)).clip(0, 1) * 0.35 +
-        (df['volume_z'].clip(-1, 3) / 4.0 + 0.25).clip(0, 1) * 0.30
+        (breakdown_pct.shift(conf_shift) / breakdown_max).clip(0, 1) * 0.35 +
+        ((df['close'] - quart_c) / (high_c - quart_c + 1e-9)).clip(0, 1) * 0.35 +
+        (df['volume_z'].shift(conf_shift).clip(-1, 3) / 4.0 + 0.25).clip(0, 1) * 0.30
     )
     confidence = confidence.fillna(0.0) * detected
 
@@ -1327,6 +1372,7 @@ def _apply_state_machine_validation(df: pd.DataFrame, cfg: dict) -> pd.DataFrame
     n = len(df)
     validated_arrays = {k: np.zeros(n, dtype=bool) for k in event_keys}
     phases = ['neutral'] * n
+    phase_dirs = ['neutral'] * n
     contexts = ['none'] * n
     confidence_mod_arrays = {k: np.ones(n, dtype=float) for k in event_keys}
 
@@ -1360,6 +1406,7 @@ def _apply_state_machine_validation(df: pd.DataFrame, cfg: dict) -> pd.DataFrame
             confidence_mod_arrays[k][i] = mod
 
         phases[i] = sm.get_phase()
+        phase_dirs[i] = sm.get_phase_dir()
         contexts[i] = sm.get_context_str()
 
     # Write back validated events and zero out confidence for invalidated events
@@ -1382,6 +1429,7 @@ def _apply_state_machine_validation(df: pd.DataFrame, cfg: dict) -> pd.DataFrame
 
     # Override phase with state-machine-derived phase
     df['wyckoff_phase_abc'] = phases
+    df['wyckoff_phase_dir'] = phase_dirs
     df['wyckoff_context'] = contexts
 
     sm_counts = {k: validated_arrays[k].sum() for k in event_keys}
@@ -1574,6 +1622,11 @@ def detect_all_wyckoff_events(df: pd.DataFrame, cfg: Optional[dict] = None,
         df = _apply_state_machine_validation(df, cfg)
         # Recompute sequence position based on SM-derived phases
         df['wyckoff_sequence_position'] = _compute_sequence_position(df)
+    else:
+        # Directional phase/context only exist via the state machine; keep the
+        # columns present (neutral) so consumers see a stable schema.
+        df['wyckoff_phase_dir'] = 'neutral'
+        df['wyckoff_context'] = 'none'
 
     # Apply higher-timeframe confidence modulation (on SM-validated events only)
     if htf_context is not None:
