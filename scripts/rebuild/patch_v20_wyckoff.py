@@ -110,9 +110,26 @@ def stitch(ohlcv_index: pd.Index) -> None:
         sys.exit("no chunks found")
     patch = pd.concat([pd.read_parquet(c) for c in chunks])
     patch = patch[~patch.index.duplicated(keep="last")].sort_index()
-    # drop non-numeric diagnostics EXCEPT the directional phase/context strings
+    # Event booleans come back as object dtype (bool + None on cold-start rows).
+    # The v15 patch dropped ALL object columns, which silently discarded the
+    # event bools and left the store carrying V14-era values — coerce them to
+    # float 0/1 instead. Keep the directional strings; drop other diagnostics.
+    for c in patch.columns:
+        if patch[c].dtype == object and c not in KEEP_STR_COLS:
+            coerced = pd.to_numeric(
+                patch[c].map(lambda v: float(v) if isinstance(v, (bool, int, float))
+                             and v == v else 0.0),
+                errors="coerce").fillna(0.0)
+            n_true = int((coerced != 0).sum())
+            sample = patch[c].dropna()
+            if len(sample) and all(isinstance(v, (bool, int, float))
+                                   for v in sample.head(200)):
+                patch[c] = coerced
+                log.info("coerced object col %s to float (%d nonzero)", c, n_true)
     drop = [c for c in patch.columns
             if patch[c].dtype == object and c not in KEEP_STR_COLS]
+    if drop:
+        log.info("dropping non-numeric diagnostics: %s", drop)
     patch = patch.drop(columns=drop, errors="ignore")
     missing = ohlcv_index.difference(patch.index)
     if len(missing):
