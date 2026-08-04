@@ -148,3 +148,24 @@ event booleans were V14-era values all along; v20 stitch coerces them properly.
   TWT +$4.1K, LC +$2.7K, FC +$1.8K) while wick_trap gives back −$5.0K and spring
   −$1.9K (fusion/dedup reshuffle from repopulated wyckoff scores). Book-level and
   validated-side net positive; watch wick_trap live share after any deploy.
+
+### 2026-08-04 addendum — Wyckoff Insider's actual practice (user-sourced, public posts)
+
+1. **Springs do NOT always require a prior SC** — valid inside reaccumulation ranges
+   (mid-uptrend pauses) without a fresh climax. EXTERNALLY VALIDATES the
+   sm_no_context_fallback change. His practice ≈ "defined range + poke-and-recover",
+   suggesting a future refinement: range-existence gate (e.g. tf4h_coil / band
+   tightness) instead of unconditional no-context fallback.
+2. **Volume tells**: he prioritizes structural recovery + confluence (MSS, return-to-
+   zone, LPS+Bojan) over strict volume formulas. Entry safety ranking: Spring/Test
+   safest > Bojan-low-in-Spring (aggressive, high R:R) > LPS (riskier re-entry).
+3. **Timeframe hierarchy (clear)**: HTF (D/W) = range, bias, permission; MTF =
+   structure/Bojan/LPS refinement; LTF = trigger. Our fixed 0.5/0.3/0.2 MTF blend in
+   _get_wyckoff_score is reasonable but suboptimal vs HTF-permission-first gating.
+4. **Model 2 is NOT publicly mechanizable** — named schematic (return-to-zone, LPS+
+   Bojan, MSS on LPS, TT targets) with no bar-level public spec. Do NOT attempt to
+   rebuild mechanically (PO3-shell lesson). Our tf1d_wyckoff_m2_signal (~26% of bars)
+   provenance is fuzzy — treat with skepticism.
+5. **Ground truth**: his labels exist only as chart images. Transcribing 20-30
+   (spring bar + range + outcome) = highest-leverage addition — would replace the
+   granularity-mismatched consensus-14 harness.
