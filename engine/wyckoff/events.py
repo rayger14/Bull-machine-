@@ -261,7 +261,7 @@ class WyckoffStateMachine:
         # (higher low = the M2 signature; a low below SC_low is spring
         # territory, not an M2 LPS).
         if raw_events.get('lps', False) and self.context == WyckoffContext.ACCUMULATION:
-            if self.state in (WyckoffState.ACCUM_SOS, WyckoffState.ACCUM_LPS):
+            if self.state == WyckoffState.ACCUM_SOS:
                 validated['lps'] = True
                 self.state = WyckoffState.ACCUM_LPS
             elif (self.range_ref.ar_high > 0
@@ -350,7 +350,7 @@ class WyckoffStateMachine:
         # LPSY: after SOW (legacy) or M2 mirror — phase-C LPSY BEFORE any SOW,
         # lower high HOLDING BELOW resistance.
         if raw_events.get('lpsy', False) and self.context == WyckoffContext.DISTRIBUTION:
-            if self.state in (WyckoffState.DISTRIB_SOW, WyckoffState.DISTRIB_LPSY):
+            if self.state == WyckoffState.DISTRIB_SOW:
                 validated['lpsy'] = True
                 self.state = WyckoffState.DISTRIB_LPSY
             elif (self.range_ref.as_low > 0
