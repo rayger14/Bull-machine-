@@ -136,6 +136,8 @@ class WyckoffStateMachine:
         self.context = WyckoffContext.NONE
         self.range_ref = RangeReference()
         self.bars_in_structure = 0
+        # sm_m2_context_only shadow: phase-C reading without state/event change
+        self.m2_shadow_c = False
 
         # Config with sm_ prefix
         self.max_structure_bars = cfg.get('sm_max_structure_bars', 1000)
@@ -150,6 +152,7 @@ class WyckoffStateMachine:
         self.context = WyckoffContext.NONE
         self.range_ref = RangeReference()
         self.bars_in_structure = 0
+        self.m2_shadow_c = False
 
     def process_bar(self, bar_idx: int, row: dict, raw_events: dict) -> tuple:
         """
@@ -190,6 +193,7 @@ class WyckoffStateMachine:
                 sc_bar_idx=bar_idx,
             )
             self.bars_in_structure = 0
+            self.m2_shadow_c = False  # new structure: clear stale shadow phase
 
         # AR: Requires prior SC within lookback
         if raw_events.get('ar', False) and self.context == WyckoffContext.ACCUMULATION:
@@ -260,8 +264,7 @@ class WyckoffStateMachine:
             if self.state in (WyckoffState.ACCUM_SOS, WyckoffState.ACCUM_LPS):
                 validated['lps'] = True
                 self.state = WyckoffState.ACCUM_LPS
-            elif (self.cfg.get('sm_m2_path', False)
-                  and self.range_ref.ar_high > 0
+            elif (self.range_ref.ar_high > 0
                   and self.state in (WyckoffState.ACCUM_ST,
                                      WyckoffState.ACCUM_SPRING)
                   and row['low'] > self.range_ref.sc_low):
@@ -270,8 +273,17 @@ class WyckoffStateMachine:
                 # occurred — never straight from AR), and ONE phase-C LPS per
                 # structure (no LPS_C self-loop; without this, every quiet dip
                 # in a range re-fires: 16 -> 2,727 events, a 170x explosion).
-                validated['lps'] = True
-                self.state = WyckoffState.ACCUM_LPS_C
+                if self.cfg.get('sm_m2_path', False):
+                    validated['lps'] = True
+                    self.state = WyckoffState.ACCUM_LPS_C
+                elif self.cfg.get('sm_m2_context_only', False):
+                    # SHADOW phase-C: only wyckoff_phase_dir/_phase_abc
+                    # readings change — no event emission, no state change, so
+                    # event columns / scores / fusion inputs stay bit-identical
+                    # to the M2-off build. (Fusion reshuffle was the full
+                    # path's failure mode: train +13K / hold -5.2K. The phase
+                    # READING co-moved as an entry qualifier in both eras.)
+                    self.m2_shadow_c = True
 
         # --- DISTRIBUTION PATH ---
 
@@ -288,6 +300,7 @@ class WyckoffStateMachine:
                     bc_bar_idx=bar_idx,
                 )
                 self.bars_in_structure = 0
+                self.m2_shadow_c = False  # new structure: clear stale shadow
 
         # AS: Requires prior BC within lookback
         if raw_events.get('as', False) and self.context == WyckoffContext.DISTRIBUTION:
@@ -340,15 +353,17 @@ class WyckoffStateMachine:
             if self.state in (WyckoffState.DISTRIB_SOW, WyckoffState.DISTRIB_LPSY):
                 validated['lpsy'] = True
                 self.state = WyckoffState.DISTRIB_LPSY
-            elif (self.cfg.get('sm_m2_path', False)
-                  and self.range_ref.as_low > 0
+            elif (self.range_ref.as_low > 0
                   and self.state in (WyckoffState.DISTRIB_ST,
                                      WyckoffState.DISTRIB_UT)
                   and row['high'] < self.range_ref.bc_high):
                 # Mirror of the accumulation M2 constraints: phase-B work (ST
                 # or UT) must precede; one phase-C LPSY per structure.
-                validated['lpsy'] = True
-                self.state = WyckoffState.DISTRIB_LPSY_C
+                if self.cfg.get('sm_m2_path', False):
+                    validated['lpsy'] = True
+                    self.state = WyckoffState.DISTRIB_LPSY_C
+                elif self.cfg.get('sm_m2_context_only', False):
+                    self.m2_shadow_c = True  # shadow phase-C (see accum path)
 
         return validated, modifiers
 
@@ -367,6 +382,12 @@ class WyckoffStateMachine:
 
     def get_phase(self) -> str:
         """Return current Wyckoff phase letter based on state"""
+        # Context-only M2 shadow: report phase C while the underlying state is
+        # still the phase-B state (no state/event mutation — see M2 branches)
+        if self.m2_shadow_c and self.state in (
+                WyckoffState.ACCUM_ST, WyckoffState.ACCUM_SPRING,
+                WyckoffState.DISTRIB_ST, WyckoffState.DISTRIB_UT):
+            return 'C'
         phase_map = {
             WyckoffState.NONE: 'neutral',
             WyckoffState.ACCUM_SC: 'A', WyckoffState.ACCUM_AR: 'A',

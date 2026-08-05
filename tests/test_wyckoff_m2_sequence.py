@@ -104,3 +104,20 @@ def test_m2_distribution_mirror_lpsy_before_sow():
     v, _ = sm.process_bar(12, _row(low=95, close=96, high=99, volume_z=2.0),
                           {'sow': True})
     assert v['sow'], "SOW must be reachable from the phase-C LPSY state"
+
+
+def test_m2_context_only_shadow():
+    """sm_m2_context_only: phase reads 'C' but NO event emission and NO state
+    change — event columns/scores stay bit-identical to M2-off."""
+    sm = WyckoffStateMachine({'sm_m2_context_only': True})
+    _drive_phase_ab(sm)
+    v, _ = sm.process_bar(14, _row(low=103.0, close=105.0), {'lps': True})
+    assert not v['lps'], "context-only must NOT emit the lps event"
+    assert sm.state == WyckoffState.ACCUM_ST, "context-only must NOT change state"
+    assert sm.get_phase() == 'C'
+    assert sm.get_phase_dir() == 'C_accum'
+    # SOS still validates from the real (unchanged) ST state, ending the shadow
+    v, _ = sm.process_bar(18, _row(low=108, close=112, high=113, volume_z=2.0),
+                          {'sos': True})
+    assert v['sos'] and sm.state == WyckoffState.ACCUM_SOS
+    assert sm.get_phase() != 'C', "shadow must not apply after the state advances"
