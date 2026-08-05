@@ -418,3 +418,22 @@ evidence EXACTLY: the source's architecture is size-tiers, not vetoes.
 itself information (no M1/M2/LPS/Bojan forming); body-break against; acceptance on
 the wrong side; missing confluence (SMT/dominance silent); time-based expiry of the
 expected window. "Data points alone are not a trade."
+
+### 2026-08-05 addendum 12 — Eye Phase 2b: corrected tiers REJECTED on untouched fold; eye sizing-dial PARKED
+
+The corrected map (DIP_IN_DEMAND > PULLBACK > EXTENSION) was validated against the
+never-touched 2023-24 fold (champion battery, 475 long positions). RESULT: INVERTED —
+EXTENSION was the best-powered, best-performing tier (TRENDING/CONFIRMED chase subset
+n=57 PF 1.82; full tier n=239 PF 1.45) and DIP the worst (n=12 PF 0.46). Worse: the
+ORIGINAL Phase-2 tiers held CORRECTLY on 2023-24 (ALIGNED_CONFIRMED 1.61 > FORMING
+1.31) — the inversion that motivated the redesign was itself era-specific. Three eras,
+three different orderings: 2018-22 strength-best, 2023-24 strength-best, 2025-26
+strength-worst. NO stable cross-era size dial exists in the eye's tier family.
+**DECISIONS:** (1) Eye sizing-dial PARKED — no Phase 3, and NO further tier re-slices:
+the untouched fold is now spent; any additional redefinition tested on seen data is
+self-deception. (2) The eye Phase-1 state machine (causal, validated timelines) is
+KEPT as infrastructure. (3) What survives every era remains the narrow mechanism-
+backed qualifiers only: the 1H C_accum phase boost (deployed), seller-flow, Bojan-wick,
+breadth. **META-LESSON (write it in stone): era-stability is rarer than mechanism-
+plausibility — 2-of-3-era signals died on the third era all week. Revisit the eye
+when LIVE data (new detection, deployed 2026-08-05) accumulates a fresh honest fold.**
