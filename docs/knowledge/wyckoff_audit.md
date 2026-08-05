@@ -468,3 +468,23 @@ queued for inventory.
 structure as bias input — buildable NOW from engine/features/stables_rotation.py
 deterministic dominance series (a NEW data dimension = honest historical test, not a
 spent-fold re-slice), (c) more model detectors each earning boosts.**
+
+### 2026-08-05 addendum 14 — Dominance-HTF structure REJECTED; rot_rising book-wide lead found
+
+**Dominance-structure bias: REJECT** (branch study/dominance-bias, 6e518c0). Decomposed:
+(a) the raw dominance DATA is real — co-moves with WI's narrative at 4/6 dated marks
+(2022 bear rise +77%, 2023 fall −33%, late-2025 M2 rise +41%, Feb-2026 peak; both
+misses at 2021 alt-season tops = our basket ≠ CRYPTOCAP USDT.D); (b) the pre-registered
+READER failed — rolling-90d-max boundaries can't read a grinding ratio (94.7% NEUTRAL,
+NEUTRAL at all 6 WI marks incl. the flagship M2→TT arc); (c) tier ordering 0/3 on PF
+with era sign-flips (WARNING best in train, worst in hold, n≤19 tiers); (d) 91-100%
+redundant with stables_rot_rising. No reader re-tune on seen folds (addendum-12
+discipline) — a fixed-structural-range reader for dominance awaits a fresh live fold.
+
+**BYPRODUCT LEAD (the real finding): `stables_rot_rising` is 3/3-fold consistent
+BOOK-WIDE** — long entries with rot=0 vs rot=1: train PF 1.52 vs 0.81; oosA (untouched
+dimension-framing) 2.11 vs 0.74; hold 1.51 vs 0.60. The deployed usage (wick_trap
+exodus refusal) uses a NARROW slice of this; the general form — size UP longs when
+rotation is NOT rising (money not fleeing to stables) — is boost-shaped, mechanism-
+backed, validated-lineage, and descriptively consistent in all three folds. →
+CANDIDATE BOOST 7: standard battery (boost on/off, co-move) is the confirmation step.
