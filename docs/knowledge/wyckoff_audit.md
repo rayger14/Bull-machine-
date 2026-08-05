@@ -304,3 +304,33 @@ DIAGNOSIS CONFIRMED: v1 campaign died on inverted geometry (deep stop, full size
 R-ladder-capped winners). His geometry: tight model stop, banked partial, derisked
 runner to a pre-mapped structural TT. → ONE pre-registered v2 with WI-faithful
 execution (acceptance entry, LPS-structure stop, TP1+derisk+runner-to-TT).
+
+### 2026-08-05 addendum 7 — WI batch 2: execution mechanics DECODED (direct evidence)
+
+**#8 selectivity:** no exact number published; "When not trading is the edge"; campaign
+trades = few high-conviction swings/year + scalps inside their ranges. Our ~950
+trades/5y is confirmed off-scale vs the source methodology.
+**#9 PO3 (VERBATIM): "A valid PO3 needs three things: A defined range. An aggressive
+break of that range. A Wyckoff inside the manipulation phase."** Never standalone. Our
+5x-rejected bare PO3 was structurally invalid by his own definition — diagnosis confirmed.
+
+**Ambiguities RESOLVED (direct quotes):**
+1. **Entry = return-to-zone (RTZ) after the MSS-on-LPS confirms** — "Return to zone
+   inside the range. LPS + Bojan. Market structure break on LPS. That is the trade."
+   MSS confirms; preferred fill is the retest back into the zone, not the breakout close.
+2. **Post-TP1 stop = UNDER THE CREATED LPS (structure anchor, NOT breakeven)** — gold
+   trade: "TP1 40%. SL movement under created LPS. Position fully derisked 1/10";
+   "TP by first supply or LTF bojan high to derisk SL same place not entry". One-step
+   structure trail anchored at the key created LPS; not a continuous every-higher-low trail.
+3. **TT** = pre-computed measured-move-style projection tied to the range/M2 ("2X"),
+   often BEYOND the plain range high/low, precise to decimals (74,384.7) — exact
+   formula still not public. Partials happen earlier at supply zones / Bojan highs;
+   core runner held to TT.
+
+**From the charts (gold 2H Jul-2026 + BTC 2H Dec-2025):** TP1 anchor = FIRST OPPOSING
+SUPPLY ZONE (structural, not an R-multiple). "UNF" (unfinished) W/M/5D candle levels
+act as magnets/targets ("M UNF fixed on demand", "UNF 5D 86,147"). Level vocabulary in
+active use: MM supply, M1 POI, HPS POI zone, inducement level, weekend $$$ (liquidity),
+timeframe-scoped Bojan zones ("3D Bojan + M Bojan + 6M Bojan" confluence at one price).
+Implication for v2 exits: TP1 should anchor to the nearest opposing structural zone
+(swing_high/supply), stop trails under the post-entry created LPS — both codable.
