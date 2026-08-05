@@ -396,3 +396,25 @@ low blind — his usage is LPS+Bojan INSIDE an armed accumulation; the faithful 
 is Bojan-low ∩ C_accum, but the intersection cohort is likely n<10 → underpowered
 today; revisit when live data accumulates. Legacy test_wyckoff_events.py 5 failures
 confirmed PRE-EXISTING on main (Feb-2026 recalibration fixture debt, unrelated).
+
+### 2026-08-05 addendum 11 — WI batch 4 (final): HTF mechanics for the all-seeing eye
+
+**States (his operative set — NOT the rigid 4-phase schematic):** IN_RANGE (default:
+"HTF range until proven otherwise"), MANIPULATION (wick deviation of/inside range —
+explicitly NOT a bias flip), MODEL_FORMING (M1/M2 accum/dist at the extremes),
+CONFIRMED_BREAK (real candle-BODY structure beyond the range + acceptance),
+TRENDING (post-break + successful retest/LPS). Plus premium/discount location.
+Neutral until proven; "reacts to the model that is present."
+**Precedence:** HTF governs bias + SIZE; MTF/LTF may authorize only small tactical
+scalps before/against HTF confirmation. "No confirmation = no trade" (at size).
+**Bias flip rule:** real candle-BODY break beyond the HTF range (wick = manipulation,
+never a flip); Monthly/2W breaks weighted highest; acceptance vs rejection decides;
+a COMPLETED M2 (LPS + MSS) at the extreme can shift local bias pre-break.
+**Permission = DIAL (his own words' shape):** against-HTF → main size ~zero until
+confirmation, scalps allowed; full size only after Wyckoff confirmation. Soft gate
+for meaningful risk, dial for tactical risk. → matches our boosts-6/6 vs filters-0/9
+evidence EXACTLY: the source's architecture is size-tiers, not vetoes.
+**Early HTF-read invalidation:** ABSENCE of the expected model at the extreme is
+itself information (no M1/M2/LPS/Bojan forming); body-break against; acceptance on
+the wrong side; missing confluence (SMT/dominance silent); time-based expiry of the
+expected window. "Data points alone are not a trade."
