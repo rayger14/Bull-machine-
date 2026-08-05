@@ -437,3 +437,34 @@ backed qualifiers only: the 1H C_accum phase boost (deployed), seller-flow, Boja
 breadth. **META-LESSON (write it in stone): era-stability is rarer than mechanism-
 plausibility — 2-of-3-era signals died on the third era all week. Revisit the eye
 when LIVE data (new detection, deployed 2026-08-05) accumulates a fresh honest fold.**
+
+### 2026-08-05 addendum 13 — WI batch 5 (final): all four eye-failure diagnoses CONFIRMED
+
+1. **HTF range = FIXED structural object** (W/M swing-anchored, redrawn ONLY on body-close
+   MSS break; premium/discount measured against THAT). Our rolling-40D location feature
+   is confirmed mis-built — in trends a rolling range trails price so "premium" degrades
+   to "market has been rising" = regime beta = the era-flips we observed.
+2. **Extension conflation confirmed**: his premium-side continuation entries REQUIRE a
+   completed/completing model (BU/LPS, retest+acceptance, clear invalidation); naked
+   strength = the chase he skips. "Deep in premium is where you start prepping longs,
+   not chasing fear."
+3. **Cross-market is a CORE bias input, not confluence**: "We're using Dominance as the
+   main driver... clear PO3... strong directional bias"; "the dominance chart gives the
+   blueprint, entries come from a valid Wyckoff on the crypto charts." His USDT.D M2/P03
+   read called the exact 2025-26 regime our price-only eye missed.
+4. **He does NOT size by regime**: size trigger = completed high-quality model
+   (normal 0.5-1%, high-probability HTF+MTF 3-5%). Regime picks WHICH models are
+   takeable; no regime size-dial exists. → the eye-as-sizing-dial was un-Wyckoff by
+   construction; the correct architecture = a PORTFOLIO OF MODEL DETECTORS, each
+   earning its own boost (exactly the 6/6 pattern; C_accum boost = first instance).
+5. **One playbook across eras**; context (HTF structure + dominance) changes which
+   models are high-probability. Era-instability is adapted to via structure+cross-market
+   reads, not system switches.
+USER NOTE: founding codebase also carries dormant Gann / time-cycle / price-zone
+machinery (relevant to his T7/Gann time-windows + time-based model-failure rule) —
+queued for inventory.
+**ARCHITECTURE VERDICT (final): eye-as-dial retired permanently. Forward path =
+(a) fixed-structural-range location feature (infrastructure fix), (b) dominance-HTF
+structure as bias input — buildable NOW from engine/features/stables_rotation.py
+deterministic dominance series (a NEW data dimension = honest historical test, not a
+spent-fold re-slice), (c) more model detectors each earning boosts.**
