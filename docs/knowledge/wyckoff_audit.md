@@ -230,3 +230,31 @@ Open question for a future study: C_accum as a CONTEXT/bias feature (sizing boos
 when phase_dir=C_accum) rather than through fusion-score reshuffling — the failure
 mode here was fusion/dedup reshuffle, not the phase reading itself (which was
 CORRECT on WI's chart). Prior: boosts 5/5.
+
+### 2026-08-04 addendum 4 — wyckoff_phase_boost VALIDATED (the correct test)
+
+User correction applied: judging M2 detection through fusion-mediated book PnL was
+the wrong instrument (Lesson #54 — fusion is noise). Correct instrument = direct
+predictive test + boost channel (boosts 5/5).
+
+**Direct test:** V20-champion LONG entries inside phase-C accumulation: PF 2.07
+train / 1.50 hold vs 1.16 / 1.09 outside (n=52/19, co-move both eras). Bar-level
+C_accum alone sign-flips across eras → qualifier, not standalone predictor.
+
+**Architecture:** `sm_m2_context_only` SHADOW phase — M2 state machine drives
+wyckoff_phase_dir ONLY; no event emission, no state mutation. Guard-verified:
+V22_CTX store differs from V20 in ONLY {phase_abc, phase_dir, sequence_position};
+all 29 event/score columns bit-identical; C_accum on the same 11,147 bars as full
+M2. (Guard also caught + reverted an unintended legacy widening: repeat-BU/LPS
+validation had leaked into every score column via replay. Tests were green — only
+the byte-level store comparison saw it.)
+
+**Boost 6** (`wyckoff_phase_boost`, 1.25x + scoped capex, ANY long archetype when
+phase_dir=='C_accum', default OFF): battery on V22_CTX, champion_paper base:
+- CONTROL: boost-OFF bit-identical to V20 champion runs (1738/596 rows) — clean attribution
+- TRAIN: PF 1.192→1.208, $97,566→$106,175 (+$8,609), DD −30.7→−29.8 (better)
+- HOLD:  PF 1.114→1.120, $12,159→$12,928 (+$769), DD −16.9→−17.4 (−0.5pp)
+- Mechanical sanity: hold delta +$769 ≈ 25% × the $3.1K C_accum-entry PnL (exact)
+**VERDICT: PASS (co-move both eras; boosts now 6-for-6). Deploy-gated on user.**
+Caveats: hold boosted n=19 (<30, flagged); train −2 positions (capex margin
+consumption); DD hold +0.5pp minor.
