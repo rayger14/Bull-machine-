@@ -276,3 +276,31 @@ real; story-ENTRY is solved by existing archetypes; story-EXIT (ride the markup)
 the unsolved discretion gap → exactly WI questions #1 (TT/profit-taking formula),
 #2 (failed accumulations), #6 (failed-LPS handling). Do NOT retune exits on this
 rejected identity. Full-story mechanization now 0/3.
+
+### 2026-08-05 addendum 6 — WI execution intel (user-sourced): the missing exit organ
+
+Answers to the 7 questions (direct + labeled inference). The prize is his EXECUTION
+recipe, which maps 1:1 onto why wyckoff_campaign v1 (and PO3-orch) bled:
+1. **Exits (pre-mapped, banked, derisked):** TT defined IN ADVANCE (measured move /
+   "2X" projection of the range). TP1 partial (~40% observed), then SL moves UNDER the
+   newly-created LPS/structure (derisk to ~1/10), core runner held to full TT. Does
+   NOT trail LTF structure once TT is mapped. "Clear invalidation, clear target."
+2. **Failed accumulations:** near-zero public post-mortems (survivorship). Invalidation
+   tells (inferred): no MSS/acceptance after LPS/spring; close outside range/DL; HTF
+   flip. Failure = wait for the next (deeper) structure, not force the thesis.
+3. **Which range:** HTF range first ("HTF range until proven otherwise"), at HTF POI /
+   discount, with a clean Wyckoff (esp. M2) forming INSIDE it and room to the opposite
+   side. Duration matters less than developed phases.
+4. **Phase-C confirmation = ACCEPTANCE, not the event bar:** "Market structure break on
+   LPS. That is the trade." Waits for closes, sometimes days. (Explains our detector
+   firing Jun 26 vs his Jul 1 label.)
+5. **Phase-B maturity:** discretionary; more tests = quality; no public bar count.
+6. **Failed M2 LPS:** stop-out for the M2 TRADE (stop under the LPS structure — the
+   model's invalidation, NOT the deep range low); planned M1 re-entry lower may remain
+   if HTF intact. → per-model tight stops, layered demand.
+7. **Cross-market confluence (SMT/USDT.D):** conviction TIER, not hard requirement —
+   matches our boost framework exactly.
+DIAGNOSIS CONFIRMED: v1 campaign died on inverted geometry (deep stop, full size,
+R-ladder-capped winners). His geometry: tight model stop, banked partial, derisked
+runner to a pre-mapped structural TT. → ONE pre-registered v2 with WI-faithful
+execution (acceptance entry, LPS-structure stop, TP1+derisk+runner-to-TT).
