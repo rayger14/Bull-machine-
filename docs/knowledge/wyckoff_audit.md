@@ -258,3 +258,21 @@ phase_dir=='C_accum', default OFF): battery on V22_CTX, champion_paper base:
 **VERDICT: PASS (co-move both eras; boosts now 6-for-6). Deploy-gated on user.**
 Caveats: hold boosted n=19 (<30, flagged); train −2 positions (capex margin
 consumption); DD hold +0.5pp minor.
+
+### 2026-08-05 addendum 5 — wyckoff_campaign standalone REJECTED (3rd full-story failure)
+
+S12 "wyckoff_campaign" (C_accum phase + spring/PTI confirmation entry, swing_low_50
+structural stop, Smart Exits V2, long-only) built on study/wyckoff-campaign (64f79a7),
+full pre-registered protocol. VERDICT: REJECT — TRAIN −$3,825 PF 0.72 (bear years
+bleed); OOS-A +$787 (n=7, thin), OOS-B +$4,280 PF 2.27 (n=10); pooled PF 1.07; in-book
+ZERO trades (neutral-weight fusion never clears the champion threshold, $0 delta).
+94% orthogonal to spring/wick_trap entries — not redundancy; the fresh entries are
+simply not good enough alone. FAILURE MECHANISM = exit/stop geometry AGAIN: wide
+structural stop → avg loss $1,096 vs avg win $401 with R-ladder-capped winners (same
+killer as PO3-orchestration). THE SPLIT VERDICT vs the validated boost: C_accum
+context makes EXISTING archetype entries better (boost passed, co-move) but does NOT
+make raw spring-event entries inside C_accum a standalone edge. Chapter-awareness is
+real; story-ENTRY is solved by existing archetypes; story-EXIT (ride the markup) is
+the unsolved discretion gap → exactly WI questions #1 (TT/profit-taking formula),
+#2 (failed accumulations), #6 (failed-LPS handling). Do NOT retune exits on this
+rejected identity. Full-story mechanization now 0/3.
