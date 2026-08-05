@@ -77,6 +77,7 @@ class WyckoffState(Enum):
     ACCUM_AR = "accum_ar"
     ACCUM_ST = "accum_st"
     ACCUM_SPRING = "accum_spring"
+    ACCUM_LPS_C = "accum_lps_c"   # M2 (Schematic #2): phase-C LPS BEFORE SOS
     ACCUM_SOS = "accum_sos"
     ACCUM_LPS = "accum_lps"
     # Distribution states
@@ -84,6 +85,7 @@ class WyckoffState(Enum):
     DISTRIB_AR = "distrib_ar"
     DISTRIB_ST = "distrib_st"
     DISTRIB_UT = "distrib_ut"
+    DISTRIB_LPSY_C = "distrib_lpsy_c"  # M2 mirror: phase-C LPSY BEFORE SOW
     DISTRIB_SOW = "distrib_sow"
     DISTRIB_LPSY = "distrib_lpsy"
 
@@ -242,18 +244,34 @@ class WyckoffStateMachine:
         if raw_events.get('sos', False):
             if self.context == WyckoffContext.ACCUMULATION:
                 if self.state in (WyckoffState.ACCUM_AR, WyckoffState.ACCUM_ST,
-                                 WyckoffState.ACCUM_SPRING):
+                                 WyckoffState.ACCUM_SPRING, WyckoffState.ACCUM_LPS_C):
                     validated['sos'] = True
                     self.state = WyckoffState.ACCUM_SOS
             elif self.context == WyckoffContext.NONE:
                 validated['sos'] = True
                 modifiers['sos'] = 0.5  # 50% confidence penalty for no-context SOS
 
-        # LPS: Requires prior SOS
+        # LPS: after SOS = BU/LPS (Schematic #1 & #2 phase D). M2 path
+        # (Schematic #2, default ON): a phase-C LPS BEFORE any SOS is valid
+        # when the range is established and the bar's low HOLDS ABOVE support
+        # (higher low = the M2 signature; a low below SC_low is spring
+        # territory, not an M2 LPS).
         if raw_events.get('lps', False) and self.context == WyckoffContext.ACCUMULATION:
-            if self.state == WyckoffState.ACCUM_SOS:
+            if self.state in (WyckoffState.ACCUM_SOS, WyckoffState.ACCUM_LPS):
                 validated['lps'] = True
                 self.state = WyckoffState.ACCUM_LPS
+            elif (self.cfg.get('sm_m2_path', True)
+                  and self.range_ref.ar_high > 0
+                  and self.state in (WyckoffState.ACCUM_ST,
+                                     WyckoffState.ACCUM_SPRING)
+                  and row['low'] > self.range_ref.sc_low):
+                # Schematic #2 structure constraints (NOT tuned numbers):
+                # phase-B work must precede the LPS (an ST or spring has
+                # occurred — never straight from AR), and ONE phase-C LPS per
+                # structure (no LPS_C self-loop; without this, every quiet dip
+                # in a range re-fires: 16 -> 2,727 events, a 170x explosion).
+                validated['lps'] = True
+                self.state = WyckoffState.ACCUM_LPS_C
 
         # --- DISTRIBUTION PATH ---
 
@@ -308,18 +326,29 @@ class WyckoffStateMachine:
         if raw_events.get('sow', False):
             if self.context == WyckoffContext.DISTRIBUTION:
                 if self.state in (WyckoffState.DISTRIB_AR, WyckoffState.DISTRIB_ST,
-                                 WyckoffState.DISTRIB_UT):
+                                 WyckoffState.DISTRIB_UT,
+                                 WyckoffState.DISTRIB_LPSY_C):
                     validated['sow'] = True
                     self.state = WyckoffState.DISTRIB_SOW
             elif self.context == WyckoffContext.NONE:
                 validated['sow'] = True
                 modifiers['sow'] = 0.5
 
-        # LPSY: Requires prior SOW
+        # LPSY: after SOW (legacy) or M2 mirror — phase-C LPSY BEFORE any SOW,
+        # lower high HOLDING BELOW resistance.
         if raw_events.get('lpsy', False) and self.context == WyckoffContext.DISTRIBUTION:
-            if self.state == WyckoffState.DISTRIB_SOW:
+            if self.state in (WyckoffState.DISTRIB_SOW, WyckoffState.DISTRIB_LPSY):
                 validated['lpsy'] = True
                 self.state = WyckoffState.DISTRIB_LPSY
+            elif (self.cfg.get('sm_m2_path', True)
+                  and self.range_ref.as_low > 0
+                  and self.state in (WyckoffState.DISTRIB_ST,
+                                     WyckoffState.DISTRIB_UT)
+                  and row['high'] < self.range_ref.bc_high):
+                # Mirror of the accumulation M2 constraints: phase-B work (ST
+                # or UT) must precede; one phase-C LPSY per structure.
+                validated['lpsy'] = True
+                self.state = WyckoffState.DISTRIB_LPSY_C
 
         return validated, modifiers
 
@@ -342,9 +371,11 @@ class WyckoffStateMachine:
             WyckoffState.NONE: 'neutral',
             WyckoffState.ACCUM_SC: 'A', WyckoffState.ACCUM_AR: 'A',
             WyckoffState.ACCUM_ST: 'A', WyckoffState.ACCUM_SPRING: 'C',
+            WyckoffState.ACCUM_LPS_C: 'C',
             WyckoffState.ACCUM_SOS: 'B', WyckoffState.ACCUM_LPS: 'D',
             WyckoffState.DISTRIB_BC: 'A', WyckoffState.DISTRIB_AR: 'A',
             WyckoffState.DISTRIB_ST: 'A', WyckoffState.DISTRIB_UT: 'C',
+            WyckoffState.DISTRIB_LPSY_C: 'C',
             WyckoffState.DISTRIB_SOW: 'B', WyckoffState.DISTRIB_LPSY: 'D',
         }
         return phase_map.get(self.state, 'neutral')

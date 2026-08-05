@@ -167,7 +167,14 @@ def main() -> None:
                     help="1-based worker index and total chunk count")
     ap.add_argument("--limit", type=int, help="smoke test: last N store bars")
     ap.add_argument("--stitch", action="store_true")
+    ap.add_argument("--version", default="V20_WYCKOFF",
+                    help="output store version tag (e.g. V21_M2); also names "
+                         "the chunk workdir so builds don't collide")
     args = ap.parse_args()
+
+    global OUT_DIR, V20
+    OUT_DIR = REPO / f"results/rebuild/{args.version.lower()}"
+    V20 = REPO / f"data/features_mtf/BTC_1H_FEATURES_{args.version}.parquet"
 
     ohlcv = load_ohlcv()
     if args.stitch:
