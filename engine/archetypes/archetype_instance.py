@@ -55,6 +55,14 @@ DERIVED_FEATURES = {
         (_safe_float(f.get('high', 0)) - max(_safe_float(f.get('open', 0)), _safe_float(f.get('close', 0)))) / max(abs(_safe_float(f.get('close', 0)) - _safe_float(f.get('open', 0))), 0.01),
         10.0
     ),
+    # Whipsaw-long resurrection study (2026-08-02): exact mirror of
+    # upper_wick_body_ratio for the long-side lower-wick rejection gate.
+    # Inert unless a YAML gate references 'derived:lower_wick_body_ratio'
+    # (no production YAML does — used only by the study variant YAML dir).
+    'lower_wick_body_ratio': lambda f: min(
+        (min(_safe_float(f.get('open', 0)), _safe_float(f.get('close', 0))) - _safe_float(f.get('low', 0))) / max(abs(_safe_float(f.get('close', 0)) - _safe_float(f.get('open', 0))), 0.01),
+        10.0
+    ),
     # Phase 2: Strategy notebook derived features
     'wyckoff_in_accumulation': lambda f: str(f.get('wyckoff_context', '')).lower() == 'accumulation',
     'wyckoff_in_distribution': lambda f: str(f.get('wyckoff_context', '')).lower() == 'distribution',
@@ -892,7 +900,11 @@ class ArchetypeInstance:
 
         # Update cooling period state
         if current_bar_idx is not None:
-            self.last_signal_bar = current_bar_idx
+            # Cooldown study 2026-08-02: legacy arms on SIGNAL (even if the
+            # signal is later deduped/blocked — audited as unintended).
+            # 'arm_on_entry'/'off' modes defer/skip arming (engine-controlled).
+            if not getattr(self, 'defer_cooldown_arm', False):
+                self.last_signal_bar = current_bar_idx
             logger.debug(f"[SIGNAL] {self.name} fired at bar {current_bar_idx}, next available at {current_bar_idx + self.cooling_period_bars}")
 
         # Compute domain scores for metadata

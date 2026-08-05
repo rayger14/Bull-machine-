@@ -140,6 +140,10 @@ class IsolatedArchetypeEngine:
                 config_dict['hard_gates'] = gates
             archetype_config = self._convert_to_archetype_config(config_dict)
             self.archetypes[name] = ArchetypeInstance(archetype_config)
+            # cooldown_mode: 'legacy' (arm on signal, default) |
+            # 'arm_on_entry' (caller arms via arm_cooldown after fill) | 'off'
+            _cd_mode = (self.config or {}).get('cooldown_mode', 'legacy')
+            self.archetypes[name].defer_cooldown_arm = _cd_mode != 'legacy'
             logger.info(
                 f"  Initialized: {name} ({config_dict['direction']}) - "
                 f"Fusion W={config_dict['fusion_weights']['wyckoff']:.2f}"
@@ -657,6 +661,13 @@ class IsolatedArchetypeEngine:
             return kept
 
         return signals
+
+    def arm_cooldown(self, archetype_id: str, bar_index: int) -> None:
+        """Arm an archetype's cooldown (used by cooldown_mode='arm_on_entry'
+        after a signal actually becomes a position)."""
+        inst = self.archetypes.get(archetype_id)
+        if inst is not None:
+            inst.last_signal_bar = bar_index
 
     def get_signals(
         self,

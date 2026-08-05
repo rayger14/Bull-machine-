@@ -64,7 +64,8 @@
     "trap_within_trend",
     "volume_fade_chop",
     "whipsaw",
-    "wick_trap"
+    "wick_trap",
+    "hob_reaction"
   ],
   "_disabled_archetypes_note": "2026-03-06: PRODUCTION MODE. bypass_threshold=false. 8 calibrated archetypes enabled, 9 disabled. Data collection mode (79 trades, 33% WR, -$4.5K) proved bypass is catastrophic.",
   "_calibrated_archetypes": [
