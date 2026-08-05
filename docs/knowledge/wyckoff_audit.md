@@ -334,3 +334,35 @@ active use: MM supply, M1 POI, HPS POI zone, inducement level, weekend $$$ (liqu
 timeframe-scoped Bojan zones ("3D Bojan + M Bojan + 6M Bojan" confluence at one price).
 Implication for v2 exits: TP1 should anchor to the nearest opposing structural zone
 (swing_high/supply), stop trails under the post-entry created LPS — both codable.
+
+### 2026-08-05 addendum 8 — WI batch 3 (final): Bojan/UNF decoded to public limit
+
+**Bojan** ("Bojan = multi-timeframe precision"; source influence @Bojan_618 — wick
+quality, opens without wicks that get "fixed", early/ugly lows):
+- M1 Bojan = highest wick tags major liquidity / MM supply-demand. M2 Bojan = same
+  structure connected to mid/HTF range highs/lows.
+- HIGHEST CONFLUENCE STACK (verbatim): M2 (third candle) + M1 (fourth candle) +
+  unfinished-candle push into liquidity + POC/Wyckoff + 0.5–0.618 fib.
+- Dual nature: bar pattern AND persistent timeframe-scoped zone ("6M Bojan low" lives
+  for months). Zone centered on the WICK TIP (body/open secondary).
+- INVALIDATION: close beyond it — and it CONVERTS to an unfinished candle ("Monthly
+  Bojan High invalidated. We now have a monthly unfinished candle.").
+- Grammar (observed): Bojan LOWS = demand/entry confluence + SL anchors ("SL under
+  45M Bojan low"); Bojan HIGHS = TP anchors / short triggers.
+- NO public wick-% rule — our legacy bojan.py 70% threshold is OUR invention, not his.
+**UNF (unfinished)**: candle missing a proper wick on one side / incomplete extreme
+expected to be revisited ("fixed"). Tracked D+ (W/3W/5D/12M); prioritize HTF + those
+aligned with Bojan levels/range extremes. UNF + Bojan highs + TT = his target ladder.
+**TT formula**: NOT publicly recoverable (no worked example; decimals imply clean
+2-anchor calc). Treat any implementation as hypothesis.
+**RTZ**: zone = the LPS/Bojan demand zone or impulse origin; prefers return after MSS
+("MS break > Time displacement"); no chase of unreturned displacement; fill depth unquantified.
+**Sizing**: "2% risk setups" (matches our 2%); TP1 ~40% at first supply → SL under
+created LPS → residual risk ≈ 1/10 of initial ("fully derisked 1/10"); builds
+positions, no mechanical grid published.
+**Vocab**: DL/DL2 = custom range/deviation tool ("DL2 always overrules negative
+FIBS"); inducement = engineered trap level at MM zones; SMT = related-pair divergence
+(ETH/BTC, dominance) at swing pivots, legs/TF not fully specified; "$$$" ≈ liquidity
+(weak evidence); "6-candle type logic" = older range-construction rules, unrecovered.
+**Failed structures**: permanent survivorship gap — compensate by self-labeling
+broken ranges from raw history when building ground truth.
