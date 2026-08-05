@@ -379,3 +379,20 @@ either geometry — it was never the exits. wyckoff_campaign v2 NOT built (gate 
 job for ~0 cost). The campaign vision's validated expression remains: existing
 archetype entries + phase-context sizing (the boost). Caveat: TP1/TT proxies crude
 (dist_to_resistance/swing_high_50); insufficient to overturn a 2-of-3-negative gate.
+
+### 2026-08-05 addendum 10 — Bojan/UNF registry: built, Stage-1 gate REJECTED
+
+Registry (engine/features/bojan_unf_registry.py, branch feat/bojan-unf-registry,
+9dc083c): 1D/3D/1W wick-extreme Bojan zones + UNF magnets + close-beyond→UNF
+conversion; causal (3-truncation no-repaint verified); sane counts (median 4
+concurrent active Bojan-lows). KEPT as research infrastructure.
+**Stage-1 gate FAILED**: near-Bojan-low champion long entries TRAIN PF 0.72 vs 1.24
+away (−$13.4K, damage in 2019/2021/2022 bear years — falling knives), HOLD PF 1.46
+vs 1.07 (bull tailwind) — Rule-9 sign-flip; regime-conditional, not structural.
+Target-ladder respect weak (winners stall within 1 ATR of overhead Bojan-high/UNF
+only 15%/12%). NO boost built (gate stopped it at descriptive cost).
+Noted for a possible future pre-registered study (NOT run): WI never buys a Bojan
+low blind — his usage is LPS+Bojan INSIDE an armed accumulation; the faithful test
+is Bojan-low ∩ C_accum, but the intersection cohort is likely n<10 → underpowered
+today; revisit when live data accumulates. Legacy test_wyckoff_events.py 5 failures
+confirmed PRE-EXISTING on main (Feb-2026 recalibration fixture debt, unrelated).
