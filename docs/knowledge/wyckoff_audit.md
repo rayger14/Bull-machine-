@@ -366,3 +366,16 @@ FIBS"); inducement = engineered trap level at MM zones; SMT = related-pair diver
 (weak evidence); "6-candle type logic" = older range-construction rules, unrecovered.
 **Failed structures**: permanent survivorship gap — compensate by self-labeling
 broken ranges from raw history when building ground truth.
+
+### 2026-08-05 addendum 9 — v2 gate CLOSED: WI geometry does not rescue campaign entries
+
+Descriptive replay of all 100 reconstructed v1 episodes under the decoded WI execution
+(model stop = event-window low −0.25 ATR; TP1 40% at nearest resistance; runner
+derisked to ~1/10R; TT = swing_high_50; 168h cap): TRAIN n=57 PF 0.92 −$5,783;
+OOS-A n=25 PF 1.44 +$12,443; OOS-B n=18 PF 0.67 −$6,862. Geometry WORKED mechanically
+(avg win/loss flipped 0.37→1.7) but tighter stops cut WR to ~35% → net negative 2/3
+windows. DOUBLE-CONFIRMED: the raw C_accum+spring entry has no standalone edge under
+either geometry — it was never the exits. wyckoff_campaign v2 NOT built (gate did its
+job for ~0 cost). The campaign vision's validated expression remains: existing
+archetype entries + phase-context sizing (the boost). Caveat: TP1/TT proxies crude
+(dist_to_resistance/swing_high_50); insufficient to overturn a 2-of-3-negative gate.
