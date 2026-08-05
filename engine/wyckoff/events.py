@@ -260,7 +260,7 @@ class WyckoffStateMachine:
             if self.state in (WyckoffState.ACCUM_SOS, WyckoffState.ACCUM_LPS):
                 validated['lps'] = True
                 self.state = WyckoffState.ACCUM_LPS
-            elif (self.cfg.get('sm_m2_path', True)
+            elif (self.cfg.get('sm_m2_path', False)
                   and self.range_ref.ar_high > 0
                   and self.state in (WyckoffState.ACCUM_ST,
                                      WyckoffState.ACCUM_SPRING)
@@ -340,7 +340,7 @@ class WyckoffStateMachine:
             if self.state in (WyckoffState.DISTRIB_SOW, WyckoffState.DISTRIB_LPSY):
                 validated['lpsy'] = True
                 self.state = WyckoffState.DISTRIB_LPSY
-            elif (self.cfg.get('sm_m2_path', True)
+            elif (self.cfg.get('sm_m2_path', False)
                   and self.range_ref.as_low > 0
                   and self.state in (WyckoffState.DISTRIB_ST,
                                      WyckoffState.DISTRIB_UT)

@@ -203,3 +203,30 @@ more transcribable M2 charts listed in the source thread.)
 2. **HTF-native detection**: his structures live at 4H+ scale; 1H windows are myopic.
    4H already catches phase A/B — supports the HTF-permission hierarchy (addendum 1).
 3. Expand ground truth from the remaining archived M2 charts (USDT.D 3D/4D series).
+
+### 2026-08-04 addendum 3 — M2 sequencer path BUILT, champion-gated OFF
+
+Implemented Schematic #2 in the state machine (states ACCUM_LPS_C / DISTRIB_LPSY_C,
+phase 'C' direction-aware; phase-B work required before the phase-C LPS; one per
+structure — first draft without these constraints exploded LPS 16→2,727 (170x);
+constrained: 16→452, ~53/yr). Tests: tests/test_wyckoff_m2_sequence.py (5, incl.
+default-off + straight-from-AR rejection). On WI's labeled BTC chart (4H): ONE
+phase-C LPS conf 0.93 + sustained C_accum through the full 8-day structure (V21
+store: C_accum coverage 2,859→11,147 bars).
+
+**Champion co-move (V21 = V20 + M2, champion_paper.json, position-level):**
+| store | train PF / PnL | hold PF / PnL |
+|---|---|---|
+| V18 (orig) | 1.193 / $98,535 | 1.028 / $2,867 |
+| V20 (fallback) | 1.192 / $97,566 | **1.114 / $12,159** |
+| V21 (+M2) | **1.219 / $110,609** | 1.066 / $7,001 |
+
+V21 beats V18 in BOTH windows, but vs the validated V20 baseline the M2 increment is
+**train +$13.0K / holdout −$5.2K** — the train-up/OOS-down gradient (Rule 9 fail).
+**VERDICT: sm_m2_path default OFF** (evidence-gated; code+tests kept, opt-in).
+V20 remains the candidate store-of-record; V21_M2 kept as research artifact.
+
+Open question for a future study: C_accum as a CONTEXT/bias feature (sizing boost
+when phase_dir=C_accum) rather than through fusion-score reshuffling — the failure
+mode here was fusion/dedup reshuffle, not the phase reading itself (which was
+CORRECT on WI's chart). Prior: boosts 5/5.

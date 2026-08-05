@@ -29,7 +29,7 @@ def _drive_phase_ab(sm):
 
 def test_m2_full_sequence_lps_before_sos():
     """SC->AR->ST -> quiet undercut (ST-B) -> phase-C LPS -> SOS -> BU/LPS."""
-    sm = WyckoffStateMachine({})
+    sm = WyckoffStateMachine({'sm_m2_path': True})
     _drive_phase_ab(sm)
 
     # ST in Phase B: quiet undercut of SC low must NOT invalidate the structure
@@ -59,7 +59,7 @@ def test_m2_full_sequence_lps_before_sos():
 def test_m2_lps_below_support_rejected():
     """An 'LPS' whose low breaks the SC low is NOT a phase-C LPS (that would be
     spring territory) — the M2 path must reject it."""
-    sm = WyckoffStateMachine({})
+    sm = WyckoffStateMachine({'sm_m2_path': True})
     _drive_phase_ab(sm)
     v, _ = sm.process_bar(14, _row(low=99.5, close=104.0), {'lps': True})
     assert not v['lps'], "low below SC support is not an M2 phase-C LPS"
@@ -67,7 +67,7 @@ def test_m2_lps_below_support_rejected():
 
 def test_m2_path_config_gated_off():
     """sm_m2_path=False reproduces legacy behavior (LPS only after SOS)."""
-    sm = WyckoffStateMachine({'sm_m2_path': False})
+    sm = WyckoffStateMachine({})  # default = OFF (evidence-gated 2026-08-04)
     _drive_phase_ab(sm)
     v, _ = sm.process_bar(14, _row(low=103.0, close=105.0), {'lps': True})
     assert not v['lps'], "legacy mode: pre-SOS LPS must stay rejected"
@@ -77,7 +77,7 @@ def test_m2_path_config_gated_off():
 def test_m2_distribution_mirror_lpsy_before_sow():
     """Mirror: BC->AS->UT context, LPSY (lower high BELOW resistance) before SOW.
     Phase-B work (a UT) must precede the LPSY — never straight from AS/AR."""
-    sm = WyckoffStateMachine({})
+    sm = WyckoffStateMachine({'sm_m2_path': True})
     v, _ = sm.process_bar(0, _row(low=98, close=99.5, high=110, volume_z=3.0),
                           {'bc': True})
     assert v['bc'] and sm.state == WyckoffState.DISTRIB_BC
