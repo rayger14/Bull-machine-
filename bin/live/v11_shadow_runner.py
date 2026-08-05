@@ -1333,6 +1333,10 @@ class V11ShadowRunner:
             abr = features.get('alt_basket_ret_4h', None)
             if abr is not None and abr == abr:
                 s.metadata['alt_basket_ret_4h'] = float(abr)
+            # Wyckoff phase-C accumulation context for Boost 6 (validated 2026-08-04)
+            pdir = features.get('wyckoff_phase_dir', None)
+            if isinstance(pdir, str) and pdir:
+                s.metadata['wyckoff_phase_dir'] = pdir
 
         # Step 4: Portfolio allocation (bypass duplicate check in data-collection mode)
         if self.bypass_threshold:
@@ -1430,6 +1434,23 @@ class V11ShadowRunner:
                         f'local_flush_breadth alt4h={float(abr):+.3f} (1.25x capex)')
                     logger.info(f"[BREADTH_BOOST] wick_trap alt4h={float(abr):+.3f} "
                                 f"→ 1.25x capex sizing ({intent.allocated_size_pct:.3f})")
+
+            # Boost 6: Wyckoff phase-C accumulation context (validated 2026-08-04:
+            # C_accum long entries PF 2.07/1.50 train/hold vs 1.16/1.09 outside;
+            # battery train +$8.6K DD better, hold +$769; shadow-phase columns,
+            # zero fusion leakage). ANY long archetype.
+            if ((self.config.get('wyckoff_phase_boost') or {}).get('enabled')
+                    and intent.signal.direction == 'long'):
+                pdir = sig_meta.get('wyckoff_phase_dir', None)
+                if isinstance(pdir, str) and pdir == 'C_accum':
+                    intent.allocated_size_pct *= 1.25
+                    sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                    sig_meta['sizing_boosts']['capex_mult'] = \
+                        sig_meta['sizing_boosts'].get('capex_mult', 1.0) * 1.25
+                    sig_meta['sizing_boosts']['reasons'].append(
+                        'wyckoff_phase_C_accum (1.25x capex)')
+                    logger.info(f"[WYCKOFF_PHASE_BOOST] {intent.signal.archetype_id} "
+                                f"C_accum → 1.25x capex sizing ({intent.allocated_size_pct:.3f})")
 
         # Update signal tracking for portfolio rejections
         for rej in rejections:

@@ -1601,6 +1601,11 @@ class LiveFeatureComputer:
                 'sm_st_max_count': 2,       # break ST self-loop
                 'sm_spring_tolerance': 0.01,
                 'sm_ut_tolerance': 0.01,
+                # M2 (Schematic #2) SHADOW phase: wyckoff_phase_dir reads 'C'
+                # inside a qualified accumulation without touching events/
+                # scores/fusion (2026-08-04; consumed only by the config-gated
+                # wyckoff_phase_boost)
+                'sm_m2_context_only': True,
             }
             buf_copy = detect_all_wyckoff_events(buf_copy, cfg=_CFG_1H, htf_context=htf_context_4h)
             last = buf_copy.iloc[-1]

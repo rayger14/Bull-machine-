@@ -75,3 +75,14 @@ def test_exodus_refusal_parity():
     assert "stables_rot_rising" in LF
     cfg = json.loads((REPO / "configs/champion_paper.json").read_text())
     assert cfg["structural_checks"]["gate_params"]["wt_no_exodus_K"] == 1
+
+
+def test_wyckoff_phase_boost_parity():
+    """Boost 6 (2026-08-04): C_accum long context boost, capex-scoped, present
+    in both engines; live metadata enrichment carries wyckoff_phase_dir.
+    (Config enablement is asserted separately once the deploy decision lands.)"""
+    for src in (BT, LV):
+        assert "wyckoff_phase_boost" in src
+        assert "wyckoff_phase_C_accum" in src
+    enrich = LV[LV.index("Step 3e"):LV.index("Step 4:")]
+    assert "wyckoff_phase_dir" in enrich

@@ -293,5 +293,9 @@
     "enabled": true,
     "_note": "validated 2026-08-01: LOCAL-flush 1.25x capex (train +$11.3K, holdout +$3.1K on stack)"
   },
-  "_exodus_note": "validated 2026-08-02: wick_trap refuses GLOBAL-flush + stables-rotation entries (train 1.36->1.56, holdout 1.26->1.51, DD down both)"
+  "_exodus_note": "validated 2026-08-02: wick_trap refuses GLOBAL-flush + stables-rotation entries (train 1.36->1.56, holdout 1.26->1.51, DD down both)",
+  "wyckoff_phase_boost": {
+    "enabled": true,
+    "_note": "Boost 6 (2026-08-04): C_accum long context 1.25x capex \u2014 validated co-move (train +$8.6K DD better, hold +$769); shadow phase, zero fusion leakage"
+  }
 }

@@ -1155,6 +1155,24 @@ class StandaloneBacktestEngine:
                             sig_meta['sizing_boosts']['reasons'].append(
                                 f'local_flush_breadth alt4h={float(abr):+.3f} (1.25x capex)')
 
+                    # Boost 6 (pre-registered study 2026-08-04, config-gated OFF):
+                    # Wyckoff phase-C accumulation context (M2 shadow phase,
+                    # sm_m2_context_only — zero fusion leakage by construction).
+                    # LONG entries taken inside a confirmed accumulation phase C
+                    # ran PF 2.07/1.50 train/holdout vs 1.16/1.09 outside
+                    # (V20 champion trades conditioned on the V21 phase state).
+                    # ALL long archetypes (context qualifier, not archetype-specific).
+                    if (self.config.get('wyckoff_phase_boost') or {}).get('enabled') \
+                       and intent.signal.direction == 'long':
+                        pdir = row.get('wyckoff_phase_dir', None)
+                        if isinstance(pdir, str) and pdir == 'C_accum':
+                            intent.allocated_size_pct *= 1.25
+                            sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                            sig_meta['sizing_boosts']['capex_mult'] = \
+                                sig_meta['sizing_boosts'].get('capex_mult', 1.0) * 1.25
+                            sig_meta['sizing_boosts']['reasons'].append(
+                                'wyckoff_phase_C_accum (1.25x capex)')
+
                 # Step 5: Execute allocations
                 for intent in intents:
                     sig = intent.signal
@@ -1458,6 +1476,8 @@ class StandaloneBacktestEngine:
 
         # Create position
         pos_id = f"{direction}_{archetype}_{int(timestamp.timestamp())}"
+        if (self.config.get('cooldown_mode') == 'arm_on_entry'):
+            self.engine.arm_cooldown(archetype, bar_idx)
         self.positions[pos_id] = TrackedPosition(
             position_id=pos_id,
             archetype=archetype,

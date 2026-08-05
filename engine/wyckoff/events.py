@@ -77,6 +77,7 @@ class WyckoffState(Enum):
     ACCUM_AR = "accum_ar"
     ACCUM_ST = "accum_st"
     ACCUM_SPRING = "accum_spring"
+    ACCUM_LPS_C = "accum_lps_c"   # M2 (Schematic #2): phase-C LPS BEFORE SOS
     ACCUM_SOS = "accum_sos"
     ACCUM_LPS = "accum_lps"
     # Distribution states
@@ -84,6 +85,7 @@ class WyckoffState(Enum):
     DISTRIB_AR = "distrib_ar"
     DISTRIB_ST = "distrib_st"
     DISTRIB_UT = "distrib_ut"
+    DISTRIB_LPSY_C = "distrib_lpsy_c"  # M2 mirror: phase-C LPSY BEFORE SOW
     DISTRIB_SOW = "distrib_sow"
     DISTRIB_LPSY = "distrib_lpsy"
 
@@ -134,6 +136,8 @@ class WyckoffStateMachine:
         self.context = WyckoffContext.NONE
         self.range_ref = RangeReference()
         self.bars_in_structure = 0
+        # sm_m2_context_only shadow: phase-C reading without state/event change
+        self.m2_shadow_c = False
 
         # Config with sm_ prefix
         self.max_structure_bars = cfg.get('sm_max_structure_bars', 1000)
@@ -148,6 +152,7 @@ class WyckoffStateMachine:
         self.context = WyckoffContext.NONE
         self.range_ref = RangeReference()
         self.bars_in_structure = 0
+        self.m2_shadow_c = False
 
     def process_bar(self, bar_idx: int, row: dict, raw_events: dict) -> tuple:
         """
@@ -188,6 +193,7 @@ class WyckoffStateMachine:
                 sc_bar_idx=bar_idx,
             )
             self.bars_in_structure = 0
+            self.m2_shadow_c = False  # new structure: clear stale shadow phase
 
         # AR: Requires prior SC within lookback
         if raw_events.get('ar', False) and self.context == WyckoffContext.ACCUMULATION:
@@ -224,23 +230,60 @@ class WyckoffStateMachine:
                         if raw_events.get('spring_b', False):
                             validated['spring_b'] = True
                         self.state = WyckoffState.ACCUM_SPRING
+            elif (self.context == WyckoffContext.NONE
+                  and self.cfg.get('sm_no_context_fallback', True)):
+                # No validated SC->AR structure exists — SC's triple-extreme gate
+                # makes that the norm, which starved springs to near-zero. Mirror
+                # the SOS/SOW no-context fallback: keep the raw detector event at
+                # half confidence instead of discarding it. State is NOT advanced
+                # (no structure to advance).
+                if raw_events.get('spring_a', False):
+                    validated['spring_a'] = True
+                    modifiers['spring_a'] = 0.5
+                if raw_events.get('spring_b', False):
+                    validated['spring_b'] = True
+                    modifiers['spring_b'] = 0.5
 
         # SOS: Requires accumulation context, or fires with reduced confidence when no context
         if raw_events.get('sos', False):
             if self.context == WyckoffContext.ACCUMULATION:
                 if self.state in (WyckoffState.ACCUM_AR, WyckoffState.ACCUM_ST,
-                                 WyckoffState.ACCUM_SPRING):
+                                 WyckoffState.ACCUM_SPRING, WyckoffState.ACCUM_LPS_C):
                     validated['sos'] = True
                     self.state = WyckoffState.ACCUM_SOS
             elif self.context == WyckoffContext.NONE:
                 validated['sos'] = True
                 modifiers['sos'] = 0.5  # 50% confidence penalty for no-context SOS
 
-        # LPS: Requires prior SOS
+        # LPS: after SOS = BU/LPS (Schematic #1 & #2 phase D). M2 path
+        # (Schematic #2, default ON): a phase-C LPS BEFORE any SOS is valid
+        # when the range is established and the bar's low HOLDS ABOVE support
+        # (higher low = the M2 signature; a low below SC_low is spring
+        # territory, not an M2 LPS).
         if raw_events.get('lps', False) and self.context == WyckoffContext.ACCUMULATION:
             if self.state == WyckoffState.ACCUM_SOS:
                 validated['lps'] = True
                 self.state = WyckoffState.ACCUM_LPS
+            elif (self.range_ref.ar_high > 0
+                  and self.state in (WyckoffState.ACCUM_ST,
+                                     WyckoffState.ACCUM_SPRING)
+                  and row['low'] > self.range_ref.sc_low):
+                # Schematic #2 structure constraints (NOT tuned numbers):
+                # phase-B work must precede the LPS (an ST or spring has
+                # occurred — never straight from AR), and ONE phase-C LPS per
+                # structure (no LPS_C self-loop; without this, every quiet dip
+                # in a range re-fires: 16 -> 2,727 events, a 170x explosion).
+                if self.cfg.get('sm_m2_path', False):
+                    validated['lps'] = True
+                    self.state = WyckoffState.ACCUM_LPS_C
+                elif self.cfg.get('sm_m2_context_only', False):
+                    # SHADOW phase-C: only wyckoff_phase_dir/_phase_abc
+                    # readings change — no event emission, no state change, so
+                    # event columns / scores / fusion inputs stay bit-identical
+                    # to the M2-off build. (Fusion reshuffle was the full
+                    # path's failure mode: train +13K / hold -5.2K. The phase
+                    # READING co-moved as an entry qualifier in both eras.)
+                    self.m2_shadow_c = True
 
         # --- DISTRIBUTION PATH ---
 
@@ -257,6 +300,7 @@ class WyckoffStateMachine:
                     bc_bar_idx=bar_idx,
                 )
                 self.bars_in_structure = 0
+                self.m2_shadow_c = False  # new structure: clear stale shadow
 
         # AS: Requires prior BC within lookback
         if raw_events.get('as', False) and self.context == WyckoffContext.DISTRIBUTION:
@@ -281,23 +325,45 @@ class WyckoffStateMachine:
                         if raw_events.get('utad', False):
                             validated['utad'] = True
                         self.state = WyckoffState.DISTRIB_UT
+            elif (self.context == WyckoffContext.NONE
+                  and self.cfg.get('sm_no_context_fallback', True)):
+                # Mirror of the spring no-context fallback (see accumulation path).
+                if raw_events.get('ut', False):
+                    validated['ut'] = True
+                    modifiers['ut'] = 0.5
+                if raw_events.get('utad', False):
+                    validated['utad'] = True
+                    modifiers['utad'] = 0.5
 
         # SOW: Requires distribution context, or fires with reduced confidence when no context
         if raw_events.get('sow', False):
             if self.context == WyckoffContext.DISTRIBUTION:
                 if self.state in (WyckoffState.DISTRIB_AR, WyckoffState.DISTRIB_ST,
-                                 WyckoffState.DISTRIB_UT):
+                                 WyckoffState.DISTRIB_UT,
+                                 WyckoffState.DISTRIB_LPSY_C):
                     validated['sow'] = True
                     self.state = WyckoffState.DISTRIB_SOW
             elif self.context == WyckoffContext.NONE:
                 validated['sow'] = True
                 modifiers['sow'] = 0.5
 
-        # LPSY: Requires prior SOW
+        # LPSY: after SOW (legacy) or M2 mirror — phase-C LPSY BEFORE any SOW,
+        # lower high HOLDING BELOW resistance.
         if raw_events.get('lpsy', False) and self.context == WyckoffContext.DISTRIBUTION:
             if self.state == WyckoffState.DISTRIB_SOW:
                 validated['lpsy'] = True
                 self.state = WyckoffState.DISTRIB_LPSY
+            elif (self.range_ref.as_low > 0
+                  and self.state in (WyckoffState.DISTRIB_ST,
+                                     WyckoffState.DISTRIB_UT)
+                  and row['high'] < self.range_ref.bc_high):
+                # Mirror of the accumulation M2 constraints: phase-B work (ST
+                # or UT) must precede; one phase-C LPSY per structure.
+                if self.cfg.get('sm_m2_path', False):
+                    validated['lpsy'] = True
+                    self.state = WyckoffState.DISTRIB_LPSY_C
+                elif self.cfg.get('sm_m2_context_only', False):
+                    self.m2_shadow_c = True  # shadow phase-C (see accum path)
 
         return validated, modifiers
 
@@ -316,13 +382,21 @@ class WyckoffStateMachine:
 
     def get_phase(self) -> str:
         """Return current Wyckoff phase letter based on state"""
+        # Context-only M2 shadow: report phase C while the underlying state is
+        # still the phase-B state (no state/event mutation — see M2 branches)
+        if self.m2_shadow_c and self.state in (
+                WyckoffState.ACCUM_ST, WyckoffState.ACCUM_SPRING,
+                WyckoffState.DISTRIB_ST, WyckoffState.DISTRIB_UT):
+            return 'C'
         phase_map = {
             WyckoffState.NONE: 'neutral',
             WyckoffState.ACCUM_SC: 'A', WyckoffState.ACCUM_AR: 'A',
             WyckoffState.ACCUM_ST: 'A', WyckoffState.ACCUM_SPRING: 'C',
+            WyckoffState.ACCUM_LPS_C: 'C',
             WyckoffState.ACCUM_SOS: 'B', WyckoffState.ACCUM_LPS: 'D',
             WyckoffState.DISTRIB_BC: 'A', WyckoffState.DISTRIB_AR: 'A',
             WyckoffState.DISTRIB_ST: 'A', WyckoffState.DISTRIB_UT: 'C',
+            WyckoffState.DISTRIB_LPSY_C: 'C',
             WyckoffState.DISTRIB_SOW: 'B', WyckoffState.DISTRIB_LPSY: 'D',
         }
         return phase_map.get(self.state, 'neutral')
@@ -330,6 +404,22 @@ class WyckoffStateMachine:
     def get_context_str(self) -> str:
         """Return context string"""
         return self.context.value
+
+    def get_phase_dir(self) -> str:
+        """Directional phase label: phase letter + structure direction.
+
+        The plain letter conflates accumulation and distribution — e.g. both
+        ACCUM_SPRING and DISTRIB_UT map to 'C' in get_phase(). Consumers that
+        need direction should read this (or pair phase with wyckoff_context).
+        """
+        phase = self.get_phase()
+        if phase == 'neutral':
+            return 'neutral'
+        if self.context == WyckoffContext.ACCUMULATION:
+            return f"{phase}_accum"
+        if self.context == WyckoffContext.DISTRIBUTION:
+            return f"{phase}_distrib"
+        return phase
 
 
 @dataclass
@@ -954,29 +1044,36 @@ def detect_spring_type_b(df: pd.DataFrame, cfg: dict) -> Tuple[pd.Series, pd.Ser
     breakdown_pct = (rolling_low - df['low']) / (rolling_low + 1e-9)
     shallow_break = (breakdown_pct > breakdown_min) & (breakdown_pct < breakdown_max)
 
-    # Multi-bar recovery: close recovers above lower quartile within recovery_bars
-    # Check if ANY bar in the next recovery_bars window recovers
-    if recovery_bars > 1:
-        recovery_check = pd.Series(False, index=df.index)
-        for offset in range(recovery_bars):
-            shifted_close = df['close'].shift(-offset)
-            recovery_check = recovery_check | (shifted_close > range_lower_quartile)
-        # Shift result back so detection fires on the confirmation bar
-        quick_recovery = recovery_check
-    else:
-        quick_recovery = df['close'] > range_lower_quartile
-
-    # Moderate volume (relaxed lower bound)
+    # Moderate volume (relaxed lower bound) — evaluated on the candidate bar
     moderate_volume = (df['volume_z'] > -0.5) & (df['volume_z'] < 2.0)
 
-    detected = shallow_break & quick_recovery & moderate_volume
+    # Candidate spring: shallow breakdown + moderate volume (no future data)
+    candidate = shallow_break & moderate_volume
 
-    # Confidence
-    range_mid = (rolling_high + rolling_low) / 2
+    # Confirmation-based recovery (same pattern as detect_spring_type_a /
+    # detect_upthrust): a candidate existed recovery_bars ago AND the current
+    # close is back above that candidate's lower quartile. Fires on the
+    # CONFIRMATION bar with zero lookahead — a recovery that did not HOLD
+    # through the confirmation bar does not fire.
+    if recovery_bars > 1:
+        detected = (
+            candidate.shift(recovery_bars).fillna(False).astype(bool) &
+            (df['close'] > range_lower_quartile.shift(recovery_bars))
+        )
+        conf_shift = recovery_bars
+    else:
+        detected = candidate & (df['close'] > range_lower_quartile)
+        conf_shift = 0
+
+    # Confidence: breakdown depth + volume from the CANDIDATE bar (shifted to
+    # the confirmation bar); recovery strength from the CURRENT close measured
+    # against the candidate's range.
+    quart_c = range_lower_quartile.shift(conf_shift)
+    high_c = rolling_high.shift(conf_shift)
     confidence = (
-        (breakdown_pct / breakdown_max).clip(0, 1) * 0.35 +
-        ((df['close'] - range_lower_quartile) / (rolling_high - range_lower_quartile + 1e-9)).clip(0, 1) * 0.35 +
-        (df['volume_z'].clip(-1, 3) / 4.0 + 0.25).clip(0, 1) * 0.30
+        (breakdown_pct.shift(conf_shift) / breakdown_max).clip(0, 1) * 0.35 +
+        ((df['close'] - quart_c) / (high_c - quart_c + 1e-9)).clip(0, 1) * 0.35 +
+        (df['volume_z'].shift(conf_shift).clip(-1, 3) / 4.0 + 0.25).clip(0, 1) * 0.30
     )
     confidence = confidence.fillna(0.0) * detected
 
@@ -1327,6 +1424,7 @@ def _apply_state_machine_validation(df: pd.DataFrame, cfg: dict) -> pd.DataFrame
     n = len(df)
     validated_arrays = {k: np.zeros(n, dtype=bool) for k in event_keys}
     phases = ['neutral'] * n
+    phase_dirs = ['neutral'] * n
     contexts = ['none'] * n
     confidence_mod_arrays = {k: np.ones(n, dtype=float) for k in event_keys}
 
@@ -1360,6 +1458,7 @@ def _apply_state_machine_validation(df: pd.DataFrame, cfg: dict) -> pd.DataFrame
             confidence_mod_arrays[k][i] = mod
 
         phases[i] = sm.get_phase()
+        phase_dirs[i] = sm.get_phase_dir()
         contexts[i] = sm.get_context_str()
 
     # Write back validated events and zero out confidence for invalidated events
@@ -1382,6 +1481,7 @@ def _apply_state_machine_validation(df: pd.DataFrame, cfg: dict) -> pd.DataFrame
 
     # Override phase with state-machine-derived phase
     df['wyckoff_phase_abc'] = phases
+    df['wyckoff_phase_dir'] = phase_dirs
     df['wyckoff_context'] = contexts
 
     sm_counts = {k: validated_arrays[k].sum() for k in event_keys}
@@ -1574,6 +1674,11 @@ def detect_all_wyckoff_events(df: pd.DataFrame, cfg: Optional[dict] = None,
         df = _apply_state_machine_validation(df, cfg)
         # Recompute sequence position based on SM-derived phases
         df['wyckoff_sequence_position'] = _compute_sequence_position(df)
+    else:
+        # Directional phase/context only exist via the state machine; keep the
+        # columns present (neutral) so consumers see a stable schema.
+        df['wyckoff_phase_dir'] = 'neutral'
+        df['wyckoff_context'] = 'none'
 
     # Apply higher-timeframe confidence modulation (on SM-validated events only)
     if htf_context is not None:
