@@ -563,3 +563,16 @@ Legitimate follow-ups (mechanism-driven, not fold re-slicing; pre-register fresh
 range_position) to make it surgical; (b) risk-budget-neutral variant (hold gross
 exposure flat). Overlap note: complementary to deployed exodus-refusal (opposite
 sides of the same signal; no double-boosting found).
+
+### 2026-08-06 addendum 19 — T-window event study: KNOWLEDGE-ONLY (nothing passes 3/3)
+
+First empirical test of WI's event rhythm (branch study/t-windows, f73883f). ALL gated
+results PARTIAL 1-2/3 — the same era-flip signature: FOMC/Conference rhythm holds in
+2018-22 + 2025-26 but INVERTS in the 2023-24 bull (hangover out-drifts front-run);
+CPI inverts in 2018-22. FOMC T0-day pop is real (+0.80%/24h in 18-22) but that's not
+the WI asymmetry. T+45/T+90 "echo" = confounded (median FOMC gap 42d → windows overlap
+the NEXT meeting; mostly bull beta). Nothing promoted: the suggestive cell (hangover
+down-weight) is filter-shaped (0/9) AND fails the gate AND a front-run boost violates
+the addendum-18 surgicality rule (15-46% cohorts). Calendar retained as infrastructure.
+HONEST GAP: WI's actual rule is MODEL-CONDITIONAL ("does the expected model form in the
+window") — untested; window∩model cohorts are n<10 today → needs live data accumulation.
