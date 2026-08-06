@@ -531,3 +531,16 @@ tested 2026-07-28 and REJECTED (holdout −$1.3K). The audit's narrower hypothes
 (capex legacy multipliers ONLY at depth>=2) is a DIFFERENT, untested claim — queued as
 a potential WFO study, NOT actioned; per-archetype OOS + co-move required, and the
 depth>=2 holdout cell is n=21 (<30) so it likely needs live data to be decidable.
+
+### 2026-08-06 addendum 17 — Range-POC Stage-1: PASS 3/3 (first new-family pass; battery-gated)
+
+WI's "close above POC = validity" tested on champion longs (rolling-60d range POC,
+0.25% bins, causal, no-repaint 3/3): ABOVE-POC PF 1.31/1.44/1.31 vs BELOW 0.69/1.19/
+0.73; avgR positive-above / negative-below in ALL THREE folds; n>=30 every cell; WR
+gap ~11pts stable. Magnet split (near-POC) inconclusive as pre-registered-exploratory.
+CAVEATS (load-bearing): rolling-range proxy may be trend-beta in disguise (the exact
+addendum-13 failure mode) → REQUIRED follow-up #1 = ORTHOGONALITY battery (does
+above-POC survive controlling for trend/EMA/range_position?); multiplicity caveat
+recorded verbatim (Nth family on these folds — 3/3 necessary, not sufficient).
+Follow-up order: orthogonality → standard boost battery → someday structural-range POC.
+Branch study/range-poc @ 9270bf0. Nothing wired.
