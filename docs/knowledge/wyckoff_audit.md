@@ -632,3 +632,20 @@ edge discovery runs on a NON-BINDING wallet; finite-capital expression is a sepa
 engineering question. DEPLOYMENT GATE REMAINING: risk-budget-neutral allocation study
 (shrink base risk so boosted positions fit the margin envelope at $100K) before any
 production wiring — naive capex deployment of these signals demonstrably self-cannibalizes.
+
+### 2026-08-06 addendum 23 — POC live forensics INVERTS the premise: Boost 8 deploy HALTED
+
+User-requested pre-ship forensics on 387 LIVE trades (Feb-Aug 2026, server state.json,
+kline alignment 0.05% median): **above-POC longs were the LOSING cohort live** (n=188,
+PF 0.56, −$24.7K) while below-POC ≈ breakeven (n=182, PF 1.01, +$0.4K) — the OPPOSITE
+of the 3/3 historical validation (above 1.31/1.44/1.31 vs below 0.69/1.19/0.73).
+Boost-8 counterfactual on the live sample: **−$6.2K** (would have amplified losers).
+Exit counterfactuals: magnet-target headline +$20.8K is a hold-168h-longer LOOK-AHEAD
+artifact — the runnable version is −$508; invalidation-stop +$1.8K but WR down and 7
+winners→losers. 12 losers→winners exist only under the look-ahead version.
+Confounds noted: one regime; starved-wallet era; oi_divergence above-POC leak −$6.3K
+(known leak) inside the losing cohort. STILL: freshest data contradicts the premise =
+the era-instability signature (addendum 12) landing on POC. **DECISION: Boost 8 stays
+OFF/unshipped. Optional middle path: merge the FEATURE (computed+logged live, flag off)
+so forward live data adjudicates the above/below cohorts with the healthy wallet.**
+The parity-proven build (feat/live-poc-boost8) remains ready either way.
