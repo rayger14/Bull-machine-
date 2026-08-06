@@ -615,3 +615,20 @@ change, the one untested structural lever; would allow honest retests of all thr
 shelved discriminators), (b) surgical intersections (mostly n<10 now), (c) live-data
 accumulation. Validated inventory unchanged: above-POC + depth>=2 + rotation-calm are
 SHELVED DISCRIMINATORS awaiting an action channel that can express them.**
+
+### 2026-08-06 addendum 22 — USER CORRECTION VALIDATED: unconstrained re-battery rescues Boosts 7 & 8
+
+User called out that margin crowd-out is a paper-wallet artifact contaminating edge
+measurement — CONFIRMED (branch study/unconstrained-boosts @ b52ade3): the $100K OFF
+arms had 29/6/18 margin rejections; at $2M (dollar-identical positions) zero rejections,
+position set invariant, residual ≈ $0 → pure signal measurement.
+**Boost 7 rotation_calm = VALIDATED SIGNAL**: ΔPnL +$34.4K/+$29.5K/+$8.1K, ΔPF
++0.033/+0.067/+0.050 (3/3); cohort PF 1.46/1.94/1.52 beats book 1.19/1.37/1.11 (3/3).
+**Boost 8 poc_validity = VALIDATED SIGNAL (weaker)**: +$32.8K/+$19.7K/+$5.7K, ΔPF+ 3/3,
+cohort above book 3/3; caveats: rolling-range proxy, 68-76% cohort, MaxDD slightly worse.
+**Boost 7b = rejected outright** (crowd-out workaround now obsolete; n=10-16 noise).
+PRIOR "REJECTS" RETRACTED as capital-competition artifacts. METHOD RULE (permanent):
+edge discovery runs on a NON-BINDING wallet; finite-capital expression is a separate
+engineering question. DEPLOYMENT GATE REMAINING: risk-budget-neutral allocation study
+(shrink base risk so boosted positions fit the margin envelope at $100K) before any
+production wiring — naive capex deployment of these signals demonstrably self-cannibalizes.
