@@ -514,3 +514,20 @@ CANDIDATE BOOST 7: standard battery (boost on/off, co-move) is the confirmation 
 PUBLIC-KNOWLEDGE EXTRACTION NOW COMPLETE (6 batches). Remaining WI-dependent items all
 require either fresh live data (dominance reader, eye rematch) or new data infrastructure
 (event calendars for T-windows, range-scoped volume profile for POC).
+
+### 2026-08-06 addendum 16 — Stack-depth audit: binary conviction tier CONFIRMED 3/3; ladder rejected
+
+Depth>=2 longs beat depth<=1 in ALL THREE folds: PF 1.78 vs 1.13 (train), 1.91 vs 1.30
+(oosA), 2.02 vs 1.01 (hold); WR ~60 vs ~44%; robust to dropping B6 (strengthens oosA
+to 2.46). STRICT ladder (0<1<2<3+) FAILS (1/3 folds; 3+ tiers n=10/11/2 noise).
+Confounds honest: ~87% of deep-stack = wick_trap; outside wick_trap the depth signal
+DIES in holdout (PF 0.41 n=6). So the true claim: "wick_trap flushes with multiple
+confirming flow reads = the book's premium trade class" — the WI 3-5% tier exists in
+our book but is narrow, not a universal ladder.
+**Cap-clipping quantified**: 44% of oosA depth>=2 positions pinned at the $52.5K base
+cap despite earning ~1.8x on legacy non-capex B1/B2 — top tier under-expressed.
+COLLISION WITH PRIOR EVIDENCE (do not forget): unconditional legacy-capex was already
+tested 2026-07-28 and REJECTED (holdout −$1.3K). The audit's narrower hypothesis
+(capex legacy multipliers ONLY at depth>=2) is a DIFFERENT, untested claim — queued as
+a potential WFO study, NOT actioned; per-archetype OOS + co-move required, and the
+depth>=2 holdout cell is n=21 (<30) so it likely needs live data to be decidable.
