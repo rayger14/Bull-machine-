@@ -147,6 +147,17 @@ class CoinbasePaperRunner:
         verbose: bool = False,
     ):
         self.config_path = config_path
+        # Config-driven wallet (2026-08-06): position_sizing pcts are calibrated
+        # to the config's capital base — honor config initial_cash unless the
+        # CLI explicitly overrides (CLI still at its default).
+        try:
+            with open(config_path) as _cf:
+                _cfg_cash = json.load(_cf).get('initial_cash')
+            if _cfg_cash and initial_cash == DEFAULT_INITIAL_CASH:
+                initial_cash = float(_cfg_cash)
+                logger.info("initial_cash from config: $%s", f"{initial_cash:,.0f}")
+        except Exception as _e:
+            logger.warning("could not read initial_cash from config: %s", _e)
         self.initial_cash = initial_cash
         self.commission_rate = commission_rate
         self.slippage_bps = slippage_bps

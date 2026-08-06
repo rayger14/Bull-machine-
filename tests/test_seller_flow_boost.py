@@ -86,3 +86,25 @@ def test_wyckoff_phase_boost_parity():
         assert "wyckoff_phase_C_accum" in src
     enrich = LV[LV.index("Step 3e"):LV.index("Step 4:")]
     assert "wyckoff_phase_dir" in enrich
+
+
+def test_rotation_calm_boost_parity():
+    """Boost 7 (2026-08-06): rotation-calm long boost, capex-scoped, present in
+    both engines, enabled live, metadata enrichment carries stables_rot_rising."""
+    for src in (BT, LV):
+        assert "rotation_calm_boost" in src
+        assert "rotation_calm stables_rot_rising=0" in src
+    enrich = LV[LV.index("Step 3e"):LV.index("Step 4:")]
+    assert "stables_rot_rising" in enrich
+    cfg = json.loads((REPO / "configs/champion_paper.json").read_text())
+    assert cfg["rotation_calm_boost"]["enabled"] is True
+
+
+def test_config_wallet_is_nonbinding_scaled():
+    """2026-08-06 wallet directive: initial_cash 20x with position_sizing pcts
+    scaled /20 so per-trade DOLLARS are unchanged ($2,000 risk, $35K margin)."""
+    cfg = json.loads((REPO / "configs/champion_paper.json").read_text())
+    cash = cfg["initial_cash"]
+    ps = cfg["position_sizing"]
+    assert cash * ps["risk_per_trade_pct"] == 2000.0
+    assert cash * ps["max_margin_per_position_pct"] == 35000.0

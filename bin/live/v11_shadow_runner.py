@@ -1337,6 +1337,10 @@ class V11ShadowRunner:
             pdir = features.get('wyckoff_phase_dir', None)
             if isinstance(pdir, str) and pdir:
                 s.metadata['wyckoff_phase_dir'] = pdir
+            # Stables rotation for Boost 7 (validated 2026-08-06)
+            rot = features.get('stables_rot_rising', None)
+            if rot is not None and rot == rot:
+                s.metadata['stables_rot_rising'] = float(rot)
 
         # Step 4: Portfolio allocation (bypass duplicate check in data-collection mode)
         if self.bypass_threshold:
@@ -1451,6 +1455,22 @@ class V11ShadowRunner:
                         'wyckoff_phase_C_accum (1.25x capex)')
                     logger.info(f"[WYCKOFF_PHASE_BOOST] {intent.signal.archetype_id} "
                                 f"C_accum → 1.25x capex sizing ({intent.allocated_size_pct:.3f})")
+
+            # Boost 7: rotation-calm (validated 2026-08-06 on non-binding wallet:
+            # ΔPnL +$34.4K/+$29.5K/+$8.1K, cohort PF beats book in all three eras).
+            # Money NOT fleeing to stables → any long sized up. NaN => no boost.
+            if ((self.config.get('rotation_calm_boost') or {}).get('enabled')
+                    and intent.signal.direction == 'long'):
+                rot = sig_meta.get('stables_rot_rising', None)
+                if rot is not None and rot == rot and float(rot) == 0.0:
+                    intent.allocated_size_pct *= 1.25
+                    sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                    sig_meta['sizing_boosts']['capex_mult'] = \
+                        sig_meta['sizing_boosts'].get('capex_mult', 1.0) * 1.25
+                    sig_meta['sizing_boosts']['reasons'].append(
+                        'rotation_calm stables_rot_rising=0 (1.25x capex)')
+                    logger.info(f"[ROTATION_CALM_BOOST] {intent.signal.archetype_id} "
+                                f"rot=0 → 1.25x capex sizing ({intent.allocated_size_pct:.3f})")
 
         # Update signal tracking for portfolio rejections
         for rej in rejections:
