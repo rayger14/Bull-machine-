@@ -544,3 +544,22 @@ above-POC survive controlling for trend/EMA/range_position?); multiplicity cavea
 recorded verbatim (Nth family on these folds — 3/3 necessary, not sufficient).
 Follow-up order: orthogonality → standard boost battery → someday structural-range POC.
 Branch study/range-poc @ 9270bf0. Nothing wired.
+
+### 2026-08-06 addendum 18 — Boost 7 (rotation-calm book-wide) REJECTED: crowd-out, not signal failure
+
+Battery (branch study/rot-calm-boost, 70e0815): TRAIN +$13.4K ✓, OOS-A +$21.9K ✓,
+OOS-B −$4.7K PF 1.120→1.069 ✗ → co-move FAIL. First boost to fail a battery.
+**The per-trade edge is CONFIRMED — the ACTION failed.** Exact decomposition: resize
+channel mechanically perfect (=0.25× boosted-cohort PnL to the dollar, POSITIVE in all
+three windows incl. +$6.0K in OOS-B); the kill was CAPEX CROWD-OUT — the boost fires
+on ~55-59% of ALL longs (rot=0 ≈ 51% of bars), a near-book-wide 1.25x leverage dial
+that consumes shared margin: OOS-B lost 30 profitable would-be positions (+$6.0K)
+to gain 19 losers (−$4.7K), reshuffle −$10.7K > resize +$6.0K.
+**NEW HOUSE RULE (learned): boosts must be SURGICAL — condition base-rate matters.
+Boosts 1-6 fired on tiny cohorts; a >50%-of-book condition is a leverage change in
+boost clothing and competes with itself for margin.**
+Legitimate follow-ups (mechanism-driven, not fold re-slicing; pre-register fresh):
+(a) narrow the cohort: rot=0 ∩ a structural qualifier (e.g. C_accum or discount
+range_position) to make it surgical; (b) risk-budget-neutral variant (hold gross
+exposure flat). Overlap note: complementary to deployed exodus-refusal (opposite
+sides of the same signal; no double-boosting found).
