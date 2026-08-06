@@ -488,3 +488,29 @@ exodus refusal) uses a NARROW slice of this; the general form — size UP longs 
 rotation is NOT rising (money not fleeing to stables) — is boost-shaped, mechanism-
 backed, validated-lineage, and descriptively consistent in all three folds. →
 CANDIDATE BOOST 7: standard battery (boost on/off, co-move) is the confirmation step.
+
+### 2026-08-06 addendum 15 — WI batch 6 (final): stand-down horizon, dominance reader spec, T7, POC, the 3-5% stack
+
+1. **Stand-down rule**: multi-day dominance rises ALONE are secondary; he stands down on
+   dominance STRUCTURE (developing model / MSS / key extreme). Our 3-day rot_rising is
+   SHORTER than his horizon → Boost 7 stands on OUR 3/3 empirical evidence, not his
+   authority; his structural version = the fresh-fold dominance-reader redesign.
+2. **Dominance reader spec (guess #2 prevented)**: same toolkit as price (fixed HTF
+   ranges, M2, Bojans, LPS, body-close breaks); W/multi-week/M structure governs bias;
+   LTF only for timing. → future reader = fixed-structural-range machine on W/M dominance.
+3. **T7/Gann decoded**: T±7 event rhythm (T−14→T−7 accumulate, T−7→T0 front-run,
+   T0→T+7 hangover-short; macro events T+45/T+90); numbered windows (T45) carry ~3-day
+   grace for the expected manipulation/model to form; expiry without model = invalidation.
+   Mechanizable but needs event calendars — queued (ties to dormant Gann machinery).
+4. **POC = point of control OF HIS DRAWN RANGE** (not multi-year composite) — a
+   confluence/validity magnet inside the range, part of the top stack with 0.5-0.618 fib.
+   Buildable as range-scoped volume profile — queued.
+5. **The 3-5% risk tier** = HTF model + MTF trigger (LPS/Bojan/MSS+RTZ) + dominance/SMT
+   agreement + clear invalidation/target + sensible location. **CONVERGENCE NOTE: our
+   multiplicative boost stacking already mirrors this** — a long carrying seller-flow +
+   breadth + C_accum (+ rot-calm if validated) ≈ 1.25^3-4 ≈ 2-2.4x base risk ≈ his
+   high-probability tier, reached the same way: independent confluences each earning size.
+   The architecture converged on his risk model without copying it.
+PUBLIC-KNOWLEDGE EXTRACTION NOW COMPLETE (6 batches). Remaining WI-dependent items all
+require either fresh live data (dominance reader, eye rematch) or new data infrastructure
+(event calendars for T-windows, range-scoped volume profile for POC).
