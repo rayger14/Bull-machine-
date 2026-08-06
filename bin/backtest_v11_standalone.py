@@ -1173,6 +1173,25 @@ class StandaloneBacktestEngine:
                             sig_meta['sizing_boosts']['reasons'].append(
                                 'wyckoff_phase_C_accum (1.25x capex)')
 
+                    # Boost 7 (validated 2026-08-06 on non-binding wallet):
+                    # Rotation-calm book-wide. stables_rot_rising == 0 = money NOT
+                    # fleeing to stables (calm); == 1 = defensive rotation (dips are
+                    # exodus stairs, not accumulation). Unconstrained battery: ΔPnL
+                    # +$34.4K/+$29.5K/+$8.1K, ΔPF + in all three windows; cohort PF
+                    # 1.46/1.94/1.52 beats book 1.19/1.37/1.11 (addendum 22).
+                    # Deployed alongside the 20x wallet so expression never
+                    # self-cannibalizes. NaN/missing => NO boost.
+                    if (self.config.get('rotation_calm_boost') or {}).get('enabled') \
+                       and intent.signal.direction == 'long':
+                        rot = row.get('stables_rot_rising', None)
+                        if rot is not None and rot == rot and float(rot) == 0.0:
+                            intent.allocated_size_pct *= 1.25
+                            sig_meta['sizing_boosts']['multiplier'] *= 1.25
+                            sig_meta['sizing_boosts']['capex_mult'] = \
+                                sig_meta['sizing_boosts'].get('capex_mult', 1.0) * 1.25
+                            sig_meta['sizing_boosts']['reasons'].append(
+                                'rotation_calm stables_rot_rising=0 (1.25x capex)')
+
                 # Step 5: Execute allocations
                 for intent in intents:
                     sig = intent.signal
@@ -2343,6 +2362,14 @@ def main():
         config = json.load(f)
 
     logger.info(f"Loaded config: {config.get('version', 'unknown')}")
+
+    # Config-driven wallet (2026-08-06): configs whose position_sizing pcts are
+    # calibrated to a specific capital base carry `initial_cash`; honor it unless
+    # the CLI explicitly overrides (i.e. CLI still at its default).
+    cfg_cash = config.get('initial_cash')
+    if cfg_cash and args.initial_cash == 100_000.0:
+        args.initial_cash = float(cfg_cash)
+        logger.info(f"initial_cash from config: ${args.initial_cash:,.0f}")
 
     # Validate feature store exists
     feature_store_path = Path(args.feature_store)

@@ -205,10 +205,12 @@
       "Probabilistic mode for smooth regime transitions"
     ]
   },
+  "initial_cash": 2000000,
+  "_initial_cash_note": "2026-08-06 user directive: the paper wallet is measurement infrastructure, not a realism constraint — sized 20x so funding never binds (the $100K wallet was silently rejecting real edges via margin crowd-out). position_sizing pcts scaled /20 so per-trade DOLLARS are unchanged ($2,000 risk, $35K margin cap, $52.5K notional at 1.5x). Backtester and live runner both read initial_cash from this config.",
   "position_sizing": {
-    "risk_per_trade_pct": 0.02,
-    "max_margin_per_position_pct": 0.35,
-    "max_position_size_pct": 0.15,
+    "risk_per_trade_pct": 0.001,
+    "max_margin_per_position_pct": 0.0175,
+    "max_position_size_pct": 0.0075,
     "use_atr_scaling": true,
     "dynamic_sizing_enabled": true,
     "fusion_size_tiers": [
@@ -297,5 +299,9 @@
   "wyckoff_phase_boost": {
     "enabled": true,
     "_note": "Boost 6 (2026-08-04): C_accum long context 1.25x capex \u2014 validated co-move (train +$8.6K DD better, hold +$769); shadow phase, zero fusion leakage"
+  },
+  "rotation_calm_boost": {
+    "enabled": true,
+    "_note": "Boost 7 (2026-08-06): rotation-calm long 1.25x \u2014 validated 3/3 on non-binding wallet (\u0394PnL +$34.4K/+$29.5K/+$8.1K; cohort PF 1.46/1.94/1.52 beats book all eras); deployed together with the 20x wallet so expression never self-cannibalizes"
   }
 }
