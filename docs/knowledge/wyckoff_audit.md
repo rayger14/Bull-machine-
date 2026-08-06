@@ -576,3 +576,20 @@ down-weight) is filter-shaped (0/9) AND fails the gate AND a front-run boost vio
 the addendum-18 surgicality rule (15-46% cohorts). Calendar retained as infrastructure.
 HONEST GAP: WI's actual rule is MODEL-CONDITIONAL ("does the expected model form in the
 window") — untested; window∩model cohorts are n<10 today → needs live data accumulation.
+
+### 2026-08-06 addendum 20 — Boost 7b (surgical) REJECTED: crowd-out is capex-margin timing, NOT cohort size
+
+Boost 7b (rot=0 ∩ C_accum, branch study/rot-calm-surgical @ c0b0d77): surgicality
+PASSED (2.0-2.7% of longs, n=16/13/7) yet REJECT — reshuffle residual still dominates
+(train −$8.0K vs resize +$7.2K; OOS-B −$5.2K vs resize +$0.06K; OOS-B fully explained:
+7 boosted positions' extra scoped-capex margin knocked out 9 other positions worth
+net +$1.8K and admitted 4 losers worth −$3.4K). AND the intersection's per-trade edge
+was a TRAIN ARTIFACT (+$28.8K train cohort PnL vs +$245/+$253 OOS).
+**META-FINDING (house rule update): crowd-out originates in SCOPED CAP-EXEMPTION
+consuming shared margin during concurrency pileups — even a 2.7% cohort triggers it.
+Cohort size does not neutralize it; the honest isolator is RISK-BUDGET-NEUTRAL
+sizing (flat gross exposure) — untested, and per-trade OOS edge ~$250 means likely
+underpowered until live data accrues.** Consistent with the live concurrency-pileup
+watch-item (live_emergent_mining_2026_07_21). Rotation-calm thread now fully closed
+(book-wide + surgical both rejected); the signal survives only in its deployed narrow
+forms (exodus refusal, and descriptively in the depth>=2 tier).
