@@ -593,3 +593,25 @@ underpowered until live data accrues.** Consistent with the live concurrency-pil
 watch-item (live_emergent_mining_2026_07_21). Rotation-calm thread now fully closed
 (book-wide + surgical both rejected); the signal survives only in its deployed narrow
 forms (exodus refusal, and descriptively in the depth>=2 tier).
+
+### 2026-08-06 addendum 21 — POC: orthogonality PASS (finding kept), Boost 8 action REJECTED; the action channel is saturated
+
+Part 1 GATE PASS (branch study/poc-orthogonality @ 146c2ba): above-POC separates
+within trend strata in ALL THREE folds (dominant stratum PF 1.35/1.61/1.30 above vs
+0.74/1.27/0.73 below; agreement with trend features ≤66.5%, phi ≤0.34) — a REAL,
+non-redundant structural discriminator (opposite of the eye-location failure). Store
+artifact noted: price_above_ema_50 ≡ ema_slope_50>0 (identical columns).
+Part 2 REJECT: boost fires on 65-75% of longs (LESS surgical than Boost 7); PF drops
+in all three windows; crowd-out residual −$22.9K/−$10.5K/−$9.4K swamps positive
+resize (+$26.9K/+$14.9K/+$5.1K); DD worse −4.4/−4.8pp. Same capex-reshuffle killer.
+**CAMPAIGN META-PATTERN (now 3 consecutive cases): real per-trade discriminators keep
+being found (rotation-calm, depth>=2, above-POC — resize channels ALL positive), but
+the CAPEX-BOOST ACTION CHANNEL IS SATURATED — the margin-constrained book cannibalizes
+itself at concurrency pileups whenever more size is added, regardless of cohort size.
+The validated Boosts 1-6 got through when the book was less boost-loaded; the marginal
+capex boost now costs more in crowd-out than it earns in resize. REMAINING LEVERS:
+(a) risk-budget-neutral sizing mechanics (re-weight within flat gross — an ENGINE
+change, the one untested structural lever; would allow honest retests of all three
+shelved discriminators), (b) surgical intersections (mostly n<10 now), (c) live-data
+accumulation. Validated inventory unchanged: above-POC + depth>=2 + rotation-calm are
+SHELVED DISCRIMINATORS awaiting an action channel that can express them.**
