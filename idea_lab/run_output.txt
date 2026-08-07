@@ -1,0 +1,61 @@
+
+=== IDEA-LAB SELF-TEST vs bt_audit referee (textbook-clean) ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long    2678.2230    2678.2230   0.00e+00  take_profit
+   60  long    2075.5777    2075.5777   0.00e+00  take_profit
+  120 short   -1034.9754   -1034.9754   0.00e+00         stop
+  200  long   -1033.9902   -1033.9902   0.00e+00         stop
+  300 short   -1034.9754   -1034.9754   0.00e+00         stop
+  450  long   -1033.9902   -1033.9902   0.00e+00         stop
+  600 short   -1034.9754   -1034.9754   0.00e+00         stop
+  800  long    2024.1353    2024.1353   0.00e+00  take_profit
+  950 short   -1034.9754   -1034.9754   0.00e+00         stop
+ 1100  long   -1033.9902   -1033.9902   0.00e+00         stop
+
+MAX per-trade relative discrepancy: 0.00e+00 %   [target < 0.01%]  ->  PASS
+
+==========================================================================================
+PER-ERA RESULTS — INTEGRATED ALL-SEEING-EYE (long-only)
+==========================================================================================
+Costs: commission 2bps/side (both sides in PnL), slippage 3bps/side (once in fill). Risk 1%/trade, start $100,000. One position at a time.
+
+### TRAIN 2018-2022
+  WI-geometry : n= 36  WR= 30.6%  PF= 0.72  avgR=-0.192  PnL=$     -7,021  MaxDD=-11.10%
+                exits {'stop': 25, 'time_exit': 3, 'runner_target': 5, 'stop_after_tp1': 3}
+  naive-ladder: n= 36  WR= 33.3%  PF= 0.78  avgR=-0.130  PnL=$     -4,841  MaxDD= -9.04%
+                exits {'stop_after_tp1': 7, 'stop': 20, 'time_exit': 3, 'take_profit': 6}
+
+### OOS-A 2023-2024
+  WI-geometry : n= 19  WR= 42.1%  PF= 1.56  avgR=+0.365  PnL=$      6,815  MaxDD= -5.12%
+                exits {'stop': 11, 'runner_target': 3, 'stop_after_tp1': 3, 'time_exit': 2}
+  naive-ladder: n= 19  WR= 47.4%  PF= 1.88  avgR=+0.484  PnL=$      9,342  MaxDD= -5.12%
+                exits {'stop': 9, 'stop_after_tp1': 2, 'take_profit': 8}
+
+### OOS-B 2025-2026H1
+  WI-geometry : n= 15  WR= 26.7%  PF= 0.58  avgR=-0.329  PnL=$     -4,947  MaxDD= -7.49%
+                exits {'stop': 11, 'runner_target': 1, 'time_exit': 2, 'stop_after_tp1': 1}
+  naive-ladder: n= 16  WR= 25.0%  PF= 0.58  avgR=-0.320  PnL=$     -5,124  MaxDD= -7.11%
+                exits {'stop': 11, 'take_profit': 3, 'stop_after_tp1': 1, 'time_exit': 1}
+
+==========================================================================================
+SPRING-OVERLAP / ORTHOGONALITY vs production `spring` archetype (A)
+  production A identity gate: tf1h_pti_trap_type in {spring, bear_trap}
+==========================================================================================
+  TRAIN 2018-2022      entries= 36  conf=pti_spring: 16  entry_bar_in_A_gate:  4  orthogonal: 20
+  OOS-A 2023-2024      entries= 19  conf=pti_spring:  2  entry_bar_in_A_gate:  0  orthogonal: 17
+  OOS-B 2025-2026H1    entries= 15  conf=pti_spring:  4  entry_bar_in_A_gate:  0  orthogonal: 11
+  POOLED               entries= 70  conf=pti_spring: 22  entry_bar_in_A_gate:  4  orthogonal: 48
+  -> 48/70 (69%) of eye entries are ORTHOGONAL to what production spring already takes.
+
+==========================================================================================
+VERDICT vs 3/3 ACCEPTANCE BAR (positive PnL AND PF>1 in ALL THREE eras)
+==========================================================================================
+  WI-geometry pass-per-era : {'TRAIN 2018-2022': False, 'OOS-A 2023-2024': True, 'OOS-B 2025-2026H1': False} -> FAIL
+  naive-ladder pass-per-era: {'TRAIN 2018-2022': False, 'OOS-A 2023-2024': True, 'OOS-B 2025-2026H1': False} -> FAIL
+
+  WI-exits vs naive-ladder (same entries) — does geometry help?
+    TRAIN 2018-2022      WI PnL $    -7,021 vs naive $    -4,841  (WI-naive = $    -2,181)
+    OOS-A 2023-2024      WI PnL $     6,815 vs naive $     9,342  (WI-naive = $    -2,527)
+    OOS-B 2025-2026H1    WI PnL $    -4,947 vs naive $    -5,124  (WI-naive = $      +177)
+
+  POOLED n (WI) = 70  [n>=30]
