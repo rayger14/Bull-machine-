@@ -771,3 +771,33 @@ Deep-research (16 verified claims, cited; synthesis step hit the Fable weekly li
 4. MTF GATING HIERARCHY (well-sourced, verify budget ran out so unverified-not-refuted): HTF sets direction FIRST, LTF only times entry; distinct non-interchangeable roles; trade only when timeframes AGREE (conjunctive gate, not average).
 THE MAPPING (why the user was right): the replacement architecture = REGIME GATE (Moneytaur context-first: CMI + breadth + stables/dominance — all already built) → CONJUNCTIVE SEQUENCE (Wyckoff phase machine: layers must co-occur in order, weakest-link) → META-LABEL SIZING (trained p(profit), the proper form of the 6 boosts). We already own all three pieces; fusion crushed them into a sum. CAVEATS: theory+practitioner+adjacent-domain evidence, NOT a proven-on-BTC result (tells us the SHAPE); meta-labeling can overfit on thin data (quantconnect "not a silver bullet"); must be validated in the clean idea-lab at the 3/3 era bar + purged CV.
 NEXT: prototype (regime-gate → conjunction → meta-label) in idea_lab/ over the validated pieces.
+
+### 2026-08-07 addendum 30 — Meta-label prototype: REJECT as built; architecture CONFIRMED; boosts revealed as the working v1
+
+Prototype (branch study/meta-label-prototype, 3e255ce): GBT+isotonic on 1,530 champion
+long entries, 35 causal features (fusion excluded), purged 5-fold train-only CV, frozen
+single-shot OOS eval.
+**REJECT for deployment:** GBT overfit (purged-CV AUC 0.52 vs resub 0.93 — coin-flip
+generalization); learned gate did NOT materialize (mean p flat: bull 0.452 = markdown
+0.452 — no stand-down where the book bled); live forward sniff ≈ null (+$422 on −$25.2K,
+winner/loser p-separation NEGATIVE, partly a feature-coverage gap: dd_score = #2
+importance but unavailable live).
+**THE TWO REAL FINDINGS:**
+1. **Architecture thesis CONFIRMED in the model's own anatomy: importance blocks =
+   structure 0.43 + regime 0.31 + context 0.19 = 0.93 vs ARCHETYPE IDENTITY 0.03.**
+   WHICH archetype fired is nearly irrelevant to trade quality; the CONDITIONS decide.
+   The 16 archetypes are ~interchangeable entry generators; participation should be
+   context-driven — precisely addendum 29's claim, now shown empirically in-house.
+2. **The crude deployed boost stack IS a working decision layer — and beats the trained
+   model OOS:** crude 1.25^count → PF 1.34/1.20 (OOS-A/OOS-B) vs learned-sized 1.25/1.11
+   vs baseline 1.24/1.09, at equal risk, in BOTH OOS eras. The hand-built boosts are the
+   v1 of the correct architecture, already live. The logistic sanity model ≈ ties crude
+   (1.32/1.21) and generalizes better than GBT → at this sample size, SIMPLE beats
+   flexible.
+**PATH (not actioned):** (a) wire the CMI regime block (risk_temp/instability/chop/
+trend_align/dd_score) into the store + live feature logging so the fairest features
+exist on both bases — cheap infra, enables everything later; (b) revisit the trained
+layer with regularized-logistic-class models once live data accumulates real sample
+size; (c) the full addendum-29 stack (JM regime gate + conjunctive sequence) remains
+untested as a combination — folds are spent; live data is the honest venue. Labels
+inherit book exits; folds heavily reused — all caveats stand.
