@@ -876,3 +876,28 @@ range object (redraw on body-close MSS) — repairs springs AND POC AND enables 
 AND premium/discount at once. This is the keystone. It's exactly WI-question-#1 (how he
 draws the range). Sensors otherwise causal; levels healthy-but-unwired; regime block needs
 materializing (addendum 32).**
+
+### 2026-08-07 addendum 34 — Keystone build: structural range FIXES location+trend-contamination, but 1H anchors can't reach "weeks"
+
+Built idea_lab/structural_range.py (branch study/structural-range e2ba6b3): causal
+persistence state machine (draw box from swing_50 pivots, hold until body-close break;
+sweep vs break split; floor-tighten in accumulation). Causal (no-repaint 3/3).
+**TWO DEFECTS FIXED (proven):**
+- SPRING MISLOCATION: rolling wyckoff_spring_a/b fired with NO active range 65%/36% of the
+  time (structurally undefinable) and 0.81/1.22 ATR mislocated otherwise; only ~21%/~28%
+  were both in-range AND ≤1 ATR from its low. Structural springs sit AT the drawn low by
+  construction (100% located). Confirms + quantifies addendum 31.
+- POC TREND-CONTAMINATION: structural-POC above/below is trend-INDEPENDENT (phi +0.075,
+  54% agree with close>ema200) vs rolling-60d POC (phi +0.515, 76%) — removes the exact
+  contamination that caused the live inversion (addendum 23/33). Within-range bar-to-bar
+  pinning 9.4% vs ~100%.
+**ONE DEFECT NOT FIXED (anchor-limited, load-bearing):** ranges don't hold for WEEKS —
+median lifetime 0.4d (target weeks); weekly POC drift 6.35 ATR (worse than rolling)
+because the box redraws too often. ROOT CAUSE PROVEN: swing_50 pivots at 1H refresh every
+~1.1 days → a 1H-anchored range is intrinsically a ~1-day object; break-acceptance tuning
+caps at 1.9d AND re-introduces trend contamination (phi 0.075→0.222). WEEKS-LONG HUMAN
+BOXES REQUIRE HTF (4H/1D) SWING PIVOTS — which are NULL in the store (tf1d_range_*,
+tf4h_range_* = the addendum-32 dead columns). So the keystone's final piece = a
+PLUMBING build (materialize HTF swing pivots), then re-run the same validated machine.
+MECHANISM KEPT, not wired. NEXT (revised list): 1b = build HTF swing pivots + re-anchor
+(merges with step-2 plumbing); then step-3 re-tests on the fixed sensors.
