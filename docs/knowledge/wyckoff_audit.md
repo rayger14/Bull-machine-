@@ -699,3 +699,27 @@ full-for-data decision (2026-07-23) → NOT proposed. This resolves a134fdd in t
 direction: live DOES match backtest at the position level. MY addendum-24 escalation was
 the error; the adversarial re-check caught it. POC decision unchanged (parked; entry
 signal survives historical controls, live is one hostile regime + the chunk artifact).
+
+### 2026-08-06 addendum 26 — Backtester trust audit: engine SOUND, one real entry-cost accounting bug
+
+Independent differential test (hand-rolled numpy referee, vectorbt/backtesting.py not
+importable): per-trade PnL reconciles **0.00%** to an independent implementation. PASS on
+look-ahead (signal-at-close/fill-at-close, no future bars), same-bar round-trip guard,
+scale-out-from-original-qty, margin↔equity reconciliation, float guards, exit-chain
+preemption, and **intrabar stop-first PESSIMISM** (stops fire on wicks + fill at stop
+level; targets need a close — conservative, no target-first inflation). Relative rankings
+trustworthy.
+**BUG FOUND (Finding 1, entry-cost path only, differential-confirmed — NOT a metric
+artifact this time):** (1) entry COMMISSION is deducted from cash but omitted from
+`trade.pnl` → headline `total_pnl` OPTIMISTIC ~2bps/trade (~$7-15K / 5-10% of the $132K
+production figure). (2) entry SLIPPAGE double-charged: in the fill price AND as a separate
+never-returned cash term → equity-curve/MaxDD PESSIMISTIC ~3bps/trade. Headline PnL and
+equity-curve PnL are on inconsistent bases. Minimal fix (NOT applied): add entry-commission
+term to `_close_position` pnl; drop the explicit slippage cash term from margin_cost (already
+in fill price). CHECK: does live v11_shadow_runner share the pattern (parity)? Re-run the
+production floors after. Regression harness kept: scratchpad/bt_audit/differential_test.py.
+WORKFLOW VERDICT (answers user's vectorbt question): keep our engine as SOURCE OF TRUTH
+(it carries live-parity + fusion/dedup/margin/Smart-Exits that libraries can't model); use
+a clean library/hand-rolled backtester as a FAST IDEA-SCREENER for simple standalone
+signals before engine integration → this seeds the "idea-lab" for testing extracted
+knowledge (PO3, POC, all-seeing-eye, Bojan, WI exits) WITHOUT fusion/dedup/crowd-out noise.
