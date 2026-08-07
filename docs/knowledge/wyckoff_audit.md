@@ -801,3 +801,24 @@ layer with regularized-logistic-class models once live data accumulates real sam
 size; (c) the full addendum-29 stack (JM regime gate + conjunctive sequence) remains
 untested as a combination — folds are spent; live data is the honest venue. Labels
 inherit book exits; folds heavily reused — all caveats stand.
+
+### 2026-08-07 addendum 31 — Sensor audit pt.1 (Wyckoff): springs are MISLOCATED — user's hypothesis CONFIRMED
+
+Read-only health audit of the 13 Wyckoff event detectors + phase (scratch sensor_audit_wyckoff).
+CAUSALITY: all clean (no-repaint, 3 cut points) — the repairs held.
+**THE ROOT BUG CONFIRMED — mislocation, not degeneracy:** spring/SC/ST fire off
+`rolling(20).min()` and that rolling low coincides with a real structural swing low
+(swing_low_50, ≤1 ATR) only ~25-40% of the time (vs 16% chance) — median ~2 ATR away.
+So the "spring" fires at arbitrary fresh-20-bar-lows mid-trend, NOT at a defined range
+low. Ground truth: 8/8 right EVENT/timing but location HIT 5/8, MISLOCATED 3/8 (FTX 2022
+"spring" fired 18.6% ABOVE the real low). → DIRECTLY explains why PO3/campaign entries
+were structurally invalid: the spring wasn't at a range low. THE HIGHEST-LEVERAGE FIX:
+anchor spring/ST detection to swing_low_50 / a persisted structural range instead of a
+rolling window (test in idea_lab at 3/3 bar, do NOT wire).
+OTHER FINDINGS: ut/utad/lps/lpsy DEGENERATE (<20 fires; utad bit-identical to ut =
+redundant). bc HEALTHY (4/4 major tops, conf .89-.98), sos/sc healthy. Graded
+wyckoff_bullish/bearish_score = FUSION-ROTTEN (compensatory avg; deprecate as decision
+inputs — use categorical phase_dir + events). wyckoff_phase_dir TRUSTWORTHY (289 C_accum
+episodes, coherent) BUT A_distrib = 40.6% of bars (over-broad distribution side, tuning
+study flagged). This is the keystone finding: the SENSORS were partly misfiring, so prior
+idea-tests were run on structurally-wrong entries — vindicates the audit-first approach.
