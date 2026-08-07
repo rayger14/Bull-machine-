@@ -649,3 +649,29 @@ the era-instability signature (addendum 12) landing on POC. **DECISION: Boost 8 
 OFF/unshipped. Optional middle path: merge the FEATURE (computed+logged live, flag off)
 so forward live data adjudicates the above/below cohorts with the healthy wallet.**
 The parity-proven build (feat/live-poc-boost8) remains ready either way.
+
+### 2026-08-06 addendum 24 — POC inversion diagnosed: NOT the entry — a book-wide LIVE reward:risk collapse
+
+Deep diagnostic (370 live longs + history POC recompute) REFUTED both my hypotheses:
+- Trend-proxy contamination: REFUTED — above-POC beat below-POC within NON-uptrend bars
+  in all 3 historical folds (train 1.16 vs 0.64, oosA 1.13 vs 0.91, hold 1.23 vs 0.73).
+- Context-flip (distribution inverts POC): REFUTED — in historical markdown/distribution
+  above-POC still WON (markdown PF 1.24 vs 0.80; 4H-distribution 1.36 vs 0.75). Live
+  inversion reproduces in NO historical bear slice.
+**ACTUAL CAUSE (mechanically dominant): payoff-geometry / RR collapse in the LIVE book.**
+Live above-POC avg-win/avg-loss |ratio| = 0.35 (win $270 / loss −$778) vs HISTORY 1.46
+(win $1,622 / loss −$1,110). Live WIN RATE actually ROSE (61.7% vs 47.9%) — but every
+live above-POC loser (72/72) is a FULL stop_loss while winners bank tiny 0.5R/1R
+scale-outs. A 4x RR collapse, size-invariant, present in below-POC too (W/L 0.73) →
+BOOK-WIDE, not POC-specific. oi_divergence leak = minor (~26%, −$6.3K).
+**CRITICAL CONFOUND the diagnostic flagged:** "history won" = BACKTESTER exits;
+"live lost" = PAPER RUNNER exits + real fills. The RR gap is partly a SYSTEM (exit-engine)
+difference, NOT purely regime. THIS CONFLICTS with the 2026-07 "exit-capture gap was a
+measurement artifact / live matches backtest" correction (commit a134fdd) — that audit
+may have sampled a benign period; this markdown sample shows a large gap.
+**DECISIVE NEXT TEST (running): replay the 370 live entries through the BACKTESTER's
+Smart-Exits-V2 on the real kline path — same entries, only exit rules differ. RR recovers
+→ live exit engine is broken (book-wide, fixable, biggest find of campaign). RR stays
+collapsed → regime (markdown full-stops everything; wait it out).**
+POC decision UNCHANGED: not shipping — but the reason is the RR problem, not a dead entry
+signal (POC entry edge survives every historical control).
