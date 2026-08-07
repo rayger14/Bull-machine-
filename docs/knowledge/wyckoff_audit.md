@@ -822,3 +822,28 @@ inputs — use categorical phase_dir + events). wyckoff_phase_dir TRUSTWORTHY (2
 episodes, coherent) BUT A_distrib = 40.6% of bars (over-broad distribution side, tuning
 study flagged). This is the keystone finding: the SENSORS were partly misfiring, so prior
 idea-tests were run on structurally-wrong entries — vindicates the audit-first approach.
+
+### 2026-08-07 addendum 32 — Sensor audit pt.2 (MTF/regime): raw inputs alive, DERIVED SCALARS not materialized
+
+Read-only audit (scratch sensor_audit_mtf). CAUSALITY: HTF wyckoff scores no-leak
+(8/8 repo tests pass, leak-sniff ~0) BUT they roll HOURLY over the in-progress HTF bar
+(not a strict closed-bar step) — 1D bias flickers within-day 35% of buckets; a gate
+wanting stable daily permission must lag/smooth it (strict mtf_alignment.py exists but
+doesn't feed these columns).
+**KEYSTONE PLUMBING GAP (confirms addendum 30):** CMI derived scalars (risk_temp,
+instability, crisis_prob, trend_align, dd_score) are computed INLINE in the backtester
+(~L696-842), NOT persisted as store columns. Live logs 3 of them; trend_align + dd_score
+logged NOWHERE (dd_score = #2 meta-label importance → nulled the live sniff). A
+regime-gate can only use features present on BOTH bases = today only the RAW-INPUT tier
+(chop_score, drawdown_persistence, adx, wick_ratio, fear_greed_norm, volume_z_7d, ema
+flags, HTF wyckoff scores — all 100% clean both sides). Good news: the whole CMI block
+is RECONSTRUCTABLE (all raw inputs present 2018+ and live) — fix is PLUMBING not new
+sensors.
+DEAD LIVE: crisis_prob frozen 0.009 (broken 'original' path; substitute path exists,
+unwired); crash_frequency_7d constant 0 live. DEAD COLUMNS: 109 all-null + 6 constant
+in store (tf1d_wyckoff_phase, tf4h_range_*, tf1d_frvp_*, mtf_* governor, tf*_boms_direction).
+MTF AGREEMENT: 4H/1D directional-agree 49%, both-bull 27.3% (20,120 bars), hard-conflict
+only 7.3% → a HTF-agreement gate is FEASIBLE (fires often, rarely conflicts).
+PRIORITIZED FIXES (proposed, not applied): P0 materialize CMI block into store+live via
+ONE shared formula (kills store/live drift); P1 fix crisis_prob (substitute path) +
+retire crash_frequency live; P2 add lagged closed-bar HTF-bias column; P3 GC 109 dead cols.
