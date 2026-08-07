@@ -847,3 +847,32 @@ only 7.3% → a HTF-agreement gate is FEASIBLE (fires often, rarely conflicts).
 PRIORITIZED FIXES (proposed, not applied): P0 materialize CMI block into store+live via
 ONE shared formula (kills store/live drift); P1 fix crisis_prob (substitute path) +
 retire crash_frequency live; P2 add lagged closed-bar HTF-bias column; P3 GC 109 dead cols.
+
+### 2026-08-07 addendum 33 — Sensor audit pt.3 (Bojan/POC/levels): the ROLLING-vs-STRUCTURAL disease is systemic
+
+Read-only audit (scratch sensor_audit_levels).
+**BOJAN = WRONG-OBJECT + DEGENERATE + DORMANT (user hypothesis CONFIRMED):** no real Bojan
+detector is wired (compute_bojan_score, registry, BojanEngine all unwired; only a bare
+wick_lower_ratio>=0.5 size-stub on wick_trap carries the name). The bare wick% fires
+DEAD-CENTER of range (median range_position 0.496) and is UNDER-represented at range lows
+(9.6% vs 20% random) — zero structural enrichment. compute_bojan_score degenerate (phob
+100/200, trap_reset 0/200). → the addendum-10 Bojan-gate FAILURE was partly a sensor
+misfire. FIX: Bojan = wick% AND sweep_low_event AND within ~0.5ATR of swing_low_50/round#
+(all inputs exist); intersection n<15 → live-data candidate, not backtest.
+**POC = WRONG-OBJECT (confirmed, quantified):** rolling-60d POC moves on ~97% of bars,
+drifts 0.3-1.1 ATR/week (a structural POC should pin for weeks); above_poc agrees with
+close>ema200 at 72-77% (phi 0.46-0.55 vs slow EMA) = real trend contamination → EXPLAINS
+the live inversion (addendum 23). FIX: POC scoped to a swing-pivot structural range,
+redrawn only on body-close MSS. Infra build; fresh-fold validation.
+**LEVEL_FEATURES = HEALTHY but DORMANT:** all 17 populated, causal (10-bar pivot lag,
+test-guarded), NOT consumed by any entry gate; exit ladder study-gated OFF. sweep_low_event
+= the gem: 2.9x location enrichment + positive fwd-24h edge, correct sign. eq_pool borderline
+(50% fire, too loose). FIX: activate sweep_low_event as a BOOST qualifier (not gate);
+tighten eq_pool tolerance.
+**THE UNIFYING DIAGNOSIS (all 3 audits): the ROLLING-WINDOW-vs-STRUCTURAL-RANGE bug is
+systemic — springs, POC, and (implicitly) premium/discount all key off rolling extremes
+instead of a drawn structural range. ONE fix — build a swing-pivot-anchored structural
+range object (redraw on body-close MSS) — repairs springs AND POC AND enables real Bojan
+AND premium/discount at once. This is the keystone. It's exactly WI-question-#1 (how he
+draws the range). Sensors otherwise causal; levels healthy-but-unwired; regime block needs
+materializing (addendum 32).**
