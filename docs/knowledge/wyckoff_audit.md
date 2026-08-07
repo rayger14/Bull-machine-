@@ -745,3 +745,19 @@ mechanizable edge). The all-seeing-eye is closed in every testable form: standal
 strategy (fail 2/3), sizing dial (failed untouched-fold gate, addendum 12/21), detection
 (kept as infra). Surviving yield = the C_accum sizing boost (Boost 6, live).
 ASSET: idea_lab/ is a reusable clean screener for any future extracted idea.
+
+### 2026-08-06 addendum 28 — 6-boost forward replay on live trades: amplifier, not rescue
+
+No-look-ahead replay (boost conditions from entry-bar features, server real-time live
+logs). PAST 2 MONTHS (74 longs, base PnL +$885, PF 1.03): all-boosts +$1,543, delta
++$658 (+74%) — BUT only 6/74 positions had any boost fire (8% coverage: live logs only
+recorded each boost's feature once it shipped), and ~$904 of the +$658 is ONE wick_trap
+winner → a WASH within noise, not signal. FULL LIVE SAMPLE (212 longs, base −$24.3K):
+all-boosts −$26.3K, delta −$1,950 (~8% worse) — the broad context boosts (phase-C 29
+fires, rotation-calm 66 fires) amplified a LOSING long book in the Feb-Jun markdown.
+CONCLUSION: boosts do exactly what boosts do — SCALE whatever the book is already doing;
+sign = whether the amplified cohort was winning/losing in the chosen window. They neither
+rescued nor broke the book. The validated edge lives in the historical 3/3 WFO cycles,
+NOT in a 2-month markdown. Confirms the deeper campaign truth: the system's yield is
+regime-dependent (long-biased book struggles in markdown/chop); boosts amplify, they
+don't fix regime.
