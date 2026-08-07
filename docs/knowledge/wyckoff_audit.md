@@ -723,3 +723,25 @@ WORKFLOW VERDICT (answers user's vectorbt question): keep our engine as SOURCE O
 a clean library/hand-rolled backtester as a FAST IDEA-SCREENER for simple standalone
 signals before engine integration → this seeds the "idea-lab" for testing extracted
 knowledge (PO3, POC, all-seeing-eye, Bojan, WI exits) WITHOUT fusion/dedup/crowd-out noise.
+
+### 2026-08-06 addendum 27 — Idea-lab built; integrated all-seeing-eye FAILS 3/3 CLEANLY (no artifact to blame)
+
+Clean single-strategy backtester built (branch study/idea-lab, 2a7d3e8; 0.00% self-test
+parity vs the audit referee; addendum-26 cost bug fixed from the start; NO fusion/dedup/
+crowd-out/chunk possible). First test = the INTEGRATED all-seeing-eye as WI actually
+trades it: C_accum/D_accum gate → spring/LPS + return-to-zone acceptance entry → tight
+LPS stop → banked-derisk-runner exits.
+RESULT — FAIL 1/3 eras: OOS-A 2023-24 PF 1.56 (bull) PASS; TRAIN 2018-22 PF 0.72 and
+OOS-B 2025-26 PF 0.58 both NEGATIVE. Only the bull era passes = regime tailwind, not
+edge. WI exit geometry did NOT beat a naive 1R/2R/3R ladder (naive ≥ WI every era; WI's
+0.1R post-TP1 derisk kills runners). Entries 69% orthogonal to spring (genuinely new set,
+still no edge). **DECISIVE: this removed EVERY engine artifact and the edge still wasn't
+there → the failure is the IDEA/mechanization, not our plumbing. Closes the campaign's
+central open question.**
+META-CONCLUSION (now proven every way): trader-knowledge mechanizes as CONTEXT/SIZING
+(6 validated boosts, deployed) but NOT as standalone whole-strategies (PO3 ×5, wyckoff-
+campaign v1/v2, integrated eye — all fail; discretion + regime-timing is the un-
+mechanizable edge). The all-seeing-eye is closed in every testable form: standalone
+strategy (fail 2/3), sizing dial (failed untouched-fold gate, addendum 12/21), detection
+(kept as infra). Surviving yield = the C_accum sizing boost (Boost 6, live).
+ASSET: idea_lab/ is a reusable clean screener for any future extracted idea.
