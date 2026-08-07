@@ -675,3 +675,27 @@ Smart-Exits-V2 on the real kline path — same entries, only exit rules differ. 
 collapsed → regime (markdown full-stops everything; wait it out).**
 POC decision UNCHANGED: not shipping — but the reason is the RR problem, not a dead entry
 signal (POC entry edge survives every historical control).
+
+### 2026-08-06 addendum 25 — CORRECTION of addendum 24: the "RR collapse" was a scale-out-chunk artifact; exits are FINE
+
+Decisive replay REFUTES addendum 24. The 0.35 avg-win/avg-loss "collapse" was produced
+by counting each SCALE-OUT CHUNK as a trade (small partial-profit rows vs full-size
+stops) — the SAME chunk-vs-position artifact as PO3's fake 80% WR (Lesson #19).
+CORRECT position-level metrics (aggregate by position_id):
+- LIVE long |W/L| = **1.14** (avg-win $886 / avg-loss $778) — healthy, NOT collapsed.
+- Chunk-|W/L| ≈ 0.4 in EVERY regime, INCLUDING the +$36K 2024 year → the chunk metric
+  is meaningless as a health signal; I mis-read it.
+- Real BACKTESTER over the SAME 2026 markdown: position |W/L| 1.12, PF 0.97 ≈ live 1.14.
+- Exit engine is SHARED CODE (coinbase_runner → V11ShadowRunner → exit_logic.py); grep-
+  confirmed. Replaying backtester exits on identical live entries does NOT recover RR
+  (lands 0.85, below live's 1.14). NO exit-engine bug exists. Fills neutral (live stops
+  −2.9bps ≈ 3bps model; scale-outs +32bps favorable).
+**TRUE cause of the −$24.3K live long loss = REGIME × ENTRY BREADTH:** 6-month markdown
+compresses winner follow-through for everyone (backtester ~breakeven over the overlap),
+AND the full junk book admits more marginal entries that full-stop (55% live vs 43%
+gated backtester) + live ran ~2 months deeper into the drawdown than the store cutoff.
+The only lever = tighten entry selection, which COLLIDES with the standing junk-book-
+full-for-data decision (2026-07-23) → NOT proposed. This resolves a134fdd in the correct
+direction: live DOES match backtest at the position level. MY addendum-24 escalation was
+the error; the adversarial re-check caught it. POC decision unchanged (parked; entry
+signal survives historical controls, live is one hostile regime + the chunk artifact).
