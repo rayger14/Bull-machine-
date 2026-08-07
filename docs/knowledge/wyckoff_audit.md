@@ -901,3 +901,29 @@ tf4h_range_* = the addendum-32 dead columns). So the keystone's final piece = a
 PLUMBING build (materialize HTF swing pivots), then re-run the same validated machine.
 MECHANISM KEPT, not wired. NEXT (revised list): 1b = build HTF swing pivots + re-anchor
 (merges with step-2 plumbing); then step-3 re-tests on the fixed sensors.
+
+### 2026-08-07 addendum 35 — Provenance ledger: OBJECTS are WI-sourced, MAGNITUDES are all ours; Moneytaur corpus is thin
+
+Pre-build knowledge audit (scratch knowledge_provenance). Clean real-vs-invented ledger.
+**THE PATTERN: the structural OBJECTS are SOURCED (WI verbatim) and the study machine
+honors them; every MAGNITUDE is INVENTED (ours).**
+SOURCED + honored by idea_lab/structural_range.py: fixed range (not rolling), body-close
+MSS redraw, wick-back-inside = SWEEP not break, premium/discount vs the drawn range, POC
+scoped to the drawn range, HTF-permission gates SIZE not veto (dial). These have WI
+quotes behind them.
+INVENTED (no WI number — must be flagged hypotheses, NOT facts): rolling-20 window
+(the keystone bug, contradicts WI), 70% Bojan wick (WI VERBATIM "OUR invention not his"),
+0.25% POC bin, MIN_WIDTH_ATR 1.5, TIGHTEN 0.75, −0.25 ATR stop buffer, TT=swing_high
+proxy, 0.5/0.3/0.2 TF blend (the Lesson-#54 compensatory anti-pattern), fib 0.705/0.786,
+all detector retrace/volume ratios (0.70 etc.). WI EXPLICITLY DISCLAIMS the 2 most-hunted:
+Bojan wick-% and TT formula — STOP hunting these.
+**MONETAUR IS THIN:** no transcribed Q&A anywhere (WI has 6 batches). Moneytaur = ONE
+rejected trailing formula (max(BE+0.5R, pivot−1ATR)) + a co-branded "context-first"
+school. All rich dominance/breadth/SMT doctrine is actually WI-sourced or joint. Do NOT
+represent dominance/breadth as "Moneytaur" — it's WI. SMT has no mechanizable spec.
+**BUILD VERDICT: the study machine is RULE-FAITHFUL; its ONE flaw is the ANCHOR TIMEFRAME
+(1H swing_50 → ~0.4d ranges vs WI's weeks). Next = pure PLUMBING (materialize HTF 4H/1D,
+ideally W/M, swing pivots) + re-run the SAME machine. NOT a redesign.** Highest-leverage
+open WI question = the exact range-anchoring rule (which swings, which TF-close redraws) —
+collapses 4 invented params at once. Every invented param above enters the HTF build
+pre-registered as a hypothesis, never a fact.
