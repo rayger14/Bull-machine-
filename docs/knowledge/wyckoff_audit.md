@@ -963,3 +963,22 @@ retest_cluster/order_block_retest — never measured. #2 = price×time confluenc
 surgical sizing boost (model-conditional by construction; the add-19-compliant revival).
 #3 = Gann {45,72,90} bar-count windows model-conditional only (48% base rate too broad
 alone). Extinct: oracle whispers (cosmetic), price-only T-windows, killzones (never existed).
+
+### 2026-08-07 addendum 37 — HTF re-anchor: WEEKS ACHIEVED on 1D pivots (keystone complete)
+
+Built idea_lab/htf_pivots.py (branch study/htf-structural-range 4a60a19): causal 4H/1D
+resample + symmetric N-bar fractal pivots + broadcast; re-fed the UNCHANGED structural_range
+machine. Result: the keystone's final flaw (0.4-day ranges) is FIXED.
+STABILITY (level-dwell = how long the drawn level persists, the right metric):
+1H swing_50 0.4d ❌ → 4H N=5 2.2d → 1D N=3 7.8d → **1D N=5 = 13.7d median (max 71.5d) ✅**.
+Floor changes on 0.15% of bars, holds 99.81% in-range. Causal 3/3. Episode overlays now
+human-shaped (2022 bear 22.4-32.4K box 56d; Nov-21 top 27d; Mar-24 ATH 25d; 2023 accum 19-21d).
+VERDICT: **1D N=5 is the structural-range anchor** (N=5>N=3: 13.7 vs 7.8d, ~16 boxes/yr);
+4H = MTF refinement layer not the weeks-range; don't tune break-acceptance (cosmetic,
+worsens phi). Weekly anchor = natural next step for WI's true W/M scale (flagged).
+CAVEATS: spring mislocation is WORSE than thought vs the TRUE HTF low (legacy rolling
+springs 5.3-7.9 ATR off, 40-68% fire with no range) — strengthens add.31. POC
+decontamination only PARTIAL now (phi +0.46 vs rolling +0.515; the 1H +0.075 was partly a
+degeneracy artifact of a 0.4d box too short to span trend); weekly DRIFT fixed (2.4 vs
+6.35). Flagged fix: volume-profile POC over price axis, not close-binning. All params
+(N, HTF choice, MIN_WIDTH 1.5) = OURS/flagged. SENSOR validated, NOT edge — step-3 re-tests next.
