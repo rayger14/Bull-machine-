@@ -82,6 +82,7 @@ class EntryPlan:
     move_stop_to_after_first_tp: Optional[float] = None
     runner_target: Optional[float] = None
     max_hold_bars: int = 168
+    risk_mult: float = 1.0                       # per-trade conviction sizing multiplier
     meta: dict = field(default_factory=dict)
 
 
@@ -128,7 +129,8 @@ def run_backtest(df: pd.DataFrame,
         if stop_dist <= 0 or not np.isfinite(stop_dist):
             equity_curve.append(equity); i += 1; continue
 
-        risk_dollars = equity * risk_pct
+        risk_mult = float(getattr(plan, "risk_mult", 1.0) or 1.0)
+        risk_dollars = equity * risk_pct * risk_mult   # conviction sizing (default 1.0x)
         qty = risk_dollars / stop_dist            # position sized off entry-stop distance
         orig_qty = qty
         notional_entry = qty * entry_fill

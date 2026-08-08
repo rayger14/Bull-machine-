@@ -1,0 +1,22 @@
+total bars: 73829  (2018-01-01 00:00:00 -> 2026-06-10 23:00:00)
+active range bars           :  47887 (64.9%)
+R1 regime permission        :  37515 (50.8%)
+R2 discount-in-active-range :  25843 (35.0%)
+struct_sweep_low bars (raw) :    392
+R3 (R2 & sweep<=K3)         :    725 (1.0%)
+FIRE (R1 & R3) bar-level    :    218
+FIRE & fib_time>0           :    141
+
+candidate ENTRY EVENTS (episodes, >6-bar gap) : 62
+per-year event count:
+2018    9
+2019    6
+2021    9
+2022    6
+2023    9
+2024    7
+2025    7
+2026    9
+
+POOLED candidate events = 62  [n>=25 OK]
+  of which fib_time_confluence>0 at event bar: 40 (65%)

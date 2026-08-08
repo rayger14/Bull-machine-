@@ -1,0 +1,88 @@
+
+=== IDEA-LAB SELF-TEST vs bt_audit referee (textbook-clean) ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long    2678.2230    2678.2230   0.00e+00  take_profit
+   60  long    2075.5777    2075.5777   0.00e+00  take_profit
+  120 short   -1034.9754   -1034.9754   0.00e+00         stop
+  200  long   -1033.9902   -1033.9902   0.00e+00         stop
+  300 short   -1034.9754   -1034.9754   0.00e+00         stop
+  450  long   -1033.9902   -1033.9902   0.00e+00         stop
+  600 short   -1034.9754   -1034.9754   0.00e+00         stop
+  800  long    2024.1353    2024.1353   0.00e+00  take_profit
+  950 short   -1034.9754   -1034.9754   0.00e+00         stop
+ 1100  long   -1033.9902   -1033.9902   0.00e+00         stop
+
+MAX per-trade relative discrepancy: 0.00e+00 %   [target < 0.01%]  ->  PASS
+
+Building fixed sensors (1D N=5 structural range + Bojan-low) on full causal history...
+
+============================================================================================
+THE UNIFIED ARCHETYPE — per-era results (long-only, own trade list)
+============================================================================================
+Costs: commission 2bps/side (both in PnL), slippage 3bps/side (once in fill). Base risk 1%/trade, start $100,000. One position at a time.
+Conviction = 1.5x risk when fib_time_confluence>0 OR a Bojan-low zone is active.
+
+### TRAIN 2018-2022
+  struct  flat : n= 40  WR= 17.5%  PF= 2.02  avgR=+1.037  PnL=$    41,684  MaxDD=-10.95%
+                 exits {'stop': 33, 'time_exit': 7}
+  struct  conv : n= 40  WR= 17.5%  PF= 2.00  avgR=+1.037  PnL=$    64,584  MaxDD=-14.61%
+  naive   flat : n= 40  WR= 32.5%  PF= 0.99  avgR=+0.009  PnL=$      -117  MaxDD=-10.01%
+  naive   conv : n= 40  WR= 32.5%  PF= 1.03  avgR=+0.009  PnL=$     1,136  MaxDD=-13.26%
+
+### OOS-A 2023-2024
+  struct  flat : n= 14  WR= 14.3%  PF= 0.73  avgR=-0.245  PnL=$    -3,788  MaxDD= -9.88%
+                 exits {'stop': 12, 'time_exit': 2}
+  struct  conv : n= 14  WR= 14.3%  PF= 0.72  avgR=-0.245  PnL=$    -5,919  MaxDD=-14.49%
+  naive   flat : n= 14  WR= 28.6%  PF= 0.75  avgR=-0.167  PnL=$    -2,437  MaxDD= -5.20%
+  naive   conv : n= 14  WR= 28.6%  PF= 0.75  avgR=-0.167  PnL=$    -3,728  MaxDD= -7.72%
+
+### OOS-B 2025-2026H1
+  struct  flat : n= 18  WR= 11.1%  PF= 0.15  avgR=-0.842  PnL=$   -14,168  MaxDD=-16.66%
+                 exits {'stop': 16, 'stop_after_tp1': 1, 'time_exit': 1}
+  struct  conv : n= 18  WR= 11.1%  PF= 0.14  avgR=-0.842  PnL=$   -20,557  MaxDD=-23.98%
+  naive   flat : n= 19  WR= 26.3%  PF= 0.80  avgR=-0.152  PnL=$    -3,099  MaxDD=-10.31%
+  naive   conv : n= 19  WR= 26.3%  PF= 0.79  avgR=-0.152  PnL=$    -4,798  MaxDD=-15.12%
+
+============================================================================================
+VERDICT vs PRE-REGISTERED 3/3 BAR (positive PnL AND PF>1 in ALL THREE eras)
+============================================================================================
+  struct/flat    {'TRAIN 2018-2022': True, 'OOS-A 2023-2024': False, 'OOS-B 2025-2026H1': False}  -> 1/3 (1/3)
+  struct/conv    {'TRAIN 2018-2022': True, 'OOS-A 2023-2024': False, 'OOS-B 2025-2026H1': False}  -> 1/3 (1/3)
+  naive/flat     {'TRAIN 2018-2022': False, 'OOS-A 2023-2024': False, 'OOS-B 2025-2026H1': False}  -> 0/3 (0/3)
+  naive/conv     {'TRAIN 2018-2022': True, 'OOS-A 2023-2024': False, 'OOS-B 2025-2026H1': False}  -> 1/3 (1/3)
+
+============================================================================================
+CHAMPION-LONG OVERLAP  (unified entry within +/-48h of any champion long entry)
+  Question: is this a GENUINELY DIFFERENT trade set, or does it re-take champion longs?
+============================================================================================
+  TRAIN 2018-2022      unified_entries= 40  champ_longs= 790  overlap= 22 (55%)  distinct=18 (45%)
+  OOS-A 2023-2024      unified_entries= 14  champ_longs= 475  overlap= 10 (71%)  distinct=4 (29%)
+  OOS-B 2025-2026H1    unified_entries= 18  champ_longs= 263  overlap= 16 (89%)  distinct=2 (11%)
+  POOLED               unified_entries= 72  overlap= 48 (67%)  distinct=24 (33%)
+
+============================================================================================
+CONVICTION-TIER COVERAGE (R4/R5): how often does time/Bojan fire on unified entries?
+============================================================================================
+  TRAIN 2018-2022      n= 40  time>0: 25  bojan_active: 35  either(=1.5x): 37 (92%)
+  OOS-A 2023-2024      n= 14  time>0:  8  bojan_active: 14  either(=1.5x): 14 (100%)
+  OOS-B 2025-2026H1    n= 18  time>0: 14  bojan_active: 18  either(=1.5x): 18 (100%)
+
+============================================================================================
+COMPARISON vs add.27 INTEGRATED-EYE (ran on BROKEN sensors; FAILED, only bull era passed)
+============================================================================================
+  add.27 eye (broken sensors) : TRAIN PF 0.72 (NEG) | OOS-A PF 1.56 (bull, PASS) |
+                                OOS-B PF 0.58 (NEG)  -> 1/3, regime tailwind not edge
+  unified (fixed sensors)     : see struct/flat row per era above.
+    TRAIN PF 2.02 | OOS-A PF 0.73 | OOS-B PF 0.15
+
+### TRAIN 2018-2022  (n=40)
+  entries BELOW ema_200 (falling-knife risk): 30  wins 5  PnL $    19,419
+  entries ABOVE ema_200 (trend-aligned)     : 10  wins 2  PnL $    22,265
+
+### OOS-A 2023-2024  (n=14)
+  entries BELOW ema_200 (falling-knife risk): 11  wins 2  PnL $      -369
+  entries ABOVE ema_200 (trend-aligned)     :  3  wins 0  PnL $    -3,419
+
+### OOS-B 2025-2026H1  (n=18)
+  entries BELOW ema_200 (falling-knife risk): 14  wins 1  PnL $   -11,752
+  entries ABOVE ema_200 (trend-aligned)     :  4  wins 1  PnL $    -2,416
