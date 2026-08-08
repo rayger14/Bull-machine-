@@ -1003,3 +1003,25 @@ CAVEATS: per-archetype OOS n<30 (directional); robust result is large-n whole-bo
 ablated retest_cluster is a never-traded population (discovery); measures CURRENT gates, NOT
 whether a better time layer (price×time multiplicative confluence boost, add-36 #2) helps —
 that's the step-3 follow-up, now well-motivated.
+
+### 2026-08-07 addendum 39 — Step-3 price×time confluence boost: REJECT 1/3 (correct SHAPE, no per-entry edge)
+
+Price×time confluence (fixed 1D structural range PLACE × validated fib_time_confluence TIME,
+multiplicative = founding shape) tested as addendum-17 Stage-1 gate on champion longs
+(branch study/price-time-confluence 2b756d4). VERDICT: FAIL 1/3 — HIGH-confluence longs beat
+LOW only in TRAIN (the calibration fold); OOS-A no; HOLD INVERTS to net loser (HIGH PF 0.87,
+avgR −0.087, −$2,780). Spearman(confluence,R): +0.025 TRAIN / −0.059 OOS-A / −0.069 HOLD =
+near-zero-to-negative (Lesson #54 signature via a new route).
+NOT crowd-out: cohort surgical (25/20/21% of longs) → genuine signal absence, not margin
+reshuffle. The founding CONJUNCTIVE SHAPE partially vindicates (multiplicative beat place-only
+AND time-only in 2/3 eras — "right place AND right time > either alone" holds directionally)
+BUT "better than its weak parts" ≠ edge; the combo isn't tradeable OOS.
+RECONCILES cleanly: add.37 said structural range = "sensor validated NOT edge" (place-only
+0/3 confirmed); add.38's net-positive TIME was a whole-book CROWD-OUT-GOVERNOR effect, a
+different mechanism than per-entry winner discrimination → time-only 1/3 here is consistent.
+KEY HONEST LESSON: fixing the sensors made them CORRECT (fire at the right place/time) but
+"correct location" ≠ "predicts winners ON THE CHAMPION'S ENTRIES." OOS, the book's edge is
+actually in the LOW-confluence longs — its other context already handles the discount+high-time
+entries; re-flagging them adds nothing. The sensors are now honest; this particular combo on
+champion entries is not an edge. (2 sibling step-3 re-tests still running: POC-structural,
+Bojan-real.)
