@@ -1,0 +1,30 @@
+{
+  "archetype": "bos_choch_reversal",
+  "description": "BOS/CHOCH Reversal (C) - Break of structure / change of character",
+  "direction": "long",
+  "enabled": true,
+  "thresholds": {
+    "min_adx": 18,
+    "min_rsi": 45,
+    "max_rsi": 80,
+    "min_volume_zscore": 0.8,
+    "min_fusion_score": 0.35,
+    "require_htf_alignment": true,
+    "smc_weight": 0.40,
+    "momentum_weight": 0.30,
+    "volume_weight": 0.20,
+    "regime_weight": 0.10
+  },
+  "allowed_regimes": ["risk_on", "neutral"],
+  "risk_management": {
+    "atr_stop_mult": 2.0,
+    "max_risk_pct": 0.02,
+    "take_profit_r": 3.5
+  },
+  "notes": [
+    "Baseline config with permissive thresholds for discovery",
+    "Optimized for bullish break of structure detection",
+    "Primary signal: tf1h_bos_bullish or tf4h_bos_bullish",
+    "Domain engines: SMC (40%), Momentum (30%), Volume (20%)"
+  ]
+}

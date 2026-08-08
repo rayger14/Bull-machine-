@@ -1,0 +1,31 @@
+{
+  "archetype": "spring_utad",
+  "description": "Spring/UTAD (A) - Wyckoff spring accumulation reversals",
+  "direction": "long",
+  "enabled": true,
+  "thresholds": {
+    "min_wyckoff_confidence": 0.50,
+    "min_wick_lower_ratio": 0.25,
+    "min_volume_zscore": 1.0,
+    "min_fusion_score": 0.35,
+    "max_rsi_entry": 70,
+    "max_adx_downtrend": 25,
+    "wyckoff_weight": 0.30,
+    "smc_weight": 0.25,
+    "price_action_weight": 0.25,
+    "momentum_weight": 0.15,
+    "regime_weight": 0.05
+  },
+  "allowed_regimes": ["risk_on", "neutral"],
+  "risk_management": {
+    "atr_stop_mult": 2.5,
+    "max_risk_pct": 0.02,
+    "take_profit_r": 3.0
+  },
+  "notes": [
+    "Baseline config with permissive thresholds for discovery",
+    "Optimized for detecting Wyckoff spring reversals",
+    "Primary signal: wyckoff_spring_a or wyckoff_spring_b events",
+    "Domain engines: Wyckoff (30%), SMC (25%), Price Action (25%)"
+  ]
+}

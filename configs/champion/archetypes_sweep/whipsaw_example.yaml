@@ -1,0 +1,38 @@
+# Whipsaw Archetype Configuration
+# Whipsaw pattern - failed breakout with rapid reversal
+
+archetype:
+  name: whipsaw
+  direction: short
+  description: Whipsaw pattern - failed breakout with rapid reversal
+
+  # DIFFERENT fusion weights (emphasize momentum reversal)
+  fusion_weights:
+    wyckoff: 0.10    # Minimal Wyckoff
+    liquidity: 0.30  # Moderate liquidity
+    momentum: 0.50   # High momentum (rapid reversal)
+    smc: 0.10        # Higher SMC emphasis for structure breaks
+
+  thresholds:
+    entry: 0.42          # Higher threshold (selective)
+    min_liquidity: 0.10  # Lower liquidity requirement
+
+  exits:
+    atr_stop_mult: 2.0    # Tight stops (short bias)
+    atr_tp_mult: 3.0      # Wider targets (capitalize on panic)
+    max_hold_hours: 24    # Very short hold (1 day max)
+    trailing_stop: true
+
+  position_sizing:
+    max_risk_pct: 0.015  # 1.5% risk (conservative for shorts)
+
+  regime_weights:
+    crisis: 0.80    # Strong in crisis (whipsaws common)
+    risk_off: 1.00  # Strongest in risk-off
+    neutral: 0.60
+    risk_on: 0.40   # Weaker in risk-on
+
+  pattern_params:
+    min_momentum_reversal: 0.60
+    require_failed_breakout: true
+    max_bars_since_breakout: 2

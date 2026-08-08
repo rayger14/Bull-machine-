@@ -1,0 +1,31 @@
+{
+  "archetype": "trap_within_trend",
+  "description": "Trap Within Trend (H) - False breakdown continuations in uptrends",
+  "direction": "long",
+  "enabled": true,
+  "thresholds": {
+    "min_htf_trend": 0,
+    "min_wick_lower_ratio": 0.25,
+    "min_adx": 15,
+    "min_rsi": 40,
+    "min_fusion_score": 0.35,
+    "momentum_weight": 0.35,
+    "price_action_weight": 0.30,
+    "wyckoff_weight": 0.20,
+    "volume_weight": 0.10,
+    "regime_weight": 0.05
+  },
+  "allowed_regimes": ["risk_on", "neutral"],
+  "risk_management": {
+    "atr_stop_mult": 2.0,
+    "max_risk_pct": 0.02,
+    "take_profit_r": 3.0
+  },
+  "notes": [
+    "Baseline config with permissive thresholds for discovery",
+    "Optimized for trend continuation after false breakdown",
+    "Primary signal: 4H uptrend + lower wick trap + recovery",
+    "Domain engines: Momentum (35%), Price Action (30%), Wyckoff (20%)",
+    "REQUIRES higher timeframe uptrend (tf4h_trend_direction > 0)"
+  ]
+}

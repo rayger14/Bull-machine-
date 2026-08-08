@@ -1,0 +1,29 @@
+{
+  "archetype": "order_block_retest",
+  "description": "Order Block Retest (B) - SMC demand zone retests",
+  "direction": "long",
+  "enabled": true,
+  "thresholds": {
+    "max_distance_from_ob": 0.05,
+    "min_bounce_body": 0.30,
+    "min_fusion_score": 0.35,
+    "max_volume_spike_down": -1.5,
+    "smc_weight": 0.35,
+    "price_action_weight": 0.25,
+    "wyckoff_weight": 0.20,
+    "volume_weight": 0.15,
+    "regime_weight": 0.05
+  },
+  "allowed_regimes": ["risk_on", "neutral"],
+  "risk_management": {
+    "atr_stop_mult": 2.0,
+    "max_risk_pct": 0.02,
+    "take_profit_r": 2.5
+  },
+  "notes": [
+    "Baseline config with permissive thresholds for discovery",
+    "Optimized for SMC order block retest detection",
+    "Primary signal: price retesting bullish order block zone",
+    "Domain engines: SMC (35%), Price Action (25%), Wyckoff (20%)"
+  ]
+}
