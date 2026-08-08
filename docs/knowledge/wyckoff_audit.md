@@ -927,3 +927,39 @@ ideally W/M, swing pivots) + re-run the SAME machine. NOT a redesign.** Highest-
 open WI question = the exact range-anchoring rule (which swings, which TF-close redraws) —
 collapses 4 invented params at once. Every invented param above enters the HTF build
 pre-registered as a hypothesis, never a fact.
+
+### 2026-08-07 addendum 36 — TIME archaeology: the founding TIME doctrine is REAL, BUILT, and PARTLY LIVE (user memory vindicated)
+
+Dug the founding bull_machine/ stack + engine/temporal/ rebuild + git history (scratch
+time_archaeology). The user's memory of a big TIME knowledge dump (fib TIME zones, time
+confluence, "price+time must agree") is CONFIRMED — it's more built than any prior dig showed.
+**WHAT EXISTS:**
+- Legacy founding: temporal_fib_clusters.py (fib BAR-COUNT projections [21,34,55,89,144]
+  from pivots; ≥2 overlap within ±3 bars = time "pressure zone"), hidden_fibs.py
+  detect_price_time_confluence (price_strength × time_strength × 1.5 — MULTIPLICATIVE,
+  "structure and vibration align"). Credited to "WI rhythm patterns" + "Moneytaur post:10".
+- Current rebuild engine/temporal/ (TemporalConfluenceEngine, gann_cycles): emits
+  temporal_confluence_score, gann_time_cluster (48% bars), fib_time_cluster (32%),
+  fib_time_confluence (mean 0.31), temporal_reversal_zone (17%) — POPULATED in the store,
+  not stubbed. Live via live_feature_computer.py:2199 (fib_time_confluence=sqrt(price×time)).
+**ALREADY LIVE, NARROWLY (the surprise):** engine/archetypes/logic.py:859 _check_L
+(retest_cluster) has a HARD identity gate: fib_time_cluster>0 or the archetype does NOT
+fire. retest_cluster.yaml soft-gates temporal_confluence_score>=0.45; order_block_retest.yaml
+fib_time_confluence>=0.1. → a TIME entry-timing filter is DEPLOYED, and we have NEVER
+measured whether it helps or silently throttles those archetypes.
+**KEY INSIGHT:** the founding price×time confluence is MULTIPLICATIVE (conjunctive/weakest-
+link) — the CORRECT combination shape per addendum-29 — not additive fusion. The founding
+devs built the right shape for price+time and we buried it under fusion scoring.
+**ANSWERS TO OPEN Qs:** (a) range-anchoring: NO help — founding time also uses rolling-window
+pivots (same disease). (b) T7/T45 event windows: Gann bar-count vibs {45,72,90} exist but
+calendar EVENT windows don't (infra only, add.19). (c) the "right-TIME confluence" user
+remembers: YES = detect_price_time_confluence / fib_time_confluence — DIRECT HIT, real.
+(d) fib-time entry filter: already live on L (see above).
+**PRIOR (honest):** the one TIME test we ran (event T-windows PRICE-ONLY) FAILED 3/3
+(era-flip, add.19). Revival must be MODEL/CONFLUENCE-conditional, never time-alone.
+**REVIVAL RANKING:** #1 (cheapest, highest-value, PURE MEASUREMENT) = ablate the 3
+already-live temporal gates in idea_lab to learn if TIME currently helps or throttles L/
+retest_cluster/order_block_retest — never measured. #2 = price×time confluence as a
+surgical sizing boost (model-conditional by construction; the add-19-compliant revival).
+#3 = Gann {45,72,90} bar-count windows model-conditional only (48% base rate too broad
+alone). Extinct: oracle whispers (cosmetic), price-only T-windows, killzones (never existed).
