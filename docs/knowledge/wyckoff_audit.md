@@ -1025,3 +1025,19 @@ actually in the LOW-confluence longs — its other context already handles the d
 entries; re-flagging them adds nothing. The sensors are now honest; this particular combo on
 champion entries is not an edge. (2 sibling step-3 re-tests still running: POC-structural,
 Bojan-real.)
+
+### 2026-08-07 addendum 40 — Step-3 POC re-test: structural fix did NOT save POC (phi unchanged)
+
+Built proper volume-over-price-axis POC on the 1D N=5 structural range (branch
+study/poc-structural 9f0ce96) — the add-37 flagged fix. RESULT: decontamination FAILED.
+phi(above-POC, close>ema200) = +0.489 whole-history ≈ rolling's +0.515, and WORSE than
+close-binned +0.460. Confirmed the add-34 phi +0.075 was a SHORT-BOX DEGENERACY artifact:
+once the box is long enough (13.7d) to span a real trend, above/below-POC RE-COUPLES to
+trend (74% agree with a plain 200-EMA). Inversion "resolves" in-sample (above>below 3/3
+same sign) but that's the exact shape rolling POC had BEFORE it lost live — with phi
+unchanged it carries the same live-inversion exposure (necessary-not-sufficient). Signal
+lives almost entirely in the uptrend stratum. Surgicality FAIL (56-63% of longs = leverage
+tilt not a boost). VERDICT: NOT a full pass — POC stays parked, not promoted. Also per
+add.24/25 the live inversion's real cause was regime×entry-breadth, so this fix targeted a
+downgraded cause anyway. HONEST: POC is fundamentally trend-correlated on our data; "above
+the value area" ≈ "price has been rising" no matter how we scope it.
