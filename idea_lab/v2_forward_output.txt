@@ -1,0 +1,65 @@
+[coverage] combined bars=75197  store<= 2026-06-10  tail(klines)=1368  fib-gap->0=191  tail wyckoff_phase/sos -> neutral/0 (M2 ALIGNED_FORMING cannot fire on tail)
+
+=== IDEA-LAB SELF-TEST vs bt_audit referee (textbook-clean) ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long    2678.2230    2678.2230   0.00e+00  take_profit
+   60  long    2075.5777    2075.5777   0.00e+00  take_profit
+  120 short   -1034.9754   -1034.9754   0.00e+00         stop
+  200  long   -1033.9902   -1033.9902   0.00e+00         stop
+  300 short   -1034.9754   -1034.9754   0.00e+00         stop
+  450  long   -1033.9902   -1033.9902   0.00e+00         stop
+  600 short   -1034.9754   -1034.9754   0.00e+00         stop
+  800  long    2024.1353    2024.1353   0.00e+00  take_profit
+  950 short   -1034.9754   -1034.9754   0.00e+00         stop
+ 1100  long   -1033.9902   -1033.9902   0.00e+00         stop
+
+MAX per-trade relative discrepancy: 0.00e+00 %   [target < 0.01%]  ->  PASS
+
+Building v2 sensors (struct range + Bojan + eye) on full causal history...
+
+================================================================================================
+UNIFIED v2 — LIVE FORWARD-TEST  [2026-02-15 -> 2026-08-06]
+================================================================================================
+Costs: commission 2bps/side, slippage 3bps/side (once in fill). Base risk 1%/trade, start $100,000. One position at a time.
+
+### Live-window aggregates (all four spec variants; headline = struct/flat)
+  struct flat: n=  4  WR= 75.0%  PF= 3.51  avgR=+0.651  PnL=$     2,605  MaxDD= -1.02%
+           exits {'stop_after_tp1': 1, 'time_exit': 2, 'stop': 1}
+  struct conv: n=  4  WR= 75.0%  PF= 3.49  avgR=+0.651  PnL=$     3,908  MaxDD= -1.53%
+           exits {'stop_after_tp1': 1, 'time_exit': 2, 'stop': 1}
+  naive  flat: n=  4  WR= 75.0%  PF= 4.76  avgR=+0.982  PnL=$     3,952  MaxDD= -1.02%
+           exits {'take_profit': 2, 'time_exit': 1, 'stop': 1}
+  naive  conv: n=  4  WR= 75.0%  PF= 4.72  avgR=+0.982  PnL=$     5,947  MaxDD= -1.53%
+           exits {'take_profit': 2, 'time_exit': 1, 'stop': 1}
+  struct flat [M2-broad]: n=  4  WR= 75.0%  PF= 3.51  avgR=+0.651  PnL=$     2,605  MaxDD= -1.02%
+
+================================================================================================
+PER-PATHWAY (headline struct/flat)
+================================================================================================
+  M1 (RTZ spring)   : n=  4  WR= 75.0%  PF= 3.51  avgR=+0.651  PnL=$     2,605  MaxDD= -1.02%
+  M2 (LPS/SOS align): n=  0  WR=  0.0%  PF= 0.00  avgR=+0.000  PnL=$         0  MaxDD=  0.00%
+  M2 (broad diag)   : n=  0  WR=  0.0%  PF= 0.00  avgR=+0.000  PnL=$         0  MaxDD=  0.00%
+
+================================================================================================
+TRADE-BY-TRADE LIST (headline struct/flat)
+================================================================================================
+ # entry_time       path    entry     stop exit_time           exit_reason      R      pnl$ <ema200 fib>0 boj
+ 1 2026-03-02 04:00:00   M1    66882    64858 2026-03-08 02:00:00 stop_after_tp1   0.79       787      no     -   Y
+ 2 2026-03-30 03:00:00   M1    67194    64863 2026-04-06 03:00:00      time_exit   0.81       814     yes     Y   Y
+ 3 2026-06-27 02:00:00   M1    60333    58411 2026-06-30 12:00:00           stop  -1.02     -1038     yes     Y   Y
+ 4 2026-07-01 04:00:00   M1    59345    57696 2026-07-08 04:00:00      time_exit   2.03      2042     yes     -   Y
+
+================================================================================================
+BELOW/ABOVE EMA200 + STAND-DOWN CHECK (headline struct/flat)
+================================================================================================
+  M1: n=4  below_ema200=3  above_ema200=1  avgMFE=+2.29R avgMAE=+0.84R WR=75%
+  M2 aligned trades in this markdown window: 0 (0 = stand-down property holds; 'took nothing, lost nothing')
+  M2 broad   trades in this markdown window: 0
+
+================================================================================================
+SIDE BY SIDE vs CHAMPION (actual live paper, full 16-archetype junk book, same window)
+================================================================================================
+  UNIFIED v2 (hypothetical, struct/flat): n=4  WR=75.0%  PF=3.51  PnL=$2,605  MaxDD=-1.0%
+  CHAMPION (actual live, full book)     : n=221  WR=33.9%  PF=0.72  PnL=$-24,568  (longs=212 shorts=9)
+
+[sensitivity] TAIL stables_rot_rising=1 (blocks tail longs): n=2 PF=inf PnL=$1,600 (vs default-0 headline n=4 PnL=$2,605)

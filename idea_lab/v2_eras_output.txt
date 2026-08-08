@@ -1,0 +1,127 @@
+
+=== IDEA-LAB SELF-TEST vs bt_audit referee (textbook-clean) ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long    2678.2230    2678.2230   0.00e+00  take_profit
+   60  long    2075.5777    2075.5777   0.00e+00  take_profit
+  120 short   -1034.9754   -1034.9754   0.00e+00         stop
+  200  long   -1033.9902   -1033.9902   0.00e+00         stop
+  300 short   -1034.9754   -1034.9754   0.00e+00         stop
+  450  long   -1033.9902   -1033.9902   0.00e+00         stop
+  600 short   -1034.9754   -1034.9754   0.00e+00         stop
+  800  long    2024.1353    2024.1353   0.00e+00  take_profit
+  950 short   -1034.9754   -1034.9754   0.00e+00         stop
+ 1100  long   -1033.9902   -1033.9902   0.00e+00         stop
+
+MAX per-trade relative discrepancy: 0.00e+00 %   [target < 0.01%]  ->  PASS
+
+Building v2 sensors (1D N=5 struct range + Bojan-low + HTF eye state) on full causal history...
+
+==============================================================================================
+UNIFIED v2 — per-era AGGREGATE (both doors combined; long-only, own trade list)
+==============================================================================================
+Costs: commission 2bps/side (both in PnL), slippage 3bps/side (once in fill). Base risk 1%/trade, start $100,000. One position at a time.
+Conviction = 1.5x when fib_time_confluence>0 OR Bojan-low active. Headline = struct/flat.
+
+### TRAIN 2018-2022
+  struct  flat : n= 23  WR= 34.8%  PF= 2.38  avgR=+1.096  PnL=$    25,475  MaxDD= -5.97%
+                 exits {'stop': 15, 'time_exit': 8}
+  struct  conv : n= 23  WR= 34.8%  PF= 2.27  avgR=+1.096  PnL=$    38,309  MaxDD= -8.86%
+  naive   flat : n= 24  WR= 45.8%  PF= 1.69  avgR=+0.328  PnL=$     7,899  MaxDD= -4.27%
+  naive   conv : n= 24  WR= 45.8%  PF= 1.68  avgR=+0.328  PnL=$    11,867  MaxDD= -6.36%
+
+### OOS-A 2023-2024
+  struct  flat : n= 13  WR= 30.8%  PF= 1.11  avgR=+0.103  PnL=$     1,112  MaxDD= -5.43%
+                 exits {'stop': 9, 'time_exit': 4}
+  struct  conv : n= 13  WR= 30.8%  PF= 1.10  avgR=+0.103  PnL=$     1,498  MaxDD= -8.08%
+  naive   flat : n= 14  WR= 42.9%  PF= 1.48  avgR=+0.261  PnL=$     3,572  MaxDD= -2.14%
+  naive   conv : n= 14  WR= 42.9%  PF= 1.47  avgR=+0.261  PnL=$     5,293  MaxDD= -3.21%
+
+### OOS-B 2025-2026H1
+  struct  flat : n=  7  WR= 28.6%  PF= 0.29  avgR=-0.533  PnL=$    -3,698  MaxDD= -5.21%
+                 exits {'stop': 5, 'stop_after_tp1': 1, 'time_exit': 1}
+  struct  conv : n=  7  WR= 28.6%  PF= 0.29  avgR=-0.533  PnL=$    -5,520  MaxDD= -7.74%
+  naive   flat : n=  7  WR= 28.6%  PF= 0.62  avgR=-0.238  PnL=$    -1,701  MaxDD= -4.49%
+  naive   conv : n=  7  WR= 28.6%  PF= 0.61  avgR=-0.238  PnL=$    -2,576  MaxDD= -6.68%
+
+==============================================================================================
+PER-PATHWAY ATTRIBUTION (headline struct/flat) — which DOOR produced what
+==============================================================================================
+
+### TRAIN 2018-2022
+  M1 (RTZ spring)   : n= 23  WR= 34.8%  PF= 2.38  avgR=+1.096  PnL=$    25,475  MaxDD= -5.97%
+  M2 (LPS/SOS align): n=  0  WR=  0.0%  PF= 0.00  avgR=+0.000  PnL=$         0  MaxDD=  0.00%
+
+### OOS-A 2023-2024
+  M1 (RTZ spring)   : n= 13  WR= 30.8%  PF= 1.11  avgR=+0.103  PnL=$     1,112  MaxDD= -5.43%
+  M2 (LPS/SOS align): n=  0  WR=  0.0%  PF= 0.00  avgR=+0.000  PnL=$         0  MaxDD=  0.00%
+
+### OOS-B 2025-2026H1
+  M1 (RTZ spring)   : n=  7  WR= 28.6%  PF= 0.29  avgR=-0.533  PnL=$    -3,698  MaxDD= -5.21%
+  M2 (LPS/SOS align): n=  0  WR=  0.0%  PF= 0.00  avgR=+0.000  PnL=$         0  MaxDD=  0.00%
+
+==============================================================================================
+ACID TEST — below/above EMA200 split per pathway per era (headline struct/flat)
+  v1 was ~76% below-EMA200 multi-era / 100% below live. Did M2 break the DNA?
+==============================================================================================
+
+### TRAIN 2018-2022
+  M1: n= 23  below= 20 (PnL $  +29,079)  above=  3 (PnL $   -3,605)  ABOVE-share=13%
+  M2: n=  0  below=  0 (PnL $       +0)  above=  0 (PnL $       +0)  ABOVE-share=n/a
+
+### OOS-A 2023-2024
+  M1: n= 13  below= 10 (PnL $   -1,828)  above=  3 (PnL $   +2,940)  ABOVE-share=23%
+  M2: n=  0  below=  0 (PnL $       +0)  above=  0 (PnL $       +0)  ABOVE-share=n/a
+
+### OOS-B 2025-2026H1
+  M1: n=  7  below=  5 (PnL $   -3,421)  above=  2 (PnL $     -277)  ABOVE-share=29%
+  M2: n=  0  below=  0 (PnL $       +0)  above=  0 (PnL $       +0)  ABOVE-share=n/a
+
+### POOLED (all eras)
+  M1: n= 43  below= 35 (PnL $  +23,831)  above=  8 (PnL $     -942)  ABOVE-share=19%
+  M2: n=  0  below=  0 (PnL $       +0)  above=  0 (PnL $       +0)  ABOVE-share=n/a
+
+==============================================================================================
+VERDICT vs PRE-REGISTERED 3/3 BAR (positive PnL AND PF>1 in ALL THREE eras)
+==============================================================================================
+  struct/flat    {'TRAIN 2018-2022': True, 'OOS-A 2023-2024': True, 'OOS-B 2025-2026H1': False}  -> 2/3 (2/3)
+  struct/conv    {'TRAIN 2018-2022': True, 'OOS-A 2023-2024': True, 'OOS-B 2025-2026H1': False}  -> 2/3 (2/3)
+  naive/flat     {'TRAIN 2018-2022': True, 'OOS-A 2023-2024': True, 'OOS-B 2025-2026H1': False}  -> 2/3 (2/3)
+  naive/conv     {'TRAIN 2018-2022': True, 'OOS-A 2023-2024': True, 'OOS-B 2025-2026H1': False}  -> 2/3 (2/3)
+
+==============================================================================================
+M2-BROAD DIAGNOSTIC (relaxed past strict ALIGNED_FORMING; struct/flat) — NOT headline
+==============================================================================================
+
+### TRAIN 2018-2022
+  aggregate   : n= 26  WR= 42.3%  PF= 2.58  avgR=+1.098  PnL=$    29,717  MaxDD= -5.03%
+  M2 (broad)  : n=  3  WR=100.0%  PF=  inf  avgR=+1.118  PnL=$     4,131  MaxDD=  0.00%
+  M2 EMA200   : below=0 above=3  ABOVE-share=100%
+
+### OOS-A 2023-2024
+  aggregate   : n= 17  WR= 41.2%  PF= 1.63  avgR=+0.444  PnL=$     7,484  MaxDD= -5.43%
+  M2 (broad)  : n=  4  WR= 75.0%  PF= 6.69  avgR=+1.553  PnL=$     6,302  MaxDD= -1.03%
+  M2 EMA200   : below=2 above=2  ABOVE-share=50%
+
+### OOS-B 2025-2026H1
+  aggregate   : n=  7  WR= 28.6%  PF= 0.29  avgR=-0.533  PnL=$    -3,698  MaxDD= -5.21%
+  M2 (broad)  : n=  0  WR=  0.0%  PF= 0.00  avgR=+0.000  PnL=$         0  MaxDD=  0.00%
+  M2 EMA200   : below=0 above=0  ABOVE-share=n/a
+
+==============================================================================================
+CHAMPION-LONG OVERLAP  (unified entry within +/-48h of any champion long)
+==============================================================================================
+  TRAIN 2018-2022      unified_entries= 23  overlap= 12 (52%)  distinct=11 (48%)
+  OOS-A 2023-2024      unified_entries= 13  overlap= 10 (77%)  distinct=3 (23%)
+  OOS-B 2025-2026H1    unified_entries=  7  overlap=  6 (86%)  distinct=1 (14%)
+
+==============================================================================================
+CONVICTION-TIER COVERAGE (R-SIZE): how often does time/Bojan fire? (non-selective = amplifier)
+==============================================================================================
+  TRAIN 2018-2022      n= 23  time>0: 12  bojan: 22  either(=1.5x): 23 (100%)
+  OOS-A 2023-2024      n= 13  time>0: 10  bojan: 13  either(=1.5x): 13 (100%)
+  OOS-B 2025-2026H1    n=  7  time>0:  6  bojan:  7  either(=1.5x):  7 (100%)
+
+  POOLED n (struct/flat) = 43  |  M2-only pooled n = 0
+    [TRAIN 2018-2022] M2 n=0 < 30 -> DIRECTIONAL ONLY, not statistically separable
+    [OOS-A 2023-2024] M2 n=0 < 30 -> DIRECTIONAL ONLY, not statistically separable
+    [OOS-B 2025-2026H1] M2 n=0 < 30 -> DIRECTIONAL ONLY, not statistically separable
