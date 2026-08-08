@@ -1106,3 +1106,31 @@ edge is FRESH OOS DATA (folds spent) + the thin model-conditional cohorts — NO
 quality and NOT the combination architecture. HONEST END-STATE: let the deployed system run
 and accumulate live data; the fixed sensors are infra ready for the model-conditional
 re-tests when a clean live fold exists. No more standalone-strategy attempts on spent folds.
+
+### 2026-08-07 addendum 44 — Unified live forward-test: entries BOUNCE (+5.6R MFE) but the tight stop gets stabbed first (7/10)
+
+No-look-ahead forward run of the unified archetype over the live-collected window (2026-02-15
+→ 08-06; causal fixed sensors + real klines + server live-feature logs for the post-06-10
+tail; ema200 cross-checked to server 0.10% mean). Branch study/unified-forward ce420b2.
+10 trades, ALL 10 below EMA-200 (pure capitulation buyer, as diagnosed). struct/flat:
+WR 30%, PF 0.89, −$822, MaxDD −4.4%. Confirms OOS-B (0.15) in CHARACTER; lands less bad
+(0.89) only because 2 late runners (+1.92R, +3.79R) rescued 7 full stops.
+**THE PRECISE MECHANISM (new, worth seeing):** the levels it bought DID bounce — all 10
+reached ≥+1R within 168h, avg max-favorable-excursion +5.6R. BUT the tight structural stop
+(created-low −0.25 ATR) was stabbed through FIRST in 7/10 (avg max-adverse +2.3R, beyond the
+~1R stop). So the capitulation-reversal SIGNAL has merit; the tight stop in high-vol markdown
+bleeds it. Only the 2 time-exit runners survived to the bounce. Conviction tier fired 10/10
+(non-selective amplifier again). Champion actual over same window: 221 pos, PF 0.72, −$24,568
+— the full junk book bled WORSE; everything long-biased lost in the markdown.
+DISCIPLINE: do NOT widen the stop to "fix" this — that's threshold-fishing n=10 one regime
+(agent correctly refused); wider stops = bigger losses when genuinely wrong; falling-knife
+identity stays regime-dependent. Stables=1 sensitivity (block tail longs) → PF 0.92, verdict
+unchanged.
+**ROOT CAUSE, FINAL FORM:** the recurring killer across the ENTIRE campaign is one thing —
+a long-biased book (archetypes, boosts, unified, all of it) bleeds in markdowns because
+NOTHING makes it stand down when the regime turns. The unified's −$822 and the book's
+−$24.5K over this window are the same disease. The genuine unaddressed lever is REGIME
+STAND-DOWN (size down/out in confirmed markdown) — as a DIAL not a veto (filters 0/9, but the
+deployed time gate works as a crowd-out governor, add.38). That needs the CMI regime block
+materialized (add.32 plumbing) + fresh live data to validate. Everything else is downstream
+of "we can't tell a bounce-dip from a first-stair-down dip in real time."
