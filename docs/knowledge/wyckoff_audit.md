@@ -1041,3 +1041,40 @@ tilt not a boost). VERDICT: NOT a full pass — POC stays parked, not promoted. 
 add.24/25 the live inversion's real cause was regime×entry-breadth, so this fix targeted a
 downgraded cause anyway. HONEST: POC is fundamentally trend-correlated on our data; "above
 the value area" ≈ "price has been rising" no matter how we scope it.
+
+### 2026-08-07 addendum 41 — Step-3 Bojan detector: LOCATION FIXED (97.4% at range low), edge REJECTED 2/3; + campaign synthesis
+
+Built the first real causal WI-faithful Bojan detector on the 1D structural anchor (branch
+study/bojan-real 6ff37a9). TWO findings:
+1. **LOCATION FIX PROVEN (user's question answered YES):** vs the bare-wick stub that fired
+   dead-center (add.33: median range_pos 0.496, 9.6% at lows), struct-anchored Bojan-lows sit
+   at median struct_range_pos 0.031, **97.4% in the bottom quintile** of the drawn range. We
+   CAN now discover Bojans at real extremes — it was impossible before the structural range
+   existed. Base rate 18.9%→2.0/1.1/0.5% (W=.5/.6/.7): rare + selective. Causal 3/3.
+2. **EDGE REJECTED 2/3:** near-Bojan-low champion longs beat not-near strongly in TRAIN
+   (PF 2-4) but are a NET LOSER in OOS-A 2023-24 (PF 0.5-0.97) — Rule-9 regime sign-flip,
+   same falling-knife damage as add.10. KEEP detector as infra; the faithful test (Bojan ∩
+   armed-accumulation) is a LIVE-DATA candidate (historically too thin/regime-contaminated).
+M1/M2 candle-ordinal NOT built (open WI question). Round-number anchor dominates (81%) —
+weakest-grounded; the clean 97.4% is the struct-anchored subset.
+
+### 2026-08-07 addendum 42 — CAMPAIGN SYNTHESIS: the sensors were broken AND fixing them isn't (yet) edge
+
+The sensor-rebuild arc (add.31-41) reached a clear, honest conclusion. THREE step-3 re-tests
+on the FIXED sensors ALL rejected as edge: price×time confluence 1/3 (add.39), POC still
+trend-correlated (add.40), Bojan location-fixed but edge 2/3 (add.41).
+**THE UNIFYING TRUTH: the sensors WERE genuinely broken (springs mislocated, POC a trend
+proxy, Bojan firing dead-center, ranges lasting 0.4d) — the user's hypothesis was RIGHT and
+is now proven+fixed (structural range holds weeks, springs/Bojan fire at real extremes, POC
+volume-axis'd). BUT "correct location" ≠ "new edge on the champion's entries." Repairing the
+sensors was NECESSARY, not SUFFICIENT. Out-of-sample, the book's edge repeatedly sits in the
+signals the fixed sensors would DE-prioritize — the archetypes + 6 boosts already capture what
+correctly-placed structure would add.** Every clean historical pass is also confounded by
+heavily-reused folds; every OOS fail is a genuine regime sign-flip.
+WHAT STANDS: the fixed sensors are HONEST INFRASTRUCTURE (causal, correctly-located) now
+available for any FUTURE use, esp. once LIVE data provides fresh, unconfounded folds. The
+validated time-layer (add.38, net-positive as a crowd-out governor) is the one exception that
+already earns its keep live. The recurring blocker for NEW edge is now definitively DATA
+(fresh OOS + the thin model-conditional cohorts), not sensor quality. The honest path forward
+is: let the deployed system run and ACCUMULATE the live data that the model-conditional tests
+(Bojan∩accumulation, meta-labeling, the eye) all need — the historical folds are spent.
