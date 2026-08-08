@@ -982,3 +982,24 @@ decontamination only PARTIAL now (phi +0.46 vs rolling +0.515; the 1H +0.075 was
 degeneracy artifact of a 0.4d box too short to span trend); weekly DRIFT fixed (2.4 vs
 6.35). Flagged fix: volume-profile POC over price axis, not close-binning. All params
 (N, HTF choice, MIN_WIDTH 1.5) = OURS/flagged. SENSOR validated, NOT edge — step-3 re-tests next.
+
+### 2026-08-07 addendum 38 — Temporal-gate ablation: the deployed TIME layer is NET-POSITIVE (validated 3/3)
+
+Ablation (branch study/temporal-ablation a12861d): ran book gates-ON vs gates-OFF, 3 windows,
+position-level. Inertness proven (bypass flag default 0 = bit-identical baseline).
+**WHOLE-BOOK VERDICT: time gates ON beat OFF in ALL THREE windows** — PnL +$21.4K/+$17.3K/
++$8.8K, PF +0.05/+0.10/+0.08, MaxDD flat-to-better. The already-live temporal layer is
+NET-POSITIVE and validated for the first time — it is NOT silently throttling; removing it
+COSTS money every era. → the TIME thread is real edge, greenlit to extend.
+PER-ARCHETYPE: order_block_retest fib_time_confluence gate = PROTECTIVE 3/3 (removing adds
+losers every window). retest_cluster hard fib_time_cluster>0 gate = MIXED 2/3 (throttles a
+profitable population in TRAIN +$37K but that suppression is exactly what prevents crowd-out;
+mildly protective OOS) → WATCH/soften-candidate, do NOT remove.
+**SYSTEMIC INSIGHT: the gate's book value is largely as a CROWD-OUT GOVERNOR** — ablated
+retest_cluster earns +$37K more alone in TRAIN yet the book is −$21K worse, because the extra
+fires displace ~$50K of better trades via best_per_direction dedup (Rule 7 in reverse). Time
+gate protects the book by keeping an over-firing archetype in check.
+CAVEATS: per-archetype OOS n<30 (directional); robust result is large-n whole-book 3/3;
+ablated retest_cluster is a never-traded population (discovery); measures CURRENT gates, NOT
+whether a better time layer (price×time multiplicative confluence boost, add-36 #2) helps —
+that's the step-3 follow-up, now well-motivated.
