@@ -1,0 +1,71 @@
+loaded 73,829 bars  2018-01-01 00:00:00 -> 2026-06-10 23:00:00
+
+==================================================================================
+CHECK 1 — struct_sweep_high LOCATION (mirror add.34 spring-at-low)
+==================================================================================
+  struct_sweep_high firings (in active range): 202
+  struct_sweep_low  firings (in active range): 392  (ratio hi/lo = 0.52)
+  (wick_high - range_high)/ATR: median=0.18  mean=0.29  within 1 ATR=98%   p90=0.62
+  1a median<=1.0 ATR: True   1b >=70% within 1 ATR: True   1c count>=30 & hi>=0.33*lo: True
+  -> CHECK 1 PASS
+
+==================================================================================
+CHECK 2 — bojan_high AT A STRUCTURAL HIGH (mirror add.41; long was 97.4%)
+==================================================================================
+  bojan_high forms: 1253   (bojan_low forms: 1458)
+  anchor mix (bojan_high): {'round': 1032, 'struct': 155, 'swing': 66}
+  % bojan_high within 1.0 ATR of struct_range_high OR swing_high_50: 29.4%
+  random-bar baseline (active bars near a structural high):            20.3%
+  enrichment = 1.45x
+  2a >=60% at/near structural high: False   2b enrichment>=2x: False
+  -> CHECK 2 FAIL
+
+==================================================================================
+CHECK 3 — C_distrib / BEAR-CONTEXT RELIABILITY (THE CRUX)
+==================================================================================
+  --- Metric A: phase & eye bear-vs-bull census ---
+  wyckoff_phase_dir C_distrib:    279  (0.38% of bars)
+  wyckoff_phase_dir C_accum:    11147  (15.10% of bars)
+  C_distrib / C_accum ratio = 0.025  (pre-reg floor 0.10)
+  eye MODEL_FORMING bear:     24   bull:   3263  (ratio 0.007)
+  eye MANIPULATION  bear:   7241   bull:   5639
+  eye CONFIRMED_BREAK bear:    240  bull:    278
+  A_distrib total: 29985  (catch-all preliminary phase — see caveats)
+
+  --- Metric B: 3 major tops, any bear signal within +/-30 days ---
+  2021 blow-off top    2021-11-10: bear-signal=YES  [C_distrib=0 MF_bear=0 sweep_hi=6 bojan_hi=27 manip_bear=216]
+  2024 ATH top         2024-03-14: bear-signal=YES  [C_distrib=0 MF_bear=0 sweep_hi=0 bojan_hi=27 manip_bear=264]
+  2025 top             2025-01-20: bear-signal=YES  [C_distrib=0 MF_bear=0 sweep_hi=8 bojan_hi=39 manip_bear=144]
+
+  --- Metric C: 6 distribution consensus events caught (+/-48h, 5%) ---
+  #3 PSY 2021      2021-02-21 ~$58,000: CAUGHT
+  #4 ST-distrib    2021-09-07 ~$52,000: CAUGHT
+  #5 UTAD 2021     2021-11-10 ~$69,000: CAUGHT
+  #6 LPSY 2022     2022-01-15 ~$47,000: MISS  
+  #12 BC 2024      2024-03-14 ~$73,660: CAUGHT
+  #13 AR 2024      2024-04-15 ~$60,000: CAUGHT
+
+  3a C_distrib>=0.10*C_accum: False (279 vs floor 1115)
+  3b >=4/6 distrib events: True (5/6)
+  3c all 3 tops marked: True (3/3)
+  -> CHECK 3 FAIL
+
+==================================================================================
+CHECK 4 — CAUSALITY / NO-REPAINT (3-cut truncation)
+==================================================================================
+  cut @  25840 (2020-12-18): sweep_high=OK  bojan_high=OK  eye=OK  -> PASS
+  cut @  44297 (2023-01-27): sweep_high=OK  bojan_high=OK  eye=OK  -> PASS
+  cut @  62754 (2025-03-06): sweep_high=OK  bojan_high=OK  eye=OK  -> PASS
+  -> CHECK 4 PASS
+
+==================================================================================
+GATE VERDICT
+==================================================================================
+  CHECK 1 (sweep_high location)            PASS
+  CHECK 2 (bojan_high location)            FAIL
+  CHECK 3 (bear-context reliability)       FAIL
+  CHECK 4 (causality)                      PASS
+
+  GATE: FAIL -> STOP; do NOT build on broken sensors
+
+STUDY ONLY — distribution-sensor audit; awaiting gate decision.
