@@ -1078,3 +1078,31 @@ already earns its keep live. The recurring blocker for NEW edge is now definitiv
 (fresh OOS + the thin model-conditional cohorts), not sensor quality. The honest path forward
 is: let the deployed system run and ACCUMULATE the live data that the model-conditional tests
 (Bojan∩accumulation, meta-labeling, the eye) all need — the historical folds are spent.
+
+### 2026-08-07 addendum 43 — Unified archetype on FIXED sensors: FAIL 1/3 — closes the standalone question (0-for-5)
+
+The unified conjunctive archetype (regime gate → structural range discount → corrected
+spring at drawn low → time confluence → structural stop → managed exit), built on the
+FIXED sensors, generating its OWN trades (branch study/unified-archetype bceedbc).
+This was the FIRST FAIR test of the unified vision (prior 4 used broken sensors).
+VERDICT: FAIL 1/3 — TRAIN 2018-22 PF 2.02 +$41.7K (strong), but OOS-A 0.73 −$3.8K and
+OOS-B 0.15 −$14.2K (both fail). Standalone unified is now 0-for-5.
+DIAGNOSIS: it's structurally a below-EMA200 CAPITULATION buyer (falling knives) that paid
+only in the V-reversal-rich 2018-22; the regime gate is self-defeating (the sweep trigger
+keeps the range 'active' so 'not broken_down' is always true). OVERLAP: 67% of its entries
+are within ±48h of a champion long; distinct fraction shrinks 45%→29%→11% and the distinct
+OOS-B trades are the losers → NOT a genuinely different/better set; the book already captures
+the good version and correctly skips the knives this adds. Conviction tier fired on 92-100%
+of entries = non-selective leverage tilt (amplifier, add.28 again).
+vs add.27 eye (broken sensors): fixing sensors FLIPPED which single era passes (TRAIN vs
+bull-OOS) but produced NO second passing era → the eye failed partly on REGIME, not only
+sensors, as flagged. Did NOT threshold-fish the failure (the below-EMA hard-gate fix would
+be fitting the seen OOS).
+**DEFINITIVE CLOSE:** fixing the sensors does NOT rescue a standalone unified strategy.
+Combined with add.42: sensors were broken (now fixed, real infra), fusion is the wrong
+shape, AND the unified standalone doesn't clear OOS even on correct inputs. The edge that
+EXISTS lives in the archetypes+6 boosts already deployed; the recurring blocker for NEW
+edge is FRESH OOS DATA (folds spent) + the thin model-conditional cohorts — NOT sensor
+quality and NOT the combination architecture. HONEST END-STATE: let the deployed system run
+and accumulate live data; the fixed sensors are infra ready for the model-conditional
+re-tests when a clean live fold exists. No more standalone-strategy attempts on spent folds.
