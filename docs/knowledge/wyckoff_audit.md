@@ -757,3 +757,41 @@ KEEPERS: RTZ filter (real, partial); the M2-broad direction (above-EMA200 + mark
 is what we want but too rare. NEXT LEVERS (both need FRESH data — folds spent): (a) new
 RETEST_HOLDING eye state to make strict M2 fireable; (b) the regime stand-down dial (needs CMI
 regime block materialized). Neither validatable on spent folds — forward-only.
+
+### 2026-08-07 addendum 47 — Cross-asset (SPX 1990-2026): spring dip-buyer failure is INTRINSIC, not BTC. The trend-CONTINUATION door is the real cross-asset edge candidate.
+
+User asked: test the long "all-seeing eye" model on SPX/MES — is the failure a BTC thing (Wyckoff is
+an equities method; traders use it on BTC)? Fetched Yahoo ^GSPC: SPX_1D 9,216 bars 1990-2026 (dotcom
+−49%, GFC −57%, COVID −34%, 2022 −25%), SPX_1H 5,090 bars 2023-26. Ported the LONG v2 model with the
+SAME BTC-tuned params (NO retune; only timeframe H→D, struct range D→W), crypto inputs dropped
+(stables→0, regime=price half only). Branch study/xasset-spx, self-test parity 0.00%.
+
+VERDICT: the M1 SPRING DIP-BUYER's failure is INTRINSIC, cross-asset.
+  - SPX hourly (bull regime that SHOULD flatter a dip-buyer): PF 0.56, −$3,208, 90% below-EMA200 —
+    lost even in a bull.
+  - SPX daily per-regime: the ONLY positive regime is the 1990s bull (+$8,219); aggregate PF 1.11 is
+    the secular-uptrend/survivorship CONFOUND, not survival.
+  - DISCRIMINATOR: pooled SPX BEARS n=4, WR 0%, ALL 4 stopped, avgR −1.02 — identical death signature
+    to BTC OOS-B (5/5 stops). Same falling-knife DNA, second asset class. Where the spring fires in an
+    equity bear it dies. (COVID/2022 fired 0: regime permission was OPEN 97-99% of bear bars — NO
+    markdown protection; only the RTZ filter's sequence-timing incidentally blocked the fast/grinding
+    bears. When a bear is slow enough for a spring to complete (dotcom, GFC), RTZ passes it and it dies.)
+  => STOP trying to fix the spring dip-buyer. It is intrinsically markdown-fragile on every asset.
+
+THE REAL FINDING (section 5, constructive): the PRICE-ONLY trend-CONTINUATION door — bull
+CONFIRMED_BREAK → LPS pullback that HOLDS (RTZ), needs NO wyckoff store, NO distribution detection —
+on daily SPX: n=24, PF 3.40, +$16,885, 92% ABOVE-EMA200, and STANDS DOWN in bears (dotcom/GFC/COVID
+0 fires, 2022 1 fire). OPPOSITE character to the dip-buyer: buys STRENGTH after the break, self-
+regime-filters (requires an up-break to fire → cannot fire deep in a bear). This is CONSISTENT with
+BTC's M2-broad (add.45: 83% above-EMA200, profitable where fired, stood down in markdowns, but only
+n=7 — starved on BTC, had room on SPX). Two asset classes now show the same self-filtering above-
+EMA200 continuation character.
+
+SYNTHESIS: the campaign's dip-buy/"spring at discount" thesis (PO3, unified M1, unified M2-strict,
+short mirror) is CLOSED. The edge that keeps surfacing is its behavioral OPPOSITE: BUY THE PULLBACK
+AFTER THE BREAK (trend continuation, above EMA200, self-regime-filtering) — the resilience the user
+wants comes not from shorting bears but from a door that simply DOESN'T FIRE in bears and rides bull
+continuations. NEXT (separate study, user decision): validate the trend-continuation door properly
+(more trades, both assets, CPCV, forward). CAVEATS: still small n (7 BTC / 24 SPX), directional not
+conclusive; SPX has survivorship confound but the bear stand-down (0 fires) shows it's SELECTIVE, not
+just riding the uptrend; folds semi-spent.
