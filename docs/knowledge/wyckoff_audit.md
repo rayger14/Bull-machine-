@@ -757,3 +757,38 @@ KEEPERS: RTZ filter (real, partial); the M2-broad direction (above-EMA200 + mark
 is what we want but too rare. NEXT LEVERS (both need FRESH data — folds spent): (a) new
 RETEST_HOLDING eye state to make strict M2 fireable; (b) the regime stand-down dial (needs CMI
 regime block materialized). Neither validatable on spent folds — forward-only.
+
+### 2026-08-07 addendum 46 — Short/distribution mirror: AUDIT GATE FAIL, nothing built. Distribution CONTEXT is 40x starved (the "know the zones correctly" bottleneck, now measured)
+
+User pivoted to resilience-via-shorting ("model should be resilient in all markets... a lot of it
+has to do with knowing the wyckoff zones correctly"). Built an audit-GATED short mirror: verify
+distribution detection BEFORE trading it. Branch study/short-mirror (idea_lab/audit_distribution_sensors.py).
+Pre-registered criteria, run once. GATE FAILED → Phase 2/3 NOT built (correct discipline — no short
+on broken sensors; clean short OOS-B fold PRESERVED, not spent).
+
+WHAT PASSED: struct_sweep_high (the drawn-range UPTHRUST geometry) is SOUND — 202 firings, median
+0.18 ATR overshoot, 98% within 1 ATR of the drawn ceiling, hi/lo ratio 0.52. The geometric mirror
+of the validated spring works.
+WHAT FAILED (decisive): distribution CONTEXT is starved 40-136x vs accumulation.
+  wyckoff_phase_dir C_distrib = 279 bars vs C_accum = 11,147 (ratio 0.025).
+  eye MODEL_FORMING-bear = 24 bars vs bull = 3,263 (ratio 0.007).
+At the 3 major tops (2021 blow-off, 2024 ATH, 2025 top): C_distrib = 0 and MODEL_FORMING-bear = 0
+at ALL THREE. The only "catches" were shallow wick sensors (manip_bear, bojan_high) — NOT
+distribution identification. A short "M2" (LPSY after bear SOS into a formed distribution model) is
+impossible: 24-bar context in 8 years. Check 2 (bojan_high 29.4%/1.45x) ruled INCONCLUSIVE — bojan
+is round-number-dominated on BOTH sides (bojan_low also only 34.8%/1.78x under same criteria; NOTE:
+this run could NOT reproduce add.41's 97.4% — flag on that earlier Bojan validation, criteria
+mismatch). Causality PASS (3-cut byte-identical). Machinery is symmetric in CODE; fed 8y of BTC it
+cannot FIND distribution.
+
+TRIPLE-CONFIRMED ROOT CAUSE: bottleneck is Wyckoff DETECTION quality, distribution half especially
+(PO3 said it, unified M1/M2 showed it, this measures it: 40x). HONEST NUANCE: partly a strict
+detector AND partly that BTC genuinely doesn't do textbook slow distribution — its tops are
+blow-off spikes + shock crashes, not multi-month UT/UTAD/LPSY schematics. So a distribution-
+SCHEMATIC short may be the WRONG MODEL for BTC. FORKS for the user: (a) context-blind geometric
+short (sweep_high + inverted RTZ) — buildable NOW but it's the M1 FALLING-KNIFE MIRROR, won't
+deliver resilience, advise AGAINST; (b) rebuild distribution detection (mirror of add.34) — real
+state-machine work, forward-only validation, fights BTC's thin distribution history; (c) REFRAME
+the short to BTC's actual behavior — short the confirmed struct break_DOWN and RIDE the markdown
+(momentum/continuation, sound geometry, NOT top-catching) — sidesteps distribution detection
+entirely. Combined all-market resilience view NOT reached — no validated short to combine.
