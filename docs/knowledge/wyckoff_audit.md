@@ -795,3 +795,37 @@ continuations. NEXT (separate study, user decision): validate the trend-continua
 (more trades, both assets, CPCV, forward). CAVEATS: still small n (7 BTC / 24 SPX), directional not
 conclusive; SPX has survivorship confound but the bear stand-down (0 fires) shows it's SELECTIVE, not
 just riding the uptrend; folds semi-spent.
+
+### 2026-08-08 addendum 48 — Trend-continuation door: cross-asset validated on edge (4/4 assets, identical params, incl. uncorrelated Gold) but NOT on bear stand-down; too RARE to prove on history → forward-collection only
+
+Validated the price-only breakout-retest door ("buy the pullback after the break") standalone on 4
+assets with IDENTICAL BTC-tuned params, no per-asset tuning, pre-registered pass rule. Branch
+study/trend-continuation (trend_continuation_door.py, run_trend_continuation.py). Self-test 0.00%/asset.
+Note: eye_state computed OHLCV-only on EVERY asset incl. BTC (wyckoff cols dropped) → stricter than
+the add.45 BTC flicker (n=7); BTC door now n=9, character-identical across assets. No volume used.
+
+RESULTS (headline struct/flat):
+  BTC   n=9  PF 2.56  +$3,740  100% above-EMA200  bear 3/3 clean  CPCV frac>1 80%
+  SPX   n=25 PF 3.53  +$17,994 92% above          bear 3/4        CPCV 93%
+  NDX   n=34 PF 2.82  +$16,336 97% above          bear 2/4        CPCV 100%
+  GOLD  n=32 PF 3.51  +$21,275 97% above          bear 1/3        CPCV 93%   (KEY uncorrelated test)
+  SPX1H n=8  PF 1.87  +$2,059  88% above (bonus, single bull)
+
+VERDICT vs pre-registered rule (PF>=1.5 on >=3/4 AND >=80% bear stand-down AND CPCV mean>1):
+  C1 edge: PASS 4/4 (incl. uncorrelated Gold 3.51) — identical params, real structural signal not a fit.
+  C2 bear stand-down: FAIL/qualified — 9/14 = 64% strict zero-fire (86% lenient). The self-filter is
+     REAL (breakout requirement blocks deep-bear entries) but LEAKS: bear-market-RALLY breakouts fire
+     and EVERY bear fire LOSES; worst on Gold (bear pooled PF 0.10, −$2,999). 8 bear trades, all-asset,
+     all net losers.
+  C3 CPCV: PASS directionally (frac PF>1 80-100%) but n/fold 3-11 → not conclusive. (Mean PF inflated by
+     zero-loss folds — ignore; use frac>1.)
+  => NOT fully validated (fails C2). BUT a genuine cross-asset-consistent, 92-100%-above-EMA200,
+     positive-expectancy REAL-BUT-RARE candidate; behavioral OPPOSITE of the dead spring (which dies on
+     Gold −$1,596 and SPX-1H 0.56). Forward test BTC 2026-02→06-10: ZERO fires, clean markdown stand-down.
+
+BINDING CONSTRAINT = frequency: n=9-34/asset over 8-36 yrs (~1-4 trades/yr) → HISTORY CANNOT PROVE IT.
+Per the rule, next step = FORWARD PAPER-COLLECTION, not deploy. THE ONE DEFECT (bear-rally breakout
+leak, worst on Gold) is EXACTLY what a causal BEAR-REGIME OVERLAY would plug → converges with the live
+market-state-detection research thread (deep-research running). Plan: let research land → design regime
+overlay to plug the Gold-style leak → then decide forward-collection of the COMPLETE door. Watch-item:
+Gold-style bear-market-rally breakouts. This is the campaign's best surviving edge candidate.
