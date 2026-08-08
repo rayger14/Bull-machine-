@@ -723,3 +723,37 @@ WORKFLOW VERDICT (answers user's vectorbt question): keep our engine as SOURCE O
 a clean library/hand-rolled backtester as a FAST IDEA-SCREENER for simple standalone
 signals before engine integration → this seeds the "idea-lab" for testing extracted
 knowledge (PO3, POC, all-seeing-eye, Bojan, WI exits) WITHOUT fusion/dedup/crowd-out noise.
+
+### 2026-08-07 addendum 45 — Full-stack M2 unified (user-approved): REJECT as edge; RTZ filter is a real keeper; strict M2 is architecturally inert
+
+User chose "full stack together" off the add.44 critique (M2/LPS + RTZ filter + time-validity +
+USDT.D dominance reader). Pre-flight found 2 of 4 already built: dominance reader = CONFIRMED
+REJECT (commit 6e518c0: 0/3 tier ordering, redundant with rot_rising — NOT rebuilt); the M2 HTF
+state machine already exists (engine/features/eye_state.py @81c9b1f, causal no-repaint 4/4). The
+eye GATE on champion had failed (CONFIRMED_BREAK/TRENDING tier INVERTS OOS: PF 1.74 train→0.47
+hold; only ALIGNED_FORMING stable both eras) → M2 built to enter the LPS RTZ pullback into
+ALIGNED_FORMING, NOT the extension. Branch study/unified-m2, pre-registered (910e0a6) before
+measurement, self-test parity 0.00%, no threshold-fishing.
+
+VERDICT: REJECT as edge (nothing ships). Three results:
+1. STRICT M2 = 0 TRADES every era + live. ARCHITECTURAL, not tunable: in the eye machine
+   `bull & MODEL_FORMING` = 3,263 bars but `+ recent bull CONFIRMED_BREAK (≤360b)` = 0 bars — the
+   two states are TEMPORALLY DISJOINT by construction (MODEL_FORMING only marks fresh low-third
+   accumulation, never a post-break retest). The M2 door literally cannot fire as designed. Fix
+   would require a NEW eye state (explicit RETEST_HOLDING/LPS emitted after a confirmed break) —
+   state-machine work, must NOT be fished on spent folds.
+2. RTZ FILTER genuinely improves M1 (FIRST real structural win in a while): multi-era 2/3 vs v1's
+   1/3 — TRAIN PF 2.02→2.38, OOS-A 0.73→1.11 (flips to PASS), OOS-B 0.15→0.29 (still fails);
+   live-forward −$822→+$2,605 (4 trades). BUT M1 still 81% below-EMA200 pooled → DNA unchanged,
+   just cleaner. Not sufficient alone (OOS-B markdown still loses).
+3. M2-BROAD diagnostic (relaxed) points the RIGHT way: candidate context 83% ABOVE-EMA200,
+   profitable where it fired (TRAIN 100% above, OOS-A 50%), 0 in OOS-B markdown (stand-down) —
+   but only 7 trades pooled, 0 in OOS-B. Directional only (n<30), NOT proof.
+
+Stand-down CONFIRMED (M2 took 0 in every markdown incl. live) but that's not edge. Champion actual
+same live window: −$24,568 PF 0.72 (both bled; everything long-biased loses in markdown). Root
+cause UNCHANGED from add.44: the missing organ is a regime stand-down DIAL, not another entry door.
+KEEPERS: RTZ filter (real, partial); the M2-broad direction (above-EMA200 + markdown stand-down)
+is what we want but too rare. NEXT LEVERS (both need FRESH data — folds spent): (a) new
+RETEST_HOLDING eye state to make strict M2 fireable; (b) the regime stand-down dial (needs CMI
+regime block materialized). Neither validatable on spent folds — forward-only.
