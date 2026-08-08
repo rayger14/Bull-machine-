@@ -829,3 +829,45 @@ leak, worst on Gold) is EXACTLY what a causal BEAR-REGIME OVERLAY would plug →
 market-state-detection research thread (deep-research running). Plan: let research land → design regime
 overlay to plug the Gold-style leak → then decide forward-collection of the COMPLETE door. Watch-item:
 Gold-style bear-market-rally breakouts. This is the campaign's best surviving edge candidate.
+
+### 2026-08-08 addendum 49 — Research verdict: "outsource Wyckoff detection" = NO (and it's the wrong target); the validated answer is a COARSE CAUSAL REGIME gate — which is exactly the door's missing overlay
+
+Deep-research sweep (101 agents, 19 sources, 81 verified claims; synthesis step returned a corrupt
+"test" stub — recovered manually from journal.jsonl). Answer to "can we buy/build/LLM better Wyckoff
+phase detection": decisive.
+
+(1) TURNKEY: NO reliable Wyckoff-phase API exists. Closest: getregime.com = coarse bull/bear/chop
+REST API, RULES-based composite (SMA/funding/fear-greed/dominance/stables/DXY), no causal guarantee,
+$0-149/mo — i.e. a hosted version of signals we ALREADY have, no better. smart-money-concepts pip pkg
+(1.9k★) = SMC primitives (BOS/CHoCH/order-blocks/FVG) NOT Wyckoff phases — overlaps our structural range.
+(2) ML/HMM: the quant standard, but detects VOLATILITY/TREND regimes (bull/bear/range/calm), NOT
+accumulation/distribution. Failure modes (all confirmed): smoothed/Viterbi labels LOOK-AHEAD (only
+FILTERED past-only is causal-safe); labels REPAINT on refit; non-stationarity needs retraining;
+lag is IRREDUCIBLE (filtered bull→bear median 2-3d, up to 7d — a Bayesian limit); causal rolling HMM
+agrees w/ offline only 56.6%, labels 30.7% bear vs 13.5%; regime-aware ML often FAILS Deflated-Sharpe
+OOS. UPSIDE (key): as a RISK FILTER a lagging filtered HMM cuts DD Buy&Hold −40.1%→−17.1% vs
+Oracle −16.8% — ~95% of perfect-foresight DD protection despite lag.
+(3) LLM/VISION: NOT reliable — VLMs only work in persistent trends, poor in ranges (where you need it),
+biased, no proven candlestick comprehension; multimodal LLMs underperform analysts; the one benchmark
+(FinMR) was WITHDRAWN; a chart-CNN got 0.892 AUC but on 500 samples w/ look-ahead labels — fatal at our
+14-label scarcity.
+(4) DESKS: use COARSE regime detection, NOT Wyckoff phases — HMM on returns/vol, OR simple rules
+(price>200EMA=bull; ADX<20 range/>25 trend; ATR percentile=vol), to GATE strategies asymmetrically
+(block entries in bad regime, allow exits). Nobody serious uses fine Wyckoff phase labeling.
+(5) DISTRIBUTION: genuinely harder AND partly structural for crypto — BTC's real top was covert whale
+distribution (split across exchanges to evade detection), textbook signals ABSENT; post-ETF changes
+degraded classic signals. CONFIRMS add.46 externally: our 40x starvation is partly real, not just a bug.
+(6) RECOMMENDATION: BUY=no, LLM=no, fine-phase ML=no (label-starved + wrong target). BUILD a coarse
+CAUSAL regime gate — RULES-based preferred (200EMA+ADX+ATR: causal-by-construction, no repaint, no
+training data) over HMM (whose ~95%-oracle DD benefit isn't worth its lag+repaint+retrain overhead for
+our case). Use as a RISK GATE not a return-timer. Avoid: smoothed/look-ahead labels (#1 trap), repaint,
+ignoring lag, no-retrain drift.
+
+PUNCHLINE FOR US: the user's premise ("if we knew Wyckoff phases exactly, issues solved") is inverted by
+the evidence — fine phases are un-buyable, un-trainable (label-starved), un-LLM-able, and genuinely
+absent at crypto tops; AND desks don't use them. The tractable + validated answer is a COARSE CAUSAL
+regime gate — which is EXACTLY the overlay the add.48 trend-continuation door needs to plug its one
+defect (bear-market-RALLY breakout leak, worst on Gold). The door already keys off EMA-200 (92-100% of
+entries above it); the leak is short-term pops above structure inside a bigger bear → a HIGHER-TIMEFRAME
+regime gate (weekly 200EMA / slow bear flag) plugs it. Rules-based, no new detection tech. Next decision
+(user): build the coarse regime overlay onto the door → then forward-collect the complete system.
