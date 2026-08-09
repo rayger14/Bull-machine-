@@ -871,3 +871,40 @@ defect (bear-market-RALLY breakout leak, worst on Gold). The door already keys o
 entries above it); the leak is short-term pops above structure inside a bigger bear → a HIGHER-TIMEFRAME
 regime gate (weekly 200EMA / slow bear flag) plugs it. Rules-based, no new detection tech. Next decision
 (user): build the coarse regime overlay onto the door → then forward-collect the complete system.
+
+### 2026-08-09 addendum 50 — Regime-overlay REUSE test: the cheap owned flag does NOT robustly plug the door's leak; the real CMI labels are UNMATERIALIZED (all-NaN in study store). Correction + honest null.
+
+Tested whether a coarse causal bear flag we ALREADY own plugs the add.48 trend-continuation door's
+bear-rally leak. Inline (no agent). idea_lab/overlay_regime_test.py on study/trend-continuation.
+Pre-registered flags (no fishing): ema200-falling over K∈{20,60} daily bars (targets "price ABOVE
+ema200 but medium trend DOWN" = bear rally) on all 4 assets; existing CMI regime_label (BTC).
+
+CORRECTION to add.49/prior turn: I claimed the CMI regime signal was "materialized in the store." WRONG.
+regime_label / regime_risk_off_prob / regime_risk_on_prob / regime_crisis_prob / regime_confidence are
+ALL 0% populated (all-NaN) in V22_CTX. The CMI RegimeService (engine/context/regime_service.py) exists
+as code and runs live/in the fusion path, but its output was never written to the offline study store.
+So FLAG-STORE could not be tested (labels all NaN) — the "thing we own" is not usable offline as-is.
+
+EMA-SLOPE proxy result — MIXED / not a robust fix (do NOT deploy, do NOT fish K):
+  SPX  : WORKS. SLOPE-20 removed 4 losers (PF 0.35, −$2,122 incl the 1 bear leaker) → KEPT n=21
+         PF 3.53→6.22, +$17,994→+$20,116; bear leak −$1,140 → $0. Clean.
+  NDX  : FAILS. removed 3 WINNERS (+$3,271), leak UNCHANGED (−$2,164). Net harmful.
+  GOLD : FAILS (worst-leak asset). SLOPE-20 removed 2 winners (+$1,436), leak −$2,999 UNCHANGED;
+         SLOPE-60 made leak WORSE. The Gold bear-rally losers fired while the 200-EMA was still
+         RISING (fast rips) → a lagging trend-slope flag structurally cannot catch them.
+  BTC  : no leak (0 bear fires); flag removed net-positive trades → mild harm, N/A.
+So a naive EMA-slope regime gate is ASSET-INCONSISTENT: fixes SPX, hurts NDX/Gold. Not a universal plug.
+
+PERSPECTIVE (important): the door is net-positive INCLUDING the leak — leak is ~7-14% of gross
+(−$1.1K to −$3K) vs door gross +$16-21K/asset; headline PF 2.56-3.53 already contains these losers. The
+leak is a MODEST DRAG, not a survival threat. The door already stands down in DEEP bears; only fast
+bear-RALLY breakouts leak.
+
+HONEST VERDICT: "do we already have a regime detector?" = YES (CMI RegimeService), but (a) its labels
+are NOT materialized in the study data, and (b) a cheap proxy for it does NOT robustly fix the specific
+leak. Properly answering "does our real regime detector plug the leak" requires MATERIALIZING the CMI
+labels over history (run the live service across the store) — and per discipline that should be a
+FORWARD evaluation, not fit on spent folds. Recommendation: do NOT over-engineer a regime overlay on
+this data; the door survives the leak; treat the bear-rally leak as a forward-watch item; if we
+forward-collect the door, log the live CMI regime_label alongside and evaluate the overlay on fresh
+fires. Not fishing K to force Gold — that would be overfitting a −$3K tail on 26 years.
