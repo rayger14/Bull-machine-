@@ -1134,3 +1134,28 @@ STAND-DOWN (size down/out in confirmed markdown) — as a DIAL not a veto (filte
 deployed time gate works as a crowd-out governor, add.38). That needs the CMI regime block
 materialized (add.32 plumbing) + fresh live data to validate. Everything else is downstream
 of "we can't tell a bounce-dip from a first-stair-down dip in real time."
+
+### 2026-08-10 addendum 51 — FIXED: BOMS direction was dead (discarded on displacement-only breaks). HTF market-structure state now has a live directional signal.
+
+User prioritized BOS/BOMS ("very important... knowing bos and boms"). Diagnosed WHY tf4h_boms_direction /
+tf1d_boms_direction were dead (all-zero everywhere, incl. the store) while boms_strength fired (0.7%).
+ROOT CAUSE (engine/structure/boms_detector.py detect_boms): `direction` was set to bullish/bearish ONLY on
+the FULL stringent BOMS confirmation (structure break + volume + FVG-trail + no-reversal). When price broke
+structure but wasn't fully confirmed, the code kept the displacement but returned `direction='none'` — the
+KNOWN break direction was discarded. So strength (from displacement) fired while direction was permanently 0.
+FIX: in the two displacement-only fallback branches, emit `direction='bullish'/'bearish'` (the known break
+side); keep `boms_detected=False` (full-confirmation semantics for knowledge_hooks UNCHANGED). Branch
+fix/boms-direction (off main). VERIFIED on BTC 1D: direction 0.0% → 2.2% of bars, aligned 1:1 with structure
+breaks (34 bull / 34 bear). CONSUMER-SAFE: only reader is knowledge_hooks (gates on boms_detected, still
+False); no archetype reads tf*_boms_direction — it was a dead feature nobody depended on, so populating it
+can't break live behavior (only revives intended HTF-state signal).
+CAVEATS / NEXT: (1) fix is in the SOURCE detector → LIVE path (live_feature_computer calls detect_boms) gets
+it on next DEPLOY (NOT deployed — standing rule); STORE (V22_CTX) is precomputed → needs a boms-column
+rebuild to propagate into study data. (2) SEPARATE unfixed issue: tf1d_boms_detected is all-NaN (the
+full-confirmation boolean is never surfaced as a feature) — not fixed here because full-confirmation BOMS is
+genuinely rare and DIRECTION is the useful HTF-state signal. (3) The BOS/CHoCH (lower-TF) store-vs-live parity
+bug (audit #2: fire in store, 0 live) is a DIFFERENT bug, not addressed here. (4) This REFRAMES the eye-gate
+HTF-state failure: its BOMS input was dead, so the HTF state it gated on was impoverished — the HTF-state
+layer may never have had a fair test. With direction now live, HTF-state(BOMS-dir) + LTF-trigger can finally
+be tested for real — after a store rebuild. HONEST: still a detection fix; the plain BOS-retest already lost
+(order_block_retest PF 0.75), so this enables a fair test, it does not by itself create edge.
