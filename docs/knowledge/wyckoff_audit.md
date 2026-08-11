@@ -1180,3 +1180,42 @@ BOMS-bear), real backtest+costs+exits (not fwd-returns), CPCV, and CROSS-ASSET w
 detector (SPX/NDX/Gold) — if the same HTF-BOMS-gates-LTF effect holds on 4 assets, that beats the
 per-asset small-n problem. This is the first result worth escalating in a while. Still: detection
 fix enabled a fair test; the pulse is real-looking but unproven.
+
+### 2026-08-10 addendum 53 — Expansion validation: REJECT. The add.52 77% was tightest-slice luck; edge dies P0→P5 (n≈5→68) to the coin-flip/trend baseline. Old-code gems recovered verbatim; ob_quality/eq_magnet show a weak-but-consistent 3/3 sizing pulse.
+
+Branch study/htf-ltf-expansion (off fix/boms-direction). Pre-registered 48-cell grid (E1 state-TF ×
+E2 persistence P∈{0,5,10,20} × E3 dir × E4 trigger), causal BOMS recompute (no-repaint 3/3), controls
+(unconditional / EMA-200 / ungated), cost-aware sim + CPCV K=6.
+
+VERDICT: REJECT — no cell meets the bar (n≥150 & ≥40 episodes & win72≥60% & beats controls & PF≥1.5).
+  - Edge dies IMMEDIATELY on E2: 1D long win72 0.800 (P0, n=5) → 0.515 (P5, n=68) ≈ unconditional
+    0.5225. On/off artifact, not graceful decay. At tradeable n (200-990): win72 0.53-0.59, PF
+    0.83-1.12 ≈ EMA-200 control (PF ~1.05). "Beats trend filter" (add.52 n=4) does NOT survive.
+  - CPCV: best n≥150 cell median PF 1.14, 0% of folds ≥1.5. Short mirror: same thin-slice signature
+    (P0 PF 1.50-1.54, n=61-65, CPCV min 0.68) — no persistent bear-side edge either.
+  - add.52's n=35 reconciles to n=5 under strict closed-bar P0 — the pulse was even thinner than
+    reported. HTF-BOMS-state + LTF-trigger architecture: CLOSED on BTC. No cross-asset escalation.
+
+PART A — verbatim gems RECOVERED (permanent record; 2 corrections to the July paraphrase):
+  1. HOB 5-comp quality: engine/liquidity/hob.py:88-100,240-276 (NOT bull_machine/). Weights: vol_surge
+     .30, level_strength .25, reaction_speed .20, wick_presence .15, confluence .10; ≥0.7 INSTITUTIONAL,
+     ≥0.5 RETAIL; hard pre-gate consolidation<0.3→None; touch strength min(1,touches/5), tol 0.1%.
+  2. Sweep reclaim: bull_machine/modules/liquidity/imbalance.py:20-60 — speed≤5h & displacement≥1.25ATR
+     & is_discount → ×1.3 cap 0.85. CORRECTIONS: golden pocket = 0.618-0.786 (not 0.65); "≤2 bars→0.8"
+     is actually a SAME-BAR sweep-reclaim rule (calculate_liquidity_score:233-256), no 2-bar counter.
+  3. Equal-cluster magnets: imbalance.py:146-200 — tail(10), tol 0.1%, count≥3, score min(count/5,1).
+  4. Trap-reset: bull_machine/modules/bojan/bojan.py:30-41,121-189 — dir-flip & body≥1.25×ATR &
+     opposite-wick/range>0.3.
+  5. MTF sync: 6-candle leg mtf_sync.py:13-46; DL2 z-veto :49-99 (4H 2.5/1D 2.2; latent bug: threshold
+     passed as timeframe arg); EQ-magnet veto bull_machine/core/sync.py:64-72.
+  6. knowledge_hooks bounded-delta: engine/fusion/knowledge_hooks.py — clamp ±0.10 thresh/±0.30 score/
+     risk×[0.5,1.5]; apply_knowledge_hooks has ZERO call sites (dormant integration pattern).
+
+THE ONE LIVE FIND (E5): within gated cohorts, ob_quality (HOB-style) and eq_magnet proximity sorted
+top-half PF ~1.35-1.39 vs bottom ~0.95-0.99, CONSISTENT 3/3 cells — first empirical support that the
+LOST QUALITY AXES carry information. Too weak to rescue this architecture (top-half win72 ~0.55), and
+built on store PROXIES (2/5 HOB components; binary eq pools). HONEST NEXT (different hypothesis, per
+Rules 7-10): dedicated quality-axis study — full 5-comp HOB + exact reclaim-speed from raw bars, framed
+as SIZING BOOST on already-good entries (champion book), NOT a trigger gate. E4 tier-3 untestable
+(tf1h_ob_high/low all-NaN in store — another dead-column find). add.51 BOMS fix stays (correct
+infrastructure; predicted not to create edge by itself).
