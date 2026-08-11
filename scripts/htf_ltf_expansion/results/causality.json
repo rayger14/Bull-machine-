@@ -1,0 +1,24 @@
+{
+  "timeframe": "1D",
+  "checks": [
+    {
+      "trunc_a": 1848,
+      "trunc_b": 2464,
+      "bars_compared": 1848,
+      "identical": true
+    },
+    {
+      "trunc_a": 2464,
+      "trunc_b": 3081,
+      "bars_compared": 2464,
+      "identical": true
+    },
+    {
+      "trunc_a": 1848,
+      "trunc_b": 3081,
+      "bars_compared": 1848,
+      "identical": true
+    }
+  ],
+  "no_repaint": true
+}
