@@ -1159,3 +1159,24 @@ HTF-state failure: its BOMS input was dead, so the HTF state it gated on was imp
 layer may never have had a fair test. With direction now live, HTF-state(BOMS-dir) + LTF-trigger can finally
 be tested for real — after a store rebuild. HONEST: still a detection fix; the plain BOS-retest already lost
 (order_block_retest PF 0.75), so this enables a fair test, it does not by itself create edge.
+
+### 2026-08-10 addendum 52 — First fair test of HTF-state + LTF-trigger (enabled by the add.51 BOMS fix): PROMISING PULSE that BEATS a plain trend filter — but n=35, needs real validation.
+
+With BOMS direction revived (add.51), ran the first fair probe of the user's vision: does the HTF
+market-structure STATE improve the 1H LTF entry trigger? Forward-return probe on BTC 1H store
+(V22_CTX), BOMS-dir recomputed with the FIXED detector (1D, trailing window, broadcast).
+- 1H bull-BOS trigger ALONE: ~51% win, +0.65%/+1.19% mean fwd (72h/1wk) = coin-flip (consistent
+  with order_block_retest PF 0.75 — the plain trigger is not an edge).
+- + HTF BOMS-bull state: 77%/69% win, +3.41%/+3.86% mean — a large, consistent lift.
+- CONTROL (is it just a trend filter?): plain close>1D-EMA200 gate only gets 54% win / +1.05% —
+  BOMS-bull (77%) BEATS the trend filter substantially. BOMS-bull-but-NOT-trend (n=4) 100% win.
+  => BOMS-direction discriminates BEYOND a plain trend filter. First empirical support that the
+     HTF-STATE-gates-LTF-ENTRY architecture (the user's founding vision) has real signal.
+CAVEATS (critical): BOMS-bull is only 1.1% of bars → n=35 signals, CLUSTERED (few independent
+episodes); the "beyond trend" evidence is n=4. This is a PROMISING PULSE, NOT proof — could be
+small-sample luck or an elaborate trend proxy. Could also partly be "trade with the HTF trend"
+(known). NEEDS a proper validation: 4H+1D BOMS (more signals), both directions (short mirror via
+BOMS-bear), real backtest+costs+exits (not fwd-returns), CPCV, and CROSS-ASSET with the fixed
+detector (SPX/NDX/Gold) — if the same HTF-BOMS-gates-LTF effect holds on 4 assets, that beats the
+per-asset small-n problem. This is the first result worth escalating in a while. Still: detection
+fix enabled a fair test; the pulse is real-looking but unproven.
