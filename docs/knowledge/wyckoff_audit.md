@@ -963,3 +963,70 @@ scalps around rare at-size cores. Our door = the at-size book, faithfully. Hones
 remain: BREADTH (the 10-asset basket ≈ 4-5 at-size trades/yr, add.54) and — if ever — a tactical small-
 size layer would need its OWN validated edge, which three tests now say does not exist in our detector
 set at sub-daily scale.
+
+### 2026-08-11 addendum 56 — Fractal EXECUTION + WI/Moneytaur EXIT toolkit: BOTH halves fail on the door's own signal. The two untested halves of WI's teaching do not beat our simple geometry. Adopt neither.
+
+Pre-registered 2×2 factorial (branch study/fractal-execution, worktree-isolated) on the SAME validated
+trend-continuation door fires (add.48/54). The door's ENTRIES never changed — only EXECUTION (entry
+timing) and EXIT (target/trail craft) varied. This tests the two halves of WI's teaching we had NOT
+tested: LTF as an EXECUTOR of daily-decided trades (add.55 already killed LTF as a signal GENERATOR),
+and the recovered WI/Moneytaur EXIT toolkit (golden pocket, structure trail, bojan-high/wick-magnet TP
+anchors, negative-fib extensions). Paired per-trade ΔR (each fire its own control); the fire set is held
+= the door's canonical Arm-A one-position trades, each arm re-simulated INDEPENDENTLY (per-trade R is
+equity-invariant), isolating EXECUTION from fire SELECTION. Self-test: a custom exit walker reproduced
+run_backtest's Arm-A per-trade R to **3.9e-14 %** on all 13 assets (validating it as the referee for the
+dynamic-trail arms run_backtest cannot express). New sensors (daily fractal pivot lows, upper wick
+magnets, active bojan-high zone) passed a 3-point truncation/no-repaint check. Files: idea_lab/
+fractal_exec_lib.py, fractal_parity_test.py, fractal_causality_test.py, fractal_stats.py,
+fractal_exit_half.py, fractal_entry_half.py, fractal_2x2_summary.py, fetch_h1.py (Coinbase 1H cache).
+
+THE ARMS. A (ref) = daily-close entry + add.54 struct exits (reproduced add.54 exactly: crypto 40 raw +
+BTC 10, SPX 25 / NDX 34 / GOLD 32 fires). B = LTF sniper entry (limit = HIGHER/less-deep of {break_level
+retest, golden-pocket 0.618 edge}; K=5 daily-bar window = 120 1H bars; buy-limit fills at min(limit,open)
+so a marketable limit cannot "buy above market"), SAME A exits. C = daily entry + WI/Moneytaur exit
+engine (TP1 40% at nearest-above of {active bojan-high zone, unswept 7-day wick magnet, struct_range_high}
+clearing ≥0.5R; runner 60% to negative-fib −0.272 ext of the range AND Moneytaur structure trail
+max(BE+0.5R, last daily pivot low −1×ATR) once ≥+1R, first hit wins). C-trail ablation = baseline struct
+TP1 + Moneytaur trail replacing the measured-move runner. D = B entry + C exits.
+
+EXIT HALF (all 13 markets, n=141; the pre-registered exit-half population):
+  C vs A     : mean ΔR **−0.045R**, median 0, 18% improved, bootstrap 95% CI **[−0.150, +0.076] (straddles 0)**,
+               WR 66→67%, runner tail PRESERVED (max single-trade R 5.63→9.42, C/A 1.67 — negfib+trail let
+               a couple winners run further), sumΔR −6.3R.
+  C-trail    : mean ΔR −0.073R, CI [−0.169, +0.016], max R→6.67, sumΔR −10.3R (the trail ALONE is net
+               harmful — it converts time-exits into earlier stop_after_tp1: A 14 → C 23, giving back open
+               profit on these bull-skewed histories).
+  Per-family : crypto +0.046 (n50), equity −0.067 (n59), gold −0.146 (n32) → only **1/3 families positive**.
+  Attribution: target-craft adds ~+0.028R over the trail alone, but both are net-negative vs A.
+  => EXIT HALF **FAILS** (CI includes 0; families inconsistent; only the runner-tail sub-condition passes).
+
+ENTRY HALF (5 assets with 1H: BTC/ETH/LTC/LINK/SOL; n=37 covered fires; BTC 8/10 — 2 fires pre-2018 have
+no 1H):
+  Fill rate 95% (35/37), but **21/35 fills were marketable** (limit at/above market → entered at ~close[D],
+  no real improvement). Mean entry improvement only **+0.90%** vs close[D], mean fill lag 1.1d — and 0.90%
+  is a small fraction of the daily stop distance, so it barely moves R.
+  B-market vs A: mean ΔR **−0.028R**, median 0, 59% improved, CI **[−0.103, +0.028] (straddles 0)**, WR 65→65%,
+                 max R unchanged, sumΔR −1.0R. Filled-only: −0.017R. The 2 timeout-chase fires cost −0.45R.
+  B-skip: realized +27.38R (filled only) vs B-market total +27.59R → **B-skip < B-market** (skipping the 2
+          unfilled fires forgoes their small net-positive B-market R). Opportunity cost of skips = +0.65R.
+  B-tight (secondary, 1H stop resized to 1% risk): mean +4.13R but **median −1.44R, WR 66→11%, max R 71.7** —
+          a fat-tail artifact of an ultra-tight stop (tiny stop_dist → huge R multiples on rare wins, most
+          trades stabbed). NOT an edge; exactly the "reweights R" caveat. Not viable.
+  fib-TIME cluster active at 21/35 fills (recorded as conviction flag; measurement only, not sized).
+  => ENTRY HALF **FAILS** both conditions (B-market CI includes 0; B-skip does not beat B-market).
+
+INTERACTION (shared 5-asset population): D mean ΔR +0.110R (CI [−0.237,+0.510], includes 0) ≈ B(−0.028)+
+C₅(+0.096) = +0.068 → halves **independent/additive within noise; no half is individually significant**.
+(On the 5 h1-crypto assets C is mildly + at +0.096; on the full-13 exit population C is −0.045. The verdict
+basis is the full population — the subset positive is ETH/LINK idiosyncrasy, not a signal.)
+
+RECOMMENDATION: **adopt NEITHER half into ONE_STRATEGY.md.** The door's simple daily-close entry and simple
+banked-and-derisked struct geometry are NOT beaten by WI's execution craftsmanship on the door's own
+signal — the fourth-through-sixth confirmations of the add.44–55 skepticism (fusion, dip-buying, speed-up,
+LTF-generator, and now LTF-executor + exit-toolkit all fail to add edge). Honest nuance worth a FORWARD
+watch-item only (not a change): on crypto the negfib+Moneytaur runner does let winners run further (tail
+5.63→9.42R, crypto family +0.046) — but it is swamped by equity/gold drag and never clears the CI. The
+pre-registered "whichever is higher (less deep)" limit made the sniper marketable 60% of the time (it just
+re-enters at market); a deeper-limit variant would trade fill-rate for improvement, but testing it now
+would be un-pre-registered fishing. THE EDGE REMAINS: rare, daily/weekly-scale, at-size, breadth-not-speed,
+simple-exit. Nothing shipped; production/live/deploy untouched; standing rules honored.
