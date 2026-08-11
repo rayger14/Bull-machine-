@@ -178,6 +178,16 @@ def main():
           f"mean entry improvement vs close[D]: {impr:+.2f}%  "
           f"mean fill lag: {np.mean([r['fill_lag_days'] for r in fills]):.1f}d" if fills else "")
 
+    print("\n  PER-ASSET B-market (covered fires):")
+    print(f"  {'asset':<9}{'n':>4}{'fills':>6}{'totR_A':>9}{'totR_B':>9}{'dR':>8}")
+    for sym in H1_ASSETS:
+        rr = [r for r in bm if r["sym"] == sym]
+        if not rr:
+            print(f"  {sym:<9}{0:>4}"); continue
+        nf = sum(1 for r in rr if r.get("filled"))
+        aa = sum(r["A"] for r in rr); bb = sum(r["B"] for r in rr)
+        print(f"  {sym:<9}{len(rr):>4}{nf:>6}{aa:>9.2f}{bb:>9.2f}{bb-aa:>+8.2f}")
+
     print("\n-- B-MARKET (same population as A; pure price improvement) --")
     sBm = paired_summary(B, A, "B-market vs A")
     print(fmt_row(sBm))
