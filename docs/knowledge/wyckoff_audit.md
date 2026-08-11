@@ -944,3 +944,22 @@ cannot prove a ~1–4/yr signal — the ONLY remaining honest validation is FORW
 basket. DEPLOYMENT PROPOSAL (not deployed): separate daily-cadence runner (NOT an 18th archetype — keeps
 it off fusion/dedup/CMI), Coinbase INTX perp basket (BNB excluded — not on Coinbase), bear-rally leak as
 a LOGGED flag never a filter. NOTHING SHIPPED; needs explicit user go per standing rules.
+
+### 2026-08-11 addendum 55 — Fractal probe: the door does NOT scale down. 4H version = same trade count, edge gone (third death of "go faster"). WI's extra cadence = small tactical scalps, not more at-size trades.
+
+User asked whether MTF/LTF sniper entries could raise the door's 4-5/yr cadence ("WI takes more trades
+than that"). Two prior LTF attempts died (add.52-53 expansion; order_block_retest PF 0.75) but those used
+DIFFERENT trigger definitions — the EXACT door geometry fractally scaled (4H exec, daily N=5 reanchor,
+identical bar-unit params) was untested. Ran it (idea_lab/probe_fractal_4h.py, BTC 8.4y):
+  DAILY (ref): n=9 (1.1/yr) WR 67% PF 2.56, OOS-A 2.84, 0 bear fires, 100% above-EMA200.
+  4H FRACTAL:  n=8 (0.9/yr) WR 50% PF 0.93 (−$304), OOS-A COLLAPSES to 0.25 (−$2,341), 1 losing bear fire.
+TWO decisive facts: (1) one TF down produced NO additional trades — the clean break→hold pattern is just
+as rare at 4H; lower TFs add noise, not opportunity; (2) what it did produce was train-good (2.96) /
+OOS-dead (0.25) — the same speed-up death signature, third confirmation. THE EDGE LIVES AT THE
+DAILY/WEEKLY SCALE, PERIOD. Do not revisit sub-daily variants of the door.
+DOCTRINE ANSWER to the cadence question: WI's own precedence rule ("HTF governs bias + SIZE; MTF/LTF may
+authorize only small tactical scalps; no confirmation = no trade AT SIZE") — his extra trades are SMALL
+scalps around rare at-size cores. Our door = the at-size book, faithfully. Honest frequency levers that
+remain: BREADTH (the 10-asset basket ≈ 4-5 at-size trades/yr, add.54) and — if ever — a tactical small-
+size layer would need its OWN validated edge, which three tests now say does not exist in our detector
+set at sub-daily scale.
