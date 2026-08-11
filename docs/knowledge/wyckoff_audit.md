@@ -908,3 +908,39 @@ FORWARD evaluation, not fit on spent folds. Recommendation: do NOT over-engineer
 this data; the door survives the leak; treat the bear-rally leak as a forward-watch item; if we
 forward-collect the door, log the live CMI regime_label alongside and evaluate the overlay on fresh
 fires. Not fishing K to force Gold — that would be overfitting a −$3K tail on 26 years.
+
+### 2026-08-11 addendum 54 — THE ONE STRATEGY assembled + validated on FRESH un-mined crypto: door PORTABILITY CONFIRMED (basket PF 2.50), boost stack partly inert, forward-collection is the only remaining proof
+(addenda 51–53 live on branch study/htf-ltf-expansion: 51 BOMS-direction fix, 52 promising HTF-state
+pulse, 53 expansion REJECT + verbatim gem recovery + ob_quality/eq_magnet weak 3/3 sizing pulse.)
+
+Assembled the campaign's surviving synthesis into ONE named strategy (docs/knowledge/ONE_STRATEGY.md)
+= WI's M2 continuation mechanized: weekly-anchored CONFIRMED up-break (PERMISSION, stand-down by
+construction) → daily retest/LPS-hold (ENTRY) → conviction sizing (boosts, never gates) → banked-and-
+derisked exits (TP1 40% at range high → BE → 60% runner to measured move). Params IDENTICAL to add.48,
+no retune. Validated on FRESH, never-touched daily crypto (Coinbase spot — Yahoo v8 hard-429'd this IP,
+Stooq JS-gated, Binance 451; vendor substituted, assets unchanged). Branch study/one-strategy off
+study/trend-continuation; idea_lab/run_one_strategy.py + fetch_fresh_crypto.py. Self-test parity 0.00%.
+
+RESULTS (headline struct/flat, rmult=1.0, identical params; 9 fresh assets + BTC ref):
+  PF>=1.5 on 6/9 fresh (ETH 1.93 n12, SOL inf n3, LTC 3.26 n9, DOT inf n1, AVAX inf n1, LINK 9.89 n5);
+  the 3 fails all n<5 (XRP 0.08 — but ~2.5yr Coinbase-suspension DATA GAP, artifact; ADA 0.28 n3;
+  DOGE 0.00 n2). n>=5 subset: 3/3 pass. BTC ref PF 2.42 n10. Pooled above-EMA200 88%. Pooled BEAR-
+  window fires n=8 PF 0.58 −$1,610 (the add.48 leak: net-losing minority, ~6% of gross, reproduced
+  EXACTLY). Dead-spring baseline stayed the opposite (DOT −$7,949 / AVAX −$2,991 catastrophic).
+  BASKET (fixed 1% risk): 40 raw trades → 32 independent episodes (±5d cross-asset), episode PF 2.68 /
+  basket PF 2.50 / MaxDD −5.79% / ~4.4 trades/basket-yr; CPCV K6m2 meanPF 2.84, frac>1 100%, >=1.5 87%.
+
+VERDICT vs pre-registered rule (majority PF>=1.5 AND agg episode PF>=1.5 AND bear-standdown consistent
+AND no catastrophic n>=5): PASS on all four → PORTABILITY CONFIRMED. The door is a real cross-asset
+edge, not a BTC/SPX/Gold fit.
+HONESTY (binding): (a) cryptos are one macro factor — 40→32 episodes; INDEPENDENT evidence for the door
+stays SPX/NDX/Gold; fresh cryptos test PORTABILITY + build the tradeable basket, nothing more.
+(b) Rarity binds — only 3 assets reach n>=5; "inf" PFs are n<=3, directional; the BASKET is the unit of
+evidence. (c) Boost stack partly INERT: eq_magnet at verbatim 0.1% tol shows ZERO ≥3-pivot clusters on
+daily crypto (original was a 1H/intrabar store proxy) — NOT loosened (=fishing). ob_quality needs the
+full 5-comp HOB pipeline — NOT computed (the add.53 quality-axis study, separate). So the live-computable
+stack = fib-time ×1.25 only, mildly net-+ (~+12% basket PnL), a sizing tilt not an edge. (d) History
+cannot prove a ~1–4/yr signal — the ONLY remaining honest validation is FORWARD paper-collection of the
+basket. DEPLOYMENT PROPOSAL (not deployed): separate daily-cadence runner (NOT an 18th archetype — keeps
+it off fusion/dedup/CMI), Coinbase INTX perp basket (BNB excluded — not on Coinbase), bear-rally leak as
+a LOGGED flag never a filter. NOTHING SHIPPED; needs explicit user go per standing rules.
