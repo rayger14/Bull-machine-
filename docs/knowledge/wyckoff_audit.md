@@ -963,3 +963,46 @@ scalps around rare at-size cores. Our door = the at-size book, faithfully. Hones
 remain: BREADTH (the 10-asset basket ≈ 4-5 at-size trades/yr, add.54) and — if ever — a tactical small-
 size layer would need its OWN validated edge, which three tests now say does not exist in our detector
 set at sub-daily scale.
+
+### 2026-08-12 addendum 57 — WI batch-6 answers: CAMPAIGN topology (1-3 sized entries per model, bank→re-enter) + the GANN TIME layer (verbatim mechanics). Our cadence gap = entries-per-model, NOT range scale.
+
+User relayed WI's answers to the cadence questions (add.56 aftermath). VERBATIM knowledge, recorded:
+
+Q1/Q2 CAMPAIGN MANAGEMENT: he does NOT buy once and sit. Active management around a core: banks
+partials (TP1 40% — matches our spec), moves stop under the NEWLY CREATED LPS/Bojan (structure-event
+trail, not pivot-ATR trail), fully derisks to ~1/10 (not our 60% runner), takes LATER LPS/RTZ/Bojan
+entries INSIDE the same larger structure. Typically 1-3 (sometimes more) SIZED entries per major
+model: M1 spring/test primary + LPS re-entry; M2 LPS primary (can be multiple) + BU. => OUR
+SINGLE-ENTRY-PER-MODEL IS THE CADENCE GAP, not the range scale.
+Q6/Q7 CADENCE GROUND TRUTH: no published counts; one week "BTC gave 6 clean setups, took 3";
+at-size HTF campaigns = few (high-single to low-teens/yr INCLUSIVE of the 1-3 entries each);
+major completed HTF models = 2-5 quality/yr (multi-week to multi-month ranges, 2W structure,
+monthly levels, range kept "until proven otherwise" by BODY structure break). Our ~1 event/yr
+detector is "right ballpark" (low end); the multiplier is ENTRIES PER MODEL + re-entries after
+banking + a tactical MTF layer (which for OUR detectors is proven dead, add.52-56 — do not revisit).
+
+GANN TIME LAYER (never captured before; core confluence alongside Wyckoff/Bojan/dominance):
+- Philosophy: "Gann timed. Wyckoff mapped." Time says WHEN turns are likely; never trade Gann alone;
+  react only when Gann window + Wyckoff confirmation align.
+- Counts: 90/180/360/540/720/1080/1440 DAYS from major highs/lows or the HALVING; 144 periods
+  (days/hours/weeks) is the recurring hidden number; turns land within ±1-3 bars of the count.
+- Halving vibrations: +180d minor pivot, +360d expansion mark, +720d 2-yr crest / DISTRIBUTION
+  window, +1440d next-halving reset.
+- STRONGEST RULES (his evidence tiers): "Don't be in a swing long in final Gann time window" (Very
+  High); "Full exit trigger all swing longs (Wyckoff + Gann time window confirms)" (High); green
+  candles w/o confirmation inside a Gann window = trap; re-accumulation can EXTEND a cycle; danger
+  zones are calendar windows (e.g. 0818→1027, Week 43 symmetry).
+- Geometry (secondary): 1x1, 1x2 angles to start; Square of 144; 144° arcs. NOT published: exact
+  square construction, exact count start-point selection (discretionary), full mechanical ruleset.
+- USABLE MECHANICAL TAKEAWAYS: overlay harmonic counts on major pivots + halving; final/danger
+  windows = stand-down/exit for swing longs WHEN STRUCTURE CONFIRMS; 144/90/180/360/720 counts as
+  entry CONFLUENCE (stacks with our validated fib-time layer — a NEW time family, never tested).
+
+IMPLICATIONS FOR ONE_STRATEGY: (1) the 168d passive hold + 60% runner are OUR placeholders — WI's
+real topology is bank 40% → trail under each new LPS → derisk to 1/10 → RE-ENTER at next LPS/RTZ
+within the live campaign; (2) the Gann danger-window exit is a TIME-based stand-down we never had —
+potentially the honest answer to both the bear-rally leak AND the "regime stand-down dial" gap;
+(3) cadence fix = campaign re-entries (validated regime, same scale), NOT smaller timeframes.
+NEXT: pre-registered CAMPAIGN-v2 + GANN study from these verbatim specs (knowledge injection, not
+fishing). Note exit-craft caution (add.56: our Moneytaur-trail test was harmful) — WI's LPS-event
+trail + re-entry topology is a DIFFERENT system (single-position testing couldn't express it).
