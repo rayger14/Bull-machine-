@@ -1,0 +1,62 @@
+WIDE-BASKET PRE-REGISTRATION  (fixed BEFORE any fetch / any outcome measured)
+=============================================================================
+Study: study/wide-basket  (off study/major-anchors).  add.62.
+Purpose: validate the IDENTICAL add.48 trend-continuation door on the widest honest
+universe; define the pre-registered forward-test basket that can reach a verdict in
+~2yr instead of ~7yr (add.60 M3). NO per-asset tuning. Run ALL, report ALL. A family
+that fails is a FINDING, not a drop.
+
+THE DOOR (frozen, identical everywhere): idea_lab/trend_continuation_door.py
+  daily exec, weekly N=5 struct range, headline struct/flat rmult=1.0.
+  M2_SOS_WIN=360 LPS_LOOKBACK=48 RTZ_ATR=0.5 STOP_BUF_ATR=0.25 DEDUP_K=3
+  MAX_HOLD=168 HTF_N=5, eye N_RANGE_1D=40 ACCEPT_CONSEC=2 TREND_CONSEC=5.
+  Costs: commission 0.0002/side + slippage 3bps/side.  Risk 1%.  $100k start.
+
+UNIVERSE (29 markets total = 13 reproduced + 16 NEW).  PRE-REGISTERED, no dropping.
+  CRYPTO (10, cached one_strategy/, Coinbase spot):
+    BTC-USD ETH-USD SOL-USD LTC-USD XRP-USD ADA-USD DOGE-USD DOT-USD AVAX-USD LINK-USD
+  EQUITY-INDEX existing (2, cached xasset/, yfinance):
+    GOLD(GC=F -> classed METAL below), NDX(^NDX)
+    [note: GOLD is cached under xasset/ but is a METAL family member for verdicts]
+  SPX retry (1, yfinance ^GSPC)  [was raw-endpoint gated add.54/58; retry per add.59]
+  NEW EQUITY-INDEX (5, yfinance): ^DJI ^RUT ^N225 ^GDAXI ^FTSE
+  NEW METAL (3, yfinance): SI=F(silver) HG=F(copper) PL=F(platinum)   [+GOLD reproduced]
+  NEW ENERGY (1, yfinance): CL=F(oil)
+  NEW FX (4, yfinance): EURUSD=X GBPUSD=X USDJPY=X AUDUSD=X
+  NEW SINGLE-STOCK (3, yfinance): AAPL MSFT NVDA
+
+FAMILY MAP (for Part-2 verdicts):
+  crypto        = BTC ETH SOL LTC XRP ADA DOGE DOT AVAX LINK
+  equity-index  = SPX NDX DJI RUT N225 DAX FTSE
+  single-stock  = AAPL MSFT NVDA
+  metal         = GOLD SILVER COPPER PLATINUM
+  energy        = OIL
+  fx            = EURUSD GBPUSD USDJPY AUDUSD
+
+MIN HISTORY: >=4yr daily each (else EXCLUDE with reason, not a silent drop).
+
+DATA-INTEGRITY CHECKS (per series): row count, date span, calendar-gap census,
+  zero-volume %, NaN OHLC. The door path is VOLUME-INDEPENDENT (verified add.48) ->
+  FX (no real volume) and index-volume noise cannot touch the headline. Confirm the
+  door truly never reads volume on the new assets (self-test + code path).
+
+REFEREE PARITY (pre-registered pass): idea-lab self-test vs textbook referee < 0.01%
+  (report 0.00%) on EVERY new asset.
+
+PART-1 per-asset report: n, WR, PF, PnL, MaxDD, above-EMA200 share, bear-window
+  behaviour where definable.  NO per-asset tuning.
+
+PART-2 wide basket: pooled n, trades/yr (THE number: does it reach 10-15?), basket
+  PF/PnL/MaxDD at fixed 1% risk, cross-asset episode clustering (+-5d = 1 episode)
+  raw AND episode-adjusted, K-block subsample stability. Family breakdown verdicts.
+  add.60 deflation: forward PF ~ half backtest edge (K=20-50 -> impliedPF 1.57-1.72
+  on the door itself); state wide-basket forward expectation honestly.
+
+PART-3 FORWARD-TEST SPEC (docs/knowledge/FORWARD_TEST_SPEC.md):
+  base = add.60 M3 finish line. CONFIRM iff forward basket PF>=1.5 AND meanR bootstrap
+  CI-lo>0 at n>=30; REFUTE iff PF<1.0 with CI-hi<0; else keep collecting. Define
+  forward paper universe (families that PASS Part 1), expected trades/yr, calendar
+  time-to-verdict at the wide cadence, minimal daily-close runner spec, per-fire flags
+  (CMI regime_label, bear-window flag). SPEC only; no deploy.
+
+Frozen this file BEFORE fetching. -- wide-basket study
