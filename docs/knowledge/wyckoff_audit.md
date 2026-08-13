@@ -1192,3 +1192,82 @@ campaign-topology+Gann, and now major-anchor-Gann + gentler-re-entry) — the ad
 the DAILY/WEEKLY scale; BREADTH (the basket) is the only honest cadence lever; forward paper-collection
 is the only remaining validation. Nothing shipped; production untouched; worktree removed; branch
 study/major-anchors pushed.
+
+### 2026-08-13 addendum 62 — WIDE-BASKET validation: the door is a TRENDING-ASSET edge (crypto+equity+single-stock+metal PASS; FX+energy REFUTE) and a 25-market forward basket reaches a verdict in ~2yr not ~7yr. Forward test PRE-REGISTERED.
+
+Purpose (from add.60): at ~4.5 basket-trades/yr the M3 forward finish line is ~7 YEARS out. Widen the
+universe to reach 10-15+ trades/yr → verdict in ~2yr. Validate the IDENTICAL add.48 door on the widest
+honest universe and lock the forward basket. Branch study/wide-basket off study/major-anchors, worktree-
+isolated. Files: idea_lab/run_wide_basket.py, fetch_wide.py, wide_basket_PREREGISTRATION.txt (universe +
+verdict rules frozen BEFORE any fetch), docs/knowledge/FORWARD_TEST_SPEC.md. STUDY ONLY; production
+untouched. NO per-asset tuning; ran ALL, reported ALL — a failing family is a FINDING, not a drop.
+
+UNIVERSE: 29 markets = 13 reproduced (10 crypto cached + GOLD/NDX cached) + 16 NEW + SPX-retry, fetched
+via yfinance (worked add.59). REFEREE PARITY: 17/17 new assets self-test 0.00% (textbook referee).
+REPRODUCTION check (un-tuned, cached/refetched): SPX ^GSPC now UN-GATED reproduces add.48 EXACTLY
+(PF 3.53 +$17,994 n25); GOLD 3.51 +$21,275; BTC 2.42; NDX 1.85 (= add.60's yfinance refetch, not
+add.48's older 2.82 fetch); crypto basket PFs identical to add.54. The door is stable across vendor/date.
+
+VOLUME-INDEPENDENCE (now load-bearing): FX majors have 100% zero-volume in yfinance; the door FIRED
+NORMALLY on all four (n=12-20) with 0.00% referee parity → PROOF the headline path never gates on volume
+(code: the only volume reader `build_structural_poc` is orthogonal and uncalled by `build_daily_sensors`).
+DAX/N225/FTSE (25-34% zero-vol index noise) also clean. Confirms the add.48 volume-independence claim.
+
+PART 1 — PER-ASSET (headline struct/flat, identical params). PF | PnL(1%R) | n | above-EMA200:
+  crypto:        BTC 2.42/$4.5k/10/90%  ETH 1.93/$4.8k/12  SOL inf/$3.8k/3  LTC 3.26/$7.8k/9
+                 XRP 0.08/-$2.7k/4 (Coinbase-suspension DATA GAP artifact, add.54) ADA 0.28/n3 DOGE 0.00/n2
+                 DOT inf/n1 AVAX inf/n1 LINK 9.89/$8.9k/5   [n<5 fails are all directional]
+  equity-index:  SPX 3.53/$18.0k/25  NDX 1.85/$6.6k/24  DJI 1.97/$8.0k/23  RUT 1.83/$8.3k/26
+                 N225 1.59/$7.0k/31  DAX 1.25/$2.8k/30  FTSE 2.87/$6.0k/16   ALL POSITIVE, 87-100% above
+  single-stock:  AAPL 3.17/$17.5k/27  MSFT 2.14/$19.2k/34  NVDA 3.92/$18.8k/24   ALL STRONG (new microstructure)
+  metal:         GOLD 3.51/$21.3k/32  SILVER 1.70/$9.3k/31  COPPER 2.61/$18.3k/30  PLATINUM 1.48/$5.6k/29  ALL POS
+  energy:        OIL 0.59/-$3.6k/13   NEGATIVE (small n, directional)
+  fx:            USDJPY 1.50/$3.3k/20 (carry-trending)  EURUSD 0.65/-$2.4k  GBPUSD 0.25/-$6.3k  AUDUSD 0.26/-$9.0k
+
+PART 2 — FAMILY VERDICTS (pooled, fixed 1% risk):
+  crypto        n50  PF 2.50  +$27.2k  meanR 0.543  88% above   SUPPORTS (portability, add.54 reproduced)
+  equity-index  n175 PF 1.97  +$55.1k  meanR 0.315  94% above   SUPPORTS (7 indices, 1990-2026)
+  single-stock  n85  PF 2.88  +$52.3k  meanR 0.616  95% above   SUPPORTS (different microstructure — key new test)
+  metal         n122 PF 2.25  +$51.5k  meanR 0.422  89% above   SUPPORTS (incl. uncorrelated Gold)
+  energy        n13  PF 0.59  -$3.6k   meanR -0.274 100% above  REFUTES (weak/negative, n=13 directional)
+  fx            n63  PF 0.57  -$14.8k  meanR -0.235 90% above   REFUTES (3/4 majors negative; mean-reverting)
+  DOMAIN VERDICT: the door's "structural breakout-retest is universal" thesis holds for TRENDING asset
+  classes (crypto, equities, single-stocks, metals) and FAILS on MEAN-REVERTING FX majors + thin OIL.
+  The single trending FX pair (USDJPY carry) is positive — consistent with "door needs a trend," not a
+  refutation of the mechanism. This BOUNDS the edge's domain honestly: it is a trend edge, not an all-
+  market edge. (fx/energy fire despite high above-EMA200 share → EMA200 alone does not capture the
+  choppy-but-drifting-up FX structure; the door's break-retest still whipsaws there.)
+
+WIDE BASKET (all 29 pooled, fixed 1% risk): 508 raw trades → 372 episodes (±5d), 36.4yr span.
+  cadence 14.0 raw/yr (RECENT-ERA 2021-26 all-live: 24.2/yr) → REACHES the 10-15 target.
+  basket PF 1.89  +$167.8k  MaxDD -6.69%  meanR +0.330 (sd 1.321, boot 95% CI [+0.220,+0.447]).
+  K-block K6m2: frac PF>1 100%, frac>=1.5 80%. (Diluted by the fx/energy losers.)
+PASS-ONLY FORWARD BASKET (drop fx+energy = 25 markets, the forward universe):
+  n432  PF 2.29  +$186.1k  MaxDD -6.02%  meanR +0.431  boot 95% CI [+0.305,+0.561] (CI-lo well >0).
+  recent-era cadence (2021-26 all live): FULL 24.2/yr, PASS 20.0/yr → n>=30 verdict in ~1.5-2.5yr.
+
+DEFLATION (add.60 M3, honest): forward expectation ~ HALF in-sample. PASS-basket meanR +0.431 → deflated
+  ~+0.22R; PF 2.29 → deflated forward PF ~1.6-1.7. Clears the CONFIRM 1.5 floor but only MARGINALLY —
+  the forward test is a real test. Family selection (dropping fx/energy on the SAME history) adds forking;
+  the forward data re-adjudicates the 4-family domain claim, which is therefore a forward hypothesis, not
+  a settled result. NOT a 2023-24 artifact (positive across 1990-2026 on equities/metals/single-stocks;
+  Gold + AAPL/MSFT + SPX carry the long-history independent evidence).
+
+PART 3 — PRE-REGISTERED FORWARD TEST (docs/knowledge/FORWARD_TEST_SPEC.md, LOCKED):
+  Unit = 25-market PASS basket at fixed 1% risk. CONFIRM iff forward PF>=1.5 AND meanR boot CI-lo>0 at
+  n>=30; REFUTE iff PF<1.0 with CI-hi<0; else keep collecting. Expected 12-20 trades/yr → finish line
+  ~2yr (vs add.60's ~7yr — the study's goal, achieved). Minimal runner = SEPARATE daily-close process
+  (one run/day after UTC close), NOT the 1H archetype engine, off fusion/dedup/CMI. Per-fire flags logged
+  (never gated): CMI_regime_label, bear_window_flag, above_ema200, family, episode_id — enabling a later
+  PAIRED-channel bear-overlay study on REAL forward fires (the add.48/49/50 open thread; the door's one
+  missing organ is a causal bear-regime gate to plug the bear-rally-breakout leak). fx+energy kept as a
+  LOGGED shadow book so the domain boundary stays under live test. SPEC ONLY — nothing deployed; needs
+  explicit user go per standing rules.
+
+BOTTOM LINE: the trend-continuation door is a GENUINE cross-family trend edge (4/6 families, incl. the
+uncorrelated Gold and independent single-stocks and 7 equity indices back to 1990) — NOT a BTC/SPX fit and
+NOT a 2023-24 artifact — but its domain is TRENDING markets; it does NOT generalize to mean-reverting FX
+or thin energy, and that boundary is now measured, not assumed. Widening to 25 markets converts the
+un-adjudicable ~7yr forward test into a ~2yr one. Deflated forward PF ~1.6-1.7 sits just above the
+CONFIRM floor, so the forward collection is decisive, not ceremonial. Nothing shipped; production
+untouched; worktree removed; branch study/wide-basket pushed.
