@@ -1006,3 +1006,90 @@ potentially the honest answer to both the bear-rally leak AND the "regime stand-
 NEXT: pre-registered CAMPAIGN-v2 + GANN study from these verbatim specs (knowledge injection, not
 fishing). Note exit-craft caution (add.56: our Moneytaur-trail test was harmful) — WI's LPS-event
 trail + re-entry topology is a DIFFERENT system (single-position testing couldn't express it).
+
+### 2026-08-12 addendum 58 — CAMPAIGN-v2 + GANN study: WI's own topology UNDERPERFORMS the simple placeholder on his own signal. Cadence goes DOWN not up; Gann tiers inert. Adopt NEITHER. (add.44–56 skepticism, 7th confirmation)
+
+Pre-registered study of WI's batch-6 verbatim specs (add.57): CAMPAIGN-v2 management topology
++ the GANN time layer. Branch study/campaign-v2 (worktree-isolated, off study/one-strategy).
+Knowledge-injection of HIS specs (legit); every interpretation flagged OURS and fixed BEFORE
+measuring; NO grids. Files: idea_lab/campaign_backtester.py (multi-entry engine, referee parity
+0.00% on the 10-spec bt_audit self-test — the extension did not disturb cost/fill discipline),
+gann_time.py (harmonic-count engine; causality PASS, 3-point truncation no-repaint PASS, 0
+mismatches), campaign_strategy.py (CampaignV2Door — door ENTRIES/STOPS unchanged, add.57
+management), run_campaign_v2.py. Costs 2bps+3bps, 1% risk, $100k. 12 markets (10 crypto incl.
+BTC ref + GOLD + NDX); SPX = DATA OUTAGE this run (Yahoo v8 429 + Stooq JS-gated, exactly the
+add.54 situation) — non-crypto independent evidence = GOLD (uncorrelated) + NDX.
+
+GANN ENGINE (fresh build; founding engine/temporal/gann.py = Fib 21/34/55/89 w/ 30d cap, and
+gann_cycles.py = ACF 30/60/90 + Square-of-9 PRICE — NEITHER implements WI's count-from-anchor
+scheme; halving there 2024-04-20 vs verbatim 2024-04-19). Anchors = weekly N=5 pivots + halvings
+(2016-07-09/2020-05-11/2024-04-19); counts 90/180/360/540/720/1080/1440d + 144d + 144w; ±3d.
+
+PART 1 — v1 (add.54: 1 entry, 60% runner, 168d) vs CAMPAIGN-v2 (bank40→structure-event trail→
+derisk to 1/10→10% runner to campaign death; up to E=3 higher-break re-entries when FLAT):
+  BASKET (fixed 1% risk, additive, 35.2yr span):
+    v1: PF 2.84  PnL $62,013  MaxDD -4.11%  n=116  cadence 3.30 tr/yr
+    v2: PF 2.96  PnL $57,120  MaxDD -3.62%  n= 88  cadence 2.50 tr/yr
+    CADENCE MULTIPLIER v2/v1 = 0.76x  (i.e. FEWER trades, not more).
+  PAIRED campaign comparison (85 campaigns, same campaigns two managements):
+    v2>v1 in 39/85; mean ΔPnL/campaign = -$58; bootstrap 95% CI [-$266, +$159] (STRADDLES 0);
+    total ΔPnL -$4,892. => WI's management is statistically INDISTINGUISHABLE from the placeholder.
+  PRE-REGISTERED VERDICT: C1 PF PASS (2.96 ≥ 2.54); C2 PnL FAIL (57.1k < 62.0k); C3 cadence FAIL
+    (0.76x < 1.5x); C4 MaxDD PASS (-3.62% better than -6.16%). => CAMPAIGN-v2 FAILS the rule.
+
+THE CADENCE ANSWER (the whole point of the study): WI's topology does NOT raise our cadence — it
+LOWERS it. TWO mechanisms, both decisive:
+  (1) entries-per-campaign ≈ 1.00 everywhere. Across 12 assets / 85 campaigns only ~3 second-entries
+      EVER fired (BTC 8e/7c, LTC 7e/6c, NDX 23e/22c; all others exactly 1.00). WI's "1-3 sized
+      entries per model" simply does not occur on our detector: a NEW HIGHER confirmed break inside a
+      live campaign while flat is as rare as the primary door itself. This is add.55's death-of-
+      "go-faster" AGAIN — our detector emits ~1 at-size event per campaign, PERIOD.
+  (2) the campaign HOLDS one position longer (runner rides to campaign death, no 168d cap), so the
+      one-position scanner SKIPS the later door fires that v1 booked as separate trades. WI's
+      "keep the range until proven otherwise" ABSORBS v1's independent re-fires into single long holds
+      → 88 trades vs 116. His topology trades LESS often at size on our signal, not more.
+  Net: the cadence gap WI attributed to "entries per model" is NOT closable on our detector set. The
+  only honest cadence lever remains BREADTH (the basket), exactly as add.54/55 concluded.
+
+PART 2 — GANN TIME LAYER:
+  ENGINE HONESTY: the VERBATIM anchor set (every weekly N=5 pivot high AND low + halvings, 9 counts,
+    ±3d) SATURATES the calendar — entry-window coverage 50–65% per asset. WI's "major" pivots are
+    DISCRETIONARY and FEW; mechanizing them as every N=5 fractal pivot over-produces anchors. A
+    ~55%-coverage "confluence tier" is nearly useless as a discriminator by construction. (Danger
+    tier — high-pivots only, 360+/halving-720+ — is tighter at 14–24%.)
+  G-ENTRY split (in- vs out-window mean R): in-window is LOWER, not higher, on BOTH topologies —
+    v1 in +0.491 (n72) vs out +0.606 (n44), Δ -0.115 CI [-0.645,+0.377]; v2 in +0.601 (n53) vs out
+    +0.721 (n35), Δ -0.120 CI [-0.822,+0.526]. Both CIs straddle 0. => G-ENTRY FAILS (no edge; if
+    anything mildly negative). NO conviction-sizing candidate.
+  G-EXIT: (a) on CAMPAIGN-v2 it is ARCHITECTURALLY INERT — its pre-registered structure-confirmation
+    clause (close < campaign floor) IS the campaign's own D2 body-break death, so v2 and v2+gexit are
+    bit-identical (PF 2.96 / PnL $57,120 / MaxDD -3.62%, n=88 both). (b) on the v1 door (Part-1
+    winner) — paired per-trade re-sim (add.56 method): G-EXIT altered 1/116 trades, mean ΔR +0.000
+    (CI [+0.000,+0.001]), sumR 62.0→62.0, maxR 5.63→5.63, runner-tail sumR(≥3) 11.1→11.1. The
+    Gann-danger-window + (close<created_LPS) conjunction almost never co-occurs while positioned
+    (v1 is already stopped by the time price closes below its entry LPS). => G-EXIT is a NO-OP on our
+    signal; it does not help the two feared soft spots because in this data those soft spots aren't
+    biting: the below-EMA200 "bear-rally leak" is net +12.7R (n=6) and campaign-death exits are net
+    +36.7R (n=19) — the runner tends to bank campaign deaths in PROFIT, not give-back.
+
+VERDICTS vs pre-registered rules: CAMPAIGN-v2 FAILS (cadence+PnL). G-ENTRY FAILS. G-EXIT records as
+INERT (redundant on v2, no-op on v1) — the "PASS" on v1 is vacuous (zero effect). ADOPT NEITHER.
+
+RECOMMENDATION for ONE_STRATEGY.md: KEEP v1 (single entry, banked-and-derisked struct exits) as the
+headline door. Do NOT adopt WI's campaign topology on our detector — it trades less often at size and
+does not beat the simple placeholder (per-campaign CI straddles 0). Do NOT adopt Gann tiers (entry
+confluence has no edge and saturates; the danger-window exit is subsumed by our own structure-break
+death). This is the SEVENTH confirmation of the add.44–56 skepticism (fusion, dip-buying, speed-up,
+LTF-generator, LTF-executor, exit-toolkit, and now campaign-topology + Gann all fail to add edge on
+the door's own signal). The door's edge lives at the DAILY/WEEKLY scale as a RARE (~1/campaign,
+~4–5/basket-yr) at-size signal, and BREADTH is the only honest frequency lever.
+
+WHAT THIS DOES NOT TEST (the one real caveat): PYRAMIDING-WHILE-POSITIONED. WI adds to a WINNING
+position while still holding; our engine is one-position / re-enter-only-when-flat (faithful to the
+task's primary "only when FLAT" reading), so concurrent adds are UNEXPRESSED — they need a multi-
+position engine (not cheap, deferred). If any part of WI's cadence claim survives our detector it is
+there, not in flat re-entries. Also flagged: "newly created higher structure" was pre-registered as
+higher break_level; a looser reading (higher LPS low) might fire more 2nd entries — a follow-up, NOT
+a retrofit (changing it now = fishing). And per standing rule, even a PASS would require FORWARD
+paper proof before adoption; this study produced no pass to forward. Referee parity 0.00%; Gann
+causality + no-repaint PASS. Nothing shipped; worktree removed, branch study/campaign-v2 pushed.
