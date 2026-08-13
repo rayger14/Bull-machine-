@@ -1192,3 +1192,117 @@ campaign-topology+Gann, and now major-anchor-Gann + gentler-re-entry) — the ad
 the DAILY/WEEKLY scale; BREADTH (the basket) is the only honest cadence lever; forward paper-collection
 is the only remaining validation. Nothing shipped; production untouched; worktree removed; branch
 study/major-anchors pushed.
+
+### 2026-08-13 addendum 60 — ADVERSARIAL AUDIT OF THE TESTING APPARATUS ITSELF: the harness is SOUND but the in/out-split machinery manufactured false-negatives; 4 of 9 rejections were UNDERPOWERED, not disproven
+
+Owner asked the meta-question after 9 straight add-on rejections: "how is it possible that nothing
+changes anything — what is the testing doing wrong?" Mandate = try to BREAK the apparatus (guilty until
+proven innocent), not defend it. Branch audit/testing-methodology off study/major-anchors, worktree-
+isolated. Files: idea_lab/audit_common.py, audit_m1_power.py, audit_m2_referee.py, audit_m3_m4.py. The
+basket reproduces add.59 EXACTLY (v1 PF 2.61, PnL $53,182, n=106, 82 campaigns; per-asset PFs identical).
+STUDY ONLY; production untouched.
+
+M1 — POSITIVE CONTROLS / POWER CURVES (the test never run; 200 seeds each):
+  The apparatus uses THREE distinct verdict machineries. Injecting a KNOWN effect and asking how often
+  each detects it gives the Minimum Detectable Effect (MDE) at our actual n:
+  (a) PAIRED ΔR machinery (G-EXIT, exit-toolkit): MDE@80% = 0.02R with a clean deterministic effect
+      (the statistics layer is SOUND and extremely powerful); 0.50R if the injected effect carries
+      per-trade noise as large as the door's own R dispersion (sd=1.31). So the paired machinery
+      detects real BROAD effects easily; when it reported "inert" (G-EXIT altered 0-1/106 trades) that
+      was a TRUE no-op, not blindness.
+  (b) IN/OUT SPLIT machinery (G-ENTRY, conviction sizing): MDE@80% = ∞ — even a HUGE +0.5R lift on a
+      random 50% cohort is detected only 49% of the time; at +0.2R power is ~10%. At n=106 with sd=1.31
+      the unpaired difference-of-means simply cannot separate any plausible real edge. THIS MACHINERY IS
+      STRUCTURALLY BLIND at our sample size. The observed add.58/59 G-ENTRY CIs (half-width ~0.5R)
+      confirm it empirically.
+  (c) CADENCE machinery (campaign-v2 C1-C4 + paired-ΔPnL): injecting +1 real winner/campaign flips
+      paired-detection TRUE (CI-lo +$1,100), C2 and C3 to PASS (cadence 1.58x). The machinery CAN detect
+      real added cadence, so the campaign-topology cadence FAIL is DECISIVE (the topology added ~0 trades:
+      entries/campaign ≈ 1.0). Paired-campaign ΔPnL machinery MDE ≈ $225/campaign (0.22R); the observed
+      −$58 (add.58) / −$25 (add.59) deltas are WITHIN ±MDE → the "management adds value" sub-question was
+      never actually adjudicated (point estimate mildly negative, but un-detectable either way).
+
+RE-GRADED VERDICT TABLE (the centerpiece — all 9 add-on rejections):
+  | # | rejection            | machinery              | point est / mechanism            | RE-GRADE |
+  |---|----------------------|------------------------|----------------------------------|----------|
+  | 1 | fusion filter        | book + correlation     | r=−0.08/−0.12, p<0.001, big n     | DETECTED-HARM (decisive) |
+  | 2 | dip-buying (spring)  | standalone/regime      | bears WR0% avgR−1.02, 3 asset cls | DETECTED-HARM (decisive, structural) |
+  | 3 | speed-up (4H fractal)| door re-run 4H         | same n (no cadence) + OOS 2.96→0.25| DECISIVE-REJECT (structural + OOS harm) |
+  | 4 | LTF-generator (exp.) | HTF-LTF expansion      | (add.52-53, not re-derived here)  | DECISIVE per log (structural); LOW-CONF flag |
+  | 5 | LTF-executor (OB)    | order_block_retest     | PF 0.75 (add.52-53, not re-derived)| likely DECISIVE-neg; LOW-CONF flag |
+  | 6 | exit-toolkit         | paired ΔR              | WI-geom −$5.8K 2/3 win neg; Gann G-EXIT 0/106 altered | DETECTED-HARM + DECISIVE-INERT |
+  | 7 | campaign-topo + Gann | cadence + paired + split| cadence 0.76x STRUCT; ΔPnL −$58 CI∋0; G-ENTRY Δ−0.12 MDE=∞ | headline DECISIVE (cadence); edge sub-claims UNDERPOWERED-NULL |
+  | 8 | major-anchor Gann    | saturation + split     | guard not cleared STRUCT; G-ENTRY Δ−0.04 MDE=∞; G-EXIT 0/106 | headline DECISIVE (saturation); edge sub-claim UNDERPOWERED-NULL |
+  | 9 | gentler LPS re-entry | cadence + paired       | cadence 0.85x STRUCT; ΔPnL −$25 CI∋0 (MDE $225) | headline DECISIVE (cadence); value sub-claim UNDERPOWERED-NULL |
+
+  WHICH CHANGE CHARACTER: NONE of the 9 HEADLINE rejections flip to "adopt" — every headline stands on a
+  DECISIVE structural or detected-harm leg (fusion/dip/speed-up/exit = real nulls or harm; topology &
+  Gann = structural cadence/saturation). BUT the EDGE SUB-CLAIMS of #7/#8/#9 (does a Gann time window
+  carry entry alpha? does WI's per-campaign management add per-trade value?) were adjudicated by the
+  IN/OUT-SPLIT and small-n paired-campaign machineries whose MDE (∞ and $225/camp) exceeds any plausible
+  effect. Those sub-claims are UNDERPOWERED-NULL — "could not have detected a real effect," NOT "no effect
+  exists." They are the only candidates for RE-TESTING, and only via the PAIRED channel or forward data.
+
+M2 — HARNESS CORRECTNESS (truly independent referee, fresh single-position walker, NO backtester imports):
+  Re-priced 66 v1 trades across BTC/GOLD/NDX from raw OHLCV. Per-trade R reconciles to |ΔR|max = 4.4e-16
+  (floating-point epsilon); $ PnL reconciles to 1e-14% once the engine's equity COMPOUNDING is mirrored
+  (the naive fixed-risk referee showed up-to-18% gaps that were pure compounding, not a bug). Engine
+  per-trade mechanics CORROBORATED independently.
+  (A) Same-bar STOP-FIRST vs TP-FIRST: changed ZERO trades on all 3 assets — the daily door's stops
+      (wick) and targets (close) essentially never collide same-bar; the pessimism convention is verdict-
+      irrelevant here.
+  (B) COST SENSITIVITY: at 3x costs (comm 6bps + slip 9bps ≈ realistic Coinbase-INTX taker+spread) the
+      door barely moves — BTC PF 2.47→2.41, GOLD 3.66→3.46, NDX 1.86→1.78. A rare, large-R daily door is
+      cost-insensitive; costs are NOT hiding or inflating the edge.
+  (C) Entry-at-close: exits scanned from entry_idx+1 by construction, entry fills at the already-formed
+      signal close → no same-bar information leak.
+
+M3 — BASELINE OPTIMISM / DEFLATED EXPECTATION:
+  In-sample basket per-trade meanR +0.502, sd 1.308, SE 0.127, t=3.95, PF 2.61. Expected-max (reality-
+  check) haircut over the door-shaped forking paths searched add.45-59: at K=20 deflated t=2.24 meanR
+  0.285 impliedPF 1.72; at K=50 deflated t=1.85 meanR 0.235 impliedPF 1.57. Honest forward expectation ≈
+  0.24-0.29R/trade (~HALF the in-sample edge), PF ~1.6-1.7. Main mitigant: the door survived cross-asset
+  with IDENTICAL params on independent classes (Gold/NDX/SPX) — forking was mostly at CONCEPT selection,
+  partially controlled. PRE-REGISTERED FORWARD TEST (lock now): unit = the ≥10-asset INTX basket at fixed
+  1% risk; CONFIRM if forward basket PF≥1.5 AND 1-sample meanR bootstrap CI-lo>0; REFUTE if PF<1.0 with
+  CI-hi<0; else keep collecting. At ~4.5 basket-trades/yr a 30-trade verdict needs ~7 YEARS — the finish
+  line is multi-year by construction, which is itself why "nothing works" is empirically un-adjudicable
+  on the available history.
+
+M4 — STRUCTURAL BIASES:
+  (a) SHADOW QUEUE: 458/564 (81%) of dedup'd door signals are skipped by the one-position engine while
+      positioned. These are overwhelmingly RE-FIRES of the same live setup (the retest condition re-
+      triggers during long holds), NOT lost independent edges — so a multi-position engine would not find
+      458 new trades. BUT genuine PYRAMIDING-while-positioned is the ONE structural lever the single-
+      position frame cannot express (add.58 flagged this); it partly inflates the "cadence 0.76x/0.85x"
+      readings (holding one position absorbs later re-fires). Verdict-changing? No rejection flips, but the
+      PYRAMIDING variant of the campaign topology remains genuinely UNTESTED (needs a multi-position engine).
+  (b) ERA COMPOSITION: 2023-24 = 27% of basket PnL, 2023-25 = 44%, GOLD alone = 37%. The door is NOT a
+      2023-24 crypto-bull artifact (positive years span 2001-2025 on Gold/NDX); the biggest concentration
+      is a SINGLE ASSET (Gold), which is the uncorrelated independent test — evidence FOR robustness.
+      Bleed years (2016 −$3.0K, 2022 −$1.2K, 2026-YTD −$1.4K) are the known bear-rally leak.
+  (c) PAIRED-FRAME LIMITATION: overlays can only re-weight/re-exit the same ~106 fires; every hypothesis
+      whose value is NEW-TRADE GENERATION (campaign re-entries, LTF generators, faster-scale setups) is
+      structurally UN-PASSABLE in this frame regardless of whether an effect exists.
+
+BOTTOM LINE — is "nothing works" the market, the sample, or the apparatus?
+  • THE ENGINE IS SOUND (M2: exact reconciliation; cost-robust; no leak; tie-break irrelevant).
+  • THE PAIRED + CADENCE STATISTICS ARE SOUND AND POWERFUL (M1a MDE 0.02R; M1c detects +1 winner/camp).
+  • FOUR of the nine rejections are DECISIVE REAL NULLS / DETECTED HARM (fusion, dip-buying, speed-up,
+    exit-toolkit) — the market truly has no edge there.
+  • The campaign/Gann HEADLINES are DECISIVE on STRUCTURAL grounds (≈1 entry/campaign; long-count
+    saturation) — real properties of the detector, not test failures.
+  • BUT the IN/OUT-SPLIT machinery (G-ENTRY, conviction sizing) is APPARATUS-BLIND (MDE=∞ at n=106): its
+    "FAILs" are UNDERPOWERED-NULLS mis-reported as disproofs. And the whole enterprise is SAMPLE-STARVED —
+    the door itself is only marginally significant after honest deflation, and the forward finish line is
+    ~7 years out.
+  So "nothing works" ≈ 55% genuine market null + structural detector limits, ~30% SAMPLE SIZE (un-
+  adjudicable at n~106 / 4.5-per-yr), ~15% APPARATUS false-negatives concentrated in the in/out-split
+  channel.
+  DESERVES RE-TESTING under a corrected design (paired channel, or forward data — folds are spent):
+    (1) any conviction-sizing / time-window hypothesis previously judged by the in/out SPLIT — re-run as a
+        PAIRED size-multiplier ΔR test (MDE 0.02-0.5R vs ∞); (2) PYRAMIDING-while-positioned via a multi-
+        position engine (the untested cadence lever); (3) the deflated door itself — forward-collect the
+        basket to the pre-registered finish line. What does NOT deserve reopening: fusion, dip-buying,
+        speed-up, exit-toolkit (decisive), and the campaign/Gann STRUCTURAL headlines (real detector limits).
+  Nothing shipped; production untouched; branch audit/testing-methodology pushed; worktree removed.
