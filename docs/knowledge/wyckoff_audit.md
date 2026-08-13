@@ -1093,3 +1093,41 @@ higher break_level; a looser reading (higher LPS low) might fire more 2nd entrie
 a retrofit (changing it now = fishing). And per standing rule, even a PASS would require FORWARD
 paper proof before adoption; this study produced no pass to forward. Referee parity 0.00%; Gann
 causality + no-repaint PASS. Nothing shipped; worktree removed, branch study/campaign-v2 pushed.
+
+#### addendum 58b — GANN RECONCILIATION vs the existing engine/temporal stack (coordinator directive)
+
+Inventory-and-reconcile of the dormant/partially-live Gann code before finalizing (the founding
+temporal stack is larger than the brief implied: engine/temporal ≈ 2,707 ln; gann_cycles.py header
+explicitly cites @Wyckoff_Insider + @ZeroIKA → founding-knowledge-grade). Read gann.py, gann_cycles.py,
+temporal_confluence.py, temporal_fusion.py, tpi.py, cycles.py.
+
+RECONCILIATION TABLE (existing vs WI batch-6 add.57):
+  | dimension    | EXISTING engine/temporal (founding)                    | WI batch-6 (add.57 / this study)          |
+  | counts       | Gann vibrations [9,21,36,45,72,90,144] (BAR counts)    | [90,180,360,540,720,1080,1440]d +144d+144w |
+  | tolerance    | ±3 BARS                                                | ±3 DAYS                                    |
+  | anchors      | RECENT swings / bars_since_* Wyckoff events / roll-20  | MAJOR weekly-N5 pivots + HALVING dates     |
+  | horizon      | max_projection ≈ 30 DAYS (tpi max_cycle_bars=720h)     | up to 1440 DAYS (4-yr halving cycle)       |
+  | grid         | 1H feature store                                       | DAILY                                      |
+  | halving use  | ONLY log-premium norm (days/1460) + thermo 144 blk/day; date 2024-04-20 | TIME ANCHOR for turn windows; date 2024-04-19 |
+  | live status  | temporal_confluence_score PARTIALLY LIVE (min-gate on retest_cluster, backtest_composite.py:361-362) | study-only, nothing wired |
+
+FAMILY GAP (confirmed FINDING): the founding-era Gann was implemented as SHORT-CYCLE BAR STATISTICS
+(≤30-day vibrations off recent swings, on 1H), and NEVER implemented WI's LONG-CALENDAR-COUNT-from-
+MAJOR-ANCHOR doctrine (90–1440 DAYS from major pivots + the HALVING). The only shared numbers are 90
+and 144 — but in different UNITS (bars vs days) and off different ANCHORS (recent swing vs major
+pivot/halving), so even those are different features. Halving-as-a-Gann-time-ANCHOR is genuinely new
+(existing code uses the halving only for a log-premium normalizer and a hashrate floor, not as a turn-
+window origin, and with the wrong date 2024-04-20 vs verbatim 2024-04-19). So gann_time.py is correctly
+a FRESH build; nothing verbatim-matching existed to reuse.
+
+ORTHOGONALITY vs the VALIDATED fib-time layer (the layer the door already sizes on, ×1.25): measured
+phi(entry_window, fib_time>0) across all bars = +0.01 (BTC), +0.02 (GOLD), −0.03 (NDX); lift ≈ 1.00.
+=> the new daily Gann window is STATISTICALLY INDEPENDENT of fib-time (co-occurs at chance), i.e. NOT
+redundant with fib-time and NOT redundant with the live short-bar gann_time_cluster (different
+units/anchors entirely). BUT independence does not rescue it: G-ENTRY already showed in-window mean R
+≤ out-window (add.58), so the new layer is an orthogonal-BUT-worthless time family — it adds an
+independent signal that carries no predictive value on the door's fires. Independent ≠ useful.
+CONCLUSION UNCHANGED: adopt neither the campaign topology nor any Gann tier; and do not extend the
+live temporal_confluence_score with the long-count family on this evidence (no edge, and it would only
+add an orthogonal-but-inert feature). Record the family gap as founding-era doctrine coverage, not as
+a to-build.
