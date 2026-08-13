@@ -203,3 +203,175 @@ class CampaignV2Door:
 def break_level_of(sig):
     bl = sig.get("break_level", np.nan)
     return bl if np.isfinite(bl) else np.nan
+
+
+# ===========================================================================
+# CAMPAIGN-v2b  (add.59 Part B / D2 FIX -- pre-registered GENTLER LPS re-entry)
+# ===========================================================================
+class CampaignV2bDoor(CampaignV2Door):
+    """add.58 flagged its own D2 defect: entries 2-3 required a NEW HIGHER break_level +
+    a fresh door _m2 fire inside a live campaign -> as rare as the door itself
+    (entries/campaign ~= 1.00). WI's "later LPS entries inside the structure" is gentler:
+    a new higher structural LOW forms, is retested, and HOLDS -- NO new breakout required.
+
+    PRE-REGISTERED SECOND-ENTRY TRIGGER (the ONLY one; add.59 Part B):
+      Inside a LIVE campaign, while FLAT after banking, a NEW confirmed N=10 fractal swing
+      low forms that is HIGHER than the previous campaign floor; price retests it or the
+      prior break_level zone (low touches within 0.5*ATR ABOVE the new LPS low OR the
+      break_level, WHICHEVER IS NEARER to price) and the bar CLOSES back above that level
+      -> entry 2. Cap E=3, dedup 3 bars (DEDUP_K). Entry 1 (campaign BIRTH) and ALL post-
+      entry management (structure-event trail, TP1/TP2 ladder, campaign-death runner exit)
+      are IDENTICAL to add.58 CAMPAIGN-v2.
+
+    INTERPRETATION REGISTER (flagged OURS; stricter reading chosen where the spec is silent):
+      * 'the previous campaign floor' = the floor value that existed JUST BEFORE this new LPS
+        updated it (a genuinely HIGHER structural low). [stricter: a new low equal to or below
+        the floor does NOT arm.]
+      * 'retests it OR the prior break_level zone, whichever is nearer' = reference level is the
+        one of {new LPS low, campaign last break_level} with the SMALLER |close-level|; the
+        break_level is used only if finite (M1 births have none -> LPS level only).
+      * touch = low[i] <= level + 0.5*ATR[i]  (a wick INTO the zone above the level);
+        hold  = close[i] > level              (closes back above -> the retest HELD).
+      * re-entry does NOT go through the door's _m2/regime gate (it is a NON-door LPS-hold
+        trigger); campaign_alive already requires eye_dir=='bull' (birth regime), so a live
+        campaign is by construction a bull-permission context. [flagged: no extra regime gate.]
+      * NO retest EXPIRY is imposed: the arm persists until it fires, a HIGHER new LPS
+        supersedes it, or the campaign dies. This is the ONE deliberately GENEROUS choice --
+        made so the mechanism gets its maximum chance to FIRE; a fail even so is unambiguous.
+      * entry 2/3 stop = new-LPS-low - 0.25*ATR (created_low := the new higher LPS low);
+        TP1/TP2 built by the SAME structure math as births.
+    """
+
+    def __init__(self, df, sr, bj, eye, gann_danger=None, enable_gexit=False):
+        super().__init__(df, sr, bj, eye, gann_danger=gann_danger, enable_gexit=enable_gexit)
+        self._re_armed = False        # a higher LPS has formed and awaits a retest-hold
+        self._re_lps = np.nan         # that new higher LPS low (stop reference for entry 2/3)
+        self.reentry_fires = 0        # diagnostic: how many gentler re-entries actually fired
+
+    def observe(self, i):
+        if not self.campaign_active:
+            return
+        # rising floor + ARM the gentler re-entry on a NEW HIGHER confirmed LPS
+        if self._new_low_bar[i]:
+            v = self.swing_low[i]
+            if np.isfinite(v):
+                prev_floor = self.campaign_floor
+                if np.isfinite(prev_floor) and v > prev_floor:
+                    self._re_armed = True          # genuinely higher structural low
+                    self._re_lps = float(v)
+                if (not np.isfinite(prev_floor)) or v > prev_floor:
+                    self.campaign_floor = float(v)  # monotone-up floor (unchanged from v2)
+        # death tests (IDENTICAL to v2)
+        d1 = (self.eye_dir[i] != "bull")
+        d2 = (np.isfinite(self.campaign_floor) and self.closes[i] < self.campaign_floor)
+        dead = d1 or d2
+        if self._enable_gexit and self._gann_danger is not None and self._gann_danger[i]:
+            if np.isfinite(self.campaign_floor) and self.closes[i] < self.campaign_floor:
+                dead = True
+        if dead:
+            self.campaign_active = False
+            self.campaign_alive = False
+            self.campaign_floor = np.nan
+            self._re_armed = False
+            self._re_lps = np.nan
+
+    def entry(self, df, i):
+        if i - self._last_entry_i < DEDUP_K:              # dedup 3 bars
+            return None
+
+        # ---- RE-ENTRY (entries 2-3): gentler LPS-hold trigger, campaign alive & FLAT ----
+        if self.campaign_active and self.campaign_alive:
+            if self._camp_entries >= E_MAX or not self._re_armed:
+                return None
+            atr = self.atr[i]
+            if not (np.isfinite(atr) and atr > 0 and np.isfinite(self._re_lps)):
+                return None
+            close_i = self.closes[i]
+            # reference level = nearer of {new LPS low, campaign last break_level}
+            cands = [self._re_lps]
+            if np.isfinite(self._camp_last_break) and self._camp_last_break > -np.inf:
+                cands.append(self._camp_last_break)
+            level = min(cands, key=lambda x: abs(close_i - x))
+            touched = self.lows[i] <= level + 0.5 * atr
+            held = close_i > level
+            if not (touched and held):
+                return None
+            entry_ord = self._camp_entries + 1
+            plan = self._make_plan(i, created_low=self._re_lps, break_level=level,
+                                   entry_ord=entry_ord)
+            if plan is None:
+                return None
+            self._camp_entries += 1
+            self._last_entry_i = i
+            self._camp_last_break = max(self._camp_last_break, level)
+            self.reentry_fires += 1
+            self._re_armed = False        # disarm; a NEW higher LPS re-arms
+            return plan
+
+        # ---- ENTRY 1 (campaign BIRTH): identical to v2 (door _m2 fire) ----
+        u = self._u
+        if not u._regime_ok(i):
+            return None
+        sig = u._m2(i)
+        if sig is None:
+            return None
+        break_level = sig["break_level"]
+        self._camp_id += 1
+        self.campaign_active = True
+        self.campaign_alive = True
+        self._camp_start_i = i
+        self._camp_entries = 0
+        self._camp_last_break = -np.inf
+        self._re_armed = False
+        self._re_lps = np.nan
+        self.campaign_floor = float(sig["created_low"]) if np.isfinite(sig["created_low"]) else np.nan
+        plan = self._make_plan(i, created_low=sig["created_low"], break_level=break_level,
+                               entry_ord=1)
+        if plan is None:
+            # roll back a stillborn campaign
+            self.campaign_active = False
+            self.campaign_alive = False
+            self.campaign_floor = np.nan
+            return None
+        self._camp_entries += 1
+        self._last_entry_i = i
+        if np.isfinite(break_level):
+            self._camp_last_break = max(self._camp_last_break, break_level)
+        if not np.isfinite(self.campaign_floor):
+            self.campaign_floor = float(sig["created_low"])
+        return plan
+
+    def _make_plan(self, i, created_low, break_level, entry_ord):
+        """Shared plan builder (same structure math as v2 _build_plan) for BOTH births and
+        gentler re-entries. created_low = the structural low the stop sits under."""
+        atr = self.atr[i]
+        entry_raw = self.closes[i]
+        if not (np.isfinite(created_low) and np.isfinite(atr) and atr > 0):
+            return None
+        stop = created_low - STOP_BUF_ATR * atr
+        R = entry_raw - stop
+        if R <= 0:
+            return None
+        rhigh, rlow, swh = self.rhigh[i], self.rlow[i], self.swh[i]
+        tp1 = None
+        for cand in (rhigh, swh):
+            if np.isfinite(cand) and cand >= entry_raw + MIN_TP1_R * R:
+                tp1 = cand
+                break
+        if tp1 is None:
+            tp1 = entry_raw + 1 * R
+        measured = rhigh + (rhigh - rlow) if (np.isfinite(rhigh) and np.isfinite(rlow) and rhigh > rlow) else -np.inf
+        tp2 = max(measured, entry_raw + 2 * R, tp1 + 0.5 * R)
+        self.entries_log.append({
+            "entry_time": self.index[i], "campaign_id": self._camp_id,
+            "entry_ord": entry_ord, "break_level": float(break_level) if np.isfinite(break_level) else np.nan,
+            "below_ema200": bool(entry_raw < self._u.ema200[i]),
+            "R_price": float(R), "tp1": float(tp1), "tp2": float(tp2),
+        })
+        return CampaignEntryPlan(
+            direction="long", stop0=stop,
+            targets=[(tp1, TP1_FRAC), (tp2, TP2_FRAC)],
+            atr_entry=float(atr), trail_buf_atr=STOP_BUF_ATR,
+            sanity_cap_bars=SANITY_CAP_BARS, risk_mult=1.0,
+            meta={"campaign_id": self._camp_id, "entry_ord": entry_ord,
+                  "tp1": float(tp1), "tp2": float(tp2)})

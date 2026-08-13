@@ -59,12 +59,37 @@ WEEKLY_N = 5                           # weekly swing-pivot fractal half-width (
 DANGER_HALVING_COUNTS = [720, 1080, 1440]
 DANGER_HIGH_COUNTS = [360, 540, 720, 1080, 1440]
 
+# --- add.59 Part A (D1 FIX): MAJOR-anchor filter (pre-registered) ---
+# A weekly N=5 confirmed pivot qualifies as a MAJOR anchor iff, at its FORMATION bar, it is
+# ALSO the extreme (highest high for a high-pivot / lowest low for a low-pivot) of the trailing
+# 365 CALENDAR DAYS. This is cycle-scale ("the real top", cycle lows), a handful per cycle --
+# NOT every fractal pivot (add.58 D1 saturation defect). Causal: the trailing-365 extreme is a
+# property of data <= the formation date, which is <= the pivot's N=5 confirmation date, so the
+# anchor never becomes usable before it is confirmed and no future data changes a past flag
+# (verified by the 3-point truncation / no-repaint self-test).
+TRAILING_DAYS = 365
 
-def _weekly_pivots(df_daily: pd.DataFrame, n: int = WEEKLY_N):
+
+def _is_trailing_extreme(df_daily: pd.DataFrame, form_date, price: float, kind: str,
+                         trailing_days: int = TRAILING_DAYS) -> bool:
+    """Causal: is `price` the extreme of the trailing `trailing_days` CALENDAR DAYS ending at
+    `form_date` (inclusive)? Uses ONLY daily bars with index <= form_date (no future data)."""
+    lo_date = form_date - pd.Timedelta(days=trailing_days)
+    win = df_daily.loc[(df_daily.index > lo_date) & (df_daily.index <= form_date)]
+    if len(win) == 0:
+        return False
+    if kind == "high":
+        return price >= float(win["high"].max()) - 1e-9
+    return price <= float(win["low"].min()) + 1e-9
+
+
+def _weekly_pivots(df_daily: pd.DataFrame, n: int = WEEKLY_N, major_only: bool = False):
     """Confirmed weekly N=n symmetric fractal pivots. Returns list of dicts:
-    {date: pivot week-start date, confirm: date confirmed (pivot_week + n weeks),
+    {date: pivot week-end date, confirm: date confirmed (pivot_week + n weeks),
      kind: 'high'|'low', price}. Causal: a pivot at week p is confirmed only after
-     n right-side weekly bars close, i.e. at week p+n."""
+     n right-side weekly bars close, i.e. at week p+n.
+    If major_only, keep ONLY pivots that are the trailing-365-calendar-day extreme at
+    formation (add.59 D1 fix)."""
     o = df_daily["open"].resample("1W").first()
     h = df_daily["high"].resample("1W").max()
     l = df_daily["low"].resample("1W").min()
@@ -77,20 +102,23 @@ def _weekly_pivots(df_daily: pd.DataFrame, n: int = WEEKLY_N):
     m = len(wk)
     for p in range(n, m - n):
         if hi[p] > hi[p - n:p].max() and hi[p] > hi[p + 1:p + 1 + n].max():
-            piv.append({"date": widx[p], "confirm": widx[p + n], "kind": "high",
-                        "price": float(hi[p])})
+            if (not major_only) or _is_trailing_extreme(df_daily, widx[p], float(hi[p]), "high"):
+                piv.append({"date": widx[p], "confirm": widx[p + n], "kind": "high",
+                            "price": float(hi[p])})
         if lo[p] < lo[p - n:p].min() and lo[p] < lo[p + 1:p + 1 + n].min():
-            piv.append({"date": widx[p], "confirm": widx[p + n], "kind": "low",
-                        "price": float(lo[p])})
+            if (not major_only) or _is_trailing_extreme(df_daily, widx[p], float(lo[p]), "low"):
+                piv.append({"date": widx[p], "confirm": widx[p + n], "kind": "low",
+                            "price": float(lo[p])})
     return piv
 
 
-def _anchors(df_daily: pd.DataFrame, use_halvings: bool):
+def _anchors(df_daily: pd.DataFrame, use_halvings: bool, major_only: bool = False):
     """Assemble the causal anchor list. Each anchor: {date, confirm, kind, source}.
     Halvings are always-confirmed (confirm == date). Weekly pivots confirm at +n weeks.
-    Halvings are only included if they fall inside the data span (use_halvings=crypto)."""
+    Halvings are only included if they fall inside the data span (use_halvings=crypto).
+    If major_only, weekly pivots are filtered to trailing-365-day extremes (add.59 D1)."""
     anchors = []
-    for pv in _weekly_pivots(df_daily):
+    for pv in _weekly_pivots(df_daily, major_only=major_only):
         anchors.append({"date": pv["date"], "confirm": pv["confirm"],
                         "kind": pv["kind"], "source": "pivot"})
     if use_halvings:
@@ -117,18 +145,19 @@ def _mark(index: pd.DatetimeIndex, anchor_date, confirm_date, counts, tol_d):
 
 
 def compute_gann_windows(df_daily: pd.DataFrame, use_halvings: bool = True,
-                         tol_d: int = TOL_D):
+                         tol_d: int = TOL_D, major_only: bool = False):
     """Causal per-bar Gann windows on a daily frame.
     Returns dict:
       entry_window : bool[n]  (any count from any anchor)
       danger_window: bool[n]  (final/danger counts: halving 720+ or MAJOR-high 360+)
       n_anchors, anchors (list), by_count (diagnostic counts per horizon).
+    major_only (add.59 D1 fix): restrict weekly-pivot anchors to trailing-365-day extremes.
     """
     index = df_daily.index
     n = len(index)
     entry_w = np.zeros(n, dtype=bool)
     danger_w = np.zeros(n, dtype=bool)
-    anchors = _anchors(df_daily, use_halvings)
+    anchors = _anchors(df_daily, use_halvings, major_only=major_only)
     for a in anchors:
         entry_w |= _mark(index, a["date"], a["confirm"], ALL_COUNTS, tol_d)
         # danger tier
@@ -143,8 +172,9 @@ def compute_gann_windows(df_daily: pd.DataFrame, use_halvings: bool = True,
 # ===========================================================================
 # SELF-TEST: causality + 3-point truncation (no repaint) + coverage sanity.
 # ===========================================================================
-def run_selftest(df_daily: pd.DataFrame, use_halvings: bool = True) -> bool:
-    full = compute_gann_windows(df_daily, use_halvings)
+def run_selftest(df_daily: pd.DataFrame, use_halvings: bool = True,
+                 major_only: bool = False) -> bool:
+    full = compute_gann_windows(df_daily, use_halvings, major_only=major_only)
     n = len(df_daily)
     ew = full["entry_window"]; dw = full["danger_window"]
     print("\n=== GANN TIME LAYER SELF-TEST ===")
@@ -174,7 +204,7 @@ def run_selftest(df_daily: pd.DataFrame, use_halvings: bool = True) -> bool:
     cuts = [int(0.4 * n), int(0.6 * n), int(0.8 * n)]
     for cut in cuts:
         sub = df_daily.iloc[:cut]
-        r = compute_gann_windows(sub, use_halvings)
+        r = compute_gann_windows(sub, use_halvings, major_only=major_only)
         # align on shared index
         m_full_e = ew[:cut]
         m_sub_e = r["entry_window"]
