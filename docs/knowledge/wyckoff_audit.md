@@ -1306,3 +1306,94 @@ BOTTOM LINE — is "nothing works" the market, the sample, or the apparatus?
         basket to the pre-registered finish line. What does NOT deserve reopening: fusion, dip-buying,
         speed-up, exit-toolkit (decisive), and the campaign/Gann STRUCTURAL headlines (real detector limits).
   Nothing shipped; production untouched; branch audit/testing-methodology pushed; worktree removed.
+
+### 2026-08-13 addendum 61 — PAIRED-CHANNEL re-test of the 3 reopened sizing hypotheses (H1 Gann / H2 ob_quality / H3 eq_magnet): ALL THREE CLOSE. The corrected (powerful) gauge AGREES with the blind one — no edge was hidden. 9th confirmation; add-on base rate 0-for-12.
+
+add.60 proved the in/out-SPLIT machinery was APPARATUS-BLIND (MDE=∞ at n=106) and pre-approved
+re-measuring the sizing/time-window sub-claims it mis-nulled with the PAIRED size-multiplier ΔR gauge
+(add.60 M1a: MDE 0.02R deterministic / 0.50R noisy). This is that re-test — the FINAL read of these
+three (folds spent; no round 3). Branch study/paired-sizing off audit/testing-methodology, worktree-
+isolated. Files: idea_lab/run_paired_sizing.py (+ diag_h2_ob_quality.py). Basket = the EXACT add.59/60
+v1 door basket via audit_common; parity re-confirmed n=106 PF 2.61 PnL $53,182 meanR +0.502 sd 1.308
+WR 63.2%. STUDY ONLY; production untouched.
+
+PAIRED ΔR MECHANICS (deterministic given the flag): a 1.25× size multiplier on a fixed-1%-risk trade
+with realized R-multiple R contributes 1.25·R·FIXED_RISK instead of R·FIXED_RISK → per-trade portfolio
+ΔR = 0.25·R for a FLAGGED trade, 0 else (sizing scales dollars, never the realized R-multiple). The
+overlay profits iff Σ(flagged R)>0 ⇔ flagged mean R>0. PRE-REGISTERED PASS (fixed before measuring):
+ADOPT-candidate iff (C1) paired mean-ΔR bootstrap 95% CI-lo>0 (10k) AND (C2) flagged mean R ≥ unflagged
+mean R (must lever the BETTER trades, not merely any positive ones); coverage guard [10%,80%]; any
+adopt is prototype-grade pending FORWARD proof.
+
+GAUGE POSITIVE-CONTROLS (two, both clean):
+  (i) INJECTION (add.60 M1a reproduced on this exact basket): paired MDE@80% = 0.020R deterministic /
+      0.500R noisy; in/out SPLIT MDE = ∞ (power ≤0.49 even at δ=+0.5R). The paired gauge is ~12× tighter
+      (CI half-width ~0.04R vs ~0.5R) — confirmed POWERFUL, the split confirmed BLIND, as advertised.
+  (ii) REAL-DATA fib-time tier (the door's OWN validated ×1.25 flag): coverage 37.7%; paired meanΔR
+      +0.029R, CI[−0.008,+0.072] (ΔPnL +$3,119 ≈ +5.9% basket). The gauge RECOVERS the correct positive
+      SIGN of fib's known "mildly net-+ tilt" (add.54) — machinery NOT flagged. Nuance (honest): on THIS
+      combined basket fib flagged mean R +0.312 < unflagged +0.617 (fib levers the WORSE half; C2 FAIL),
+      so its +$ is only because the whole book is net-positive — exactly add.54's "a tilt, not an edge."
+      LESSON that governs the verdicts below: on a 63%-WR/+0.5-meanR book, C1 (CI-lo>0) is a WEAK bar —
+      almost ANY flag catching net-positive trades clears it. The BINDING criterion is C2 + robustness.
+
+RESULTS (paired ΔR; 1.25× on flagged; 10k bootstrap):
+  | hyp | flag                         | cover | meanR_flag | meanR_unfl | meanΔR  | ΔR CI-lo | C1 | C2 | verdict |
+  | H1  | Gann MAJOR-anchor in-window  | 29.2% |   +0.472   |   +0.514   | +0.0345 |  +0.0061 | P  | F  | CLOSE   |
+  | H2  | ob_quality top-half (median) | 50.0% |   +0.605   |   +0.399   | +0.0756 |  +0.0257 | P  | P  | CLOSE*  |
+  | H3  | eq_magnet proximity          |  0.0% |    n/a     |   +0.502   | +0.0000 |  +0.0000 | F  | F  | CLOSE   |
+
+H1 GANN major-anchor conviction sizing — CLOSE. C1 passes only because flagged trades are net-positive;
+  C2 FAILS (flagged +0.472 < unflagged +0.514 — the multiplier would lever slightly WORSE trades). Per-
+  family: crypto flag>unflag (+0.740 vs +0.467) but EQUITY strongly inverts (+0.142 vs +0.423) and GOLD
+  flat (+0.606 vs +0.611). The PAIRED (powerful) gauge now AGREES with add.58/59's in/out-split G-ENTRY
+  reads (in-window mean R ≤ out-window) — i.e. the split's null there was NOT a false-negative; there is
+  genuinely no long-count-window entry edge on the door's fires. add.60's "underpowered-null" loophole is
+  CLOSED for H1: re-measured with MDE-0.04R resolution, still no edge.
+
+H2 ob_quality top-half — CLOSE* (clears the literal two-part rule; FAILS the pre-registered "unambiguous"
+  bar under family-consistency + skeptical diagnostics; a false pass). The mechanical C1+C2 both pass, BUT:
+  (1) COMPOSITE ob_quality corr(R) = +0.012 ≈ ZERO — no monotonic quality→R relationship exists; NO single
+      component discriminates (consol +0.11 but ~constant/degenerate, vol −0.00, react +0.01, wick +0.00).
+  (2) NON-MONOTONIC ARTIFACT: the median-split gap (+0.605 vs +0.399 = +0.206) collapses to +0.044 at the
+      cleaner tertile extremes (top⅓ +0.557 vs bottom⅓ +0.513). The "edge" is an accident of where the
+      median falls, not a signal.
+  (3) FAILS ON THE INDEPENDENT FAMILY: GOLD+NDX (n=56, the uncorrelated non-crypto test that carries the
+      door's real cross-asset evidence) → flagged +0.410 < unflagged +0.483, ΔR CI[−0.004,+0.057] straddles
+      0. The entire pass is CRYPTO-carried — and on crypto the pooled median is a degenerate 78/22 split
+      (39 flagged / 11 unflagged), not a top/bottom contrast.
+  (4) BIG-WINNER-DRIVEN: dropping the top-3 flagged crypto winners collapses crypto flagged mean R
+      +0.675 → +0.353. And crypto's 50 trades = only ~40 independent ±5d episodes, so the per-trade
+      bootstrap OVERSTATES the crypto significance.
+  Verdict: the pre-registered rule passed literally, but the pre-registered family-consistency + "a pass
+  must be unambiguous" standard is NOT met — H2 is a crypto-concentrated, non-monotonic, few-winner, in-
+  sample-median artifact (composite signal corr ≈ 0). CLOSE. (Even were it real, standing rule makes any
+  adopt forward-only; there is nothing here worth forwarding.)
+
+H3 eq_magnet — CLOSE (INERT / non-computable at the verbatim spec, exactly as add.54 predicted). At the
+  verbatim add.53-gem#3 tolerance (0.1% equal-level, tail-10 confirmed pivots, cluster ≥3) eq_magnet fires
+  on 0/106 door entries across ALL 12 assets — ZERO coverage (degenerate). It is not a measured null, it
+  is untestable on daily door fires; loosening the tolerance to force fires = fishing (add.54). CLOSE at
+  spec.
+
+METHOD NOTES / honesty: (a) the ob_quality daily port is a faithful reconstruction of engine/liquidity/
+hob.py's 5-component score (weights .25/.30/.20/.15/.10) with DOCUMENTED approximations — MTF-confluence
+component=0 (no 4H/1D dict on the daily frame; weight .10), wick vol-z multiplier=1.0 (daily window<84
+bars → the detector's own z=0 fallback), reaction "pips"(×10000) saturates on daily crypto (faithful to
+the store formula), no consolidation<0.3 HOB-rejection (would drop entries and change the basket), level=
+break_level. Given corr(R)=+0.012 across the composite AND every component, no plausible un-approximated
+variant rescues it. (b) eq_magnet is the run_one_strategy verbatim port. (c) per-trade bootstrap ignores
+cross-asset ±5d clustering (crypto 50→40 episodes) — noted where it matters (H2 crypto). (d) H1 Gann
+window = gann_time.compute_gann_windows(major_only=True), causality + no-repaint PASS (add.59).
+
+FINAL DISPOSITION: H1 CLOSE, H2 CLOSE, H3 CLOSE — 0-for-3. This is the 9th consecutive add-on confirmation
+(add.44–60 skepticism), base rate now 0-for-12. The decisive meta-result: for the TWO paired-channel-
+eligible hypotheses (H1 window-entry, H2 quality-sizing), the CORRECTED powerful gauge (MDE 0.04R here)
+reaches the SAME conclusion as the blind split — so add.60's "underpowered-null" loophole was NOT hiding a
+real edge in these; the split's nulls were correct, just for the wrong (blind) reason. eq_magnet is simply
+inert at spec. UNCHANGED doctrine: the door's edge is a rare (~1/campaign, ~4-5/basket-yr) at-size DAILY/
+WEEKLY signal; BREADTH is the only honest cadence lever; sizing overlays add ≤ a net-positive-book tilt,
+not selection alpha; FORWARD paper-collection of the ≥10-asset basket to the add.60 pre-registered finish
+line remains the only live validation. What STILL deserves reopening (unchanged from add.60): PYRAMIDING-
+while-positioned (needs a multi-position engine) and the forward-collection itself. Nothing shipped;
+production untouched; branch study/paired-sizing pushed; worktree removed.
