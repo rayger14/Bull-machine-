@@ -1131,3 +1131,64 @@ CONCLUSION UNCHANGED: adopt neither the campaign topology nor any Gann tier; and
 live temporal_confluence_score with the long-count family on this evidence (no edge, and it would only
 add an orthogonal-but-inert feature). Record the family gap as founding-era doctrine coverage, not as
 a to-build.
+
+### 2026-08-13 addendum 59 — FINAL-round corrected re-test of add.58's two self-flagged defects (MAJOR-anchor Gann + gentler LPS re-entry): BOTH re-tests FAIL. Both hypotheses CLOSED permanently. 8th confirmation.
+
+add.58 REJECTED Campaign-v2 + the Gann layer but flagged two of its OWN implementation defects as
+legitimate round-2 follow-ups. This is that round-2 (ONE pre-registered corrected definition each, NO
+grids, FINAL — fail again ⇒ close forever). Branch study/major-anchors off study/campaign-v2, worktree-
+isolated. Files: gann_time.py (`major_only` trailing-365-extreme anchor filter, add.59 D1), campaign_
+strategy.py (`CampaignV2bDoor` gentler LPS-hold re-entry, add.59 D2), run_major_anchors.py. Costs
+2bps+3bps, 1% risk, $100k, 12 markets (10 fresh crypto incl. BTC ref + GOLD + NDX re-fetched via
+yfinance; SPX still gated per add.54/58). Referee parity 0.00% (10/10 textbook), Gann causality +
+3-point no-repaint PASS on the MAJOR anchors.
+
+PART A — MAJOR-anchor Gann (D1 fix = "anchors saturated: it used EVERY weekly N=5 pivot → 50-65%
+coverage"). Pre-registered anchor: a weekly N=5 CONFIRMED pivot that at FORMATION is ALSO the trailing-
+365-calendar-day extreme (highest high / lowest low), computed causally from data ≤ formation ≤ the
+N=5 confirm date (no repaint) + crypto halvings. Counts/tol UNCHANGED from add.58.
+  ANCHOR CENSUS (the filter works, and picks the RIGHT pivots): major filter cut anchors ~55-63%
+    (BTC 67→28, GOLD 160→48, NDX 153→59). BTC's 28 = the real cycle turns: 2017-12-17 (~$20k top),
+    2021-04-18 + 2021-11-14 (double top), 2020-03-15 (COVID low), 2018-12-16 + 2022-11-27 (cycle
+    bottoms) + 3 halvings — exactly WI's "handful of cycle-scale anchors."
+  SATURATION GUARD (pre-registered: meaningful only if entry-window coverage < 25%; else STOP + close):
+    coverage HALVED (~57%→~25%) but did NOT clear the guard. Basket mean 25.3%, median 25.4%, range
+    [19.7, 31.5]; only 6/12 assets < 25%; the FLAGSHIPS all SATURATE — BTC 31.5%, GOLD 26.6%, NDX 31.2%
+    (the two longest-history, most-liquid, non-crypto INDEPENDENT anchors). ⇒ GUARD NOT CLEARED → STOP
+    Part A per pre-registration. STRUCTURAL REASON (decisive): 9 counts × horizons up to 1440 DAYS ×
+    ±3d means even ~28 anchors blanket ≥25% of the calendar — the long-count doctrine intrinsically
+    saturates. "Major" CANNOT be mechanized causally without discretion. Hypothesis CLOSED.
+  DIAGNOSTIC (non-dispositive, run anyway to prove no hidden edge was discarded): even setting the
+    guard aside, G-ENTRY on the v1 door with MAJOR windows = in-window +0.472 (n31) vs out +0.514
+    (n75), Δ −0.042 CI[−0.530,+0.436] (straddles 0, mildly NEGATIVE — SAME sign as add.58's every-pivot
+    result). G-EXIT (major danger tier) altered 0/106 v1 trades — INERT, identical to add.58. No latent
+    edge exists to rescue with a non-saturating redesign.
+
+PART B — gentler LPS re-entry (D2 fix = "second-entry too strict: required a new HIGHER break_level +
+fresh door fire → entries/campaign ≈ 1.00"). Pre-registered trigger (CampaignV2bDoor): inside a LIVE
+campaign while FLAT, a NEW confirmed N=10 fractal swing low forms HIGHER than the previous campaign
+floor, price retests the nearer of {new LPS low, prior break_level} (low ≤ level+0.5·ATR) and CLOSES
+back above it → entry 2 (cap E=3, dedup 3 bars). All post-entry management identical to add.58 v2.
+  THE MECHANISM FIRED THIS TIME (the D2 fix is mechanically real): 8 gentler re-entries across 82
+    campaigns vs only ~3 EVER in add.58's strict definition. entries/campaign rose on several assets
+    (BTC 1.29, ADA 1.33, ETH 1.20, LINK 1.20). So the defect WAS the strictness — corrected, it fires
+    ~2.7×.
+  BUT IT STILL FAILS, for add.58's mechanism-2 reason: basket entries/campaign only ≈ 1.10 and cadence
+    multiplier v2b/v1 = 0.85× (STILL FEWER trades than v1). Holding one campaign position longer
+    ABSORBS v1's independent later door re-fires faster than the 8 gentle re-entries ADD them. Basket
+    (fixed 1% risk, 25.2yr span): v1 PF 2.61 / $53,182 / DD −4.20% / n106 vs v2b PF 2.44 / $50,777 /
+    DD −4.47% / n90. Paired campaigns 38/82 v2b>v1, mean ΔPnL −$25/campaign, bootstrap CI [−$247,+$211]
+    (STRADDLES 0 — statistically indistinguishable from the placeholder, exactly like add.58).
+  PRE-REGISTERED VERDICT: C1 PF PASS (2.44 ≥ 2.31); C2 PnL FAIL (50.8k < 53.2k); C3 cadence FAIL
+    (0.85× < 1.5×); C4 MaxDD PASS. ⇒ CAMPAIGN-v2b FAILS. Hypothesis CLOSED.
+
+FINAL DISPOSITION: BOTH hypotheses CLOSED PERMANENTLY (round 2 was the last per the multiplicity
+contract). The Gann long-count layer adds no edge and cannot be mechanized without discretion; WI's
+extra "1-3 entries per model" cadence is NOT recoverable on our detector — even the gentler LPS-hold
+re-entry that DOES fire trades LESS often at size, not more. This is the 8th consecutive confirmation
+of the add.44-58 skepticism (fusion, dip-buying, speed-up, LTF-generator, LTF-executor, exit-toolkit,
+campaign-topology+Gann, and now major-anchor-Gann + gentler-re-entry) — the add-on base rate is now
+0-for-9. UNCHANGED doctrine: the door's edge is a RARE (~1/campaign, ~4-5/basket-yr) at-size signal at
+the DAILY/WEEKLY scale; BREADTH (the basket) is the only honest cadence lever; forward paper-collection
+is the only remaining validation. Nothing shipped; production untouched; worktree removed; branch
+study/major-anchors pushed.
