@@ -1,0 +1,70 @@
+BREADTH-AT-SCALE (add.64) — PRE-REGISTRATION  (frozen BEFORE any outcome is measured)
+=====================================================================================
+Question (owner's requirement): "many trades that are good." The validated add.48
+trend-continuation door fires ~0.7-0.9/yr per instrument and CANNOT be sped up
+(add.55/63: rarity IS the self-regime-filter). The FREE parameter is the number of
+instruments. 25 markets -> ~20 tr/yr. Does the edge HOLD at ~300-instrument scale,
+and what does the PORTFOLIO actually look like?
+
+DOOR: FROZEN. Identical add.48 params, NO tuning. daily exec, weekly N=5 anchor,
+struct/flat headline (rmult=1.0, conviction OFF), costs 2bps commission + 3bps
+slippage/side, fixed 1% risk, $100k. Run ALL names, report ALL. A failing name is a
+FINDING, not a drop.
+
+UNIVERSE (pre-registered, mechanical — no discretionary name selection):
+  = ALL current S&P 500 constituents (503, Wikipedia snapshot 2026-08-14) that pass
+    BOTH screens:
+      (S1) >= 8.0 years of daily history via yfinance (owner's "8yr" bar).
+      (S2) data-integrity: no time gap > 7 calendar days inside the series, no NaN
+           OHLC, adjusted-price sanity.
+  Financials are KEPT (dropping them would be a discretionary filter; the door
+  doctrine is run-ALL). Sector labels retained for per-sector clustering.
+
+PRICES: yfinance auto_adjust=True (split + dividend adjusted). RATIONALE: single-stock
+  raw OHLC has large split discontinuities (AAPL 4:1 2020, NVDA 10:1 2024, etc.) that
+  would create phantom gaps in structural range / ATR. Back-adjustment is purely
+  MULTIPLICATIVE, so the door's scale-invariant signals (breakout above rolling ceiling,
+  retest as fraction of ATR) are UNCHANGED and causally safe (no look-ahead in relative
+  structure). This is a deliberate, documented departure from add.62's raw fetch for the
+  3 reproduced stocks; auto_adjust=True is the more-correct choice for equities.
+
+SURVIVORSHIP (must be prominent in the report):
+  Current-constituent lists inflate history — today's members are the winners that
+  SURVIVED to still be in the index. Mitigations, all pre-registered:
+   (a) PRIMARY read on the recent window 2018-2026 AND the full window separately.
+   (b) Compare the mega-cap trio (AAPL/MSFT/NVDA) PF vs the broad-universe PF — does
+       breadth DILUTE the mega-cap success?
+   (c) State plainly: the FORWARD test is survivorship-immune and is the real arbiter.
+       Any in-sample breadth PF is upper-bounded by survivorship.
+
+VERDICT RULE (pre-registered; BREADTH-AT-SCALE VALIDATES iff ALL hold):
+  V1  pooled RECENT-window (2018-2026) PF >= 1.5 with meanR bootstrap CI-lo > 0 at n>=300
+  V2  MEDIAN per-name PF > 1
+  V3  >= 55% of names PF > 1
+  V4  capped-portfolio MaxDD <= 15%
+  V5  cadence >= 100 trades/yr (capped portfolio)
+  Report against EACH criterion. If PASS -> recommend amending FORWARD_TEST_SPEC to
+  wide-basket 25 + this stock universe (survivorship caveat prominent). If breadth
+  DILUTES below the bar -> say so plainly: the door's stock success was mega-cap-specific
+  and the owner's frequency requirement cannot be met honestly within this edge.
+
+PORTFOLIO RULES (pre-registered, ONE setting each — operational necessity, not tuned):
+  P1  max concurrent open positions = 20, first-come-first-served (later fires while at
+      cap are SKIPPED). Report portfolio WITH and WITHOUT the cap.
+  P2  per-sector cap = 5 concurrent open positions per GICS sector, FCFS.
+  Fixed 1% risk per position.
+
+REPORTS:
+  Part 1: universe + survivorship handling.
+  Part 2: per-name distribution (median PF, %PF>1, %PF>1.5, worst decile, histograms) +
+          pooled table (n, trades/yr, PF, meanR + boot CI, MaxDD at 1% risk, per-year
+          counts, per-sector clustering).
+  Part 3: PORTFOLIO reality — concurrency distribution (peak/median), ±5d episode
+          clustering (raw n vs independent episodes), trades/month distribution 2018-2026
+          (months >=5, >=10, zero; last-12mo; last-month), bear behavior (2022 + COVID +
+          2018Q4; capped MaxDD through 2022).
+  Part 4: verdict vs each pre-registered criterion.
+  Part 5: amended forward proposal if PASS.
+
+DISCIPLINE: referee parity 0.00% self-test on a 10-name sample (reported). STUDY ONLY,
+  production untouched, worktree removed when done, branch pushed, addendum 64 appended.

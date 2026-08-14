@@ -1271,3 +1271,84 @@ or thin energy, and that boundary is now measured, not assumed. Widening to 25 m
 un-adjudicable ~7yr forward test into a ~2yr one. Deflated forward PF ~1.6-1.7 sits just above the
 CONFIRM floor, so the forward collection is decisive, not ceremonial. Nothing shipped; production
 untouched; worktree removed; branch study/wide-basket pushed.
+
+### 2026-08-14 addendum 64 — BREADTH-AT-SCALE: the door's EDGE holds on 476 S&P 500 names (not mega-cap-specific, not a 2018-24 fit) but the owner's DAILY-cadence requirement CANNOT be met honestly — long holds + hard cross-name clustering + a 15% DD ceiling are in irreducible tension. VERDICT: 4/5 PASS, cadence FAILS.
+
+Purpose (owner's core requirement = "many trades that are good"): the FROZEN add.48 door fires ~0.7-0.9/yr
+per instrument and cannot be sped up (add.55/63). The FREE parameter is instrument COUNT. 25 markets -> ~20
+tr/yr; test whether ~300 names -> ~200+/yr = "a good trade nearly every day," AND characterize the actual
+PORTFOLIO. Branch study/breadth-300 off study/wide-basket, worktree-isolated. Files: idea_lab/
+fetch_breadth300.py, run_breadth300.py, breadth300_PREREGISTRATION.txt. STUDY ONLY; production untouched.
+
+UNIVERSE (pre-registered, mechanical): ALL 503 current S&P 500 constituents (Wikipedia 2026-08-14) with
+>=8yr adjusted daily history + integrity pass. 501 fetched (2 mangled tickers dropped), 476 pass (25
+excluded = all <8yr recent IPOs: ABNB/COIN/CRWD/GEHC/etc.; ZERO integrity failures). Financials KEPT
+(run-ALL doctrine). auto_adjust=True (split/div adjusted — multiplicative => door's scale-invariant signals
+UNCHANGED & causally safe; a documented improvement over add.62's raw fetch: AAPL/MSFT/NVDA reproduce
+3.12/2.52/3.80 vs add.62 3.17/2.14/3.92, MSFT lifts on div-adjust). REFEREE PARITY 10/10 self-test 0.00%.
+
+SURVIVORSHIP (binding, stated plainly): current-constituent lists inflate history — today's members are the
+WINNERS that survived. Every in-sample PF here is upper-bounded. Mitigations run: (a) primary read on recent
+2018-2026 AND full window; (b) mega-cap-trio vs broad; (c) the FORWARD test is the only survivorship-immune
+arbiter. add.60 half-life deflation: recent PF 1.75 -> forward ~1.4 (may sit BELOW the 1.5 CONFIRM floor).
+
+PART 1 — PER-NAME (476 names, 8,601 trades, 36yr, headline struct/flat identical params):
+  median n 18/name; median PF 2.10 (mean 2.95); 92.4% of names PF>1, 73.9% PF>1.5; 92.6% of names
+  net-profitable; median PnL/name +$5,976. Worst decile (47 names) sum only -$70k (mean -$1.5k/name = shallow
+  losers). PF histogram unimodal-right: mode 2-3 (132 names), only 35/476 names PF<1. The edge is BROAD, not
+  carried by a handful.
+
+PART 2 — POOLED (fixed 1% risk = $1000/trade):
+  FULL 1990-2026 : n8601  PF 2.21  meanR +0.401  boot95%CI [+0.371,+0.431]  (positive every decade)
+  RECENT 2018-26 : n2622  PF 1.75  meanR +0.279  boot95%CI [+0.226,+0.334]  (survivorship-primary)
+  Every SECTOR PF>1.5 (Materials weakest 1.68, Utilities strongest 2.71) — no sector carries it.
+  SURVIVORSHIP CHECK (b): mega-cap trio AAPL/MSFT/NVDA PF 3.06 vs broad-rest PF 2.20. Breadth DILUTES the
+  mega-cap success but the broad universe stays STRONGLY positive => the door's stock edge is NOT mega-cap-
+  specific. This is the key affirmative finding: the edge SCALES.
+
+PART 3 — THE PORTFOLIO REALITY (the decisive, un-flattering part):
+  CLUSTERING: 8,601 raw entries -> only 504 independent episodes (+-5d); recent 2,622 raw -> 103 episodes =
+    12.0/yr. Equities pile into the SAME index breakouts. The "304 raw/yr" is ~25x inflated by correlation;
+    the honest independent-signal rate is ~12/yr.
+  HOLD TIME: mean 161 / median 185 CALENDAR DAYS (~6 months — 8-mo max_hold + measured-move runners).
+  CONCURRENCY (uncapped, 2018-26 daily grid): peak 237, median 140 simultaneous = 237%/140% of equity at
+    risk at 1% each. The uncapped book is a FICTION (recent uncapped MaxDD -89.9%). The cap is an OPERATIONAL
+    NECESSITY, not a filter.
+  CAPPED PORTFOLIO (pre-registered P1 max 20 total + P2 max 5/sector, FCFS): accepts 1,763/8,601 (skips 6,728
+    to the total cap). PF 2.27, PnL $833k, meanR +0.473, MaxDD -12.58%, median concurrency 20 (book ~ALWAYS
+    FULL). Cadence 53/yr recent = ~1/week. Monthly (104 mo): mean 4.4 entries/mo, median 3, 41% of months
+    >=5, only 4% zero; last-12-mo 50; last-month 8.
+  CAP-LEVEL SENSITIVITY (the money table — cadence vs DD are in direct tension because holds are long &
+    correlated): cap10 28/yr/-9.5%/PF2.23 | cap20 53/yr/-12.6%/2.27 | cap30 77/yr/-16.8%/2.13 |
+    cap40 95/yr/-22.5%/2.04 | cap60+ plateaus 111/yr/-22.5% (raw supply + 5/sector exhausted). To reach the
+    owner's >=100/yr you must run ~50-60 slots = 50-60% gross exposure AND eat MaxDD ~-22% (BREACHES the 15%
+    ceiling). You CANNOT have both >=100 risk-capped entries/yr AND <=15% DD from this door.
+  BEAR BEHAVIOR: breadth AMPLIFIES the add.48 bear-rally leak — some name is always breaking out, so the
+    self-regime-filter weakens in aggregate: COVID 60 fires PF 0.54 (-$20k), 2022 171 fires PF 0.83 (-$16k),
+    2018Q4 43 fires PF 0.99 (~flat). Capped MaxDD through 2021-22 -15.45%. The missing causal bear-regime
+    gate (add.48/49/50 open thread) matters MORE at universe scale, not less.
+
+PART 4 — VERDICT vs PRE-REGISTERED RULE (all 5 required):
+  V1 recent PF>=1.5 & CI-lo>0 & n>=300 : 1.75 / +0.226 / 2622  PASS
+  V2 median per-name PF>1              : 2.10                  PASS
+  V3 >=55% names PF>1                  : 92.4%                 PASS
+  V4 capped MaxDD<=15%                 : -12.58%               PASS
+  V5 cadence>=100/yr (capped)          : 53.0/yr               FAIL
+  => BREADTH-AT-SCALE does NOT fully validate (fails V5). The EDGE scales cleanly (V1-V4 strong, survivorship-
+  caveated, NOT mega-cap-specific); the owner's DAILY-frequency requirement does NOT, and the failure is
+  STRUCTURAL, not fixable by more names: long ~6-mo holds + ~12 independent episodes/yr + a sane DD ceiling
+  bound the risk-capped intake to ~50-65/yr. More names past ~476 add correlated, not independent, signal.
+
+BOTTOM LINE for the owner (vivid + honest): the door is a GENUINE, broad trend edge — 476 survivor names,
+median PF 2.10, 92% profitable, every sector, back to 1990, and NOT just AAPL/MSFT/NVDA. But "a good trade
+nearly every day" is not what this delivers: the lived experience is a book that is ALWAYS ~20 positions full,
+taking ~1 NEW trade/week (~4-5/month), each held ~6 months, clustered into ~12 real market episodes/yr. To
+manufacture 100+ entries/yr you'd trade correlated duplicates at 50%+ gross exposure and a 22% drawdown — the
+frequency and the safety cannot both be had. The honest recommendation is BREADTH AS DIVERSIFICATION (many
+names to smooth the equity curve and keep the book working), NOT breadth as a cadence multiplier. FORWARD
+PROPOSAL (amend, not lock): keep the pre-registered 25-market wide basket (add.62) as the forward unit; ADD a
+capped S&P 500 stock sleeve (cap 20 total / 5 per sector, 1% risk) as a SECOND logged forward channel with the
+survivorship caveat prominent and the same per-fire flags (CMI_regime_label, bear_window_flag, above_ema200,
+sector, episode_id) — its value is DD-smoothing + faster accumulation of independent bear-leak fires for the
+overlay study, expressly NOT a claim of daily cadence. Nothing shipped; production untouched; needs explicit
+user go per standing rules; worktree removed; branch study/breadth-300 pushed.
