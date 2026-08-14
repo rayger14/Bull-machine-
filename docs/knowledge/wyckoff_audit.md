@@ -1271,3 +1271,94 @@ or thin energy, and that boundary is now measured, not assumed. Widening to 25 m
 un-adjudicable ~7yr forward test into a ~2yr one. Deflated forward PF ~1.6-1.7 sits just above the
 CONFIRM floor, so the forward collection is decisive, not ceremonial. Nothing shipped; production
 untouched; worktree removed; branch study/wide-basket pushed.
+
+### 2026-08-14 addendum 63 — FRACTAL MTF, the FAIR re-adjudication: add.55's "4H = no extra trades" was a RESAMPLE BUG (the eye never ran at 4H); throttle FIXED it fires 3.3-5.1x — but the edge FAILS the powered wide-basket rule (bear bleed, combined MaxDD 2.1-2.25x door). Fractal-entries thesis CLOSED. 9th confirmation.
+
+The owner's core conviction ("HTF->LTF fractal entries"), tested 4x before but never fairly (4H fired
+n=8 == daily n=8 — anomalous; OOS rested on n=4; all BTC-only), gets its powered, multi-family, throttle-
+FIXED final test. Branch study/fractal-mtf off study/wide-basket, worktree-isolated. STUDY ONLY; nothing
+shipped; production untouched.
+
+PHASE 1 — THE NAMED THROTTLE (decisive, mechanical, not a hypothesis).
+  engine/features/eye_state.compute_eye_features() hard-calls _resample_1d() at entry, collapsing ANY
+  input frame to '1D' CALENDAR bars BEFORE the break state machine runs. add.55's probe_fractal_4h fed it
+  the 4H exec frame expecting a 40x4H (~6.7d) ceiling; the eye silently rebuilt a 40x1D (~40d) ceiling.
+  FUNNEL (BTC 8.4y, reproduced add.55 exactly): daily n=9 PF 2.56 / 4H-as-built n=8 PF 0.93.
+    exec bars      : daily 3,081   | 4H 18,471
+    eye _resample  : 3,081 daily   | 18,471 -> COLLAPSED to the SAME 3,081 daily bars
+    unique eye rows: 889           | 889 (identical)
+    CONFIRMED_BREAK enter events: 7 | 7 (IDENTICAL, 310d median spacing both)
+    true-4H eye would emit: 348 confirmed breaks -> the collapse SUPPRESSED breaks ~50x.
+  The "4H fractal" was the daily break-generator with a 4H retest grid glued on via broadcast. It never
+  tested the door at 4H. add.55's "one TF down produced NO additional trades; the pattern is just as rare
+  at 4H" was an ARTIFACT of this bug, not a property of the market. The break generator was byte-identical.
+
+PHASE 2 — ROLE ARCHITECTURE (research, ~12 sources: Elder Triple Screen, ICT MTF, Wyckoff MTF, multiscale-
+  momentum literature). VERDICT = role (iii): HTF defines WHERE/WHETHER (zone + bias); LTF supplies WHEN
+  via its OWN fresh structure shift (MSS/CHoCH/spring) INSIDE that HTF zone. Structural INDEPENDENCE is the
+  whole point. Elder=(ii-iii, independent trigger), ICT=(iii textbook), Wyckoff=(iii), academia REJECTS
+  role (i) "same pattern shrunk" (shortest horizon mean-reverts -> noise). Role (iii) is the one variant
+  never tested here; add.55 tested (i), add.56 tested (ii). Reconciles with WI doctrine (add.57/11: HTF
+  governs bias+size, LTF tactical).
+
+PHASE 3 — THROTTLE FIX (eye_native.py: run the SAME machine on the exec frame at native resolution; a
+  DIAGNOSED-BUG repair, not a tuning choice). PARITY: daily door reproduced bit-for-bit (n=9 PF 2.56 —
+  validated door UNCHANGED). Causality/no-repaint: 0 mismatches over 12,929 truncation-overlap bars.
+  Two arms tested (funnel-fix finding kept separate from edge finding), 2 independent families, costs
+  2bps+3bps, fixed 1% risk:
+    LTF-NAKED  = 4H door native eye, no HTF gate       (role i)
+    LTF-GATED  = 4H door fires only while DAILY campaign (native daily-eye bull bias) active (role iii)
+  CRYPTO family (BTC/ETH/LTC/SOL/LINK, 1H->4H, full 2016-2026 cycle incl. bears):
+    daily ref pooled n=38 PF 3.42, ~4.4/yr.
+    NAKED n=195 PF 1.53 meanR +0.246 CI[+0.041,+0.458] | 5.1x cadence | BEAR n=43 PF 0.24 -$27,579 |
+      OOS PF 1.44 | K6 frac>=1.5 33% | above-EMA200 87%.
+    GATED n=130 PF 1.61 meanR +0.287 CI[+0.017,+0.566] | 3.3x cadence | BEAR n=21 PF 0.04 -$19,458 |
+      TRAIN PF 1.73 / OOS PF 1.26 | K6 frac>=1.5 67% | above-EMA200 92%.
+  EQUITY/METAL family (GLD/SLV/GOLD/SPY/QQQ/AAPL/MSFT/NVDA, yfinance 730d 1H->4H, ~2.9y):
+    NAKED n=60 PF 2.44 meanR +0.429 CI[+0.116,+0.754] | GATED n=55 PF 2.52 meanR +0.491 CI[+0.151,+0.849]
+    | above-EMA200 97-100% | K6 frac>=1.5 83-100%. LOOKS STRONG — but the window is 2023-26, PURELY BULL,
+    ZERO bear exposure (the exact regime where break-retest always wins, and exactly where crypto fails).
+  COMBINED-BOOK MaxDD (crypto, the family with bears; shared $100k, 1% risk):
+    door alone -5.50% | door+NAKED -12.35% (2.25x) | door+GATED -11.78% (2.14x). CEILING 1.5x=-8.25%.
+
+PRE-REGISTERED VERDICT (validate iff pooled LTF PF>=1.5 @ n>=150 with meanR CI-lo>0 AND holds in >=2
+  families AND combined MaxDD <= 1.5x door): FAILS.
+  - combined-MaxDD clause: FAIL decisively (2.14-2.25x vs 1.5x ceiling) — DISPOSITIVE, both arms.
+  - regime clause (my rail: no single regime worse than baseline): FAIL — door ~0 bear fires -> fractal
+    bear PF 0.04-0.24, -$19-27K. The 2nd family's PF "pass" is a bull-only regime ARTIFACT (no bears).
+  - deflation: full-cycle PF ~1.53-1.61 -> ~half-deflated ~1.2-1.3, below the 1.5 floor; crypto OOS PF
+    already 1.26-1.44 sub-floor. n<150 for the full-cycle gated family alone (130).
+
+THE DEEPER FINDING (why the door lives at daily/weekly): the RARITY was never a limitation to overcome —
+  it WAS the edge. The slow 40-DAY ceiling only breaks on genuine trend RESUMPTION; it self-filters bear
+  rallies by construction (add.48). Fixing the throttle (40x4H ~ 6.7d ceiling) restores cadence but
+  DESTROYS the self-regime-filter: the fast ceiling breaks on every bear-rally pop -> the door fires into
+  countertrend noise and is run over. Role (iii) HTF-gating helps at the margin (PF 1.53->1.61, K-block
+  33%->67%, above-EMA200 87%->92%) but CANNOT rescue the leak — a DAILY bull standing bias persists
+  through bear rallies (add.50 reconfirmed: EMA200/bull-bias do not catch fast bear-market rips). This is
+  the same mechanism the founding doctrine encoded and the academic multiscale result predicts (fast
+  horizon mean-reverts). The FAIR test (throttle fixed, real power, 2 families, full cycle) lands the
+  SAME place the 4 unfair ones did — now with the mechanism understood, not just the outcome.
+
+DISPOSITION: TWO findings, kept separate.
+  (A) FUNNEL-FIX = a diagnosis WIN. add.55 (and by inheritance the "4H clone fired n=8, same as daily"
+      anomaly) was a RESAMPLE BUG. A detector that now fires at its natural 3.3-5.1x rate is real progress
+      in understanding — the "throttle nobody diagnosed" is named and repaired. eye_native.py + the parity
+      + no-repaint checks stand as the corrected mechanization.
+  (B) EDGE = REJECT, and this CLOSES THE FRACTAL-ENTRIES THESIS PERMANENTLY. With the throttle fixed and
+      powered multi-family testing, the LTF layer fails the pre-registered rule on the dispositive MaxDD
+      and regime clauses. This is the 9th consecutive confirmation of the add.44-62 skepticism (fusion,
+      dip-buying, speed-up, LTF-generator, LTF-executor, exit-toolkit, campaign-topology+Gann, major-
+      anchor-Gann+gentler-re-entry, and now the FAIR fractal MTF). The door's edge lives at the
+      DAILY/WEEKLY scale as a RARE at-size signal; BREADTH (the 25-market basket, add.62) is the only
+      honest cadence lever; forward paper-collection remains the sole outstanding validation.
+
+IMPLICATIONS FOR ONE_STRATEGY.md / FORWARD_TEST_SPEC.md: NO CHANGE. The door stays single-scale
+  (daily-exec / weekly-anchor). Do NOT add a 4H/LTF fractal entry layer — it fails powered testing and
+  more than doubles combined book MaxDD via bear-rally bleed. The add.62 25-market PASS basket forward
+  test is unchanged and remains the live finish line. One knowledge carry-forward: the bear-rally leak
+  (add.48/50) is now shown to be the SAME failure that kills the fractal layer at scale — a causal bear-
+  regime overlay remains the door's one missing organ and the fractal result reinforces (does not
+  supersede) that watch-item. Referee parity 0.00% (daily-door reproduction is the referee); Gann/other
+  machinery untouched. Nothing shipped; production untouched; worktree removed; branch study/fractal-mtf
+  pushed.
