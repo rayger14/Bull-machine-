@@ -1452,3 +1452,91 @@ UNCHANGED: (1) a causal bear-REGIME gate for the bear-rally leak (add.48/49/50) 
 it; (2) forward paper-collection to the finish line. N3 acceptance added as a deferred future-round watch-item
 (needs a delayed-entry re-sim, not a sizing overlay). Nothing shipped; production untouched; worktree removed;
 branch study/wi-batch7 pushed.
+
+### 2026-08-15 addendum 66 — TRANSLATION LEDGER + testing-frame audit: batch-7's null is FRAME-INDEPENDENT; the door's entry clock is already daily; the real open fidelity question is the ENTRY OBJECT (LPS+Bojan), not the confluence test
+
+WI reasonably asked whether the batch-7 refutation (add.65) is a FIFTH translation failure (after the 4
+confirmed bugs: mislocated springs add.31/34; 4H eye resample add.63; Gann anchor saturation add.58/59;
+disjoint M2 states add.45) rather than a real null. This study answers it three ways. Branch
+study/translation-ledger off study/wi-batch7, worktree-isolated. STUDY ONLY; production untouched.
+Files: docs/knowledge/TRANSLATION_LEDGER.md (the centerpiece, written FOR WI), idea_lab/forming_bar_sensor.py,
+run_forming_bar.py, run_near_miss.py, forming_bar_results.json, near_miss_results.json. Door reproduced
+bit-exact (GOLD n=32 PF 3.507 $21,274 = add.62). Referee parity 0.00% throughout.
+
+DELIVERABLE 1 — THE TRANSLATION LEDGER (15 layers, each: HIS VERBATIM WORDS + OUR EXACT CODE (file:line +
+every number) + OURS-interpretation choices + a dated chart case he can adjudicate + a LOW/MED/HIGH
+translation-risk grade). Highest-risk (most-likely-OUR-fault) rows, with the honest read that a null on
+them is WEAK evidence about WI's actual method:
+  #3 retest/LPS entry (MED-HIGH): "LPS + Bojan candle into a drawn zone" was reduced to "close held above
+     break_level AND low dipped into break_level+0.5*ATR". Our fire set is a SUPERSET of his — the direct
+     mechanism by which our door "fires on structure alone." THE single most consequential row.
+  #7 Bojan/wick anatomy (HIGH): batch-7 N2b = one-candle lower-wick>=0.55 + close top-40% — a crude proxy
+     for his MULTI-candle M1/M2 sequence + persistent timeframe-scoped ZONE. Its null is weak evidence about
+     his Bojan; likely "WRONG, that's not my Bojan."
+  #11 chop-count veto (HIGH): the 90d/15-bar/3-fail rule is ENTIRELY ours (he gave a concept, not a counter);
+     degenerated to 2.4% coverage and mis-fired in bears. Not a test of his judgment, a test of our guess at it.
+  #13 Gann (HIGH, already-confirmed bug add.58/59): "major anchor" cannot be mechanized causally without
+     discretion (50-65% -> 25% coverage, still saturates). Un-translatable as-is.
+  #14 dominance (HIGH): his "main driver" (USDT.D structure) is set to 0/absent on the ENTIRE stock/metal/index
+     batch-7 universe. Fair objection: "you tested my method with my main driver removed." Counter: the door
+     validated cross-asset WITHOUT dominance (add.48/62 incl. uncorrelated Gold), so it isn't necessary for the
+     edge — but its absence is a real fidelity gap he may contest.
+  #6 campaign topology (HIGH): no pyramiding-while-positioned — his "1-3 sized entries per model" is UNEXPRESSED
+     on our one-position engine (add.58/59). Known structural gap.
+  Lower-risk / faithful rows: #1 drawn box + body-close break (MED; but the door BREAKS against a rolling-40d
+  EYE box, not his fixed W/M range — partial re-introduction of the add.13 rolling disease); #2 acceptance =
+  2 daily closes (MED); #4 stop under created LPS then BE (MED; BE contradicts his "under created LPS"); #5
+  TP1-40%/60%-runner vs his 1/10 core (MED-HIGH); #8 sweep 0.1-0.4 ATR (MED); #9 freshness F=10 (MED, and it
+  LOSES — freshest retests are worst); #10 origin 365d-rolling vs his drawn-range discount (MED-HIGH); #12
+  climax 1.8x (MED, inert); #15 M1 spring (LOW — correctly RETIRED; the dip-buyer is not his edge). WI is asked
+  to mark each row AGREE / WRONG(+the right rule) / CAN'T-SAY-WITHOUT-CHART.
+
+DELIVERABLE 2 — FORMING-BAR GAP (he trades the FORMING weekly candle; we use COMPLETED bars). Precise inventory
+(verified in code): the door's ENTRY path is 100% DAILY-completed-bar — break confirmation is the DAILY eye
+(2 consecutive daily closes vs a rolling-40-DAY boundary), evaluated at every daily close; retest-hold (T4) and
+proximity (T5) are daily reads. The ONLY completed-WEEKLY object is the struct-range's weekly N=5 pivots, which
+feed ONLY the TP anchor struct_range_high and the rarely-binding R0 broken_down veto (~1% of bars; the close>ema200
+branch dominates at 88-100% above-EMA200). So the door is ALREADY finer-grained than his weekly forming-candle
+reads. ONE pre-registered variant (forming_bar_sensor.py): relax ONLY T4 to also confirm when the causal
+week-to-date HIGH has reclaimed break_level and close is within RTZ_ATR*ATR (the "mid-week rejection that holds").
+WTD truncation no-repaint: 1,124,972 points, 0 mismatches. Referee 0.00%.
+  50-stock sample (2018+):  A n289 PF1.83 meanR+0.313  ->  B n295 PF1.90 meanR+0.347; 284 matched, B earlier on
+    73 (median shift 0d, max +39d), 11 added fires (PF1.12), paired dR +0.042.
+  wide basket (trending):   A n432 PF2.29 meanR+0.431  ->  B n444 PF2.36 meanR+0.472; 418 matched, B earlier on
+    115 (median 0d, max +60d), 26 added (PF1.63), paired dR +0.030.
+  FINDING: ~74% of entries UNCHANGED (same-day); on the ~26% where forming-week evidence bites, entries move
+  earlier and outcomes are MILDLY better. The forming-bar gap is REAL but SMALL and does NOT manufacture the
+  batch-7 null (a forming door is if anything marginally better, still with confluence adding nothing). ONE
+  in-sample diagnostic = a WATCH-ITEM for a pre-registered forward look, NOT an adoption (train/OOS co-movement
+  unestablished). Decision-grade: the door does NOT penalize WI by waiting for completed weekly bars.
+
+DELIVERABLE 3 — SELECTION-BIAS / NEAR-MISS audit (the testing-frame question). Batch-7 tested confluence as
+AND-overlays on fires ALREADY selected by the 5 checks (conditioning on a collider -> tilts to null). The check
+the frame missed: build the NEAR-MISS population = retest events failing EXACTLY ONE of {C1 dir, C2 state, C4 hold,
+C5 proximity} on the 476-stock recent 2018+ window, simulate each as-if-taken (door plan/exits/costs, isolated;
+inline simulator asserted bit-identical to run_backtest -> SIM PARITY 0.00% on 2,555 real events), compute the
+add.65 confluence score, and ask: does confluence RESCUE marginal structure? Pre-registered pass (K>=2 confluent):
+confluent-near-miss meanR CI-lo>0 AND > non-confluent, per family + pooled + >=2 clean families.
+  Census: REAL 15,123 | missC5(no pullback) 80,175 | missC4(didn't hold) 38,050 | missC1(dir) 4,750 | missC2(state) 1,297.
+  REAL fires (isolated): meanR +0.348 PF1.91.  Near-miss meanR: missC1 +0.462, missC4 +0.448, missC5 +0.283,
+  missC2 +0.258 — ALL positive, comparable-to-better than real fires. Confluent vs non-confluent: POOLED +0.336 vs
+  +0.340 (R2 FAIL); missC4 +0.361<+0.453 and missC2 +0.173<+0.288 (confluence HURTS the two it should help most);
+  missC1/missC5 show +0.02-0.06R "wins" inside wide CIs, contradicted by a FLAT by-score curve (s0..s4:
+  0.327/0.369/0.339/0.291/0.303, NOT monotonic).
+  VERDICT: NO RESCUE. The batch-7 null is FRAME-INDEPENDENT. TWO decisive reads: (1) the door's 5 checks are NOT
+  sharply discriminating — marginal structure (fail one check) is ~as profitable as clean structure (survivorship +
+  2018-26 trend beta caveated, add.64 — but that cuts AGAINST confluence, not for it); (2) confluence sorts neither
+  SELECTED (batch-7) nor MARGINAL (this) retests. Confluence is neither a narrowing nor a widening tool on this door.
+  Had it passed, adoption would have required a strictly-bounded two-condition rule (exactly-one-missed AND score>=2),
+  never a weighted score (Lesson #54); it did not pass.
+
+SYNTHESIS (decision-grade): the batch-7 refutation is NOT a translation failure at the confluence layer — it is
+frame-independent and survives both the forming-bar and near-miss checks. The one live fidelity question is the
+ENTRY OBJECT itself (ledger rows #3/#7): if WI's real entry is specifically the LPS-Bojan candle into a pre-drawn
+zone (not "any daily close that holds"), we tested confluence on a LOOSER fire set than his, and the correct next
+experiment is to first TIGHTEN the entry to his definition and re-test confluence on THAT — which requires his
+row-by-row correction of the ledger. Everything else is either a nameable structural gap (cadence/pyramiding,
+dominance-on-stocks) or a layer un-mechanizable without his discretion (Gann anchors). This is the 11th consecutive
+add-on-layer rejection; the door's edge remains the RARE structural break-retest at daily/weekly scale, and BREADTH
++ forward paper-collection remain the only honest levers. Nothing shipped; production untouched; worktree to be
+removed; branch study/translation-ledger pushed.

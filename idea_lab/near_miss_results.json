@@ -1,0 +1,92 @@
+{
+  "census": {
+    "missC5": 80175,
+    "REAL": 15123,
+    "missC4": 38050,
+    "missC2": 1297,
+    "missC1": 4750
+  },
+  "n_real": 15123,
+  "real_meanR": 0.34831916662485934,
+  "real_ci_lo": 0.3234859177568984,
+  "real_pf": 1.9086342786672792,
+  "families": {
+    "missC1": {
+      "tag": "missC1",
+      "n": 4750,
+      "meanR": 0.46240714409780853,
+      "ci_lo": 0.39344985230322554,
+      "pf": 1.9278109419561236,
+      "n_conf": 382,
+      "conf_meanR": 0.5177766305584307,
+      "conf_ci_lo": 0.3089017581138138,
+      "nonconf_meanR": 0.4575648492654007,
+      "R1": true,
+      "R2": true,
+      "rescue": true
+    },
+    "missC2": {
+      "tag": "missC2",
+      "n": 1297,
+      "meanR": 0.2577476296063516,
+      "ci_lo": 0.20103021081569636,
+      "pf": 1.786673892164201,
+      "n_conf": 345,
+      "conf_meanR": 0.1731527554163926,
+      "conf_ci_lo": 0.07051451885246673,
+      "nonconf_meanR": 0.28840438548401537,
+      "R1": true,
+      "R2": false,
+      "rescue": false
+    },
+    "missC4": {
+      "tag": "missC4",
+      "n": 38050,
+      "meanR": 0.44758051441897895,
+      "ci_lo": 0.4242474726557846,
+      "pf": 1.9421245946628998,
+      "n_conf": 2357,
+      "conf_meanR": 0.3611762898189057,
+      "conf_ci_lo": 0.2966574870840406,
+      "nonconf_meanR": 0.45328624824304453,
+      "R1": true,
+      "R2": false,
+      "rescue": false
+    },
+    "missC5": {
+      "tag": "missC5",
+      "n": 80175,
+      "meanR": 0.2825864408564062,
+      "ci_lo": 0.2732299788963779,
+      "pf": 1.7291719143874904,
+      "n_conf": 2501,
+      "conf_meanR": 0.30672633678300487,
+      "conf_ci_lo": 0.25848190638012997,
+      "nonconf_meanR": 0.2818091681562437,
+      "R1": true,
+      "R2": true,
+      "rescue": true
+    }
+  },
+  "pooled": {
+    "tag": "POOLED",
+    "n": 124272,
+    "meanR": 0.33971883513074974,
+    "ci_lo": 0.33012593429278686,
+    "pf": 1.8128092505237687,
+    "n_conf": 5585,
+    "conf_meanR": 0.3358896073212949,
+    "conf_ci_lo": 0.2967063546579023,
+    "nonconf_meanR": 0.33989902535643435,
+    "R1": true,
+    "R2": false,
+    "rescue": false
+  },
+  "parity_checked": 2555,
+  "parity_fail": 0,
+  "global_rescue": false,
+  "fams_rescue": [
+    "missC1",
+    "missC5"
+  ]
+}
