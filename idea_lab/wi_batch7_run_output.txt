@@ -1,0 +1,274 @@
+====================================================================================================
+WI BATCH-7 CONFLUENCE TEST (add.65) — six confluence specs as OVERLAYS on the FROZEN door
+PRIMARY: 476 S&P-500 names recent 2018-26 | SECONDARY: full-history stocks + 25-mkt wide basket
+====================================================================================================
+
+BREADTH-300 universe: 476 names pass screens (>= 8.0yr + integrity)
+REFEREE PARITY self-test sample (10): ['AMCR', 'APO', 'AZO', 'CBRE', 'EXPE', 'GDDY', 'GWW', 'LYV', 'OXY', 'TSCO']
+
+=== IDEA-LAB SELF-TEST vs referee (textbook-clean) on AMCR ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long   -1033.9902   -1033.9902   0.00e+00         stop
+   58 short   -1034.9754   -1034.9754   0.00e+00         stop
+  106  long   -1033.9902   -1033.9902   0.00e+00         stop
+  154 short    2098.0458    2098.0458   0.00e+00  take_profit
+  202  long   -1033.9902   -1033.9902   0.00e+00         stop
+  250 short    2096.0526    2096.0526   0.00e+00  take_profit
+  298  long   -1033.9902   -1033.9902   0.00e+00         stop
+  346 short   -1034.9754   -1034.9754   0.00e+00         stop
+MAX per-trade relative discrepancy: 0.00e+00 %  [target <0.01%] -> PASS (0.00%)
+
+=== IDEA-LAB SELF-TEST vs referee (textbook-clean) on APO ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long   -1033.9902   -1033.9902   0.00e+00         stop
+   58 short   -1034.9754   -1034.9754   0.00e+00         stop
+  106  long   -1033.9902   -1033.9902   0.00e+00         stop
+  154 short   -1034.9754   -1034.9754   0.00e+00         stop
+  202  long   -1033.9902   -1033.9902   0.00e+00         stop
+  250 short    2168.7365    2168.7365   0.00e+00  take_profit
+  298  long    2935.7335    2935.7335   0.00e+00  take_profit
+  346 short   -1034.9754   -1034.9754   0.00e+00         stop
+MAX per-trade relative discrepancy: 0.00e+00 %  [target <0.01%] -> PASS (0.00%)
+
+=== IDEA-LAB SELF-TEST vs referee (textbook-clean) on AZO ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long   -1033.9902   -1033.9902   0.00e+00         stop
+   58 short    2214.2789    2214.2789   0.00e+00  take_profit
+  106  long    2164.7349    2164.7349   0.00e+00  take_profit
+  154 short   -1034.9754   -1034.9754   0.00e+00         stop
+  202  long   -1033.9902   -1033.9902   0.00e+00         stop
+  250 short   -1034.9754   -1034.9754   0.00e+00         stop
+  298  long   -1033.9902   -1033.9902   0.00e+00         stop
+  346 short   -1034.9754   -1034.9754   0.00e+00         stop
+MAX per-trade relative discrepancy: 0.00e+00 %  [target <0.01%] -> PASS (0.00%)
+  ...50/476 assets, 900 fires
+
+=== IDEA-LAB SELF-TEST vs referee (textbook-clean) on CBRE ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long    2047.0028    2047.0028   0.00e+00  take_profit
+   58 short   -1034.9754   -1034.9754   0.00e+00         stop
+  106  long    2184.0160    2184.0160   0.00e+00  take_profit
+  154 short   -1034.9754   -1034.9754   0.00e+00         stop
+  202  long    1965.0772    1965.0772   0.00e+00  take_profit
+  250 short   -1034.9754   -1034.9754   0.00e+00         stop
+  298  long   -1033.9902   -1033.9902   0.00e+00         stop
+  346 short   -1034.9754   -1034.9754   0.00e+00         stop
+MAX per-trade relative discrepancy: 0.00e+00 %  [target <0.01%] -> PASS (0.00%)
+  ...100/476 assets, 1829 fires
+  ...150/476 assets, 2723 fires
+
+=== IDEA-LAB SELF-TEST vs referee (textbook-clean) on EXPE ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long   -1033.9902   -1033.9902   0.00e+00         stop
+   58 short   -1034.9754   -1034.9754   0.00e+00         stop
+  106  long   -1033.9902   -1033.9902   0.00e+00         stop
+  154 short    4562.6666    4562.6666   0.00e+00  take_profit
+  202  long   -1033.9902   -1033.9902   0.00e+00         stop
+  250 short   -1034.9754   -1034.9754   0.00e+00         stop
+  298  long    2153.9975    2153.9975   0.00e+00  take_profit
+  346 short   -1034.9754   -1034.9754   0.00e+00         stop
+MAX per-trade relative discrepancy: 0.00e+00 %  [target <0.01%] -> PASS (0.00%)
+
+=== IDEA-LAB SELF-TEST vs referee (textbook-clean) on GDDY ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long   -1033.9902   -1033.9902   0.00e+00         stop
+   58 short   -1034.9754   -1034.9754   0.00e+00         stop
+  106  long    3260.1347    3260.1347   0.00e+00  take_profit
+  154 short    4901.4217    4901.4217   0.00e+00  take_profit
+  202  long   -1033.9902   -1033.9902   0.00e+00         stop
+  250 short   -1034.9754   -1034.9754   0.00e+00         stop
+  298  long   -1033.9902   -1033.9902   0.00e+00         stop
+  346 short    2159.2241    2159.2241   0.00e+00  take_profit
+MAX per-trade relative discrepancy: 0.00e+00 %  [target <0.01%] -> PASS (0.00%)
+  ...200/476 assets, 3597 fires
+
+=== IDEA-LAB SELF-TEST vs referee (textbook-clean) on GWW ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long   -1033.9902   -1033.9902   0.00e+00         stop
+   58 short   -1034.9754   -1034.9754   0.00e+00         stop
+  106  long   -1033.9902   -1033.9902   0.00e+00         stop
+  154 short   -1034.9754   -1034.9754   0.00e+00         stop
+  202  long   -1033.9902   -1033.9902   0.00e+00         stop
+  250 short   -1034.9754   -1034.9754   0.00e+00         stop
+  298  long   -1033.9902   -1033.9902   0.00e+00         stop
+  346 short   -1034.9754   -1034.9754   0.00e+00         stop
+MAX per-trade relative discrepancy: 0.00e+00 %  [target <0.01%] -> PASS (0.00%)
+  ...250/476 assets, 4457 fires
+
+=== IDEA-LAB SELF-TEST vs referee (textbook-clean) on LYV ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long   -1033.9902   -1033.9902   0.00e+00         stop
+   58 short   -1034.9754   -1034.9754   0.00e+00         stop
+  106  long    2426.9003    2426.9003   0.00e+00  take_profit
+  154 short   -1034.9754   -1034.9754   0.00e+00         stop
+  202  long   -1033.9902   -1033.9902   0.00e+00         stop
+  250 short   -1034.9754   -1034.9754   0.00e+00         stop
+  298  long   -1033.9902   -1033.9902   0.00e+00         stop
+  346 short   -1034.9754   -1034.9754   0.00e+00         stop
+MAX per-trade relative discrepancy: 0.00e+00 %  [target <0.01%] -> PASS (0.00%)
+  ...300/476 assets, 5361 fires
+
+=== IDEA-LAB SELF-TEST vs referee (textbook-clean) on OXY ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long   -1033.9902   -1033.9902   0.00e+00         stop
+   58 short    2338.7736    2338.7736   0.00e+00  take_profit
+  106  long   -1033.9902   -1033.9902   0.00e+00         stop
+  154 short    4926.7475    4926.7475   0.00e+00  take_profit
+  202  long    2902.4596    2902.4596   0.00e+00  take_profit
+  250 short   -1034.9754   -1034.9754   0.00e+00         stop
+  298  long   -1033.9902   -1033.9902   0.00e+00         stop
+  346 short   -1034.9754   -1034.9754   0.00e+00         stop
+MAX per-trade relative discrepancy: 0.00e+00 %  [target <0.01%] -> PASS (0.00%)
+  ...350/476 assets, 6261 fires
+  ...400/476 assets, 7205 fires
+
+=== IDEA-LAB SELF-TEST vs referee (textbook-clean) on TSCO ===
+  idx   dir      lab_pnl      ref_pnl      rel_%       reason
+   10  long   -1033.9902   -1033.9902   0.00e+00         stop
+   58 short    1975.3882    1975.3882   0.00e+00  take_profit
+  106  long    2905.2977    2905.2977   0.00e+00  take_profit
+  154 short   -1034.9754   -1034.9754   0.00e+00         stop
+  202  long    2579.7739    2579.7739   0.00e+00  take_profit
+  250 short   -1034.9754   -1034.9754   0.00e+00         stop
+  298  long   -1033.9902   -1033.9902   0.00e+00         stop
+  346 short   -1034.9754   -1034.9754   0.00e+00         stop
+MAX per-trade relative discrepancy: 0.00e+00 %  [target <0.01%] -> PASS (0.00%)
+  ...450/476 assets, 8094 fires
+
+REFEREE PARITY: 10 tested -> ALL 0.00% PASS
+total confirmed-break events across universe: 13875
+
+fires: full-history 8601  |  recent-2018+ (PRIMARY) 2622
+
+WIDE BASKET fires: all 508  trending(pass) 432  fx+energy 76
+
+====================================================================================================
+PRIMARY — 476 stocks, recent 2018-2026   (n=2622, pooled PF 1.75, meanR +0.279)
+====================================================================================================
+spec                    cover meanR_flag meanR_unfl  PF_flag  PF_unfl   meanDR  DR_CIlo  DR_CIhi
+N1 freshness<=10       49.3%      0.215      0.342     1.66     1.82   0.0265   0.0198   0.0333
+N2a sweep-retest       27.8%      0.279      0.279     1.80     1.73   0.0193   0.0132   0.0255
+N2b candle anatomy     10.6%      0.280      0.279     1.71     1.75   0.0074   0.0033   0.0118
+N4 origin discount     20.7%      0.241      0.289     1.69     1.76   0.0125   0.0076   0.0174
+
+veto                    cover meanR_flag meanR_kept  PF_flag  rmDelta  rm_CIlo  rm_CIhi
+N5 chop-count>=3        2.4%      0.473      0.274     2.66  -0.0048  -0.0117   0.0020
+N6 climax-ATR           2.4%      0.628      0.271     3.47  -0.0085  -0.0204   0.0010
+
+====================================================================================================
+SECONDARY(a) — 476 stocks, FULL history   (n=8601, pooled PF 2.21, meanR +0.401)
+====================================================================================================
+spec                    cover meanR_flag meanR_unfl  PF_flag  PF_unfl   meanDR  DR_CIlo  DR_CIhi
+N1 freshness<=10       52.9%      0.395      0.409     2.49     2.00   0.0522   0.0483   0.0562
+N2a sweep-retest       26.2%      0.387      0.407     2.18     2.22   0.0254   0.0216   0.0293
+N2b candle anatomy     11.8%      0.423      0.399     2.27     2.20   0.0124   0.0098   0.0152
+N4 origin discount     17.4%      0.341      0.414     2.03     2.24   0.0148   0.0120   0.0177
+
+veto                    cover meanR_flag meanR_kept  PF_flag  rmDelta  rm_CIlo  rm_CIhi
+N5 chop-count>=3        2.5%      0.483      0.399     2.81  -0.0021  -0.0056   0.0014
+N6 climax-ATR           3.1%      0.374      0.402     2.15   0.0009  -0.0044   0.0058
+
+====================================================================================================
+SECONDARY(b) — wide basket, TRENDING (pass) families   (n=432, pooled PF 2.29, meanR +0.431)
+====================================================================================================
+spec                    cover meanR_flag meanR_unfl  PF_flag  PF_unfl   meanDR  DR_CIlo  DR_CIhi
+N1 freshness<=10       52.5%      0.308      0.566     2.03     2.52   0.0405   0.0232   0.0581
+N2a sweep-retest       21.5%      0.563      0.395     3.01     2.13   0.0303   0.0152   0.0473
+N2b candle anatomy     12.0%      0.284      0.451     1.59     2.43   0.0085  -0.0033   0.0219
+N4 origin discount     20.4%      0.346      0.453     2.03     2.36   0.0176   0.0038   0.0330
+
+veto                    cover meanR_flag meanR_kept  PF_flag  rmDelta  rm_CIlo  rm_CIhi
+N5 chop-count>=3        5.1%     -0.114      0.460     0.77   0.0292   0.0053   0.0552
+N6 climax-ATR           7.6%      0.314      0.441     1.86   0.0097  -0.0326   0.0470
+
+====================================================================================================
+SHADOW — wide basket fx+energy (domain boundary; not a pass unit)   (n=76, pooled PF 0.58, meanR -0.242)
+====================================================================================================
+spec                    cover meanR_flag meanR_unfl  PF_flag  PF_unfl   meanDR  DR_CIlo  DR_CIhi
+N1 freshness<=10       47.4%     -0.088     -0.380     0.81     0.43  -0.0104  -0.0459   0.0257
+N2a sweep-retest       31.6%     -0.125     -0.295     0.75     0.51  -0.0099  -0.0396   0.0211
+N2b candle anatomy     42.1%     -0.308     -0.193     0.46     0.66  -0.0325  -0.0652   0.0010
+N4 origin discount     18.4%     -0.256     -0.238     0.56     0.58  -0.0118  -0.0348   0.0105
+
+veto                    cover meanR_flag meanR_kept  PF_flag  rmDelta  rm_CIlo  rm_CIhi
+N5 chop-count>=3        5.3%     -0.331     -0.237     0.35   0.0050  -0.0308   0.0449
+N6 climax-ATR           1.3%      0.852     -0.256      inf  -0.0146  -0.0487   0.0000
+
+----------------------------------------------------------------------
+COMBINED CONFLUENCE SCORE (sum of N1,N2a,N2b,N4)  |  PRIMARY
+----------------------------------------------------------------------
+ score      n  cover%    meanR      PF     WR
+     0    735    28.0    0.364    1.86  55.2%
+     1   1089    41.5    0.259    1.70  57.0%
+     2    654    24.9    0.221    1.65  58.4%
+     3    133     5.1    0.267    1.95  60.9%
+     4     11     0.4    0.264    2.08  72.7%
+  MONOTONIC in score: NO
+  sized(1/1.25/1.5) vs flat: meanΔR +0.0211  CI[+0.0146,+0.0277]  ΔPnL $55,371  -> beats flat
+
+----------------------------------------------------------------------
+COMBINED CONFLUENCE SCORE (sum of N1,N2a,N2b,N4)  |  SECONDARY(a) full-history
+----------------------------------------------------------------------
+ score      n  cover%    meanR      PF     WR
+     0   2358    27.4    0.412    2.01  56.4%
+     1   3681    42.8    0.422    2.35  63.3%
+     2   2084    24.2    0.360    2.21  63.3%
+     3    448     5.2    0.362    2.32  64.1%
+     4     30     0.3    0.549    4.49  80.0%
+  MONOTONIC in score: NO
+  sized(1/1.25/1.5) vs flat: meanΔR +0.0322  CI[+0.0281,+0.0364]  ΔPnL $277,080  -> beats flat
+
+----------------------------------------------------------------------
+COMBINED CONFLUENCE SCORE (sum of N1,N2a,N2b,N4)  |  SECONDARY(b) wide trending
+----------------------------------------------------------------------
+ score      n  cover%    meanR      PF     WR
+     0    119    27.5    0.536    2.55  62.2%
+     1    186    43.1    0.452    2.33  59.7%
+     2    107    24.8    0.294    1.90  60.7%
+     3     20     4.6    0.343    2.29  65.0%
+     4      0     0.0       --      --     --
+  MONOTONIC in score: NO
+  sized(1/1.25/1.5) vs flat: meanΔR +0.0262  CI[+0.0102,+0.0429]  ΔPnL $11,306  -> beats flat
+
+----------------------------------------------------------------------
+N1 FRESHNESS DISTRIBUTION DIAGNOSTIC (bars break->retest)
+----------------------------------------------------------------------
+  percentiles: p0=1  p10=1  p25=2  p50=11  p75=131  p90=239  p100=360
+  mean 72.5  max 360   (door validity window = 360 bars)
+
+  staleness bucket       n  cover%    meanR      PF     WR
+  0-10                1293    49.3    0.215    1.66  59.2%
+  11-30                231     8.8    0.314    1.88  58.9%
+  31-90                274    10.5    0.299    1.70  54.7%
+  91-180               369    14.1    0.356    1.89  57.7%
+  181-360              455    17.4    0.369    1.81  51.4%
+  361-max                0
+
+----------------------------------------------------------------------
+N5 BEAR/CHOP-WINDOW EFFECT (chop-flag coverage + flagged vs unflagged meanR)
+----------------------------------------------------------------------
+  window      fires   chop% meanR_all meanR_chop meanR_calm  PF_all
+  2018Q4         43     2.3    -0.005      0.247     -0.011    0.99
+  COVID          60     1.7    -0.341     -1.003     -0.330    0.54
+  2022          171     1.2    -0.096      0.307     -0.100    0.83
+  2026YTD       200     3.0     0.241     -0.336      0.259    1.90
+
+====================================================================================================
+CROSS-SET CONSISTENCY & PRE-REGISTERED VERDICTS
+====================================================================================================
+spec                   P_cover   P_dRlo  P_C2 S_full_sign S_wide_sign   verdict
+N1 freshness<=10         49.3%   0.0198 False           +           +FALSE-PASS
+N2a sweep-retest         27.8%   0.0132 False           +           +FALSE-PASS
+N2b candle anatomy       10.6%   0.0033  True           +           +    ADOPT*
+N4 origin discount       20.7%   0.0076 False           +           +FALSE-PASS
+N5 chop-count>=3          2.4%  -0.0117    --           -           +     CLOSE
+N6 climax-ATR             2.4%  -0.0204    --           +           +     CLOSE
+
+----------------------------------------------------------------------
+N3 ACCEPTANCE — descriptive flag (forward info; not a sizing overlay)
+----------------------------------------------------------------------
+  PRIMARY        cover 75.0%  meanR_flag +0.342  meanR_unflag +0.090  (entry-shift variant deferred: requires re-sim from i+2 -> NOT cheap on the frozen backtester; flag reported only)
+  full           cover 75.7%  meanR_flag +0.479  meanR_unflag +0.162  (entry-shift variant deferred: requires re-sim from i+2 -> NOT cheap on the frozen backtester; flag reported only)
+  wide-trending  cover 79.6%  meanR_flag +0.503  meanR_unflag +0.149  (entry-shift variant deferred: requires re-sim from i+2 -> NOT cheap on the frozen backtester; flag reported only)
+
+results dumped -> /private/tmp/claude-501/-Users-rayghandchi-Bull-Machine-Bull-machine-/da0c7698-bb0a-4aa2-9a4e-481e62857ce4/scratchpad/breadth300/wi_batch7_results.json

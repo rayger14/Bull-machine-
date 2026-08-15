@@ -1352,3 +1352,103 @@ survivorship caveat prominent and the same per-fire flags (CMI_regime_label, bea
 sector, episode_id) — its value is DD-smoothing + faster accumulation of independent bear-leak fires for the
 overlay study, expressly NOT a claim of daily cadence. Nothing shipped; production untouched; needs explicit
 user go per standing rules; worktree removed; branch study/breadth-300 pushed.
+
+### 2026-08-15 addendum 65 — WI BATCH-7 CONFLUENCE TEST: WI's core claim ("the naked retest underperforms the confluent retest") is REFUTED on the powered universe. All 6 confluence specs CLOSE (0/6); the NAKED retest is the BEST tier. Add-on base rate now 0-for-18.
+
+The first POWERED test of Wyckoff-Insider's confluence-stack critique of THE DOOR. WI reviewed our exact
+mechanized rulebook and said the door "fires on structure alone — I almost never take the pure retest
+without additional confluence." Until now untestable (n~106). Now decidable: PRIMARY = 476 S&P-500 names
+recent 2018-26 (n=2,622 fires), SECONDARY = full-history stocks (n=8,601) + the 25-market wide basket
+(trending-pass n=432), via the add.60/61-verified PAIRED size-multiplier ΔR machinery (MDE 0.02-0.05R).
+Branch study/wi-batch7 off study/breadth-300, worktree-isolated. Files: idea_lab/run_wi_batch7.py,
+check_n5_truncation.py. THE DOOR IS FROZEN — all six specs are OVERLAYS computed POST-HOC from the SAME
+causal sensor arrays the door used (OHLCV, atr_14, eye_state/dir, range_upper_1d) + the door's own logged
+break_level; the break BAR is recomputed deterministically from the eye arrays and verified to reproduce
+the door's break_level EXACTLY (26/26 AAPL) → zero door mutation. STUDY ONLY; production untouched.
+REFEREE PARITY 10/10 self-test 0.00%. N5 (a NEW rolling sensor) 3-point truncation check: 594 checks,
+0 mismatches → causal / no-repaint.
+
+CLOSED-LIST ACKNOWLEDGMENT (WI's batch-7 suggestions overlapping already-adjudicated axes — NOT re-tested):
+  Gann/time windows (add.58/59/61 FINAL, closed) · dominance/USDT.D structure (add.14/46 REJECT; stables
+  flag already in the door's R0) · multi-TF/LTF entries (add.52/53/55/63 FINAL) · shorts/springs (add.44-47
+  closed; dip-buyer is DETECTED-HARM) · ob_quality / eq_magnet (add.61 H2/H3 FINAL CLOSE). WI's overlaps
+  with these were acknowledged as decided, not reopened.
+
+THE SIX NEW SPECS (pre-registered exact defs; WI verbatim where given, OURS where interpolated). Overlay =
+1.25x sizing ΔR=0.25·R·flag (entry-quality N1/N2a/N2b/N4) or removal/inverse-size veto (N5/N6):
+  N1 FRESHNESS  bars break→retest <= 10 (WI "8-12" midpoint, OURS)
+  N2a SWEEP     entry/i-1 low undercuts break_level by 0.1-0.4 ATR then closes back above (WI verbatim)
+  N2b ANATOMY   entry lower-wick >= 0.55 range AND close in top 40% (WI "55-60", 0.55; never-tested exact rule)
+  N3 ACCEPTANCE higher low within 2 bars after retest (FORWARD info → delayed-entry diagnostic, NOT a sizing overlay)
+  N4 ORIGIN     break_level in LOWER 60% of trailing-365d span at break (WI "discount/EQ not premium"; 0.60 OURS)
+  N5 CHOP-VETO  >=3 failed breakouts (confirmed bull break whose close drops back below level within 15 bars,
+                resolution<=entry) in trailing 90d = "chop regime" (WI's highest-interest, aimed at the bear leak)
+  N6 CLIMAX-VETO atr14 at break > 1.8x its 90-bar median = blow-off skip (1.8 OURS)
+
+PER-SPEC RESULTS (paired ΔR; PRIMARY n=2,622, pooled PF 1.75 meanR +0.279). cover | meanR_flag | meanR_unfl
+| PF_flag | ΔR_CI-lo | C2(flag>=unfl) | secondary-consistency | VERDICT:
+  N1 fresh    49.3%  0.215  0.342  1.66  +0.020  C2-FAIL  full+wide agree flag WORSE   CLOSE (false pass)
+  N2a sweep   27.8%  0.279  0.279  1.80  +0.013  C2-FAIL  full flag-worse, wide flag-better (inconsist) CLOSE
+  N2b anatomy 10.6%  0.280  0.279  1.71  +0.003  C2 +0.001R  wide INVERTS (0.284<0.451)  CLOSE (false pass)
+  N4 origin   20.7%  0.241  0.289  1.69  +0.008  C2-FAIL  full+wide agree flag WORSE   CLOSE (false pass)
+  N5 chop     2.4%   0.473  (kept 0.274)  removalΔ -0.005  cover DEGENERATE(<10%)  sign flips prim/wide  CLOSE
+  N6 climax   2.4%   0.628  (kept 0.271)  removalΔ -0.009  cover DEGENERATE(<10%)      CLOSE
+
+THE DECISIVE READ — the mechanical pre-registered rule (P1 CI-lo>0 + sign-holds-secondary + coverage) flags
+ONLY N2b as "ADOPT*", but that is a TEXTBOOK add.61-H2 FALSE PASS: C2 margin is +0.001R (economically nil),
+coverage sits ON the 10% degenerate boundary, and the wide-secondary INVERTS the selection (flagged 0.284 <
+unflagged 0.451). Per the add.61 BINDING standard (on a 55-63%-WR net-positive book, C1/P1 is a weak bar
+almost any positive-catching flag clears; the deciding criterion is C2 + family-consistency + monotonicity),
+N2b CLOSES. Net: 0-for-6.
+
+THE COMBINED CONFLUENCE SCORE = the cleanest refutation of WI. score = #{N1,N2a,N2b,N4} passing; meanR by level:
+  PRIMARY:  s0 0.364(PF1.86 n735) · s1 0.259 · s2 0.221 · s3 0.267 · s4 0.264(n11)   NOT monotonic
+  FULL:     s0 0.412 · s1 0.422 · s2 0.360 · s3 0.362 · s4 0.549(n30)                 NOT monotonic
+  WIDE:     s0 0.536(PF2.55) · s1 0.452 · s2 0.294 · s3 0.343 · s4 —                   NOT monotonic
+  In every set the NAKED retest (score 0 = zero confluence) has the HIGHEST or tied-highest meanR, and meanR
+  is FLAT-to-DECREASING as confluence stacks. The sized-portfolio (1/1.25/1.5) "beats flat" on CI-lo>0 —
+  but that is again the net-positive-book artifact (up-sizing any positive trades raises PnL); the pre-
+  registered combined-adopt rule REQUIRES monotonicity, which FAILS on all three sets. Combined score: CLOSE.
+
+FRESHNESS DISTRIBUTION DIAGNOSTIC (doubles as the answer to "is the 360-bar validity window admitting weak
+stale retests?"): bars-to-retest p50=11, p90=239, max 360 (window fully used). meanR by staleness (PRIMARY):
+  0-10: 0.215 (PF1.66) · 11-30: 0.314 · 31-90: 0.299 · 91-180: 0.356 · 181-360: 0.369 (PF1.81).
+  The FRESHEST retests are the WORST, not the best — staler retests hold up fine (even 181-360 bars is
+  net-positive PF 1.81). So (a) WI's freshness intuition is inverted here, and (b) the 360-bar window is NOT
+  admitting weak stale retests — the tail is healthy; no case to tighten it. (Full-history mirrors: 0-10
+  bucket 0.395 ~ overall 0.401.)
+
+N5 BEAR/CHOP-WINDOW EFFECT (the spec WI cared most about — aimed at the add.48/64 bear-rally leak). On the
+full-history stock pool the chop-veto MISSES its target: COVID 60 fires (chop-flag on only 1) chop meanR
+-1.003; but 2018Q4 (chop +0.247 vs calm -0.011) and 2022 (chop +0.307 vs calm -0.100) have the chop-flagged
+trades OUTPERFORMING; 2026-YTD chop -0.336 vs calm +0.259. Coverage in every bear is 1-3% (n_flag 1-6). The
+chop-count veto does NOT cleanly identify the bear-rally losers and does NOT plug the leak; on the wide
+basket its removal-delta is +0.029 (CI-lo>0) but that reverses the stock sign and rests on ~22 flagged
+trades. The door's missing organ remains a causal bear-REGIME gate (add.48/49/50), NOT a chop-count veto.
+
+N3 ACCEPTANCE — the one honest standout, but NOT adoptable here. cover 75%, meanR_flag +0.342 vs unflag
++0.090 (PRIMARY; full +0.479 vs +0.162; wide +0.503 vs +0.149) — a real +0.25-0.35R separation. BUT it is
+FORWARD price action (a higher low in the next 2 bars), i.e. nearly tautological (trades that don't
+immediately make new lows win more), and it is a DELAYED-ENTRY variant, not a causal sizing overlay. The
+entry-shift re-sim (enter at bar i+2 with a recomputed stop, re-scan exits) is NOT cheap on the frozen
+single-position backtester and was DEFERRED. N3 is the single pre-registered watch-item for a future round
+IF a proper delayed-entry re-sim is built; it is not adopted now (look-ahead as a sizing flag).
+
+VERDICT vs pre-registered pass rules: N1 CLOSE, N2a CLOSE, N2b CLOSE (false pass), N3 watch-item (deferred),
+N4 CLOSE, N5 CLOSE, N6 CLOSE. 0-for-6. This is the 10th consecutive add-on round to reject; add-on base rate
+0-for-18 (was 0-for-12 at add.61). The corrected POWERFUL paired gauge (MDE 0.02-0.05R) — not the blind
+in/out split — delivered these nulls at n=2,622-8,601, so they are DETECTED nulls, not underpowered ones.
+
+WI's CORE CLAIM ON TRIAL — "the naked retest underperforms the confluent retest": the data says the OPPOSITE.
+On 8,601 fires the naked retest is as good as or BETTER than every confluence tier, and meanR does not rise
+with stacked confluence. WI's edge is discretionary chart-reading that does not survive mechanization on this
+door's fires — exactly the add.44-61 pattern (his geometry underperforms the simple placeholder on his own
+signal). The honest answer to give back to WI: on THIS mechanized door, additional confluence does not select
+better trades; the structural break-retest is already the whole edge.
+
+WHAT AMENDS ONE_STRATEGY / FORWARD_TEST_SPEC: NOTHING. No spec adopts. The frozen door and the pre-registered
+25-market forward basket (add.62) + capped S&P-500 sleeve (add.64) stand unchanged. The two open threads are
+UNCHANGED: (1) a causal bear-REGIME gate for the bear-rally leak (add.48/49/50) — N5 does not substitute for
+it; (2) forward paper-collection to the finish line. N3 acceptance added as a deferred future-round watch-item
+(needs a delayed-entry re-sim, not a sizing overlay). Nothing shipped; production untouched; worktree removed;
+branch study/wi-batch7 pushed.
