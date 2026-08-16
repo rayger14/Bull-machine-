@@ -18,6 +18,8 @@ os.makedirs(WB, exist_ok=True)
 
 # key -> yahoo ticker.  (KEY is the internal display symbol used by the harness.)
 NEW = {
+    "GOLD":     "GC=F",      # add.68: XA cache deleted in disk cleanup -> refetch
+    "NDX":      "^NDX",      # add.68: XA cache deleted in disk cleanup -> refetch
     "SPX":      "^GSPC",     # retry (raw-endpoint gated before; yfinance path)
     "DJI":      "^DJI",
     "RUT":      "^RUT",
