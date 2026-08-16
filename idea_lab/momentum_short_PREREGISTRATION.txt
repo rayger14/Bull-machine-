@@ -1,0 +1,125 @@
+================================================================================
+MOMENTUM-SHORT DOOR — PRE-REGISTRATION  (fixed BEFORE any outcome is measured)
+BUILD 1 of 4. STUDY ONLY. NOTHING SHIPS. Branch study/momentum-short.
+wyckoff_audit add.68 (this build).  Author sign-off timestamp = commit of THIS file.
+================================================================================
+
+0. PROVENANCE (both knowledge sources implemented faithfully, cited)
+--------------------------------------------------------------------
+INTERNAL (the never-run fork):
+  * add.46 fork (c): "short the confirmed struct break-DOWN and RIDE the markdown —
+    momentum/continuation, sound geometry, NOT top-catching — sidesteps distribution
+    detection entirely." (flagged 'never run' until now.)
+  * add.57 WI bias-flip doctrine: "a real candle-BODY break beyond the HTF range ...
+    a confirmed break flips bias" — BOTH directions. The eye machine already flips
+    standing_bias to 'bear' on run_dn>=ACCEPT_CONSEC (2 body closes below). We reuse
+    that verbatim; we do NOT add a new flip rule.
+  * add.47/48: the VALIDATED LONG DOOR (trend-continuation / breakout-retest, "buy the
+    pullback after the break"). This build is its EXACT GEOMETRIC MIRROR, inverted.
+  * add.54: THE ONE STRATEGY — the long door's cross-asset portability harness we mirror.
+EXTERNAL (CTA / time-series-momentum practice):
+  * Shorts here are BREAKDOWN CONTINUATION, not top-picking. Price is BELOW its long
+    MA and we ride the markdown after a confirmed structural break-down + failed retest.
+    This is the classic CTA/trend-following short: enter in the direction of the
+    established down-move on a pullback, never fade a high. (Documented framing; the
+    mechanism the report must judge: markets fall differently than they rise — faster,
+    with shallower/rarer retests — so the mirror may have LESS opportunity to enter.)
+
+1. THE MIRROR (EXACT inversion of trend_continuation_door.py / UnifiedArchetypeV2._m2,
+   m2_mode='broad'; NO NEW PARAMETERS — every magnitude imported from
+   unified_archetype_v2.py, none redefined). LONG spec -> SHORT spec, term by term:
+--------------------------------------------------------------------
+   REGIME R0 (permission; mirror of long "not-markdown"):
+     long : stables_rot_rising==0 AND (close> ema200 OR state != BROKEN_DOWN)
+     SHORT: stables_rot_rising==0 AND (close< ema200 OR state != BROKEN_UP)
+     NOTE: build_base_sensors sets stables_rot_rising=0 on EVERY asset (price-only door),
+     so the stables term is INERT on all families; R0 reduces to the not-markup clause.
+
+   TRIGGER + ENTRY (breakdown-retest = mirror of the breakout-retest):
+     T1  eye_dir[i]=='bear'            (standing bias set bear only by a confirmed DOWN-break)
+     T2  eye_state[i] in {MODEL_FORMING(inert), IN_RANGE, MANIPULATION}  (non-extension:
+         NOT CONFIRMED_BREAK/TRENDING -> we enter the PULLBACK, never the extension)
+     T3  a bear CONFIRMED_BREAK (eye_state==CONFIRMED_BREAK AND eye_dir=='bear') within
+         trailing M2_SOS_WIN bars -> break_level = range_LOWER_1d at that break bar
+         (mirror of range_upper). Else the setup does not exist (window expiry = skip).
+     T4  close[i] <= break_level        (the down-break was NOT given back = HOLD below)
+     T5  high[i] >= break_level - RTZ_ATR*ATR   (pulled back UP INTO the retest zone)
+     ENTRY SHORT at close[i].
+
+   STOP:  created_high = max(high) over trailing LPS_LOOKBACK bars (the pullback leg);
+          stop = created_high + STOP_BUF_ATR*ATR14(entry).   (mirror of created_low - buf)
+
+   MANAGE (two exit variants; identical entries+stops):
+     'struct' (HEADLINE) = TP1 40% at struct_range_LOW (else swing_low_50, else entry-1R;
+         must clear <= entry - MIN_TP1_R*R) -> stop to BREAKEVEN -> runner 60% to the
+         DOWNSIDE MEASURED MOVE struct_range_low - (range_high-range_low), floored (i.e.
+         capped further-down) at entry-2R via tt = min(entry-2R, measured).
+     'naive' = plain 1R/2R/3R equal thirds to the downside.
+     max_hold = MAX_HOLD bars. HEADLINE = struct / flat (rmult=1.0, conviction OFF).
+
+   SIZE (reported, NOT headline): base 1%; CONVICTION_MULT if (fib_time_confluence>0)
+     OR (bojan zone active). FLAG: the mirror's conviction sensor is NOT inverted
+     (bojan_LOW is used, bojan_HIGH not built). Immaterial to the verdict: the headline
+     is struct/flat rmult=1.0, immune to fib/bojan (exactly as the long headline).
+
+   DEDUP: no re-entry within DEDUP_K bars of the last entry.
+
+   IMPORTED PARAMS (identical to the long door; NONE new):
+     M2_SOS_WIN=360  LPS_LOOKBACK=48  RTZ_ATR=0.5  STOP_BUF_ATR=0.25  DEDUP_K=3
+     CONVICTION_MULT=1.5  MAX_HOLD=168  MIN_TP1_R=0.5  HTF_N=5 (weekly struct range)
+     eye: N_RANGE_1D=40, ACCEPT_CONSEC=2, TREND_CONSEC=5.
+   COSTS: commission 2bps/side, slippage 3bps/side. Risk 1%/trade, $100k start.
+   Daily exec, weekly N=5 struct range, PRICE-ONLY eye (wyckoff cols dropped).
+
+2. REALISM FLAG PER FAMILY (shorting frictions; reported separately)
+--------------------------------------------------------------------
+   crypto perps      : clean shorting (funding not modeled; flagged). CLEAN family.
+   equity-index/futs : realistic to short. CLEAN family.
+   metals (Gold etc) : realistic via futures. CLEAN family.
+   FX                : symmetric by construction (not a headline family; door REFUTES fx
+                       per add.62 long-side — reported for completeness only).
+   SINGLE STOCKS     : borrow cost + hard-to-borrow + uptick/locate realities NOT modeled.
+                       Run, but REPORT SEPARATELY and label APPROXIMATE. Not in the
+                       clean-shorting pass rule.
+
+3. VALIDATION FAMILIES (full multi-family, mirror of add.54/62/64)
+--------------------------------------------------------------------
+   * 10 crypto dailies (ETH,SOL,LTC,XRP,ADA,DOGE,DOT,AVAX,LINK,BTC) — refetch fresh.
+   * SPX, NDX, GOLD + the wide-basket trending families (equity-index DJI/RUT/N225/DAX/FTSE,
+     metals SILVER/COPPER/PLATINUM; energy OIL + fx as REFUTE controls).
+   * the 476-stock S&P universe (breadth300 cache) — APPROXIMATE (borrow), reported apart.
+   Self-test referee parity must be 0.00% on every new asset. Causality 3-point test on
+   the mirrored short sensors (decision at bar i invariant to truncation at i).
+
+4. MONEY WINDOWS (this door's entire purpose = markdown resilience) — reported explicitly
+--------------------------------------------------------------------
+   crypto bears : 2018, 2022, 2025-26 markdown.
+   equity bears : dotcom 2000-02, GFC 2007-09, COVID 2020, 2022.
+   Report pooled bear-window short PF/n/PnL per family. A short that CANNOT make money
+   in a pooled bear window has no reason to exist.
+
+5. ALSO REPORTED
+--------------------------------------------------------------------
+   * Combined book LONG+SHORT vs LONG-only (add.48 resilience question): all-weather PF,
+     and MaxDD. Does adding the short RAISE PF and CUT MaxDD?
+   * Above/below-EMA200 split (shorts should be BELOW-EMA200 — the mirror acid test).
+   * Episode clustering (concurrency / cross-name bunching in crashes).
+   * K-block CPCV subsample stability (K=6, test_m=2; frac PF>1).
+   * Bootstrap 95% CI on meanR (10k resamples).
+
+6. PRE-REGISTERED PASS RULE (all three must hold; decided BEFORE measurement)
+--------------------------------------------------------------------
+   (A) EDGE:   pooled SHORT PF >= 1.5 at n >= 50 with bootstrap meanR CI-low > 0,
+               on the CLEAN-SHORTING families (crypto + equity-index + metals).
+   (B) MONEY:  the door MAKES money (pooled PF > 1.2) in the pooled BEAR windows.
+   (C) HEDGE:  combined LONG+SHORT book MaxDD <= LONG-only MaxDD.
+   VALIDATES iff (A) AND (B) AND (C). Single-stock (borrow) result is corroborating
+   context only, never part of the rule. If any of A/B/C fails -> REJECT / watch-item,
+   and the report must state the MECHANISM (esp. if markets fall too fast to retest).
+
+7. CAUSALITY / ANTI-FISH DISCIPLINE
+--------------------------------------------------------------------
+   Every read at bar i uses arrays at indices <= i (eye lags 1 bar via broadcast; entry
+   is this bar's close). No per-asset tuning, no grids, no iterating against outcomes.
+   Params frozen at the long door's values. This file committed BEFORE the run.
+================================================================================
