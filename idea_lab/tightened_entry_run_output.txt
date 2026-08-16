@@ -1,0 +1,91 @@
+========================================================================================================
+THE TIGHTENED-ENTRY TEST (add.67) — WI's strict LPS+Bojan+MSS entry vs the loose door
+PRIMARY: 476 S&P-500 recent 2018-26 | SECONDARY: full-history stocks + 25-mkt wide basket
+========================================================================================================
+
+BREADTH-300 universe: 476 names pass screens
+  ...100/476  door fires 1829
+  ...200/476  door fires 3597
+  ...300/476  door fires 5361
+  ...400/476  door fires 7205
+
+REFEREE PARITY (sim_one vs independent run_backtest walker): 78 strict entries checked, 0 mismatches (max |Δ| 0.00e+00) -> 0.00% PASS
+
+door fires: full-history 8601  |  recent-2018+ (PRIMARY) 2622
+  (missing BTC-USD)
+  (missing ETH-USD)
+  (missing SOL-USD)
+  (missing LTC-USD)
+  (missing XRP-USD)
+  (missing ADA-USD)
+  (missing DOGE-USD)
+  (missing DOT-USD)
+  (missing AVAX-USD)
+  (missing LINK-USD)
+WIDE BASKET door fires: all 458  trending(pass) 382
+
+========================================================================================================
+PRIMARY — 476 stocks, recent 2018-2026   (loose door fires n=2622, book PF 1.75, meanR +0.279, totR +732.0, PnL $732,043)
+========================================================================================================
+S1 coverage: 2622/2622 setups.  MSS-search termination (S1 setups): {'mss': 1226, 'cap': 489, 'lps_broke': 907}
+
+variant          n_strict  shrink    meanR   CI-lo   CI-hi     WR     PF    bookR   book%       PnL$  pairN   pairΔR  Δ CIlo  Δ CIhi
+V0 {S1+S3}           1226    0.47    0.183   0.087   0.283  46.7%   1.35    224.7   30.7%    224,745   1226   -0.357  -0.456  -0.257
+Va {S1+S2a+S3}        276    0.11    0.104  -0.066   0.282  45.7%   1.20     28.8    3.9%     28,803    276   -0.529  -0.727  -0.335
+Vb {S1+S2b+S3}          8    0.00    0.342  -0.499   1.159  62.5%   1.89      2.7    0.4%      2,732      8   -1.789  -3.026  -0.627
+Vc {S1+S2c+S3}       1066    0.41    0.162   0.063   0.267  46.4%   1.31    173.0   23.6%    172,953   1066   -0.422  -0.527  -0.311
+
+SKIPPED by V0 (no MSS / S1 fail): n=1396  winners=657 (47%)  summed loose R of skipped=+69.8  (meanR skipped +0.050)
+
+ENTRY-DELAY (MSS_bar - door_bar), bars: p10=0 p50=2 p90=14 max=56 mean=4.3  |  neg/zero/pos delay = 52/93/1081
+ENTRY-PRICE shift (strict close vs door close): median +1.87%  worse-fill(higher) 1013/1226 (83%)
+
+S2c INVERSE (unfinished-low-below vs finished), LOOSE fires: unfinished n=669 meanR +0.473 PF 2.62  |  finished n=1953 meanR +0.213 PF 1.53  (Δ finished-unfinished -0.260)
+MAGNET overhead-supply in TT path (diagnostic): with n=212 meanR +0.484  |  without n=1014 meanR +0.121
+
+========================================================================================================
+SECONDARY(a) — 476 stocks, FULL history   (loose door fires n=8601, book PF 2.21, meanR +0.401, totR +3453.3, PnL $3,453,289)
+========================================================================================================
+S1 coverage: 8601/8601 setups.  MSS-search termination (S1 setups): {'lps_broke': 2937, 'cap': 1497, 'mss': 4167}
+
+variant          n_strict  shrink    meanR   CI-lo   CI-hi     WR     PF    bookR   book%       PnL$  pairN   pairΔR  Δ CIlo  Δ CIhi
+V0 {S1+S3}           4167    0.48    0.245   0.196   0.295  50.4%   1.50   1019.1   29.5%  1,019,149   4167   -0.418  -0.472  -0.364
+Va {S1+S2a+S3}        987    0.11    0.264   0.171   0.361  51.8%   1.56    260.6    7.5%    260,563    987   -0.425  -0.522  -0.327
+Vb {S1+S2b+S3}         32    0.00    0.471  -0.113   1.299  50.0%   2.35     15.1    0.4%     15,072     32   -1.380  -2.245  -0.430
+Vc {S1+S2c+S3}       3446    0.40    0.249   0.196   0.301  51.2%   1.52    857.4   24.8%    857,359   3446   -0.471  -0.529  -0.413
+
+SKIPPED by V0 (no MSS / S1 fail): n=4434  winners=2260 (51%)  summed loose R of skipped=+692.9  (meanR skipped +0.156)
+
+ENTRY-DELAY (MSS_bar - door_bar), bars: p10=0 p50=2 p90=13 max=58 mean=4.4  |  neg/zero/pos delay = 163/322/3682
+ENTRY-PRICE shift (strict close vs door close): median +1.85%  worse-fill(higher) 3407/4167 (82%)
+
+========================================================================================================
+SECONDARY(b) — wide basket, TRENDING families   (loose door fires n=382, book PF 2.26, meanR +0.416, totR +159.0, PnL $158,968)
+========================================================================================================
+S1 coverage: 382/382 setups.  MSS-search termination (S1 setups): {'lps_broke': 105, 'mss': 217, 'cap': 60}
+
+variant          n_strict  shrink    meanR   CI-lo   CI-hi     WR     PF    bookR   book%       PnL$  pairN   pairΔR  Δ CIlo  Δ CIhi
+V0 {S1+S3}            217    0.57    0.322   0.113   0.537  51.6%   1.66     69.8   43.9%     69,780    217   -0.195  -0.401   0.010
+Va {S1+S2a+S3}         46    0.12    0.714   0.221   1.256  58.7%   2.75     32.9   20.7%     32,866     46    0.010  -0.465   0.513
+Vb {S1+S2b+S3}          3    0.01    0.750  -1.007   1.633  66.7%   3.23      2.2    1.4%      2,249      3   -3.642  -4.616  -1.989
+Vc {S1+S2c+S3}        166    0.43    0.264   0.041   0.502  51.2%   1.54     43.9   27.6%     43,870    166   -0.293  -0.511  -0.070
+
+SKIPPED by V0 (no MSS / S1 fail): n=165  winners=87 (53%)  summed loose R of skipped=+46.8  (meanR skipped +0.284)
+
+ENTRY-DELAY (MSS_bar - door_bar), bars: p10=1 p50=1 p90=14 max=42 mean=4.9  |  neg/zero/pos delay = 4/18/195
+ENTRY-PRICE shift (strict close vs door close): median +1.26%  worse-fill(higher) 182/217 (84%)
+
+========================================================================================================
+PRE-REGISTERED VERDICT  (VALIDATE iff paired ΔR CI-lo>0 on PRIMARY, sign holds on a
+secondary, AND book R >= 90% of loose book R). Else the LOOSE door is VINDICATED.
+========================================================================================================
+variant           P_pairΔR  P_ΔCIlo  P_book%  full_ΔR  wide_ΔR                   VERDICT
+V0 {S1+S3}          -0.357   -0.456    30.7%   -0.418   -0.195REJECT: paired ΔR CI-lo<=0; book 31%<90%; no secondary sign
+Va {S1+S2a+S3}      -0.529   -0.727     3.9%   -0.425    0.010REJECT: paired ΔR CI-lo<=0; book 4%<90%
+Vb {S1+S2b+S3}      -1.789   -3.026     0.4%   -1.380   -3.642REJECT: paired ΔR CI-lo<=0; book 0%<90%; no secondary sign
+Vc {S1+S2c+S3}      -0.422   -0.527    23.6%   -0.471   -0.293REJECT: paired ΔR CI-lo<=0; book 24%<90%; no secondary sign
+
+-> NO strict variant clears the rule. The LOOSE DOOR is VINDICATED: our looser
+   translation is not a bug — it is an improvement on the teacher (Layer 3 closes).
+
+results -> /private/tmp/claude-501/-Users-rayghandchi-Bull-Machine-Bull-machine-/da0c7698-bb0a-4aa2-9a4e-481e62857ce4/scratchpad/breadth300/tightened_entry_results.json
