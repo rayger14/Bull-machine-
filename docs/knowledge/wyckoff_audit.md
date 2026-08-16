@@ -1540,3 +1540,103 @@ dominance-on-stocks) or a layer un-mechanizable without his discretion (Gann anc
 add-on-layer rejection; the door's edge remains the RARE structural break-retest at daily/weekly scale, and BREADTH
 + forward paper-collection remain the only honest levers. Nothing shipped; production untouched; worktree to be
 removed; branch study/translation-ledger pushed.
+
+### 2026-08-16 addendum 67 — THE TIGHTENED-ENTRY TEST: WI's strict LPS+Bojan+MSS entry is WORSE than the loose door — per-setup AND as a book. Layer 3 CLOSES: our looser translation is an IMPROVEMENT on the teacher, not a bug. (add-on base rate now 0-for-22)
+
+The definitive Layer-3/7 fidelity experiment, and the proper execution of add.65's one deferred watch-item
+(the N3 entry-shift re-sim). External review supplied WI's actual entry definition — *"LPS + Bojan. Market
+structure break on LPS. That is the trade."* Our door's entry (*"any daily close that holds above the broken
+level after dipping into the retest zone"*) is a SUPERSET of his. The question: is HIS strict fire-set better
+than our loose one? Branch study/tightened-entry off study/translation-ledger, worktree-isolated. Files:
+idea_lab/tightened_entry_PREREGISTRATION.txt (spec frozen BEFORE measuring), run_tightened_entry.py,
+tightened_entry_run_output.txt, tightened_entry_results.json. STUDY ONLY; production untouched. Referee parity
+0.00% (sim_one re-sim vs the INDEPENDENT run_backtest one-shot walker; 78 strict entries, 0 mismatches, max
+|Δ| 0.0). Frozen door bit-reproduced: PRIMARY n=2,622 PF 1.75 meanR +0.279 (= add.64/65), full n=8,601, GOLD 32.
+
+FOUNDING-KNOWLEDGE (owner-supplied, verbatim; recorded as add.8-grade Bojan doctrine). Bojan's framework is
+NOT wick-percentage anatomy (that was OUR invention, and it explains the N2b null, add.65). It is
+"FINISHED vs UNFINISHED BUSINESS": (1) an extreme made very EARLY in its candle's period is weak/unfinished and
+tends to get revisited (a Monday weekly low is weak; a late-week low with a rejection wick is finished);
+(2) opens with no wick to one side (open≈high or open≈low) are incomplete and tend to get "fixed"; (3) significant
+unfilled HTF wicks act as magnets/targets; (4) context split: fade weak opens in bracketing environments, more
+caution in trending; (5) multi-TF stacking (same character on daily + weekly) raises conviction. This corrects
+the Layer-7 ledger row: our one-candle wick% was never his Bojan.
+
+PRE-REGISTERED STRICT ENTRY (every interpolation flagged OURS). On a door setup (confirmed break + price back in
+the retest zone — unchanged), require ALL THREE causally: S1 LPS zone touch (pullback low in the door's T5 zone;
+LPS := argmin low over [follow-through peak .. door bar]); S2 Bojan candle at the LPS (FOUR variants, each run
+separately); S3 minor MARKET-STRUCTURE BREAK on the LPS := the first bar that CLOSES above the pullback leg's
+minor swing high (highest high strictly between the follow-peak and the LPS; monotonic-fallback = highest high of
+the 5 bars before the LPS, OURS). ENTRY = the close of that MSS bar (a genuine SHIFT, later than the door's
+entry), exits re-simulated fully from there: stop = LPS low − 0.25·ATR14(MSS), same TP1-40%/BE/60%-runner
+geometry, costs 2+3bps, 1% risk. S2 variants: S2a one-candle (lower-wick≥0.55 + close top-40% at LPS or LPS−1,
+add.65 N2b kept for continuity); S2b persistent-zone (an active un-invalidated bojan_detector low zone, daily
+frame, overlaps the retest band ±RTZ·ATR); S2c FINISHED-LOW (the Layer-7-faithful proxy of the doctrine above):
+(i) the weekly candle holding the LPS low printed it on trading-day-rank ≥ 3 of its week (late = finished;
+closed-bar discipline — the LPS week must be closed as of the MSS decision bar, else False), AND/OR (ii) the LPS
+daily open is not at its low (open−low ≥ 0.1·range = a real lower wick). Variants run: V0 {S1+S3}, Va {S1+S2a+S3},
+Vb {S1+S2b+S3}, Vc {S1+S2c+S3}. Universes: PRIMARY 476 S&P-500 recent 2018-26; SECONDARY (a) full-history stocks
+n=8,601 + (b) 25-market wide basket trending (n=382; the crypto sub-basket was evicted from the ephemeral cache
+this session → wide secondary is GOLD+7 indices+metals+single-stocks, still incl. the uncorrelated Gold).
+
+FIRE-SET CENSUS (the strict rules SHRINK the set hard). PRIMARY: S1 coverage 100% (LPS-in-zone is ~tautological
+on door fires — expected). MSS-search termination on the 2,622 door setups: MSS found 1,226 (47%), LPS broke
+first 907 (35%), cap-expired 489 (19%). So S3 alone (before any Bojan) discards 53% of the door's setups; the
+Bojan gates cut far more (Va keeps 276=11%, Vb 8≈0%, Vc 1,066=41%). Vb (persistent-zone) is DEGENERATE (n=8
+primary / 32 full / 3 wide) — the daily Bojan zone rarely overlaps the retest band, consistent with the
+ONE_STRATEGY "eq_magnet/bojan inert on daily" note.
+
+THE PER-SETUP PAIRED TABLE (the decisive read — isolates ENTRY quality from SETUP selection; same setup, two
+entries, ΔR = strict − loose, bootstrap 95% CI). PRIMARY:
+  | variant        | n_strict | shrink | strict meanR | book R (% of loose) | paired ΔR [CI]              |
+  | LOOSE door     |   2,622  |  1.00  |    +0.279    |  732.0 (100%)       |  —                          |
+  | V0 {S1+S3}     |   1,226  |  0.47  |    +0.183    |  224.7 ( 31%)       |  -0.357 [-0.456, -0.257]    |
+  | Va {S1+S2a+S3} |     276  |  0.11  |    +0.104    |   28.8 (  4%)       |  -0.529 [-0.727, -0.335]    |
+  | Vb {S1+S2b+S3} |       8  |  0.00  |    +0.342    |    2.7 (  0.4%)     |  -1.789 [-3.026, -0.627]    |
+  | Vc {S1+S2c+S3} |   1,066  |  0.41  |    +0.162    |  173.0 ( 24%)       |  -0.422 [-0.527, -0.311]    |
+  FULL-HISTORY (n=8,601) mirrors every sign: V0 ΔR -0.418 [-0.472,-0.364], Va -0.425, Vb -1.380, Vc -0.471; strict
+  books retain 0.4-30% of the loose 3,453R. WIDE-TRENDING (n=382): V0 -0.195 [-0.401,+0.010], Vc -0.293
+  [-0.511,-0.070]; the ONLY non-negative cell anywhere is Va +0.010 [-0.465,+0.513] — CI straddles 0 (per-setup
+  INDISTINGUISHABLE), on n=46 retaining 21% of book R. Its eye-catching +0.714 strict meanR is SETUP SELECTION,
+  not entry quality: the paired ΔR proves the strict ENTRY adds nothing on those same setups.
+
+WHY THE STRICT ENTRY LOSES (mechanism, not noise): the MSS confirmation DELAYS entry (PRIMARY delay p50=2, mean
+4.3 bars) and buys in +1.87% HIGHER (median; worse-fill 83% of the time) into the SAME target structure, with the
+stop still under the same LPS low → a wider stop, a smaller position, and fewer R of runway to the measured move.
+You pay for the "market-structure-break" confirmation in exactly the R it was supposed to protect. And S3 SKIPS
+1,396 door setups (no MSS / LPS broke first), of which 657 (47%) were loose WINNERS worth +69.8R foregone
+(+692.9R skipped on full-history). Higher per-trade selectivity cannot recover a book that throws away half its
+winners AND enters the rest worse.
+
+S2c INVERSE — the doctrine INVERTS on this door (an honest, striking null, like the add.65 freshness inversion):
+"unfinished-low-below" LOOSE fires (early-week low OR no-lower-wick — the character the doctrine says is weak and
+revisit-prone) had meanR +0.473 PF 2.62 (n=669), while "finished" lows had meanR +0.213 PF 1.53 (n=1,953);
+Δ finished−unfinished = −0.260. Used as an entry gate, the finished-low filter would preferentially KEEP the
+WORSE trades. (Magnet diagnostic, non-gated: fires with an unfilled overhead-supply level inside the TT path did
+better, +0.484 vs +0.121 — a weak swh50 proxy, recorded not adopted.) The finished-vs-unfinished doctrine is a
+real chart-reading idea, but its causal daily mechanization does not select better door entries — it anti-selects.
+
+VERDICT vs the pre-registered rule (VALIDATE iff paired ΔR CI-lo>0 on PRIMARY, sign holds on a secondary, AND
+book R ≥ 90% of loose): ALL FOUR VARIANTS REJECT — every PRIMARY paired-ΔR CI sits entirely below 0, and every
+strict book retains ≤31% of the loose book's R. **The LOOSE DOOR is VINDICATED. Layer 3 closes: our looser
+translation is not a bug — it is an IMPROVEMENT on the teacher.** On this mechanized, cross-asset-validated door,
+the structural break-retest hold IS the whole edge; adding WI's LPS-Bojan-then-MSS confirmation delays and
+worsens the entry and discards half the winners. Combined with add.65 (confluence overlays 0/6) and add.66
+(frame-independent null), the entry-object fidelity question (ledger rows #3/#7) — the last thing that could have
+overturned the batch-7 null — is answered: tightening to WI's exact entry makes it WORSE, not better. Add-on base
+rate now 0-for-22.
+
+WHAT AMENDS ONE_STRATEGY / FORWARD_TEST_SPEC: NOTHING. No variant adopts; the frozen door's loose retest-hold
+entry stands unchanged; the 25-market forward basket (add.62) + capped S&P sleeve (add.64) are untouched. The two
+open threads are UNCHANGED (a causal bear-REGIME gate for the bear-rally leak; forward paper-collection to the
+finish line). This experiment does NOT re-open them. If WI ever returns a row-by-row ledger correction with a
+DIFFERENT entry definition, that is a separate future decision — but the S3 "market-structure-break on the LPS"
+element (the non-tautological core of his verbatim entry) was tested faithfully here and it does not help.
+
+PARKED (reviewer's two flagged future items — recorded, NOT tested): (1) dual-range unification — the eye's
+rolling-40d box (what the door actually breaks against) vs structural_range.py's drawn W/M box (Layer-1 fidelity
+gap, add.13 rolling-disease); a separate build, not an entry question. (2) causal dominance rotation — Layer-14
+gap (dominance absent off-crypto); needs a materialized causal USDT.D structural reader; a separate build. Both
+are structural-fidelity builds, orthogonal to this closed entry question.
+
+Nothing shipped; production untouched; worktree removed; branch study/tightened-entry pushed.
