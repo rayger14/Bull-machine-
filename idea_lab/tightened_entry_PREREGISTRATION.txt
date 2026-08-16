@@ -1,0 +1,114 @@
+THE TIGHTENED-ENTRY TEST — PRE-REGISTRATION (frozen BEFORE any outcome is measured)
+==================================================================================
+wyckoff_audit addendum 67 (pending). STUDY ONLY. Nothing ships. Branch
+study/tightened-entry off study/translation-ledger. Worktree-isolated.
+
+QUESTION (Translation Ledger rows #3 + #7): our door's entry ("any daily close that
+holds above the broken level after dipping into the retest zone") is a SUPERSET of WI's
+actual entry ("LPS + Bojan. Market structure break on LPS. That is the trade.").
+Is HIS strict fire-set BETTER than our loose one — per-trade AND as a book?
+
+THE LOOSE BASELINE (unchanged, the frozen door — add.48/54/62/64):
+  On a confirmed bull break (break_level) with price back in the retest zone
+  (T4 close>=break_level, T5 low<=break_level+RTZ_ATR*ATR), ENTER at that daily close.
+
+WI'S STRICT ENTRY (pre-registered; every interpolation flagged OURS):
+  On the SAME door setup (confirmed break + price back in the retest zone — unchanged),
+  the STRICT entry requires ALL THREE, causally:
+  S1 LPS ZONE TOUCH: the pullback low (the LPS) is in the retest zone (the door's T5).
+     LPS bar := argmin(low) over [follow_peak .. door_fire_bar], where
+     follow_peak := argmax(high) over [break_bar .. door_fire_bar].  (OURS: this
+     operationalization of "the pullback low"; expected ~100% coverage since the door
+     already required low<=break_level+RTZ*ATR.)  S1 test: low[LPS] <= break_level +
+     RTZ_ATR*ATR[LPS].
+  S2 BOJAN CANDLE — FOUR pre-registered variants, each reported separately:
+     S2a ONE-CANDLE (batch-7 N2b anatomy, kept for continuity): the LPS bar OR the bar
+        immediately before it has lower wick >= 0.55 of range AND close in top 40%
+        ((close-low)/range >= 0.60).  (OURS: 0.55/0.60, from WI "55-60".)
+     S2b PERSISTENT-ZONE (the Layer-7-faithful one): an ACTIVE un-invalidated Bojan-low
+        zone (bojan_detector roster, daily frame) overlaps the retest band
+        [break_level - RTZ_ATR*ATR[LPS], break_level + RTZ_ATR*ATR[LPS]] at the LPS bar.
+        (OURS: the retest-band width = +/- RTZ_ATR*ATR; "any active low zone overlaps".)
+     S2c FINISHED-LOW (the finished-vs-unfinished-business proxy; owner doctrine
+        add.67, all causal from daily bars, closed-bar discipline):
+          (i)  the WEEKLY candle containing the LPS low printed that low on trading-day
+               rank >= 3 of its week (late-in-period = "finished"). CLOSED-BAR HANDLING
+               (OURS): the LPS week must be CLOSED as of the strict decision (MSS) bar,
+               i.e. week_id[MSS] > week_id[LPS]; if the LPS week is not yet closed at MSS
+               (MSS same week as LPS) S2c(i)=False (conservative). day-rank counted among
+               the trading bars present in that ISO week (freq='W').  AND/OR
+          (ii) the LPS DAILY bar's open is NOT at its low: open-low >= 0.1*range (a real
+               lower wick exists below the open).  (OURS: 0.1 threshold.)
+        PRIMARY S2c := (i) OR (ii). Also report (i), (ii), (i AND ii) separately.
+        INVERSE DIAGNOSTIC (not an entry gate): unfinished-low-below :=
+          (day-rank <= 2 = early-week) OR (open-low < 0.1*range = no lower wick).
+          Reported as a would-be veto (does its presence predict worse R / more stops).
+  S3 MINOR MARKET-STRUCTURE BREAK ON THE LPS (the genuinely new, non-tautological
+     element; the deferred N3 done properly): AFTER the LPS bar, price CLOSES above the
+     MINOR SWING HIGH formed during the pullback leg:
+       minor_swing_high := max(high) over the bars STRICTLY BETWEEN follow_peak and LPS;
+       if the pullback is monotonic (no strictly-between bar), FALLBACK (OURS):
+       minor_swing_high := max(high) over the 5 bars immediately before the LPS.
+     MSS bar := the FIRST bar j > LPS with close[j] > minor_swing_high. Search forward
+       with (OURS) a body-close INVALIDATION guard (if close[j] < low[LPS] first, the LPS
+       broke -> no MSS -> strict SKIPS the setup) and a cap of MSS_CAP=60 daily bars after
+       the LPS (a setup that takes >~3 months to break minor structure up is not the same
+       continuation; report the delay distribution to show the cap does not bind).
+     ENTRY = the CLOSE of the MSS bar (a genuine entry SHIFT — LATER than the door's
+       entry). Re-simulate exits FULLY from the shifted entry:
+         stop = low[LPS] - STOP_BUF_ATR*ATR14(MSS)      (WI "SL under the created LPS";
+                OURS: anchor to the single LPS-bar low, not the door's rolling-48 min —
+                they coincide for small delays)
+         TP1 40% at struct_range_high[MSS] (else swing_high_50, else entry+1R; >=0.5R) ->
+         stop to breakeven -> runner 60% to measured move struct_range_high+(high-low),
+         floored entry+2R; MAX_HOLD=168; costs 2bps commission + 3bps slippage; 1% risk.
+       (Same TP/BE/runner geometry as the door, evaluated at the shifted entry bar.)
+
+STRICT VARIANTS RUN (vs the LOOSE door baseline):
+  V0 = {S1+S3}       (structure-break entry, no Bojan)
+  Va = {S1+S2a+S3}   (+ one-candle Bojan at the LPS)
+  Vb = {S1+S2b+S3}   (+ persistent-zone Bojan at the LPS)
+  Vc = {S1+S2c+S3}   (+ finished-low Bojan proxy at the LPS)
+  (Va/Vb/Vc are subsets of V0 filtered by the S2 flag; all share the S3 entry shift.)
+
+UNIVERSES:
+  PRIMARY   = 476 S&P-500 names, recent 2018-2026 (matches add.64/65 primary).
+  SECONDARY = (a) full-history stock pool + (b) 25-market wide basket (trending
+              families: crypto/equity-index/metal/single-stock).
+
+MEASUREMENT (powered, pre-registered) per variant vs loose:
+  * FIRE-SET CENSUS: n (fire-set shrinkage), termination reasons of the MSS search.
+  * PER-TRADE: meanR + bootstrap 95% CI, WR, PF.
+  * BOOK: total R and PnL at 1% risk (a strict set with higher per-trade quality can
+    still LOSE as a book by skipping winners — report both explicitly).
+  * PAIRED PER-SETUP (isolates ENTRY quality from SETUP selection): on setups where a
+    loose fire AND the strict entry BOTH exist, ΔR = strict_R - loose_R (same setup, two
+    entries), mean + bootstrap 95% CI.
+  * SKIPPED-WINNERS OPPORTUNITY COST: door fires the strict rule SKIPS entirely — count
+    and summed R, split by loose-winner/loser.
+  * ENTRY-DELAY DISTRIBUTION: MSS_bar - door_bar (days later); entry price better/worse.
+  * S2c inverse (unfinished-low-below) diagnostic; unfilled-weekly-upper-wick magnet
+    split (diagnostic only, never gated).
+
+REFEREE PARITY: the shifted-entry exits are re-simulated by an inlined single-position
+  walker (sim_one, add.66) and VERIFIED bit-identical (R) against the INDEPENDENT
+  reference walker run_backtest driven with a one-shot EntryPlan at the MSS bar. Target
+  0.00% on every checked strict entry. Causality/3-point-truncation on every NEW sensor
+  (minor-swing-high tracker, MSS search, weekly day-rank, zone overlap) — all read only
+  bars <= the decision (MSS) bar.
+
+PASS RULE (pre-registered; WI's strict entry VALIDATES iff):
+  a strict variant's PER-SETUP PAIRED ΔR bootstrap CI-lo > 0 on PRIMARY, with the SIGN
+  holding on a secondary, AND its TOTAL BOOK R >= 90% of the loose book's R (quality
+  WITHOUT material opportunity cost). ADOPT would mean tightening ONE_STRATEGY's entry to
+  WI's definition (prototype-grade; forward proof still required). If no strict variant
+  clears both, or a variant bleeds book R through skipped winners, the LOOSE DOOR stands
+  VINDICATED and Layer 3 closes: "our looser translation is not a bug — it is an
+  improvement on the teacher." NO grids beyond the four pre-registered variants. ONE
+  round — this closes Layer 3/7 either way.
+
+PARKED (recorded, NOT tested — reviewer's two flagged future items):
+  * dual-range unification (the eye's rolling-40d box vs structural_range.py's drawn W/M
+    box) — a known Layer-1 fidelity gap; a separate build, not this experiment.
+  * causal dominance rotation — Layer-14 gap (dominance absent off-crypto); needs a
+    materialized causal USDT.D structural reader, a separate build.
