@@ -1,0 +1,125 @@
+FUNDING CARRY — PRE-REGISTRATION (frozen BEFORE any outcome is measured)
+========================================================================
+BUILD 3 of 4. Branch study/funding-carry off study/tightened-entry. Worktree-isolated.
+STUDY ONLY; production untouched. NO grids, NO per-parameter tuning, NO iterating
+against results. Two canonical forms fixed here; magnitudes fixed here.
+
+Date frozen: 2026-08-16 (before running run_funding_carry.py / run_funding_regime_dial.py)
+
+DATA (verified on disk before freezing):
+  Funding: data/cache/derivatives_hourly_full.parquet, col binance_funding_rate.
+    = Binance last_funding_rate (REALIZED 8h settlement rate) ffilled to 1H.
+    Settles every 8h at 00:00/08:00/16:00 UTC. Coverage 2020-09-01 -> 2026-06-11.
+    Distribution (per-8h): mean 1.036e-4 (annualized ~11.3%); median 8.5e-5;
+    85th 1.0e-4; 99th 1.062e-3 (annualized ~116%); min -1.19e-3 (annualized ~-130%).
+    Right-skewed with a cluster at the 1.0e-4 Binance baseline.
+  Price: data/features_mtf/BTC_1H_FEATURES_V22_CTX.parquet (OHLCV), 2018-01 -> 2026-06.
+  Overlap used for Form A: 2020-09-01 -> 2026-06-10 (~5.75 yr).
+
+FUNDING MECHANICS (documented precisely, load-bearing for Form A PnL):
+  Funding is a PAID cash flow between longs and shorts, exchanged every 8h.
+  If funding_rate > 0: LONGS PAY SHORTS.   If funding_rate < 0: SHORTS PAY LONGS.
+  Payment per settlement = funding_rate * position_notional.
+  Cash flow to a position: cf = -side * funding_rate * notional
+    side = +1 long, -1 short. (Short with rate>0 RECEIVES +rate*notional; long with
+    rate<0 RECEIVES -rate*notional = +|rate|*notional.) Modeled EXPLICITLY every 8h.
+  Binance 8h cadence => 3 settlements/day => annualization factor = 3*365 = 1095.
+
+=====================================================================================
+FORM A — FUNDING-EXTREME FADE (standalone carry strategy; the primary deliverable)
+=====================================================================================
+Grid: the 8h funding-settlement grid (timestamps 00/08/16 UTC). BTC 1H resampled to
+  8h OHLC aligned to those boundaries. All decisions at 8h closes; stop checked using
+  the 8h bar low/high; funding accrues at each held 8h settlement.
+
+SIGNAL (all causal):
+  f3 = trailing 3-DAY MEAN of the 8h funding rate = rolling mean of the last 9
+       settled 8h rates (3 days * 3/day). Causal (uses t and priors only).
+  Expanding-causal percentiles of the f3 SERIES: at each step t, P85_t / P50_t /
+       P15_t = 85th/50th/15th percentile of {f3_s : s <= t} (expanding window,
+       recomputed each step, uses only past+present). Warmup: no trades until
+       >= 270 completed 8h steps of f3 history (~90 days) so percentiles are defined.
+
+ENTRY (one position at a time; carry book, no pyramiding):
+  If FLAT and f3_t > P85_t  -> SHORT (crowded longs pay us; we collect + funding).
+  If FLAT and f3_t < P15_t  -> LONG  (crowded shorts pay us; we collect - funding).
+  (Symmetric mirror of the 85th extreme; 15th is the pre-registered lower extreme.)
+
+SIZE (carry, wide stop):
+  risk_dollars = 0.01 * equity (1% risk, fixed-fractional on running equity).
+  stop_distance = 3.0 * ATR   (ATR = Wilder ATR14 on the DAILY frame, value as of the
+       entry day; wide because this is a carry hold, not a breakout).
+  qty = risk_dollars / stop_distance ; notional = qty * entry_price.
+
+HOLD / FUNDING ACCRUAL:
+  Each held 8h settlement: funding_cf = -side * funding_rate(t) * notional (added to PnL).
+  (notional marked at entry price, held constant — conservative; funding is on position size.)
+
+EXIT (first to trigger):
+  (a) STOP: short stops if 8h-bar HIGH >= entry + 3*ATR; long stops if 8h-bar LOW <=
+      entry - 3*ATR. Fill at the stop price. (price leg = -risk_dollars by construction.)
+  (b) NORMALIZATION: short exits when f3_t < P50_t; long exits when f3_t > P50_t.
+      Fill at the 8h close.
+  No take-profit (a carry position is held for the cash flow, exited on normalization/stop).
+  No max-hold cap (spec says "hold while the extreme persists").
+
+COSTS: 2bps commission + 3bps slippage = 5bps per side, on notional, at entry and exit.
+
+PnL DECOMPOSITION (reported): price_leg + funding_leg - costs = net, per trade and book.
+  gross_profit = sum of positive-net trades; gross_loss = sum of |negative-net trades|.
+  PF = gross_profit / gross_loss.
+
+PARITY (referee): independent re-computation of book net PnL two ways
+  (per-trade sum vs equity-curve delta) MUST agree to 0.00%.
+
+CAUSALITY 3-POINT CHECK: on f3 and on each expanding percentile series, verify that the
+  value at index k is unchanged when the series is truncated at k (no future leakage /
+  no repaint), at 3 sampled indices. MUST be 0 mismatches.
+
+PRE-REGISTERED VALIDATION RULE (Form A validates iff ALL THREE):
+  A1  total net PnL > 0 AND PF >= 1.30
+  A2  funding_leg cash flow >= 40% of GROSS PROFIT (proves it is CARRY, not disguised
+      mean-reversion price luck)
+  A3  no single squeeze EPISODE draws the book down more than -15% (book DD within episode)
+  If any fail: Form A does NOT validate — reported plainly as thin/squeeze-fragile.
+
+REQUIRED HONEST REPORTING (regardless of pass/fail):
+  - annualized carry YIELD captured (funding_leg / avg_notional / years, annualized)
+  - benchmark vs FLAT CASH (0% book) and the short-vol honesty framing
+  - SQUEEZE-EPISODE TABLE: worst adverse episodes for the short-collecting book, esp.
+    2021 bull squeezes (shorts-collecting-funding run over — the known death mode),
+    per episode: dates, book DD, funding collected, price loss, net.
+  - per-YEAR / era stratification (2020-22 vs 2023-26).
+
+=====================================================================================
+FORM B — FUNDING AS REGIME DIAL on the validated door (boost-shaped; secondary)
+=====================================================================================
+Unit = the FROZEN add.48 trend-continuation door (struct/flat headline, rmult=1.0)
+  run on BTC-USD DAILY (resampled causally from the 1H V22 OHLCV). Door entries are
+  LONG only. Funding exists only for BTC, so this is inherently BTC-door-only.
+
+FLAG (never a gate): for each door entry at time te, crowded_long = (f3 at te > P85 at
+  te) using the SAME Form-A expanding-85th percentile machinery on the 8h f3 series
+  (nearest settled value at/just before te). Door entries with crowded_long=True are
+  the "crowded-funding entry" tier; else "clean" tier.
+
+PAIRED SPLIT (report paired): door outcome R for crowded vs clean entries. Report n,
+  meanR, PF each; bootstrap 95% CI on (meanR_clean - meanR_crowded). Framing = sizing
+  tier (a penalty multiplier on crowded entries / boost on clean), NEVER a gate.
+
+PRE-REGISTERED ADOPT RULE (Form B adopts as a sizing-tier CANDIDATE iff):
+  crowded-entry meanR materially WORSE than clean (Δ = clean - crowded > 0) with
+  bootstrap 95% CI-lo > 0, at usable n. If n_crowded < 30 OR n_clean < 30 => report
+  DIRECTIONAL ONLY (per escalation rule, n<30 not statistically separable) and do NOT
+  claim adoption; escalate that funding is single-asset so Form B cannot be powered.
+
+=====================================================================================
+DISCIPLINE (inherited from wyckoff_audit add.62-67):
+  - pre-registration frozen before measuring (this file, committed before results)
+  - referee/parity 0.00%, causality 3-point no-repaint checks
+  - report ALL, drop NONE; a failing form is a FINDING
+  - boost-shaped overlays only (Lesson #54), never fusion filters, never new gates
+  - deflation: single-asset in-sample => forward expectation discounted; say so
+  - add-on base rate context: 0-for-22 add-on layers on the door — strong NO prior
+  - Standing orders: no production config/code/bypass/archetype changes; recs only.
+=====================================================================================
