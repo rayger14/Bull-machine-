@@ -140,7 +140,7 @@ sizing tilt, add.10, not as an entry gate). Entry at the **daily close**, not at
 +1.09R). *Is buying the daily close on the hold your fill, or would you have rested a limit inside the zone and
 required the LPS+Bojan candle specifically?*
 
-**(e) Risk: MED-HIGH.** The break→pullback→hold shape is faithful and is the layer that carries the edge. But
+**(e) Risk: HIGH** *(elevated from MED-HIGH on external review, 2026-08-15)*. The break→pullback→hold shape is faithful and is the layer that carries the edge. But
 **"LPS + Bojan" is reduced to "close held above the level + dipped into an ATR-scaled zone"** — the *Bojan
 candle*, the *inducement/sweep of the LPS*, and the *fill-in-zone* are all dropped or approximated. If your entry
 is specifically the LPS-Bojan candle (not any hold), our fire set is a **superset** of yours — which is exactly
@@ -548,7 +548,7 @@ For every layer in §1, please mark one of:
 |---|-------|:--------------:|:----------------------------:|
 | 1 | Structural range + location | MED | rolling-40d eye box ≠ your drawn W/M range |
 | 2 | Break/acceptance | MED | "2 daily closes" vs your (weekly?) acceptance |
-| 3 | Retest / LPS entry | **MED-HIGH** | **"LPS+Bojan candle" reduced to "any hold in an ATR zone"** |
+| 3 | Retest / LPS entry | **HIGH** | **"LPS+Bojan candle + minor structure break" reduced to "any hold in an ATR zone" — our fire set is a SUPERSET of yours. Sharpened question: is the entry specifically the LPS+Bojan candle (rejection wick + close location) that ALSO produces a minor market-structure break, or is any daily close that holds above the broken level acceptable?** |
 | 4 | Stops | MED | post-TP1 → breakeven vs your "under created LPS" |
 | 5 | TP/derisk/runner | MED-HIGH | 60% runner vs your 1/10 core; our TT formula |
 | 6 | Campaign topology | **HIGH** | **no pyramiding-while-positioned (your 1–3 entries/model)** |
@@ -565,6 +565,11 @@ For every layer in §1, please mark one of:
 ---
 
 ## 5. Bottom line
+
+**The single highest-probability place we are still looser than you is the entry definition itself
+(Layer 3 + Layer 7). If your real trigger is specifically the LPS+Bojan candle (with a minor market
+structure break) rather than any hold above the level, then batch-7 tested confluence on a broader
+fire set than you would take.**
 
 - **The highest-risk (most-likely-our-fault) translation rows are #3 (LPS+Bojan entry reduced to "any hold"),
   #6 (no pyramiding), #7 (single-candle Bojan), #11 (invented chop-count), #13 (un-mechanizable Gann anchor), and
