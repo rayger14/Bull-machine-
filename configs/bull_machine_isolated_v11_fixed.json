@@ -43,13 +43,12 @@
       }
     ],
     "notes": [
-      "2026-03-06: PRODUCTION MODE \u2014 threshold active, 8 calibrated archetypes, max 3 positions",
-      "Data collection mode ended: 79 trades, 33% WR, -$4,488. Bypass mode was catastrophic.",
-      "Enabled: wick_trap, liquidity_sweep, retest_cluster, trap_within_trend, spring, failed_continuation, order_block_retest, liquidity_vacuum"
+      "2026-08-11: DATA-COLLECTION MODE \u2014 bypass_threshold=true, all 16 archetypes enabled. The dynamic threshold is computed/logged but not gated on.",
+      "The prior notes ('PRODUCTION MODE threshold active, 8 calibrated, max 3 positions', 'Data collection mode ended ... Bypass mode was catastrophic') described a superseded 2026-03-06 experiment and no longer match this config \u2014 corrected for config honesty (engine-integrity audit #1)."
     ]
   },
   "disabled_archetypes": [],
-  "_disabled_archetypes_note": "2026-03-06: PRODUCTION MODE. bypass_threshold=false. 8 calibrated archetypes enabled, 9 disabled. Data collection mode (79 trades, 33% WR, -$4.5K) proved bypass is catastrophic.",
+  "_disabled_archetypes_note": "2026-08-11: DATA-COLLECTION MODE. disabled_archetypes=[] - all 16 archetypes enabled. bypass_threshold=true (see adaptive_fusion._threshold_note). The prior 2026-03-06 text ('bypass_threshold=false, 9 disabled, bypass is catastrophic') no longer matches this config - corrected for config honesty (engine-integrity audit #1).",
   "_calibrated_archetypes": [
     "trap_within_trend",
     "liquidity_vacuum",
@@ -122,7 +121,7 @@
       "long_squeeze": 0.2,
       "confluence_breakout": 0.05
     },
-    "_threshold_note": "2026-03-06: PRODUCTION MODE. bypass_threshold=false. Only signals above dynamic threshold trade. Data collection (79 trades, 33% WR, -$4.5K) proved bypass is catastrophic.",
+    "_threshold_note": "2026-08-11: DATA-COLLECTION MODE. bypass_threshold=true BY DESIGN (junk book collects maximum live signal data; user decision 2026-07-23). Sub-threshold signals trade; the dynamic threshold is computed and logged but NOT used as a hard gate. This is the canonical backtest config (bin/backtest_v11_standalone.py) and runs the same bypass=true as live champion_paper.json. Rationale: fusion score has NEGATIVE predictive power (Lesson #54). The prior 2026-03-06 text ('bypass_threshold=false ... bypass is catastrophic') contradicted the live value below (true) - corrected for config honesty (engine-integrity audit #1).",
     "bypass_threshold": true,
     "cmi_weights": {
       "risk_temp": {

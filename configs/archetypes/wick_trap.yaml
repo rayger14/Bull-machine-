@@ -25,13 +25,14 @@ hard_gates:
   op: min
   value: 0.0
   description: At least median volume (real wicks have volume behind them)
-- feature: instability_score
-  op: max
-  value: 0.45
-  nan_policy: skip
-  description: 'Low market instability - above 0.45 wicks are noise not reversal (backtest
-    WR 67% vs 49%, p=0.018) [FIXED 2026-07-13: engine emits instability_score; was
-    inert via nan_policy skip]'
+# REMOVED 2026-08-11 (engine-integrity audit #7): the instability_score max 0.45
+# gate was a LIVE-ONLY, never-backtested filter. instability_score is emitted on
+# 100% of live bars (blocking 14.1% of them, >0.45) but is ABSENT from every
+# backtest store (V12/V14) -> nan_policy:skip made it inert in every backtest that
+# validated wick_trap. The 2026-07-13 rename (instability -> instability_score)
+# accidentally ACTIVATED this unvalidated filter live only. Doctrine: never run a
+# never-validated filter as the binding constraint (filters 0/9 accepted; boosts
+# preferred). Removing it makes live match the validated backtest.
 gate_mode: hard
 exit_logic:
   max_hold_hours: 168
