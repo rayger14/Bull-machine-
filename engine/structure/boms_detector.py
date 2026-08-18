@@ -303,12 +303,16 @@ def detect_boms(df: pd.DataFrame, timeframe: str = '4H',
                         displacement=float(displacement)
                     )
 
-    # No full BOMS detected, but return best displacement if structure was broken
-    # This allows archetype system to use displacement without requiring FVG/reversal confirmation
+    # No full BOMS detected, but return best displacement if structure was broken.
+    # This allows archetype system to use displacement without requiring FVG/reversal confirmation.
+    # FIX: emit the KNOWN break direction here (it was previously discarded as 'none', which
+    # left tf4h_boms_direction / tf1d_boms_direction dead — all-zero everywhere). boms_detected
+    # stays False (full-confirmation semantics for knowledge_hooks unchanged); direction now
+    # reflects the structure-break side, so HTF market-structure state has a live directional signal.
     if best_bullish_displacement > 0.0:
         return BOMSSignal(
             boms_detected=False,
-            direction='none',
+            direction='bullish',
             volume_surge=0.0,
             fvg_present=False,
             confirmation_bars=0,
@@ -318,7 +322,7 @@ def detect_boms(df: pd.DataFrame, timeframe: str = '4H',
     elif best_bearish_displacement > 0.0:
         return BOMSSignal(
             boms_detected=False,
-            direction='none',
+            direction='bearish',
             volume_surge=0.0,
             fvg_present=False,
             confirmation_bars=0,

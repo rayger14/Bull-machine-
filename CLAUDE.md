@@ -16,16 +16,6 @@
 | **Live Runner** | `bin/live/coinbase_runner.py` (Coinbase BTC-PERP-INTX paper trading) |
 | **Dashboard** | `dashboard/` (React 19 + TypeScript + Vite + Tailwind CSS 4, served at port 8081) |
 
-### Production Results (2020-2024, $100K, post-Optuna 6-group)
-| Metric | Value |
-|--------|-------|
-| PF | 1.73 |
-| PnL | $132K |
-| MaxDD | -8.3% |
-| Sharpe | 1.33 |
-| Trades | 731 |
-| Win Rate | 79.5% |
-
 ---
 
 ## Quick Validation
@@ -39,38 +29,12 @@ python3 bin/backtest_v11_standalone.py --start-date 2020-01-01 --commission-rate
 
 ---
 
-## Critical Paths That Affect Signal Generation
+## Design Constraints (rationale the code can't explain)
 
-- `engine/archetypes/archetype_instance.py`: Hard gates + fusion scoring + whale penalty
-- `engine/archetypes/logic_v2_adapter.py`: Feature mapping adapter layer
-- `engine/archetypes/threshold_policy.py`: Dynamic threshold resolution
-- `configs/archetypes/*.yaml`: Per-archetype hard gates and weights
-- `configs/bull_machine_isolated_v11_fixed.json`: CMI parameters and thresholds
-- `engine/context/regime_service.py`: CMI v0 regime scoring
-
----
-
-## Architecture Overview
-
-### CMI v0 Regime System (Orthogonal to Archetype Fusion)
-- **Dynamic threshold** = base + (1 - risk_temp) * temp_range + instability * instab_range
-- **Config**: base=0.18, temp_range=0.38, instab_range=0.15, crisis_coeff=0.50
-- **risk_temperature**: trend_align(45%) + ADX(25%) + fear_greed(15%) + drawdown(15%)
-- **instability**: chop(40%) + wick_score(25%) + vol_instab(25%) + adx_weakness(10%)
-- **crisis_prob**: base_crisis(45%) + sentiment_crisis(45%) + vol_shock(10%)
-- CMI must be orthogonal to archetype fusion — no double-counting
-
-### Smart Exits V2 (exit_logic.py)
-Priority chain: hard_stop → invalidation → distress → profit_targets → time_exit → reason_gone → trailing_stop → runner
-- **Composite invalidation**: 5-feature score (BOS, RSI, EMA slope, volume), threshold 4/5, wick_trap + retest_cluster only
-- **Distress half-exit**: 50% exit when underwater + 4/5 distress signals, all archetypes
-- **Chop-aware trailing**: 0.75x at chop>0.45, 0.88x at chop>0.35
-- **Regime exit scaling**: DISABLED (all factors = 1.0, was net negative)
-
-### Whale Footprint System
-- **Whale conflict penalty** (archetype_instance.py): Direction-aware 4-signal check, 5%/10%/15%/20% tiers
-- **Hard gates**: Per-archetype YAML configs, evaluated BEFORE fusion scoring
-- **derivatives_heat**: CMI component, DISABLED (weight=0%) pending 3+ years OI data
+- **CMI regime system must stay orthogonal to archetype fusion** — no double-counting (`engine/context/regime_service.py`; weights/thresholds live in `configs/bull_machine_isolated_v11_fixed.json`)
+- **Regime exit scaling is DISABLED** (all factors = 1.0) — tested net negative
+- **derivatives_heat is DISABLED** (CMI weight = 0%) pending 3+ years of OI data
+- **Whale conflict penalty + hard gates** run BEFORE fusion scoring (`engine/archetypes/archetype_instance.py`, per-archetype YAMLs)
 
 ---
 
@@ -106,10 +70,7 @@ exit_qty = original_qty * pct
 
 ## Deployment
 
-- **Server**: `165.1.79.19` | **SSH**: `ssh -i ~/.ssh/oracle_bullmachine ubuntu@165.1.79.19`
-- **Deploy**: `./deploy/deploy.sh` (builds dashboard, syncs code, restarts services)
-- **Services**: coinbase-paper (800MB limit) + dashboard (8081, 200MB limit)
-- **Monitor**: `sudo journalctl -u coinbase-paper -f`
+Use the `/deploy-server` skill (server, SSH, deploy.sh, monitoring). **Never deploy without an explicit go from the user in the current exchange.**
 
 ---
 
@@ -177,29 +138,7 @@ Before committing code changes:
 
 **ALWAYS use the `/optuna-optimize` skill before running any Optuna optimization.** This skill enforces walk-forward validation, CPCV, and anti-overfit checks. Never run Optuna on the full date range without WFO/CPCV validation.
 
-### Quick Reference
-```bash
-# Walk-Forward mode (recommended)
-python3 bin/optuna_wfo.py --group A --trials 40 --mode wfo
-
-# CPCV mode (rigorous, for production deployment)
-python3 bin/optuna_wfo.py --group A --trials 30 --mode cpcv
-
-# Quick single-window (testing only, NOT for production)
-python3 bin/optuna_optimize_gates.py --group A --trials 60
-```
-
-### Key Rules
-- Never optimize on full date range without WFO/CPCV validation
-- Never optimize more than 15 parameters at once (split into groups of 5-8)
-- Never deploy without comparing to baseline
-- Never ignore trade count drops (>50% = overfit)
-- Always run parameter importance analysis after optimization
-
----
-
-**Last Updated**: 2026-03-13
-**Architecture Version**: v18 Optuna 6-Group Optimization + WFO/CPCV
+The skill contains the run commands and full rule set (WFO/CPCV modes, ≤15 params per group, baseline comparison, trade-count and importance checks).
 
 ---
 
