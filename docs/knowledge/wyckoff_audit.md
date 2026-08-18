@@ -1134,3 +1134,49 @@ STAND-DOWN (size down/out in confirmed markdown) — as a DIAL not a veto (filte
 deployed time gate works as a crowd-out governor, add.38). That needs the CMI regime block
 materialized (add.32 plumbing) + fresh live data to validate. Everything else is downstream
 of "we can't tell a bounce-dip from a first-stair-down dip in real time."
+
+### 2026-08-10 addendum 51 — FIXED: BOMS direction was dead (discarded on displacement-only breaks). HTF market-structure state now has a live directional signal.
+
+User prioritized BOS/BOMS ("very important... knowing bos and boms"). Diagnosed WHY tf4h_boms_direction /
+tf1d_boms_direction were dead (all-zero everywhere, incl. the store) while boms_strength fired (0.7%).
+ROOT CAUSE (engine/structure/boms_detector.py detect_boms): `direction` was set to bullish/bearish ONLY on
+the FULL stringent BOMS confirmation (structure break + volume + FVG-trail + no-reversal). When price broke
+structure but wasn't fully confirmed, the code kept the displacement but returned `direction='none'` — the
+KNOWN break direction was discarded. So strength (from displacement) fired while direction was permanently 0.
+FIX: in the two displacement-only fallback branches, emit `direction='bullish'/'bearish'` (the known break
+side); keep `boms_detected=False` (full-confirmation semantics for knowledge_hooks UNCHANGED). Branch
+fix/boms-direction (off main). VERIFIED on BTC 1D: direction 0.0% → 2.2% of bars, aligned 1:1 with structure
+breaks (34 bull / 34 bear). CONSUMER-SAFE: only reader is knowledge_hooks (gates on boms_detected, still
+False); no archetype reads tf*_boms_direction — it was a dead feature nobody depended on, so populating it
+can't break live behavior (only revives intended HTF-state signal).
+CAVEATS / NEXT: (1) fix is in the SOURCE detector → LIVE path (live_feature_computer calls detect_boms) gets
+it on next DEPLOY (NOT deployed — standing rule); STORE (V22_CTX) is precomputed → needs a boms-column
+rebuild to propagate into study data. (2) SEPARATE unfixed issue: tf1d_boms_detected is all-NaN (the
+full-confirmation boolean is never surfaced as a feature) — not fixed here because full-confirmation BOMS is
+genuinely rare and DIRECTION is the useful HTF-state signal. (3) The BOS/CHoCH (lower-TF) store-vs-live parity
+bug (audit #2: fire in store, 0 live) is a DIFFERENT bug, not addressed here. (4) This REFRAMES the eye-gate
+HTF-state failure: its BOMS input was dead, so the HTF state it gated on was impoverished — the HTF-state
+layer may never have had a fair test. With direction now live, HTF-state(BOMS-dir) + LTF-trigger can finally
+be tested for real — after a store rebuild. HONEST: still a detection fix; the plain BOS-retest already lost
+(order_block_retest PF 0.75), so this enables a fair test, it does not by itself create edge.
+
+### 2026-08-10 addendum 52 — First fair test of HTF-state + LTF-trigger (enabled by the add.51 BOMS fix): PROMISING PULSE that BEATS a plain trend filter — but n=35, needs real validation.
+
+With BOMS direction revived (add.51), ran the first fair probe of the user's vision: does the HTF
+market-structure STATE improve the 1H LTF entry trigger? Forward-return probe on BTC 1H store
+(V22_CTX), BOMS-dir recomputed with the FIXED detector (1D, trailing window, broadcast).
+- 1H bull-BOS trigger ALONE: ~51% win, +0.65%/+1.19% mean fwd (72h/1wk) = coin-flip (consistent
+  with order_block_retest PF 0.75 — the plain trigger is not an edge).
+- + HTF BOMS-bull state: 77%/69% win, +3.41%/+3.86% mean — a large, consistent lift.
+- CONTROL (is it just a trend filter?): plain close>1D-EMA200 gate only gets 54% win / +1.05% —
+  BOMS-bull (77%) BEATS the trend filter substantially. BOMS-bull-but-NOT-trend (n=4) 100% win.
+  => BOMS-direction discriminates BEYOND a plain trend filter. First empirical support that the
+     HTF-STATE-gates-LTF-ENTRY architecture (the user's founding vision) has real signal.
+CAVEATS (critical): BOMS-bull is only 1.1% of bars → n=35 signals, CLUSTERED (few independent
+episodes); the "beyond trend" evidence is n=4. This is a PROMISING PULSE, NOT proof — could be
+small-sample luck or an elaborate trend proxy. Could also partly be "trade with the HTF trend"
+(known). NEEDS a proper validation: 4H+1D BOMS (more signals), both directions (short mirror via
+BOMS-bear), real backtest+costs+exits (not fwd-returns), CPCV, and CROSS-ASSET with the fixed
+detector (SPX/NDX/Gold) — if the same HTF-BOMS-gates-LTF effect holds on 4 assets, that beats the
+per-asset small-n problem. This is the first result worth escalating in a while. Still: detection
+fix enabled a fair test; the pulse is real-looking but unproven.
