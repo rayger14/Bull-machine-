@@ -1180,3 +1180,28 @@ BOMS-bear), real backtest+costs+exits (not fwd-returns), CPCV, and CROSS-ASSET w
 detector (SPX/NDX/Gold) — if the same HTF-BOMS-gates-LTF effect holds on 4 assets, that beats the
 per-asset small-n problem. This is the first result worth escalating in a while. Still: detection
 fix enabled a fair test; the pulse is real-looking but unproven.
+
+### 2026-08-20 addendum 53 — Live-display audit + v2 SHADOW detectors (branch feat/wyckoff-v2-shadow-detectors)
+
+Read-only live audit (agent, server untouched): data feed REAL (mean basis
+−0.0015% vs Coinbase spot, fresh <2min, zero repaint over 61 truncated
+recomputes). But: **BC INVERTED live** (fwd +1.20%/72h, fires on rallies —
+fired 3x on 08-19 right before +7%; poisons bearish score → m2_signal=1 during
+rallies via net-dominance), headline scores are rolling MAXIMA (24h/42d/90d)
+displayed as live gauges (0.9933 pinned; largest fusion domain — a Lesson #54
+mechanism), phase machine 96.6% in {A,neutral} over 6 months (known
+bottleneck, unchanged), UT/UTAD bit-identical, SC/AR/AS/ST coin-flip fwd.
+ROOT CAUSE of BC inversion found in code: 3 gates, no reversal requirement,
+and _range_position is CLOSE-based → rejection tops (close low) FAIL at_highs;
+only strong-close breakouts can fire. Wick gate cannot be restored (fix #2
+history: euphoric tops close at highs).
+FIX (shadow columns only, v1 untouched, isolation proven): detect_climax_v2 —
+gates on the EXTREME reached + (rejection NOW → immediate) or (reversal within
+5 bars → confirmed, stamped causally late). V12 replay: bc_v2_confirmed fwd
++0.40/+0.24 vs v1 +1.08/+1.92 (baseline +0.45/+1.11) — direction fixed.
+spring_b_anchored (add.31 implemented, post-SM subset): +1.18/+2.25 n=100 vs
+plain +0.90/+1.48 n=146 — anchoring keeps the good springs. wyckoff_event_now/
+age_h + raw context sides added for display honesty. SC v2 reads as bear-STATE
+(−0.62/72h), not a buy trigger. Deep-daily buffer left OFF (2026-07-20 verdict
+stands). NEXT: collect live shadow data; promotion to decision inputs requires
+its own validation study (boost-shaped per Rules 7-10, never a filter).
