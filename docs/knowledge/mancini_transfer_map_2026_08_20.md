@@ -12,6 +12,7 @@ Variant: 75% @1R, 15% @2R, 10% runner, trail 3.5×ATR after T1, NO breakeven (BM
 | trades | 3512 | 2694 (−23%) |
 | avg/trade | $77 | $89 (+17%); avg win +37%, avg loss smaller |
 **VERDICT: REJECT as straight swap.** Per-trade quality improves everywhere; total PnL falls because longer holds block position slots (−23% turnover). BM PnL = turnover × small edge. A fair re-test requires runner-slot demotion (Mancini's fix, +$10.7K there) — not justified while entry quality is the known leak (their 5y sweep verbatim: "every configuration has every year red regardless of exit tuning. The issue isn't exits — it's entry quality" = BM bucket-A finding).
+**$2M-wallet control (same day)**: identical trade counts (3512/2694) and ratios at 20x capital — margin was NEVER the constraint. The −818 trades are STRUCTURAL (archetype/direction position slots occupied by longer holds), so the turnover loss holds at any wallet size and equals lost data points under the edge-discovery mandate. Runner-slot demotion is the hard prerequisite for any long-runner exit scheme in BM.
 Method note: first A/B ran byte-identical (patched dead default_rules; real ladder lives in create_default_exit_config per-archetype). Golden-master lesson self-demonstrated.
 
 ## Transfer candidates (evidence-backed, in priority order)
