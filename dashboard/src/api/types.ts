@@ -367,6 +367,22 @@ export interface WyckoffData {
   bullish_1d?: number;
   bearish_1d?: number;
 
+  // Honest gauges (2026-08-20 audit): score/tf*_score above are rolling
+  // MAXIMA (24h carry / 42d / 90d); event_now is the per-bar truth.
+  event_now?: number;           // per-bar max event confidence, 0 = quiet
+  event_age_h?: number;         // hours since newest event, -1 = none in buffer
+  bullish_4h_raw?: number;      // pre-arbitration sides (net zeroes the loser)
+  bearish_4h_raw?: number;
+  bullish_1d_raw?: number;
+  bearish_1d_raw?: number;
+  shadow_v2?: {                 // v2 shadow detectors (data collection only)
+    bc_v2?: boolean;
+    bc_v2_confirmed?: boolean;
+    sc_v2?: boolean;
+    sc_v2_confirmed?: boolean;
+    spring_b_anchored?: boolean;
+  };
+
   // NEW: Cycle tracking
   cycle_start?: string;
   cycle_duration_hours?: number;
