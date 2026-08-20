@@ -452,6 +452,13 @@ class WyckoffHTFContext:
     dominant_direction: str  # "bullish", "bearish", "neutral"
     recent_events: Dict[str, float]  # {event_name: max_confidence} from recent bars
     timeframe: str          # "1D", "4H", etc. for logging
+    # Raw pre-arbitration sides (2026-08-20): net-dominance forces the losing
+    # side to exactly 0.0, so downstream displays can't tell "no bullish
+    # evidence" from "bullish evidence netted away". These carry the raw maxes
+    # for display/logging; net bullish_score/bearish_score stay authoritative
+    # for decisions. Defaults keep older constructors valid.
+    raw_bullish_score: float = 0.0
+    raw_bearish_score: float = 0.0
 
 
 def _rolling_z_score(series: pd.Series, window: int = 20) -> pd.Series:
@@ -644,6 +651,109 @@ def detect_buying_climax(df: pd.DataFrame, cfg: dict) -> Tuple[pd.Series, pd.Ser
     confidence = confidence.fillna(0.0) * detected
 
     return detected, confidence
+
+
+def detect_climax_v2(df: pd.DataFrame, cfg: dict,
+                     side: str = "buying") -> Tuple[pd.Series, pd.Series, pd.Series]:
+    """
+    v2 SHADOW climax detector — disambiguates climax from breakout/breakdown.
+
+    Background (wyckoff_audit.md + live audit 2026-08-20): the v1 BC/SC
+    detectors share 3 hard gates (volume_z, long range_position, range_z) with
+    NO reversal requirement, so an SOS breakout bar and a Buying Climax are
+    indistinguishable — BC's forward returns match SOS's (+1.2%/72h), i.e. it
+    fires on rallies. The wick gate can't simply be restored: real euphoric
+    tops (Apr/Nov 2021) close AT their highs and were only caught after the
+    wick gate was demoted (see "6 Fixes Applied", fix #2). The only honest
+    disambiguator for a strong-close candidate is WHAT HAPPENS NEXT:
+        reversal within k bars  -> climax   (confirmed, stamped late)
+        continuation            -> breakout (neither column fires)
+
+    Emits three causal series:
+        detected   — immediate fire: v1 gates AND rejection evidence on the
+                     bar itself (wick quality >= wick_min OR close in the
+                     opposite third of the bar's range).
+        confidence — v1-style confidence, only on immediate fires.
+        confirmed  — a gate-passing candidate (with or without rejection)
+                     whose reversal completed: for buying, a close BELOW the
+                     candidate bar's low within confirm_bars; for selling, a
+                     close ABOVE the candidate bar's high. Stamped at the
+                     CONFIRMATION bar — on truncated data the flag simply
+                     hasn't appeared yet, so earlier bars never repaint.
+
+    SHADOW CONTRACT: these columns are data-collection only. They are NOT in
+    _ACCUM_EVENTS/_DISTRIB_EVENTS, so they cannot touch directional scores,
+    the state machine, phases, or any live consumer.
+    """
+    if 'volume_z' not in df.columns:
+        df['volume_z'] = _rolling_z_score(df['volume'], window=20)
+
+    bar_range = df['high'] - df['low']
+    range_z = _rolling_z_score(bar_range, window=20)
+    close_loc = ((df['close'] - df['low']) / (bar_range + 1e-9)).clip(0, 1)
+
+    volume_z_min = cfg.get('climax_v2_volume_z_min', 2.5)
+    range_z_min = cfg.get('climax_v2_range_z_min', 1.5)
+    wick_min = cfg.get('climax_v2_wick_min', 0.5)
+    confirm_bars = cfg.get('climax_v2_confirm_bars', 5)
+    range_lookback = cfg.get('climax_v2_range_lookback', 50)
+
+    extreme_volume = df['volume_z'] > volume_z_min
+    wide_range = range_z > range_z_min
+
+    # Position of the EXTREME reached, not the close. v1's _range_position is
+    # close-based, so a genuine rejection top (which closes low) fails the
+    # "at_highs" gate — the structural reason v1 BC only catches strong-close
+    # bars (breakouts). A climax is defined by where price REACHED.
+    rolling_high = df['high'].rolling(range_lookback).max()
+    rolling_low = df['low'].rolling(range_lookback).min()
+    range_size = rolling_high - rolling_low + 1e-9
+
+    if side == "buying":
+        extreme_reach = ((df['high'] - rolling_low) / range_size).clip(0, 1)
+        at_extreme = extreme_reach > cfg.get('bc_range_pos_min', 0.8)
+        wick_quality = _wick_quality(df, direction='upper')
+        # rejection NOW: real upper wick or a close in the lower third
+        rejection = (wick_quality >= wick_min) | (close_loc <= 0.35)
+        extreme_pos_conf = extreme_reach
+    else:
+        extreme_reach = ((df['low'] - rolling_low) / range_size).clip(0, 1)
+        at_extreme = extreme_reach < cfg.get('sc_range_pos_max', 0.2)
+        wick_quality = _wick_quality(df, direction='lower')
+        # absorption NOW: real lower wick or a close in the upper third
+        rejection = (wick_quality >= wick_min) | (close_loc >= 0.65)
+        extreme_pos_conf = 1.0 - extreme_reach
+
+    candidate = (extreme_volume & at_extreme & wide_range).fillna(False)
+    detected = (candidate & rejection).fillna(False)
+
+    confidence = (
+        (df['volume_z'] / 5.0).clip(0, 1) * 0.30 +
+        extreme_pos_conf.clip(0, 1) * 0.20 +
+        (range_z / 3.0).clip(0, 1) * 0.20 +
+        wick_quality.clip(0, 1) * 0.30
+    )
+    confidence = confidence.fillna(0.0) * detected
+
+    # Delayed confirmation — causal by construction: we only ever stamp a bar
+    # AFTER the candidate, using closes up to that bar. Truncating the frame
+    # removes future stamps without altering past ones (no repaint).
+    confirmed = pd.Series(False, index=df.index)
+    closes = df['close'].values
+    cand_idx = np.flatnonzero(candidate.values)
+    n = len(df)
+    for i in cand_idx:
+        ref_low = df['low'].values[i]
+        ref_high = df['high'].values[i]
+        for j in range(i + 1, min(i + 1 + confirm_bars, n)):
+            if side == "buying" and closes[j] < ref_low:
+                confirmed.iloc[j] = True
+                break
+            if side == "selling" and closes[j] > ref_high:
+                confirmed.iloc[j] = True
+                break
+
+    return detected.astype(bool), confidence, confirmed
 
 
 def detect_automatic_rally(df: pd.DataFrame, cfg: dict,
@@ -1403,6 +1513,8 @@ def create_wyckoff_context(df: pd.DataFrame, lookback: int = 3,
         dominant_direction=direction,
         recent_events=recent,
         timeframe=timeframe,
+        raw_bullish_score=raw_bullish_score,
+        raw_bearish_score=raw_bearish_score,
     )
     logger.info(f"WyckoffHTFContext({timeframe}): phase={phase}, "
                 f"bullish={bullish_score:.3f}, bearish={bearish_score:.3f}, "
@@ -1664,6 +1776,18 @@ def detect_all_wyckoff_events(df: pd.DataFrame, cfg: Optional[dict] = None,
     df['wyckoff_lps'], df['wyckoff_lps_confidence'] = detect_last_point_of_support(df, cfg)
     df['wyckoff_lpsy'], df['wyckoff_lpsy_confidence'] = detect_last_point_of_supply(df, cfg)
 
+    # ------------------------------------------------------------------
+    # v2 SHADOW columns (2026-08-20) — data collection ONLY. Deliberately
+    # NOT in _ACCUM_EVENTS/_DISTRIB_EVENTS: they cannot touch directional
+    # scores, the state machine, phases, or any live consumer. Promotion to
+    # decision inputs requires a passing validation study first.
+    # ------------------------------------------------------------------
+    if cfg.get('shadow_v2_enabled', True):
+        (df['wyckoff_bc_v2'], df['wyckoff_bc_v2_confidence'],
+         df['wyckoff_bc_v2_confirmed']) = detect_climax_v2(df, cfg, side='buying')
+        (df['wyckoff_sc_v2'], df['wyckoff_sc_v2_confidence'],
+         df['wyckoff_sc_v2_confirmed']) = detect_climax_v2(df, cfg, side='selling')
+
     # Determine phase and sequence (before SM so phase exists)
     df['wyckoff_phase_abc'] = _determine_wyckoff_phase(df)
     df['wyckoff_sequence_position'] = _compute_sequence_position(df)
@@ -1680,12 +1804,49 @@ def detect_all_wyckoff_events(df: pd.DataFrame, cfg: Optional[dict] = None,
         df['wyckoff_phase_dir'] = 'neutral'
         df['wyckoff_context'] = 'none'
 
+    # Anchored spring shadow (wyckoff_audit add.31: springs fire at fresh
+    # 20-bar lows mid-trend, not at structural range lows — "the highest-
+    # leverage fix: anchor to the 50-bar swing low; test, do NOT wire").
+    # Computed AFTER state-machine validation so it is a strict subset of the
+    # final wyckoff_spring_b column (the one every consumer sees). spring_b
+    # stamps at the confirmation bar; its candidate bar sits recovery_bars
+    # earlier, so all anchor inputs are shifted to align.
+    if cfg.get('shadow_v2_enabled', True):
+        recovery_bars = cfg.get('spring_b_recovery_bars', 3)
+        tr = pd.concat([
+            df['high'] - df['low'],
+            (df['high'] - df['close'].shift(1)).abs(),
+            (df['low'] - df['close'].shift(1)).abs(),
+        ], axis=1).max(axis=1)
+        atr14 = tr.rolling(14).mean()
+        prior_low50 = df['low'].shift(1).rolling(50).min()
+        cand_low = df['low'].shift(recovery_bars)
+        anchor_tol = cfg.get('spring_anchor_atr_tol', 1.0)
+        anchored_ok = (
+            (cand_low - prior_low50.shift(recovery_bars)).abs()
+            <= anchor_tol * atr14.shift(recovery_bars)
+        ).fillna(False)
+        df['wyckoff_spring_b_anchored'] = (
+            df['wyckoff_spring_b'].astype(bool) & anchored_ok
+        )
+
     # Apply higher-timeframe confidence modulation (on SM-validated events only)
     if htf_context is not None:
         df = _apply_htf_modulation(df, htf_context)
 
     # Compute directional scores (after SM + HTF modulation)
     df = _compute_directional_scores(df)
+
+    # Honest current-state gauge (2026-08-20 live audit): the legacy display
+    # scores are rolling/window MAXIMA (24h carry, 42d/90d buffer max) that can
+    # never fall while an old event sits in the buffer. wyckoff_event_now is
+    # the per-bar max SM-validated event confidence — exactly 0 on bars where
+    # no event is active. Display/logging only; no live consumer reads it.
+    _v1_conf_cols = [f'wyckoff_{e}_confidence' for e in _ACCUM_EVENTS + _DISTRIB_EVENTS
+                     if f'wyckoff_{e}_confidence' in df.columns]
+    df['wyckoff_event_now'] = (
+        df[_v1_conf_cols].fillna(0.0).max(axis=1) if _v1_conf_cols else 0.0
+    )
 
     # Log summary
     event_counts = {

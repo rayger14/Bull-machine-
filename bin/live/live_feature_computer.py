@@ -1655,6 +1655,19 @@ class LiveFeatureComputer:
             if 'wyckoff_bearish_score' in buf_copy.columns:
                 out['wyckoff_bearish_score'] = float(recent_window['wyckoff_bearish_score'].max())
 
+            # Honest current-state extras (2026-08-20 audit): wyckoff_event_now
+            # (per-bar max, 0 when quiet) already flows via the generic column
+            # loop above; add the age of the newest active event so displays
+            # can label carried-forward maxima ("BC, 9h ago") instead of
+            # presenting them as live readings. Display/logging only.
+            if 'wyckoff_event_now' in buf_copy.columns:
+                active_idx = buf_copy.index[buf_copy['wyckoff_event_now'] > 0]
+                if len(active_idx) > 0:
+                    age = (buf_copy.index[-1] - active_idx[-1]) / pd.Timedelta(hours=1)
+                    out['wyckoff_event_age_h'] = float(age)
+                else:
+                    out['wyckoff_event_age_h'] = -1.0  # no event in buffer
+
             # Event history + conviction
             self.last_wyckoff_event_history = self._wyckoff_event_history(buf_copy, max_events=20)
             self.last_wyckoff_conviction = self._wyckoff_conviction_breakdown(last)
@@ -1771,6 +1784,9 @@ class LiveFeatureComputer:
                 # Graded bullish/bearish scores (replace binary M1/M2)
                 out['tf1d_wyckoff_bullish_score'] = ctx_1d.bullish_score
                 out['tf1d_wyckoff_bearish_score'] = ctx_1d.bearish_score
+                # Raw pre-arbitration sides (2026-08-20) — see 4H note.
+                out['tf1d_wyckoff_bullish_raw'] = ctx_1d.raw_bullish_score
+                out['tf1d_wyckoff_bearish_raw'] = ctx_1d.raw_bearish_score
 
                 # Keep M1/M2 for backward compat but now derived from context
                 out['tf1d_wyckoff_m1_signal'] = 1 if ctx_1d.bullish_score > 0.1 else 0
@@ -1804,6 +1820,11 @@ class LiveFeatureComputer:
                 # 4H scores
                 out['tf4h_wyckoff_bullish_score'] = htf_context_4h.bullish_score
                 out['tf4h_wyckoff_bearish_score'] = htf_context_4h.bearish_score
+                # Raw pre-arbitration sides (2026-08-20): net-dominance zeroes
+                # the losing side, so "bullish 0.000" can mean either "no
+                # evidence" or "netted away". Log the raw maxes for honesty.
+                out['tf4h_wyckoff_bullish_raw'] = htf_context_4h.raw_bullish_score
+                out['tf4h_wyckoff_bearish_raw'] = htf_context_4h.raw_bearish_score
 
                 confs_4h = []
                 for e in ALL_EVENTS:
