@@ -2890,6 +2890,25 @@ class CoinbasePaperRunner:
                 "bullish_1d": self._safe_float(features.get("tf1d_wyckoff_bullish_score")),
                 "bearish_1d": self._safe_float(features.get("tf1d_wyckoff_bearish_score")),
                 "tf1d_bars": int(features.get("tf1d_daily_bars", 0) or 0),
+                # --- HONEST GAUGES (2026-08-20 audit): the score/tf*_score
+                # fields above are rolling MAXIMA (24h carry / 42d / 90d
+                # buffer max). event_now is the per-bar truth (0 = nothing
+                # active); event_age_h dates the newest event; *_raw are the
+                # pre-arbitration directional sides (net zeroes the loser).
+                "event_now": self._safe_float(features.get("wyckoff_event_now")),
+                "event_age_h": self._safe_float(features.get("wyckoff_event_age_h", -1.0)),
+                "bullish_4h_raw": self._safe_float(features.get("tf4h_wyckoff_bullish_raw")),
+                "bearish_4h_raw": self._safe_float(features.get("tf4h_wyckoff_bearish_raw")),
+                "bullish_1d_raw": self._safe_float(features.get("tf1d_wyckoff_bullish_raw")),
+                "bearish_1d_raw": self._safe_float(features.get("tf1d_wyckoff_bearish_raw")),
+                # v2 SHADOW detectors (data collection; not in trading path)
+                "shadow_v2": {
+                    "bc_v2": bool(features.get("wyckoff_bc_v2", False)),
+                    "bc_v2_confirmed": bool(features.get("wyckoff_bc_v2_confirmed", False)),
+                    "sc_v2": bool(features.get("wyckoff_sc_v2", False)),
+                    "sc_v2_confirmed": bool(features.get("wyckoff_sc_v2_confirmed", False)),
+                    "spring_b_anchored": bool(features.get("wyckoff_spring_b_anchored", False)),
+                },
                 "phase": features.get("wyckoff_phase_abc", "neutral"),
                 "sequence_position": int(features.get("wyckoff_sequence_position", 0) or 0),
                 "events": {

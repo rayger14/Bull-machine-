@@ -186,8 +186,8 @@ const EVENT_META: Record<string, EventMeta> = {
     ],
   },
   ut: {
-    short: 'UT',
-    label: 'Upthrust',
+    short: 'UT / UTAD',
+    label: 'Upthrust (incl. UTAD)',
     type: 'distrib',
     explanation:
       'A fake breakout above the distribution range that reverses within 3 bars on a volume spike. Designed to trap late buyers and trigger breakout stops. The classic "bull trap."',
@@ -279,7 +279,9 @@ const PHASE_GROUPS: PhaseGroup[] = [
     sublabel: 'Distribution',
     color: 'text-orange-400',
     borderColor: 'border-orange-500/20',
-    events: ['sow', 'ut', 'utad'],
+    // Honesty fix 2026-08-20: UT and UTAD are currently one detection
+    // (bit-identical fires per audit) — shown as a single merged chip.
+    events: ['sow', 'ut'],
     description:
       'Smart money distributes within the range. Upthrusts trap late buyers. SOW proves supply exceeds demand.',
   },
@@ -696,8 +698,29 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
             {activeCount} Active
           </Badge>
         )}
-        {wyckoff.tf1d_m1_signal === 1 && <Badge variant="green">M1 Accum</Badge>}
-        {wyckoff.tf1d_m2_signal === 1 && <Badge variant="red">M2 Distrib</Badge>}
+        {/* Honesty fix 2026-08-20: the m1/m2 flags fire at raw-margin > 0.1
+            (very low), so a weak echo lit a solid red "M2 Distrib" during
+            rallies. Show the graded net value; solid color only when the net
+            side actually dominates (> 0.3, same bar as phase detection). */}
+        {(() => {
+          const netBull = wyckoff.bullish_1d ?? 0;
+          const netBear = wyckoff.bearish_1d ?? 0;
+          if (wyckoff.tf1d_m1_signal === 1) {
+            return (
+              <Badge variant={netBull > 0.3 ? 'green' : 'neutral'}>
+                M1 Accum {(netBull * 100).toFixed(0)}%{netBull <= 0.3 ? ' (weak)' : ''}
+              </Badge>
+            );
+          }
+          if (wyckoff.tf1d_m2_signal === 1) {
+            return (
+              <Badge variant={netBear > 0.3 ? 'red' : 'neutral'}>
+                M2 Distrib {(netBear * 100).toFixed(0)}%{netBear <= 0.3 ? ' (weak)' : ''}
+              </Badge>
+            );
+          }
+          return null;
+        })()}
       </div>
 
       {/* HTF Structural Bias Summary — most important at a glance */}
@@ -990,13 +1013,30 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
           Multi-Timeframe Peak Event Confidence
         </div>
         <p className="text-[10px] text-slate-700 mb-3">
-          Wyckoff is primarily a higher-timeframe structural tool — 1D and 4H scores matter most for identifying accumulation/distribution phases. 1H events are tactical entry triggers that fire within the HTF context. A 1H score of 0 is normal between events.
+          These are running MAXIMA over their windows, not live readings — they cannot fall while a past event sits in the buffer. The &ldquo;Now&rdquo; line below is the per-bar truth.
         </p>
+        {/* Honesty fix 2026-08-20: per-bar current state, 0 when quiet */}
+        {wyckoff.event_now != null && (
+          <div className="text-[11px] font-mono mb-3 px-2 py-1.5 rounded bg-white/[0.03] border border-white/[0.05]">
+            <span className={wyckoff.event_now > 0 ? 'text-cyan-300' : 'text-slate-500'}>
+              Now: {(wyckoff.event_now * 100).toFixed(0)}%
+              {wyckoff.event_now === 0 && ' — no event active on this bar'}
+            </span>
+            {(wyckoff.event_age_h ?? -1) >= 0 && (
+              <span className="text-slate-600">
+                {' '}· last event {Math.round(wyckoff.event_age_h!)}h ago
+              </span>
+            )}
+            {(wyckoff.event_age_h ?? -1) < 0 && (
+              <span className="text-slate-600"> · no event in buffer</span>
+            )}
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-3">
           <div>
             <Gauge
               value={score1d}
-              label="1D Macro"
+              label="1D Macro (90d max)"
               colorStops={[
                 'bg-rose-500',
                 'bg-amber-400',
@@ -1007,13 +1047,16 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
             />
             {wyckoff.tf1d_bars != null && (
               <div className="text-[9px] text-slate-700 text-center mt-1">
-                {wyckoff.tf1d_bars}/20 daily bars
+                {wyckoff.tf1d_bars} daily bars
+                {wyckoff.tf1d_bars < 100 && (
+                  <span className="text-amber-500/70"> · deep context OFF</span>
+                )}
               </div>
             )}
           </div>
           <Gauge
             value={score4h}
-            label="4H Structure"
+            label="4H Structure (42d max)"
             colorStops={[
               'bg-rose-500',
               'bg-amber-400',
@@ -1024,7 +1067,7 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
           />
           <Gauge
             value={score1h}
-            label="1H Trigger"
+            label="1H Trigger (24h carry)"
             colorStops={[
               'bg-rose-500',
               'bg-amber-400',
@@ -1047,10 +1090,13 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
           </p>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: '1D', bull: wyckoff.bullish_1d ?? 0, bear: wyckoff.bearish_1d ?? 0 },
-              { label: '4H', bull: wyckoff.bullish_4h ?? 0, bear: wyckoff.bearish_4h ?? 0 },
-              { label: '1H', bull: wyckoff.bullish_1h ?? 0, bear: wyckoff.bearish_1h ?? 0 },
-            ].map(({ label, bull, bear }) => (
+              { label: '1D', bull: wyckoff.bullish_1d ?? 0, bear: wyckoff.bearish_1d ?? 0,
+                bullRaw: wyckoff.bullish_1d_raw, bearRaw: wyckoff.bearish_1d_raw },
+              { label: '4H', bull: wyckoff.bullish_4h ?? 0, bear: wyckoff.bearish_4h ?? 0,
+                bullRaw: wyckoff.bullish_4h_raw, bearRaw: wyckoff.bearish_4h_raw },
+              { label: '1H', bull: wyckoff.bullish_1h ?? 0, bear: wyckoff.bearish_1h ?? 0,
+                bullRaw: undefined, bearRaw: undefined },
+            ].map(({ label, bull, bear, bullRaw, bearRaw }) => (
               <div key={label} className="p-2 bg-white/[0.02] rounded-lg border border-white/[0.04]">
                 <div className="text-[9px] text-slate-600 text-center mb-1">{label}</div>
                 <div className="flex justify-between items-center gap-1">
@@ -1059,6 +1105,11 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
                       {(bull * 100).toFixed(1)}%
                     </div>
                     <div className="text-[8px] text-emerald-600">Bull</div>
+                    {/* Honesty fix 2026-08-20: net-dominance zeroes the losing
+                        side; the raw max shows evidence that was netted away */}
+                    {bullRaw != null && bullRaw > bull && (
+                      <div className="text-[8px] text-slate-600 font-mono">raw {(bullRaw * 100).toFixed(0)}%</div>
+                    )}
                   </div>
                   <div className="w-px h-4 bg-white/[0.06]" />
                   <div className="text-center flex-1">
@@ -1066,6 +1117,9 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
                       {(bear * 100).toFixed(1)}%
                     </div>
                     <div className="text-[8px] text-rose-600">Bear</div>
+                    {bearRaw != null && bearRaw > bear && (
+                      <div className="text-[8px] text-slate-600 font-mono">raw {(bearRaw * 100).toFixed(0)}%</div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1080,7 +1134,7 @@ export default function WyckoffCycle({ wyckoff, oracle }: WyckoffCycleProps) {
       {/* Overall Confidence */}
       {wyckoff.event_confidence != null && wyckoff.event_confidence > 0 && (
         <div className="mt-3 flex items-center gap-2 text-xs">
-          <span className="text-slate-600">Peak Event Confidence:</span>
+          <span className="text-slate-600">Peak Event Confidence (24h max):</span>
           <Badge variant={wyckoff.event_confidence >= 0.8 ? 'green' : wyckoff.event_confidence >= 0.5 ? 'cyan' : 'yellow'}>
             {(wyckoff.event_confidence * 100).toFixed(1)}%
           </Badge>
