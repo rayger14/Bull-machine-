@@ -37,6 +37,45 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+
+def select_completed_taker_bucket(taker_data, now):
+    """Pick the last COMPLETED 1H taker-volume bucket (SENSOR REPAIR 2026-08-24).
+
+    OKX returns buckets newest-first as [ts_ms, sell_vol, buy_vol]. The runner
+    fetches ~1 minute past the hour, so the head bucket is usually the hour
+    that just STARTED (~60s of volume) — reading it made live taker_imbalance
+    white noise (autocorr 0.007; r=0.017 vs real CME hourly flow). The
+    validated store feature is a full-hour aggregate, so we must select the
+    bucket for the last completed hour by TIMESTAMP, never by position.
+
+    Returns (sell_vol, buy_vol) floats, or None if no completed bucket found.
+    """
+    import pandas as _pd
+    now = _pd.Timestamp(now)
+    if now.tzinfo is None:
+        now = now.tz_localize('UTC')
+    completed = (now.floor('h') - _pd.Timedelta(hours=1)).timestamp() * 1000
+    for row in taker_data or []:
+        try:
+            ts = float(row[0])
+            if abs(ts - completed) < 1:
+                return float(row[1]), float(row[2])
+        except (IndexError, TypeError, ValueError):
+            continue
+    return None
+
+
+def taker_imbalance_from_vols(buy, sell):
+    """Store-matching imbalance: (buy-sell)/(buy+sell) == (r-1)/(r+1), in [-1, 1].
+
+    The old live formula (r-1)/max(r,0.01) had a different scale (std 0.27 vs
+    the store's 0.075) on top of the snapshot bug; this restores the exact
+    definition the seller-flow boost was validated on
+    (derivatives_data_backfill_method.md).
+    """
+    tot = buy + sell
+    return (buy - sell) / tot if tot > 0 else 0.0
+
 BASE_URL = "https://www.okx.com"
 
 
@@ -231,14 +270,18 @@ class OKXDerivativesAPI:
                 {"ccy": ccy, "instType": "CONTRACTS", "period": "1H"},
             )
             if taker_data and len(taker_data) > 0:
-                # Response: list of [timestamp, sell_vol, buy_vol] — newest first
-                try:
-                    sell_vol = float(taker_data[0][1])
-                    buy_vol = float(taker_data[0][2])
+                # Response: list of [timestamp, sell_vol, buy_vol] — newest first.
+                # SENSOR REPAIR 2026-08-24: use the last COMPLETED hour (by
+                # timestamp), never the just-started head bucket. See
+                # select_completed_taker_bucket docstring.
+                import pandas as _pd
+                bucket = select_completed_taker_bucket(taker_data, _pd.Timestamp.utcnow())
+                if bucket is not None:
+                    sell_vol, buy_vol = bucket
+                    result["taker_sell_vol_1h"] = sell_vol
+                    result["taker_buy_vol_1h"] = buy_vol
                     if sell_vol > 0:
                         result["taker_buy_sell_ratio"] = buy_vol / sell_vol
-                except (IndexError, TypeError, ValueError):
-                    pass
         except Exception as exc:
             logger.warning("OKX taker volume failed: %s", exc)
 
