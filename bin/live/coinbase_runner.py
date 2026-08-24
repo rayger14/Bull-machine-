@@ -1397,6 +1397,7 @@ class CoinbasePaperRunner:
 
         self.feature_computer.ingest_candles(candles)
         self._refresh_daily_context(force=True)
+        self._refresh_cme_oi()
 
         # Backfill feature_history from warmup candles + historical macro
         # data so correlation and cointegration are ready immediately.
@@ -2715,6 +2716,23 @@ class CoinbasePaperRunner:
         except Exception as exc:
             logger.warning("[BREADTH] alt fetch failed (%s) — feature absent", exc)
 
+    def _refresh_cme_oi(self, timestamp=None):
+        """Daily CME OI shadow-feature refresh (2026-08-24). Never raises;
+        without a Databento key the feed is inert and features stay absent."""
+        try:
+            from bin.live.cme_oi_feed import CMEOIFeed
+            if not hasattr(self, "_cme_oi_feed"):
+                self._cme_oi_feed = CMEOIFeed()
+                if not self._cme_oi_feed.available:
+                    logger.info("[CME_OI] no Databento key — shadow feed inert")
+            if not self._cme_oi_feed.available:
+                return
+            now = pd.Timestamp(timestamp) if timestamp is not None else pd.Timestamp.utcnow()
+            self._cme_oi_feed.refresh_if_needed(now)
+            self.feature_computer.set_cme_oi_features(self._cme_oi_feed.features(now))
+        except Exception as exc:
+            logger.warning("[CME_OI] refresh hook failed (%s) — features unchanged", exc)
+
     def _refresh_daily_context(self, timestamp=None, force=False):
         """Feed ~300 real daily candles into the feature computer's deep
         daily buffer (2026-07-20 upgrade). Once per UTC day; failure keeps
@@ -3240,6 +3258,7 @@ class CoinbasePaperRunner:
 
         # Deep daily context: refresh once per UTC day (cheap single request)
         self._refresh_daily_context(timestamp=timestamp)
+        self._refresh_cme_oi(timestamp=timestamp)
 
         # Compute features (~240 columns)
         try:
