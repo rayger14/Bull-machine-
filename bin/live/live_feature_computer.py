@@ -2389,10 +2389,20 @@ class LiveFeatureComputer:
             else:
                 result['ls_ratio_extreme'] = 0.0
 
-            # taker_imbalance
-            taker = data.get('taker_buy_sell_ratio', 1.0)
-            # Convert ratio to imbalance: ratio=1.0 -> 0, ratio=1.5 -> positive, ratio=0.5 -> negative
-            result['taker_imbalance'] = (taker - 1.0) / max(taker, 0.01) if taker else 0.0
+            # taker_imbalance — SENSOR REPAIR 2026-08-24: compute from the
+            # last COMPLETED hour's buy/sell volumes with the store-matching
+            # formula (buy-sell)/(buy+sell). The old path applied
+            # (r-1)/max(r,0.01) to a just-started bucket (~60s of volume),
+            # yielding white noise (autocorr 0.007) that was NOT the variable
+            # the seller-flow boost was validated on. Fallback keeps the old
+            # ratio-based value only if hourly vols are absent.
+            from bin.live.okx_derivatives_api import taker_imbalance_from_vols
+            _b = data.get('taker_buy_vol_1h'); _s = data.get('taker_sell_vol_1h')
+            if _b is not None and _s is not None:
+                result['taker_imbalance'] = taker_imbalance_from_vols(_b, _s)
+            else:
+                taker = data.get('taker_buy_sell_ratio', 1.0)
+                result['taker_imbalance'] = ((taker - 1.0) / (taker + 1.0)) if taker else 0.0
 
             self._binance_cache = result
             self._binance_last_fetch = now
