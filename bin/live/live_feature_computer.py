@@ -711,6 +711,11 @@ class LiveFeatureComputer:
         logger.info(f"Ingested {len(buf)} daily candles "
                     f"({buf.index[0].date()} to {buf.index[-1].date()})")
 
+    def set_cme_oi_features(self, feats: dict) -> None:
+        """Store the daily CME OI shadow features (set by the runner's daily
+        refresh; merged into every bar's feature vector for logging only)."""
+        self._cme_oi_features = dict(feats) if feats else {}
+
     def update(self, candle: dict) -> pd.Series:
         """
         Process one new candle and return the full feature vector.
@@ -834,6 +839,12 @@ class LiveFeatureComputer:
 
         # P2. Derivatives institutional flow features (OKX/Binance/CoinGlass)
         features.update(self._binance_futures_features())
+
+        # CME institutional OI — SHADOW features (2026-08-24). Set daily by
+        # the runner via set_cme_oi_features(); logged for study, consumed by
+        # NOTHING in the trading path (cme_oi_regime_study_2026_08_21.md).
+        if getattr(self, '_cme_oi_features', None):
+            features.update(self._cme_oi_features)
 
         # Feed derivatives funding rate into _funding_history for Z-score computation.
         # The Z-score needs 10+ historical values to compute — this populates it
