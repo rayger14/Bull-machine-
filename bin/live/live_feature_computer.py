@@ -844,7 +844,11 @@ class LiveFeatureComputer:
         # the runner via set_cme_oi_features(); logged for study, consumed by
         # NOTHING in the trading path (cme_oi_regime_study_2026_08_21.md).
         if getattr(self, '_cme_oi_features', None):
-            features.update(self._cme_oi_features)
+            # merge only real values: NaN would be coerced to a misleading 0.0
+            # by the JSON feature logger (age 0.0 = "fresh" is a lie; absent
+            # keys are honest).
+            features.update({k: v for k, v in self._cme_oi_features.items()
+                             if v == v})
 
         # Feed derivatives funding rate into _funding_history for Z-score computation.
         # The Z-score needs 10+ historical values to compute — this populates it
