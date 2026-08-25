@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -73,13 +74,36 @@ def fetch_daily_oi(api_key: str, lookback_days: int = 10,
         "pretty_ts": "true",
         "map_symbols": "true",
     })
-    req = urllib.request.Request(f"{_HIST_URL}?{params}")
-    auth = (api_key + ":").encode()
     import base64
-    req.add_header("Authorization", "Authorization: Basic".split()[0] and
-                   "Basic " + base64.b64encode(auth).decode())
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        lines = r.read().decode().strip().splitlines()
+    def _get(url):
+        req = urllib.request.Request(url)
+        req.add_header("Authorization",
+                       "Basic " + base64.b64encode((api_key + ":").encode()).decode())
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.read().decode().strip().splitlines()
+    try:
+        lines = _get(f"{_HIST_URL}?{params}")
+    except urllib.error.HTTPError as e:
+        # Databento's statistics availability lags ~1 day (+weekends); an end
+        # beyond available_end 422s. Parse available_end and retry clamped.
+        if e.code != 422:
+            raise
+        try:
+            body = json.loads(e.read().decode())
+            avail = (body.get("detail", {}).get("payload", {})
+                     or {}).get("available_end")
+        except Exception:
+            avail = None
+        if not avail:
+            raise
+        clamped = pd.Timestamp(avail).tz_convert("UTC") if pd.Timestamp(avail).tzinfo             else pd.Timestamp(avail, tz="UTC")
+        params2 = urllib.parse.urlencode({
+            "dataset": "GLBX.MDP3", "symbols": symbol, "stype_in": "continuous",
+            "schema": "statistics", "start": start.strftime("%Y-%m-%d"),
+            "end": clamped.strftime("%Y-%m-%dT%H:%M:%S"),
+            "encoding": "json", "pretty_ts": "true", "map_symbols": "true",
+        })
+        lines = _get(f"{_HIST_URL}?{params2}")
     rows: List[Dict] = []
     for line in lines:
         try:
