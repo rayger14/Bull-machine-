@@ -205,7 +205,7 @@
     ]
   },
   "initial_cash": 2000000,
-  "_initial_cash_note": "2026-08-06 user directive: the paper wallet is measurement infrastructure, not a realism constraint — sized 20x so funding never binds (the $100K wallet was silently rejecting real edges via margin crowd-out). position_sizing pcts scaled /20 so per-trade DOLLARS are unchanged ($2,000 risk, $35K margin cap, $52.5K notional at 1.5x). Backtester and live runner both read initial_cash from this config.",
+  "_initial_cash_note": "2026-08-06 user directive: the paper wallet is measurement infrastructure, not a realism constraint \u2014 sized 20x so funding never binds (the $100K wallet was silently rejecting real edges via margin crowd-out). position_sizing pcts scaled /20 so per-trade DOLLARS are unchanged ($2,000 risk, $35K margin cap, $52.5K notional at 1.5x). Backtester and live runner both read initial_cash from this config.",
   "position_sizing": {
     "risk_per_trade_pct": 0.001,
     "max_margin_per_position_pct": 0.0175,
@@ -235,7 +235,9 @@
       "fusion >= 0.60: 2x base size (high conviction, rare but impactful)",
       "fusion >= 0.40: 1.5x base size (moderate conviction)",
       "fusion >= 0.18: 1x base size (meets threshold, standard sizing)"
-    ]
+    ],
+    "sizing_package_enabled": true,
+    "_sizing_package_note": "VALIDATED 2026-08-24/25 (sizing_package_verdict + june autopsy docs): flat-notional (divisor 0.025) x strict-causal t-1 tape dial (1.25 post-impulse / 1.0 base / 0.75 dead). Revert = set false."
   },
   "leverage": 1.5,
   "leverage_notes": "2026-02-27: REVERTED to 1.5x (Phase 1). Previous 3.0x was premature \u2014 live PF=0.45 with 29.6% WR. Stay at 1.5x until live PF>1.3 for 30+ days.",

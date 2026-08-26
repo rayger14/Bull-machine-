@@ -1398,6 +1398,7 @@ class CoinbasePaperRunner:
         self.feature_computer.ingest_candles(candles)
         self._refresh_daily_context(force=True)
         self._refresh_cme_oi()
+        self._refresh_tape_dial()
 
         # Backfill feature_history from warmup candles + historical macro
         # data so correlation and cointegration are ready immediately.
@@ -2716,6 +2717,26 @@ class CoinbasePaperRunner:
         except Exception as exc:
             logger.warning("[BREADTH] alt fetch failed (%s) — feature absent", exc)
 
+    def _refresh_tape_dial(self, timestamp=None):
+        """Daily tape-dial refresh (sizing package, 2026-08-25). Computes the
+        t-1 causal multiplier series from real daily candles and hands it to
+        the shadow runner's sizing path. Neutral (1.0) on any failure."""
+        try:
+            runner = getattr(self, 'runner', None) or getattr(self, 'shadow_runner', None)
+            if runner is None or not getattr(runner, 'sizing_package_enabled', False):
+                return
+            daily = self.adapter.fetch_ohlcv_1d(limit=30)
+            if daily is None or len(daily) < 16:
+                logger.warning("[TAPE_DIAL] insufficient daily candles (%s) — dial neutral",
+                               0 if daily is None else len(daily))
+                return
+            from engine.risk.tape_dial import compute_tape_dial
+            closes = daily['close'] if 'close' in daily else daily['Close']
+            runner.set_tape_dial(compute_tape_dial(closes))
+            logger.info("[TAPE_DIAL] refreshed (%d daily closes)", len(closes))
+        except Exception as exc:
+            logger.warning("[TAPE_DIAL] refresh failed (%s) — dial unchanged", exc)
+
     def _refresh_cme_oi(self, timestamp=None):
         """Daily CME OI shadow-feature refresh (2026-08-24). Never raises;
         without a Databento key the feed is inert and features stay absent."""
@@ -3259,6 +3280,7 @@ class CoinbasePaperRunner:
         # Deep daily context: refresh once per UTC day (cheap single request)
         self._refresh_daily_context(timestamp=timestamp)
         self._refresh_cme_oi(timestamp=timestamp)
+        self._refresh_tape_dial(timestamp=timestamp)
 
         # Compute features (~240 columns)
         try:

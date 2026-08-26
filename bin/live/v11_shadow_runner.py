@@ -261,6 +261,16 @@ class V11ShadowRunner:
         # Position sizing
         sizing_cfg = self.config.get('position_sizing', {})
         self.risk_per_trade = sizing_cfg.get('risk_per_trade_pct', 0.02)
+        # SIZING PACKAGE (validated 2026-08-24/25): flat-notional + t-1 tape
+        # dial. Config-gated; revert = sizing_package_enabled: false. The dial
+        # series is set daily by the host runner via set_tape_dial().
+        self.sizing_package_enabled = bool(sizing_cfg.get('sizing_package_enabled', False))
+        self._tape_dial = None
+
+    def set_tape_dial(self, dial):
+        """Receive the current tape-dial series (daily multipliers, t-1
+        causal) from the host runner's daily refresh."""
+        self._tape_dial = dial
         self.max_position_pct = sizing_cfg.get('max_position_size_pct', 0.15)  # legacy, unused
         self.max_margin_pct = sizing_cfg.get('max_margin_per_position_pct', 0.35)
         self.leverage = self.config.get('leverage', 1.0)
@@ -1714,8 +1724,26 @@ class V11ShadowRunner:
         if pd.isna(stop_distance_pct) or stop_distance_pct <= 0:
             stop_distance_pct = 0.025
 
-        risk_dollars = portfolio_value * self.risk_per_trade
-        notional = risk_dollars / stop_distance_pct
+        _risk_pct = self.risk_per_trade
+        if self.sizing_package_enabled:
+            # SIZING PACKAGE: dial multiplier (neutral 1.0 if series absent)
+            # + flat notional. Legacy path below is byte-identical when off.
+            from engine.risk.tape_dial import FLAT_NOTIONAL_DIVISOR
+            _m = 1.0
+            if self._tape_dial is not None and len(self._tape_dial) > 0:
+                _ts = pd.Timestamp(timestamp)
+                if _ts.tzinfo is not None and self._tape_dial.index.tz is None:
+                    _ts = _ts.tz_localize(None)
+                elif _ts.tzinfo is None and self._tape_dial.index.tz is not None:
+                    _ts = _ts.tz_localize(self._tape_dial.index.tz)
+                _v = self._tape_dial.asof(_ts.normalize())
+                if _v == _v:
+                    _m = float(_v)
+            risk_dollars = portfolio_value * _risk_pct * _m
+            notional = risk_dollars / FLAT_NOTIONAL_DIVISOR
+        else:
+            risk_dollars = portfolio_value * _risk_pct
+            notional = risk_dollars / stop_distance_pct
 
         # Scale by conviction multiplier from PortfolioAllocator
         notional *= (allocated_size_pct / 0.02)

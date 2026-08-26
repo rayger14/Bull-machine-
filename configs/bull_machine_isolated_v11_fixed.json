@@ -92,18 +92,18 @@
     "crisis_prob_substitute": {
       "w_macro": 0.25,
       "w_sentiment": 0.35,
-      "w_structural": 0.30,
-      "w_vol_shock": 0.10,
-      "a_dxy": 0.60,
-      "a_vix": 0.40,
+      "w_structural": 0.3,
+      "w_vol_shock": 0.1,
+      "a_dxy": 0.6,
+      "a_vix": 0.4,
       "b_ema_slope": 15.0,
       "b_wyckoff_breakdown": 1.0,
       "fear_threshold": 35.0,
       "rv_floor": 0.75,
-      "rv_range": 0.50,
+      "rv_range": 0.5,
       "macro_offset": 1.0,
       "struct_offset": 0.5,
-      "_validation": "LUNA week 2022-05-09→15 mean=0.55 (78.6% bars > 0.5), COVID 2020-03-09→20 mean=0.62 (75% > 0.5), Bull 2024 Mar-Apr mean=0.24, Bull 2021 Apr mean=0.17. Live W3 (May28-Jun02 2026) mean=0.27 vs W1 (Apr20-May17) mean=0.23."
+      "_validation": "LUNA week 2022-05-09\u219215 mean=0.55 (78.6% bars > 0.5), COVID 2020-03-09\u219220 mean=0.62 (75% > 0.5), Bull 2024 Mar-Apr mean=0.24, Bull 2021 Apr mean=0.17. Live W3 (May28-Jun02 2026) mean=0.27 vs W1 (Apr20-May17) mean=0.23."
     },
     "per_archetype_base_threshold": {
       "trap_within_trend": 0.11,
@@ -233,7 +233,9 @@
       "fusion >= 0.60: 2x base size (high conviction, rare but impactful)",
       "fusion >= 0.40: 1.5x base size (moderate conviction)",
       "fusion >= 0.18: 1x base size (meets threshold, standard sizing)"
-    ]
+    ],
+    "sizing_package_enabled": true,
+    "_sizing_package_note": "VALIDATED 2026-08-24/25 (sizing_package_verdict + june autopsy docs): flat-notional (divisor 0.025) x strict-causal t-1 tape dial (1.25 post-impulse / 1.0 base / 0.75 dead). Revert = set false."
   },
   "leverage": 1.5,
   "leverage_notes": "2026-02-27: REVERTED to 1.5x (Phase 1). Previous 3.0x was premature \u2014 live PF=0.45 with 29.6% WR. Stay at 1.5x until live PF>1.3 for 30+ days.",
