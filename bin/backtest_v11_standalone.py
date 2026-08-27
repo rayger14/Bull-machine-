@@ -1457,12 +1457,17 @@ class StandaloneBacktestEngine:
 
         # SIZING PACKAGE: tape-dial multiplier (t-1 causal) + flat notional.
         # Legacy path (package disabled) is byte-identical to pre-package code.
+        _dial_mult = 1.0
         if self.sizing_package_enabled and self._tape_dial is not None:
             from engine.risk.tape_dial import FLAT_NOTIONAL_DIVISOR
             _dd = pd.Timestamp(timestamp)
             _dd = _dd.tz_localize(None) if _dd.tzinfo is not None and self._tape_dial.index.tz is None else _dd
             _m = self._tape_dial.asof(_dd.normalize())
-            risk_per_trade *= float(_m) if _m == _m else 1.0
+            # POST-CAP dial (fix 2026-08-27): applied AFTER the margin cap so
+            # the dead-tape de-size expresses on cap-bound positions too
+            # (pre-cap, 0.75x of an above-cap desired size still hit the cap
+            # and the June protection never expressed live).
+            _dial_mult = float(_m) if _m == _m else 1.0
             risk_dollars = portfolio_value * risk_per_trade
             notional = risk_dollars / FLAT_NOTIONAL_DIVISOR
         else:
@@ -1490,6 +1495,11 @@ class StandaloneBacktestEngine:
         if margin > max_margin:
             margin = max_margin
             notional = margin * self.leverage  # scale notional down proportionally
+
+        # SIZING PACKAGE: tape-dial applied post-cap (fix 2026-08-27)
+        if _dial_mult != 1.0:
+            notional *= _dial_mult
+            margin = notional / self.leverage
 
         position_size_usd = notional  # for trade log / PnL calculation
 

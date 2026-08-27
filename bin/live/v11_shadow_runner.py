@@ -1725,11 +1725,12 @@ class V11ShadowRunner:
             stop_distance_pct = 0.025
 
         _risk_pct = self.risk_per_trade
+        _dial_mult = 1.0
         if self.sizing_package_enabled:
-            # SIZING PACKAGE: dial multiplier (neutral 1.0 if series absent)
-            # + flat notional. Legacy path below is byte-identical when off.
+            # SIZING PACKAGE: flat notional here; dial applied POST-CAP below
+            # (fix 2026-08-27: pre-cap the 0.75x de-size was swallowed by the
+            # margin cap on cap-bound positions and never expressed live).
             from engine.risk.tape_dial import FLAT_NOTIONAL_DIVISOR
-            _m = 1.0
             if self._tape_dial is not None and len(self._tape_dial) > 0:
                 _ts = pd.Timestamp(timestamp)
                 if _ts.tzinfo is not None and self._tape_dial.index.tz is None:
@@ -1738,8 +1739,8 @@ class V11ShadowRunner:
                     _ts = _ts.tz_localize(self._tape_dial.index.tz)
                 _v = self._tape_dial.asof(_ts.normalize())
                 if _v == _v:
-                    _m = float(_v)
-            risk_dollars = portfolio_value * _risk_pct * _m
+                    _dial_mult = float(_v)
+            risk_dollars = portfolio_value * _risk_pct
             notional = risk_dollars / FLAT_NOTIONAL_DIVISOR
         else:
             risk_dollars = portfolio_value * _risk_pct
@@ -1764,6 +1765,11 @@ class V11ShadowRunner:
         if margin > max_margin:
             margin = max_margin
             notional = margin * self.leverage
+
+        # SIZING PACKAGE: tape-dial applied post-cap (fix 2026-08-27)
+        if _dial_mult != 1.0:
+            notional *= _dial_mult
+            margin = notional / self.leverage
 
         position_size_usd = notional  # for trade log / PnL calc
 
