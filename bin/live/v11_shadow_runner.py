@@ -266,11 +266,6 @@ class V11ShadowRunner:
         # series is set daily by the host runner via set_tape_dial().
         self.sizing_package_enabled = bool(sizing_cfg.get('sizing_package_enabled', False))
         self._tape_dial = None
-
-    def set_tape_dial(self, dial):
-        """Receive the current tape-dial series (daily multipliers, t-1
-        causal) from the host runner's daily refresh."""
-        self._tape_dial = dial
         self.max_position_pct = sizing_cfg.get('max_position_size_pct', 0.15)  # legacy, unused
         self.max_margin_pct = sizing_cfg.get('max_margin_per_position_pct', 0.35)
         self.leverage = self.config.get('leverage', 1.0)
@@ -2387,6 +2382,11 @@ class V11ShadowRunner:
         with open(state_path, 'w') as f:
             json.dump(state, f, indent=2, default=str)
         logger.info(f"State saved: {len(self.positions)} positions, ${self.cash:,.0f} cash")
+
+    def set_tape_dial(self, dial):
+        """Receive the current tape-dial series (daily multipliers, t-1
+        causal) from the host runner's daily refresh (sizing package)."""
+        self._tape_dial = dial
 
     def load_state(self) -> bool:
         """Load saved state for restart recovery. Returns True if loaded."""
