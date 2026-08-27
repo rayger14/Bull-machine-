@@ -279,10 +279,5 @@
       "wick_pct_G": 0.38184757169438016,
       "wick_pct_K": 0.4910969436357509
     }
-  },
-  "runner_slot_demotion": {
-    "enabled": true,
-    "demote_fraction": 0.25,
-    "_note": "2026-08-27: runner tails (<=25% of original) do not occupy max_pos slots; margin still counted. Backtest-fidelity + future non-bypass live. Revert = enabled:false."
   }
 }
