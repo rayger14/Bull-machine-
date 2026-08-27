@@ -304,5 +304,10 @@
   "rotation_calm_boost": {
     "enabled": true,
     "_note": "Boost 7 (2026-08-06): rotation-calm long 1.25x \u2014 validated 3/3 on non-binding wallet (\u0394PnL +$34.4K/+$29.5K/+$8.1K; cohort PF 1.46/1.94/1.52 beats book all eras); deployed together with the 20x wallet so expression never self-cannibalizes"
+  },
+  "runner_slot_demotion": {
+    "enabled": true,
+    "demote_fraction": 0.25,
+    "_note": "inert under bypass (limits skipped); binds only if bypass ever disabled"
   }
 }

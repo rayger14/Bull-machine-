@@ -28,7 +28,7 @@ hard_gates:
   value: 0.1
   nan_policy: skip
   description: Fib time ratio confluence (lowered for better soft gate balance)
-gate_mode: soft
+gate_mode: hard  # 2026-08-27 identity restoration: soft fusion-penalty made OBR lose dedup slots; hard = -\$3.8K->+\$1.1K, WR 25->38%, n 44->91 (identity_gates_verdict doc)
 exit_logic:
   max_hold_hours: 96
   scale_out_enabled: true
