@@ -43,6 +43,27 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 logger = logging.getLogger(__name__)
 
+
+def _liquidity_score_from(features) -> float:
+    """liquidity_score = 0.35*vol + 0.25*atr_pct + 0.20*fvg + 0.20*oi.
+
+    Must match archetype_instance._get_liquidity_score() fallback. Pure
+    function so ordering bugs are impossible to reintroduce silently.
+    """
+    _vol_z = features.get('volume_zscore', 0.0) or 0.0
+    if _vol_z != _vol_z:
+        _vol_z = 0.0
+    _vol_score = min(max(_vol_z, 0.0) / 2.5, 1.0)
+    _atr_pct = features.get('atr_percentile', 0.5)
+    if _atr_pct is None or _atr_pct != _atr_pct:
+        _atr_pct = 0.5
+    _fvg = float(features.get('tf1h_fvg_present', 0.0) or 0.0)
+    _oi = features.get('oi_change_4h', 0.0)
+    if _oi is None or (isinstance(_oi, float) and _oi != _oi):
+        _oi = 0.0
+    _oi_score = min(abs(_oi) * 10.0, 1.0)
+    return 0.35 * _vol_score + 0.25 * _atr_pct + 0.20 * _fvg + 0.20 * _oi_score
+
 # ---------------------------------------------------------------------------
 # TA-Lib with pandas fallback
 # ---------------------------------------------------------------------------
@@ -806,15 +827,7 @@ class LiveFeatureComputer:
         # caused fusion scores to be ~0.19 points too low in live.
         # Computed here (not in _boms_liquidity_features) because we need
         # volume_zscore from step C and atr_percentile from step B.
-        _vol_z = features.get('volume_zscore', 0.0)
-        _vol_score = min(max(_vol_z, 0.0) / 2.5, 1.0)
-        _atr_pct = features.get('atr_percentile', 0.5)
-        _fvg = float(features.get('tf1h_fvg_present', 0.0))
-        _oi_change = features.get('oi_change_4h', 0.0)
-        if _oi_change is None or (isinstance(_oi_change, float) and _oi_change != _oi_change):
-            _oi_change = 0.0
-        _oi_score = min(abs(_oi_change) * 10.0, 1.0)
-        features['liquidity_score'] = 0.35 * _vol_score + 0.25 * _atr_pct + 0.20 * _fvg + 0.20 * _oi_score
+        features['liquidity_score'] = _liquidity_score_from(features)
 
         # J. Fibonacci (swing detection + retracement + time zones)
         features.update(self._fib_features())
@@ -882,6 +895,15 @@ class LiveFeatureComputer:
 
         # R. RSI divergence (price vs RSI direction over 14-bar lookback)
         features['rsi_divergence'] = self._compute_rsi_divergence()
+
+        # H2-FIX (2026-08-28 metrology audit): liquidity_score above was
+        # computed BEFORE atr_percentile (step Q) and oi_change_4h (binance
+        # step) were written, so it ran on defaults (0.5 / 0.0) — pinned at
+        # ~0.125+0.35*vol+0.20*fvg for the sensor's whole life. Recompute now
+        # that the real inputs exist. NOTE: the legacy fusion_* columns
+        # computed mid-pipeline still saw the early value; the ENGINE and the
+        # feature log read this corrected one.
+        features['liquidity_score'] = _liquidity_score_from(features)
 
         # S. Level-awareness features (2026-07-13, unified-strategy build):
         # prior-day/week levels, confirmed swings + touch counts, sweep/reclaim
