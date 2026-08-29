@@ -237,7 +237,9 @@
       "fusion >= 0.18: 1x base size (meets threshold, standard sizing)"
     ],
     "sizing_package_enabled": true,
-    "_sizing_package_note": "VALIDATED 2026-08-24/25 (sizing_package_verdict + june autopsy docs): flat-notional (divisor 0.025) x strict-causal t-1 tape dial (1.25 post-impulse / 1.0 base / 0.75 dead). Revert = set false."
+    "_sizing_package_note": "VALIDATED 2026-08-24/25 (sizing_package_verdict + june autopsy docs): flat-notional (divisor 0.025) x strict-causal t-1 tape dial (1.25 post-impulse / 1.0 base / 0.75 dead). Revert = set false.",
+    "tape_dial_enabled": false,
+    "_tape_dial_note": "DISABLED 2026-08-29: V23 parity-store decomposition \u2014 dial-only $101.7K/DD-31.1 vs off $117.8K/DD-26.1 (4/5 years worse); flat-notional-only $137.7K/DD-25.5 (KEPT). June live-cohort effect was real but does not survive 5 honest years."
   },
   "leverage": 1.5,
   "leverage_notes": "2026-02-27: REVERTED to 1.5x (Phase 1). Previous 3.0x was premature \u2014 live PF=0.45 with 29.6% WR. Stay at 1.5x until live PF>1.3 for 30+ days.",
