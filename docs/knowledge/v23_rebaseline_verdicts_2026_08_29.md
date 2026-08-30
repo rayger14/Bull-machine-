@@ -19,3 +19,6 @@ By 20-day range location: bottom third 30% WR −$10.7K (knife-catches, whale-zo
 
 ## EXPOSED CONCLUSIONS STATUS
 Re-verdicted: sizing package (above). Still to re-verdict on V23: wyckoff_phase & distribution_exhaustion boosts (free-pass leg), OBR hard gate (PR #72), whale-penalty taker threshold, sweep-location (August REJECT ran on contaminated store). Industry context: pro systematic desks −10..−20% MaxDD @ Sharpe 1-2; we are −32% @ 0.6 — the gap is throttle/concentration, not entries.
+
+## OBR hard-gate silo re-test (2026-08-30): PR #72 CLOSED UNMERGED
+Fair trial (silo, V23): soft PF 1.00/−$84 vs hard PF 0.82/−$10,953/DD −27.6% — the hard gate makes OBR WORSE on honest data. The original broken-store portfolio validation (+$1.1K) was artifact. Identity-gates campaign final tally: OBR-hard mirage, CB enforcement reject, boms floor dead config — ZERO shipped changes, honestly. OBR stays a Reject in both modes; 13th entry-rule funeral. Also same-day: wick_trap vol-floor 1.5 REJECT (−$23K) and LC high-side-only REJECT (−$18.6K) in silo — winners' edges confirmed participation-broad on honest instruments.
