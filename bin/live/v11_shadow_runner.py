@@ -265,6 +265,9 @@ class V11ShadowRunner:
         # dial. Config-gated; revert = sizing_package_enabled: false. The dial
         # series is set daily by the host runner via set_tape_dial().
         self.sizing_package_enabled = bool(sizing_cfg.get('sizing_package_enabled', False))
+        # V23 decomposition 2026-08-29: flat-notional +17%/better DD on the
+        # parity store; the dial -$16K/worse DD. Dial now independently gated.
+        self.tape_dial_enabled = bool(sizing_cfg.get('tape_dial_enabled', True))
         self._tape_dial = None
         self.max_position_pct = sizing_cfg.get('max_position_size_pct', 0.15)  # legacy, unused
         self.max_margin_pct = sizing_cfg.get('max_margin_per_position_pct', 0.35)
@@ -1762,7 +1765,7 @@ class V11ShadowRunner:
             notional = margin * self.leverage
 
         # SIZING PACKAGE: tape-dial applied post-cap (fix 2026-08-27)
-        if _dial_mult != 1.0:
+        if _dial_mult != 1.0 and getattr(self, 'tape_dial_enabled', True):
             notional *= _dial_mult
             margin = notional / self.leverage
 

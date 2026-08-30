@@ -461,6 +461,9 @@ class StandaloneBacktestEngine:
         # SIZING PACKAGE (validated 2026-08-24/25, strict-causal t-1 dial):
         # flat-notional + tape-state dial. Config-gated; revert = set false.
         self.sizing_package_enabled = bool(sizing_cfg.get('sizing_package_enabled', False))
+        # V23 decomposition 2026-08-29: flat-notional +17%/better DD on the
+        # parity store; the dial -$16K/worse DD. Dial now independently gated.
+        self.tape_dial_enabled = bool(sizing_cfg.get('tape_dial_enabled', True))
         self._tape_dial = None
         if self.sizing_package_enabled:
             from engine.risk.tape_dial import compute_tape_dial
@@ -1497,7 +1500,7 @@ class StandaloneBacktestEngine:
             notional = margin * self.leverage  # scale notional down proportionally
 
         # SIZING PACKAGE: tape-dial applied post-cap (fix 2026-08-27)
-        if _dial_mult != 1.0:
+        if _dial_mult != 1.0 and getattr(self, 'tape_dial_enabled', True):
             notional *= _dial_mult
             margin = notional / self.leverage
 
