@@ -61,3 +61,30 @@ consistent: keep net-positive classes, cut net-negative ones, and only PnL-by-ye
 **Status:** PR opened for user decision (LC is live at full size). Tercile
 boundary was 2.57; 2.0 was the pre-registered conservative round number — a 2.5
 floor was NOT tested (would be tuning past the pre-registration).
+
+## Addendum (2026-08-30): Mancini-native micro study + CPCV
+
+1H velocity failed because it's the wrong ruler. Re-measured at Mancini's resolution
+using owned Databento CME 1m bars + 8.35M aggressor-tagged trades, 60min pre-entry,
+direction-adjusted (trio silo entries 2021-2024; 30-40% excluded for CME gaps):
+
+- **wick_trap x aggr_imb15 (+19pp, 3/3 yrs):** buyer-aggressed reclaims in the final
+  15min win 56%/+$16.2K; seller-hammered "reclaims" win 37%/lose. = Mancini's
+  "recovers with conviction" + July flush-qualification consensus, invisible at 1H.
+- wick_trap violent flushes: WR flat but PnL +$28.5K vs -$1.8K — third independent
+  confirmation the violent tercile is the jackpot class; never filter it.
+- sweep: slow/already-turning approaches better (flush_speed -16pp, approach_v30
+  +17pp, both 3/4 yrs) — the sweep edge is NOT knife-catching.
+- LC: biggest raw gaps of the study (reclaim +44pp, anti-chase -30pp) but only 2
+  evaluable years — parked below the pre-registered floor.
+
+**CPCV (pre-registered: 6 blocks, 15 combos, 7d purge, threshold learned on train
+only, pass >= 12/15 positive AND median > 0):**
+- wick_trap aggr_imb15 1.25x boost: **PASS 12/15, median +$1,546** (worst -$2.0K,
+  best +$4.9K). Exactly at the bar; 2022 thin (5 trades). "Survived, not crowned."
+- sweep axes: FAIL 11/15 both — parked, no design re-rolls.
+
+**Path:** aggr_imb15 live sensor from Coinbase public trades feed (free), shadow-only;
+final promotion verdict reserved for the 2025-26 store extension (data with zero role
+in discovery). Discovery-window caveat applies to everything above: CPCV kills
+regime-luck, not selection bias.
