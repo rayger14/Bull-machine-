@@ -3,6 +3,7 @@ import GlassCard from '../ui/GlassCard';
 import Badge from '../ui/Badge';
 import ProgressBar from '../ui/ProgressBar';
 import { ARCHETYPES } from '../../data/archetypes';
+import { PARITY_RESULTS, PARITY_DATE } from '../../data/parityResults';
 
 export default function ArchetypeCards() {
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -21,14 +22,14 @@ export default function ArchetypeCards() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-slate-200">{arch.name}</span>
-                {arch.calibrated && <Badge variant="green">Calibrated</Badge>}
-                {!arch.calibrated && <Badge variant="orange">Uncalibrated</Badge>}
-                {!arch.proven && arch.pf && parseFloat(arch.pf) < 1 && <Badge variant="red">Disabled</Badge>}
+                {PARITY_RESULTS[key]?.verdict === 'GRADUATE' && <Badge variant="green">Graduate</Badge>}
+                {PARITY_RESULTS[key]?.verdict === 'REJECT' && <Badge variant="red">Reject</Badge>}
+                {PARITY_RESULTS[key]?.verdict === 'THIN' && <Badge variant="yellow">Thin sample</Badge>}
               </div>
               <div className="flex items-center gap-2">
-                {arch.pf && (
-                  <span className={`text-sm font-mono font-bold ${parseFloat(arch.pf) >= 1 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    PF {arch.pf}
+                {PARITY_RESULTS[key] && (
+                  <span className={`text-sm font-mono font-bold ${PARITY_RESULTS[key].pf >= 1.2 ? 'text-emerald-400' : PARITY_RESULTS[key].pf >= 1 ? 'text-amber-400' : 'text-rose-400'}`}>
+                    PF {PARITY_RESULTS[key].pf.toFixed(2)}
                   </span>
                 )}
                 <Badge variant={arch.dir === 'long' ? 'green' : arch.dir === 'short' ? 'red' : 'yellow'}>
@@ -36,6 +37,13 @@ export default function ArchetypeCards() {
                 </Badge>
               </div>
             </div>
+            {PARITY_RESULTS[key] && (
+              <div className="text-[10px] font-mono text-slate-500 mb-1">
+                SILO {PARITY_DATE}: {PARITY_RESULTS[key].positions} trades · WR {PARITY_RESULTS[key].wr.toFixed(0)}% ·
+                {' '}${'{'}(PARITY_RESULTS[key].pnl/1000).toFixed(1){'}'}K · DD {PARITY_RESULTS[key].maxDD.toFixed(1)}%
+                {PARITY_RESULTS[key].note && <span className="text-slate-600"> — {PARITY_RESULTS[key].note}</span>}
+              </div>
+            )}
             <div className="text-xs text-slate-400 mb-2">{arch.desc}</div>
             {arch.trades && <div className="text-[10px] text-slate-600 mb-2">{arch.trades}</div>}
 

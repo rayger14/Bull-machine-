@@ -1,10 +1,40 @@
 import GlassCard from '../components/ui/GlassCard';
 import Badge from '../components/ui/Badge';
 import ArchetypeCards from '../components/strategy/ArchetypeCards';
+import { BOOK_COMPARISON, PARITY_METHOD, PARITY_DATE } from '../data/parityResults';
 
 export default function StrategyPage() {
   return (
     <div className="space-y-4">
+      {/* V23 parity-store research verdicts */}
+      <GlassCard>
+        <div className="flex items-center gap-2 mb-3">
+          <div className="text-xs text-slate-500 uppercase tracking-wider">Honest Research Baseline</div>
+          <Badge variant="cyan">V23 parity store · {PARITY_DATE}</Badge>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead><tr className="text-slate-600 text-left">
+              <th className="py-1 pr-3">Book configuration</th><th className="text-right pr-3">PnL (5yr)</th>
+              <th className="text-right pr-3">PF</th><th className="text-right pr-3">MaxDD</th><th className="text-right pr-3">Sharpe</th>
+            </tr></thead>
+            <tbody>
+              {BOOK_COMPARISON.map((r) => (
+                <tr key={r.label} className="border-t border-white/[0.04]">
+                  <td className="py-1.5 pr-3 text-slate-300">{r.label}
+                    <div className="text-[10px] text-slate-600">{r.note}</div></td>
+                  <td className="text-right pr-3 font-mono text-emerald-400">${'{'}(r.pnl/1000).toFixed(0){'}'}K</td>
+                  <td className="text-right pr-3 font-mono">{Number.isFinite(r.pf) ? r.pf.toFixed(2) : '—'}</td>
+                  <td className="text-right pr-3 font-mono text-rose-400">{Number.isFinite(r.maxDD) ? r.maxDD.toFixed(1)+'%' : '—'}</td>
+                  <td className="text-right pr-3 font-mono">{Number.isFinite(r.sharpe) ? r.sharpe.toFixed(2) : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-[10px] text-slate-600 mt-2 leading-relaxed">{PARITY_METHOD}</p>
+      </GlassCard>
+
       {/* System overview */}
       <GlassCard>
         <div className="text-xs text-slate-500 uppercase tracking-wider mb-3">System Architecture</div>
