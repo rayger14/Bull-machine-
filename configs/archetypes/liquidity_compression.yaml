@@ -21,9 +21,9 @@ thresholds:
 hard_gates:
 - feature: volume_zscore
   op: min
-  value: 2.0
+  value: 3.0
   nan_policy: skip
-  description: "Elevated volume confirms exhaustion. Raised 1.5->2.0 (2026-08-30 within-gate study: 1.5-2.0 band lost 5/5 years; V23 silo A/B PnL $29.8K->$37.6K, PF 1.43->1.59, every year equal-or-better; docs/knowledge/within_gate_quality_study_2026_08_30.md)"
+  description: "Explosive volume only: LC edge lives exclusively at vz>=3.0 (positive 3/3 eras incl. virgin 2018-19; 2.0-3.0 band negative 3/3). Floor 1.5->3.0 2026-08-31: full-range silo PF 1.43->1.86, fresh -\$6.4K->+\$3.1K. docs/knowledge/within_gate_quality_study_2026_08_30.md"
 - feature: derived:rsi_extreme_65
   op: bool_true
   nan_policy: skip

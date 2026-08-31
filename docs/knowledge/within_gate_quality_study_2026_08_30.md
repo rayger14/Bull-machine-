@@ -88,3 +88,14 @@ only, pass >= 12/15 positive AND median > 0):**
 final promotion verdict reserved for the 2025-26 store extension (data with zero role
 in discovery). Discovery-window caveat applies to everything above: CPCV kills
 regime-luck, not selection bias.
+
+## Addendum 2 (2026-08-31): floor moved 2.0 -> 3.0 on three-era band evidence
+
+User challenge ("silo purity; at what volume does the engine start making money")
+produced the band table: 2.0-2.5 and 2.5-3.0 negative/dead in ALL THREE eras
+(virgin 2018-19, discovery, fresh); 3.0-4.0 and 4.0+ positive in all three.
+Pre-registered virgin assertion PASSED (>=3.0: $343/trade 55% WR vs $156 42%).
+Engine A/B at floor 3.0 (full range): PF 1.43->1.86, discovery +$8.6K,
+fresh -$6.4K -> +$3.1K PURE SILO, virgin flat with fewer trades. 7/9 years
+green. LC's true thesis: explosive coil breaks ONLY. PR #76 amended to 3.0.
+Robustness: bootstrap P(win) 98% fresh; floor curve is a plateau 1.9-3.0+.
