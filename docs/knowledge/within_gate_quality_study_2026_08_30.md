@@ -22,3 +22,15 @@ claim is BTC-only, 3/3 BTC eras incl. virgin + engine A/B) but: never port the
 constant to another asset unmeasured.
 
 Assets: eth_1h + es_1h parquets in scratchpad (re-fetchable; ES cost ~cents).
+
+## Addendum 4 (2026-09-01): altcoin breadth test — "crypto physics" label RETRACTED
+
+Pre-registered majority rule over 5 alts (same ETH-passing recipe): LTC direction
+right but 1/3 eras; LINK flat; ADA INVERTED (-1.77 vs +0.88); SOL wicky better;
+DOGE strongly INVERTED (clean -2.41%/29% WR vs wicky +0.79%). 0-1/5 pass ->
+**clean-break effect reclassified: BTC/ETH regularity, not crypto-universal.**
+Liquidation-cascade mechanism = unproven storytelling (meme coins may invert:
+wicky flush = retail capitulation). Full scoreboard: BTC 3/3, ETH 3/3, ES 0 (1h
+and daily), LTC/LINK/ADA/SOL/DOGE fail/invert. Implication: tilt stays
+shadow-eligible on BTC evidence alone; live shadow now MANDATORY and longer
+(months) before any sizing; alt data (scratchpad parquets) re-fetchable free.
