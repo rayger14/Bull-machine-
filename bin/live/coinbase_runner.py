@@ -3038,6 +3038,27 @@ class CoinbasePaperRunner:
             logger.warning("Failed to build oracle synthesis: %s", exc)
             heartbeat["oracle"] = None
 
+        # Sensor observability (2026-09-02): log the repaired sensors' hourly
+        # values so a frozen/pinned feature (the liquidity_score class of bug)
+        # is visible in production, not just in offline recomputation.
+        def _sv(name):
+            v = features.get(name)
+            try:
+                v = float(v)
+                return round(v, 4) if v == v else None
+            except (TypeError, ValueError):
+                return None
+        heartbeat["sensor_check"] = {k: _sv(k) for k in (
+            "liquidity_score", "volume_zscore", "atr_percentile",
+            "oi_change_4h", "taker_imbalance", "chop_score",
+        )}
+        try:
+            import json as _json
+            with open(self.output_dir / "sensor_series.jsonl", "a") as _f:
+                _f.write(_json.dumps({"ts": str(timestamp), **heartbeat["sensor_check"]}) + "\n")
+        except Exception as exc:
+            logger.warning("Failed to append sensor_series.jsonl: %s", exc)
+
         try:
             hb_path = self.output_dir / "heartbeat.json"
             with open(hb_path, "w") as f:
