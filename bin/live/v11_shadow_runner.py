@@ -269,6 +269,21 @@ class V11ShadowRunner:
         # parity store; the dial -$16K/worse DD. Dial now independently gated.
         self.tape_dial_enabled = bool(sizing_cfg.get('tape_dial_enabled', True))
         self._tape_dial = None
+        # Loss-triggered stand-down (engine/risk/stand_down.py). mode:
+        # 'off' | 'shadow' (log would-block, never block) | 'enforce'.
+        # Pause state is in-memory only — acceptable for shadow; revisit
+        # persistence before any enforce promotion.
+        _sd_cfg = self.config.get('risk_management', {}).get('stand_down', {})
+        self.stand_down_mode = str(_sd_cfg.get('mode', 'off')).lower()
+        self._stand_down = None
+        self._sd_would_block = 0
+        if self.stand_down_mode in ('shadow', 'enforce'):
+            from engine.risk.stand_down import LossStandDown
+            self._stand_down = LossStandDown(
+                k=_sd_cfg.get('k', 2),
+                window_hours=_sd_cfg.get('window_hours', 48),
+                pause_hours=_sd_cfg.get('pause_hours', 24),
+            )
         self.max_position_pct = sizing_cfg.get('max_position_size_pct', 0.15)  # legacy, unused
         self.max_margin_pct = sizing_cfg.get('max_margin_per_position_pct', 0.35)
         self.leverage = self.config.get('leverage', 1.0)
@@ -1262,6 +1277,29 @@ class V11ShadowRunner:
             signals = surviving
             self.last_dynamic_threshold = regime_threshold
 
+        # Stand-down: book-level loss-triggered pause. Runs even under bypass
+        # (it is a risk rule, not a fusion artifact). shadow = log only.
+        if signals and self._stand_down is not None and self._stand_down.blocked(timestamp):
+            if self.stand_down_mode == 'enforce':
+                for s in signals:
+                    idx = sig_index[id(s)]
+                    rej = f'stand_down ({self._stand_down.status(timestamp)})'
+                    self.last_bar_signals[idx]['status'] = 'rejected'
+                    self.last_bar_signals[idx]['rejection_reason'] = rej
+                    self.last_bar_signals[idx]['rejection_stage'] = 'stand_down'
+                    self._open_phantom(s, features, current_regime, rej, 'stand_down')
+                self.signals_rejected += len(signals)
+                logger.warning("[STAND_DOWN] ENFORCE blocked %d entries | %s",
+                               len(signals), self._stand_down.status(timestamp))
+                signals = []
+            else:  # shadow
+                self._sd_would_block += len(signals)
+                for s in signals:
+                    idx = sig_index[id(s)]
+                    self.last_bar_signals[idx]['stand_down_would_block'] = True
+                logger.info("[STAND_DOWN] SHADOW would block %d entries | %s",
+                            len(signals), self._stand_down.status(timestamp))
+
         # Step 3c: Apply position limits (SKIPPED in bypass/data-collection mode)
         if signals and not self.bypass_threshold:
             if not self.adaptive_fusion.get('enabled', False):
@@ -1918,6 +1956,8 @@ class V11ShadowRunner:
         ))
 
         pos.current_quantity -= exit_quantity
+        if self._stand_down is not None:
+            self._stand_down.record_leg(pos_id, pnl)
         pos.total_exits_pct += exit_pct
 
         # Log EVERY exit (including scale-outs) to trade_outcomes.csv
@@ -1958,6 +1998,10 @@ class V11ShadowRunner:
                 else:
                     dust_pnl = (pos.entry_price - fill_exit) * pos.current_quantity
                 self.cash += dust_margin + dust_pnl
+            if self._stand_down is not None:
+                self._stand_down.finalize(pos_id, exit_timestamp)
+                if self._stand_down.blocked(exit_timestamp):
+                    logger.warning("[STAND_DOWN] %s", self._stand_down.status(exit_timestamp))
             del self.positions[pos_id]
 
     def _check_all_exits(self, row: pd.Series, ts: pd.Timestamp):
