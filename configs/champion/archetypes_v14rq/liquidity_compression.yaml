@@ -21,9 +21,9 @@ thresholds:
 hard_gates:
 - feature: volume_zscore
   op: min
-  value: 1.5
+  value: 3.0
   nan_policy: skip
-  description: Elevated volume confirms exhaustion (not quiet market)
+  description: "Explosive volume only (vz>=3.0, validated 3 eras incl virgin; P0 fix 2026-09-03: this LIVE dir was missed by the Sept-2 deploy which edited configs/archetypes/ only)"
 - feature: derived:rsi_extreme_65
   op: bool_true
   nan_policy: skip
