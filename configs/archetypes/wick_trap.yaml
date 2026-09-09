@@ -21,6 +21,11 @@ hard_gates:
 - feature: derived:wick_anomaly
   op: bool_true
   description: Lower or upper wick > 35% of candle range
+- feature: wick_lower_ratio
+  op: min
+  value: 0.35
+  nan_policy: skip
+  description: "Directional identity (2026-09-08): a long trap requires the wick BELOW. Panel forensic caught 2 live longs qualifying on bearish upper wicks; pre-registered A/B PF 1.37->1.49, fresh improved. Removes a mildly net-positive class (+$2.7K/6.7yr) by declared bar."
 - feature: volume_zscore
   op: min
   value: 0.0
