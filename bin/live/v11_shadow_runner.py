@@ -750,14 +750,18 @@ class V11ShadowRunner:
         boms = round(_g('tf1h_boms_strength', _g('boms_strength', 0)), 3)
         bos_bull = int(_g('bos_bullish', 0))
         bos_bear = int(_g('bos_bearish', 0))
-        vol_z = round(_g('volume_z_7d', 0), 2)
+        # F4 fix 2026-09-08: log the series the gates actually read
+        # (volume_zscore, 20-bar), not volume_z_7d (168-bar, diverges up to 3.9σ)
+        vol_z = round(_g('volume_zscore', 0), 2)
         fz = round(_g('funding_Z', 0), 2)
         chop = round(_g('chop_score', 0.5), 3)
         fvg = int(_g('tf1h_fvg_present', 0))
         fg_raw = round(_g('fear_greed_norm', 0.5) * 100, 0)
         bb_width = round(_g('bb_width', 0), 4)
         atr_pct = round(_g('atr_percentile', 0), 3)
-        rsi_extreme = int(_g('derived:rsi_extreme_65', _g('rsi_extreme_65', 0)))
+        # F5 fix: the 'derived:' key never exists in the feature dict —
+        # compute the derived gate's actual definition (rsi>65 or rsi<35)
+        rsi_extreme = int(rsi > 65 or rsi < 35)
 
         gate_values = {
             'rsi_14': rsi, 'adx': adx, 'atr_14': atr, 'wick_ratio': wick,
@@ -2182,17 +2186,20 @@ class V11ShadowRunner:
         real_losses = [t for t in self.trades if t.pnl <= 0]
         real_pnl = sum(t.pnl for t in self.trades)
 
-        if total_pnl > 0 and len(wins) > len(losses):
-            insight = (f"Filters are too tight — rejected signals would have netted "
-                       f"${total_pnl:.0f} ({len(wins)}W/{len(losses)}L). "
-                       f"Consider lowering thresholds.")
-        elif total_pnl < real_pnl:
-            insight = (f"Filters are working — rejected signals would have lost "
-                       f"${total_pnl:.0f} vs real ${real_pnl:.0f}. "
-                       f"Current thresholds are protecting capital.")
+        # F7 fix 2026-09-08: phantom t.pnl is a SCALED PERCENTAGE (10x pct),
+        # not dollars — never compare it to real_pnl (USD). Compare like units:
+        # per-trade average pct for phantoms vs reals.
+        phantom_avg_pct = (total_pnl / 10.0) / len(self.phantom_trades) if self.phantom_trades else 0.0
+        real_avg_pct = (sum(getattr(t, 'pnl_pct', 0.0) for t in self.trades) / len(self.trades)) if self.trades else 0.0
+        if phantom_avg_pct > 0 and len(wins) > len(losses):
+            insight = (f"Filters may be too tight — rejected signals averaged "
+                       f"{phantom_avg_pct:+.2f}%/trade ({len(wins)}W/{len(losses)}L).")
+        elif phantom_avg_pct < real_avg_pct:
+            insight = (f"Filters are working — rejected signals averaged "
+                       f"{phantom_avg_pct:+.2f}%/trade vs real {real_avg_pct:+.2f}%/trade.")
         else:
-            insight = (f"Mixed results — phantom PnL ${total_pnl:.0f} vs real ${real_pnl:.0f}. "
-                       f"Need more data for clear signal.")
+            insight = (f"Mixed — phantom avg {phantom_avg_pct:+.2f}%/trade vs real "
+                       f"{real_avg_pct:+.2f}%/trade. Need more data.")
 
         # Per-archetype phantom breakdown
         by_arch = {}

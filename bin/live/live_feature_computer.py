@@ -61,6 +61,11 @@ def _liquidity_score_from(features) -> float:
     _oi = features.get('oi_change_4h', 0.0)
     if _oi is None or (isinstance(_oi, float) and _oi != _oi):
         _oi = 0.0
+    # F1 fix 2026-09-08: an OI feed outage printed -1.0 (impossible) and
+    # saturated this term at its max for 3h. Physically implausible moves
+    # are treated as missing, not as maximal liquidity.
+    if abs(_oi) > 0.5:
+        _oi = 0.0
     _oi_score = min(abs(_oi) * 10.0, 1.0)
     return 0.35 * _vol_score + 0.25 * _atr_pct + 0.20 * _fvg + 0.20 * _oi_score
 

@@ -2601,7 +2601,9 @@ class CoinbasePaperRunner:
             "calibrated_archetypes": self.runner.config.get('_calibrated_archetypes', []),
             "base_max_positions": af.get('base_max_positions', 3),
             "entry_spacing_bars": getattr(self.runner, '_entry_spacing_bars', 2),
-            "gate_mode": "soft",
+            # F3 fix: no global override is set, so per-YAML gate_mode
+            # governs (hard for most). The old hardcoded "soft" misstated it.
+            "gate_mode": "per-yaml (hard default)",
             "per_archetype_base_threshold": af.get('per_archetype_base_threshold', {}),
             "temp_range": af.get('temp_range', 0.38),
             "instab_range": af.get('instab_range', 0.15),
@@ -3048,12 +3050,20 @@ class CoinbasePaperRunner:
                 return round(v, 4) if v == v else None
             except (TypeError, ValueError):
                 return None
+        # F2 fix: one sensor row per bar (a reprocessed bar must not append twice)
+        if getattr(self, '_last_sensor_ts', None) == str(timestamp):
+            _sensor_dup = True
+        else:
+            _sensor_dup = False
+            self._last_sensor_ts = str(timestamp)
         heartbeat["sensor_check"] = {k: _sv(k) for k in (
             "liquidity_score", "volume_zscore", "atr_percentile",
             "oi_change_4h", "taker_imbalance", "chop_score",
         )}
         try:
             import json as _json
+            if _sensor_dup:
+                raise RuntimeError("duplicate bar — sensor row already appended")
             with open(self.output_dir / "sensor_series.jsonl", "a") as _f:
                 _f.write(_json.dumps({"ts": str(timestamp), **heartbeat["sensor_check"]}) + "\n")
         except Exception as exc:
