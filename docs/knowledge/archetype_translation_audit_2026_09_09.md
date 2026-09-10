@@ -257,6 +257,10 @@ for date in ['2021-01-15', '2021-04-01']:
     assert prefix != reference
 ```
 
+### September 10 follow-up
+
+The approved research-only build is now documented in [research validation results](research_validation_results_2026_09_10.md). It quantifies the previously unknown minute causality impact, profiles all 17 archetypes' gate inputs, and reproduces a live/backtest threshold-boundary mismatch. Earlier observations above are retained as the original audit record; consult the follow-up for corrected chronological results and remaining limitations.
+
 ### Standing orders (verbatim from project quant instructions)
 
 - **NEVER turn off bypass_threshold** — data collection mode is required for the foreseeable future
