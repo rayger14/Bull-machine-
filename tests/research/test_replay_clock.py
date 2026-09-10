@@ -121,6 +121,30 @@ class ReplayClockTests(unittest.TestCase):
         self.assertEqual(r['completed'],[])
         self.assertEqual(r['developing'][0]['volume'],59.)
 
+    def test_invalid_warmup_taints_later_retained_state(self):
+        a=self.observation(value=float('nan'),status='invalid',available_at='2026-01-01T01:00Z')
+        b=self.observation(id='f2')
+        r=self.run_replay(bars(3),[a,b],emit_from='2026-01-01T01:00Z')
+        self.assertFalse(r['rows'][0]['certified'])
+        self.assertFalse(r['certified'])
+        self.assertTrue(r['issues'])
+
+    def test_mutable_processor_outputs_cannot_rewrite_history(self):
+        class Mutable(Accumulator):
+            def update(self,candle,observations):
+                self.funding.append(candle['close'])
+                return {'history':self.funding}
+        r=self.m.replay(bars(3),[],Mutable,instrument='BTC',timeframe='1h')
+        self.assertEqual(r['rows'][0]['output']['history'],[100.])
+        self.assertEqual(r['rows'][1]['output']['history'],[100.,100.])
+
+    def test_hash_cannot_confuse_nan_with_literal_marker_dictionary(self):
+        a=self.observation(value=float('nan'))
+        cp=self.run_replay(bars(3),[a])['checkpoint']
+        changed=self.observation(value={'__nonfinite__':'nan'})
+        with self.assertRaisesRegex(ValueError,'checkpoint'):
+            self.run_replay(bars(),[changed],checkpoint=cp)
+
 
 if __name__=='__main__':
     unittest.main()

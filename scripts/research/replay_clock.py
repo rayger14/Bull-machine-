@@ -4,6 +4,7 @@ Resume deliberately replays the identical original history through a fresh
 processor. No partial detector-state restoration, silent sorting or gap filling.
 """
 from dataclasses import asdict, dataclass
+from copy import deepcopy
 import hashlib
 import json
 import math
@@ -36,8 +37,26 @@ def json_safe(value):
     return value
 
 
+def canonical(value):
+    """Type-tagged checkpoint encoding, separate from display serialization."""
+    if isinstance(value,np.generic):
+        return canonical(value.item())
+    if isinstance(value,pd.Timestamp):
+        return ['timestamp',str(value)]
+    if isinstance(value,dict):
+        pairs=[[canonical(k),canonical(v)] for k,v in value.items()]
+        return ['dict',sorted(pairs,key=lambda p:json.dumps(p[0],sort_keys=True))]
+    if isinstance(value,(list,tuple)):
+        return [type(value).__name__,[canonical(v) for v in value]]
+    if value is None or isinstance(value,(bool,int,str)):
+        return [type(value).__name__,value]
+    if isinstance(value,float):
+        return ['float',value.hex()]
+    raise ValueError(f'Unsupported checkpoint value type: {type(value).__name__}')
+
+
 def digest(value):
-    return hashlib.sha256(json.dumps(json_safe(value), sort_keys=True,
+    return hashlib.sha256(json.dumps(canonical(value), sort_keys=True,
                                     allow_nan=False).encode()).hexdigest()
 
 
@@ -191,16 +210,19 @@ def replay(bars, observations, factory, *, instrument, timeframe,
                 issues.append(f'{name}: invalid value')
             if o.valid_until is not None and now >= utc(o.valid_until):
                 issues.append(f'{name}: stale')
-        output = processor.update(dict(candle,close_time=str(now)),
-                                  {k:o.value for k,o in selected.items()})
+        output = processor.update(deepcopy(dict(candle,close_time=str(now))),
+                                  deepcopy({k:o.value for k,o in selected.items()}))
+        # Arbitrary stateful processors may retain warmup defects forever.
+        # No later good sample proves this memory clean without a reset contract.
+        all_issues.extend(issues)
+        retained_issues=sorted(set(all_issues))
         if opened >= first_emit:
-            all_issues.extend(issues)
             if cursor is None or now > cursor:
-                rows.append(dict(decision_time=str(now),output=output,
+                rows.append(dict(decision_time=str(now),output=deepcopy(output),
                     observation_ids={k:o.id for k,o in selected.items()},
-                    certified=not issues,issues=issues))
+                    certified=not retained_issues,issues=retained_issues))
     end = bars.index[-1].tz_convert('UTC') + step
-    return dict(rows=rows,state=processor.snapshot(),
+    return dict(rows=rows,state=deepcopy(processor.snapshot()),
         checkpoint=dict(cursor=str(end),prefix_hash=prefix_hash(end)),
         certified=bool(rows) and not all_issues,issues=sorted(set(all_issues)),
         scope='Supplied observation clock and processor only; not full strategy parity')
