@@ -23,14 +23,14 @@ annotate_h3_events(ledgers, *, policy_id, child_events) -> dict
 
 `ledgers` is a list of exactly four ledgers with unique configurations `(4H,3)`, `(4H,5)`, `(1D,3)`, `(1D,5)`. Batch input with an incomplete/duplicate configuration set raises `ValueError`; no winning configuration is selected. Each event yields four records. The batch returns `rows`, counts by configuration and status, `certified=False`, and limitations. No PnL is accepted or calculated.
 
-Each child event contains nonempty strings `id`, `contract_id`, `kind`, `instrument`, `data_stream_id`, `evidence_id`; aware timestamps `first_sweep_open`, `decision_time`, `available_at`; and `values`.
+Each child event contains nonempty strings `id`, `contract_id`, `kind`, `instrument`, `data_stream_id`, `evidence_id`; aware timestamps `first_sweep_open`, `reclaim_bar_open`, `decision_time`, `available_at`; and `values`.
 
 Supported contracts:
 
-- `lc_fixed_parent_reclaim_v1`: kind `hourly_lc`, values `low`, `close`, decision exactly first-sweep open plus one hour, sweep open on an hour boundary.
-- `minute_child_sweep_parent_location_v1`: kind `minute_equal_low_sweep`, values `child_level`, `sweep_low`, `reclaim_close`; sweep and decision on minute boundaries, decision strictly after sweep. The selector's sweep-depth/touch/spacing rules are not reimplemented.
+- `lc_fixed_parent_reclaim_v1`: kind `hourly_lc`, values `low`, `close`; reclaim-bar open equals first-sweep open, both on an hour boundary. Derive decision as reclaim-bar open plus one hour.
+- `minute_child_sweep_parent_location_v1`: kind `minute_equal_low_sweep`, values `child_level`, `sweep_low`, `reclaim_close`; sweep and reclaim-bar opens on minute boundaries, reclaim-bar open at or after first-sweep open. Derive decision as reclaim-bar open plus one minute. The selector's sweep-depth/touch/spacing rules are not reimplemented.
 
-All numeric values must be finite positive numbers, not booleans or numeric strings. LC `low <= close`; minute `sweep_low < child_level` and `sweep_low <= reclaim_close`. Evidence IDs attest frozen-event provenance only; the evaluator does not authenticate raw candles or reproduce native detection. `available_at == decision_time` is mandatory. Unknown policy IDs raise `ValueError`; invalid/missing event, ledger or temporal evidence yields `unknown`, never permission.
+All numeric values must be finite positive numbers, not booleans or numeric strings. LC `low <= close`; minute `sweep_low < child_level` and `sweep_low <= reclaim_close`. Evidence IDs attest frozen-event provenance only; the evaluator does not authenticate raw candles or reproduce native detection. Supplied `decision_time` and `available_at` must both equal the derived decision exactly; an arbitrary later minute cannot consume future parent transitions. Unknown policy IDs raise `ValueError`; invalid/missing event, ledger or temporal evidence yields `unknown`, never permission.
 
 Return fields: `id`, `policy_id`, `status` (`pass`, `reject`, `unknown`), `would_allow` (true only for pass), `reasons`, `child_event_id`, `child_event_contract_id`, `decision_time`, `parent_config`, `parent_contract_id`, `parent_data_stream_id`, `binding`, `interval_transition_ids`, `bound_lineage_broken`, `bound_version_superseded`, `evaluated_values`, `comparison_contract`, `certified=False`, `limitations`.
 
