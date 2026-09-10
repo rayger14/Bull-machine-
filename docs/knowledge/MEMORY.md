@@ -2,6 +2,8 @@
 
 ## September 10, 2026 verification overrides
 
+- [Actual feature and signal replay](feature_signal_replay_2026_09_10.md): delegated quant reviewers approved the source-faithful LFC/signal adapters, hardened experiment report and separate synthetic native virtual-book fixture. 106 research tests pass. The 1,002-hour feature buffer-boundary replay preserves prefix/restart rows and state. All 17 archetypes retained; minute input aggregates into native hourly feature/signal updates, not a newly validated minute strategy. Missing raw-feed receipt provenance/model artifacts and full historical feature-to-book composition remain blockers. Production unchanged; no profitability claim.
+
 - [Replay contract build](replay_contract_build_2026_09_10.md): approved initial clock/selected-feature/report interfaces implemented; 63 research tests pass. Source-faithful reference and finite-FVG/OI-liquidity candidate stay separate. Historical report explicitly remains uncertified; unknown release/version/state provenance and full-LFC/book integration remain unresolved. Production unchanged; no profitability claim.
 
 - [Research validation results](research_validation_results_2026_09_10.md): the recovered minute sweep headline below is **not validated**; legacy event selection is noncausal. Chronological replay fails profitability. Local live/backtest threshold boundary differs in 48/192 controlled cases. All 17 archetypes remain unchanged.
