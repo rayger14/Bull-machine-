@@ -184,7 +184,9 @@ def test_context_at_minute_aggregation_has_identical_parent_identity():
     aggregated = pd.DataFrame(aggregated_rows).set_index("open_time")
     aggregated.index = pd.to_datetime(aggregated.index, utc=True)
     aggregated = aggregated[["open", "high", "low", "close", "volume"]]
-    aggregated["volume"] = 1.0
+    np.testing.assert_array_equal(
+        aggregated["volume"].to_numpy(), hourly["volume"].to_numpy()
+    )
     aggregated["atr_14"] = hourly["atr_14"].to_numpy()
 
     direct_ledger = build(hourly, "4H", 3)
