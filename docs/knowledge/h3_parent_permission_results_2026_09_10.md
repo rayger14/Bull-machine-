@@ -41,7 +41,7 @@ Before any strategy conclusion, complete consumed-field provenance, then separat
 
 ## Verified annotation results
 
-Implementation commits `c0929a4` and `2bd6b70`; 46 focused policy tests. Independent task review caught and closed three defects: binding outside the validated causal prefix, duplicate consumed transition IDs, and malformed-event batch exceptions. Root's fresh full research suite after fixes: **265 passed**, one pre-existing urllib3/LibreSSL warning, 11.99 seconds. Production `engine/`, `bin/`, and `configs/` diff is empty for this phase.
+Implementation commits `c0929a4`, `2bd6b70`, and `667c736`; 52 focused policy tests. Independent task review caught and closed three defects: binding outside the validated causal prefix, duplicate consumed transition IDs, and malformed-event batch exceptions. Final review additionally closed initially-active/future-version false permission and malformed-ledger container exceptions. Cold-start and consumed-version clocks are checked, with an independent strict-before-sweep bound-availability assertion. The scoped final re-review approved both fixes for local research only. Root's fresh full research suite after fixes: **271 passed**, one pre-existing urllib3/LibreSSL warning, 12.03 seconds. Production `engine/`, `bin/`, and `configs/` diff is empty for this phase.
 
 June 10–20 fixed event population, parent histories beginning June 1:
 
@@ -61,6 +61,6 @@ Rejection reasons:
 
 Full 720-hour parent histories and **freshly rebuilt 456-hour prefixes ending June 20** produced exactly equal full annotation records, including IDs, for both arms. Fresh copied-input evaluation also matched; inputs remained unchanged. These are fixed-event/evaluator checks, not native engine selection/restart certification.
 
-Private result: `results/research_validation_2026_09_10/h3_parent_permission/june_fixed_event_annotations.json`, SHA256 `a60cc953a80c8239cb90e136b2758c5460df9d60b3cebdce54882ebd483acec6`. The artifact records policy source hash, frozen input hashes, every annotation, reason counts, and checks.
+Private result: `results/research_validation_2026_09_10/h3_parent_permission/june_fixed_event_annotations.json`, SHA256 `77ff36592b862a43033a15e48b8ca43159b4a455136f209af62a2db661e10d21`. The artifact records policy source hash, frozen input hashes, every annotation, reason counts, and checks. After final fix `667c736`, all 456 full annotation records remained exactly equal to the earlier run, and rebuilt-prefix, fresh-copy and nonmutation checks passed again. The refreshed policy SHA256 is `b0ebfe75e0222aa65460a1f21b747f4ab238a5f3c2708ff454a12f56755d97ee`.
 
 Interpretation: this particular parent-floor-reclaim subtype is **very restrictive for hourly LC** in the inspected population. It is not ready to become a universal LC gate. Daily coverage is strongly dependent on bounded prehistory and anchor confirmation; an absent parent is not evidence that the trade would lose. The minute variants admit different subsets, but a larger admitted count does not identify the better strategy. Do not loosen thresholds or choose an anchor because these counts look attractive. Preserve baseline archetypes and advance only with separate coverage and economic validation.
