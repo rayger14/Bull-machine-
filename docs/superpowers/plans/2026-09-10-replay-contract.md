@@ -25,12 +25,12 @@ Files: `scripts/research/replay_clock.py`, `tests/research/test_replay_clock.py`
 
 Interfaces: `Observation` (id, feature, value, instrument, source, units, version, event_time, available_at, status, received_at, valid_until); `replay(bars, observations, factory, instrument, timeframe, emit_from=None, checkpoint=None, expected_versions=None)`; `context_at(bars, decision_time, base_timeframe, target_timeframe)`.
 
-- [ ] Write tests first for delayed release, unknown release, duplicates/out-of-order, formula mismatch, stale/invalid values, missing bars, empty input, and closed/developing context at exact boundaries.
-- [ ] Test prefix/restart invariance using a stateful processor: `update` accumulates every candle's close and observation funding readings; literal sum verifies warmup includes each candle exactly once. Check multiple resume cuts and changed-prehistory rejection.
-- [ ] Run `python3 -m unittest discover -s tests/research -p test_replay_clock.py -v`; fail before implementation.
-- [ ] Implement UTC validation, availability-first stable observation order, exact instrument/version contracts, strict candle envelope/grid/continuity, and prefix-bound checkpoints. Fresh `factory()` on every call rebuilds processor state by replaying every prior candle. Emit only post-checkpoint rows.
-- [ ] Implement context aggregation on base candles whose close is at/before decision time. Output complete and developing buckets separately with constituent completeness.
-- [ ] Run tests and commit independently.
+- [x] Write tests first for delayed release, unknown release, duplicates/out-of-order, formula mismatch, stale/invalid values, missing bars, empty input, and closed/developing context at exact boundaries.
+- [x] Test prefix/restart invariance using a stateful processor: `update` accumulates every candle's close and observation funding readings; literal sum verifies warmup includes each candle exactly once. Check multiple resume cuts and changed-prehistory rejection.
+- [x] Run `python3 -m unittest discover -s tests/research -p test_replay_clock.py -v`; fail before implementation.
+- [x] Implement UTC validation, availability-first stable observation order, exact instrument/version contracts, strict candle envelope/grid/continuity, and prefix-bound checkpoints. Fresh `factory()` on every call rebuilds processor state by replaying every prior candle. Emit only post-checkpoint rows.
+- [x] Implement context aggregation on base candles whose close is at/before decision time. Output complete and developing buckets separately with constituent completeness.
+- [x] Run tests and commit independently.
 
 ## Task 2 — Source-faithful reference and correction candidate
 
@@ -38,12 +38,12 @@ Files: `scripts/research/replay_features.py`, `tests/research/test_replay_featur
 
 Interfaces: `compare_features(features)` and `decision_probe(features, cfg, case, root)`; processor `SelectedFeatureProcessor.update(candle, observations)` for the clock.
 
-- [ ] Tests first: reference retains NaN FVG pass; correction rejects it; OI change .02 increases liquidity by .04 on otherwise equal inputs; fusion descendants refresh; missing dependencies invalidate candidate descendants; inputs remain unchanged.
-- [ ] Tests first: gate audit records combined actual evaluator penalty/mode, reference/candidate pre/post gate score, actual live/backtest acceptance, and narrow scope. A known global-bypass case still disagrees.
-- [ ] Run tests to observe expected missing-implementation failure.
-- [ ] Extract trusted pure helpers `_liquidity_score_from` and `_fusion_scores` by exact AST from local source; execute actual `DERIVED_FEATURES`/gate evaluator and existing boundary probe. Do not construct network clients or live runners.
-- [ ] Correction recomputes declared liquidity→fusion descendants; derivative-dependent regime context is flagged invalidated. Funding reconstruction remains unavailable absent its full observation contract.
-- [ ] Run all research tests and commit.
+- [x] Tests first: reference retains NaN FVG pass; correction rejects it; OI change .02 increases liquidity by .04 on otherwise equal inputs; fusion descendants refresh; missing dependencies invalidate candidate descendants; inputs remain unchanged.
+- [x] Tests first: gate audit records combined actual evaluator penalty/mode, reference/candidate pre/post gate score, actual live/backtest acceptance, and narrow scope. A known global-bypass case still disagrees.
+- [x] Run tests to observe expected missing-implementation failure.
+- [x] Extract trusted pure helpers `_liquidity_score_from` and `_fusion_scores` by exact AST from local source; execute actual `DERIVED_FEATURES`/gate evaluator and existing boundary probe. Do not construct network clients or live runners.
+- [x] Correction recomputes declared liquidity→fusion descendants; derivative-dependent regime context is flagged invalidated. Funding reconstruction remains unavailable absent its full observation contract.
+- [x] Run all research tests and commit.
 
 ## Task 3 — Version-aware historical CLI and certificate
 
@@ -51,10 +51,10 @@ Files: `scripts/research/replay_contract_report.py`, `tests/research/test_replay
 
 Interface: `build_report(store, live_records, configs, hashes)` and CLI `--store --live-jsonl --config --out`.
 
-- [ ] Tests first: excludes all ambiguous duplicate rows; preserves 17/no-data archetypes; missing version/availability blocks certification; genuine source metadata mismatch reported; JSON finite-safe; empty evidence fails; returns decision-boundary diagnostic separately from paired-input drift.
-- [ ] Run failing tests. Implement report using existing gate/config loaders, selected-feature probes and boundary matrix. Record hashes, coverage and all blockers. Provide exit 2 with `--require-certification` for incomplete evidence.
-- [ ] Run actual 526-row paired archive exercise; emit candidate predicate/feature changes, not hypothetical P&L or actual entry counts.
-- [ ] Run all research tests, CLI expected-failure checks, independent source review, and production-diff checks. Fix review findings with failing regressions. Commit report/docs locally.
+- [x] Tests first: excludes all ambiguous duplicate rows; preserves 17/no-data archetypes; missing version/availability blocks certification; genuine source metadata mismatch reported; JSON finite-safe; empty evidence fails; returns decision-boundary diagnostic separately from paired-input drift.
+- [x] Run failing tests. Implement report using existing gate/config loaders, selected-feature probes and boundary matrix. Record hashes, coverage and all blockers. Provide exit 2 with `--require-certification` for incomplete evidence.
+- [x] Run actual 526-row paired archive exercise; emit candidate predicate/feature changes, not hypothetical P&L or actual entry counts.
+- [x] Run all research tests, CLI expected-failure checks, independent source review, and production-diff checks. Fix review findings with failing regressions. Commit report/docs locally.
 
 ## Literal acceptance examples
 
@@ -67,3 +67,7 @@ assert compare_features({'tf1h_fvg_present': 0, 'tf4h_fvg_present': 0, 'fvg_pres
 ```
 
 Full-LFC reconstruction cannot be certified from the recovered archives alone: they lack availability/version/state provenance. The implemented interface and diagnostics must make this limitation explicit rather than fabricate a complete golden master.
+
+## Execution record
+
+Initial scoped interfaces implemented and reviewed; 63 research tests pass. The historical CLI processed 526 unambiguous paired rows and correctly exits 2 when certification is required. Full-LFC and strategy/book certification is not implemented or claimed. Review regressions, exact outcomes and reproduction commands are in `docs/knowledge/replay_contract_build_2026_09_10.md`. Production/configs/data remain unchanged; all work stays on the local research branch.

@@ -1,6 +1,6 @@
 # Research replay contract — design for review
 
-Status: proposed implementation; not a production behavior change. Evidence: `docs/knowledge/feature_parity_root_causes_2026_09_10.md`.
+Status: approved by user and initial interfaces implemented; not a production behavior change. Evidence: `docs/knowledge/feature_parity_root_causes_2026_09_10.md`. Delivery/scope limits: `docs/knowledge/replay_contract_build_2026_09_10.md`. Full feature/state/book certification remains unimplemented and is not implied by these interfaces.
 
 ## Objective and scope
 

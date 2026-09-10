@@ -2,6 +2,8 @@
 
 ## September 10, 2026 verification overrides
 
+- [Replay contract build](replay_contract_build_2026_09_10.md): approved initial clock/selected-feature/report interfaces implemented; 63 research tests pass. Source-faithful reference and finite-FVG/OI-liquidity candidate stay separate. Historical report explicitly remains uncertified; unknown release/version/state provenance and full-LFC/book integration remain unresolved. Production unchanged; no profitability claim.
+
 - [Research validation results](research_validation_results_2026_09_10.md): the recovered minute sweep headline below is **not validated**; legacy event selection is noncausal. Chronological replay fails profitability. Local live/backtest threshold boundary differs in 48/192 controlled cases. All 17 archetypes remain unchanged.
 - [Feature parity root causes](feature_parity_root_causes_2026_09_10.md): all 74,436 V23 liquidity scores match zero-OI computation; saved OI changes 52,413 expected values. NaN truthiness adds 9,364 `any_fvg` predicate passes (not trades). June/July live snapshots are old-version evidence; V23 builder warmup/resume paths need clock regression tests. Proposed research replay contract is pending design review; no production repairs or new profitability claims.
 
