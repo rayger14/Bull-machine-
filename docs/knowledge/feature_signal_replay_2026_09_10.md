@@ -62,6 +62,8 @@ The separate synthetic virtual-book fixture characterizes those native downstrea
 
 ## Next bounded research step
 
+Update: the one-engine native composition and historical exercises are now implemented in [Native pipeline and trader-intent witnesses](native_pipeline_and_trader_witnesses_2026_09_10.md). That newer checkpoint supersedes the composition step below; it does not certify executable fills or full live-host parity.
+
 Compose feature/signal replay with the reviewed native-book reference without a second detector pass, first on controlled positive fixtures. Bind the availability/fill convention explicitly before historical execution: retaining the runner's hour-open labels does not establish that a close-known signal could have traded at that open. Then add properly timestamped external observations and model artifacts if recovered. No gate optimization or strategy promotion should precede these checks and a fresh out-of-sample protocol.
 
 No archetype was disabled or tuned. No raw data, engine, runner or production config was edited. No profitability estimate was produced by this work.

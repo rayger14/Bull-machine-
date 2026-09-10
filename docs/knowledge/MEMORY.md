@@ -2,6 +2,8 @@
 
 ## September 10, 2026 verification overrides
 
+- [Native pipeline and trader-intent witnesses](native_pipeline_and_trader_witnesses_2026_09_10.md): 140 research tests pass. One LFC and one runner-owned engine now compose into a guarded native paper book; full-prehistory positions and prefix/restart state tested. Hourly 240-bar and minute 120-bar diagnostic checks pass. Hourly emitted window has two entries, both via collection bypass, including OI divergence on defaulted zero OI without derivatives observations. Native close-price/backdated labels and gap-stop assumptions are explicitly non-executable. Two-entry minute-price diagnostic also finds pre-delay dataset basis: do not attribute total price difference solely to latency. Trader-intent witnesses distinguish predicate/gate correctness from teacher fidelity and profitability. No production changes or tuning.
+
 - [Actual feature and signal replay](feature_signal_replay_2026_09_10.md): delegated quant reviewers approved the source-faithful LFC/signal adapters, hardened experiment report and separate synthetic native virtual-book fixture. 106 research tests pass. The 1,002-hour feature buffer-boundary replay preserves prefix/restart rows and state. All 17 archetypes retained; minute input aggregates into native hourly feature/signal updates, not a newly validated minute strategy. Missing raw-feed receipt provenance/model artifacts and full historical feature-to-book composition remain blockers. Production unchanged; no profitability claim.
 
 - [Replay contract build](replay_contract_build_2026_09_10.md): approved initial clock/selected-feature/report interfaces implemented; 63 research tests pass. Source-faithful reference and finite-FVG/OI-liquidity candidate stay separate. Historical report explicitly remains uncertified; unknown release/version/state provenance and full-LFC/book integration remain unresolved. Production unchanged; no profitability claim.
@@ -12,6 +14,7 @@
 Older study verdicts below retain historical context and must not override these newer measurement findings.
 
 ## User Preferences
+- Progress updates must state what was accomplished, what remains uncertain, and the next steps. Routine research proceed decisions are delegated to quant reviewers reporting to the lead agent; do not repeatedly ask Ray to proceed. This does not authorize live trading changes, deployment, public pushes, or profitability claims.
 - [Backtest output format](feedback_backtest_output.md) — always show date range, starting equity, avg risk per trade
 
 ## Key Architecture

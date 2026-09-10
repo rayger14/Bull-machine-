@@ -35,6 +35,62 @@ def resolved(path):
     return path.resolve() if path.is_absolute() else (ROOT/path).resolve()
 
 
+def observe_engine_signals(engine, original_get_signals, **native_kwargs):
+    """Observe one native call and return its SAME list/objects plus diagnostics.
+
+    No clock, buffer, allocation policy, network policy, or second engine belongs
+    here. Callers provide those boundaries. The selected-signal diagnostic is
+    copied before the caller can apply runner threshold/sizing mutations.
+    """
+    bar_index = native_kwargs['bar_index']
+    outcomes = {name: dict(detect_calls=0, structural=None, gates=None,
+                          fusion_before_gate_penalty=None, native_signal=None,
+                          can_signal_before=arch.can_signal(bar_index),
+                          last_signal_bar_before=arch.last_signal_bar,
+                          gate_mode=arch.config.gate_mode,
+                          entry_threshold=arch.config.entry_threshold)
+                for name, arch in engine.archetypes.items()}
+
+    def observe(original, record):
+        def call(*args, **kwargs):
+            value = original(*args, **kwargs)
+            record(value, args, kwargs)
+            return value
+        return call
+
+    with ExitStack() as stack:
+        checker = engine.structural_checker
+        if checker is not None:
+            def structure_record(value, args, kwargs):
+                name = kwargs['archetype_name']
+                outcomes[name]['structural'] = dict(passed=value[0], reason=value[1])
+            stack.enter_context(patch.object(checker, 'check_structure', observe(checker.check_structure, structure_record)))
+        for name, arch in engine.archetypes.items():
+            item = outcomes[name]
+
+            def detect_record(value, args, kwargs, item=item):
+                item['detect_calls'] += 1
+                item['native_signal'] = deepcopy(vars(value)) if value is not None else None
+
+            def gate_record(value, args, kwargs, item=item):
+                item['gates'] = dict(passed=value[0], reason=value[1], penalty=value[2])
+
+            def fusion_record(value, args, kwargs, item=item):
+                item['fusion_before_gate_penalty'] = value
+
+            for method, record in (('detect', detect_record), ('_evaluate_gates', gate_record),
+                                   ('compute_fusion_score', fusion_record)):
+                original = getattr(arch, method)
+                stack.enter_context(patch.object(arch, method, observe(original, record)))
+        signals = original_get_signals(**native_kwargs)
+    selected = {signal.archetype_id for signal in signals}
+    for name, item in outcomes.items():
+        item['selected'] = name in selected
+        item['last_signal_bar_after'] = engine.archetypes[name].last_signal_bar
+    return signals, dict(archetypes=outcomes, signals=[deepcopy(vars(signal)) for signal in signals],
+                         structural_errors=checker.stats['errors'] if checker is not None else 0)
+
+
 class SignalEngine:
     def __init__(self, config=ROOT/'configs/champion_paper.json'):
         config = resolved(config)
@@ -100,61 +156,19 @@ class SignalEngine:
         self.buffer.append(bar.copy())
         previous = self.buffer[-2] if len(self.buffer) >= 2 else None
         lookback = pd.DataFrame(list(self.buffer)) if len(self.buffer) > 1 else None
-        outcomes = {name: dict(detect_calls=0, structural=None, gates=None,
-                              fusion_before_gate_penalty=None, native_signal=None,
-                              can_signal_before=arch.can_signal(self.bar_index),
-                              last_signal_bar_before=arch.last_signal_bar,
-                              gate_mode=arch.config.gate_mode,
-                              entry_threshold=arch.config.entry_threshold)
-                    for name, arch in self.engine.archetypes.items()}
-
-        def observe(original, record):
-            def call(*args, **kwargs):
-                value = original(*args, **kwargs)
-                record(value, args, kwargs)
-                return value
-            return call
-
         def reject_allocation(*args, **kwargs):
             raise RuntimeError('Allocation is prohibited in signal-only replay')
 
         with deny_network(), ExitStack() as stack:
             stack.enter_context(patch.object(self.engine, 'allocate', reject_allocation))
             stack.enter_context(patch.object(self.engine.portfolio_allocator, 'allocate', reject_allocation))
-            checker = self.engine.structural_checker
-            if checker is not None:
-                def structure_record(value, args, kwargs):
-                    name = kwargs['archetype_name']
-                    outcomes[name]['structural'] = dict(passed=value[0], reason=value[1])
-                stack.enter_context(patch.object(checker, 'check_structure', observe(checker.check_structure, structure_record)))
-            for name, arch in self.engine.archetypes.items():
-                item = outcomes[name]
-
-                def detect_record(value, args, kwargs, item=item):
-                    item['detect_calls'] += 1
-                    item['native_signal'] = deepcopy(vars(value)) if value is not None else None
-
-                def gate_record(value, args, kwargs, item=item):
-                    item['gates'] = dict(passed=value[0], reason=value[1], penalty=value[2])
-
-                def fusion_record(value, args, kwargs, item=item):
-                    item['fusion_before_gate_penalty'] = value
-
-                for method, record in (('detect', detect_record), ('_evaluate_gates', gate_record),
-                                       ('compute_fusion_score', fusion_record)):
-                    original = getattr(arch, method)
-                    stack.enter_context(patch.object(arch, method, observe(original, record)))
-            signals = self.engine.get_signals(bar=bar, bar_index=self.bar_index,
-                                             prev_row=previous, lookback_df=lookback)
-        selected = {signal.archetype_id for signal in signals}
-        for name, item in outcomes.items():
-            item['selected'] = name in selected
-            item['last_signal_bar_after'] = self.engine.archetypes[name].last_signal_bar
-        if checker is not None and checker.stats['errors']:
+            _, diagnostic = observe_engine_signals(self.engine, self.engine.get_signals,
+                bar=bar, bar_index=self.bar_index, prev_row=previous, lookback_df=lookback)
+        if diagnostic['structural_errors']:
             self.blockers.add('structural_error_permissive_fallback')
         return dict(certified=False, bar_index=self.bar_index, feature_open_time=str(opened),
-                    decision_time=str(decision_time), archetypes=outcomes,
-                    signals=[deepcopy(vars(signal)) for signal in signals],
+                    decision_time=str(decision_time), archetypes=diagnostic['archetypes'],
+                    signals=diagnostic['signals'],
                     blockers=sorted(self.blockers),
                     scope='Native get_signals including structure/gates/fusion/cooldown/dedup; not runner entry or execution')
 

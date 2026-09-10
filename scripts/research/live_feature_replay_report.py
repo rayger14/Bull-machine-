@@ -28,6 +28,8 @@ def assert_unchanged(expected):
 
 
 def manifest_files(manifest):
+    if not isinstance(manifest, dict):
+        return {}
     if 'files' in manifest:
         return {str((ROOT/Path(path)).resolve()): value for path, value in manifest['files'].items()}
     result = {}
