@@ -59,6 +59,8 @@ Weights differ by archetype. W is direction-aware multi-timeframe Wyckoff; L is 
 
 Soft gates then multiply F by their pass fraction. In the default native fusion mode an **inner YAML threshold** remains active (`:822–850`). The isolated engine keeps the highest emitted detector fusion score per direction—after soft-gate penalty and inner threshold, before runner crisis adjustment (`isolated_archetype_engine.py:585–633`). Cooldown can arm before dedup, even for candidates later discarded (`archetype_instance.py:901–908`).
 
+The separate `confidence` field is also not a calibrated probability: `min(1, fusion/max(entry_threshold,0.01))` saturates at 1 for emitted default-fusion-mode candidates whose threshold is at least0.01 (`archetype_instance.py:846–850,898–899`). A guarded local probe with threshold0.18 and scores0.18,0.30,0.80 returned confidence1.0 for all three. This does not measure an80% or100% likelihood of trade success.
+
 The runner applies:
 
 ```text
