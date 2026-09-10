@@ -2,6 +2,8 @@
 
 Research decisions delegated by Ray were reviewed by the quant team on September 10, 2026. These are **candidate contracts, not validated strategies**. All 17 native archetypes remain independent references. No production gate, threshold, risk setting, or exit rule is changed.
 
+Implementation status: the first [H1/H2 permission audit](context_permission_audit_2026_09_10.md) is a standalone sidecar, not the native pre-cooldown enforcement described as the eventual H1 intervention below. Its 240-hour historical diagnostic cannot grant H1 permission without consumed-field provenance; H2 alone passes all 239 rows with supplied previous-hour context. These are compliance/coverage observations, not economic improvements. The [September 8 case](sep8_liquidity_compression_case_2026_09_10.md) is descriptive and must not select candidate thresholds.
+
 ## Order of work
 
 1. Separate missing evidence from observed values.

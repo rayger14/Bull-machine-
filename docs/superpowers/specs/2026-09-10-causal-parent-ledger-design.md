@@ -24,6 +24,8 @@ Use existing `replay_clock.validate_bars(bars, '1h')`: aware UTC-normalizable, u
 
 Only complete aligned 4/24-hour buckets enter pivot detection. Exclude a leading partial bucket and retain a trailing partial bucket as a developing diagnostic, not a pivot constituent. Missing interior hours reject. Recovered aggregation must match independently aggregated complete buckets on valid inputs.
 
+Aggregation comparison keeps OHLC, bucket indices and close times exact. Nonnegative finite volume sums may differ by at most eight floating-point ULPs at the larger magnitude, explicitly recorded in the contract. This is a comparison-only roundoff allowance for different summation algorithms, not input rounding or a strategy threshold; larger/nonfinite differences reject. The June real-data witness differed by one to two ULPs despite identical constituents.
+
 Canonicalize external timestamps to UTC. For the source-only compatibility copy, make UTC timestamps naive, execute the unchanged source functions, then explicitly restore UTC. Check epoch identity. This bridge solves the recovered dtype mismatch without resampling in local time or accepting naive external timestamps.
 
 ## Ledger and identities
