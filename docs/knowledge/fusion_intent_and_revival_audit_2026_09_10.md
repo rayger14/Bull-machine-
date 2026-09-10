@@ -72,6 +72,10 @@ Macro is not a direct term in the technical F formula. Current champion selects 
 
 The intended orthogonality is incomplete at input level: ADX appears in M, risk temperature and instability; volume and other fields also recur. That is overlapping influence, not automatically a bug, but it must be measured explicitly rather than sold as independent confirmations.
 
+### The factor-attribution display is not causal attribution
+
+The runner's `_compute_factor_attribution` explicitly calls itself approximate (`v11_shadow_runner.py:1588–1697`). It assigns macro a share from absolute F&G/DXY/VIX extremity (up to 0.30), regime a share from a heuristic alignment term (up to 0.20), then distributes the remaining share between technical and liquidity using configured weights. It does not measure the marginal effect of those factors on PnL or replay the decision without them. Macro extremity also does not encode whether that macro state favors this direction/horizon. Consequently, a displayed macro contribution is not proof that macro drove the entry or explained a winner. This source finding does not independently attest the frontend version behind the supplied screenshot.
+
 ## Reproduced implementation hazards
 
 These are deterministic local synthetic probes, **not measured prevalence in actual live trades**. No production fix was made.
