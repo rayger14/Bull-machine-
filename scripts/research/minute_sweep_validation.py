@@ -75,7 +75,9 @@ def simulate_events(bars, events, *, entry_mode='next_open', notional=50000.,
 
     Lockout is fixed from entry, not released by an early stop (legacy policy).
     Half the fixed-notional round-trip fee is charged at each side. Next-open
-    includes the entry bar. Stop gaps fill at min(stop, bar open).
+    includes the entry bar and exits at the deadline OPEN, before another entry
+    can use that open. Close-mode exits at deadline close. Stop gaps fill at
+    min(stop, bar open).
     """
     validate_bars(bars)
     if entry_mode not in ('close', 'next_open'):
@@ -112,12 +114,13 @@ def simulate_events(bars, events, *, entry_mode='next_open', notional=50000.,
         if stop >= entry:
             skipped_invalid += 1
             continue
-        end = min(i+hold_minutes, len(bars)-1)
+        deadline = i+hold_minutes
+        end = min(deadline-(entry_mode == 'next_open'), len(bars)-1)
         first = i if entry_mode == 'next_open' else i+1
         hits = np.flatnonzero(low[first:end+1] <= stop)
         stopped = bool(len(hits))
-        exit_idx = first+int(hits[0]) if stopped else end
-        closed = stopped or i+hold_minutes < len(bars)
+        closed = stopped or deadline < len(bars)
+        exit_idx = first+int(hits[0]) if stopped else deadline if closed else end
         qty = notional/entry
         # Mark only information available while the position is held. On a stop
         # bar the close after execution does not belong to this position.
@@ -125,13 +128,16 @@ def simulate_events(bars, events, *, entry_mode='next_open', notional=50000.,
         mark_end = exit_idx if closed else exit_idx+1
         marks[first:mark_end] = realized + (close[first:mark_end]-entry)*qty-fee
         record = dict(entry_idx=int(i), entry_time=str(bars.index[i]),
+                      entry_phase='open' if entry_mode == 'next_open' else 'close',
                       entry_price=entry, stop_price=float(stop), notional=notional,
                       initial_risk=float((entry-stop)*qty), event=e)
         if closed:
-            fill = min(stop, float(op[exit_idx])) if stopped else float(close[exit_idx])
+            fill = min(stop, float(op[exit_idx])) if stopped else float(
+                op[exit_idx] if entry_mode == 'next_open' else close[exit_idx])
             pnl = (fill-entry)*qty-2*fee
             record.update(exit_idx=int(exit_idx), exit_time=str(bars.index[exit_idx]),
                           exit_price=fill, reason='stop' if stopped else 'time',
+                          exit_phase='stop' if stopped else 'open' if entry_mode == 'next_open' else 'close',
                           pnl=float(pnl), fees=2*fee)
             trades.append(record)
             realized += pnl

@@ -108,6 +108,17 @@ class MinuteValidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.simulate(self.small_bars(), [event(5), event(2)])
 
+    def test_next_open_time_exit_is_at_deadline_open_before_later_wick(self):
+        b = self.small_bars()
+        b.loc[b.index[7], ['open', 'high', 'low', 'close']] = [100., 108., 98., 107.]
+        r = self.simulate(b, [event(2), event(6)])
+        first = r['trades'][0]
+        self.assertEqual(first['reason'], 'time')
+        self.assertEqual(first['exit_price'], 100.)
+        self.assertEqual(first['exit_phase'], 'open')
+        self.assertEqual(first['exit_idx'], 7)
+        self.assertEqual(r['trades'][1]['entry_idx'], 7)
+
 
 if __name__ == '__main__':
     unittest.main()
