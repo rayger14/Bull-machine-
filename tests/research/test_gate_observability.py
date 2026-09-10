@@ -60,10 +60,26 @@ class GateObservabilityTests(unittest.TestCase):
         self.assertEqual(new['unique_values'], 0)
 
     def test_empty_frame_preserves_archetype(self):
-        cfg={'unused':{'name':'unused','direction':'neutral','hard_gates':[]}}
+        cfg={'unused':{'name':'unused','direction':'neutral','hard_gates':[],
+                       'enabled':False,'gate_mode':'soft'}}
         rows=self.m.audit_frame(pd.DataFrame(index=pd.DatetimeIndex([], tz='UTC')),cfg,'empty')
         self.assertEqual(rows[0]['archetype'],'unused')
         self.assertEqual(rows[0]['rows'],0)
+        self.assertFalse(rows[0]['enabled'])
+        self.assertEqual(rows[0]['gate_mode'],'soft')
+        self.assertEqual(rows[0]['direction'],'neutral')
+
+    def test_absent_columns_still_evaluate_every_timestamp(self):
+        cfg={'squeeze':{'hard_gates':[{'feature':'vol_shock','op':'max',
+                                      'value':.1,'nan_policy':'skip'}]}}
+        index=pd.date_range('2026-01-01',periods=2,tz='UTC')
+        for frame in (pd.DataFrame({'unrelated':[1,2]},index=index),
+                      pd.DataFrame(index=index)):
+            with self.subTest(columns=list(frame.columns)):
+                row=self.m.audit_frame(frame,cfg,'fixture')[0]
+                self.assertEqual(row['counts'],{'skip':2})
+                self.assertEqual(row['missing_input_rows'],2)
+                self.assertEqual(sum(row['counts'].values()),row['rows'])
 
 
 if __name__ == '__main__':

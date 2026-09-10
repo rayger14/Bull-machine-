@@ -103,9 +103,14 @@ def audit_frame(frame, configs, source):
     result = []
     for name, cfg in configs.items():
         gates = cfg.get('hard_gates', [])
-        if frame.empty or not gates:
+        policy = dict(direction=cfg.get('direction'),
+            gate_mode=cfg.get('gate_mode', 'hard'), enabled=cfg.get('enabled', True),
+            bypass_fusion_threshold=cfg.get('bypass_fusion_threshold', False),
+            enforce_gates_under_bypass=cfg.get('enforce_gates_under_bypass', 'default'))
+        if len(frame) == 0 or not gates:
             result.append(dict(source=source, archetype=name, year=None,
-                               rows=len(frame), gate_index=None, status='no_rows' if frame.empty else 'no_gates'))
+                               rows=len(frame), gate_index=None, **policy,
+                               status='no_rows' if len(frame) == 0 else 'no_gates'))
             continue
         for gi, gate in enumerate(gates):
             deps = dependencies(gate)
@@ -113,7 +118,10 @@ def audit_frame(frame, configs, source):
             for year, part in frame.groupby(frame.index.year):
                 counts, resolutions, values = Counter(), Counter(), set()
                 missing_rows = defaulted_rows = invalid_rows = 0
-                for features in part[columns].to_dict('records'):
+                # pandas drops record cardinality for a zero-column frame.
+                # Wholly absent dependencies must still be probed at every row.
+                records = part[columns].to_dict('records') if columns else ({} for _ in range(len(part)))
+                for features in records:
                     obs = gate_observation(gate, features)
                     counts[obs['status']] += 1; resolutions[obs['resolution']] += 1
                     missing_rows += bool(obs['missing_inputs'])
@@ -122,10 +130,7 @@ def audit_frame(frame, configs, source):
                     if obs['value'] is not None:
                         values.add(str(obs['value']))
                 result.append(dict(source=source, archetype=name, year=int(year), rows=len(part),
-                    gate_index=gi, gate=gate, direction=cfg.get('direction'),
-                    gate_mode=cfg.get('gate_mode', 'hard'), enabled=cfg.get('enabled', True),
-                    bypass_fusion_threshold=cfg.get('bypass_fusion_threshold', False),
-                    enforce_gates_under_bypass=cfg.get('enforce_gates_under_bypass', 'default'),
+                    gate_index=gi, gate=gate, **policy,
                     dependencies=deps, missing_columns=[k for k in deps if k not in frame],
                     counts=dict(counts), resolutions=dict(resolutions),
                     missing_input_rows=missing_rows, derived_defaulted_rows=defaulted_rows,
