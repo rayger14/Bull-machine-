@@ -7,6 +7,7 @@ import math
 from pathlib import Path
 import sys
 from typing import Any, Dict
+import numpy as np
 
 ROOT=Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -22,7 +23,8 @@ FUSION_INPUTS=('rsi_14','adx','tf1h_bos_detected','tf4h_bos_bullish','tf4h_bos_b
 FUSION_DESCENDANTS=('fusion_liquidity','tf1h_fusion_score','tf4h_fusion_score',
                     'tf1d_fusion_score','fusion_total')
 CONTEXT_DESCENDANTS=('risk_temperature','risk_temp','instability_score','crisis_prob',
-                     'regime_label','derivatives_heat')
+                     'regime_label','macro_regime','derivatives_heat',
+                     'funding_oi_divergence','oi_price_divergence')
 DEPENDENCIES={
     'funding': ['funding_history','funding_Z'],
     'oi_change_4h': ['liquidity_score',*CONTEXT_DESCENDANTS],
@@ -31,6 +33,8 @@ DEPENDENCIES={
 
 
 def finite(value):
+    if isinstance(value,np.generic):
+        value=value.item()
     return isinstance(value,(int,float)) and math.isfinite(value)
 
 

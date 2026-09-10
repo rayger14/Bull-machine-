@@ -51,6 +51,23 @@ class ReplayFeatureTests(unittest.TestCase):
         self.assertNotIn('risk_temperature',r['features'])
         self.assertIn('funding_Z',r['uncertified'])
 
+    def test_all_unimplemented_oi_descendants_and_regime_alias_are_invalidated(self):
+        f=features(.02);f.update(funding_oi_divergence=0,oi_price_divergence=0,
+                                regime_label='bull',macro_regime='bull')
+        r=self.m.compare_features(f)['candidate']
+        for name in ['funding_oi_divergence','oi_price_divergence','macro_regime']:
+            self.assertIn(name,r['invalidated'])
+            self.assertNotIn(name,r['features'])
+
+    def test_numpy_finite_presence_and_float_inputs_are_preserved(self):
+        import numpy as np
+        f=features();f.update(tf1h_fvg_present=np.int64(1),fvg_present=np.bool_(True),
+                             oi_change_4h=np.float32(.02))
+        r=self.m.compare_features(f)['candidate']
+        self.assertTrue(r['any_fvg'])
+        self.assertEqual(r['missing_dependencies'],[])
+        self.assertAlmostEqual(r['features']['liquidity_score'],.365)
+
     def test_gate_penalty_and_boundary_behavior_are_recorded_separately(self):
         cfg={'name':'fixture','direction':'long','gate_mode':'soft','hard_gates':[
             {'feature':'derived:any_fvg','op':'bool_true'},
