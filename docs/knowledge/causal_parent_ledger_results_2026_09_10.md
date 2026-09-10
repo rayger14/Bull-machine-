@@ -13,7 +13,7 @@ All four explicit source hypotheses remain separate: 4H/N=3, 4H/N=5, 1D/N=3, 1D/
 ## Verification
 
 - 47 focused parent tests pass, including seven local real-source integration cases with no skips.
-- 219 full research tests pass in the root verification (11.57 seconds), with the one pre-existing urllib3/LibreSSL warning; no new parent warning.
+- 219 full research tests pass in the final root verification (11.61 seconds), with the one pre-existing urllib3/LibreSSL warning; no new parent warning.
 - Source parity covers all four anchor/N combinations. Same-data minute aggregation and direct hourly input share parent identities. No different-venue parity is claimed.
 - Prefix and fresh full-history restart tests pass; serialized partial checkpoint restore is not implemented.
 - Controlled annotation seams pin old-floor/new-floor sweep semantics, old-anchor reformation and equal-priced pivot identity. These supplement rather than replace real-source integrations.
@@ -21,6 +21,8 @@ All four explicit source hypotheses remain separate: 4H/N=3, 4H/N=5, 1D/N=3, 1D/
 - `git diff b26a5b8 -- engine bin configs` is empty. No original data or sibling source was edited.
 
 The first real-data attempt correctly exposed a test gap: recovered pandas resample sums and independent grouped volume sums differed by 1–2 floating-point ULPs (37 of 180 four-hour buckets, maximum 9.094947017729282e-13). The initial exact comparator rejected the run. The reviewed fix permits at most eight ULPs for finite nonnegative volume **comparison only**, records that convention in the contract, and leaves prices/times exact. Tests accept the eighth ULP, reject the ninth, material differences, OHLC drift and nonfinite values. Inputs and source logic are not rounded or rewritten.
+
+Independent task review approved the parent component, and broad cross-component review found no critical or important findings. Its one minor test-quality finding was resolved in `c36dcac`: the minute/hour fixture now asserts actual aggregated volume exactly instead of overwriting it. The final full research suite passed after that test-only change. Approval is for local research use, not live capital. The existing `quant/archetype-evidence-audit` branch is retained; no merge or push.
 
 ## June 2026 historical annotation, not strategy performance
 

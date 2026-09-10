@@ -53,7 +53,7 @@ expected_hashes = {
 }
 ```
 
-- [ ] **Step 1: Write deterministic failing tests.** Tests must exercise real source functions, not mock a successful ledger. Skip only source integration tests with an explicit missing-local-source reason on machines without the sibling checkout; validation and query tests must still run there. Build aligned UTC hourly fixtures with actual varying OHLCV and explicit ATR. A seed fixture:
+- [x] **Step 1: Write deterministic failing tests.** Tests must exercise real source functions, not mock a successful ledger. Skip only source integration tests with an explicit missing-local-source reason on machines without the sibling checkout; validation and query tests must still run there. Build aligned UTC hourly fixtures with actual varying OHLCV and explicit ATR. A seed fixture:
 
 ```python
 index = pd.date_range('2026-01-01', periods=1200, freq='h', tz='UTC')
@@ -80,7 +80,7 @@ pd.testing.assert_frame_equal(bars, original)
 
 Compare minute→hour aggregation using `context_at` to identical hourly data, with identical explicit ATR and data_stream_id. Do not claim different-venue parity. Verify equal-priced pivot occurrences have distinct IDs while unchanged bounds retain originally adopted anchor IDs.
 
-- [ ] **Step 2: Run and record RED.**
+- [x] **Step 2: Run and record RED.**
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -o addopts='' -q -p no:cacheprovider tests/research/test_causal_parent_ledger.py
@@ -88,7 +88,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -o addopts='' -q -p no:cacheprovider
 
 Expected missing-module/function failures before implementation, not silent skips.
 
-- [ ] **Step 3: Implement the guarded adapter and ledger.** Read the exact recovered functions first. Under the existing guard, compile/execute verified source bytes in a non-main module namespace (no bytecode writes). Restrict inputs to complete independently aggregated anchor buckets; convert only the private source copy from UTC-aware to UTC-naive and restore/check UTC epoch identity. Call unchanged `detect_fractal_pivots`, `_broadcast`, and `build_structural_range`; compare recovered aggregation to independent complete buckets. Do not reimplement the range strategy.
+- [x] **Step 3: Implement the guarded adapter and ledger.** Read the exact recovered functions first. Under the existing guard, compile/execute verified source bytes in a non-main module namespace (no bytecode writes). Restrict inputs to complete independently aggregated anchor buckets; convert only the private source copy from UTC-aware to UTC-naive and restore/check UTC epoch identity. Call unchanged `detect_fractal_pivots`, `_broadcast`, and `build_structural_range`; compare recovered aggregation to independent complete buckets. Do not reimplement the range strategy.
 
 Use source output to annotate the sequential state; the core distinction is:
 
@@ -105,7 +105,7 @@ Formation adopts latest visible low/high pivot IDs. Tightening adopts the new lo
 
 Parent lookup uses UTC timestamps with inclusive or strict comparison; before coverage/no active state returns None. At or beyond `last_processed_close + 1h`, raise `ValueError('out_of_coverage')`; carry is allowed before that boundary. Binding uses strict `< first_sweep_open`, with copied fixed geometry and stored lineage/version/availability. Changing the returned record must not mutate the ledger.
 
-- [ ] **Step 4: Run focused tests and full research regression.**
+- [x] **Step 4: Run focused tests and full research regression.**
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -o addopts='' -q -p no:cacheprovider tests/research/test_causal_parent_ledger.py
@@ -115,7 +115,7 @@ git diff -- engine bin configs
 
 Expected all pass, zero production diff. In the report distinguish real-source parity tests from synthetic annotation seam tests and any skipped local integrations.
 
-- [ ] **Step 5: Self-review and commit only owned code/test files.**
+- [x] **Step 5: Self-review and commit only owned code/test files.**
 
 ```bash
 git add scripts/research/causal_parent_ledger.py tests/research/test_causal_parent_ledger.py
