@@ -24,11 +24,11 @@ The independent assessment found the local environment has older NumPy/Numba ver
 
 No market data or profitability search is needed for this first comparison. Freeze synthetic quote/order events and expected behavior:
 
-1. A signal is available at01:00:00UTC; order-insert latency is90seconds.
-2. A quote at01:01:29.900 is bid99.9/ask100.1; it must not fill the not-yet-ready order.
-3. The first quote after readiness,01:01:30.100, is bid100.4/ask100.6. Under the explicitly chosen first-post-readiness-quote model, a market buy fills at100.6, not at the earlier ask.
-4. A subsequent sell stop at95 faces a first executable bid92 after a gap. Model the fill at the available bid with declared latency; do not award95 merely because the order's stop level was95.
+1. A signal is available at 01:00:00 UTC; order-insert latency is 90 seconds.
+2. A quote at 01:01:29.900 is bid 99.9 / ask 100.1; it must not fill the not-yet-ready order.
+3. The first quote after readiness, 01:01:30.100, is bid 100.4 / ask 100.6. Under the explicitly chosen first-post-readiness-quote model, a market buy fills at 100.6, not at the earlier ask.
+4. A subsequent sell stop at 95 faces a first executable bid 92 after a gap. Model the fill at the available bid with declared latency; do not award 95 merely because the order's stop level was 95.
 
-This first-post-readiness-quote model is a proposed conservative fixture contract, not a universal description of how resting venue liquidity behaves. An engine that fills against an already-active quote at order arrival requires a different explicitly stated contract, not a silent expectation change. Compare the same fixed assumptions in both engines and preserve each order-state transition.
+This first-post-readiness-quote model is a proposed causal fixture contract, not a universal description of how resting venue liquidity behaves or a universally conservative price. An engine that fills against an already-active quote at order arrival requires a different explicitly stated contract, not a silent expectation change. Compare Bull Machine's declared research execution contract against a NautilusTrader adapter under the same fixed assumptions and preserve each order-state transition. A later hftbacktest comparison requires its own explicitly encoded depth/trade events, not a generic quote fixture.
 
 Use an exact release/version and lockfile in a separate research environment, verify official provenance and license before installation, and record source hashes and runtime versions. No live integration or promotion follows from passing synthetic fixtures. Exchange-native quote/depth/receipt evidence and comparisons against observed fills remain necessary for empirical calibration.
