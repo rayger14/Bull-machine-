@@ -1209,7 +1209,22 @@ class ArchetypeLogic:
                 window = window.copy()
                 window.index = pd.date_range(
                     end=pd.Timestamp('2100-01-01'), periods=len(window), freq='h')
-            signals = HOBDetector({}).detect_hob_patterns({'1H': window}, '1H')
-            return any(s.hob_type == HOBType.BULLISH_HOB for s in signals)
+            # TEACHING RESTORATION A/B (pre-registered 2026-09-04):
+            # (1) MTF confluence repaired — 4H/1D resamples of the same window
+            #     (1D ~8 bars < the fn's 20-bar floor, auto-skipped; 4H live).
+            _agg = {'open':'first','high':'max','low':'min','close':'last','volume':'sum'}
+            mtf = {'1H': window,
+                   '4H': window.resample('4h').agg(_agg).dropna(),
+                   '1D': window.resample('1D').agg(_agg).dropna()}
+            signals = HOBDetector({}).detect_hob_patterns(mtf, '1H')
+            # (2) Freshness IS the identity: a mitigated/stale zone is not a
+            #     Bojan zone (touches<=14, age<=15h — bounds declared in the
+            #     2026-09-04 audit before this test).
+            for sg in signals:
+                if sg.hob_type == HOBType.BULLISH_HOB and sg.liquidity_levels:
+                    lv = sg.liquidity_levels[0]
+                    if lv.touches <= 14 and lv.age_hours <= 15.0:
+                        return True
+            return False
         except Exception:
             return False
