@@ -25,6 +25,8 @@ annotate_h3_events(ledgers, *, policy_id, child_events) -> dict
 
 Each child event contains nonempty strings `id`, `contract_id`, `kind`, `instrument`, `data_stream_id`, `evidence_id`; aware timestamps `first_sweep_open`, `reclaim_bar_open`, `decision_time`, `available_at`; and `values`.
 
+Canonicalize all event timestamps to UTC before equality, ordering, grid-alignment checks, ID construction, and serialization; hour/minute boundary means the UTC grid.
+
 Supported contracts:
 
 - `lc_fixed_parent_reclaim_v1`: kind `hourly_lc`, values `low`, `close`; reclaim-bar open equals first-sweep open, both on an hour boundary. Derive decision as reclaim-bar open plus one hour.
