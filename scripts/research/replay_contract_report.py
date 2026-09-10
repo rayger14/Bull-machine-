@@ -42,15 +42,21 @@ def build_report(store,live_records,configs,hashes):
         else:
             order_issue=False
     duplicates=live.index.duplicated(keep=False)
-    retained=live.loc[~duplicates]
-    common=store.index.intersection(retained.index).sort_values()
+    # Preserve sparse JSON key absence. A rectangular DataFrame inserts NaN
+    # and can change bool(NaN)-sensitive production behavior.
+    identity_rows=[any(store.attrs.get(k) and r.get(k) and store.attrs[k]!=r[k]
+                       for k in ('instrument','venue')) for r in records]
+    raw_by_time={t:r for t,r,dup,bad_id in zip(live.index,records,duplicates,identity_rows)
+                 if not dup and not bad_id}
+    common=store.index.intersection(pd.DatetimeIndex(list(raw_by_time),tz='UTC')).sort_values()
     srows=store.loc[common].to_dict('records')
-    lrows=retained.loc[common].to_dict('records')
+    lrows=[dict(raw_by_time[t]) for t in common]
     pairs=[(compare_features(s),compare_features(l)) for s,l in zip(srows,lrows)]
     blockers=['full_pipeline_not_replayed','historical_state_not_reconstructed']
     if not len(common): blockers.append('no_paired_evidence')
     if len(records) and order_issue: blockers.append('archive_out_of_order')
     if duplicates.any(): blockers.append('ambiguous_duplicate_timestamps')
+    if any(identity_rows): blockers.append('instrument_or_venue_mismatch')
     if not records or any(not r.get('available_at') for r in records):
         blockers.append('missing_available_at')
     else:
@@ -103,6 +109,7 @@ def build_report(store,live_records,configs,hashes):
     return json_safe(dict(certified=False,blockers=sorted(set(blockers)),
         coverage=dict(store_rows=len(store),live_rows=len(records),paired_rows=len(common),
             excluded_duplicate_rows=int(duplicates.sum()),
+            excluded_identity_rows=sum(identity_rows),
             duplicate_timestamps=sorted(set(map(str,live.index[duplicates]))),
             start=str(common.min()) if len(common) else None,end=str(common.max()) if len(common) else None),
         source_versions=dict(store=store_version,live=sorted(versions)),

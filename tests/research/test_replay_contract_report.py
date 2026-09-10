@@ -58,5 +58,22 @@ class ReplayReportTests(unittest.TestCase):
         self.assertEqual(r['boundary']['mismatches'],48)
         self.assertIn('not_trade_counts',r['limitations'])
 
+    def test_sparse_live_rows_preserve_absent_keys_in_reference(self):
+        s,l,c=self.fixture()
+        l[1]['fvg_present']=False
+        r=self.m.build_report(s,l,c,{})
+        gate=r['archetypes'][0]['gates'][0]
+        self.assertEqual(gate['statuses']['live_reference'],{'fail':3})
+        self.assertEqual(gate['live_candidate_changes'],0)
+
+    def test_known_instrument_or_venue_mismatch_is_excluded(self):
+        for instrument,venue in [('ETH','venue-a'),('BTC','venue-b')]:
+            s,l,c=self.fixture();s.attrs.update(instrument='BTC',venue='venue-a')
+            for row in l:row.update(instrument=instrument,venue=venue)
+            r=self.m.build_report(s,l,c,{})
+            self.assertIn('instrument_or_venue_mismatch',r['blockers'])
+            self.assertEqual(r['coverage']['paired_rows'],0)
+            self.assertEqual(r['coverage']['excluded_identity_rows'],3)
+
 
 if __name__=='__main__': unittest.main()
