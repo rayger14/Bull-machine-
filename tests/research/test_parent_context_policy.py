@@ -355,6 +355,81 @@ def test_transition_after_decision_is_not_consumed_or_hashed():
     assert baseline["interval_transition_ids"] == ["transition-2", "transition-3"]
 
 
+def test_unvalidated_intrahour_tail_cannot_supply_a_parent():
+    """Break caught: bind_parent consuming a malformed row beyond the validated prefix."""
+    book = ledger()
+    fake = _version(
+        "version-fake",
+        lineage_id="lineage-fake",
+        low=90.0,
+        high=130.0,
+        formation_hour="2026-01-01 02:00:00+00:00",
+        available_at="2026-01-01 03:00:00+00:00",
+    )
+    book["versions"].append(fake)
+    injected = deepcopy(book["transitions"][2])
+    injected.update(
+        id="transition-injected",
+        source_hour="2026-01-01 02:15:00+00:00",
+        available_at="2026-01-01 03:15:00+00:00",
+        post_lineage_id="lineage-fake",
+        post_version_id="version-fake",
+        post_range_low=90.0,
+        post_range_high=130.0,
+    )
+    book["transitions"].insert(3, injected)
+    event = minute_event(child_level=95.0, reclaim_close=101.0)
+    event["values"]["sweep_low"] = 89.0
+    event.update(
+        first_sweep_open="2026-01-01 03:30:00+00:00",
+        reclaim_bar_open="2026-01-01 03:30:00+00:00",
+        decision_time="2026-01-01 03:31:00+00:00",
+        available_at="2026-01-01 03:31:00+00:00",
+    )
+
+    result = evaluate_h3_permission(book, policy_id=MINUTE_POLICY, child_event=event)
+
+    assert result["status"] == "unknown"
+    assert result["would_allow"] is False
+    assert result["reasons"] == ["malformed_causal_prefix"]
+    assert result["binding"] is None
+
+
+def test_valid_future_append_does_not_change_fixed_event_result():
+    """Break caught: treating a valid later ledger extension as consumed evidence."""
+    book = ledger()
+    baseline = evaluate_h3_permission(book, policy_id=LC_POLICY, child_event=lc_event())
+    extended = deepcopy(book)
+    extended["coverage"].update(
+        last_processed_close="2026-01-01 06:00:00+00:00",
+        query_exclusive_end="2026-01-01 07:00:00+00:00",
+        input_hours=6,
+    )
+    extended["transitions"].append(
+        _transition(
+            5,
+            pre_version="version-1",
+            pre_lineage="lineage-1",
+            pre_state="active",
+        )
+    )
+
+    assert evaluate_h3_permission(
+        extended, policy_id=LC_POLICY, child_event=lc_event()
+    ) == baseline
+
+
+def test_duplicate_transition_identity_in_consumed_prefix_is_unknown():
+    """Break caught: ambiguous interval evidence reusing one transition identity twice."""
+    book = ledger()
+    book["transitions"][2]["id"] = book["transitions"][1]["id"]
+
+    result = evaluate_h3_permission(book, policy_id=LC_POLICY, child_event=lc_event())
+
+    assert result["status"] == "unknown"
+    assert result["reasons"] == ["malformed_causal_prefix"]
+
+
 def test_break_between_minute_sweep_and_reclaim_close_rejects():
     """Break caught: inspecting only child boundary transitions and missing an interval break."""
     book = ledger()
@@ -724,6 +799,26 @@ def test_batch_requires_four_unique_hypotheses_and_counts_every_event():
         annotate_h3_events(books[:3], policy_id=LC_POLICY, child_events=events)
     with pytest.raises(ValueError, match="exactly four unique"):
         annotate_h3_events(books[:3] + [books[0]], policy_id=LC_POLICY, child_events=events)
+
+
+def test_batch_counts_invalid_event_as_unknown_for_every_configuration():
+    """Break caught: indexing a missing result config instead of emitting unknown rows."""
+    books = [
+        ledger(anchor_timeframe=timeframe, pivot_n=n)
+        for timeframe, n in [("4H", 3), ("4H", 5), ("1D", 3), ("1D", 5)]
+    ]
+
+    batch = annotate_h3_events(books, policy_id=LC_POLICY, child_events=[{}])
+
+    assert len(batch["rows"]) == 4
+    assert all(row["status"] == "unknown" for row in batch["rows"])
+    assert all(row["parent_config"] is not None for row in batch["rows"])
+    assert batch["counts"] == {
+        "1D:3": {"pass": 0, "reject": 0, "unknown": 1},
+        "1D:5": {"pass": 0, "reject": 0, "unknown": 1},
+        "4H:3": {"pass": 0, "reject": 0, "unknown": 1},
+        "4H:5": {"pass": 0, "reject": 0, "unknown": 1},
+    }
 
 
 def _real_bars(periods=96):

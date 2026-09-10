@@ -323,10 +323,14 @@ def _validate_prefix(ledger, decision, config):
     versions = _version_index(ledger)
     prefix = []
     referenced_ids = set()
+    transition_ids = set()
     for position in range(required):
         transition = raw_transitions[position]
         if not isinstance(transition, dict) or not _nonempty(transition.get("id")):
             raise _UnknownEvidence("malformed_causal_prefix")
+        if transition["id"] in transition_ids:
+            raise _UnknownEvidence("malformed_causal_prefix")
+        transition_ids.add(transition["id"])
         try:
             source = utc(transition.get("source_hour"), "source_hour")
             available = utc(transition.get("available_at"), "transition available_at")
@@ -342,9 +346,18 @@ def _validate_prefix(ledger, decision, config):
                 _validated_version(versions, transition[key])
                 referenced_ids.add(transition[key])
         prefix.append(deepcopy(transition))
+    for transition in raw_transitions[required:]:
+        if not isinstance(transition, dict):
+            continue
+        try:
+            available = utc(transition.get("available_at"), "transition available_at")
+        except (TypeError, ValueError):
+            continue
+        if available <= decision:
+            raise _UnknownEvidence("malformed_causal_prefix")
     _validate_lifecycle(prefix, versions)
     _validate_anchor_references(ledger, versions, referenced_ids, manifest, config)
-    return manifest, prefix, versions
+    return manifest, prefix, versions, referenced_ids
 
 
 def _base_result(policy_id, event, ledger, parent_config, *, status, reasons, decision):
@@ -396,24 +409,37 @@ def evaluate_h3_permission(ledger, *, policy_id, child_event):
         raise ValueError("unknown parent permission policy_id")
     raw_event = deepcopy(child_event)
     event_evidence = raw_event
-    parent_config = None
+    try:
+        parent_config = _parent_config(ledger)
+    except _UnknownEvidence:
+        parent_config = None
     decision = None
     try:
         event, clocks, child_timeframe = _validate_child_event(policy_id, raw_event)
         event_evidence = event
         decision = clocks["decision_time"]
-        parent_config = _parent_config(ledger)
-        manifest, prefix, versions = _validate_prefix(ledger, decision, parent_config)
+        if parent_config is None:
+            raise _UnknownEvidence("invalid_parent_ledger")
+        manifest, prefix, versions, validated_version_ids = _validate_prefix(
+            ledger, decision, parent_config
+        )
         if event["instrument"] != manifest["instrument"]:
             raise _UnknownEvidence("instrument_mismatch")
         if event["data_stream_id"] != manifest["data_stream_id"]:
             raise _UnknownEvidence("data_stream_mismatch")
+        causal_ledger = deepcopy(ledger)
+        causal_ledger["transitions"] = prefix
         binding = bind_parent(
-            ledger,
+            causal_ledger,
             child_event_id=event["id"],
             child_timeframe=child_timeframe,
             first_sweep_open=clocks["first_sweep_open"],
         )
+        if (
+            binding.get("status") == "bound"
+            and binding.get("parent_version_id") not in validated_version_ids
+        ):
+            raise _UnknownEvidence("malformed_causal_prefix")
         if binding.get("parent_available_at") is not None:
             binding["parent_available_at"] = str(
                 utc(binding["parent_available_at"], "parent_available_at")
@@ -512,9 +538,11 @@ def annotate_h3_events(ledgers, *, policy_id, child_events):
     if not isinstance(ledgers, (list, tuple)):
         raise ValueError("exactly four unique parent configurations required")
     configs = []
+    ledger_configs = []
     try:
         for ledger in ledgers:
             config = _parent_config(ledger)
+            ledger_configs.append(config)
             configs.append((config["anchor_timeframe"], config["pivot_n"]))
     except _UnknownEvidence as exc:
         raise ValueError("exactly four unique parent configurations required") from exc
@@ -530,10 +558,9 @@ def annotate_h3_events(ledgers, *, policy_id, child_events):
         for config in sorted(PARENT_CONFIGS)
     }
     for event in events:
-        for ledger in ledgers:
+        for ledger, config in zip(ledgers, ledger_configs):
             row = evaluate_h3_permission(ledger, policy_id=policy_id, child_event=event)
             rows.append(row)
-            config = row["parent_config"]
             key = "%s:%d" % (config["anchor_timeframe"], config["pivot_n"])
             counts[key][row["status"]] += 1
     return json_safe(
