@@ -105,11 +105,23 @@ def _validate_child_event(policy_id, child_event):
 
 
 def _parent_config(ledger):
-    try:
-        parameters = ledger["manifest"]["parameters"]
-        config = (parameters["anchor_timeframe"], parameters["pivot_n"])
-    except (KeyError, TypeError):
+    if not isinstance(ledger, dict):
         raise _UnknownEvidence("invalid_parent_ledger")
+    manifest = ledger.get("manifest")
+    if not isinstance(manifest, dict):
+        raise _UnknownEvidence("invalid_parent_ledger")
+    parameters = manifest.get("parameters")
+    if not isinstance(parameters, dict):
+        raise _UnknownEvidence("invalid_parent_ledger")
+    anchor_timeframe = parameters.get("anchor_timeframe")
+    pivot_n = parameters.get("pivot_n")
+    if (
+        not isinstance(anchor_timeframe, str)
+        or isinstance(pivot_n, bool)
+        or not isinstance(pivot_n, int)
+    ):
+        raise _UnknownEvidence("invalid_parent_ledger")
+    config = (anchor_timeframe, pivot_n)
     if config not in PARENT_CONFIGS:
         raise _UnknownEvidence("invalid_parent_ledger")
     return {"anchor_timeframe": config[0], "pivot_n": config[1]}
@@ -205,8 +217,21 @@ def _validate_anchor_references(ledger, versions, referenced_ids, manifest, conf
 
 
 def _validate_lifecycle(prefix, versions):
+    first = prefix[0]
+    if (
+        first.get("pre_state") != "forming"
+        or first.get("pre_range_low") is not None
+        or first.get("pre_range_high") is not None
+        or first.get("pre_lineage_id") is not None
+        or first.get("pre_version_id") is not None
+        or first.get("evaluated_version_id") is not None
+    ):
+        raise _UnknownEvidence("malformed_causal_prefix")
     prior = None
     for transition in prefix:
+        transition_available = utc(
+            transition["available_at"], "transition available_at"
+        )
         pre_state = transition.get("pre_state")
         post_state = transition.get("post_state")
         if not _nonempty(pre_state) or not _nonempty(post_state):
@@ -233,6 +258,8 @@ def _validate_lifecycle(prefix, versions):
             pre_version = _validated_version(versions, pre_version_id)
             if (
                 pre_version["lineage_id"] != pre_lineage_id
+                or utc(pre_version["available_at"], "version available_at")
+                > transition_available
                 or not _same_bound(transition.get("pre_range_low"), pre_version["range_low"])
                 or not _same_bound(transition.get("pre_range_high"), pre_version["range_high"])
             ):
@@ -247,6 +274,8 @@ def _validate_lifecycle(prefix, versions):
             post_version = _validated_version(versions, post_version_id)
             if (
                 post_version["lineage_id"] != post_lineage_id
+                or utc(post_version["available_at"], "version available_at")
+                > transition_available
                 or not _same_bound(transition.get("post_range_low"), post_version["range_low"])
                 or not _same_bound(transition.get("post_range_high"), post_version["range_high"])
             ):
@@ -269,8 +298,10 @@ def _validate_lifecycle(prefix, versions):
                     or post_version.get("predecessor_version_id") != pre_version_id
                 ):
                     raise _UnknownEvidence("malformed_causal_prefix")
-                available = utc(transition["available_at"], "transition available_at")
-                if utc(post_version["available_at"], "version available_at") != available:
+                if (
+                    utc(post_version["available_at"], "version available_at")
+                    != transition_available
+                ):
                     raise _UnknownEvidence("malformed_causal_prefix")
         elif pre_state != "active" and post_state == "active":
             if (
@@ -278,8 +309,10 @@ def _validate_lifecycle(prefix, versions):
                 or post_version.get("predecessor_version_id") is not None
             ):
                 raise _UnknownEvidence("malformed_causal_prefix")
-            available = utc(transition["available_at"], "transition available_at")
-            if utc(post_version["available_at"], "version available_at") != available:
+            if (
+                utc(post_version["available_at"], "version available_at")
+                != transition_available
+            ):
                 raise _UnknownEvidence("malformed_causal_prefix")
         prior = transition
 
@@ -287,9 +320,11 @@ def _validate_lifecycle(prefix, versions):
 def _validate_prefix(ledger, decision, config):
     if not isinstance(ledger, dict):
         raise _UnknownEvidence("invalid_parent_ledger")
+    manifest = ledger.get("manifest")
+    coverage = ledger.get("coverage")
+    if not isinstance(manifest, dict) or not isinstance(coverage, dict):
+        raise _UnknownEvidence("invalid_parent_ledger")
     try:
-        manifest = ledger["manifest"]
-        coverage = ledger["coverage"]
         if manifest.get("schema") != "causal_parent_ledger.v1":
             raise _UnknownEvidence("invalid_parent_ledger")
         for field in ("contract_id", "instrument", "data_stream_id"):
@@ -441,9 +476,12 @@ def evaluate_h3_permission(ledger, *, policy_id, child_event):
         ):
             raise _UnknownEvidence("malformed_causal_prefix")
         if binding.get("parent_available_at") is not None:
-            binding["parent_available_at"] = str(
-                utc(binding["parent_available_at"], "parent_available_at")
+            parent_available = utc(
+                binding["parent_available_at"], "parent_available_at"
             )
+            if parent_available >= clocks["first_sweep_open"]:
+                raise _UnknownEvidence("malformed_causal_prefix")
+            binding["parent_available_at"] = str(parent_available)
     except _UnknownEvidence as exc:
         result = _base_result(
             policy_id,

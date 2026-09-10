@@ -430,6 +430,48 @@ def test_duplicate_transition_identity_in_consumed_prefix_is_unknown():
     assert result["reasons"] == ["malformed_causal_prefix"]
 
 
+def test_causal_prefix_must_start_from_constructor_cold_state():
+    """Break caught: accepting a carried active parent before the ledger's first row."""
+    book = ledger()
+    book["transitions"][0].update(
+        pre_state="active",
+        pre_range_low=100.0,
+        pre_range_high=120.0,
+        pre_lineage_id="lineage-1",
+        pre_version_id="version-1",
+        evaluated_version_id="version-1",
+    )
+
+    result = evaluate_h3_permission(book, policy_id=LC_POLICY, child_event=lc_event())
+
+    assert result["status"] == "unknown"
+    assert result["reasons"] == ["malformed_causal_prefix"]
+
+
+def test_future_version_cannot_be_consumed_or_bound_before_availability():
+    """Break caught: a future version entering through an initially-active first row."""
+    book = ledger()
+    book["transitions"][0].update(
+        pre_state="active",
+        pre_range_low=100.0,
+        pre_range_high=120.0,
+        pre_lineage_id="lineage-1",
+        pre_version_id="version-1",
+        evaluated_version_id="version-1",
+    )
+    book["versions"][0].update(
+        formation_hour="2026-01-01 10:00:00+00:00",
+        available_at="2026-01-01 11:00:00+00:00",
+    )
+
+    result = evaluate_h3_permission(book, policy_id=LC_POLICY, child_event=lc_event())
+
+    assert result["status"] == "unknown"
+    assert result["would_allow"] is False
+    assert result["reasons"] == ["malformed_causal_prefix"]
+    assert result["binding"] is None
+
+
 def test_break_between_minute_sweep_and_reclaim_close_rejects():
     """Break caught: inspecting only child boundary transitions and missing an interval break."""
     book = ledger()
@@ -738,6 +780,25 @@ def test_invalid_event_or_source_identity_is_unknown(mutate, reason):
     assert result["certified"] is False
 
 
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda book: book.update(coverage=None),
+        lambda book: book["manifest"]["parameters"].update(anchor_timeframe=[]),
+    ],
+)
+def test_malformed_ledger_containers_return_unknown(mutate):
+    """Break caught: leaking AttributeError/TypeError instead of evidence-unknown."""
+    book = ledger()
+    mutate(book)
+
+    result = evaluate_h3_permission(book, policy_id=LC_POLICY, child_event=lc_event())
+
+    assert result["status"] == "unknown"
+    assert result["would_allow"] is False
+    assert result["reasons"] == ["invalid_parent_ledger"]
+
+
 def test_equivalent_offset_clocks_have_identical_utc_result_and_id():
     """Break caught: timezone spelling changing causal ordering or record identity."""
     utc_result = evaluate_h3_permission(
@@ -819,6 +880,35 @@ def test_batch_counts_invalid_event_as_unknown_for_every_configuration():
         "4H:3": {"pass": 0, "reject": 0, "unknown": 1},
         "4H:5": {"pass": 0, "reject": 0, "unknown": 1},
     }
+
+
+def test_batch_counts_valid_configs_with_malformed_coverage_as_unknown():
+    """Break caught: malformed ledger containers crashing a valid four-config batch."""
+    books = [
+        ledger(anchor_timeframe=timeframe, pivot_n=n)
+        for timeframe, n in [("4H", 3), ("4H", 5), ("1D", 3), ("1D", 5)]
+    ]
+    for book in books:
+        book["coverage"] = None
+
+    batch = annotate_h3_events(books, policy_id=LC_POLICY, child_events=[lc_event()])
+
+    assert len(batch["rows"]) == 4
+    assert all(row["status"] == "unknown" for row in batch["rows"])
+    assert all(row["reasons"] == ["invalid_parent_ledger"] for row in batch["rows"])
+    assert sum(statuses["unknown"] for statuses in batch["counts"].values()) == 4
+
+
+def test_batch_rejects_unhashable_configuration_with_documented_value_error():
+    """Break caught: unhashable config types escaping the batch as raw TypeError."""
+    books = [
+        ledger(anchor_timeframe=timeframe, pivot_n=n)
+        for timeframe, n in [("4H", 3), ("4H", 5), ("1D", 3), ("1D", 5)]
+    ]
+    books[0]["manifest"]["parameters"]["anchor_timeframe"] = []
+
+    with pytest.raises(ValueError, match="exactly four unique parent configurations required"):
+        annotate_h3_events(books, policy_id=LC_POLICY, child_events=[lc_event()])
 
 
 def _real_bars(periods=96):
