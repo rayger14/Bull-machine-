@@ -8,6 +8,7 @@ import pytest
 
 from scripts.research.causal_parent_ledger import (
     _annotate_source_outputs,
+    _assert_aggregation_parity,
     _pivot_records_from_source,
     bind_parent,
     build_parent_ledger,
@@ -283,6 +284,89 @@ def portable_build(tmp_path, bars=None, **overrides):
     return build_parent_ledger(hourly_bars(16) if bars is None else bars, **kwargs)
 
 
+def aggregation_frames(volume=648.44622162):
+    index = pd.DatetimeIndex([pd.Timestamp("2026-01-01 00:00:00", tz="UTC")])
+    independent = pd.DataFrame(
+        {
+            "open": [100.0],
+            "high": [102.0],
+            "low": [99.0],
+            "close": [101.0],
+            "volume": [volume],
+            "close_time": index + pd.Timedelta("4h"),
+        },
+        index=index,
+    )
+    recovered = independent.copy()
+    recovered.index = recovered.index.tz_localize(None)
+    recovered["close_time"] = recovered["close_time"].dt.tz_localize(None)
+    return recovered, independent
+
+
+def test_aggregation_parity_enforces_the_eight_ulp_volume_boundary():
+    """Break caught: exact float equality rejecting the observed resample/groupby last bit."""
+    recovered, independent = aggregation_frames()
+    eight_ulps_up = independent.volume.iloc[0]
+    for _ in range(8):
+        eight_ulps_up = np.nextafter(eight_ulps_up, np.inf)
+    recovered.loc[recovered.index[0], "volume"] = eight_ulps_up
+
+    _assert_aggregation_parity(recovered, independent)
+
+    recovered.loc[recovered.index[0], "volume"] = np.nextafter(eight_ulps_up, np.inf)
+    with pytest.raises(ValueError, match="recovered aggregation mismatch"):
+        _assert_aggregation_parity(recovered, independent)
+
+
+def test_manifest_declares_the_bounded_volume_comparison(tmp_path):
+    """Break caught: numeric tolerance changing without becoming contract identity."""
+    ledger = portable_build(tmp_path)
+
+    assert ledger["manifest"]["aggregation_comparison"] == {
+        "index_ohlc_close_time": "exact",
+        "volume": {
+            "operands": "finite_nonnegative",
+            "max_ulp_difference": 8,
+            "ulp_magnitude": "larger_absolute_operand",
+        },
+        "input_rounding_or_rewriting": False,
+    }
+
+
+@pytest.mark.parametrize(
+    "column,bad_value",
+    [("volume", np.inf), ("volume", np.nan), ("high", np.inf), ("high", np.nan)],
+)
+def test_aggregation_parity_rejects_nonfinite_values_even_when_both_match(column, bad_value):
+    """Break caught: equal nonfinite source/independent values bypassing validation."""
+    recovered, independent = aggregation_frames()
+    recovered.loc[recovered.index[0], column] = bad_value
+    independent.loc[independent.index[0], column] = bad_value
+
+    with pytest.raises(ValueError, match="recovered aggregation mismatch"):
+        _assert_aggregation_parity(recovered, independent)
+
+
+def test_aggregation_parity_rejects_material_volume_difference():
+    """Break caught: tolerance broadening from last-bit drift to material volume changes."""
+    recovered, independent = aggregation_frames()
+    recovered.loc[recovered.index[0], "volume"] += 1e-9
+
+    with pytest.raises(ValueError, match="recovered aggregation mismatch"):
+        _assert_aggregation_parity(recovered, independent)
+
+
+def test_aggregation_parity_keeps_ohlc_exact():
+    """Break caught: applying the volume tolerance to strategy-bearing OHLC values."""
+    recovered, independent = aggregation_frames()
+    recovered.loc[recovered.index[0], "high"] = np.nextafter(
+        independent.high.iloc[0], np.inf
+    )
+
+    with pytest.raises(ValueError, match="recovered aggregation mismatch"):
+        _assert_aggregation_parity(recovered, independent)
+
+
 @pytest.mark.parametrize(
     "mutator,match",
     [
@@ -383,11 +467,12 @@ def test_empty_complete_anchor_buckets_reject(tmp_path):
 
 def test_source_side_effect_is_rejected_by_existing_guard(tmp_path):
     """Break caught: source top-level code writing to disk while being loaded."""
-    unsafe = "open('/tmp/causal-parent-ledger-forbidden', 'w').write('x')\n" + SAFE_HTF
+    forbidden = tmp_path / "forbidden-source-output"
+    unsafe = "open(%r, 'w').write('x')\n" % str(forbidden) + SAFE_HTF
     paths, hashes = local_sources(tmp_path, htf=unsafe)
     with pytest.raises(RuntimeError, match="Prohibited side effect"):
         portable_build(tmp_path, source_paths=paths, expected_hashes=hashes)
-    assert not Path("/tmp/causal-parent-ledger-forbidden").exists()
+    assert not forbidden.exists()
 
 
 def _version(version_id="v1", available_at="2026-01-01 04:00:00+00:00"):

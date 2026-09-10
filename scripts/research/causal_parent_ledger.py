@@ -5,6 +5,7 @@ parent hypothesis, certify source receipts, or integrate with native signals.
 """
 from copy import deepcopy
 import hashlib
+import math
 from pathlib import Path
 import platform
 
@@ -19,6 +20,15 @@ MAX_INPUT_HOURS = 2048
 ANCHOR_TIMEFRAMES = {"4H": pd.Timedelta("4h"), "1D": pd.Timedelta("1d")}
 ATR_POLICY = "hour_close_assumed"
 CONTRACT_SCHEMA = "causal_parent_ledger.v1"
+AGGREGATION_COMPARISON = {
+    "index_ohlc_close_time": "exact",
+    "volume": {
+        "operands": "finite_nonnegative",
+        "max_ulp_difference": 8,
+        "ulp_magnitude": "larger_absolute_operand",
+    },
+    "input_rounding_or_rewriting": False,
+}
 
 
 def _nonempty(value, label):
@@ -153,11 +163,28 @@ def _assert_aggregation_parity(recovered, independent):
     expected = independent[recovered_utc.columns]
     if not recovered_utc.index.equals(expected.index):
         raise ValueError("recovered aggregation mismatch")
-    for column in ("open", "high", "low", "close", "volume"):
-        if not np.array_equal(
-            recovered_utc[column].to_numpy(dtype=float),
-            expected[column].to_numpy(dtype=float),
-        ):
+    for column in ("open", "high", "low", "close"):
+        actual = recovered_utc[column].to_numpy(dtype=float)
+        wanted = expected[column].to_numpy(dtype=float)
+        if not np.isfinite(actual).all() or not np.isfinite(wanted).all():
+            raise ValueError("recovered aggregation mismatch")
+        if not np.array_equal(actual, wanted):
+            raise ValueError("recovered aggregation mismatch")
+    actual_volume = recovered_utc["volume"].to_numpy(dtype=float)
+    wanted_volume = expected["volume"].to_numpy(dtype=float)
+    if (
+        not np.isfinite(actual_volume).all()
+        or not np.isfinite(wanted_volume).all()
+        or (actual_volume < 0).any()
+        or (wanted_volume < 0).any()
+    ):
+        raise ValueError("recovered aggregation mismatch")
+    for actual, wanted in zip(actual_volume, wanted_volume):
+        larger_magnitude = max(abs(float(actual)), abs(float(wanted)))
+        tolerance = AGGREGATION_COMPARISON["volume"]["max_ulp_difference"] * math.ulp(
+            larger_magnitude
+        )
+        if abs(float(actual) - float(wanted)) > tolerance:
             raise ValueError("recovered aggregation mismatch")
     if not recovered_utc["close_time"].equals(expected["close_time"]):
         raise ValueError("recovered aggregation mismatch")
@@ -190,6 +217,7 @@ def _contract_manifest(instrument, anchor_timeframe, pivot_n, atr_contract, sour
     contract = {
         "schema": CONTRACT_SCHEMA,
         "instrument": instrument,
+        "aggregation_comparison": deepcopy(AGGREGATION_COMPARISON),
         "source_hashes": deepcopy(source_hashes),
         "helper_hashes": _helper_hashes(),
         "runtime_hashes": runtime["hashes"],
