@@ -44,6 +44,36 @@ The registered report provides raw coverage and conflicts, all17archetype counts
 
 The [library assessment](backtesting_library_assessment_2026_09_10.md) recommends no new dependency for this descriptive unit. NautilusTrader is a candidate for a separately pinned quote/latency/gap-fill benchmark; hftbacktest needs suitable depth/event data for a queue study. The repository's existing Nautilus-named strategy imports its own EventEngine, not the external package.
 
+## Independent raw-reference measurements
+
+After the protocol was frozen, root and a separate read-only quant agent independently calculated the following literal reference from the raw snapshot. The reusable implementation has not yet completed review/matched these references; this section will be updated after that check. These are grouped recorded exit subtotals, not verified closed-position, fully net or threshold-on strategy results.
+
+| Logged margin cohort | Groups | Recorded exit subtotal | Recorded-subtotal PF | Win fraction | Mean displayed-stop risk proxy | Mean PnL / risk proxy |
+|---|---:|---:|---:|---:|---:|---:|
+| Nonnegative | 87 | +$11,270.02 | 1.2475 | 41.38% | $1,032.26 | +0.10321 |
+| Negative | 143 | −$11,897.42 | 0.8364 | 43.36% | $929.56 | −0.06277 |
+| All explicit-ID groups | 230 | −$627.40 | 0.9947 | 42.61% | $968.41 | +0.000012 |
+
+Win fractions count groups after all recorded legs are summed, not individual scale-outs. The risk ratio is explicitly a proxy: displayed stop distance times observed exit quantity is not authenticated initial risk or full netR. No account starting equity, net account return or average actual risk is implied.
+
+| Stored input | Spearman vs recorded dollars | Spearman vs risk-proxy ratio |
+|---|---:|---:|
+| Fusion | 0.11489 | 0.09821 |
+| Entry threshold | 0.01154 | 0.06068 |
+| Logged margin | 0.07733 | 0.02094 |
+
+These weak pooled rank associations do not establish predictive calibration or causality. They neither support a universal score inversion nor prove the existing cutoff is correctly calibrated. Historical source versions and decision stages are not authenticated; all results mix selected observations and changing environments.
+
+### Concentration and composition
+
+All explicit-ID groups by entry month: March20/−$9,190.54; April28/+$2,078.62; May42/−$10,777.14; June22/−$3,569.29; July54/−$3,920.95; August51/+$28,312.61; September13/−$3,560.71. These are calendar groupings, not assumed implementation epochs.
+
+August contributes40of87nonnegative-margin groups and+$23,141.93 of their recorded subtotal; outside August that cohort totals−$11,871.91. August's11negative-margin groups also total+$5,170.68. Excluding August is a concentration sensitivity diagnostic chosen after seeing this table, not a pre-registered alternative strategy or independent holdout.
+
+LC alone has37explicit-ID groups with+$11,168.69 recorded subtotal.12nonnegative-margin LC groups contribute+$2,512.81;25negative-margin LC groups contribute+$8,655.88. Both LC cohorts are sparse. This shows what a static retained-group accounting would discard, not the PnL of a native threshold-enforced LC strategy. Five August LC groups account for+$8,198.95; the selected September8 winner is not independent validation.
+
+The earlier July reports and this broader snapshot cover different samples. A negative historical correlation does not justify declaring fusion permanently inverted; a later positive subtotal does not justify switching it on. The next tests must separate archetype, period, actual decision-stage score, and portfolio selection effects.
+
 ## Next registered comparisons
 
 1. Recorded score/threshold/margin description on the frozen snapshot.
