@@ -20,7 +20,7 @@ Use same-source outcome bars through June 20 04:00 inclusive, admitting no new e
 
 `compare_minute_parent_arms(bars, events, permissions, *, window_start, window_end)`:
 
-- `bars`: the existing simulator's contiguous aware minute OHLC frame; read-only.
+- `bars`: the existing simulator's contiguous aware minute OHLC frame; read-only. OHLC columns must have real numeric integer/unsigned/float dtypes, not object/string, bool or complex representations. Reject unsupported representations with ValueError before converted-array validation or replay; do not coerce the frozen bars. Other non-price columns are outside this check.
 - `events`: list of raw selector dictionaries with local indices into `bars`, including `pivot_idx`, `confirmed_idx`, `sweep_idx`, `reclaim_idx`, `level`, `sweep_low`, `touches`. Preserve exact content and order; unique increasing reclaims and valid source indices. Every reclaim must lie in the declared half-open window. Event ID is the simulator's UTC `reclaim:<ISO>|pivot:<ISO>` identity.
 - `permissions`: dictionary with EXACT four variant keys above. Each value maps EVERY event ID exactly once to strict `True`, strict `False`, or `None` (unknown). Reject missing/extra IDs or variants, numeric/string truthiness, duplicates in derived IDs, invalid clocks/indices and malformed containers with ValueError. No partial or guessed joins.
 - The adapter consumes precomputed decisions, NOT authenticated parent evidence. The historical caller must separately rehash frozen sources, verify annotation policy/config/decision clocks/event identity, and preserve original annotation hashes in the artifact. This wrapper does not reconstruct parents or certify their truth.
