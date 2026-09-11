@@ -30,3 +30,23 @@ several bps; venue is Binance-perp-grade fills.
 This is a second machine (minute-scale scalper runner), not a Bull Machine
 archetype. Path if commissioned: paper-scalper on live minute feed (the true
 adverse-selection measurement) -> then sizing. Do not bolt into the 1H engine.
+
+## Design completion (2026-09-09, same day): entry/exit battery — FINAL SPEC
+
+Declared one-change variants vs baseline ($69.9K/6-6/DD-18.0K):
+- X2 stop -0.15% (was -0.05%): **$204.5K, 6/6, DD -$9.8K — ADOPTED.** Tight
+  stops were noise-stabbed; same law as the 1H engine's structural-stop
+  inversion. Plateau check: monotone wider-is-better through -0.25% — spec
+  stays at DECLARED -0.15% (no gradient-chasing); edge is the ENTRY, the stop
+  subtracts.
+- X1 24h hold: $100K pass alone; combo with X2 $170.6K < X2 alone — 4h kept.
+- E1 confirm bar: FAIL 5/6 (third burial of acceptance, now at 1m).
+- E2 depth floor: FAIL 4/6.
+- Latency stress on spec: $215K (edge not latency-bound).
+- STOP-SLIPPAGE = the one real sensitivity: +0.05% worse stop fills -> $135.7K
+  6/6; +0.10% -> $67K 5/6. Live fill quality decides which world we get.
+
+FINAL SPEC: fast(<=30m)-reclaim of >=2-touch cluster level; entry reclaim
+close; stop sweep_low-0.15%; 4h hold; 1.5x size on touches>=3. Backtest
+$204K/5.7yr per $50K notional, 6/6 years, maxDD -$9.8K. Sole remaining
+unknown: live cascade fills -> build the paper scalper.
