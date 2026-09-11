@@ -46,7 +46,11 @@ def _utc_timestamp(value, label):
         timestamp = timestamp.tz_convert('UTC')
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(f'Invalid {label}') from exc
-    if timestamp.value % pd.Timedelta(minutes=1).value:
+    try:
+        subminute = timestamp.value % pd.Timedelta(minutes=1).value
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f'Invalid {label}') from exc
+    if subminute:
         raise ValueError(f'{label} must align exactly to the UTC minute grid')
     return timestamp
 
@@ -79,8 +83,7 @@ def _validate_events(bars, events, start, end):
                 or event['touches'] < 1):
             raise ValueError('Invalid event touches')
         prices = (event['level'], event['sweep_low'])
-        if any(not isinstance(value, (int, float)) or isinstance(value, bool)
-               for value in prices):
+        if any(type(value) not in (int, float) for value in prices):
             raise ValueError('Invalid event price type')
         try:
             numeric = np.asarray(prices, dtype=float)

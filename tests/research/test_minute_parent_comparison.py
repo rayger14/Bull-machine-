@@ -335,3 +335,29 @@ def test_standard_json_numeric_event_prices_remain_valid_without_normalization()
         window_start=bars.index[0], window_end=bars.index[-1] + pd.Timedelta(minutes=1),
     )
     assert result['arms']['baseline']['simulation']['trades'][0]['event']['sweep_low'] == 95
+
+
+def test_numeric_subclass_price_fails_before_simulator_arithmetic():
+    """Catches isinstance accepting a hostile numeric subclass into frozen fills."""
+    class HostileFloat(float):
+        def __mul__(self, other):
+            raise TypeError('hostile arithmetic')
+
+    bars, events, _, permissions = fixture()
+    events = copy.deepcopy(events)
+    events[0]['sweep_low'] = HostileFloat(95.0)
+    with pytest.raises(ValueError, match='price'):
+        compare_minute_parent_arms(
+            bars, events, permissions,
+            window_start=bars.index[0], window_end=bars.index[-1] + pd.Timedelta(minutes=1),
+        )
+
+
+def test_native_resolution_overflow_in_aware_window_raises_value_error():
+    """Catches Timestamp.value overflow escaping the public validation boundary."""
+    bars, events, _, permissions = fixture()
+    with pytest.raises(ValueError, match='window'):
+        compare_minute_parent_arms(
+            bars, events, permissions,
+            window_start='2500-01-01T00:00:00Z', window_end='2500-01-01T01:00:00Z',
+        )
