@@ -1,5 +1,9 @@
 # ZeroIka Equal-Lows Sweep — Native-Resolution Validation (2026-09-09)
 
+> **September 11 research reconciliation:** The validation and profitability claims below are retained as historical study notes, not the current verdict. The [causal replay audit](research_validation_results_2026_09_10.md) reproduced the legacy positive result but found future-history-dependent candidate selection; the chronological interpretation failed profitability. The [four-month parent-filter experiment](monthly_parent_economics_2026_09_11.md) also did not establish an edge. Neither study proves that every possible causal sweep strategy loses, but these older headlines do not justify deployment.
+>
+> The script committed on `main` as `d2fe814` (`bin/studies/sweep_native_scalper_study.py`) preserves a pivot-ordered forward search with shared sweep-spacing state. It is not a correction of the audited chronological-selection problem. Its executable body uses 7 bps costs and a 0.05%-below-sweep stop, despite the header describing 12 bps and 0.15%; it does not implement the stated 1.5x sizing or a non-overlapping portfolio simulation. Do not treat that script alone as a reproducer of the final-spec headline. No script or live-engine behavior was changed during this reconciliation.
+
 **Origin:** the 1H swept-level restoration of liquidity_sweep FAILED (starved to
 n=14 — at 1H the textbook event can't fit one bar; the deep-wick proxy IS the
 1H edge). Question: is the teaching real at its native resolution? Tested on
