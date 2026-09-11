@@ -32,7 +32,7 @@
 - Consumes: minute OHLC frame, raw locally indexed selector events, complete four-variant event-ID permission maps and aware aligned window bounds.
 - Produces: `compare_minute_parent_arms(bars, events, permissions, *, window_start, window_end)` with five arms, each containing `simulation`, complete `event_ledger`, `summary`, and `comparison`. Comparison keys: `shared_entered_ids`, `baseline_only_entered_ids`, `arm_only_entered_ids`, `status_transitions` (list of `{baseline_status, arm_status, count}` records). Summary extends unchanged simulator summary with `completed_fees`, `completed_gross_pnl`, `mean_net_pnl_over_initial_risk`, `median_net_pnl_over_initial_risk`. Top-level `parameters`, `coverage`, `arms`, `limitations`, `certified`.
 
-- [ ] **Step 1: Write behavior-first fixtures and tests**
+- [x] **Step 1: Write behavior-first fixtures and tests**
 
 Use real simulator calls, not a mocked simulator. A flat 720-minute synthetic frame allows early and later candidates; returned trades and event statuses make filtering-vs-lockout order observable.
 
@@ -68,11 +68,11 @@ def test_permission_rejection_frees_later_busy_candidate():
 
 Add concrete tests for all-permit whole-simulator equality; unknown/no-permit/empty arms; hand-derived $60 fee and risk ratio; same-entry-bar and gap stops; early-stop fixed lockout; censored/unfilled tails; rejected out-of-window events; missing/extra variant or event identity; bool/string/numeric permission strictness; malformed index/clock/container; copied-input repeatability/nonmutation and strict JSON. Each names the implementation error it catches. Do not test asserted mock interactions or only duplicate construction details.
 
-- [ ] **Step 2: Observe RED**
+- [x] **Step 2: Observe RED**
 
 Run `python3 -m pytest tests/research/test_minute_parent_comparison.py -q -o addopts=''`. First missing import establishes absent API; after adding only a minimal importable stub, rerun and record assertion RED before implementing the comparison.
 
-- [ ] **Step 3: Implement the minimal wrapper**
+- [x] **Step 3: Implement the minimal wrapper**
 
 Validate all identities/windows/permission maps before economic calls. Work on copies and derive event IDs exactly as the simulator does. Execute baseline once and each arm on its permitted event list:
 
@@ -84,11 +84,11 @@ simulation = simulate_events(
 
 Join simulator ledger back onto every original ID, using explicit permission statuses for omitted events. Build entered-ID sets from completed/open_censored states; compare all event status pairs. Compute new completed-only summary fields from actual simulator trades: sum fees, net plus fees, mean/median `pnl / initial_risk`; empty ratios are null. Preserve simulation objects semantically, including all censored positions. Output fixed parameters and explicit unfunded/conditional/flat-start/tail limitations. `json.dumps(result, allow_nan=False)` must succeed or raise ValueError for nonrepresentable output. No CLI, parent recomputation, new exit policy, source mutation, optimizer, or extra simulator is needed.
 
-- [ ] **Step 4: Observe GREEN and review**
+- [x] **Step 4: Observe GREEN and review**
 
 Run focused command above, then `python3 -m pytest tests/research -q -o addopts=''`, then `git diff --check`. Record exact RED/GREEN evidence in the task report. Independently review spec compliance and code quality before running historical outcomes.
 
-- [ ] **Step 5: Commit the owned source/test pair**
+- [x] **Step 5: Commit the owned source/test pair**
 
 `git add scripts/research/minute_parent_comparison.py tests/research/test_minute_parent_comparison.py` then `git commit -m "Add frozen minute parent sleeve comparison"`.
 
