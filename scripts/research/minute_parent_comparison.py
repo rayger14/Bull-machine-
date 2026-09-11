@@ -35,6 +35,15 @@ def _is_index(value):
             and not isinstance(value, (bool, np.bool_)))
 
 
+def _validate_native_ohlc(bars):
+    required = ('open', 'high', 'low', 'close')
+    if not isinstance(bars, pd.DataFrame) or any(column not in bars for column in required):
+        raise ValueError('Real numeric OHLC columns required')
+    if any(getattr(bars[column].dtype, 'kind', None) not in ('i', 'u', 'f')
+           for column in required):
+        raise ValueError('Real numeric OHLC dtypes required')
+
+
 def _utc_timestamp(value, label):
     try:
         timestamp = pd.Timestamp(value)
@@ -188,6 +197,7 @@ def compare_minute_parent_arms(bars, events, permissions, *, window_start, windo
     Inputs are validated completely before any simulator call.  Each permission
     arm replays only its allowed candidates, so denial cannot create a lockout.
     """
+    _validate_native_ohlc(bars)
     try:
         validate_bars(bars)
     except (AttributeError, KeyError, TypeError, ValueError, OverflowError) as exc:

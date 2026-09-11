@@ -361,3 +361,38 @@ def test_native_resolution_overflow_in_aware_window_raises_value_error():
             bars, events, permissions,
             window_start='2500-01-01T00:00:00Z', window_end='2500-01-01T01:00:00Z',
         )
+
+
+@pytest.mark.parametrize('representation', ['string', 'decimal', 'bool', 'complex'])
+def test_non_real_native_ohlc_representations_fail_before_inherited_simulator(representation):
+    """Catches coercible OHLC values surviving validation and breaking frozen fills later."""
+    bars, events, _, permissions = fixture()
+    if representation == 'string':
+        bars = bars.astype(str)
+    elif representation == 'decimal':
+        bars = bars.astype(object)
+        bars.loc[bars.index[0], 'open'] = Decimal('100')
+    elif representation == 'bool':
+        bars = bars.copy()
+        bars['open'] = bars['open'] > 0
+    else:
+        bars = bars.copy()
+        bars['open'] = bars['open'].astype(complex)
+    with pytest.raises(ValueError, match='OHLC'):
+        compare_minute_parent_arms(
+            bars, events, permissions,
+            window_start=bars.index[0], window_end=bars.index[-1] + pd.Timedelta(minutes=1),
+        )
+
+
+def test_native_integer_ohlc_remains_valid_and_unmutated():
+    """Catches rejecting or coercing normal native parquet-style integer OHLC data."""
+    bars, events, _, permissions = fixture()
+    bars = bars.astype(int)
+    original = bars.copy(deep=True)
+    result = compare_minute_parent_arms(
+        bars, events, permissions,
+        window_start=bars.index[0], window_end=bars.index[-1] + pd.Timedelta(minutes=1),
+    )
+    assert result['arms']['baseline']['simulation']['trades']
+    assert bars.equals(original)
