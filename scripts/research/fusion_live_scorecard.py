@@ -17,11 +17,72 @@ _PNL_ALIAS_TOLERANCE = 0.005 + 1e-12
 
 
 def _is_number(value):
-    return (
-        isinstance(value, (int, float))
-        and not isinstance(value, bool)
-        and isfinite(value)
-    )
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        converted = float(value)
+    except (OverflowError, TypeError, ValueError):
+        return False
+    return isfinite(converted)
+
+
+def _finite_sum(values):
+    try:
+        result = fsum(values)
+    except (OverflowError, ValueError):
+        return None
+    return result if isfinite(result) else None
+
+
+def _finite_product(left, right):
+    try:
+        result = left * right
+    except OverflowError:
+        return None
+    return result if isfinite(result) else None
+
+
+def _finite_ratio(numerator, denominator):
+    try:
+        result = numerator / denominator
+    except (OverflowError, ZeroDivisionError):
+        return None
+    return result if isfinite(result) else None
+
+
+def _finite_mean(values):
+    if not values:
+        return None
+    total = _finite_sum(values)
+    if total is not None:
+        return total / len(values)
+    scaled = _finite_sum(value / len(values) for value in values)
+    return scaled if scaled is not None and isfinite(scaled) else None
+
+
+def _finite_even_average(left, right):
+    if left == right:
+        return left
+    if left >= 0 and right >= 0:
+        result = left + (right - left) / 2.0
+    elif left <= 0 and right <= 0:
+        result = right + (left - right) / 2.0
+    else:
+        result = (left + right) / 2.0
+    return result if isfinite(result) else None
+
+
+def _finite_median(values):
+    if not values:
+        return None
+    result = median(values)
+    if isfinite(result):
+        return result
+    ordered = sorted(values)
+    middle = len(ordered) // 2
+    if len(ordered) % 2:
+        return ordered[middle]
+    return _finite_even_average(ordered[middle - 1], ordered[middle])
 
 
 def _format_utc(value):
@@ -305,14 +366,19 @@ def _derive_group(position_id, validated_rows, open_ids):
         normalized["exit_time_value"]
         for _index, _row, _reasons, normalized in validated_rows
     ]
-    quantity_sum = fsum(
+    quantity_sum = _finite_sum(
         normalized["quantity"]
         for _index, _row, _reasons, normalized in validated_rows
     )
-    pnl_sum = fsum(
+    pnl_sum = _finite_sum(
         normalized["pnl_usd"]
         for _index, _row, _reasons, normalized in validated_rows
     )
+    arithmetic_reasons = []
+    if quantity_sum is None:
+        arithmetic_reasons.append("unrepresentable_quantity_sum")
+    if pnl_sum is None:
+        arithmetic_reasons.append("unrepresentable_recorded_exit_pnl_usd")
     score = first["fusion_score"]
     threshold = first["threshold_at_entry"]
     margin = first["threshold_margin"]
@@ -327,7 +393,26 @@ def _derive_group(position_id, validated_rows, open_ids):
         (first["direction"] == "long" and stop < entry_price)
         or (first["direction"] == "short" and stop > entry_price)
     )
-    risk_proxy = abs(entry_price - stop) * quantity_sum if adverse_stop else None
+    risk_proxy = None
+    if adverse_stop and quantity_sum is not None:
+        risk_proxy = _finite_product(abs(entry_price - stop), quantity_sum)
+        if risk_proxy is None:
+            arithmetic_reasons.append(
+                "unrepresentable_displayed_stop_risk_proxy_usd"
+            )
+        elif risk_proxy == 0:
+            arithmetic_reasons.append("displayed_stop_risk_proxy_underflow")
+
+    risk_ratio = None
+    if risk_proxy is not None and risk_proxy > 0 and pnl_sum is not None:
+        risk_ratio = _finite_ratio(pnl_sum, risk_proxy)
+        if risk_ratio is None:
+            arithmetic_reasons.append(
+                "unrepresentable_recorded_pnl_over_displayed_stop_risk_proxy"
+            )
+
+    if arithmetic_reasons:
+        return None, arithmetic_reasons
 
     display_values_by_row = [
         _display_threshold(row) for _index, row in indexed_rows
@@ -369,11 +454,7 @@ def _derive_group(position_id, validated_rows, open_ids):
         "entry_threshold_above_score_range": threshold > 1,
         "displayed_stop_loss": stop,
         "displayed_stop_risk_proxy_usd": risk_proxy,
-        "recorded_pnl_over_displayed_stop_risk_proxy": (
-            pnl_sum / risk_proxy
-            if risk_proxy is not None and risk_proxy > 0
-            else None
-        ),
+        "recorded_pnl_over_displayed_stop_risk_proxy": risk_ratio,
         "display_threshold_values": display_values,
         "display_threshold_missing_or_invalid": display_missing,
         "display_threshold_varied": len(display_values) > 1,
@@ -388,7 +469,7 @@ def _derive_group(position_id, validated_rows, open_ids):
         / 3600.0,
         "open_in_snapshot": position_id in open_ids,
         "completion_certified": False,
-    }
+    }, []
 
 
 def _average_ranks(values):
@@ -453,10 +534,6 @@ def _correlations(groups, sparse_threshold):
     }
 
 
-def _mean(values):
-    return fsum(values) / len(values) if values else None
-
-
 def _stats(groups, sparse_threshold):
     pnls = [group["recorded_exit_pnl_usd"] for group in groups]
     positive = [value for value in pnls if value > 0]
@@ -472,33 +549,79 @@ def _stats(groups, sparse_threshold):
         if group["displayed_stop_risk_proxy_usd"] is not None
     ]
     durations = [group["source_label_duration_hours"] for group in groups]
-    gross_positive = fsum(positive)
-    gross_negative_abs = abs(fsum(negative))
     n = len(groups)
+    unavailable = []
+
+    pnl_sum = _finite_sum(pnls)
+    if pnl_sum is None:
+        unavailable.append("recorded_exit_pnl_usd_sum")
+
+    gross_positive = _finite_sum(positive)
+    if gross_positive is None:
+        unavailable.append("gross_positive_pnl_usd")
+    gross_negative_sum = _finite_sum(negative)
+    gross_negative_abs = (
+        abs(gross_negative_sum) if gross_negative_sum is not None else None
+    )
+    if gross_negative_abs is None:
+        unavailable.append("gross_negative_pnl_usd_abs")
+
+    zero_loss = len(negative) == 0
+    profit_factor = None
+    if not zero_loss:
+        if gross_positive is None or gross_negative_abs is None:
+            unavailable.append("recorded_subtotal_profit_factor")
+        else:
+            profit_factor = _finite_ratio(gross_positive, gross_negative_abs)
+            if profit_factor is None:
+                unavailable.append("recorded_subtotal_profit_factor")
+
+    mean_pnl = _finite_mean(pnls)
+    if pnls and mean_pnl is None:
+        unavailable.append("mean_recorded_group_pnl_usd")
+    median_pnl = _finite_median(pnls)
+    if pnls and median_pnl is None:
+        unavailable.append("median_recorded_group_pnl_usd")
+
+    mean_ratio = _finite_mean(ratios)
+    if ratios and mean_ratio is None:
+        unavailable.append(
+            "mean_recorded_pnl_over_displayed_stop_risk_proxy"
+        )
+    median_ratio = _finite_median(ratios)
+    if ratios and median_ratio is None:
+        unavailable.append(
+            "median_recorded_pnl_over_displayed_stop_risk_proxy"
+        )
+
+    mean_proxy = _finite_mean(proxies)
+    if proxies and mean_proxy is None:
+        unavailable.append("mean_displayed_stop_risk_proxy_usd")
+    mean_duration = _finite_mean(durations)
+    if durations and mean_duration is None:
+        unavailable.append("mean_source_label_duration_hours")
+
     return {
         "n": n,
-        "recorded_exit_pnl_usd_sum": fsum(pnls),
+        "recorded_exit_pnl_usd_sum": pnl_sum,
         "wins": len(positive),
         "losses": len(negative),
         "breakevens": n - len(positive) - len(negative),
         "win_fraction": len(positive) / n if n else None,
         "gross_positive_pnl_usd": gross_positive,
         "gross_negative_pnl_usd_abs": gross_negative_abs,
-        "recorded_subtotal_profit_factor": (
-            gross_positive / gross_negative_abs if gross_negative_abs else None
-        ),
-        "zero_loss": gross_negative_abs == 0,
-        "mean_recorded_group_pnl_usd": _mean(pnls),
-        "median_recorded_group_pnl_usd": median(pnls) if pnls else None,
+        "recorded_subtotal_profit_factor": profit_factor,
+        "zero_loss": zero_loss,
+        "mean_recorded_group_pnl_usd": mean_pnl,
+        "median_recorded_group_pnl_usd": median_pnl,
         "risk_proxy_ratio_n": len(ratios),
-        "mean_recorded_pnl_over_displayed_stop_risk_proxy": _mean(ratios),
-        "median_recorded_pnl_over_displayed_stop_risk_proxy": (
-            median(ratios) if ratios else None
-        ),
+        "mean_recorded_pnl_over_displayed_stop_risk_proxy": mean_ratio,
+        "median_recorded_pnl_over_displayed_stop_risk_proxy": median_ratio,
         "risk_proxy_usd_n": len(proxies),
-        "mean_displayed_stop_risk_proxy_usd": _mean(proxies),
+        "mean_displayed_stop_risk_proxy_usd": mean_proxy,
         "source_label_duration_n": len(durations),
-        "mean_source_label_duration_hours": _mean(durations),
+        "mean_source_label_duration_hours": mean_duration,
+        "arithmetic_unavailable_metrics": sorted(set(unavailable)),
         "sparse": n < sparse_threshold,
         "correlations": _correlations(groups, sparse_threshold),
     }
@@ -680,7 +803,23 @@ def build_fusion_scorecard(
                 }
             )
         else:
-            groups.append(_derive_group(position_id, validated, open_by_id))
+            group, arithmetic_reasons = _derive_group(
+                position_id, validated, open_by_id
+            )
+            if arithmetic_reasons:
+                quarantined_groups.append(
+                    {
+                        "position_id": position_id,
+                        "row_indices": [index for index, _row in indexed_rows],
+                        "reasons": sorted(set(arithmetic_reasons)),
+                        "exit_rows": [
+                            {"row_index": index, "record": _json_safe(row)}
+                            for index, row in indexed_rows
+                        ],
+                    }
+                )
+            else:
+                groups.append(group)
 
     eligible = [
         group
@@ -741,9 +880,18 @@ def build_fusion_scorecard(
         reason for group in quarantined_groups for reason in group["reasons"]
     )
     entry_times = [_parse_aware_utc(group["entry_time"]) for group in groups]
-    exit_times = [
+    first_exit_times = [
+        _parse_aware_utc(group["first_exit_time"]) for group in groups
+    ]
+    last_exit_times = [
         _parse_aware_utc(group["last_exit_time"]) for group in groups
     ]
+    source_exit_time_range = {
+        "first": (
+            _format_utc(min(first_exit_times)) if first_exit_times else None
+        ),
+        "last": _format_utc(max(last_exit_times)) if last_exit_times else None,
+    }
     coverage = {
         "raw_exit_rows": len(trades),
         "raw_signal_rows": len(signal_rows),
@@ -802,7 +950,7 @@ def build_fusion_scorecard(
             for group in groups
         ),
         "source_entry_time_range": _time_range(entry_times),
-        "source_exit_time_range": _time_range(exit_times),
+        "source_exit_time_range": source_exit_time_range,
         "completion_certified": False,
     }
 

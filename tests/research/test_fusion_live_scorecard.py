@@ -504,6 +504,197 @@ def test_signal_coverage_is_descriptive_and_does_not_join_outcomes():
 
 
 @pytest.mark.parametrize(
+    ("changes", "reason"),
+    [
+        ({"quantity": 10**400}, "invalid_quantity"),
+        ({"pnl_usd": 10**400, "pnl": 10**400}, "invalid_pnl_usd"),
+    ],
+)
+def test_unrepresentable_source_numbers_quarantine_without_conversion_error(
+    changes, reason
+):
+    report = build([exit_row(**changes)])
+
+    assert report["groups"] == []
+    assert report["quarantined_groups"][0]["row_indices"] == [0]
+    assert reason in report["quarantined_groups"][0]["reasons"]
+    json.dumps(report, allow_nan=False)
+
+
+@pytest.mark.parametrize(
+    ("rows", "reason"),
+    [
+        (
+            [
+                exit_row(quantity=1e308),
+                exit_row(quantity=1e308, timestamp_exit="2026-01-01T02:00:00Z"),
+            ],
+            "unrepresentable_quantity_sum",
+        ),
+        (
+            [
+                exit_row(pnl_usd=1e308, pnl=1e308),
+                exit_row(
+                    pnl_usd=1e308,
+                    pnl=1e308,
+                    timestamp_exit="2026-01-01T02:00:00Z",
+                ),
+            ],
+            "unrepresentable_recorded_exit_pnl_usd",
+        ),
+        (
+            [
+                exit_row(
+                    entry_price=1e308,
+                    stop_loss=1.0,
+                    quantity=1e308,
+                    pnl_usd=1.0,
+                    pnl=1.0,
+                )
+            ],
+            "unrepresentable_displayed_stop_risk_proxy_usd",
+        ),
+        (
+            [
+                exit_row(
+                    entry_price=1e-323,
+                    stop_loss=5e-324,
+                    quantity=1.0,
+                    pnl_usd=1e308,
+                    pnl=1e308,
+                )
+            ],
+            "unrepresentable_recorded_pnl_over_displayed_stop_risk_proxy",
+        ),
+        (
+            [
+                exit_row(
+                    entry_price=1e-323,
+                    stop_loss=5e-324,
+                    quantity=5e-324,
+                    pnl_usd=1.0,
+                    pnl=1.0,
+                )
+            ],
+            "displayed_stop_risk_proxy_underflow",
+        ),
+    ],
+)
+def test_unrepresentable_group_arithmetic_quarantines_whole_group(rows, reason):
+    report = build(rows)
+
+    assert report["groups"] == []
+    assert report["quarantined_groups"][0]["row_indices"] == list(
+        range(len(rows))
+    )
+    assert reason in report["quarantined_groups"][0]["reasons"]
+    json.dumps(report, allow_nan=False)
+
+
+def test_cross_group_positive_overflow_nulls_only_unavailable_aggregates():
+    report = build(
+        [
+            exit_row(
+                position_id="huge-a",
+                entry_price=2.0,
+                stop_loss=1.0,
+                pnl_usd=1e308,
+                pnl=1e308,
+            ),
+            exit_row(
+                position_id="huge-b",
+                entry_price=2.0,
+                stop_loss=1.0,
+                pnl_usd=1e308,
+                pnl=1e308,
+            ),
+        ]
+    )
+    summary = report["summary"]
+
+    assert len(report["groups"]) == 2
+    assert summary["n"] == 2
+    assert summary["wins"] == 2
+    assert summary["zero_loss"] is True
+    assert summary["recorded_exit_pnl_usd_sum"] is None
+    assert summary["gross_positive_pnl_usd"] is None
+    assert summary["mean_recorded_group_pnl_usd"] == 1e308
+    assert summary["median_recorded_group_pnl_usd"] == 1e308
+    assert summary["mean_recorded_pnl_over_displayed_stop_risk_proxy"] == 1e308
+    assert summary["median_recorded_pnl_over_displayed_stop_risk_proxy"] == 1e308
+    assert summary["recorded_subtotal_profit_factor"] is None
+    assert summary["arithmetic_unavailable_metrics"] == [
+        "gross_positive_pnl_usd",
+        "recorded_exit_pnl_usd_sum",
+    ]
+    assert summary["correlations"]["fusion_score_vs_recorded_exit_pnl_usd"][
+        "n"
+    ] == 2
+    json.dumps(report, allow_nan=False)
+
+
+def test_cross_group_negative_overflow_nulls_dependent_profit_factor():
+    report = build(
+        [
+            exit_row(position_id="loss-a", pnl_usd=-1e308, pnl=-1e308),
+            exit_row(position_id="loss-b", pnl_usd=-1e308, pnl=-1e308),
+        ]
+    )
+    summary = report["summary"]
+
+    assert summary["n"] == 2
+    assert summary["losses"] == 2
+    assert summary["zero_loss"] is False
+    assert summary["gross_negative_pnl_usd_abs"] is None
+    assert summary["recorded_subtotal_profit_factor"] is None
+    assert summary["mean_recorded_group_pnl_usd"] == -1e308
+    assert summary["median_recorded_group_pnl_usd"] == -1e308
+    assert summary["arithmetic_unavailable_metrics"] == [
+        "gross_negative_pnl_usd_abs",
+        "recorded_exit_pnl_usd_sum",
+        "recorded_subtotal_profit_factor",
+    ]
+    json.dumps(report, allow_nan=False)
+
+
+def test_cross_group_large_risk_mean_and_even_median_remain_representable():
+    report = build(
+        [
+            exit_row(
+                position_id="risk-a", entry_price=1e308, stop_loss=1.0, quantity=1.0
+            ),
+            exit_row(
+                position_id="risk-b", entry_price=1e308, stop_loss=1.0, quantity=1.0
+            ),
+        ]
+    )
+
+    assert report["summary"]["mean_displayed_stop_risk_proxy_usd"] == 1e308
+    assert report["summary"]["arithmetic_unavailable_metrics"] == []
+    json.dumps(report, allow_nan=False)
+
+
+def test_source_exit_range_uses_first_partial_exit_and_last_partial_exit():
+    report = build(
+        [
+            exit_row(position_id="partial", timestamp_exit="2026-01-01T01:00:00Z"),
+            exit_row(
+                position_id="partial",
+                timestamp_exit="2026-01-01T03:00:00Z",
+                pnl_usd=-5.0,
+                pnl=-5.0,
+            ),
+            exit_row(position_id="middle", timestamp_exit="2026-01-01T02:00:00Z"),
+        ]
+    )
+
+    assert report["coverage"]["source_exit_time_range"] == {
+        "first": "2026-01-01T01:00:00Z",
+        "last": "2026-01-01T03:00:00Z",
+    }
+
+
+@pytest.mark.parametrize(
     "kwargs",
     [
         {"trades": {}},
