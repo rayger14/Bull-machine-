@@ -188,8 +188,8 @@ def _validate_exit_row(row, archetypes, server_time):
         reasons.append("invalid_direction")
     normalized["direction"] = direction
 
-    entry_time = _parse_aware_utc(row.get("entry_time"))
-    exit_time = _parse_aware_utc(row.get("exit_time"))
+    entry_time = _parse_aware_utc(row.get("timestamp_entry"))
+    exit_time = _parse_aware_utc(row.get("timestamp_exit"))
     if entry_time is None:
         reasons.append("invalid_entry_time")
     if exit_time is None:
@@ -201,22 +201,26 @@ def _validate_exit_row(row, archetypes, server_time):
     normalized["entry_time_value"] = entry_time
     normalized["exit_time_value"] = exit_time
 
-    numeric_rules = {
-        "entry_price": lambda value: value > 0,
-        "quantity": lambda value: value > 0,
-        "pnl_usd": lambda _value: True,
-        "fusion_score": lambda value: 0 <= value <= 1,
-        "threshold_at_entry": lambda value: value >= 0,
-        "threshold_margin": lambda _value: True,
-        "displayed_stop_loss": lambda value: value >= 0,
-    }
-    for field, rule in numeric_rules.items():
-        value = row.get(field)
+    numeric_rules = (
+        ("entry_price", "entry_price", lambda value: value > 0),
+        ("quantity", "quantity", lambda value: value > 0),
+        ("pnl_usd", "pnl_usd", lambda _value: True),
+        ("fusion_score", "fusion_score", lambda value: 0 <= value <= 1),
+        (
+            "threshold_at_entry",
+            "threshold_at_entry",
+            lambda value: value >= 0,
+        ),
+        ("threshold_margin", "threshold_margin", lambda _value: True),
+        ("stop_loss", "displayed_stop_loss", lambda value: value >= 0),
+    )
+    for raw_field, internal_field, rule in numeric_rules:
+        value = row.get(raw_field)
         if not _is_number(value) or not rule(float(value)):
-            reasons.append("invalid_{}".format(field))
-            normalized[field] = None
+            reasons.append("invalid_{}".format(internal_field))
+            normalized[internal_field] = None
         else:
-            normalized[field] = float(value)
+            normalized[internal_field] = float(value)
 
     if "pnl" in row:
         pnl = row.get("pnl")

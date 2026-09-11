@@ -19,16 +19,28 @@ def exit_row(**changes):
         "position_id": "p1",
         "archetype": "test_long",
         "direction": "long",
-        "entry_time": "2026-01-01T00:00:00Z",
-        "exit_time": "2026-01-01T01:00:00Z",
+        "timestamp_entry": "2026-01-01T00:00:00Z",
+        "timestamp_exit": "2026-01-01T01:00:00Z",
         "entry_price": 100.0,
+        "exit_price": 110.0,
         "quantity": 1.0,
+        "position_size_usd": 100.0,
         "pnl_usd": 10.0,
         "pnl": 10.0,
+        "pnl_pct": 10.0,
         "fusion_score": 0.30,
         "threshold_at_entry": 0.25,
         "threshold_margin": 0.05,
-        "displayed_stop_loss": 90.0,
+        "stop_loss": 90.0,
+        "take_profit": 120.0,
+        "exit_reason": "synthetic_exit",
+        "duration_hours": 1.0,
+        "entry_regime": "synthetic_regime",
+        "atr_at_entry": 2.0,
+        "crisis_prob_at_entry": 0.1,
+        "instability_at_entry": 0.2,
+        "leverage_applied": 1.0,
+        "risk_temp_at_entry": 0.3,
         "factor_attribution": {"entry_conditions": {"dynamic_threshold": 0.27}},
         "source_version": "epoch1",
     }
@@ -65,7 +77,9 @@ def open_row(**changes):
 def test_partial_exits_are_one_observation():
     rows = [
         exit_row(),
-        exit_row(exit_time="2026-01-01T02:00:00Z", pnl_usd=-5.0, pnl=-5.0),
+        exit_row(
+            timestamp_exit="2026-01-01T02:00:00Z", pnl_usd=-5.0, pnl=-5.0
+        ),
     ]
 
     report = build_fusion_scorecard(
@@ -89,16 +103,46 @@ def test_partial_exits_are_one_observation():
     assert report["by_archetype"]["unused"]["n"] == 0
 
 
+def test_full_shape_raw_api_exit_schema_maps_to_conceptual_output_fields():
+    report = build([exit_row()])
+
+    assert len(report["groups"]) == 1
+    group = report["groups"][0]
+    assert group["entry_time"] == "2026-01-01T00:00:00Z"
+    assert group["first_exit_time"] == "2026-01-01T01:00:00Z"
+    assert group["last_exit_time"] == "2026-01-01T01:00:00Z"
+    assert group["displayed_stop_loss"] == 90.0
+
+
+def test_invented_aliases_do_not_satisfy_missing_raw_exit_fields():
+    row = exit_row()
+    row["entry_time"] = row.pop("timestamp_entry")
+    row["exit_time"] = row.pop("timestamp_exit")
+    row["displayed_stop_loss"] = row.pop("stop_loss")
+
+    report = build([row])
+
+    assert report["groups"] == []
+    assert report["quarantined_groups"][0]["row_indices"] == [0]
+    assert {
+        "invalid_entry_time",
+        "invalid_exit_time",
+        "invalid_displayed_stop_loss",
+    }.issubset(report["quarantined_groups"][0]["reasons"])
+
+
 def test_summary_and_logged_margin_cohorts_use_group_subtotals():
     rows = [
         exit_row(),
-        exit_row(exit_time="2026-01-01T02:00:00Z", pnl_usd=-5.0, pnl=-5.0),
+        exit_row(
+            timestamp_exit="2026-01-01T02:00:00Z", pnl_usd=-5.0, pnl=-5.0
+        ),
         exit_row(
             position_id="p2",
             archetype="test_short",
             direction="short",
-            exit_time="2026-01-01T03:00:00Z",
-            displayed_stop_loss=110.0,
+            timestamp_exit="2026-01-01T03:00:00Z",
+            stop_loss=110.0,
             pnl_usd=-5.0,
             pnl=-5.0,
             fusion_score=0.2,
@@ -174,16 +218,18 @@ def test_invalid_numeric_row_contaminates_its_whole_id_group(changes, reason):
 def test_utc_equivalent_entry_clocks_group_but_invalid_clock_is_quarantined():
     equivalent = build(
         [
-            exit_row(entry_time="2026-01-01T00:00:00Z"),
+            exit_row(timestamp_entry="2026-01-01T00:00:00Z"),
             exit_row(
-                entry_time="2025-12-31T19:00:00-05:00",
-                exit_time="2026-01-01T02:00:00+00:00",
+                timestamp_entry="2025-12-31T19:00:00-05:00",
+                timestamp_exit="2026-01-01T02:00:00+00:00",
             ),
         ]
     )
     invalid = build(
         [
-            exit_row(position_id="late", entry_time="2026-01-01T04:00:00Z"),
+            exit_row(
+                position_id="late", timestamp_entry="2026-01-01T04:00:00Z"
+            ),
             exit_row(position_id="late"),
         ]
     )
@@ -242,7 +288,7 @@ def test_stored_threshold_is_not_replaced_by_display_threshold_and_rounding_is_f
                 factor_attribution={"entry_conditions": {"dynamic_threshold": 0.9}},
             ),
             exit_row(
-                exit_time="2026-01-01T02:00:00Z",
+                timestamp_exit="2026-01-01T02:00:00Z",
                 fusion_score=0.3,
                 threshold_at_entry=0.30005,
                 threshold_margin=0.0,
@@ -338,12 +384,12 @@ def test_short_and_adverse_side_risk_proxy_rules():
                 position_id="short",
                 archetype="test_short",
                 direction="short",
-                displayed_stop_loss=110,
+                stop_loss=110,
                 pnl_usd=-5,
                 pnl=-5,
             ),
-            exit_row(position_id="bad-long-stop", displayed_stop_loss=110),
-            exit_row(position_id="zero-stop", displayed_stop_loss=0),
+            exit_row(position_id="bad-long-stop", stop_loss=110),
+            exit_row(position_id="zero-stop", stop_loss=0),
         ]
     )
     groups = {group["position_id"]: group for group in report["groups"]}
