@@ -43,9 +43,12 @@ def _utc_timestamp(value, label):
     if timestamp.tz is None or pd.isna(timestamp):
         raise ValueError(f'{label} must be timezone-aware')
     try:
-        return timestamp.tz_convert('UTC')
+        timestamp = timestamp.tz_convert('UTC')
     except (TypeError, ValueError, OverflowError) as exc:
         raise ValueError(f'Invalid {label}') from exc
+    if timestamp.value % pd.Timedelta(minutes=1).value:
+        raise ValueError(f'{label} must align exactly to the UTC minute grid')
+    return timestamp
 
 
 def _event_id(index, event):
@@ -75,8 +78,12 @@ def _validate_events(bars, events, start, end):
                 or isinstance(event['touches'], (bool, np.bool_))
                 or event['touches'] < 1):
             raise ValueError('Invalid event touches')
+        prices = (event['level'], event['sweep_low'])
+        if any(not isinstance(value, (int, float)) or isinstance(value, bool)
+               for value in prices):
+            raise ValueError('Invalid event price type')
         try:
-            numeric = np.asarray([event['level'], event['sweep_low']], dtype=float)
+            numeric = np.asarray(prices, dtype=float)
         except (TypeError, ValueError, OverflowError) as exc:
             raise ValueError('Invalid event prices') from exc
         if not np.isfinite(numeric).all() or (numeric <= 0).any():

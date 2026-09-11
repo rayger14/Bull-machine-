@@ -1,5 +1,6 @@
 import copy
 import json
+from decimal import Decimal
 
 import pandas as pd
 import pytest
@@ -280,3 +281,57 @@ def test_unrepresentable_bar_price_raises_value_error_at_public_boundary():
             bars, events, permissions,
             window_start=bars.index[0], window_end=bars.index[-1] + pd.Timedelta(minutes=1),
         )
+
+
+@pytest.mark.parametrize('window_start, window_end', [
+    ('2026-01-01T00:00:30Z', '2026-01-01T12:00:00Z'),
+    ('2026-01-01T00:00:00Z', '2026-01-01T12:00:00.001Z'),
+])
+def test_subminute_window_bounds_fail_before_replay(window_start, window_end):
+    """Catches accepting a window that cannot align to the minute simulator grid."""
+    bars, events, _, permissions = fixture()
+    with pytest.raises(ValueError, match='minute'):
+        compare_minute_parent_arms(
+            bars, events, permissions, window_start=window_start, window_end=window_end,
+        )
+
+
+def test_timezone_equivalent_aligned_window_is_normalized_to_utc():
+    """Catches treating non-UTC but aligned permission windows as invalid."""
+    bars, events, _, permissions = fixture()
+    result = compare_minute_parent_arms(
+        bars, events, permissions,
+        window_start='2025-12-31T16:00:00-08:00',
+        window_end='2026-01-01T04:00:00-08:00',
+    )
+    assert result['coverage']['window_start'] == '2026-01-01T00:00:00+00:00'
+    assert result['coverage']['window_end'] == '2026-01-01T12:00:00+00:00'
+
+
+@pytest.mark.parametrize('field, value', [
+    ('level', '98'),
+    ('sweep_low', Decimal('95')),
+    ('level', True),
+])
+def test_non_json_event_price_types_fail_before_the_unchanged_simulator(field, value):
+    """Catches coercing a raw frozen price that later breaks simulator validation."""
+    bars, events, _, permissions = fixture()
+    events = copy.deepcopy(events)
+    events[0][field] = value
+    with pytest.raises(ValueError, match='price'):
+        compare_minute_parent_arms(
+            bars, events, permissions,
+            window_start=bars.index[0], window_end=bars.index[-1] + pd.Timedelta(minutes=1),
+        )
+
+
+def test_standard_json_numeric_event_prices_remain_valid_without_normalization():
+    """Catches overrestricting integer frozen values while adding the raw-type contract."""
+    bars, events, _, permissions = fixture()
+    events = copy.deepcopy(events)
+    events[0]['level'], events[0]['sweep_low'] = 98, 95
+    result = compare_minute_parent_arms(
+        bars, events, permissions,
+        window_start=bars.index[0], window_end=bars.index[-1] + pd.Timedelta(minutes=1),
+    )
+    assert result['arms']['baseline']['simulation']['trades'][0]['event']['sweep_low'] == 95
