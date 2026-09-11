@@ -38,7 +38,7 @@ def build_fusion_scorecard(trades, *, open_positions, signal_rows, archetypes, s
 
 `snapshot_meta` requires aware `server_time` and `heartbeat_updated_at`, plus caller-supplied `source_hashes` mapping retained in output. `archetypes` is a nonempty list of unique nonempty strings. Other inputs are lists. Return keys: `certified`, `limitations`, `snapshot_meta`, `coverage`, `groups`, `quarantined_groups`, `excluded_rows`, `open_inventory`, `summary`, `by_archetype`, `by_direction`, `by_month`, `by_source_version`, `signal_coverage`. Metric/subrecord names may follow the spec vocabulary; document exact names in report so controller can consume them. Include original row indices for all grouped/quarantined/excluded rows, with no row in two categories. A nonempty ID with any invalid exit row quarantines every row for that ID. Open inventory may have missing score metadata, which stays unavailable. No CLI/network/loading pipeline is part of this task.
 
-- [ ] **Step 1: Write hand-derived failing tests.** Begin with the public interface and a concrete partial-exit grouping test; implement only after RED. Use a complete synthetic exit fixture with position ID p1, archetype test_long, direction long, entry2026-01-01T00:00Z at100, stop90, score0.30, threshold0.25, margin0.05, source_version epoch1. Two exits at01:00Z and02:00Z, each quantity1, pnl_usd/pnl10 and-5. Literal expected group subtotal5, quantity2, risk proxy20, ratio0.25, duration2h, one winning group (not two observations). Snapshot server2026-01-02T01:00Z, heartbeat2026-01-02T00:00Z. Add a second group p2: short entry100 stop110 quantity1 pnl-5, score0.2 threshold0.3 margin-0.1. Overall two groups, subtotal0, recorded-subtotalPF1, one positive/one negative; each margin cohort n1. Assert zero counts for an additional supplied archetype.
+- [x] **Step 1: Write hand-derived failing tests.** Begin with the public interface and a concrete partial-exit grouping test; implement only after RED. Use a complete synthetic exit fixture with position ID p1, archetype test_long, direction long, entry2026-01-01T00:00Z at100, stop90, score0.30, threshold0.25, margin0.05, source_version epoch1. Two exits at01:00Z and02:00Z, each quantity1, pnl_usd/pnl10 and-5. Literal expected group subtotal5, quantity2, risk proxy20, ratio0.25, duration2h, one winning group (not two observations). Snapshot server2026-01-02T01:00Z, heartbeat2026-01-02T00:00Z. Add a second group p2: short entry100 stop110 quantity1 pnl-5, score0.2 threshold0.3 margin-0.1. Overall two groups, subtotal0, recorded-subtotalPF1, one positive/one negative; each margin cohort n1. Assert zero counts for an additional supplied archetype.
 
 ```python
 def test_partial_exits_are_one_observation():
@@ -54,7 +54,7 @@ def test_partial_exits_are_one_observation():
 
 Before each added behavior, add and observe its failing test: blank IDs, duplicates/group conflicts, invalid row contamination, clocks and UTC equivalence, numeric/sentinel handling, stored-vs-display threshold distinction, margin-rounding ambiguity, pnl alias mismatch, open matching/closure limitations, malformed inventory, short risk, source version coverage, tie/constant correlations, empty groups/zero losses, reproducibility/nonmutation. Tied-rank fixture scores[1,1,2] and outcomes[1,2,3] has Spearman sqrt(3)/2, not1. Test a negative monotonic relation=-1 and constant operands=None. Tests must exercise public output; do not assert private helper structure.
 
-- [ ] **Step 2: Observe RED.**
+- [x] **Step 2: Observe RED.**
 
 ```bash
 python3 -m pytest tests/research/test_fusion_live_scorecard.py -q -o addopts=''
@@ -62,9 +62,9 @@ python3 -m pytest tests/research/test_fusion_live_scorecard.py -q -o addopts=''
 
 Record initial import failure, then behavior failures after the interface exists. Import failure alone is insufficient proof of numeric/validation branches.
 
-- [ ] **Step 3: Implement pure behavior.** Decompose within the module into validation/grouping, group derivation, summary/rank metrics and signal coverage. Use finite type checks (excluding booleans/strings), copied records, aware UTC clocks, deterministic sorting and JSON-safe nulls. Never replace entry threshold with factor display threshold or derive missing score from margin. Preserve the exact contracts in the spec. Keep implementation scope to this source/test pair; if spec ambiguity is load-bearing, ask controller before inventing behavior.
+- [x] **Step 3: Implement pure behavior.** Decompose within the module into validation/grouping, group derivation, summary/rank metrics and signal coverage. Use finite type checks (excluding booleans/strings), copied records, aware UTC clocks, deterministic sorting and JSON-safe nulls. Never replace entry threshold with factor display threshold or derive missing score from margin. Preserve the exact contracts in the spec. Keep implementation scope to this source/test pair; if spec ambiguity is load-bearing, ask controller before inventing behavior.
 
-- [ ] **Step 4: Verify GREEN and self-review.**
+- [x] **Step 4: Verify GREEN and self-review.**
 
 ```bash
 python3 -m pytest tests/research/test_fusion_live_scorecard.py -q -o addopts=''
@@ -74,7 +74,7 @@ git diff --check
 
 Run focused suite while iterating and full research suite once before commit. Baseline271passed with one existing urllib3/LibreSSL warning. No need to read actual outcome rankings; real snapshot run is controller-owned after independent review.
 
-- [ ] **Step 5: Commit only owned source/tests and report.**
+- [x] **Step 5: Commit only owned source/tests and report.**
 
 ```bash
 git add scripts/research/fusion_live_scorecard.py tests/research/test_fusion_live_scorecard.py

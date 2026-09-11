@@ -4,7 +4,7 @@
 
 The user asked whether fusion and its thresholds were correctly designed, not simply whether to turn the old cutoff back on. The approved first experiment separates stored fusion, stored entry threshold and logged margin, using explicit-ID grouped recorded exits. The subsequent challenger ladder compares native threshold enforcement, simple static cutoff and narrowly defined parent/context rules; none is promoted here.
 
-Implementation/results are pending independent review. The [registered contract](../superpowers/specs/2026-09-10-fusion-live-scorecard-design.md) fixes grouping, exclusions, metrics and limits before additional outcome rankings. No live or production changes.
+The reusable implementation passed task review and reproduces the independent raw-reference measurements below. The [registered contract](../superpowers/specs/2026-09-10-fusion-live-scorecard-design.md) fixes grouping, exclusions, metrics and limits before additional outcome rankings. Final integration review is pending. No live or production changes.
 
 ## Frozen sources
 
@@ -18,7 +18,7 @@ Separate GET downloads from http://165.1.79.19:8081 are non-atomic paper/shadow 
 
 Status server time2026-09-10T23:50:30.522662UTC; heartbeat updated23:01:56.103217UTC. The trades and signal snapshots are byte-identical to the earlier September8-case downloads; no newly completed exits appeared between those snapshots.
 
-535 rows are exit legs, not535 trades. Entries span2026-02-15 20:00UTC through2026-09-09 20:00UTC; exits throughSeptember10 12:00UTC.467 rows carry explicit position IDs, forming230groups;68older rows lack IDs. Explicit-group entry range startsMarch3 08:00UTC. Group multiplicities:110single-leg,36two-leg,51three-leg,33four-leg. Three current open IDs have no overlapping exit groups and no scale-outs yet.
+535 rows are exit legs, not 535 trades. Entries span 2026-02-15 20:00 UTC through 2026-09-09 20:00 UTC; exits through September 10 at 12:00 UTC. 467 rows carry explicit position IDs, forming 230 groups; 68 older rows lack IDs. Explicit-group entry range starts March 3 at 08:00 UTC. Group multiplicities: 110 single-leg, 36 two-leg, 51 three-leg, 33 four-leg. Three current open IDs have no overlapping exit groups and no scale-outs yet.
 
 The bounded project/sibling/project-associated temporary-directory search found no historical completed-position receipt ledger with original quantities. Current open inventory does have original/current quantities. Consequently, absent-from-open exit groups are not certified complete positions. Risk from displayed stop and summed recorded exit quantity is a diagnostic proxy, not fully net initial-risk R. No starting equity or average actual per-trade risk is reconstructed; the report is not an account-equity backtest.
 
@@ -44,9 +44,9 @@ The registered report provides raw coverage and conflicts, all17archetype counts
 
 The [library assessment](backtesting_library_assessment_2026_09_10.md) recommends no new dependency for this descriptive unit. NautilusTrader is a candidate for a separately pinned quote/latency/gap-fill benchmark; hftbacktest needs suitable depth/event data for a queue study. The repository's existing Nautilus-named strategy imports its own EventEngine, not the external package.
 
-## Independent raw-reference measurements
+## Verified descriptive measurements
 
-After the protocol was frozen, root and a separate read-only quant agent independently calculated the following literal reference from the raw snapshot. The reusable implementation has not yet completed review/matched these references; this section will be updated after that check. These are grouped recorded exit subtotals, not verified closed-position, fully net or threshold-on strategy results.
+After the protocol was frozen, root and a separate read-only quant agent independently calculated the following literal reference from the raw snapshot. The reviewed reusable implementation reproduces the counts, subtotals, PF and all six rank correlations. These are grouped recorded exit subtotals, not verified closed-position, fully net or threshold-on strategy results.
 
 | Logged margin cohort | Groups | Recorded exit subtotal | Recorded-subtotal PF | Win fraction | Mean displayed-stop risk proxy | Mean PnL / risk proxy |
 |---|---:|---:|---:|---:|---:|---:|
@@ -66,13 +66,23 @@ These weak pooled rank associations do not establish predictive calibration or c
 
 ### Concentration and composition
 
-All explicit-ID groups by entry month: March20/−$9,190.54; April28/+$2,078.62; May42/−$10,777.14; June22/−$3,569.29; July54/−$3,920.95; August51/+$28,312.61; September13/−$3,560.71. These are calendar groupings, not assumed implementation epochs.
+All explicit-ID groups by entry month: March 20 / −$9,190.54; April 28 / +$2,078.62; May 42 / −$10,777.14; June 22 / −$3,569.29; July 54 / −$3,920.95; August 51 / +$28,312.61; September 13 / −$3,560.71. These are calendar groupings, not assumed implementation epochs.
 
-August contributes40of87nonnegative-margin groups and+$23,141.93 of their recorded subtotal; outside August that cohort totals−$11,871.91. August's11negative-margin groups also total+$5,170.68. Excluding August is a concentration sensitivity diagnostic chosen after seeing this table, not a pre-registered alternative strategy or independent holdout.
+August contributes 40 of 87 nonnegative-margin groups and +$23,141.93 of their recorded subtotal; outside August that cohort totals −$11,871.91. August's 11 negative-margin groups also total +$5,170.68. Excluding August is a concentration sensitivity diagnostic chosen after seeing this table, not a pre-registered alternative strategy or independent holdout.
 
-LC alone has37explicit-ID groups with+$11,168.69 recorded subtotal.12nonnegative-margin LC groups contribute+$2,512.81;25negative-margin LC groups contribute+$8,655.88. Both LC cohorts are sparse. This shows what a static retained-group accounting would discard, not the PnL of a native threshold-enforced LC strategy. Five August LC groups account for+$8,198.95; the selected September8 winner is not independent validation.
+LC alone has 37 explicit-ID groups with +$11,168.69 recorded subtotal. 12 nonnegative-margin LC groups contribute +$2,512.81; 25 negative-margin LC groups contribute +$8,655.88. Both LC cohorts are sparse. This shows what a static retained-group accounting would discard, not the PnL of a native threshold-enforced LC strategy. Five August LC groups account for +$8,198.95; the selected September 8 winner is not independent validation.
 
 The earlier July reports and this broader snapshot cover different samples. A negative historical correlation does not justify declaring fusion permanently inverted; a later positive subtotal does not justify switching it on. The next tests must separate archetype, period, actual decision-stage score, and portfolio selection effects.
+
+## Implementation verification and reproducibility
+
+Source: `scripts/research/fusion_live_scorecard.py`; tests: `tests/research/test_fusion_live_scorecard.py`. Initial implementation `98ca934`; raw-schema boundary fix `2a0827b`. The first actual-snapshot check exposed a mismatch between invented synthetic input keys and the API's `timestamp_entry`, `timestamp_exit`, `stop_loss`. A full raw-shaped fixture and no-alias regression reproduced it before the boundary-only fix. Scoped re-review approved the fix; the actual snapshot then retained all 230 explicit-ID groups with zero quarantines and accounted for all 535 rows.
+
+Focused tests: **39 passed**. Root's fresh full research suite after the fix: **310 passed**, one existing urllib3/LibreSSL warning, 12.64 seconds. Production `engine/`, `bin/`, and `configs/` diff from phase base `4cfaded` is empty. All 17 archetype keys are present, including zero observed groups for volume_fade_chop and whipsaw; no definition was changed.
+
+Private generated artifact: `results/research_validation_2026_09_10/fusion_scorecard/scorecard_20260910.json`, SHA256 `d066ce45ef5d2d2b32752e0ad76da1cdbc5f2e7b14b75cc900c54583afc13da2`. Policy source SHA256 `69475e36e0a97c44e3d5b1a75c7128d2bcdbe72fa904feba54b5416121a5f80f`. It embeds raw source hashes, snapshot clocks, all groups/exclusions/open inventory, all archetype summaries, signals, and check results. Raw source hashes matched; copied-input repeatability and input nonmutation passed; the independent reference counts/subtotals/PF/ranks matched. JSON serialization rejects nonfinite values.
+
+All 230 group source versions remain unknown; completion and overall certification remain false. No displayed-threshold substitutions, signal-to-position outcome joins, learned cutoffs, inferential intervals, forward-test results, or native policy backtests are included.
 
 ## Next registered comparisons
 
