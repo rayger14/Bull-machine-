@@ -10,7 +10,7 @@ No production source/config or live state was modified. Hourly and minute BTC re
 
 The runner-owned engine performs archetype structure, cooldown, gates/inner thresholds and emitted-score dedup before returning selected signals. The runner then applies crisis-adjusted fusion and an exact per-archetype outer threshold in Step3b. Its stored display threshold can remain global and its diagnostic score/margin are rounded; those are not sufficient to reconstruct the exact decision boundary.
 
-At `bin/live/v11_shadow_runner.py:1161`, exact per-archetype threshold/margin metadata are assigned to the signal. The below-threshold bypass branch can additionally enforce hard gates. At `:1269` onward, non-bypass activates position limits and at `:1287` same-direction spacing. At `:1357`, collection bypass constructs fixed-size intents while the non-bypass path invokes the allocator. Thus a true/false bypass comparison is a legitimate **bundled native-policy comparison**, not an outer-cutoff-only intervention.
+At `bin/live/v11_shadow_runner.py:1161`, exact per-archetype threshold/margin metadata are assigned to the signal. The below-threshold bypass branch can additionally enforce hard gates. At `:1269` onward, non-bypass activates position limits and at `:1290` same-direction spacing. At `:1357`, collection bypass constructs fixed-size intents while the non-bypass path invokes the allocator. Thus a true/false bypass comparison is a legitimate **bundled native-policy comparison**, not an outer-cutoff-only intervention.
 
 The distinction does not mean book states should remain identical after a properly isolated gate change. They should diverge causally when different candidates enter. It means the non-gate rules and parameterization must be held fixed if the question is the marginal effect of that gate.
 
@@ -21,7 +21,7 @@ The distinction does not mean book states should remain identical after a proper
 Before an isolated hourly comparison, design and test a research-only intervention boundary with:
 
 1. Immutable, hashed variant identity propagated through construction, reports and checkpoint contracts; reject cross-arm checkpoints.
-2. An exact copied Step3b trace before further mutation: raw detector score, crisis-adjusted score, actual per-archetype threshold, margin, gate status and disposition. Do not infer that trace from rounded dashboard fields.
+2. An exact copied Step3b trace before further mutation: pre-outer-cutoff selected-signal fusion score (already processed by the inner engine), crisis-adjusted score, actual per-archetype threshold, margin, gate status and disposition. Do not infer that trace from rounded dashboard fields or call the selected-signal value an untouched detector score.
 3. An intervention that rejects only the designated sub-threshold candidates while preserving the remaining collection allocation/spacing/limit semantics. Keep a bundled bypass-toggle comparison separately named if later studied.
 4. Full original prehistory replay in each arm, including positions before the emitted reporting window, with separate prefix/restart checks and complete exits/open inventory. Filtering historical exits is not this experiment.
 5. Separate executable fill/accounting design: the current adapter explicitly preserves completed-hour-close prices, hour-open labels and native gap-stop assumptions. Source-parity results cannot be labeled obtainable market returns.
