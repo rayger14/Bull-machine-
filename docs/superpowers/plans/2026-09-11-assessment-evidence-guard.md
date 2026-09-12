@@ -83,6 +83,8 @@ breakeven = indicative_close * (1 + roundtrip_cost / notional)
   Root separately commits results/docs and performs final scoped review.
 
 Completed implementation: `deb675a`; review correction: `b18120b` rejects lossy
-integer conversion and independently tests packet/chunk hashes.33 focused tests;
-task spec/quality review approved after one fix round. Actual tool delivery and
+integer conversion and independently tests packet/chunk hashes. Final correction
+`c350060` rejects JSON coercion and uses type-exact envelope comparison.39 focused
+tests and455 research tests pass; task and final scoped re-reviews approved.
+Actual tool delivery and
 reviewer routing remain explicitly outside this helper's integration scope.

@@ -138,13 +138,13 @@ Transport records are caller attestations, not proof the model read every byte;
 path existence is not citation entailment.
 
 The new `scripts/research/assessment_evidence_guard.py` is a standalone pure
-helper, with33 focused tests and no dependency, model/API, file/network I/O or
+helper, with39 focused tests and no dependency, model/API, file/network I/O or
 live integration. `build_envelope` creates canonical JSON chunks, a section
 inventory, byte/hash records and deterministic indicative economics.
 `validate_delivery` checks a caller-supplied complete ordered text receipt against
 the original packet; `resolve_evidence` resolves an exact typed path and returns
 a detached value. Missing/changed/reordered/truncated chunks, cross-case IDs,
-invalid numbers and wrong-source paths fail the relevant boundary checks.
+invalid numbers and nonexistent or wrongly typed paths fail the relevant boundary checks.
 
 Root also used all eight existing packets as **no-model fixtures**: each complete
 in-memory roundtrip passes and each dropped-final-chunk control fails. Canonical
@@ -161,9 +161,13 @@ conversion and a missing independent hash-test expectation. Inputs that cannot
 be represented without integer precision loss are rejected; tests independently
 check canonical packet and chunk SHA256 values and ordered indices. These are
 future-helper boundary repairs, not changes to the frozen economic scorer.
-Scoped spec/quality re-review approved the fixes. Final fresh verification:
-**449 research tests pass**, one existing LibreSSL warning,11.97seconds; all18
+The broader final review also caught JSON tuple/key coercion that could make
+delivered evidence differ from the object used by the locator, plus loose
+boolean/integer envelope equality. Strict JSON-tree validation and type-exact
+canonical envelope comparison now have regression coverage. Final fresh verification:
+**455 research tests pass**, one existing LibreSSL warning,11.82seconds; all18
 private study-boundary tests also pass. No further market/model calls were made.
+Final scoped re-review approves the repairs for local research handoff only.
 
 ## Operational defects preserved
 
