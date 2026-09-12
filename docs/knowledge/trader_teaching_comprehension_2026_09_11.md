@@ -136,7 +136,13 @@ The full research suite was rerun: **416 passed**, one existing LibreSSL warning
 market-data providers changed. No optimizer, full legacy economic backtest,
 deployment, push or PR action was performed for this comprehension probe.
 
-Next, approved by the quant guide: [four-case August teaching-on/off real-market
+Follow-on completed: [four-case August teaching transfer results](teaching_market_transfer_2026_09_11.md).
+Both arms selected the same one profitable hypothetical case, but four paired
+setups, delivery uncertainty and reviewer-history exposure do not establish
+incremental teaching value or a deployable edge. The following records the
+original next-step decision, not pending reconstruction work.
+
+Approved by the quant guide: [four-case August teaching-on/off real-market
 transfer](../superpowers/specs/2026-09-11-teaching-market-transfer.md), with two
 hourly and two minute cases and at most eight fresh calls. The quant guide also
 approved the protocol and hash-pinned source wrapper before execution. Register first, then
