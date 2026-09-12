@@ -6,6 +6,16 @@ Implementation and pre-outcome review are complete; historical source preparatio
 is running. **No expanded-study assessor answers or candidate outcomes have been
 computed yet.** Do not confuse this with the completed four-case June pilot.
 
+The first source-preparation run exited before writing its artifact: the sticky
+offline guard retained an optional urllib3 IPv6 capability-probe socket attempt
+during constructor import. No network succeeded. Root reproduced the failure
+with constructor-only input, then verified the existing native-adapter pattern
+(`socket.has_ipv6=False` only inside the guarded scope) allows construction with
+all17 archetypes, restores the flag, and still denies deliberate socket creation.
+The rerun uses isolated per-month processes/caches without changing selection,
+data, engine rules or the guard. The three existing malformed example-YAML log
+messages are retained; all17 actual archetypes must still be present.
+
 The user approved broader dates and emphasized minute data inside larger
 structure. The [registered protocol](../superpowers/specs/2026-09-11-layered-entry-study.md)
 selects up to twelve cases: one per half-month per track in March, May and July
