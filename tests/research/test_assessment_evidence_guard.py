@@ -107,6 +107,18 @@ def test_validate_delivery_accepts_exact_caller_attested_receipts_only():
     assert not module().validate_delivery(source, envelope, records(envelope), case_id='other')['valid']
 
 
+@pytest.mark.parametrize('mutation', ['execution_flag', 'chunk_index'])
+def test_validate_delivery_rejects_type_coercible_envelope_tampering(mutation):
+    source = packet()
+    envelope = module().build_envelope(source, max_chunk_bytes=32)
+    altered = deepcopy(envelope)
+    if mutation == 'execution_flag':
+        altered['execution_authorized'] = 0
+    else:
+        altered['chunks'][0]['index'] = False
+    assert not module().validate_delivery(source, altered, records(envelope), case_id='C1')['valid']
+
+
 def test_resolve_evidence_returns_detached_nested_value():
     source = packet()
     value = module().resolve_evidence(source, ['evidence', 'bars', 0])
@@ -154,5 +166,25 @@ def test_build_envelope_rejects_integer_plan_values_that_lose_float_precision():
     source = packet()
     source['plan'].update(indicative_close=9007199254740993, stop=9007199254740991,
                           notional=9007199254740993, roundtrip_cost=0)
+    with pytest.raises(ValueError):
+        module().build_envelope(source)
+
+
+@pytest.mark.parametrize('mutation', ['tuple', 'set', 'nested_nonstring_key'])
+def test_build_envelope_rejects_non_json_coercible_original_values(mutation):
+    source = packet()
+    if mutation == 'tuple':
+        source['evidence']['bars'] = ((100.0, 101.0),)
+    elif mutation == 'set':
+        source['evidence']['markers'] = {'not-json'}
+    else:
+        source['evidence']['parent'][1] = 'not-json'
+    with pytest.raises(ValueError):
+        module().build_envelope(source)
+
+
+def test_build_envelope_rejects_cyclic_original_json_tree():
+    source = packet()
+    source['evidence']['cycle'] = source['evidence']
     with pytest.raises(ValueError):
         module().build_envelope(source)

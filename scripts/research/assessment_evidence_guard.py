@@ -5,8 +5,40 @@ import json
 import math
 
 
+def _strict_json(value, active=None):
+    if active is None:
+        active = set()
+    if type(value) is dict:
+        identity = id(value)
+        if identity in active:
+            raise ValueError('JSON tree cannot contain cycles')
+        active.add(identity)
+        try:
+            for key, item in value.items():
+                if type(key) is not str:
+                    raise ValueError('JSON object keys must be strings')
+                _strict_json(item, active)
+        finally:
+            active.remove(identity)
+    elif type(value) is list:
+        identity = id(value)
+        if identity in active:
+            raise ValueError('JSON tree cannot contain cycles')
+        active.add(identity)
+        try:
+            for item in value:
+                _strict_json(item, active)
+        finally:
+            active.remove(identity)
+    elif type(value) is float and not math.isfinite(value):
+        raise ValueError('JSON numbers must be finite')
+    elif type(value) not in (str, int, float, bool, type(None)):
+        raise ValueError('value is not a JSON type')
+
+
 def _canonical(packet):
     try:
+        _strict_json(packet)
         return json.dumps(packet, sort_keys=True, separators=(',', ':'), ensure_ascii=True,
                           allow_nan=False)
     except (TypeError, ValueError, OverflowError) as exc:
@@ -88,7 +120,7 @@ def validate_delivery(packet, envelope, records, *, case_id):
         expected = build_envelope(packet, envelope.get('max_chunk_bytes'))
         if case_id != packet.get('case_id') or envelope.get('case_id') != case_id:
             raise ValueError('case_id mismatch')
-        if envelope != expected:
+        if _canonical(envelope) != _canonical(expected):
             raise ValueError('envelope mismatch')
         if not isinstance(records, list) or len(records) != len(expected['chunks']):
             raise ValueError('receipt count mismatch')
