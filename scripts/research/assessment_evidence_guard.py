@@ -137,6 +137,45 @@ def validate_delivery(packet, envelope, records, *, case_id):
             'authority': 'caller_attested_transport_only'}
 
 
+def validate_runtime_returns(packet, envelope, captures, *, case_id, role):
+    """Check supplied inner exec returns, not their authenticity or outer rendering.
+
+    Callers must persist actual returns before emission. This pure helper cannot
+    prove that provenance; it never reads source files or repairs/sorts captures.
+    """
+    errors = []
+    try:
+        if not all(isinstance(v, str) and v.strip() for v in (case_id, role)):
+            raise ValueError('case_id and role must be nonempty text')
+        if not isinstance(envelope, dict) or not isinstance(envelope.get('chunks'), list):
+            raise ValueError('envelope chunks required')
+        if not isinstance(captures, list) or len(captures) != len(envelope['chunks']):
+            raise ValueError('runtime return count mismatch')
+        records = []
+        fields = {'role', 'case_id', 'packet_sha256', 'chunk_index', 'exec_result'}
+        for index, capture in enumerate(captures):
+            if not isinstance(capture, dict) or set(capture) != fields:
+                raise ValueError('runtime capture schema mismatch')
+            if (capture['role'] != role or capture['case_id'] != case_id
+                    or capture['packet_sha256'] != envelope.get('packet_sha256')
+                    or type(capture['chunk_index']) is not int
+                    or capture['chunk_index'] != index):
+                raise ValueError('runtime capture binding/order mismatch')
+            result = capture['exec_result']
+            if (not isinstance(result, dict) or type(result.get('exit_code')) is not int
+                    or result['exit_code'] != 0 or result.get('session_id') is not None):
+                raise ValueError('runtime read failed or unfinished')
+            if not isinstance(result.get('output'), str):
+                raise ValueError('runtime output missing')
+            records.append({'index': index, 'text': result['output'], 'truncated': False})
+        errors.extend(validate_delivery(packet, envelope, records, case_id=case_id)['errors'])
+    except (ValueError, TypeError, KeyError, AttributeError) as exc:
+        errors.append(str(exc))
+    return {'valid': not errors, 'errors': errors,
+            'authority': 'captured_inner_runtime_returns_only', 'execution_authorized': False,
+            'outer_renderer_unverified': True, 'model_attention_unverified': True}
+
+
 def resolve_evidence(packet, path):
     """Return a detached value at a typed packet path; existence is not entailment."""
     if not isinstance(packet, dict) or not isinstance(path, list) or not path:
