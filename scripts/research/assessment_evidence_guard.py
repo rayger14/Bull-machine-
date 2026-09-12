@@ -20,6 +20,8 @@ def _number(value, name, *, positive=False, nonnegative=False):
         number = float(value)
     except OverflowError as exc:
         raise ValueError(name + ' must be finite') from exc
+    if isinstance(value, int) and int(number) != value:
+        raise ValueError(name + ' must be losslessly representable')
     if not math.isfinite(number) or (positive and number <= 0) or (nonnegative and number < 0):
         raise ValueError(name + ' out of range')
     return number

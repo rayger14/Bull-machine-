@@ -1,5 +1,6 @@
 """Contract tests for the offline, caller-attested assessment delivery guard."""
 from copy import deepcopy
+import hashlib
 import importlib
 import json
 from pathlib import Path
@@ -33,11 +34,17 @@ def test_build_envelope_canonical_chunks_and_indicative_economics():
     economics = envelope['indicative_economics']
     assert envelope['case_id'] == 'C1'
     assert envelope['packet_bytes'] == len(canonical.encode('ascii'))
+    assert envelope['packet_sha256'] == hashlib.sha256(canonical.encode('ascii')).hexdigest()
     assert envelope['sections'] == ['case_id', 'evidence', 'plan']
     assert envelope['max_chunk_bytes'] == 32 and envelope['execution_authorized'] is False
     assert ''.join(chunk['text'] for chunk in envelope['chunks']) == canonical
     assert all(chunk['bytes'] == len(chunk['text'].encode('ascii')) <= 32
                for chunk in envelope['chunks'])
+    expected_texts = [canonical[start:start + 32] for start in range(0, len(canonical), 32)]
+    assert [chunk['index'] for chunk in envelope['chunks']] == list(range(len(expected_texts)))
+    assert [chunk['sha256'] for chunk in envelope['chunks']] == [
+        hashlib.sha256(text.encode('ascii')).hexdigest() for text in expected_texts
+    ]
     assert economics == {
         'basis': 100.0, 'quantity': 10.0, 'initial_risk': 20.0, 'target': 104.0,
         'cost_R': 0.06, 'breakeven': 100.12, 'net_stop': -21.2, 'net_target': 38.8,
@@ -141,3 +148,11 @@ def test_build_envelope_rejects_invalid_packet_values(change):
 def test_build_envelope_rejects_invalid_chunk_bounds(bound):
     with pytest.raises(ValueError):
         module().build_envelope(packet(), max_chunk_bytes=bound)
+
+
+def test_build_envelope_rejects_integer_plan_values_that_lose_float_precision():
+    source = packet()
+    source['plan'].update(indicative_close=9007199254740993, stop=9007199254740991,
+                          notional=9007199254740993, roundtrip_cost=0)
+    with pytest.raises(ValueError):
+        module().build_envelope(source)
