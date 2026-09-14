@@ -214,3 +214,79 @@ def replay_reviewed_sleeve(bars, requests, *, track, as_of):
     result = replay_sleeve(bars,candidates,track=track,as_of=as_of)
     result['review_gates'] = gates
     return result
+
+
+def _isolated_sleeves(bars, silos, *, as_of, reviewed):
+    """Validate explicit ownership before running independent, stateless books."""
+    cutoff = _clock(as_of)
+    identity_keys = {'archetype','track','variant'}
+    payload = 'requests' if reviewed else 'candidates'
+    row_keys = ({'candidate_id','packet','menu','choice','review','settings'}
+                if reviewed else CANDIDATE_KEYS)
+    if not isinstance(silos,list):
+        raise ValueError('explicit silo list required')
+    prepared = []; seen = set()
+    for silo in silos:
+        if not isinstance(silo,dict) or set(silo) != identity_keys | {payload}:
+            raise ValueError('exact silo identity and payload required')
+        identity = {k:silo[k] for k in identity_keys}
+        if (any(type(v) is not str or not v.strip() or v != v.strip() for v in identity.values())
+                or identity['track'] not in ('hourly','minute')):
+            raise ValueError('nonempty canonical identity and supported track required')
+        key = tuple(identity[k] for k in ('archetype','track','variant'))
+        if key in seen:
+            raise ValueError('duplicate silo declaration')
+        seen.add(key)
+        if not isinstance(silo[payload],list):
+            raise ValueError('silo payload must be a list')
+        records = []; candidate_ids = set()
+        for row in silo[payload]:
+            if not isinstance(row,dict) or set(row) != row_keys | identity_keys:
+                raise ValueError('exact row identity and fields required')
+            if any(row[k] != identity[k] for k in identity_keys):
+                raise ValueError('row belongs to a different silo')
+            candidate_id = row['candidate_id']
+            if (type(candidate_id) is not str or not candidate_id.strip()
+                    or candidate_id in candidate_ids):
+                raise ValueError('unique nonempty candidate IDs required within silo')
+            candidate_ids.add(candidate_id)
+            if reviewed:
+                packet = row['packet']
+                expected = dict(identity,candidate_id=candidate_id)
+                if (not isinstance(packet,dict) or packet.get('research_identity') != expected
+                        or packet.get('track') != identity['track']):
+                    raise ValueError('reviewed packet must bind exact research identity')
+            records.append(deepcopy({k:row[k] for k in row_keys}))
+        prepared.append((key,identity,records))
+    outputs = []
+    replay = replay_reviewed_sleeve if reviewed else replay_sleeve
+    for key,identity,records in sorted(prepared,key=lambda item:item[0]):
+        # Each invocation constructs fresh capacity, uncertainty and accounting.
+        # The underlying functions only read bars; no shared portfolio is built.
+        result = replay(bars,records,track=identity['track'],as_of=cutoff)
+        outputs.append(dict(identity,replay=result))
+    return dict(as_of=cutoff.isoformat(),silos=outputs,combined_policy_net_pnl=None,
+                source_population_verified=False,execution_authorized=False)
+
+
+def replay_isolated_sleeves(bars, silos, *, as_of):
+    """One independent long research book per (archetype, track, variant).
+
+    Declare even empty silos. Candidate IDs need only be unique within a silo.
+    Every candidate repeats its ownership; mismatches fail, never auto-route.
+    Results are independent experiments and must not be summed as a portfolio.
+    This isolates supplied plans, not upstream detector/cooldown/feature state.
+    Source enumeration and any strategy-specific cooldowns remain caller duties.
+    """
+    return _isolated_sleeves(bars,silos,as_of=as_of,reviewed=False)
+
+
+def replay_reviewed_isolated_sleeves(bars, silos, *, as_of):
+    """Isolated books with the real assessment gate and sealed silo identity.
+
+    Before compiling the menu or obtaining review, the source packet must include
+    research_identity={archetype,track,variant,candidate_id}. Never retrofit this
+    onto old locked assessments. Content binding is not proof of real role
+    provenance, source completeness, or semantic fidelity to an archetype.
+    """
+    return _isolated_sleeves(bars,silos,as_of=as_of,reviewed=True)
