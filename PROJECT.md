@@ -40,6 +40,11 @@ Agent names are not portable across CLIs. Check current processes, git changes
 and local ledger before taking over; do not run two writers or duplicate a model
 experiment. The controller must update this table when verification changes it.
 
+Continuity check: a fresh agent without this chat recovered the goal, experiment,
+first incomplete task and private-data boundary from these startup documents. Its
+identified stale MEMORY planning sentence was corrected. This checks handoff
+usability, not automatic loading by every CLI or correctness of future agent work.
+
 ## Immediate resume instructions
 
 1. Read this handoff, newest `docs/knowledge/MEMORY.md` overrides, then active spec
