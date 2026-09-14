@@ -194,6 +194,35 @@ def test_latest_review_controls_new_snapshots_but_old_snapshot_is_frozen(tmp_pat
     db.close()
 
 
+def test_latest_appended_review_wins_after_clock_rollback_and_reopen(
+    monkeypatch, tmp_path
+):
+    module = memory_module()
+    path = tmp_path / "memory.sqlite"
+    db = module.ResearchMemory(path)
+    rid = db.propose(doctrine_fixture())
+    recording_clock = {"value": "2026-09-14T02:00:00+00:00"}
+    monkeypatch.setattr(module, "_now", lambda: recording_clock["value"])
+    approve(db, rid, reviewer="first-independent-reviewer")
+    approved_snapshot = db.snapshot(as_of=AS_OF, training_end=AS_OF)
+
+    recording_clock["value"] = "2026-09-14T01:00:00+00:00"
+    db.review(
+        rid,
+        "second-independent-reviewer",
+        "reject",
+        "Later append after a recording-clock rollback",
+    )
+    db.close()
+
+    reopened = module.ResearchMemory(path)
+    assert reopened.snapshot(as_of=AS_OF, training_end=AS_OF)["records"] == []
+    assert [
+        record["id"] for record in reopened.load_snapshot(approved_snapshot["id"])["records"]
+    ] == [rid]
+    reopened.close()
+
+
 def test_reopening_preserves_record_and_snapshot_identities(tmp_path):
     path = tmp_path / "memory.sqlite"
     first = open_memory(path)
@@ -220,6 +249,18 @@ def test_duplicate_proposal_is_idempotent(tmp_path):
         count = connection.execute("SELECT COUNT(*) FROM records").fetchone()[0]
     assert second == first
     assert count == 1
+    db.close()
+
+
+def test_duplicate_source_references_are_allowed(tmp_path):
+    db = open_memory(tmp_path / "memory.sqlite")
+    record = doctrine_fixture(
+        source_refs=["docs/rulecard.md#context", "docs/rulecard.md#context"]
+    )
+
+    rid = db.propose(record)
+
+    assert rid == canonical_hash(record)
     db.close()
 
 

@@ -68,7 +68,9 @@ def _clock(value, field):
     return parsed.astimezone(timezone.utc)
 
 
-def _string_list(value, field, *, require_value=False, allow_tuple=False):
+def _string_list(
+    value, field, *, require_value=False, allow_tuple=False, unique=False
+):
     expected = (list, tuple) if allow_tuple else (list,)
     if not isinstance(value, expected) or isinstance(value, (str, bytes)):
         raise ValueError(f"{field} must be a list of nonempty strings")
@@ -77,7 +79,7 @@ def _string_list(value, field, *, require_value=False, allow_tuple=False):
         raise ValueError(f"{field} must contain at least one value")
     if any(not isinstance(item, str) or not item.strip() for item in result):
         raise ValueError(f"{field} must be a list of nonempty strings")
-    if len(set(result)) != len(result):
+    if unique and len(set(result)) != len(result):
         raise ValueError(f"{field} values must be unique")
     return result
 
@@ -113,8 +115,8 @@ def _validate_record(record):
         raise ValueError("content must be a JSON object")
     _validate_json(record["content"])
     _string_list(record["source_refs"], "source_refs", require_value=True)
-    _string_list(record["tags"], "tags")
-    case_ids = _string_list(record["case_ids"], "case_ids")
+    _string_list(record["tags"], "tags", unique=True)
+    case_ids = _string_list(record["case_ids"], "case_ids", unique=True)
 
     available_at = record["available_at"]
     event_end = record["event_end"]
@@ -287,9 +289,16 @@ class ResearchMemory:
         if training_clock > as_of_clock:
             raise ValueError("training_end must be less than or equal to as_of")
         exclusions = sorted(
-            _string_list(excluded_case_ids, "excluded_case_ids", allow_tuple=True)
+            _string_list(
+                excluded_case_ids,
+                "excluded_case_ids",
+                allow_tuple=True,
+                unique=True,
+            )
         )
-        requested_tags = sorted(_string_list(tags, "tags", allow_tuple=True))
+        requested_tags = sorted(
+            _string_list(tags, "tags", allow_tuple=True, unique=True)
+        )
         excluded = set(exclusions)
         tag_filter = set(requested_tags)
 
@@ -301,10 +310,11 @@ class ResearchMemory:
             ).fetchall()
             for (record_id,) in rows:
                 record = self._record(record_id)
+                # Supersession follows append order; recorded_at remains evidence.
                 latest = self._connection.execute(
                     """SELECT id FROM reviews
                        WHERE record_id = ?
-                       ORDER BY recorded_at DESC, rowid DESC LIMIT 1""",
+                       ORDER BY rowid DESC LIMIT 1""",
                     (record_id,),
                 ).fetchone()
                 if latest is None:
