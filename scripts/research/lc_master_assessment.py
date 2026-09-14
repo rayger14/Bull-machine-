@@ -259,8 +259,11 @@ def _validate_snapshot(snapshot,packet):
     if len(snapshot['records'])!=len(snapshot['review_ids']):
         raise ValueError('record/review binding missing')
     decision=utc(packet['decision_time'])
-    if utc(snapshot['as_of']) > decision or utc(snapshot['training_end']) > decision:
+    as_of=utc(snapshot['as_of']); training_end=utc(snapshot['training_end'])
+    if as_of > decision or training_end > decision:
         raise ValueError('future memory cutoff')
+    if training_end > as_of:
+        raise ValueError('memory training_end exceeds as_of')
     excluded=set(snapshot['excluded_case_ids']) | {packet['case_id'],packet['candidate_id']}
     seen=set()
     for record in snapshot['records']:
@@ -270,9 +273,10 @@ def _validate_snapshot(snapshot,packet):
         seen.add(record['id'])
         if excluded.intersection(record['case_ids']):
             raise ValueError('excluded case in memory')
-        if record['available_at'] is not None and utc(record['available_at']) > utc(snapshot['as_of']):
+        if record['available_at'] is not None and utc(record['available_at']) > as_of:
             raise ValueError('future memory availability')
-        if record['event_end'] is not None and utc(record['event_end']) >= utc(snapshot['training_end']):
+        if record['event_end'] is not None and (utc(record['event_end']) > as_of
+                                               or utc(record['event_end']) >= training_end):
             raise ValueError('future memory event')
 
 

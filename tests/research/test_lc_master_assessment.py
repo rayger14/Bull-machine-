@@ -341,3 +341,39 @@ def test_unavailable_current_atr_never_compiles_a_native_economic_plan(change):
     raw['previous_features']['bb_width']=.07
     p=api().build_lc_packet(raw,bars,parents,prov,'LC1')
     assert p['conditions']['status']==('unknown' if change=='unverified_reconstruction' else 'fail')
+
+
+@pytest.mark.parametrize('with_record', [False,True])
+def test_snapshot_training_end_after_as_of_cannot_build_request(with_record):
+    req=request(); snapshot=deepcopy(req['memory_snapshot'])
+    snapshot['as_of']='2025-12-30T00:00Z'
+    if with_record:
+        record=dict(kind='hypothesis',author='fixture',content={'text':'Dated method'},
+                    source_refs=['fixture-source'],tags=[],available_at='2025-12-29T00:00Z',
+                    event_end='2025-12-31T00:00Z',case_ids=['prior-case'])
+        record['id']=digest(record)
+        snapshot['records']=[record]; snapshot['review_ids']=['d'*64]
+    snapshot.pop('id'); snapshot['id']=digest(snapshot)
+    with pytest.raises(ValueError):
+        api().build_lc_request(packet(),snapshot,req['master_brief'],req['settings'])
+
+
+def test_resealed_request_with_event_after_snapshot_cutoff_cannot_grade_support():
+    req=request(); snapshot=deepcopy(req['memory_snapshot'])
+    snapshot['as_of']='2026-01-01T00:00Z'
+    record=dict(kind='hypothesis',author='fixture',content={'text':'Dated method'},
+                source_refs=['fixture-source'],tags=[],available_at='2025-12-29T00:00Z',
+                event_end='2025-12-31T00:00Z',case_ids=['prior-case'])
+    record['id']=digest(record)
+    snapshot['records']=[record]; snapshot['review_ids']=['d'*64]
+    snapshot.pop('id'); snapshot['id']=digest(snapshot)
+    # Equal cutoffs are valid, and this event precedes both by one day.
+    built=api().build_lc_request(packet(),snapshot,req['master_brief'],req['settings'])
+    assert api().grade_lc_choice(built,choice(built))==[]
+    # Alter only the copied snapshot cutoff and update every affected hash.
+    built['memory_snapshot']['as_of']='2025-12-30T00:00Z'
+    built['memory_snapshot'].pop('id')
+    built['memory_snapshot']['id']=digest(built['memory_snapshot'])
+    built['memory_sha256']=digest(built['memory_snapshot'])
+    built.pop('seal'); built['seal']=digest(built)
+    assert api().grade_lc_choice(built,choice(built))
