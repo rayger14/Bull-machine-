@@ -15,6 +15,9 @@ Source window: [2026-01-01T00:00:00Z,2026-04-01T00:00:00Z), monthly independent
 5b8a4533f70b8ccd0dc533984469e6886ec73ce315d48f150c667ccb97e84035.
 This is retrospectively exposed development history, not a pristine holdout.
 Do not extend dates because a rule has few passes or poor outcomes.
+Outcome observation ends at 2026-04-02T00:00:00Z, covering Q1 candidate deadlines;
+this tail never admits April candidates. Each book has continuous Q1 occupancy,
+not monthly position resets; monthly warm-ups reset only source signal replay.
 
 Retain every long LC native pre-winner emission from the unchanged signal replay.
 Do NOT use the old hourly_eligible collector, which already filters on H2.
@@ -66,6 +69,9 @@ Evaluate separate pass/fail/unknown facts:
 
 Known false dominates unknown; otherwise any unavailable operand yields unknown.
 Future data is invalid/unknown research input and must never authorize entry.
+Evaluate predicates only from validated operands. A future or mismatched price
+cannot create an apparent known geometry failure and earn rejection credit;
+affected predicates are unknown. Unaffected genuinely known failures may dominate.
 Native source numeric truth is distinguished from authentic original live receipt
 truth: verified deterministic reconstruction is enough for THIS offline reference,
 but never described as receipt-authenticated. Missing historical macro/derivatives
@@ -83,6 +89,11 @@ echo arithmetic or attach a pass/fail status to every natural-language sentence.
 Packet contains six completed timeframes, feature provenance, current/previous
 LC inputs, both parent views, condition states, executable finite menu and the
 approved curriculum snapshot. Retain supplied evidence with stable IDs.
+Preserve the legacy internal evidence_catalog required by compile_menu. Add a
+separate LC group_catalog for response citations. Replace legacy instructions in
+both the outer request and displayed plan_menu, reseal the new request, and verify
+the displayed economic plans exactly equal compile_menu plans. Do not pass the
+old claims/probability/teaching schema through nested menu instruction text.
 
 Specialist exact response: case_id,packet_sha256,memory_sha256,interpretation,
 plan_id,supporting,opposing,unknowns,structural_invalidation.

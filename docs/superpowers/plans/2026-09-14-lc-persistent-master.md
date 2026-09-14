@@ -15,6 +15,7 @@
 - Offline only; no live/config/fusion/archetype changes, new dependencies, push, PR or fine-tuning.
 - Do not edit existing frozen research modules or artifacts. Add new modules/tests; preserve unrelated user changes.
 - Source window [2026-01-01T00:00:00Z,2026-04-01T00:00:00Z), monthly independent30day seeds; development data, not pristine holdout.
+- Outcome cutoff2026-04-02T00:00:00Z; continuous Q1 position books, no monthly occupancy resets or April admissions.
 - Retain native pre-winner long LC emissions before any H2/nested-structure filtering; never call hourly_eligible for collection.
 - Common $50000 notional,12bps,90s processing,zero routing,15min exclusive entry expiry,close-2.7ATR stop,actual-entry2R,decision+1440min deadline.
 - Independent LC-native,LC-structure,LC-structure-agent books; full code cohort distinct from four-case agent subset.
@@ -168,6 +169,11 @@ dominates unknown. No teacher attribution for new numeric geometry.
 
 Use existing compile_menu on new packets without changing old module prompts.
 New request replaces legacy instructions entirely; source material is data.
+Keep legacy internal evidence_catalog for compile_menu compatibility and add a
+separate group_catalog for LC citations. Replace nested displayed menu.instruction
+as well as outer instruction, reseal the new request and independently compare
+economic menu plans with a fresh compile_menu call; old assessment schema must
+not leak through nested text. Do not run old grade_choice against the new schema.
 Evidence group IDs reference complete groups: current,previous,native,parent4h,
 parent1d,1m,5m,15m,1h,4h,1d,conditions,economics,limitations and approved curriculum.
 Include canonical sealed packet, snapshot and menu hashes. Master brief is source-
@@ -195,6 +201,8 @@ Snapshot request contains approved records so no uncontrolled lookup during role
   t.low=99,t.close=105,priorBB=.04: pass. Change t.low=100 -> fail; pBB=.07 ->fail;
   C.high=121 ->fail; missingparenthistory ->unknown; brokenlineage ->fail;
   prioravailableat>setup ->unknown; mutate future minute tail ->same packet.
+  Also combine future/mismatched candle operands with apparently failing geometry:
+  affected predicates must be unknown, never a known rejection credited to policy.
 - [ ] Add request/choice/critic tests for all mappings, stale bindings, citations,
   unsupported plan, null versus reject, shared evidence support and discretionary
   critic notes. Use real conditional menu and existing resolver for a hand-built
@@ -228,6 +236,8 @@ Snapshot request contains approved records so no uncontrolled lookup during role
   Validate receipts independently, store in jobs, grade through real LC adapter.
 - [ ] Lock all grades before revealing any new outcomes. Replay two full-cohort code
   books and matched three-book sample through existing replay_isolated_sleeves.
+  Concatenate monthly candidates into continuous Q1 books; use the separately
+  frozen Apr2 outcome cutoff without admitting April candidates.
   Enforce fail=reject,unknown=null and invalid agent=null. Report counts,coverage,
   costs,net PnL,risk,missed winners/avoided losses only for valid alternatives.
 - [ ] Persist outcomes separately and one post-reveal lesson proposal; verify it
