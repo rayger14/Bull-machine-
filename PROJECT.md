@@ -1,0 +1,110 @@
+# Bull Machine — start here
+
+Updated September14,2026. This is the current cross-chat/CLI handoff, not a trading
+model's training context. Check git status/log because active work may be newer.
+
+## User's goal
+
+Build an evidence-grounded master research trader that understands the trader
+teachings, Wyckoff backbone, nested timeframe structure,17archetypes and fusion
+intent; briefs specialists and tests whether its judgments improve entries.
+The immediate approved priority is **LC-first**, using minute data as execution
+context within larger structure. The separate minute equal-low research family
+is not a substitute. Aim for dependable evidence of an edge; profitability is not
+guaranteed or presently certified. Archetype/arm books must remain independent.
+
+## Current approved work
+
+- Branch: `quant/archetype-evidence-audit`; user explicitly chose continued work
+  here rather than a new worktree.
+- [Spec](docs/superpowers/specs/2026-09-14-lc-persistent-master.md).
+- [Implementation plan](docs/superpowers/plans/2026-09-14-lc-persistent-master.md).
+- Plan commits: `28d67c0`, quant clarifications `e31034e`.
+- User explicitly requested planning followed by completion, with quant review.
+- No live deployment, production/config/fusion edits, fine-tuning, push or PR.
+
+## What is done versus not done
+
+| Item | Verified state |
+|---|---|
+| Earlier April code/agent comparison | Completed, independently reproduced; report below |
+| LC-first source/design preflight | Completed; source-only master recommendation and independent quant review |
+| New spec and four-task implementation plan | Written and committed; no new profitability claim |
+| Task1 native LC source collector | Implementation in progress; do not assume committed or reviewed |
+| Task2 persistent reviewed memory | Planned, not implemented at this checkpoint |
+| Task3 LC judgments/restartable jobs | Planned, not implemented at this checkpoint |
+| Task4 actual Q1 comparison | Not started; no Q1 outcome reveal or new specialist trades |
+
+Current controller assigned Task1 to `lc_source_implementer` in this local session.
+Agent names are not portable across CLIs. Check current processes, git changes
+and local ledger before taking over; do not run two writers or duplicate a model
+experiment. The controller must update this table when verification changes it.
+
+## Immediate resume instructions
+
+1. Read this handoff, newest `docs/knowledge/MEMORY.md` overrides, then active spec
+   and plan. Do not restart the entire trader audit.
+2. Inspect `git status --short` and `git log -8 --oneline`.
+3. Check local `.superpowers/sdd/2026-09-14-lc-persistent-master/progress.md` and
+   task reports if present. These are ignored local execution detail, not portable
+   truth; reconcile with commits and tests if absent.
+4. Finish/review Task1, then launch fixed Q1 source reconstruction with at most two
+   concurrent month processes. Continue Tasks2–4 with their test/review gates.
+5. Update this handoff after each accepted task so another session can continue
+   without relying on uncommitted plans or an agent's conversation memory.
+
+Baseline command, last verified before new implementation:681passes, one existing
+urllib3/LibreSSL warning. This is software verification, not strategy validation.
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -o addopts='' -q tests/research
+```
+
+## Critical decisions not to rediscover or silently change
+
+- Q1 candidate window Jan1–Apr1 exclusive; outcome coverage ends Apr2. Monthly
+  30day warm-ups reset signal source only; Q1 position books remain continuous.
+- Collect native LC pre-winner longs BEFORE H2/structure filtering. The old
+  `hourly_eligible` helper already filters H2 and is not the new native baseline.
+- Three books: native,explicit nested-child structure,same structure plus agent.
+  New prior-hour compressed-child geometry is a project hypothesis, not universal
+  LC identity or an exact trader rule. Parent-floor reclaim is only one subtype.
+- Four first previously unassessed LC cases maximum; no outcome-based selection,
+  retries or answer repair. Full code cohort and agent subset are different reports.
+- Source,policy,memory,requests precede roles; responses precede critiques; all
+  grades precede prices. Invalid/unknown is not a profitable rejection.
+- Project handoff memory can mention outcomes. Trading-agent memory must exclude
+  its current/future test labels. Do not load this file into market assessment.
+- Persistent master means durable reviewed records and restartable research jobs
+  in version1, not trained model weights or an autonomous live daemon.
+
+## Existing results and private data
+
+[Latest completed economic report](docs/knowledge/isolated_entry_comparison_2026_09_14.md),
+commit `1acdb81`: April3hourly/242minute candidates; code references net negative;
+all4 agent factual/schema checks passed but semantic reviews failed, so validated
+agent PnL remains null. Raw diagnostic choices are not validated performance.
+This does not test all17 or establish WFO/CPCV or live expectancy.
+
+Permanent local Binance archive:
+`data/recovered_binance_minute_2026_09_14/btc_1m_2021_2026.parquet`.
+SHA256 `5b8a4533f70b8ccd0dc533984469e6886ec73ce315d48f150c667ccb97e84035`.
+Earlier `results/` artifacts and helper modules, archive, external parent-source
+files under `/Users/rayghandchi/Bull Machine/one-strategy/idea_lab`, and local
+execution ledgers are NOT all included in a GitHub clone. Read precise paths in
+source manifests. Do not invent substitute data or claim GitHub is complete.
+
+Unrelated untracked graph directories and the prior
+`scripts/research/rebuild_entry_population.py` are to be preserved. That capture
+driver has a documented persisted-JSON finalizer boundary; do not mistake it for
+a standalone end-to-end clean-clone workflow.
+
+## What to tell a new CLI
+
+> Read AGENTS.md and PROJECT.md, then the active spec/plan and newest
+> MEMORY overrides. Verify actual git/test state, report the current goal and
+> first incomplete task, and continue without changing frozen/live behavior.
+
+Same-machine sessions can read the same files. Another machine needs the correct
+branch/commits plus separately transferred private artifacts. No push has been
+performed for the current plan; local commits are not automatically on GitHub.
