@@ -30,12 +30,14 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 | Earlier April code/agent comparison | Completed, independently reproduced; report below |
 | LC-first source/design preflight | Completed; source-only master recommendation and independent quant review |
 | New spec and four-task implementation plan | Written and committed; no new profitability claim |
-| Task1 native LC source collector | Implementation in progress; do not assume committed or reviewed |
-| Task2 persistent reviewed memory | Planned, not implemented at this checkpoint |
+| Task1 native LC source collector | Committed40f86de;702tests independently pass; independent review approved |
+| Task2 persistent reviewed memory | Implementation in progress; no reviewed store yet |
 | Task3 LC judgments/restartable jobs | Planned, not implemented at this checkpoint |
 | Task4 actual Q1 comparison | Not started; no Q1 outcome reveal or new specialist trades |
 
-Current controller assigned Task1 to `lc_source_implementer` in this local session.
+Task1 implementation by `lc_source_implementer` is committed; independent review by
+`lc_source_task_review` approved it. January/February source reconstructions are
+running; March is pending. Task2 belongs to `lc_memory_implementer` this session.
 Agent names are not portable across CLIs. Check current processes, git changes
 and local ledger before taking over; do not run two writers or duplicate a model
 experiment. The controller must update this table when verification changes it.
@@ -53,12 +55,12 @@ usability, not automatic loading by every CLI or correctness of future agent wor
 3. Check local `.superpowers/sdd/2026-09-14-lc-persistent-master/progress.md` and
    task reports if present. These are ignored local execution detail, not portable
    truth; reconcile with commits and tests if absent.
-4. Finish/review Task1, then launch fixed Q1 source reconstruction with at most two
-   concurrent month processes. Continue Tasks2–4 with their test/review gates.
+4. Finish/review Task2, monitor January/February source jobs, then launch March
+   when a slot frees (at most two month processes). Continue Tasks3–4 with reviews.
 5. Update this handoff after each accepted task so another session can continue
    without relying on uncommitted plans or an agent's conversation memory.
 
-Baseline command, last verified before new implementation:681passes, one existing
+Verification command, last verified after Task1 implementation:702passes, one existing
 urllib3/LibreSSL warning. This is software verification, not strategy validation.
 
 ```sh
