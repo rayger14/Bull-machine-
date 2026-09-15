@@ -51,6 +51,20 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 
 ## Latest deliverables
 
+**Newest — reviewed LC economic validation protocol, not yet executed:**
+[Protocol](docs/superpowers/specs/2026-09-15-lc-economic-validation-protocol.md)
+and [checkpoint](docs/knowledge/lc_validation_protocol_2026_09_15.md).
+Independent quant review approved the fixed Jan20/25/29/31 development batch:
+three isolated books, four cost/delay scenarios, at most4specialists/4critics,
+all case terminals before outcomes, explicit null/failure treatment and dollar
+MTM drawdown. Root source-only assembly verifies all4predecision prefixes and
+published requests. No D1 market roles/outcomes have run. Current18Q1 candidates
+are exposed and insufficient evidence for institutional edge claims. Broader
+walk-forward/CPCV and prospective paper phases remain separately gated.
+NEXT: implementation plan and small separate D1 runner/scenario/report layer,
+fixture and independent readiness review, then freeze and execute the protocol.
+Do not extend the frozen Jan19 runner in place or repeat completed roles.
+
 **Completed — one real LC judgment survived independent review:**
 [January19 validity pilot](docs/knowledge/lc_jan19_validity_2026_09_15.md).
 Case LCV1: one fresh requested Astra/high specialist chose `wait_5m_high`; one
@@ -60,9 +74,9 @@ recomputes on restart. This is research usability, NOT live readiness or agent
 profitability. No post-decision prices or PnL were read/scored. Root114focused
 tests pass (104existing +10private); independent preflight review approved.
 Private runner/data/captures remain under `results/lc_jan19_validity_2026_09_15/`.
-Next: separately preregister a bounded chronological LC economic comparison of
-native immediate, always-wait and reviewed agent choice in separate books.
-Freeze cases/budget/metrics before calls and all grades before outcomes. Do not
+The next economic protocol has now been written/reviewed as described above;
+implementation and execution remain next. Freeze cases/budget/metrics before
+calls and all case terminals before outcomes. Do not
 repeat this pilot or the earlier four roles. No trading threshold is validated.
 
 **Completed — shared-catalog offline integration:**
@@ -163,13 +177,12 @@ usability, not automatic loading by every CLI or correctness of future agent wor
 3. Check local `.superpowers/sdd/2026-09-15-lc-citation-integration/progress.md` and
    task reports if present. These are ignored local execution detail, not portable
    truth; reconcile with commits and tests if absent.
-4. Read the January19 validity report and verify its saved terminal state if
-   private files are available. Integration and the single real-role pilot are
-   complete; do not rerun either. Next design/preregister a separate bounded
-   chronological economic comparison with independent native/always-wait/agent
-   books, fixed role budget and outcomes hidden until all grades lock. Q1 remains
-   exposed development. Preserve original sources/curriculum/freezes; no source
-   replay, old answer repair, threshold tuning or live changes are implied.
+4. Read the reviewed LC economic validation protocol and checkpoint above. Next
+   write its implementation plan, build/review the separate small D1 runner, then
+   freeze and run the exact4cases and4scenarios. No D1 roles have run. Preserve
+   Jan19's completed terminal state and all earlier runs; no role retries, source
+   replay, threshold tuning or live changes. Q1 remains exposed development,
+   and WFO/CPCV/prospective phases are not yet executed or fully registered.
 5. Update this handoff after each accepted task so another session can continue
    without relying on uncommitted plans or an agent's conversation memory.
 
