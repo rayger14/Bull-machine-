@@ -32,8 +32,8 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 | New spec and four-task implementation plan | Written and committed; no new profitability claim |
 | Task1 native LC source collector | Committed40f86de;702tests independently pass; independent review approved |
 | Task2 persistent reviewed memory | Committed eb54a64/2cfa453; independent review approved after clock-order fix;746tests pass |
-| Task3 LC judgments/restartable jobs | Implementation in progress; not yet reviewed |
-| Task4 actual Q1 comparison | All3source months verified:18nativeLC;7approved memory records; no market roles or outcomes yet |
+| Task3 LC judgments/restartable jobs | Committed bad3555/fb7d434; independent review approved;87focused/833research tests pass |
+| Task4 actual Q1 comparison | Private harness implementation in progress;18nativeLC and7approved records ready; no market roles/outcomes yet |
 
 Task1 implementation by `lc_source_implementer` is committed; independent review by
 `lc_source_task_review` approved it. January/February source reconstructions are
@@ -41,7 +41,10 @@ complete (9/4native candidates); March completed5. All18unique IDs, complete sou
 minute coverage, unchanged manifests and rebuilt hourly-input hashes verified.
 Task2 passed independent review
 after fixing review supersession under clock rollback. Task3 belongs to
-`lc_assessment_jobs_implementer`. One source-only `lc_curriculum_master_brief`
+`lc_assessment_jobs_implementer` completed Task3, then independent review approved
+the copied-memory chronology correction. Task4 private experiment harness now
+belongs to `lc_experiment_implementer`; no final requests or outcomes are frozen
+yet. One source-only `lc_curriculum_master_brief`
 completed with exact captured input and valid source citations, then independent
 source review approved it. Final7record snapshot is
 `ab473778d356b3d16ebe0e06ed24ee20b31c18dcd3be49146d2a8a4d362d4ffd`.
@@ -64,13 +67,14 @@ usability, not automatic loading by every CLI or correctness of future agent wor
 3. Check local `.superpowers/sdd/2026-09-14-lc-persistent-master/progress.md` and
    task reports if present. These are ignored local execution detail, not portable
    truth; reconcile with commits and tests if absent.
-4. Finish/review Task3, then complete Task4 with frozen packets, fresh roles and
-   locked outcomes. Source and approved curriculum are ready; don't replay them
+4. Finish/review the Task4 private harness, then freeze packets, run fresh roles and
+   lock grades before outcomes. Source and approved curriculum are ready; don't replay them
    or repeat the bounded master role unless a verified defect requires a new study.
 5. Update this handoff after each accepted task so another session can continue
    without relying on uncommitted plans or an agent's conversation memory.
 
-Verification command, last verified after Task2 correction:746passes, one existing
+Verification command, last implementer full run after Task3 correction:833passes;
+root independently verified87focused and the pre-correction830full suite. One existing
 urllib3/LibreSSL warning. This is software verification, not strategy validation.
 
 ```sh
