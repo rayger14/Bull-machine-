@@ -17,17 +17,23 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 
 - Branch: `quant/archetype-evidence-audit`; user explicitly chose continued work
   here rather than a new worktree.
-- [Spec](docs/superpowers/specs/2026-09-14-lc-persistent-master.md).
-- [Implementation plan](docs/superpowers/plans/2026-09-14-lc-persistent-master.md).
-- Plan commits: `28d67c0`, quant clarifications `e31034e`.
+- Active [spec](docs/superpowers/specs/2026-09-15-lc-context-discrimination.md)
+  and [plan](docs/superpowers/plans/2026-09-15-lc-context-adapter.md), plan commit52cd5cc.
+- Historical [v1 spec](docs/superpowers/specs/2026-09-14-lc-persistent-master.md)
+  and [plan](docs/superpowers/plans/2026-09-14-lc-persistent-master.md)
+  remain preserved, not silently relaxed.
 - User explicitly requested planning followed by completion, with quant review.
 - No live deployment, production/config/fusion edits, fine-tuning, push or PR.
 - Latest separately approved research direction:
   [LC context discrimination](docs/superpowers/specs/2026-09-15-lc-context-discrimination.md).
-  Only its facts-only slice is implemented; the original spec/plan below remains
-  historical unfinished work, not permission to silently relax its policy.
+  Facts, request/grader/jobs, five-record memory and the fixed comparison ran.
+  Independent accounting audit passed; all4agent answers failed a dual-citation
+  interface, so validated agent PnL is null. A bounded prospective
+  [single-catalog publication plan](docs/superpowers/plans/2026-09-15-lc-citation-publication.md)
+  is implemented and independently approved, without changing or retrying the
+  frozen run. Full decision/critic/job integration remains the next deliverable.
 
-## What is done versus not done
+## Historical v1 implementation state
 
 | Item | Verified state |
 |---|---|
@@ -39,16 +45,32 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 | Task3 LC judgments/restartable jobs | Committed bad3555/fb7d434; independent review approved;87focused/833research tests pass |
 | Task4 actual Q1 comparison | PhaseA harness/source preflight built; root849tests pass; independent harness review and actual roles/outcomes pending |
 
-Latest deliverable: [September15 context checkpoint](docs/knowledge/lc_context_checkpoint_2026_09_15.md).
-New `lc_context_facts.py` and34literal tests independently reviewed; root combined
-883tests pass,19.61s, existingwarning. Four original source packets describe
-3upside/1downside closes;4H states intact/broken-up/broken-up/broken-down. Last
-case daily absent-before becomes active by decision, without backdating binding.
-Separate three-arm contract specified/reviewed: native immediate, generic
-5m-high wait, same-menu context-judging agent. No new adapter/jobs/role run or
-outcomes yet. Next: build/test the separate request/grader/job adapter, remove
-old mandatory hypothesis from new memory only, review, then freeze four roles
-and critics before any new economic reveal. See exact contract; no new cutoff.
+## Latest deliverables
+
+[September15 adapter report](docs/knowledge/lc_context_adapter_2026_09_15.md):
+context request/grader/jobs committed c979261, separate reviewed5record memory,
+restartable runner and actual fixed run complete. Final root verification passed
+966 distinct tests: 950 public/new-private plus 16 original-private. Four requestedAstra/high
+specialists read71byte-validchunks; rawchoices3wait/1reject. All4cite visible
+compilerE####IDs thatthefrozengraderdoesnotaccept. Zero criticsinvoked; all4grades
+locked beforeoutcomes; noanswerrepair. Finalgradeinvalid_transport reflectsthe
+transparentabsent-critic sentinel, NOT failedspecialistdelivery. AgentPnL=null.
+
+Independentarchive replay reproduced full18native+$10,157.47 (18entries) versus
+alwayswait+$9,846.49 (12entries/6expiries); matched4native+$2,789.80 versus
+wait+$1,392.35. All4pilotnativeoutcomespositive; noagentadvantage/edge/WFO/CPCV
+claim. Postwinnerselectionbugfixedbeforefreeze tokeepall18prewinnerLCsignals.
+The prospective citation publisher is complete and independently approved:
+16 new tests; all 798 advertised IDs resolve and validate across four source
+requests. This validates citation membership, not claim truth or trading quality.
+Next: connect it to a separately versioned specialist/critic/grading/job path.
+No new market roles until one explicit accepted catalog is used end to end.
+Then preregister a new chronological comparison. Do not repeat sources/memory
+or regrade/retry the revealed four cases.
+
+[Earlier facts checkpoint](docs/knowledge/lc_context_checkpoint_2026_09_15.md)
+remains valid. Separate three-arm contract: native immediate, generic5m-high wait,
+same-menu context-judging agent. No new cutoff or old-policy mutation.
 
 Previous deliverable: [LC setup comparison](docs/knowledge/lc_pattern_table_2026_09_14.md)
 and private `results/lc_pattern_table_2026_09_14/table.json`:11 already-revealed
@@ -68,7 +90,7 @@ read-only gate review reproduced this. Existing live LC37recorded-exit groups
 (20positive/17negative) support descriptive score/outcome contrasts but lack a
 verified full nested-feature/closed-position join. Proposed next: a separately
 versioned subtype/lifecycle/minute-confirmation comparison, not a threshold tweak.
-The new facts slice is implemented; the new executable adapter is not. Preserve
+The new facts slice and separate executable adapter are implemented. Preserve
 the original frozen hypothesis; do not describe
 the all-reject role protocol as an agent entry-discrimination experiment.
 
@@ -102,11 +124,13 @@ usability, not automatic loading by every CLI or correctness of future agent wor
 1. Read this handoff, newest `docs/knowledge/MEMORY.md` overrides, then active spec
    and plan. Do not restart the entire trader audit.
 2. Inspect `git status --short` and `git log -8 --oneline`.
-3. Check local `.superpowers/sdd/2026-09-14-lc-persistent-master/progress.md` and
+3. Check local `.superpowers/sdd/2026-09-15-lc-context-adapter/progress.md` and
    task reports if present. These are ignored local execution detail, not portable
    truth; reconcile with commits and tests if absent.
-4. Read the September15 context checkpoint and separate comparison contract.
-   Continue with the new adapter, not a rerun or silent relaxation of old Task4.
+4. Read the September15 adapter report and separate comparison contract.
+   The prospective citation publisher is complete. Continue with its integration
+   into new specialist/critic graders and jobs, not a rerun or regrade of
+   completed run_v1 or a silent relaxation of historical Task4.
    Preserve original sources/curriculum/freezes; new memory excludes only the
    two exactly identified v1-specific records. Do not repeat source jobs or the
    old bounded master brief. Integration review still precedes permanent
@@ -129,9 +153,9 @@ env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -o addopts='' -q te
   30day warm-ups reset signal source only; Q1 position books remain continuous.
 - Collect native LC pre-winner longs BEFORE H2/structure filtering. The old
   `hourly_eligible` helper already filters H2 and is not the new native baseline.
-- Three books: native,explicit nested-child structure,same structure plus agent.
-  New prior-hour compressed-child geometry is a project hypothesis, not universal
-  LC identity or an exact trader rule. Parent-floor reclaim is only one subtype.
+- Active three books: native immediate,always wait_5m_high,agent choosing from
+  the same menu. The historical v1 nested-child geometry remains a separate
+  project hypothesis, not universal LC identity or a new hidden entry gate.
 - Four first previously unassessed LC cases maximum; no outcome-based selection,
   retries or answer repair. Full code cohort and agent subset are different reports.
 - Source,policy,memory,requests precede roles; responses precede critiques; all
@@ -143,7 +167,9 @@ env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -o addopts='' -q te
 
 ## Existing results and private data
 
-[Latest completed economic report](docs/knowledge/isolated_entry_comparison_2026_09_14.md),
+[Latest completed economic report](docs/knowledge/lc_context_adapter_2026_09_15.md)
+contains the Q1 code controls and invalid-agent boundary above. Earlier
+[April comparison](docs/knowledge/isolated_entry_comparison_2026_09_14.md),
 commit `1acdb81`: April3hourly/242minute candidates; code references net negative;
 all4 agent factual/schema checks passed but semantic reviews failed, so validated
 agent PnL remains null. Raw diagnostic choices are not validated performance.
