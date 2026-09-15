@@ -47,6 +47,18 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 
 ## Latest deliverables
 
+**In progress — next approved deliverable:**
+[single-catalog integration plan](docs/superpowers/plans/2026-09-15-lc-citation-integration.md)
+and [design](docs/superpowers/specs/2026-09-15-lc-citation-integration-design.md),
+commits 269c2bb/54e05b3. Implementation d2f1b0e and recovery fix cfc5214 have passed
+independent task review. The new role request, shared specialist/critic catalog
+and immutable jobs include explicit critic-not-invoked events. All 798 source
+IDs and 16 synthetic jobs passed the initial source-only integration check.
+Controller is running post-fix verification and final integration review.
+Check `.superpowers/sdd/2026-09-15-lc-citation-integration/progress.md` and live
+processes before restarting. See the [integration report](docs/knowledge/lc_published_integration_2026_09_15.md). No new market
+roles or results yet; completed experiment below remains unchanged.
+
 [September15 adapter report](docs/knowledge/lc_context_adapter_2026_09_15.md):
 context request/grader/jobs committed c979261, separate reviewed5record memory,
 restartable runner and actual fixed run complete. Final root verification passed

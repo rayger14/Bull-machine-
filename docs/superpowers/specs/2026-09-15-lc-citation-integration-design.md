@@ -40,8 +40,11 @@ bindings cannot bypass validation. Preserve source evidence and fixed economics.
 
 The choice has exact keys: `case_id`, `request_sha256`, `interpretation`,
 `plan_id`, `supporting`, `opposing`, `unknowns`, `structural_invalidation`.
-`request_sha256` is `digest(request)`, binding all published evidence, memory,
-brief, menu and instructions. Items retain `text` and `evidence_ids`; text is
+`request_sha256` copies the visible `request['seal']`, the digest of the request
+body excluding that seal, binding all published evidence, memory, brief, menu
+and instructions. The instruction/schema explicitly identify this copy operation;
+the model must not compute an unavailable whole-object hash. Items retain
+`text` and `evidence_ids`; text is
 nonempty and at most 1200 characters, lists at most 8, IDs 1..8 unique exact
 catalog keys. Both fine and group IDs are accepted by all consuming paths.
 
@@ -93,8 +96,9 @@ The existing ordered storage requires both role slots before locking a grade.
 specialist contract or failed declared specialist transport. Store a deterministic
 `kind='review_not_run'` event with reason `invalid_assessment` or
 `invalid_transport`, empty raw text, its real UTF-8 hash and explicitly
-controller-not-invoked/transport-false provenance. This is a storage event, not a
-model response. Validate the exact event on restart. A valid delivered specialist
+controller-not-invoked/transport-false provenance with capture_sha256=null because
+no delivery occurred. This is a storage event, not a model response. Validate the
+exact event on restart. A valid delivered specialist
 cannot skip review; missing reviewer stage cannot lock a grade.
 
 Skipped-review grades preserve the actual specialist failure, set

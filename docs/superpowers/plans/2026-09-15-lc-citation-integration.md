@@ -41,7 +41,7 @@ The minimal valid new choice is:
 ```python
 def answer(source, req, plan_id='enter', interpretation='support'):
     return {
-        'case_id': req['case_id'], 'request_sha256': digest(req),
+        'case_id': req['case_id'], 'request_sha256': req['seal'],
         'interpretation': interpretation, 'plan_id': plan_id,
         'supporting': [{'text': 'Literal synthetic support.', 'evidence_ids': ['context']}]
             if interpretation == 'support' else [],
@@ -76,7 +76,9 @@ env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -o addopts='' -q te
 
 Implement a deterministic transformed evidence view with a single current root
 instruction/schema and version `lc_context_citations_v2`. Keep original source
-request and publication digests separately named; seal the new request. Derive
+request and publication digests separately named; seal the new request. The
+choice's request_sha256 must copy that visible root seal (body digest), with an
+explicit instruction/schema rule; no invisible hash computation by a model. Derive
 expected request from original source during every public validation. Validate
 copied locators against the new role request, not against a transformed object
 misrepresented as the strict source publication. Reuse pure parsing/shape/readiness
