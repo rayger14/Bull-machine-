@@ -239,6 +239,8 @@ def test_lock_requires_every_case_and_published_grade_is_recomputable(tmp_path):
     with pytest.raises(ValueError, match="every"):
         value.lock_terminals(terminals)
     terminals["b"] = {"kind": "external_failure", "reason": "specialist_timeout"}
+    value.finalize_case("a", terminals["a"])
+    value.finalize_case("b", terminals["b"])
     value.lock_terminals(terminals)
     assert value.assert_reveal_allowed() is True
 
@@ -269,9 +271,11 @@ def test_real_published_job_artifacts_bind_delivery_and_grade(tmp_path):
             "kind": "delivered", "job_directory": str(path),
             "raw_response_sha256": payload["raw_sha256"], "capture_sha256": stages[role]["sha256"],
         })
-    campaign.lock_terminals({source["case_id"]: {
+    terminal = {
         "kind": "published_grade", "job_directory": str(path), "grade_sha256": stages["grade"]["sha256"],
-    }})
+    }
+    campaign.finalize_case(source["case_id"], terminal)
+    campaign.lock_terminals({source["case_id"]: terminal})
     assert campaign.assert_reveal_allowed() is True
 
 
@@ -283,3 +287,55 @@ def test_reveal_is_refused_before_terminals_and_empty_campaign_is_not_launchable
         value.start_attempt("a", "specialist")
     value.lock_terminals({})
     assert value.assert_reveal_allowed() is True
+
+
+def test_decision_path_seals_specialist_start_and_same_runtime_elapsed_with_ceiling(tmp_path):
+    from scripts.research.lc_campaign_contract import ceil_elapsed_seconds
+
+    wall = [100]; mono = [200]; now = [0]
+    jobs = {"/synthetic/a": SyntheticJob("/synthetic/a")}
+    value = ledger(tmp_path, now, jobs)
+    value._wall_ns = lambda: wall[0]; value._monotonic_ns = lambda: mono[0]; value._runtime_id = "timer-a"
+    value.freeze(manifest(["a"])); value.start_attempt("a", "specialist")
+    path = value.state()["cases"]["a"]["decision_path"]
+    assert path["start"] == {"runtime_id": "timer-a", "wall_ns": 100, "monotonic_ns": 200}
+    value.finish_attempt("a", "specialist", {"kind": "external_failure", "reason": "missing"})
+    wall[0] = 999; mono[0] = 1_000_000_201
+    terminal = {"kind": "external_failure", "reason": "specialist_missing"}
+    sealed = value.finalize_case("a", terminal)
+    assert sealed["timing_valid"] is True
+    assert sealed["elapsed_ns"] == 1_000_000_001
+    assert ceil_elapsed_seconds(sealed["elapsed_ns"]) == 2
+    assert value.finalize_case("a", terminal) == sealed
+    value.lock_terminals({"a": terminal})
+
+
+def test_decision_path_runtime_restart_invalidates_elapsed_and_terminal_mismatch_blocks_lock(tmp_path):
+    wall = [1]; mono = [2]; now = [0]
+    jobs = {"/synthetic/a": SyntheticJob("/synthetic/a")}
+    first = ledger(tmp_path, now, jobs)
+    first._wall_ns = lambda: wall[0]; first._monotonic_ns = lambda: mono[0]; first._runtime_id = "timer-a"
+    first.freeze(manifest(["a"])); first.start_attempt("a", "specialist")
+    first.finish_attempt("a", "specialist", {"kind": "external_failure", "reason": "missing"})
+    resumed = ledger(tmp_path, now, jobs)
+    resumed._wall_ns = lambda: wall[0]; resumed._monotonic_ns = lambda: mono[0]; resumed._runtime_id = "timer-b"
+    terminal = {"kind": "external_failure", "reason": "specialist_missing"}
+    sealed = resumed.finalize_case("a", terminal)
+    assert sealed["timing_valid"] is False
+    assert sealed["reason"] == "timer_runtime_changed"
+    assert sealed["elapsed_ns"] is None
+    with pytest.raises(ValueError, match="finalized|hash"):
+        resumed.lock_terminals({"a": {"kind": "external_failure", "reason": "different"}})
+    resumed.lock_terminals({"a": terminal})
+
+
+def test_lock_requires_finalized_decision_path_for_timeout_and_skipped_reviewer(tmp_path):
+    now = [0]; jobs = {"/synthetic/a": SyntheticJob("/synthetic/a")}
+    value = ledger(tmp_path, now, jobs); value.freeze(manifest(["a"])); value.start_attempt("a", "specialist")
+    now[0] = 600
+    value.state()
+    terminal = {"kind": "external_failure", "reason": "specialist_timeout"}
+    with pytest.raises(ValueError, match="finalized"):
+        value.lock_terminals({"a": terminal})
+    value.finalize_case("a", terminal)
+    value.lock_terminals({"a": terminal})

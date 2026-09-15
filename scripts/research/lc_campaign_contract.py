@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import tempfile
 import time
+import uuid
 
 from scripts.research.assessment_evidence_guard import _canonical
 
@@ -24,6 +25,13 @@ MAX_CASES = MAX_ROLE_ATTEMPTS = 30
 MAX_ACTIVE = 3
 DEADLINE_SECONDS = 600
 _HEX = set("0123456789abcdef")
+DECISION_PATH_VERSION = "lc_campaign_decision_path_v1"
+
+
+def ceil_elapsed_seconds(elapsed_ns):
+    if type(elapsed_ns) is not int or elapsed_ns < 0:
+        raise ValueError("elapsed_ns must be a nonnegative integer")
+    return (elapsed_ns + 999_999_999) // 1_000_000_000
 
 
 def select_block(candidate_ids: list[str], excluded: set[str], cap: int = 30) -> list[str]:
@@ -124,11 +132,17 @@ class CampaignLedger:
     `lock_terminals` accepts one terminal per frozen case: a recomputable
     published grade or an external controller failure with its null plan.
     """
-    def __init__(self, directory: Path, *, clock=time.time, job_loader=_default_job_loader):
+    def __init__(self, directory: Path, *, clock=time.time, job_loader=_default_job_loader,
+                 wall_ns=time.time_ns, monotonic_ns=time.monotonic_ns, runtime_id=None):
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
         self._clock = clock
         self._job_loader = job_loader
+        self._wall_ns = wall_ns
+        self._monotonic_ns = monotonic_ns
+        self._runtime_id = runtime_id if runtime_id is not None else uuid.uuid4().hex
+        if not isinstance(self._runtime_id, str) or not self._runtime_id:
+            raise ValueError("runtime_id must be nonempty")
         self._lock_path = self.directory / ".lock"
 
     def _locked(self):
@@ -215,7 +229,7 @@ class CampaignLedger:
         case_specs = {case["case_id"]: case for case in state["manifest"]["cases"]}
         invoked = {role: 0 for role in ROLES}; active = 0
         for case_id, case in state["cases"].items():
-            if not isinstance(case, dict) or set(case) != {"roles"} or not isinstance(case["roles"], dict):
+            if not isinstance(case, dict) or set(case) != {"roles", "decision_path"} or not isinstance(case["roles"], dict):
                 raise ValueError("invalid case state")
             if set(case["roles"]) != set(ROLES):
                 raise ValueError("invalid case role schema")
@@ -225,6 +239,7 @@ class CampaignLedger:
                     invoked[role] += 1
                 if record["status"] == "active":
                     active += 1
+            self._validate_decision_path(case_specs[case_id], case["roles"], case["decision_path"], state["manifest"])
         if invoked != state["budgets"]:
             raise ValueError("role budget does not equal immutable invocations")
         if active > MAX_ACTIVE:
@@ -251,6 +266,65 @@ class CampaignLedger:
                 self._validate_stored_terminal(case_specs[case_id], terminal)
         elif state["terminals"]:
             raise ValueError("terminals exist before terminal lock")
+
+    def _validate_decision_path(self, case, roles, path, manifest):
+        keys = {"schema_version", "manifest_sha256", "case_id", "source_request_sha256", "role_request_sha256",
+                "specialist_attempt_id", "start", "end", "terminal_sha256", "terminal_valid", "reason",
+                "timing_valid", "elapsed_ns", "path_sha256"}
+        if not isinstance(path, dict) or set(path) != keys or path["schema_version"] != DECISION_PATH_VERSION:
+            raise ValueError("invalid decision path schema")
+        body = {key: item for key, item in path.items() if key != "path_sha256"}
+        if path["path_sha256"] != _hash(body):
+            raise ValueError("decision path hash changed")
+        if (path["manifest_sha256"] != _hash(manifest) or path["case_id"] != case["case_id"]
+                or path["source_request_sha256"] != case["source_request_sha256"]
+                or path["role_request_sha256"] != case["role_request_sha256"]):
+            raise ValueError("decision path binding differs from manifest")
+        for name in ("start", "end"):
+            observation = path[name]
+            if observation is not None:
+                if not isinstance(observation, dict) or set(observation) != {"runtime_id", "wall_ns", "monotonic_ns"} or not isinstance(observation["runtime_id"], str) or not observation["runtime_id"]:
+                    raise ValueError("invalid timing observation")
+                for clock_name in ("wall_ns", "monotonic_ns"):
+                    if type(observation[clock_name]) is not int or observation[clock_name] < 0:
+                        raise ValueError("timing observations must be nonnegative integers")
+        specialist = roles["specialist"]
+        if path["specialist_attempt_id"] != specialist["attempt_id"]:
+            raise ValueError("decision path specialist attempt differs")
+        if path["start"] is None and path["specialist_attempt_id"] is not None:
+            raise ValueError("specialist attempt lacks sealed start")
+        if path["start"] is not None and path["specialist_attempt_id"] is None:
+            raise ValueError("decision path start lacks specialist attempt")
+        if path["end"] is None:
+            if any(path[key] is not None for key in ("terminal_sha256", "terminal_valid", "timing_valid", "reason", "elapsed_ns")):
+                raise ValueError("unfinalized decision path has terminal fields")
+            return
+        _sha(path["terminal_sha256"], "decision terminal hash")
+        if type(path["terminal_valid"]) is not bool or type(path["timing_valid"]) is not bool or not isinstance(path["reason"], (str, type(None))):
+            raise ValueError("invalid decision path terminal validity")
+        if path["elapsed_ns"] is not None and (type(path["elapsed_ns"]) is not int or path["elapsed_ns"] < 0):
+            raise ValueError("invalid decision path elapsed_ns")
+        if path["elapsed_ns"] is not None:
+            if path["start"] is None or path["start"]["runtime_id"] != path["end"]["runtime_id"] or path["elapsed_ns"] != path["end"]["monotonic_ns"] - path["start"]["monotonic_ns"]:
+                raise ValueError("invalid decision path elapsed binding")
+
+    def _observation(self):
+        wall = self._wall_ns(); monotonic = self._monotonic_ns()
+        if type(wall) is not int or wall < 0 or type(monotonic) is not int or monotonic < 0:
+            raise ValueError("clock observations must be nonnegative integer nanoseconds")
+        return {"runtime_id": self._runtime_id, "wall_ns": wall, "monotonic_ns": monotonic}
+
+    def _path(self, manifest, case):
+        body = {"schema_version": DECISION_PATH_VERSION, "manifest_sha256": _hash(manifest), "case_id": case["case_id"],
+                "source_request_sha256": case["source_request_sha256"], "role_request_sha256": case["role_request_sha256"],
+                "specialist_attempt_id": None, "start": None, "end": None, "terminal_sha256": None,
+                "terminal_valid": None, "timing_valid": None, "reason": None, "elapsed_ns": None}
+        return dict(body, path_sha256=_hash(body))
+
+    def _seal_path(self, path, **changes):
+        body = {key: item for key, item in path.items() if key != "path_sha256"}
+        body.update(deepcopy(changes))
+        return dict(body, path_sha256=_hash(body))
 
     def _validate_role_record(self, case, role, record, locked):
         keys = {"status", "attempt_id", "started_at", "deadline_at", "finished_at", "result"}
@@ -342,7 +416,7 @@ class CampaignLedger:
                 cases[case["case_id"]] = {"roles": {
                     role: {"status": "not_invoked", "attempt_id": None, "started_at": None,
                            "deadline_at": None, "finished_at": None, "result": None}
-                    for role in ROLES}}
+                    for role in ROLES}, "decision_path": self._path(manifest, case)}
             self._write({"schema_version": SCHEMA_VERSION, "manifest": deepcopy(manifest), "cases": cases,
                          "budgets": {role: 0 for role in ROLES}, "late_deliveries": [], "terminals": {},
                          "terminals_locked": False})
@@ -376,6 +450,11 @@ class CampaignLedger:
             now = _now(self._clock())
             record.update({"status": "active", "attempt_id": _hash({"case_id": case_id, "role": role, "started_at": now}),
                            "started_at": now, "deadline_at": now + DEADLINE_SECONDS})
+            if role == "specialist":
+                case_spec = next(item for item in state["manifest"]["cases"] if item["case_id"] == case_id)
+                path = state["cases"][case_id]["decision_path"]
+                state["cases"][case_id]["decision_path"] = self._seal_path(
+                    path, specialist_attempt_id=record["attempt_id"], start=self._observation())
             state["budgets"][role] += 1
             self._write(state)
             return deepcopy(record)
@@ -433,6 +512,37 @@ class CampaignLedger:
             raise ValueError("published grade is not recomputable")
         return dict(terminal, status=grade["status"], research_plan=deepcopy(grade["research_plan"]))
 
+    def finalize_case(self, case_id, terminal):
+        """Seal the recomputed terminal and local timing endpoint for one case."""
+        with self._locked() as stream:
+            state = self._state_for_write()
+            if case_id not in state["cases"] or state["terminals_locked"]:
+                raise ValueError("unknown case or terminal lock")
+            if any(record["status"] == "active" for record in state["cases"][case_id]["roles"].values()):
+                raise ValueError("active attempt prevents case finalization")
+            validated = self._validate_terminal(state, case_id, terminal)
+            terminal_sha256 = _hash(validated)
+            path = state["cases"][case_id]["decision_path"]
+            if path["end"] is not None:
+                if path["terminal_sha256"] != terminal_sha256:
+                    raise ValueError("immutable finalized terminal differs")
+                return deepcopy(path)
+            end = self._observation(); start = path["start"]
+            reason = None; elapsed = None
+            if start is None:
+                reason = "specialist_not_started"
+            elif start["runtime_id"] != self._runtime_id:
+                reason = "timer_runtime_changed"
+            elif end["wall_ns"] < start["wall_ns"] or end["monotonic_ns"] < start["monotonic_ns"]:
+                reason = "timer_clock_regressed"
+            else:
+                elapsed = end["monotonic_ns"] - start["monotonic_ns"]
+            state["cases"][case_id]["decision_path"] = self._seal_path(
+                path, end=end, terminal_sha256=terminal_sha256, terminal_valid=True,
+                timing_valid=elapsed is not None, reason=reason, elapsed_ns=elapsed)
+            self._write(state)
+            return deepcopy(state["cases"][case_id]["decision_path"])
+
     def lock_terminals(self, terminals):
         with self._locked() as stream:
             state = self._state_for_write()
@@ -441,6 +551,10 @@ class CampaignLedger:
             if any(record["status"] == "active" for case in state["cases"].values() for record in case["roles"].values()):
                 raise ValueError("active attempt prevents terminal lock")
             expected = {case_id: self._validate_terminal(state, case_id, item) for case_id, item in terminals.items()}
+            for case_id, terminal in expected.items():
+                path = state["cases"][case_id]["decision_path"]
+                if path["end"] is None or path["terminal_sha256"] != _hash(terminal):
+                    raise ValueError("finalized decision path terminal hash required")
             if state["terminals_locked"]:
                 if state["terminals"] != expected:
                     raise ValueError("immutable terminals differ")
