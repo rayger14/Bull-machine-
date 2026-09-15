@@ -304,9 +304,15 @@ class CampaignLedger:
             raise ValueError("invalid decision path terminal validity")
         if path["elapsed_ns"] is not None and (type(path["elapsed_ns"]) is not int or path["elapsed_ns"] < 0):
             raise ValueError("invalid decision path elapsed_ns")
-        if path["elapsed_ns"] is not None:
-            if path["start"] is None or path["start"]["runtime_id"] != path["end"]["runtime_id"] or path["elapsed_ns"] != path["end"]["monotonic_ns"] - path["start"]["monotonic_ns"]:
-                raise ValueError("invalid decision path elapsed binding")
+        if path["timing_valid"] is True:
+            if (path["elapsed_ns"] is None or path["reason"] is not None or path["start"] is None
+                    or path["start"]["runtime_id"] != path["end"]["runtime_id"]
+                    or path["end"]["wall_ns"] < path["start"]["wall_ns"]
+                    or path["end"]["monotonic_ns"] < path["start"]["monotonic_ns"]
+                    or path["elapsed_ns"] != path["end"]["monotonic_ns"] - path["start"]["monotonic_ns"]):
+                raise ValueError("invalid timing-valid decision path")
+        elif path["elapsed_ns"] is not None or not isinstance(path["reason"], str) or not path["reason"]:
+            raise ValueError("invalid timing-invalid decision path")
 
     def _observation(self):
         wall = self._wall_ns(); monotonic = self._monotonic_ns()

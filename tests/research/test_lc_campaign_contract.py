@@ -339,3 +339,35 @@ def test_lock_requires_finalized_decision_path_for_timeout_and_skipped_reviewer(
         value.lock_terminals({"a": terminal})
     value.finalize_case("a", terminal)
     value.lock_terminals({"a": terminal})
+
+
+def test_reopen_rejects_rehashed_decision_path_timing_validity_mismatches(tmp_path):
+    wall = [10]; mono = [20]; now = [0]
+    jobs = {"/synthetic/a": SyntheticJob("/synthetic/a")}
+    value = ledger(tmp_path, now, jobs)
+    value._wall_ns = lambda: wall[0]; value._monotonic_ns = lambda: mono[0]; value._runtime_id = "timer-a"
+    value.freeze(manifest(["a"])); value.start_attempt("a", "specialist")
+    value.finish_attempt("a", "specialist", {"kind": "external_failure", "reason": "missing"})
+    wall[0] = 11; mono[0] = 21
+    value.finalize_case("a", {"kind": "external_failure", "reason": "terminal"})
+    state_path = tmp_path / "ledger" / "ledger.json"
+
+    def alter(path, mutate):
+        def rewrite_path(state):
+            decision_path = state["cases"]["a"]["decision_path"]
+            mutate(decision_path)
+            body = {key: item for key, item in decision_path.items() if key != "path_sha256"}
+            decision_path["path_sha256"] = hashlib.sha256(_canonical(body).encode("ascii")).hexdigest()
+        rewrite_rehashed_state(state_path, rewrite_path)
+        with pytest.raises(ValueError, match="timing"):
+            ledger(tmp_path, now, jobs).state()
+
+    alter(state_path, lambda path: path.update(timing_valid=False))
+    # Restore a clean sealed path for independent invalid-state variants.
+    value = ledger(tmp_path / "second", now, jobs)
+    value._wall_ns = lambda: wall[0]; value._monotonic_ns = lambda: mono[0]; value._runtime_id = "timer-a"
+    value.freeze(manifest(["a"])); value.start_attempt("a", "specialist")
+    value.finish_attempt("a", "specialist", {"kind": "external_failure", "reason": "missing"})
+    value.finalize_case("a", {"kind": "external_failure", "reason": "terminal"})
+    state_path = tmp_path / "second" / "ledger" / "ledger.json"
+    alter(state_path, lambda path: path.update(reason="unexpected"))
