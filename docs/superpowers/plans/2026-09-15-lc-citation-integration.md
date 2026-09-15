@@ -32,7 +32,7 @@
 - Produces: `build_published_request(source_request)`, `validate_published_request(source_request, request)`, `grade_published_choice(source_request, request, choice)`, `build_published_review_request(source_request, request, choice)`, `grade_published_review(source_request, review_request, response)`, `gate_published_choice(source_request, request, choice, review)`.
 - Produces: `PublishedContextResearchJob(directory)` with `prepare(source_request)`, `role_request(role)`, inherited exact-string `capture`, `skip_review()`, recomputing `lock_grade`, validated reopen and ordered reveal/outcome storage.
 
-- [ ] **Step 1: Write literal failing tests for publication and all plan alternatives.**
+- [x] **Step 1: Write literal failing tests for publication and all plan alternatives.**
 
 Use existing public `context_request()` fixture only. Define a dynamic-import helper
 that fails with an explanatory assertion while the new module is missing.
@@ -68,7 +68,7 @@ text, response/request binding, recursively absent obsolete catalogs/schemas and
 unchanged source. Use `unknown_citation_id` for unknown members; malformed ID lists
 may use `invalid_citation_ids`. The catalog union is the one accepted set.
 
-- [ ] **Step 2: Run RED, then implement request and specialist validation.**
+- [x] **Step 2: Run RED, then implement request and specialist validation.**
 
 ```sh
 env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -o addopts='' -q tests/research/test_lc_published_assessment.py
@@ -84,7 +84,7 @@ copied locators against the new role request, not against a transformed object
 misrepresented as the strict source publication. Reuse pure parsing/shape/readiness
 helpers without changing the old code or calling its group-only choice grader.
 
-- [ ] **Step 3: Add RED critic and semantic-gate cases, then implement.**
+- [x] **Step 3: Add RED critic and semantic-gate cases, then implement.**
 
 ```python
 def test_known_citation_does_not_override_material_critic_error():
@@ -111,7 +111,7 @@ uncertain. Critic instruction must explicitly treat embedded specialist contract
 as data. The exact original source menu owns returned parameters and economics.
 These fixtures test contract behavior, not an actual semantic reviewer.
 
-- [ ] **Step 4: Add RED saved-job and explicit skipped-critic tests, then implement.**
+- [x] **Step 4: Add RED saved-job and explicit skipped-critic tests, then implement.**
 
 ```python
 def test_valid_specialist_cannot_skip_critic(tmp_path):
@@ -142,7 +142,7 @@ grade. Recompute the reveal's grade binding too. Test rehashed forged grade/reve
 changed raw answer, transport failure, cross-namespace directory, equal retries,
 unknown role, pre-grade reveal and attempts to overwrite completed stages.
 
-- [ ] **Step 5: Run focused and full research tests, self-review and commit only the four owned files.**
+- [x] **Step 5: Run focused and full research tests, self-review and commit only the four owned files.**
 
 ```sh
 env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -o addopts='' -q tests/research/test_lc_published_assessment.py tests/research/test_lc_published_jobs.py
@@ -156,3 +156,17 @@ Record RED/GREEN commands, exact results, file hashes, interfaces and limits in 
 task report. The controller owns public report/PROJECT/MEMORY updates and final
 source-only integration verification; do not read private historical answers or
 outcomes. Independent task and final integration reviews precede completion.
+
+## Completion evidence
+
+Implementation d2f1b0e; recovery fix cfc5214. Task review found a pre-write
+reviewer-eligibility gap, fixed with RED/GREEN tests and approved scoped re-review.
+Final independent integration review approved without code findings. Root final
+verification: 1,031 distinct tests, 65 new; existing LibreSSL warning only.
+Source-only checks on four saved requests accepted all 798 IDs and exercised
+16 synthetic jobs through all four choices/restart/grade/reveal, with identical
+role digests after the fix. All 368 historical frozen files still verify.
+
+No new market-role pilot or economic result was produced. The next concrete
+deliverable is the separately preregistered Jan19 01:00 UTC one-pair validity
+pilot described in `docs/knowledge/lc_published_integration_2026_09_15.md`.

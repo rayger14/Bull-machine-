@@ -17,8 +17,10 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 
 - Branch: `quant/archetype-evidence-audit`; user explicitly chose continued work
   here rather than a new worktree.
-- Active [spec](docs/superpowers/specs/2026-09-15-lc-context-discrimination.md)
-  and [plan](docs/superpowers/plans/2026-09-15-lc-context-adapter.md), plan commit52cd5cc.
+- Latest completed [integration spec](docs/superpowers/specs/2026-09-15-lc-citation-integration-design.md)
+  and [plan](docs/superpowers/plans/2026-09-15-lc-citation-integration.md).
+  The [context comparison](docs/superpowers/specs/2026-09-15-lc-context-discrimination.md)
+  and its plan commit52cd5cc remain preserved.
 - Historical [v1 spec](docs/superpowers/specs/2026-09-14-lc-persistent-master.md)
   and [plan](docs/superpowers/plans/2026-09-14-lc-persistent-master.md)
   remain preserved, not silently relaxed.
@@ -31,7 +33,8 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
   interface, so validated agent PnL is null. A bounded prospective
   [single-catalog publication plan](docs/superpowers/plans/2026-09-15-lc-citation-publication.md)
   is implemented and independently approved, without changing or retrying the
-  frozen run. Full decision/critic/job integration remains the next deliverable.
+  frozen run. The new offline decision/critic/job integration is now completed
+  and independently approved. A new real-role validity pilot remains next.
 
 ## Historical v1 implementation state
 
@@ -47,17 +50,23 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 
 ## Latest deliverables
 
-**In progress — next approved deliverable:**
+**Completed — shared-catalog offline integration:**
 [single-catalog integration plan](docs/superpowers/plans/2026-09-15-lc-citation-integration.md)
 and [design](docs/superpowers/specs/2026-09-15-lc-citation-integration-design.md),
 commits 269c2bb/54e05b3. Implementation d2f1b0e and recovery fix cfc5214 have passed
-independent task review. The new role request, shared specialist/critic catalog
-and immutable jobs include explicit critic-not-invoked events. All 798 source
-IDs and 16 synthetic jobs passed the initial source-only integration check.
-Controller is running post-fix verification and final integration review.
+independent task and final integration review. The new role request, shared
+specialist/critic catalog and immutable jobs include explicit critic-not-invoked
+events. Final root verification: **1,031 distinct tests** (1,015 +16), existing
+LibreSSL warning. All 798 source IDs and 16 synthetic jobs passed both initial
+and post-fix checks. All 368 old frozen files still verify. No work remains
+running for this integration; do not re-dispatch its implementation.
 Check `.superpowers/sdd/2026-09-15-lc-citation-integration/progress.md` and live
-processes before restarting. See the [integration report](docs/knowledge/lc_published_integration_2026_09_15.md). No new market
-roles or results yet; completed experiment below remains unchanged.
+processes before restarting. See the [integration report](docs/knowledge/lc_published_integration_2026_09_15.md).
+Next: preregister and assemble the January19 01:00 UTC candidate, then at most
+one new specialist/critic pair to verify real-role usability. No retries or
+replacement after failure. It is exposed-Q1 development, not a holdout, and no
+new market roles or results have been produced. Completed results below remain
+unchanged; validated agent PnL is still unknown.
 
 [September15 adapter report](docs/knowledge/lc_context_adapter_2026_09_15.md):
 context request/grader/jobs committed c979261, separate reviewed5record memory,
@@ -75,10 +84,10 @@ claim. Postwinnerselectionbugfixedbeforefreeze tokeepall18prewinnerLCsignals.
 The prospective citation publisher is complete and independently approved:
 16 new tests; all 798 advertised IDs resolve and validate across four source
 requests. This validates citation membership, not claim truth or trading quality.
-Next: connect it to a separately versioned specialist/critic/grading/job path.
-No new market roles until one explicit accepted catalog is used end to end.
-Then preregister a new chronological comparison. Do not repeat sources/memory
-or regrade/retry the revealed four cases.
+That publication is now connected through the separately versioned offline path
+described above. Next is the small preregistered real-role pilot, then a separately
+registered economic comparison. Do not repeat sources/memory or regrade/retry
+the revealed four cases.
 
 [Earlier facts checkpoint](docs/knowledge/lc_context_checkpoint_2026_09_15.md)
 remains valid. Separate three-arm contract: native immediate, generic5m-high wait,
@@ -105,6 +114,8 @@ versioned subtype/lifecycle/minute-confirmation comparison, not a threshold twea
 The new facts slice and separate executable adapter are implemented. Preserve
 the original frozen hypothesis; do not describe
 the all-reject role protocol as an agent entry-discrimination experiment.
+
+### Historical v1 details — preserved, not the current resume task
 
 Task1 implementation by `lc_source_implementer` is committed; independent review by
 `lc_source_task_review` approved it. January/February source reconstructions are
@@ -136,13 +147,16 @@ usability, not automatic loading by every CLI or correctness of future agent wor
 1. Read this handoff, newest `docs/knowledge/MEMORY.md` overrides, then active spec
    and plan. Do not restart the entire trader audit.
 2. Inspect `git status --short` and `git log -8 --oneline`.
-3. Check local `.superpowers/sdd/2026-09-15-lc-context-adapter/progress.md` and
+3. Check local `.superpowers/sdd/2026-09-15-lc-citation-integration/progress.md` and
    task reports if present. These are ignored local execution detail, not portable
    truth; reconcile with commits and tests if absent.
-4. Read the September15 adapter report and separate comparison contract.
-   The prospective citation publisher is complete. Continue with its integration
-   into new specialist/critic graders and jobs, not a rerun or regrade of
-   completed run_v1 or a silent relaxation of historical Task4.
+4. Read the September15 published integration report. The publisher, new graders
+   and jobs are complete and independently reviewed. Next assemble the fixed
+   Jan19 01:00 UTC LC case from saved January source/parent ledgers plus its
+   12-day pre-decision minute prefix; no engine rerun. Freeze a new case ID,
+   namespace, source/code hashes and exposure metadata before at most one
+   specialist and one conditional critic. Stop on invalid/incomplete/material
+   failure; no retries. Do not regrade completed run_v1 or relax historical Task4.
    Preserve original sources/curriculum/freezes; new memory excludes only the
    two exactly identified v1-specific records. Do not repeat source jobs or the
    old bounded master brief. Integration review still precedes permanent

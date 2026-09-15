@@ -177,13 +177,19 @@ reproduction; this public report does not make a GitHub clone self-contained.
 
 ## Next action
 
+**Subsequent checkpoint:** the separately versioned assessment/critic/job
+integration is now completed and independently approved; see the
+[integration report](lc_published_integration_2026_09_15.md). Its next step is a
+new one-pair real-role validity pilot, not another implementation of this plan
+or a retry of these four revealed cases.
+
 The single-catalog publication component is built and independently approved.
 Its APIs are `publish_citation_contract`, `validate_citation_contract` and
 `validate_citation_ids`; its version is `lc_citation_publication_v2`. Original
 request bindings and new publication hashes remain distinct. The old grader
 does not accept this publication; no old response has been remapped or regraded.
 
-The next deliverables, in order, are:
+The original follow-on deliverables were (item 1 is now complete):
 
 1. **End-to-end contract integration:** a separately versioned specialist grader,
    critic interface and job namespace that all use this one catalog. Acceptance:

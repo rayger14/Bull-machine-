@@ -11,14 +11,14 @@ it does not tune a trading rule or establish that an agent is profitable.
 ## Current checkpoint
 
 Implementation is committed as `d2f1b0e`, with recovery fix `cfc5214`.
-Pre-fix root verification passed **1,028 distinct
-tests**: 1,012 public/current-private tests in 118.77s and 16 original-private tests
-in 3.72s. The only warning is the existing system LibreSSL/urllib3 compatibility
-warning. Independent task review found one recovery defect: direct reviewer
+Final root verification passed **1,031 distinct tests**: 1,015 public/current-private
+tests in 128.53s and 16 original-private tests in 3.75s. The only warning is the
+existing system LibreSSL/urllib3 compatibility warning. Independent task review
+found one recovery defect: direct reviewer
 capture could persist a file before rejecting an invalid specialist. Pre-write
 validation and regression tests now fix it; scoped re-review approved with no
-remaining findings. Post-fix root verification and final integration review
-remain pending.
+remaining findings. Final independent integration review approved the complete
+offline library path with no Critical, Important or Minor code findings.
 
 The root source-only integration check passed on all four existing source
 requests: **798 IDs** resolve and validate through specialist and critic paths
@@ -26,7 +26,9 @@ requests: **798 IDs** resolve and validate through specialist and critic paths
 temporary jobs cover enter/wait/reject/uncertain through capture, grade, reopen
 and reveal ordering, preserving exact original-menu economics and source hashes.
 All answers in that check are synthetic; no real model or semantic review was
-performed. The completed old experiment's `verify` command also exited 0.
+performed. The check was repeated successfully after the recovery fix with
+identical role-request digests. The completed old experiment's `verify` command
+also exited 0, preserving all 368 pinned files.
 
 Design: [integration spec](../superpowers/specs/2026-09-15-lc-citation-integration-design.md).
 Execution: [implementation plan](../superpowers/plans/2026-09-15-lc-citation-integration.md).
@@ -56,7 +58,7 @@ Code entry points:
 - `scripts/research/lc_published_jobs.py`: `PublishedContextResearchJob.prepare`,
   `role_request`, `capture`, `skip_review`, `lock_grade`, `authorize_reveal`.
 - `tests/research/test_lc_published_assessment.py` and
-  `test_lc_published_jobs.py`: 62 new tests, including explicit unknown-ID errors,
+  `test_lc_published_jobs.py`: 65 new tests, including explicit unknown-ID errors,
   raw-string binding, truthful skipped-review provenance and forged-grade refusal.
 
 The job bundle is controller-only. Deliver only `role_request('specialist')` or
@@ -119,8 +121,8 @@ The local `.superpowers/sdd/2026-09-15-lc-citation-integration/` directory conta
 the implementation report, review package, ledger and source-only check.
 Source-check script SHA256:
 `374fa59209dbf541d56ccdabc096f06ef6bc38cc2458bf1677d73f15037b1858`.
-Recorded result SHA256:
-`1070fbf74d25651318807bb3a784e1a7a98e294d1a8dc5f083d5baa0f74c8482`.
+Post-fix recorded result (`source_integration_final.json`) SHA256:
+`6cf28bb22fb4572e8a2a1ec0b01bf4e74331bf99fa27e9ed9d38fc74d9667923`.
 
 No new market-role run, new PnL result, training, dependency installation,
 production/config/fusion change, push or PR occurred in this integration work.
