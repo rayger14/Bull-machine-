@@ -1,6 +1,6 @@
 # Bull Machine — start here
 
-Updated September14,2026. This is the current cross-chat/CLI handoff, not a trading
+Updated September15,2026. This is the current cross-chat/CLI handoff, not a trading
 model's training context. Check git status/log because active work may be newer.
 
 ## User's goal
@@ -22,6 +22,10 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 - Plan commits: `28d67c0`, quant clarifications `e31034e`.
 - User explicitly requested planning followed by completion, with quant review.
 - No live deployment, production/config/fusion edits, fine-tuning, push or PR.
+- Latest separately approved research direction:
+  [LC context discrimination](docs/superpowers/specs/2026-09-15-lc-context-discrimination.md).
+  Only its facts-only slice is implemented; the original spec/plan below remains
+  historical unfinished work, not permission to silently relax its policy.
 
 ## What is done versus not done
 
@@ -33,7 +37,40 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 | Task1 native LC source collector | Committed40f86de;702tests independently pass; independent review approved |
 | Task2 persistent reviewed memory | Committed eb54a64/2cfa453; independent review approved after clock-order fix;746tests pass |
 | Task3 LC judgments/restartable jobs | Committed bad3555/fb7d434; independent review approved;87focused/833research tests pass |
-| Task4 actual Q1 comparison | Private harness implementation in progress;18nativeLC and7approved records ready; no market roles/outcomes yet |
+| Task4 actual Q1 comparison | PhaseA harness/source preflight built; root849tests pass; independent harness review and actual roles/outcomes pending |
+
+Latest deliverable: [September15 context checkpoint](docs/knowledge/lc_context_checkpoint_2026_09_15.md).
+New `lc_context_facts.py` and34literal tests independently reviewed; root combined
+883tests pass,19.61s, existingwarning. Four original source packets describe
+3upside/1downside closes;4H states intact/broken-up/broken-up/broken-down. Last
+case daily absent-before becomes active by decision, without backdating binding.
+Separate three-arm contract specified/reviewed: native immediate, generic
+5m-high wait, same-menu context-judging agent. No new adapter/jobs/role run or
+outcomes yet. Next: build/test the separate request/grader/job adapter, remove
+old mandatory hypothesis from new memory only, review, then freeze four roles
+and critics before any new economic reveal. See exact contract; no new cutoff.
+
+Previous deliverable: [LC setup comparison](docs/knowledge/lc_pattern_table_2026_09_14.md)
+and private `results/lc_pattern_table_2026_09_14/table.json`:11 already-revealed
+reconstructed LC cases across three separate studies plus37 recorded live groups.
+Descriptive extraction complete; independent assembled-table review approved for
+descriptive research, not trading-rule or statistical validation.
+No pooled performance, new backtest, threshold optimization or newly revealed Q1
+outcome. Upside expansions win in the small layered sample but lose in April;
+last5m recovery also appears before a losing upper rejection. This informed the
+new separate contract above. Do not treat this table as validated tuning.
+
+Prior user-directed diagnostic: [LC pattern audit](docs/knowledge/lc_pattern_diagnostic_2026_09_14.md).
+All18 fail the new same-hour child-rejection reference:13 downside expansions,
+5 upside expansions, zero sweep/reclaims. The13 evidence failures mean10 broken
+parents plus3 forming/absent active parents, not13 missing-data cases. Independent
+read-only gate review reproduced this. Existing live LC37recorded-exit groups
+(20positive/17negative) support descriptive score/outcome contrasts but lack a
+verified full nested-feature/closed-position join. Proposed next: a separately
+versioned subtype/lifecycle/minute-confirmation comparison, not a threshold tweak.
+The new facts slice is implemented; the new executable adapter is not. Preserve
+the original frozen hypothesis; do not describe
+the all-reject role protocol as an agent entry-discrimination experiment.
 
 Task1 implementation by `lc_source_implementer` is committed; independent review by
 `lc_source_task_review` approved it. January/February source reconstructions are
@@ -42,9 +79,10 @@ minute coverage, unchanged manifests and rebuilt hourly-input hashes verified.
 Task2 passed independent review
 after fixing review supersession under clock rollback. Task3 belongs to
 `lc_assessment_jobs_implementer` completed Task3, then independent review approved
-the copied-memory chronology correction. Task4 private experiment harness now
-belongs to `lc_experiment_implementer`; no final requests or outcomes are frozen
-yet. One source-only `lc_curriculum_master_brief`
+the copied-memory chronology correction. Task4 PhaseA private harness was completed
+by `lc_experiment_implementer`; `preflight_phase_a_final` has four request-only
+jobs. Whole-harness review remains pending; no permanent run/outcome freeze.
+One source-only `lc_curriculum_master_brief`
 completed with exact captured input and valid source citations, then independent
 source review approved it. Final7record snapshot is
 `ab473778d356b3d16ebe0e06ed24ee20b31c18dcd3be49146d2a8a4d362d4ffd`.
@@ -67,15 +105,19 @@ usability, not automatic loading by every CLI or correctness of future agent wor
 3. Check local `.superpowers/sdd/2026-09-14-lc-persistent-master/progress.md` and
    task reports if present. These are ignored local execution detail, not portable
    truth; reconcile with commits and tests if absent.
-4. Finish/review the Task4 private harness, then freeze packets, run fresh roles and
-   lock grades before outcomes. Source and approved curriculum are ready; don't replay them
-   or repeat the bounded master role unless a verified defect requires a new study.
+4. Read the September15 context checkpoint and separate comparison contract.
+   Continue with the new adapter, not a rerun or silent relaxation of old Task4.
+   Preserve original sources/curriculum/freezes; new memory excludes only the
+   two exactly identified v1-specific records. Do not repeat source jobs or the
+   old bounded master brief. Integration review still precedes permanent
+   market-role freeze, and all grades precede outcomes.
 5. Update this handoff after each accepted task so another session can continue
    without relying on uncommitted plans or an agent's conversation memory.
 
-Verification command, last implementer full run after Task3 correction:833passes;
-root independently verified87focused and the pre-correction830full suite. One existing
-urllib3/LibreSSL warning. This is software verification, not strategy validation.
+Root fresh combined verification after PhaseA:849passes (833public plus16private),
+18.93s, one existing urllib3/LibreSSL warning. This is software verification, not
+strategy validation. Public-suite command below; add the private
+`results/lc_persistent_master_2026_09_14/test_experiment.py` for combined scope.
 
 ```sh
 env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -o addopts='' -q tests/research
