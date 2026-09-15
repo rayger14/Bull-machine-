@@ -1,7 +1,11 @@
 """Focused contract tests for the offline consolidated-campaign ledger."""
 from copy import deepcopy
+import hashlib
+import json
 
 import pytest
+
+from scripts.research.assessment_evidence_guard import _canonical
 
 
 def manifest(case_ids, root="/synthetic"):
@@ -64,6 +68,14 @@ def delivery(case_id, role):
         "raw_response_sha256": "3" * 64,
         "capture_sha256": "4" * 64,
     }
+
+
+def rewrite_rehashed_state(path, mutate):
+    value = json.loads(path.read_text())
+    mutate(value)
+    body = {key: item for key, item in value.items() if key != "state_sha256"}
+    value["state_sha256"] = hashlib.sha256(_canonical(body).encode("ascii")).hexdigest()
+    path.write_text(_canonical(value))
 
 
 def test_exclusion_splits_run_instead_of_deleting_interior():
@@ -147,6 +159,41 @@ def test_timeout_is_terminal_and_late_delivery_is_an_immutable_side_record(tmp_p
     state = value.state()
     assert state["cases"]["a"]["roles"]["specialist"]["status"] == "timeout"
     assert state["late_deliveries"][0]["result"]["kind"] == "delivered"
+
+
+def test_exact_600_seconds_times_out_and_accepts_only_one_late_result(tmp_path):
+    now = [0.25]
+    jobs = {"/synthetic/a": SyntheticJob("/synthetic/a", captures={
+        "specialist": {"raw_response_sha256": "3" * 64, "capture_sha256": "4" * 64},
+    })}
+    value = ledger(tmp_path, now, jobs); value.freeze(manifest(["a"])); value.start_attempt("a", "specialist")
+    now[0] = 600.25
+    failure = {"kind": "external_failure", "reason": "controller_crash"}
+    first = value.finish_attempt("a", "specialist", failure)
+    assert first["kind"] == "late_external_failure"
+    assert value.finish_attempt("a", "specialist", deepcopy(failure)) == first
+    with pytest.raises(ValueError, match="late result"):
+        value.finish_attempt("a", "specialist", delivery("a", "specialist"))
+    state = value.state()
+    record = state["cases"]["a"]["roles"]["specialist"]
+    assert record["status"] == "timeout"
+    assert record["deadline_at"] == 600.25
+    assert len(state["late_deliveries"]) == 1
+
+
+def test_reopen_rejects_rehashed_malformed_nested_state_and_budget_invariant(tmp_path):
+    jobs = {"/synthetic/a": SyntheticJob("/synthetic/a")}
+    value = ledger(tmp_path, jobs=jobs); value.freeze(manifest(["a"]))
+    state_path = tmp_path / "ledger" / "ledger.json"
+    rewrite_rehashed_state(state_path, lambda state: state["cases"]["a"].update(roles={}))
+    with pytest.raises(ValueError, match="role|case"):
+        ledger(tmp_path, jobs=jobs).state()
+
+    other = tmp_path / "budget"; value = ledger(other, jobs=jobs); value.freeze(manifest(["a"]))
+    value.start_attempt("a", "specialist")
+    rewrite_rehashed_state(other / "ledger" / "ledger.json", lambda state: state["budgets"].update(specialist=0))
+    with pytest.raises(ValueError, match="budget"):
+        ledger(other, jobs=jobs).state()
 
 
 def test_delivered_attempt_requires_job_capture_hash_binding(tmp_path):
