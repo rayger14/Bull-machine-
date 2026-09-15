@@ -34,7 +34,8 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
   [single-catalog publication plan](docs/superpowers/plans/2026-09-15-lc-citation-publication.md)
   is implemented and independently approved, without changing or retrying the
   frozen run. The new offline decision/critic/job integration is now completed
-  and independently approved. A new real-role validity pilot remains next.
+  and independently approved. The January19 real-role validity pilot is now
+  complete: one wait choice passed an independent critic; no outcomes scored.
 
 ## Historical v1 implementation state
 
@@ -50,6 +51,20 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 
 ## Latest deliverables
 
+**Completed — one real LC judgment survived independent review:**
+[January19 validity pilot](docs/knowledge/lc_jan19_validity_2026_09_15.md).
+Case LCV1: one fresh requested Astra/high specialist chose `wait_5m_high`; one
+separate fresh requested Astra/high critic completed with zero material errors.
+All42 captured chunks validate; terminal `research_ready` grade is locked and
+recomputes on restart. This is research usability, NOT live readiness or agent
+profitability. No post-decision prices or PnL were read/scored. Root114focused
+tests pass (104existing +10private); independent preflight review approved.
+Private runner/data/captures remain under `results/lc_jan19_validity_2026_09_15/`.
+Next: separately preregister a bounded chronological LC economic comparison of
+native immediate, always-wait and reviewed agent choice in separate books.
+Freeze cases/budget/metrics before calls and all grades before outcomes. Do not
+repeat this pilot or the earlier four roles. No trading threshold is validated.
+
 **Completed — shared-catalog offline integration:**
 [single-catalog integration plan](docs/superpowers/plans/2026-09-15-lc-citation-integration.md)
 and [design](docs/superpowers/specs/2026-09-15-lc-citation-integration-design.md),
@@ -62,11 +77,9 @@ and post-fix checks. All 368 old frozen files still verify. No work remains
 running for this integration; do not re-dispatch its implementation.
 Check `.superpowers/sdd/2026-09-15-lc-citation-integration/progress.md` and live
 processes before restarting. See the [integration report](docs/knowledge/lc_published_integration_2026_09_15.md).
-Next: preregister and assemble the January19 01:00 UTC candidate, then at most
-one new specialist/critic pair to verify real-role usability. No retries or
-replacement after failure. It is exposed-Q1 development, not a holdout, and no
-new market roles or results have been produced. Completed results below remain
-unchanged; validated agent PnL is still unknown.
+The separately preregistered January19 01:00 UTC specialist/critic pilot above
+has now completed. It is exposed-Q1 development, not a holdout. Older results
+below remain unchanged; validated agent PnL is still unknown.
 
 [September15 adapter report](docs/knowledge/lc_context_adapter_2026_09_15.md):
 context request/grader/jobs committed c979261, separate reviewed5record memory,
@@ -85,7 +98,7 @@ The prospective citation publisher is complete and independently approved:
 16 new tests; all 798 advertised IDs resolve and validate across four source
 requests. This validates citation membership, not claim truth or trading quality.
 That publication is now connected through the separately versioned offline path
-described above. Next is the small preregistered real-role pilot, then a separately
+described above. Its single real-role pilot has passed; next is a separately
 registered economic comparison. Do not repeat sources/memory or regrade/retry
 the revealed four cases.
 
@@ -150,17 +163,13 @@ usability, not automatic loading by every CLI or correctness of future agent wor
 3. Check local `.superpowers/sdd/2026-09-15-lc-citation-integration/progress.md` and
    task reports if present. These are ignored local execution detail, not portable
    truth; reconcile with commits and tests if absent.
-4. Read the September15 published integration report. The publisher, new graders
-   and jobs are complete and independently reviewed. Next assemble the fixed
-   Jan19 01:00 UTC LC case from saved January source/parent ledgers plus its
-   12-day pre-decision minute prefix; no engine rerun. Freeze a new case ID,
-   namespace, source/code hashes and exposure metadata before at most one
-   specialist and one conditional critic. Stop on invalid/incomplete/material
-   failure; no retries. Do not regrade completed run_v1 or relax historical Task4.
-   Preserve original sources/curriculum/freezes; new memory excludes only the
-   two exactly identified v1-specific records. Do not repeat source jobs or the
-   old bounded master brief. Integration review still precedes permanent
-   market-role freeze, and all grades precede outcomes.
+4. Read the January19 validity report and verify its saved terminal state if
+   private files are available. Integration and the single real-role pilot are
+   complete; do not rerun either. Next design/preregister a separate bounded
+   chronological economic comparison with independent native/always-wait/agent
+   books, fixed role budget and outcomes hidden until all grades lock. Q1 remains
+   exposed development. Preserve original sources/curriculum/freezes; no source
+   replay, old answer repair, threshold tuning or live changes are implied.
 5. Update this handoff after each accepted task so another session can continue
    without relying on uncommitted plans or an agent's conversation memory.
 
