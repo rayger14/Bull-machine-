@@ -51,7 +51,24 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 
 ## Latest deliverables
 
-**Newest — reviewed LC economic validation protocol, not yet executed:**
+**Newest — one consolidated LC campaign planned, not yet implemented/run:**
+[Authoritative design and implementation plan](docs/superpowers/plans/2026-09-15-lc-consolidated-campaign.md).
+User capped market assessments at30setups/60calls. Fixed31-month code census:
+January2024–July2026; matched agent cohort is earliest contiguous30 previously
+unassessed native LC opportunities in January–July2026, or the longest eligible
+run if shorter. The unchanged curriculum has a January2026 cutoff; do not
+backdate it to admit2025 agent cases. No outcome-based selection or replacements.
+Independent source and quant design reviews informed the plan. Root verified
+the permanent2,979,360-row minute archive hash; onlyQ1 native sources currently
+exist. Source work is estimated in hours, capped at18summed worker-hours/max2workers.
+Six cost/latency scenarios distinguish operational NO_ORDER fallback from valid
+judgment, and include measured specialist+on-path critic time. No live changes,
+automatic tuning, extra pilots or claim that30cases prove an edge.
+NEXT: implement/review Tasks1–4, reconstruct/freeze the fixed census and requests,
+then execute Task5 once through independent accounting audit and final report.
+No expanded source run, campaign market role or new economic outcome has begun.
+
+**Superseded prospective schedule — four-case economic protocol never executed:**
 [Protocol](docs/superpowers/specs/2026-09-15-lc-economic-validation-protocol.md)
 and [checkpoint](docs/knowledge/lc_validation_protocol_2026_09_15.md).
 Independent quant review approved the fixed Jan20/25/29/31 development batch:
@@ -61,9 +78,9 @@ MTM drawdown. Root source-only assembly verifies all4predecision prefixes and
 published requests. No D1 market roles/outcomes have run. Current18Q1 candidates
 are exposed and insufficient evidence for institutional edge claims. Broader
 walk-forward/CPCV and prospective paper phases remain separately gated.
-NEXT: implementation plan and small separate D1 runner/scenario/report layer,
-fixture and independent readiness review, then freeze and execute the protocol.
-Do not extend the frozen Jan19 runner in place or repeat completed roles.
+The consolidated plan above replaces this pending D1 implementation/run schedule;
+preserve the old protocol, but do not launch its four-case batch. Do not extend
+the frozen Jan19 runner in place or repeat completed roles.
 
 **Completed — one real LC judgment survived independent review:**
 [January19 validity pilot](docs/knowledge/lc_jan19_validity_2026_09_15.md).
@@ -177,12 +194,14 @@ usability, not automatic loading by every CLI or correctness of future agent wor
 3. Check local `.superpowers/sdd/2026-09-15-lc-citation-integration/progress.md` and
    task reports if present. These are ignored local execution detail, not portable
    truth; reconcile with commits and tests if absent.
-4. Read the reviewed LC economic validation protocol and checkpoint above. Next
-   write its implementation plan, build/review the separate small D1 runner, then
-   freeze and run the exact4cases and4scenarios. No D1 roles have run. Preserve
-   Jan19's completed terminal state and all earlier runs; no role retries, source
-   replay, threshold tuning or live changes. Q1 remains exposed development,
-   and WFO/CPCV/prospective phases are not yet executed or fully registered.
+4. Read the consolidated campaign plan above. First incomplete task is Task1:
+   new immutable monthly source wrapper, not another D1 plan/pilot. Complete
+   implementation/readiness review before bounded source/call execution. No
+   campaign source expansion or roles have run. Preserve Jan19 and all earlier
+   runs; no retries, threshold tuning or live changes. The broader source census
+   is prospectively specified in the new plan, not permission to change old
+   sources. Historical research remains retrospective/exposed; no WFO/CPCV or
+   prospective profitability claim.
 5. Update this handoff after each accepted task so another session can continue
    without relying on uncommitted plans or an agent's conversation memory.
 
@@ -197,7 +216,8 @@ env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -o addopts='' -q te
 
 ## Critical decisions not to rediscover or silently change
 
-- Q1 candidate window Jan1–Apr1 exclusive; outcome coverage ends Apr2. Monthly
+- Historical Q1 candidate window Jan1–Apr1 exclusive; outcome coverage ends Apr2.
+  The new consolidated campaign has its own exact dates in the active plan. Monthly
   30day warm-ups reset signal source only; Q1 position books remain continuous.
 - Collect native LC pre-winner longs BEFORE H2/structure filtering. The old
   `hourly_eligible` helper already filters H2 and is not the new native baseline.
