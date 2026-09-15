@@ -171,6 +171,7 @@ def test_exact_600_seconds_times_out_and_accepts_only_one_late_result(tmp_path):
     failure = {"kind": "external_failure", "reason": "controller_crash"}
     first = value.finish_attempt("a", "specialist", failure)
     assert first["kind"] == "late_external_failure"
+    now[0] = 601.25
     assert value.finish_attempt("a", "specialist", deepcopy(failure)) == first
     with pytest.raises(ValueError, match="late result"):
         value.finish_attempt("a", "specialist", delivery("a", "specialist"))
@@ -193,6 +194,22 @@ def test_reopen_rejects_rehashed_malformed_nested_state_and_budget_invariant(tmp
     value.start_attempt("a", "specialist")
     rewrite_rehashed_state(other / "ledger" / "ledger.json", lambda state: state["budgets"].update(specialist=0))
     with pytest.raises(ValueError, match="budget"):
+        ledger(other, jobs=jobs).state()
+
+
+def test_reopen_rejects_rehashed_impossible_finish_time_and_forged_attempt_id(tmp_path):
+    jobs = {"/synthetic/a": SyntheticJob("/synthetic/a")}
+    now = [10]
+    value = ledger(tmp_path, now, jobs); value.freeze(manifest(["a"])); value.start_attempt("a", "specialist")
+    value.finish_attempt("a", "specialist", {"kind": "external_failure", "reason": "missing"})
+    state_path = tmp_path / "ledger" / "ledger.json"
+    rewrite_rehashed_state(state_path, lambda state: state["cases"]["a"]["roles"]["specialist"].update(finished_at=5))
+    with pytest.raises(ValueError, match="precedes"):
+        ledger(tmp_path, jobs=jobs).state()
+
+    other = tmp_path / "attempt"; value = ledger(other, jobs=jobs); value.freeze(manifest(["a"])); value.start_attempt("a", "specialist")
+    rewrite_rehashed_state(other / "ledger" / "ledger.json", lambda state: state["cases"]["a"]["roles"]["specialist"].update(attempt_id="0" * 64))
+    with pytest.raises(ValueError, match="attempt id"):
         ledger(other, jobs=jobs).state()
 
 

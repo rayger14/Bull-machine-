@@ -265,6 +265,8 @@ class CampaignLedger:
                 raise ValueError("invalid not-invoked role record")
             return
         _sha(record["attempt_id"], "attempt id"); _time(record["started_at"], "started_at"); _time(record["deadline_at"], "deadline_at")
+        if record["attempt_id"] != _hash({"case_id": case["case_id"], "role": role, "started_at": record["started_at"]}):
+            raise ValueError("attempt id does not bind case, role and start time")
         if record["deadline_at"] != record["started_at"] + DEADLINE_SECONDS:
             raise ValueError("role deadline differs from 600 seconds")
         if status == "active":
@@ -272,6 +274,8 @@ class CampaignLedger:
                 raise ValueError("active role has terminal fields")
             return
         _time(record["finished_at"], "finished_at")
+        if record["finished_at"] < record["started_at"]:
+            raise ValueError("finished_at precedes started_at")
         if status == "timeout":
             expected = {"kind": "deadline_timeout", "deadline_at": record["deadline_at"]}
             if record["finished_at"] != record["deadline_at"] or record["result"] != expected:
@@ -394,7 +398,9 @@ class CampaignLedger:
                 late = {"case_id": case_id, "role": role, "attempt_id": record["attempt_id"], "received_at": now, "result": validated}
                 prior = [item for item in state["late_deliveries"] if item["case_id"] == case_id and item["role"] == role]
                 if prior:
-                    if prior[0] != late:
+                    immutable = {key: late[key] for key in ("case_id", "role", "attempt_id", "result")}
+                    prior_immutable = {key: prior[0][key] for key in immutable}
+                    if prior_immutable != immutable:
                         raise ValueError("immutable late result differs")
                     return {"kind": "late_delivery" if validated["kind"] == "delivered" else "late_external_failure", **deepcopy(prior[0])}
                 state["late_deliveries"].append(late); self._write(state)
