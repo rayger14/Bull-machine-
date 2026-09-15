@@ -30,6 +30,13 @@ protocol, not a new strategy or profitability experiment.
   or model-memory isolation, is the enforced experimental boundary.
 - Deliver only the appropriate `PublishedContextResearchJob.role_request` through
   4096-byte ASCII chunks using the existing envelope/actual-return validator.
+  The existing transport helper requires a top-level plan for arithmetic checks,
+  so the private transport packet is exactly `{case_id, plan, request}`: `request`
+  is the unchanged job role request and `plan` is an identical copy of the
+  validated source plan. The inner request is the sole role contract; the outer
+  plan is transport metadata, not a second policy. Validate this exact wrapper
+  against the job before delivery. Specialists copy the inner request's visible
+  seal, not the envelope packet hash. No shared source/helper is modified.
   Persist each actual inner tool return before exposing its output to the role.
   Each role writes one exact raw JSON answer, without grading/repair loops.
 - Roles must not read project handoffs, source files, archives, other cases,
