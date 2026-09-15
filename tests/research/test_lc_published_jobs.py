@@ -120,6 +120,43 @@ def test_valid_specialist_cannot_skip_critic(tmp_path):
         runner.lock_grade()
 
 
+@pytest.mark.parametrize("failure,reason", [
+    ("invalid_assessment", "invalid_assessment"),
+    ("invalid_transport", "invalid_transport"),
+])
+def test_ineligible_reviewer_capture_leaves_no_artifact_and_skip_recovers(
+        tmp_path, failure, reason):
+    path = tmp_path / failure; source = context_request(); runner = job(path)
+    runner.prepare(source); req = runner.role_request("specialist")
+    value = answer(source, req)
+    if failure == "invalid_assessment":
+        value["supporting"][0]["evidence_ids"] = ["missing"]
+    raw = json.dumps(value)
+    runner.capture(
+        "specialist", raw,
+        valid_transport("specialist", failure != "invalid_transport"),
+    )
+
+    with pytest.raises(ValueError, match="critic"):
+        runner.capture("reviewer", "{}", valid_transport("reviewer"))
+
+    assert not (path / "reviewer.json").exists()
+    reopened = job(path)
+    assert reopened.state == "specialist"
+    assert reopened.skip_review()["reason"] == reason
+    grade = reopened.lock_grade()
+    assert grade["status"] == reason
+    assert grade["critic_status"] == "not_invoked"
+
+
+def test_missing_specialist_reviewer_capture_leaves_no_artifact(tmp_path):
+    path = tmp_path / "missing"; runner = job(path); runner.prepare(context_request())
+    with pytest.raises(ValueError):
+        runner.capture("reviewer", "{}", valid_transport("reviewer"))
+    assert not (path / "reviewer.json").exists()
+    assert job(path).state == "request"
+
+
 def test_invalid_specialist_uses_truthful_skip_event_and_null_grade(tmp_path):
     path = tmp_path / "invalid"; source = context_request(); runner = job(path)
     runner.prepare(source); req = runner.role_request("specialist")

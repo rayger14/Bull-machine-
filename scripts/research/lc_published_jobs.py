@@ -185,6 +185,18 @@ class PublishedContextResearchJob(ResearchJob):
         return build_published_review_request(
             bundle["source_request"], bundle["role_request"], specialist["raw_response"])
 
+    def capture(self, role, raw_response, provenance):
+        """Reject ineligible reviewer writes before entering the atomic store."""
+        if role == "reviewer":
+            stages = self._read()
+            if "specialist" not in stages:
+                raise ValueError("specialist capture required before reviewer capture")
+            bundle = stages["request"]["payload"]
+            specialist = stages["specialist"]["payload"]
+            if _skip_reason(bundle, specialist) is not None:
+                raise ValueError("invalid specialist cannot be routed to critic")
+        return super().capture(role, raw_response, provenance)
+
     def skip_review(self):
         stages = self._read()
         if "specialist" not in stages:
