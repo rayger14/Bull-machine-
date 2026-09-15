@@ -188,6 +188,10 @@ def _merge_hashes(target, additions, label):
 
 
 def _nested_manifest_files(node, target, label):
+    if isinstance(node, list):
+        for child in node:
+            _nested_manifest_files(child, target, label)
+        return
     if not isinstance(node, dict):
         return
     if "files" in node:
@@ -292,6 +296,17 @@ def _validate_candidates(candidates, start, end):
         raise ValueError("candidate decisions must be unique and chronological")
 
 
+def _is_pinned_saved_source(source, month):
+    saved = SAVED_Q1.get(month)
+    if saved is None:
+        return False
+    path, expected_hash = saved
+    if not path.exists() or _sha(path) != expected_hash:
+        return False
+    rendered_hash = hashlib.sha256(_json_text(source).encode()).hexdigest()
+    return rendered_hash == expected_hash
+
+
 def _validate_source(source, month):
     if not isinstance(source, dict):
         raise ValueError("source must be a mapping")
@@ -303,7 +318,11 @@ def _validate_source(source, month):
             raise ValueError(key + " differs from fixed month bounds")
     if source.get("seed_days") != 30:
         raise ValueError("source must retain the reviewed 30-day seed")
-    if Path(source.get("source_path", "")).resolve() != ARCHIVE.resolve():
+    source_path = Path(source.get("source_path", ""))
+    if (
+        source_path.resolve() != ARCHIVE.resolve()
+        and not _is_pinned_saved_source(source, month)
+    ):
         raise ValueError("source must use the permanent minute archive")
     if source.get("source_sha256") != SOURCE_SHA256:
         raise ValueError("source archive identity differs")
@@ -371,6 +390,28 @@ def _load_saved_q1(month):
     return source
 
 
+def _reviewed_q1_hashes():
+    """Return file expectations authenticated by the pinned Q1 source payloads."""
+    reviewed = {}
+    for month, (path, expected_source_hash) in SAVED_Q1.items():
+        if not path.exists() or _sha(path) != expected_source_hash:
+            raise ValueError("saved Q1 source hash mismatch: " + month)
+        source = json.loads(path.read_text())
+        _merge_hashes(reviewed, _manifest_hashes(source), "reviewed Q1 baseline")
+    return reviewed
+
+
+def _reviewed_hash(path, reviewed, label):
+    resolved = str(Path(path).resolve())
+    if resolved not in reviewed:
+        raise ValueError(label + " is absent from reviewed Q1 baseline: " + resolved)
+    expected = reviewed[resolved]
+    actual = _sha(path) if Path(path).exists() else None
+    if actual != expected:
+        raise ValueError(label + " differs from reviewed Q1 baseline: " + resolved)
+    return expected
+
+
 def _production_context():
     """Load the reviewed source services without altering the frozen collector."""
     from contextlib import redirect_stdout
@@ -390,18 +431,22 @@ def _production_context():
     from scripts.research.replay_clock import digest, validate_bars
     from scripts.research.virtual_book_replay import side_effect_guard
 
+    reviewed = _reviewed_q1_hashes()
+    _reviewed_hash(INVENTORY, reviewed, "archive inventory")
+    _reviewed_hash(REFERENCE, reviewed, "parent reference")
+    archive_expected = _reviewed_hash(ARCHIVE, reviewed, "permanent archive")
+    if archive_expected != SOURCE_SHA256:
+        raise ValueError("permanent archive differs from reviewed Q1 baseline")
     inventory = json.loads(INVENTORY.read_text())
     reference = json.loads(REFERENCE.read_text())
     _verify_archive_inventory(inventory)
     reference_manifest = reference["ledgers"][0]["manifest"]
     parent_paths = deepcopy(reference_manifest["source_paths"])
     parent_hashes = deepcopy(reference_manifest["source_hashes"])
-    _verify_hashes(
-        {
-            str((ROOT / Path(parent_paths[key])).resolve()): expected
-            for key, expected in parent_hashes.items()
-        }
-    )
+    for key, path in parent_paths.items():
+        expected = _reviewed_hash(path, reviewed, "parent source " + key)
+        if expected != parent_hashes.get(key):
+            raise ValueError("parent source differs from reviewed Q1 reference: " + key)
     stream = reference_manifest["data_stream_id"]
     if stream != "btc_1m_2021_2026_saved_5b8a4533f70b8ccd":
         raise ValueError("unexpected data stream identity")
@@ -423,9 +468,26 @@ def _production_context():
     source_paths = [ARCHIVE, INVENTORY, REFERENCE]
     source_paths.extend(Path(path) for path in parent_paths.values())
     config_paths = [ROOT / "configs/champion_paper.json", LC_CONFIG]
-    source_hashes = {str(path.resolve()): _sha(path) for path in source_paths}
-    code_hashes = {str(path.resolve()): _sha(path) for path in code_paths}
-    config_hashes = {str(path.resolve()): _sha(path) for path in config_paths}
+    source_hashes = {}
+    for path in source_paths:
+        expected = (
+            SOURCE_SHA256
+            if path.resolve() == ARCHIVE.resolve()
+            else _reviewed_hash(path, reviewed, "shared source")
+        )
+        source_hashes[str(path.resolve())] = expected
+    code_hashes = {}
+    for path in code_paths:
+        expected = (
+            _sha(path)
+            if path.resolve() == Path(__file__).resolve()
+            else _reviewed_hash(path, reviewed, "shared code")
+        )
+        code_hashes[str(path.resolve())] = expected
+    config_hashes = {
+        str(path.resolve()): _reviewed_hash(path, reviewed, "shared config")
+        for path in config_paths
+    }
     if code_hashes.get(str(OLD_COLLECTOR.resolve())) != OLD_COLLECTOR_SHA256:
         raise ValueError("frozen Q1 collector hash mismatch")
     guarded = {}
@@ -686,6 +748,23 @@ def _candidate_manifest(source, source_text):
     }
 
 
+def _publish_prepared_directory(temporary, output, expected_source_hash):
+    """Reserve output without clobbering; publish completion manifest last.
+
+    A directory without ``manifest.json`` is deliberately an incomplete attempt.
+    The campaign controller must preserve/report that state rather than treating it
+    as a completed source or retrying into the same path.
+    """
+    try:
+        output.mkdir(parents=False, exist_ok=False)
+    except FileExistsError as exc:
+        raise ValueError("output collision; source artifacts are immutable") from exc
+    os.replace(temporary / "source.json", output / "source.json")
+    if _sha(output / "source.json") != expected_source_hash:
+        raise ValueError("published source hash mismatch; completion withheld")
+    os.replace(temporary / "manifest.json", output / "manifest.json")
+
+
 def prepare_source(month: str, out: Path) -> dict:
     """Create one immutable source directory and return its full source payload."""
     month_bounds(month)
@@ -695,7 +774,8 @@ def prepare_source(month: str, out: Path) -> dict:
     source = _source_for_month(month)
     _validate_source(source, month)
     source_text = _json_text(source)
-    manifest_text = _json_text(_candidate_manifest(source, source_text))
+    manifest = _candidate_manifest(source, source_text)
+    manifest_text = _json_text(manifest)
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(tempfile.mkdtemp(prefix="." + output.name + ".", dir=output.parent))
     try:
@@ -703,10 +783,11 @@ def prepare_source(month: str, out: Path) -> dict:
             handle.write(source_text)
         with (temporary / "manifest.json").open("x") as handle:
             handle.write(manifest_text)
-        try:
-            os.rename(temporary, output)
-        except FileExistsError as exc:
-            raise ValueError("output collision; source artifacts are immutable") from exc
+        _publish_prepared_directory(
+            temporary,
+            output,
+            manifest["source_file_sha256"],
+        )
     finally:
         if temporary.exists():
             shutil.rmtree(temporary)

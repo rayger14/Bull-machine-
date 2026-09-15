@@ -191,6 +191,73 @@ def test_new_source_uses_permanent_archive_when_historical_temp_link_is_gone(
     module._verify_archive_inventory(inventory)
 
 
+def test_production_context_rejects_shared_config_drift_before_construction(
+    monkeypatch,
+):
+    module = campaign_source()
+    real_sha = module._sha
+    config = module.LC_CONFIG.resolve()
+
+    def drifted_sha(path):
+        if Path(path).resolve() == config:
+            return "0" * 64
+        return real_sha(path)
+
+    monkeypatch.setattr(module, "_sha", drifted_sha)
+    with pytest.raises(ValueError, match="reviewed Q1 baseline"):
+        module._production_context()
+
+
+def _install_authenticated_q1_alias_fixture(
+    module, monkeypatch, tmp_path, *, missing_unrelated=False
+):
+    original_path = module.SAVED_Q1["2026-01"][0]
+    payload = json.loads(original_path.read_text())
+    historical_alias = tmp_path / "unavailable-historical-archive.parquet"
+    payload["source_path"] = str(historical_alias)
+    source_files = payload["source_manifest"]["files"]
+    if missing_unrelated:
+        reference = str(module.REFERENCE.resolve())
+        source_files[str(tmp_path / "unavailable-reference.json")] = source_files.pop(
+            reference
+        )
+    fixture = tmp_path / "source.json"
+    fixture.write_text(module._json_text(payload))
+    artifact_hash = _sha(fixture)
+    projection = {
+        "source_file_sha256": artifact_hash,
+        "hourly_input_hash": payload["hourly_input_hash"],
+        "candidate_ids": [row["candidate_id"] for row in payload["candidates"]],
+    }
+    monkeypatch.setattr(module, "SAVED_Q1", {"2026-01": (fixture, artifact_hash)})
+    monkeypatch.setattr(module, "Q1_PROJECTIONS", {"2026-01": projection})
+    return historical_alias
+
+
+def test_saved_q1_loader_accepts_authenticated_missing_historical_archive_alias(
+    monkeypatch, tmp_path
+):
+    module = campaign_source()
+    alias = _install_authenticated_q1_alias_fixture(module, monkeypatch, tmp_path)
+
+    source = module._load_saved_q1("2026-01")
+
+    assert source["source_path"] == str(alias)
+    assert not alias.exists()
+
+
+def test_saved_q1_loader_does_not_alias_unrelated_missing_manifest_file(
+    monkeypatch, tmp_path
+):
+    module = campaign_source()
+    _install_authenticated_q1_alias_fixture(
+        module, monkeypatch, tmp_path, missing_unrelated=True
+    )
+
+    with pytest.raises(ValueError, match="file hash mismatch"):
+        module._load_saved_q1("2026-01")
+
+
 @pytest.mark.parametrize("manifest_name", ["source_manifest", "config_manifest"])
 def test_altered_source_or_config_is_rejected(monkeypatch, tmp_path, manifest_name):
     module = campaign_source()
@@ -230,10 +297,15 @@ def test_source_and_config_files_cannot_be_misclassified(
         module.prepare_source("2024-01", tmp_path / (source_key + "-misclassified"))
 
 
-def test_existing_output_collision_does_not_start_replay(monkeypatch, tmp_path):
+@pytest.mark.parametrize("occupied", [False, True], ids=["empty", "nonempty"])
+def test_existing_output_collision_does_not_start_replay(
+    monkeypatch, tmp_path, occupied
+):
     module = campaign_source()
     out = tmp_path / "existing"
     out.mkdir()
+    if occupied:
+        (out / "existing-evidence").write_text("preserve me\n")
 
     def should_not_run(month):
         raise AssertionError("source replay must not run")
@@ -241,6 +313,9 @@ def test_existing_output_collision_does_not_start_replay(monkeypatch, tmp_path):
     monkeypatch.setattr(module, "_source_for_month", should_not_run)
     with pytest.raises(ValueError, match="new output path"):
         module.prepare_source("2024-01", out)
+
+    if occupied:
+        assert (out / "existing-evidence").read_text() == "preserve me\n"
 
 
 def test_prepare_source_writes_atomic_source_and_lean_exposure_manifest(
@@ -292,23 +367,74 @@ def test_prepare_source_writes_atomic_source_and_lean_exposure_manifest(
     assert {"outcomes", "prices", "assessment", "selected"}.isdisjoint(manifest)
 
 
-def test_atomic_publish_rejects_a_racing_output_collision(monkeypatch, tmp_path):
+@pytest.mark.parametrize("occupied", [False, True], ids=["empty", "nonempty"])
+def test_atomic_publish_rejects_a_real_racing_output_collision(
+    monkeypatch, tmp_path, occupied
+):
     module = campaign_source()
     payload = source_payload(module, monkeypatch, tmp_path)
-    monkeypatch.setattr(module, "_source_for_month", lambda month: payload)
     out = tmp_path / "racing-output"
 
-    def collide(source, destination):
-        Path(destination).mkdir()
-        raise FileExistsError(destination)
+    def collide_after_initial_check(month):
+        out.mkdir()
+        if occupied:
+            (out / "racing-evidence").write_text("preserve me\n")
+        return payload
 
-    monkeypatch.setattr(os, "rename", collide)
+    monkeypatch.setattr(module, "_source_for_month", collide_after_initial_check)
     with pytest.raises(ValueError, match="output collision"):
         module.prepare_source("2024-01", out)
 
     assert out.is_dir()
-    assert list(out.iterdir()) == []
+    expected = ["racing-evidence"] if occupied else []
+    assert sorted(path.name for path in out.iterdir()) == expected
     assert not list(tmp_path.glob(".racing-output.*"))
+
+
+def test_failed_manifest_publication_leaves_source_as_incomplete_evidence(
+    monkeypatch, tmp_path
+):
+    module = campaign_source()
+    payload = source_payload(module, monkeypatch, tmp_path)
+    monkeypatch.setattr(module, "_source_for_month", lambda month: payload)
+    real_replace = os.replace
+
+    def fail_manifest(source, destination):
+        if Path(destination).name == "manifest.json":
+            raise OSError("injected manifest publication failure")
+        return real_replace(source, destination)
+
+    monkeypatch.setattr(os, "replace", fail_manifest)
+    out = tmp_path / "partial-output"
+    with pytest.raises(OSError, match="manifest publication failure"):
+        module.prepare_source("2024-01", out)
+
+    assert (out / "source.json").is_file()
+    assert not (out / "manifest.json").exists()
+    assert not list(tmp_path.glob(".partial-output.*"))
+
+
+def test_completion_manifest_is_not_published_after_source_bytes_change(
+    monkeypatch, tmp_path
+):
+    module = campaign_source()
+    payload = source_payload(module, monkeypatch, tmp_path)
+    monkeypatch.setattr(module, "_source_for_month", lambda month: payload)
+    real_replace = os.replace
+
+    def alter_published_source(source, destination):
+        result = real_replace(source, destination)
+        if Path(destination).name == "source.json":
+            Path(destination).write_bytes(Path(destination).read_bytes() + b"altered")
+        return result
+
+    monkeypatch.setattr(os, "replace", alter_published_source)
+    out = tmp_path / "changed-output"
+    with pytest.raises(ValueError, match="published source hash mismatch"):
+        module.prepare_source("2024-01", out)
+
+    assert (out / "source.json").is_file()
+    assert not (out / "manifest.json").exists()
 
 
 def test_nested_replay_manifest_conflict_is_rejected(monkeypatch, tmp_path):
@@ -322,6 +448,19 @@ def test_nested_replay_manifest_conflict_is_rejected(monkeypatch, tmp_path):
 
     with pytest.raises(ValueError, match="conflicting source replay manifest hash"):
         module.prepare_source("2024-01", tmp_path / "conflict")
+
+
+def test_nested_replay_manifest_lists_are_not_skipped(monkeypatch, tmp_path):
+    module = campaign_source()
+    payload = source_payload(module, monkeypatch, tmp_path)
+    archive_path = str(module.ARCHIVE.resolve())
+    payload["source_manifest"]["replay"]["listed_leaves"] = [
+        {"files": {archive_path: "0" * 64}}
+    ]
+    monkeypatch.setattr(module, "_source_for_month", lambda month: payload)
+
+    with pytest.raises(ValueError, match="conflicting source replay manifest hash"):
+        module.prepare_source("2024-01", tmp_path / "listed-conflict")
 
 
 def test_all_17_archetypes_are_required(monkeypatch, tmp_path):
