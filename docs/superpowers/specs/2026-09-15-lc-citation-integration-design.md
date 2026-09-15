@@ -89,9 +89,22 @@ equal retries are idempotent. Keep the base capture provenance contract explicit
 it is caller-declared, not authenticated model identity or actual delivery.
 
 The existing ordered storage requires both role slots before locking a grade.
-This task does not add an automatic critic invocation or sentinel. If a caller
-records a non-invoked critic sentinel for invalid specialists, it must label it
-truthfully and must not report a semantic review or score a null plan as a skip.
+`skip_review()` may fill the reviewer slot only after recomputing an invalid
+specialist contract or failed declared specialist transport. Store a deterministic
+`kind='review_not_run'` event with reason `invalid_assessment` or
+`invalid_transport`, empty raw text, its real UTF-8 hash and explicitly
+controller-not-invoked/transport-false provenance. This is a storage event, not a
+model response. Validate the exact event on restart. A valid delivered specialist
+cannot skip review; missing reviewer stage cannot lock a grade.
+
+Skipped-review grades preserve the actual specialist failure, set
+`critic_status='not_invoked'`, and have null plans. Actual critic captures use
+`critic_status='captured'`, which does not imply semantic approval. Never report
+a skipped critic as a failed critic invocation or score a null plan as a skip.
+
+Independent quant design review approved this approach, including the explicit
+skip event, exact raw binding and restart grade recomputation. The controller
+adopted these recommendations under the user's delegated-review authority.
 
 ## Fixed boundaries
 
