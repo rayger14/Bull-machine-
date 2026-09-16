@@ -204,6 +204,26 @@ def test_source_reserves_capacity_and_budget_before_launch_across_restart(setup)
     assert reopened.status()["source"]["reserved_worker_hours"] == 16
 
 
+def test_interrupted_source_is_terminal_charged_and_releases_slot_for_new_directory(setup):
+    controller, inventory, receipts, _, job_loader, _ = setup
+    now = [0.0]; controller._clock = lambda: now[0]
+    controller.inventory(inventory)
+    first = controller.reserve_source("2024-01", receipts["2024-01"]["directory"],
+                                      reserved_hours=.5)
+    reopened = CampaignController(controller.run_dir, job_loader=job_loader,
+        source_validator=lambda source, month: None, file_hasher=controller._file_hasher,
+        required_registries=controller._required_registries,
+        q1_projections=controller._q1_projections, clock=lambda: now[0])
+    now[0] = 900
+    failed = reopened.fail_source("2024-01", first["attempt_id"], "worker_interrupted")
+    assert failed["status"] == "failed" and failed["elapsed_hours"] == .25
+    retry = reopened.reserve_source("2024-01", str(Path(receipts["2024-01"]["directory"]).with_name("2024-01-retry")),
+                                    reserved_hours=.25)
+    status = reopened.status()["source"]
+    assert retry["status"] == "active" and status["active"] == 1
+    assert status["reserved_worker_hours"] == .75
+
+
 def test_source_reopens_artifacts_and_completed_bytes_are_immutable(setup):
     controller, inventory, receipts, _, _, _ = setup
     controller.inventory(inventory)
@@ -260,7 +280,7 @@ def test_lead_request_is_exact_bytes_and_crash_after_dispatch_is_consumed(setup)
 def test_capture_finalize_and_score_are_hash_bound_and_idempotent(setup):
     controller, prepared, jobs, case_id = prepare_one(setup)
     controller.request_role(case_id, "specialist")
-    assert controller.capture_role(case_id, "specialist", "raw answer",
+    assert controller.capture_role(case_id, "specialist", b"raw answer",
                                    {"transport_valid": True})["kind"] == "delivered"
     jobs["job-one"]["grade"] = {"grade_sha256": "9" * 64, "status": "valid",
                                  "research_plan": {"id": "wait"}}
@@ -276,6 +296,22 @@ def test_capture_finalize_and_score_are_hash_bound_and_idempotent(setup):
     with pytest.raises(ValueError, match="immutable score"):
         controller.score(accounting, {"bars": [1]}, outcome={"sha256": "7" * 64})
     assert controller.report()["score"]["result_sha256"] == digest_bytes(_canonical(result).encode("ascii"))
+
+
+def test_non_utf8_role_bytes_are_hash_bound_terminal_failure(setup):
+    controller, _, _, case_id = prepare_one(setup)
+    controller.request_role(case_id, "specialist")
+    raw = b"\xff\x00tool-return"
+    assert controller.capture_role(case_id, "specialist", raw,
+                                   {"transport_valid": True}) == {
+        "kind": "external_failure", "reason": "invalid_response_utf8"}
+    operation = controller._read()["operations"][case_id + ":specialist"]
+    assert operation["capture"] == {
+        "kind": "invalid_response_bytes",
+        "raw_response_sha256": digest_bytes(raw),
+        "byte_length": len(raw),
+        "reason": "invalid_response_utf8",
+    }
 
 
 def test_status_is_read_only_and_cli_only_advertises_read_only_phases(tmp_path, capsys):

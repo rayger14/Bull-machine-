@@ -383,17 +383,38 @@ class CampaignController:
             if _canonical(wrapper) != raw or wrapper != expected:
                 raise ValueError("controller exact-byte wrapper binding differs")
             capture = operation["capture"]
-            if isinstance(capture, dict) and "capture_sha256" in capture:
+            role_record = ledger["cases"][case_id]["roles"][role]
+            if capture is None:
+                continue
+            if (isinstance(capture, dict) and capture.get("kind") == "delivered_bytes"):
+                if (set(capture) != {"kind", "raw_response_sha256", "capture_sha256", "byte_length"}
+                        or type(capture["byte_length"]) is not int or capture["byte_length"] < 0):
+                    raise ValueError("invalid exact-byte capture schema")
                 binding = self._job_loader(state["prepared"]["jobs"][case_id]).capture_binding(role)
-                if any(capture.get(name) != value for name, value in binding.items()):
+                if (role_record["status"] != "delivered"
+                        or any(capture.get(name) != value for name, value in binding.items())):
                     raise ValueError("controller capture differs from published job")
+            elif (isinstance(capture, dict) and capture.get("kind") == "invalid_response_bytes"):
+                if (set(capture) != {"kind", "raw_response_sha256", "byte_length", "reason"}
+                        or type(capture["byte_length"]) is not int or capture["byte_length"] < 0
+                        or capture["reason"] != "invalid_response_utf8"
+                        or role_record["status"] != "external_failure"
+                        or role_record["result"] != {"kind": "external_failure",
+                                                     "reason": "invalid_response_utf8"}):
+                    raise ValueError("invalid response-byte failure binding")
+            elif (not isinstance(capture, dict) or set(capture) != {"kind", "reason"}
+                  or capture["kind"] != "external_failure"
+                  or role_record["status"] != "external_failure"
+                  or role_record["result"] != capture):
+                raise ValueError("invalid controller failure capture")
 
     def _validate_state(self, state, *, validate_external):
         if not isinstance(state["sources"], dict) or not isinstance(state["source_attempts"], dict):
             raise ValueError("invalid source state")
         if (isinstance(state["reserved_worker_hours"], bool)
                 or not isinstance(state["reserved_worker_hours"], (int, float))
-                or not 0 <= state["reserved_worker_hours"] <= MAX_SOURCE_HOURS):
+                or not math.isfinite(state["reserved_worker_hours"])
+                or state["reserved_worker_hours"] < 0):
             raise ValueError("invalid reserved worker-hour total")
         if state["inventory"] is not None:
             self._validate_inventory(state["inventory"], external=validate_external)
@@ -403,15 +424,15 @@ class CampaignController:
                 (self._validate_q1_receipt(receipt) if "source_file" in receipt
                  else self._validate_source_receipt(receipt))
         active = 0; reserved = 0
-        attempted_months = set(); attempted_directories = set()
+        attempted_directories = set(); live_months = set()
         for attempt in state["source_attempts"].values():
             if set(attempt) != {"attempt_id", "month", "directory", "reserved_hours", "started_at",
-                               "status", "finished_at", "elapsed_hours"}:
+                               "status", "finished_at", "elapsed_hours", "failure_reason"}:
                 raise ValueError("invalid source attempt schema")
-            if (attempt["month"] not in SOURCE_UNITS or attempt["month"] in attempted_months
+            if (attempt["month"] not in SOURCE_UNITS
                     or attempt["directory"] in attempted_directories):
                 raise ValueError("duplicate or unknown source attempt identity")
-            attempted_months.add(attempt["month"]); attempted_directories.add(attempt["directory"])
+            attempted_directories.add(attempt["directory"])
             if (isinstance(attempt["reserved_hours"], bool)
                     or not isinstance(attempt["reserved_hours"], (int, float))
                     or not math.isfinite(attempt["reserved_hours"]) or attempt["reserved_hours"] <= 0):
@@ -422,18 +443,33 @@ class CampaignController:
                         or not math.isfinite(value) or value < 0):
                     raise ValueError("invalid source attempt clock")
             if attempt["status"] == "active":
-                if attempt["finished_at"] is not None or attempt["elapsed_hours"] is not None:
+                if (attempt["finished_at"] is not None or attempt["elapsed_hours"] is not None
+                        or attempt["failure_reason"] is not None
+                        or attempt["month"] in live_months):
                     raise ValueError("active source attempt has terminal timing")
+                live_months.add(attempt["month"])
             elif attempt["status"] == "completed":
                 elapsed = attempt["elapsed_hours"]
                 if (attempt["finished_at"] is None or not isinstance(elapsed, (int, float))
                         or isinstance(elapsed, bool) or not 0 <= elapsed <= attempt["reserved_hours"]
                         or abs(elapsed - (attempt["finished_at"] - attempt["started_at"]) / 3600) > 1e-12
-                        or attempt["month"] not in state["sources"]):
+                        or attempt["month"] not in state["sources"]
+                        or attempt["failure_reason"] is not None
+                        or attempt["month"] in live_months):
                     raise ValueError("invalid completed source attempt timing")
+                live_months.add(attempt["month"])
+            elif attempt["status"] == "failed":
+                elapsed = attempt["elapsed_hours"]
+                if (attempt["finished_at"] is None or isinstance(elapsed, bool)
+                        or not isinstance(elapsed, (int, float)) or not math.isfinite(elapsed)
+                        or elapsed < 0
+                        or abs(elapsed - (attempt["finished_at"] - attempt["started_at"]) / 3600) > 1e-12
+                        or not isinstance(attempt["failure_reason"], str)
+                        or not attempt["failure_reason"]):
+                    raise ValueError("invalid failed source attempt timing")
             else:
                 raise ValueError("invalid source attempt status")
-            reserved += attempt["reserved_hours"]
+            reserved += max(attempt["reserved_hours"], attempt["elapsed_hours"] or 0)
             active += attempt["status"] == "active"
         if active > MAX_SOURCE_WORKERS or abs(reserved - state["reserved_worker_hours"]) > 1e-9:
             raise ValueError("source capacity or budget ledger differs")
@@ -468,7 +504,8 @@ class CampaignController:
             state = self._state()
             if state["inventory"] is None: raise ValueError("inventory required before source")
             if month not in SOURCE_UNITS: raise ValueError("unknown source unit")
-            if month in state["sources"] or any(a["month"] == month for a in state["source_attempts"].values()):
+            if (month in state["sources"] or any(a["month"] == month and a["status"] == "active"
+                                                 for a in state["source_attempts"].values())):
                 raise ValueError("source unit already attempted; immutable collision/reuse forbidden")
             if (any(a["directory"] == str(directory) for a in state["source_attempts"].values())
                     or any(r.get("directory") == str(directory) for r in state["sources"].values())):
@@ -489,7 +526,8 @@ class CampaignController:
             attempt_id = _digest({"month": month, "directory": str(directory), "started_at": started})
             attempt = {"attempt_id": attempt_id, "month": month, "directory": str(directory),
                        "reserved_hours": reserved_hours, "started_at": started,
-                       "status": "active", "finished_at": None, "elapsed_hours": None}
+                       "status": "active", "finished_at": None, "elapsed_hours": None,
+                       "failure_reason": None}
             state["source_attempts"][attempt_id] = attempt
             state["reserved_worker_hours"] += reserved_hours
             self._write(state); return deepcopy(attempt)
@@ -511,6 +549,30 @@ class CampaignController:
             attempt["elapsed_hours"] = elapsed
             state["sources"][month] = receipt
             self._write(state); return deepcopy(receipt)
+
+    def fail_source(self, month, attempt_id, reason):
+        """Terminalize interrupted source work without refunding its reservation.
+
+        A later attempt for the same month must use a new output directory and
+        consumes a new reservation.  If interruption lasted beyond the original
+        reservation, the overrun is charged too and blocks further reservations.
+        """
+        with self._locked():
+            state = self._state(); attempt = state["source_attempts"].get(attempt_id)
+            if (attempt is None or attempt["month"] != month or attempt["status"] != "active"):
+                raise ValueError("active matching source attempt required")
+            if not isinstance(reason, str) or not reason:
+                raise ValueError("source failure reason required")
+            finished = self._clock()
+            if (isinstance(finished, bool) or not isinstance(finished, (int, float))
+                    or not math.isfinite(finished) or finished < attempt["started_at"]):
+                raise ValueError("source failure clock must not precede start")
+            elapsed = (finished - attempt["started_at"]) / 3600
+            extra = max(0, elapsed - attempt["reserved_hours"])
+            attempt.update(status="failed", finished_at=finished,
+                           elapsed_hours=elapsed, failure_reason=reason)
+            state["reserved_worker_hours"] += extra
+            self._write(state); return deepcopy(attempt)
 
     def _curriculum(self, curriculum):
         if (not isinstance(curriculum, dict) or curriculum.get("snapshot_id") != SNAPSHOT_ID
@@ -619,15 +681,29 @@ class CampaignController:
             state = self._state(); key = case_id + ":" + role
             operation = state["operations"].get(key)
             if operation is None: raise ValueError("reserved role request required")
-            if not isinstance(raw_response, str) or not isinstance(provenance, dict):
-                raise ValueError("exact response string and provenance required")
+            if not isinstance(raw_response, bytes) or not isinstance(provenance, dict):
+                raise ValueError("exact response bytes and provenance required")
+            raw_sha256 = hashlib.sha256(raw_response).hexdigest()
+            try:
+                response_text = raw_response.decode("utf-8")
+            except UnicodeDecodeError:
+                result = {"kind": "external_failure", "reason": "invalid_response_utf8"}
+                self._ledger().finish_attempt(case_id, role, result)
+                capture = {"kind": "invalid_response_bytes",
+                           "raw_response_sha256": raw_sha256,
+                           "byte_length": len(raw_response),
+                           "reason": "invalid_response_utf8"}
+                if operation["capture"] is not None and operation["capture"] != capture:
+                    raise ValueError("immutable capture differs")
+                operation["capture"] = capture; self._write(state)
+                return deepcopy(result)
             job = self._job_loader(state["prepared"]["jobs"][case_id])
-            job.capture(role, raw_response, provenance); binding = job.capture_binding(role)
+            job.capture(role, response_text, provenance); binding = job.capture_binding(role)
             result = {"kind": "delivered", "job_directory": state["prepared"]["jobs"][case_id],
                       **binding}
             self._ledger().finish_attempt(case_id, role, result)
-            capture = {"raw_response_sha256": hashlib.sha256(raw_response.encode()).hexdigest(),
-                       **binding}
+            capture = {"kind": "delivered_bytes", "byte_length": len(raw_response),
+                       "raw_response_sha256": raw_sha256, **binding}
             if operation["capture"] is not None and operation["capture"] != capture:
                 raise ValueError("immutable capture differs")
             operation["capture"] = capture; self._write(state); return deepcopy(result)
