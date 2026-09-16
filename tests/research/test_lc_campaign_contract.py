@@ -371,3 +371,35 @@ def test_reopen_rejects_rehashed_decision_path_timing_validity_mismatches(tmp_pa
     value.finalize_case("a", {"kind": "external_failure", "reason": "terminal"})
     state_path = tmp_path / "second" / "ledger" / "ledger.json"
     alter(state_path, lambda path: path.update(reason="unexpected"))
+
+
+def test_validate_state_snapshot_is_read_only_and_rejects_rehashed_grade_path_and_timing(tmp_path):
+    from scripts.research.lc_campaign_contract import validate_state_snapshot
+
+    wall = [1]; mono = [2]; now = [0]
+    grade = {"grade_sha256": "5" * 64, "status": "research_ready", "research_plan": {"action": "wait"}}
+    jobs = {"/synthetic/a": SyntheticJob("/synthetic/a", grade=grade)}
+    value = ledger(tmp_path, now, jobs)
+    value._wall_ns = lambda: wall[0]; value._monotonic_ns = lambda: mono[0]; value._runtime_id = "runtime"
+    value.freeze(manifest(["a"])); value.start_attempt("a", "specialist")
+    value.finish_attempt("a", "specialist", {"kind": "external_failure", "reason": "missing"})
+    wall[0] = 2; mono[0] = 3
+    terminal = {"kind": "external_failure", "reason": "failed"}; value.finalize_case("a", terminal)
+    snapshot = value.state(); original = deepcopy(snapshot)
+    result = validate_state_snapshot(snapshot, job_loader=lambda path: jobs[str(path)])
+    assert result == snapshot and result is not snapshot and snapshot == original
+
+    def rehash(state):
+        body = {key: item for key, item in state.items() if key != "state_sha256"}
+        state["state_sha256"] = hashlib.sha256(_canonical(body).encode("ascii")).hexdigest()
+
+    forged = deepcopy(snapshot); forged["cases"]["a"]["decision_path"]["timing_valid"] = False
+    path = forged["cases"]["a"]["decision_path"]
+    path["path_sha256"] = hashlib.sha256(_canonical({key: item for key, item in path.items() if key != "path_sha256"}).encode("ascii")).hexdigest(); rehash(forged)
+    with pytest.raises(ValueError, match="timing"):
+        validate_state_snapshot(forged, job_loader=lambda path: jobs[str(path)])
+
+    value.lock_terminals({"a": terminal}); locked_snapshot = value.state()
+    forged = deepcopy(locked_snapshot); forged["terminals"] = {"a": {"kind": "published_grade", "job_directory": "/synthetic/a", "grade_sha256": "5" * 64, "status": "forged", "research_plan": {"action": "wait"}}}; rehash(forged)
+    with pytest.raises(ValueError, match="grade"):
+        validate_state_snapshot(forged, job_loader=lambda path: jobs[str(path)])

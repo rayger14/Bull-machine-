@@ -587,3 +587,19 @@ class CampaignLedger:
             state = self._state_for_write()
             self._write(state)
             return deepcopy(state)
+
+
+def validate_state_snapshot(state, *, job_loader=_default_job_loader):
+    """Validate a detached ledger snapshot without opening or modifying a run directory."""
+    if not isinstance(state, dict) or "state_sha256" not in state:
+        raise ValueError("invalid campaign ledger snapshot")
+    # Canonicalization both rejects non-JSON values and ensures the same canonical
+    # representation used by persisted ledger bytes is the one being hashed.
+    _canonical(state)
+    body = {key: item for key, item in state.items() if key != "state_sha256"}
+    if state["state_sha256"] != _hash(body):
+        raise ValueError("campaign ledger snapshot hash changed")
+    validator = object.__new__(CampaignLedger)
+    validator._job_loader = job_loader
+    validator._validate_state(state)
+    return deepcopy(state)
