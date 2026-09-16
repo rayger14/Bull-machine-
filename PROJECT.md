@@ -51,7 +51,7 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 
 ## Latest deliverables
 
-**Newest — one consolidated LC campaign planned, not yet implemented/run:**
+**Newest — consolidated LC campaign implementation complete; no campaign run yet:**
 [Authoritative design and implementation plan](docs/superpowers/plans/2026-09-15-lc-consolidated-campaign.md).
 User capped market assessments at30setups/60calls. Fixed31-month code census:
 January2024–July2026; matched agent cohort is earliest contiguous30 previously
@@ -64,9 +64,16 @@ exist. Source work is estimated in hours, capped at18summed worker-hours/max2wor
 Six cost/latency scenarios distinguish operational NO_ORDER fallback from valid
 judgment, and include measured specialist+on-path critic time. No live changes,
 automatic tuning, extra pilots or claim that30cases prove an edge.
-NEXT: implement/review Tasks1–4, reconstruct/freeze the fixed census and requests,
-then execute Task5 once through independent accounting audit and final report.
+Tasks1–4 are implemented and independently reviewed through commits62a56ba..
+2488787. The source census, immutable role ledger/decision timing, isolated
+hourly/minute accounting and restartable controller are present. Root final
+research regression:1081passed in144.26s with the existing LibreSSL warning.
 No expanded source run, campaign market role or new economic outcome has begun.
+NEXT: run Task5 inventory/source-only census, inspect actual eligible N and
+freeze all requests, then perform the single readiness check before any paid
+market role. Current execution ledger:
+`.superpowers/sdd/2026-09-15-lc-consolidated-campaign/progress.md`. Do not
+redispatch completed implementation or duplicate paid roles.
 
 **Superseded prospective schedule — four-case economic protocol never executed:**
 [Protocol](docs/superpowers/specs/2026-09-15-lc-economic-validation-protocol.md)
