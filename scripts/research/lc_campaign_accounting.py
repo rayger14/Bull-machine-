@@ -19,16 +19,16 @@ is not a second terminal schema.  Its ``manifest`` must equal
 is read only from ``cases[case_id].decision_path``.
 
 ``score_campaign`` returns ``lc_campaign_accounting_result_v1`` with independent
-``broad`` and ``matched`` books, scenario-keyed arm metrics, paired contrasts,
-episodes, nonentry attribution, reliability/timing counts, and explicit
-unfunded/fixed-notional assumptions.  Unknown books and invalid measured timing
-remain null; they are never represented by zero dollars.
+``broad`` and ``matched`` books.  Every arm contains ``silos`` of
+``{identity, denominator, metrics}`` and explicit null ``combined_*`` fields;
+paired contrasts, episodes, attribution, and patterns are likewise per matching
+archetype/track and never summed across tracks. Reliability remains campaign
+level. Unknown books and invalid measured timing remain null, never zero.
 """
 from __future__ import annotations
 
 from copy import deepcopy
 from collections import Counter
-import hashlib
 import math
 import statistics
 
@@ -36,7 +36,7 @@ import pandas as pd
 
 from scripts.research.conditional_entry import MINUTE, _clock
 from scripts.research.conditional_occupancy import PLAN_KEYS, replay_isolated_sleeves
-from scripts.research.lc_campaign_contract import ceil_elapsed_seconds
+from scripts.research.lc_campaign_contract import ceil_elapsed_seconds, validate_state_snapshot
 from scripts.research.assessment_evidence_guard import _canonical
 
 
@@ -206,13 +206,6 @@ def _validate_inputs(manifest, state):
     _clock(manifest["as_of"])
     if not isinstance(manifest["broad_cases"], list) or not isinstance(manifest["matched_case_ids"], list):
         raise ValueError("case collections must be lists")
-    expected_state = {"schema_version", "manifest", "cases", "budgets", "late_deliveries",
-                      "terminals", "terminals_locked", "state_sha256"}
-    if not isinstance(state, dict) or set(state) != expected_state:
-        raise ValueError("terminals must be the full CampaignLedger.state object")
-    body = {key: value for key, value in state.items() if key != "state_sha256"}
-    if state["state_sha256"] != hashlib.sha256(_canonical(body).encode("ascii")).hexdigest():
-        raise ValueError("campaign state hash changed")
     if (state["manifest"] != manifest["campaign_manifest"] or state["terminals_locked"] is not True
             or set(state["terminals"]) != set(manifest["matched_case_ids"])
             or set(state["cases"]) != set(manifest["matched_case_ids"])):
@@ -220,32 +213,6 @@ def _validate_inputs(manifest, state):
     contract_ids = [item["case_id"] for item in state["manifest"]["cases"]]
     if contract_ids != manifest["matched_case_ids"] or len(set(contract_ids)) != len(contract_ids):
         raise ValueError("matched IDs must preserve the Task-2 manifest order")
-    contract_cases = {item["case_id"]: item for item in state["manifest"]["cases"]}
-    path_keys = {"schema_version", "manifest_sha256", "case_id", "source_request_sha256",
-                 "role_request_sha256", "specialist_attempt_id", "start", "end",
-                 "terminal_sha256", "terminal_valid", "reason", "timing_valid",
-                 "elapsed_ns", "path_sha256"}
-    for identity in contract_ids:
-        path = state["cases"][identity].get("decision_path")
-        if not isinstance(path, dict) or set(path) != path_keys:
-            raise ValueError("exact decision timing path required")
-        path_body = {key: value for key, value in path.items() if key != "path_sha256"}
-        case = contract_cases[identity]
-        if (path["path_sha256"] != hashlib.sha256(_canonical(path_body).encode("ascii")).hexdigest()
-                or path["case_id"] != identity
-                or path["source_request_sha256"] != case["source_request_sha256"]
-                or path["role_request_sha256"] != case["role_request_sha256"]
-                or path["terminal_valid"] is not True
-                or path["terminal_sha256"] != hashlib.sha256(
-                    _canonical(state["terminals"][identity]).encode("ascii")).hexdigest()):
-            raise ValueError("decision path binding differs")
-        if path["timing_valid"] is True:
-            if type(path["elapsed_ns"]) is not int or path["elapsed_ns"] < 0 or path["reason"] is not None:
-                raise ValueError("invalid timing-valid decision path")
-            ceil_elapsed_seconds(path["elapsed_ns"])
-        elif (path["timing_valid"] is not False or path["elapsed_ns"] is not None
-              or not isinstance(path["reason"], str) or not path["reason"]):
-            raise ValueError("invalid timing-invalid decision path")
     case_keys = {"case_id", "track", "decision_time", "source_close", "atr14", "plans", "facts"}
     cases = {}; prior = None
     for case in manifest["broad_cases"]:
@@ -278,16 +245,23 @@ def _candidate(case, plan, variant, unavailable_reason=None):
                 plan=deepcopy(plan), unavailable_reason=unavailable_reason)
 
 
-def _run_book(bars, cases, plans, reasons, variant, as_of):
-    tracks = sorted(set(case["track"] for case in cases))
-    if len(tracks) != 1:
-        raise ValueError("one track required per campaign book")
-    identity = {"archetype": "liquidity_compression", "track": tracks[0], "variant": variant}
-    rows = [_candidate(case, plans.get(case["case_id"]), variant,
-                       reasons.get(case["case_id"])) for case in cases]
-    silo = dict(identity, candidates=rows)
-    result = replay_isolated_sleeves(bars, [silo], as_of=as_of)
-    return result["silos"][0]["replay"]
+def _case_silos(cases):
+    grouped = {}
+    for case in cases:
+        grouped.setdefault(("liquidity_compression", case["track"]), []).append(case)
+    return grouped
+
+
+def _run_books(bars, cases, plans, reasons, variant, as_of):
+    silos = []
+    for (archetype, track), grouped in sorted(_case_silos(cases).items()):
+        identity = {"archetype": archetype, "track": track, "variant": variant}
+        rows = [_candidate(case, plans.get(case["case_id"]), variant,
+                           reasons.get(case["case_id"])) for case in grouped]
+        silos.append(dict(identity, candidates=rows))
+    if not silos:
+        return []
+    return replay_isolated_sleeves(bars, silos, as_of=as_of)["silos"]
 
 
 def _metrics(bars, book, cases):
@@ -339,36 +313,45 @@ def _metrics(bars, book, cases):
     }
 
 
-def _score_arm(bars, cases, base_plans, reasons, variant, cost, processing, as_of):
-    if not cases:
-        return {"available": True, "reason": None, "candidate_count": 0,
-                "net_dollars": 0.0, "dollars_per_candidate": 0.0,
-                "trades": 0, "closed_trades": 0, "fees": 0.0,
-                "average_initial_risk": None, "wins": 0, "losses": 0,
-                "breakeven": 0, "win_rate": None, "average_win": None,
-                "average_loss": None, "average_hold_minutes": None,
-                "occupied_months": [], "occupied_weeks": [],
-                "entry_reasons": {}, "admission_order": [],
-                "mtm": {"status": "available", "reason": None, "points": [],
-                        "max_drawdown_dollars": 0.0, "worst_closed_loss": None,
-                        "ambiguous_bar_count": 0},
-                "decision_month_contributions": {}, "leave_one_month_out": {}}
-    plans = {identity: (scenario_plan(plan, cost, processing[identity]) if plan is not None else None)
-             for identity, plan in base_plans.items()}
-    return _metrics(bars, _run_book(bars, cases, plans, reasons, variant, as_of), cases)
+def _score_arm(bars, cases, base_plans, reasons, variant, cost, processing, as_of,
+               null_tracks=None):
+    null_tracks = set() if null_tracks is None else set(null_tracks)
+    output = []
+    for (archetype, track), grouped in sorted(_case_silos(cases).items()):
+        identity = {"archetype": archetype, "track": track, "variant": variant}
+        if track in null_tracks:
+            output.append({"identity": identity, "denominator": len(grouped),
+                           "metrics": None, "reason": "invalid_measured_timing"})
+            continue
+        plans = {case["case_id"]: (scenario_plan(base_plans[case["case_id"]], cost,
+                 processing[case["case_id"]]) if base_plans[case["case_id"]] is not None else None)
+                 for case in grouped}
+        replay = _run_books(bars, grouped, plans, reasons, variant, as_of)[0]["replay"]
+        output.append({"identity": identity, "denominator": len(grouped),
+                       "metrics": _metrics(bars, replay, grouped), "reason": None})
+    return {"silos": output, "combined_net_dollars": None,
+            "combined_dollars_per_candidate": None, "combined_mtm": None}
 
 
 def _episodes(cases):
     groups = []; current = []; end = None
     for case in cases:
         start = _clock(case["decision_time"]); case_end = start+pd.Timedelta(hours=24)
-        if end is None or start > end:
-            if current: groups.append(current)
+        if not current:
             current = [case["case_id"]]; end = case_end
-        else:
+        elif start <= end:
             current.append(case["case_id"]); end = max(end, case_end)
-    if current: groups.append(current)
-    return groups
+        else:
+            groups.append(current)
+            current = [case["case_id"]]; end = case_end
+    return groups + ([current] if current else [])
+
+
+def _episode_silos(cases):
+    return {"silos": [{"archetype": archetype, "track": track,
+                        "episodes": _episodes(grouped)}
+                       for (archetype, track), grouped in sorted(_case_silos(cases).items())],
+            "combined": None}
 
 
 def _nonentry_attribution(a_book, c_book, c_reasons):
@@ -414,9 +397,37 @@ def _exploratory_patterns(cases, a_book):
     return {"denominator": len(cases), "fitted_thresholds": False, "fields": output}
 
 
-def score_campaign(bars, manifest, terminals) -> dict:
+def _arm_by_track(arm):
+    return {item["identity"]["track"]: item for item in arm["silos"]}
+
+
+def _contrasts(cases, a_arm, b_arm, c_arm):
+    a_silos = _arm_by_track(a_arm); b_silos = _arm_by_track(b_arm); c_silos = _arm_by_track(c_arm)
+    output = []
+    for (archetype, track), grouped in sorted(_case_silos(cases).items()):
+        a = a_silos[track]["metrics"]; b = b_silos[track]["metrics"]
+        c = c_silos[track]["metrics"]
+        cop = c["net_dollars"] if c is not None else None
+        output.append({"archetype": archetype, "track": track,
+                       "paired_denominator": len(grouped),
+                       "C_operational_minus_A": (cop-a["net_dollars"]
+                           if cop is not None and a["net_dollars"] is not None else None),
+                       "C_operational_minus_B": (cop-b["net_dollars"]
+                           if cop is not None and b["net_dollars"] is not None else None)})
+    return {"silos": output, "combined_C_operational_minus_A": None,
+            "combined_C_operational_minus_B": None, "combined_denominator": None}
+
+
+def _silo_denominators(cases):
+    return [{"archetype": archetype, "track": track, "denominator": len(grouped)}
+            for (archetype, track), grouped in sorted(_case_silos(cases).items())]
+
+
+def score_campaign(bars, manifest, terminals, *, job_loader=None) -> dict:
     """Replay all registered books after a locked Task-2 state is supplied."""
-    manifest = deepcopy(manifest); state = deepcopy(terminals)
+    manifest = deepcopy(manifest)
+    state = (validate_state_snapshot(terminals) if job_loader is None
+             else validate_state_snapshot(terminals, job_loader=job_loader))
     case_map = _validate_inputs(manifest, state)
     broad = manifest["broad_cases"]
     matched = [case_map[identity] for identity in manifest["matched_case_ids"]]
@@ -437,7 +448,7 @@ def score_campaign(bars, manifest, terminals) -> dict:
 
     a_base = {case["case_id"]: case["plans"]["immediate"] for case in matched}
     b_base = {case["case_id"]: case["plans"]["wait_5m_high"] for case in matched}
-    op_base = {}; judgment_base = {}; reasons = {}; measured = {}; timing_all_valid = True
+    op_base = {}; judgment_base = {}; reasons = {}; measured = {}; invalid_timing_tracks = set()
     deliberate_rejects = 0; fallback_reasons = Counter(); status_counts = Counter()
     for case in matched:
         identity = case["case_id"]; terminal = state["terminals"][identity]
@@ -460,10 +471,11 @@ def score_campaign(bars, manifest, terminals) -> dict:
         if path.get("timing_valid") is True:
             measured[identity] = ceil_elapsed_seconds(path["elapsed_ns"])
         else:
-            timing_all_valid = False
+            invalid_timing_tracks.add(case["track"])
 
     matched_scenarios = {}
-    nonentry = {}; patterns = {"denominator": len(matched), "fitted_thresholds": False, "fields": {}}
+    nonentry = {"silos": [], "combined": None}
+    patterns = {"silos": [], "combined": None}
     assumed = dict(SCENARIOS, S4=(12, 90), S5=(24, 90))
     for scenario, (cost, delay) in assumed.items():
         ab_delay = {case["case_id"]: 90 if scenario in ("S4", "S5") else delay for case in matched}
@@ -473,36 +485,32 @@ def score_campaign(bars, manifest, terminals) -> dict:
             "B": _score_arm(bars, matched, b_base, {}, "matched_B_"+scenario,
                             cost, ab_delay, as_of),
         }
-        if scenario in ("S4", "S5") and not timing_all_valid:
-            arms.update(C_operational=None, C_judgment=None)
-            contrasts = {"C_operational_minus_A": None, "C_operational_minus_B": None,
-                         "paired_denominator": len(matched)}
-        else:
-            c_delay = measured if scenario in ("S4", "S5") else {
-                case["case_id"]: delay for case in matched}
-            arms["C_operational"] = _score_arm(
-                bars, matched, op_base, {}, "matched_C_operational_"+scenario,
-                cost, c_delay, as_of)
-            judgment_reasons = {identity: reasons.get(identity, "judgment_unavailable")
-                                for identity, plan in judgment_base.items() if plan is None}
-            arms["C_judgment"] = _score_arm(
-                bars, matched, judgment_base, judgment_reasons,
-                "matched_C_judgment_"+scenario, cost, c_delay, as_of)
-            cop = arms["C_operational"]["net_dollars"]
-            contrasts = {
-                "C_operational_minus_A": (cop-arms["A"]["net_dollars"]
-                    if cop is not None and arms["A"]["net_dollars"] is not None else None),
-                "C_operational_minus_B": (cop-arms["B"]["net_dollars"]
-                    if cop is not None and arms["B"]["net_dollars"] is not None else None),
-                "paired_denominator": len(matched),
-            }
-            if scenario == "S0" and matched:
-                a_book = _run_book(bars, matched, {identity: scenario_plan(plan, cost, delay)
-                                   for identity, plan in a_base.items()}, {}, "attribution_A", as_of)
-                c_book = _run_book(bars, matched, {identity: scenario_plan(plan, cost, delay)
-                                   for identity, plan in op_base.items()}, {}, "attribution_C", as_of)
-                nonentry = _nonentry_attribution(a_book, c_book, reasons)
-                patterns = _exploratory_patterns(matched, a_book)
+        c_delay = measured if scenario in ("S4", "S5") else {
+            case["case_id"]: delay for case in matched}
+        null_tracks = invalid_timing_tracks if scenario in ("S4", "S5") else set()
+        arms["C_operational"] = _score_arm(
+            bars, matched, op_base, {}, "matched_C_operational_"+scenario,
+            cost, c_delay, as_of, null_tracks)
+        judgment_reasons = {identity: reasons.get(identity, "judgment_unavailable")
+                            for identity, plan in judgment_base.items() if plan is None}
+        arms["C_judgment"] = _score_arm(
+            bars, matched, judgment_base, judgment_reasons,
+            "matched_C_judgment_"+scenario, cost, c_delay, as_of, null_tracks)
+        contrasts = _contrasts(matched, arms["A"], arms["B"], arms["C_operational"])
+        if scenario == "S0" and matched:
+            a_runs = _run_books(bars, matched, {identity: scenario_plan(plan, cost, delay)
+                                for identity, plan in a_base.items()}, {}, "attribution_A", as_of)
+            c_runs = _run_books(bars, matched, {identity: scenario_plan(plan, cost, delay)
+                                for identity, plan in op_base.items()}, {}, "attribution_C", as_of)
+            c_by_track = {item["track"]: item["replay"] for item in c_runs}
+            case_silos = _case_silos(matched)
+            for item in a_runs:
+                track = item["track"]; grouped = case_silos[(item["archetype"], track)]
+                identity = {"archetype": item["archetype"], "track": track}
+                nonentry["silos"].append({"identity": identity,
+                    "attribution": _nonentry_attribution(item["replay"], c_by_track[track], reasons)})
+                patterns["silos"].append({"identity": identity,
+                    "patterns": _exploratory_patterns(grouped, item["replay"])})
         matched_scenarios[scenario] = dict(arms, contrasts=contrasts)
 
     role_status = Counter(record["status"] for case in state["cases"].values()
@@ -522,6 +530,9 @@ def score_campaign(bars, manifest, terminals) -> dict:
                              "median": statistics.median(valid_latencies),
                              "max": max(valid_latencies)} if valid_latencies else None)
     measured_s4 = matched_scenarios["S4"]["C_operational"]
+    measured_expiries = (None if invalid_timing_tracks else sum(
+        item["metrics"]["entry_reasons"].get("expired", 0)
+        for item in measured_s4["silos"] if item["metrics"] is not None))
     reliability = {
         "cases": len(matched),
         "specialist_invoked": sum(record["attempt_id"] is not None for record in role_records["specialist"]),
@@ -542,17 +553,18 @@ def score_campaign(bars, manifest, terminals) -> dict:
         "timing_invalid": len(matched)-len(valid_latencies),
         "latency_seconds": valid_latencies,
         "latency_distribution_seconds": latency_distribution,
-        "measured_expiries_S4": (measured_s4["entry_reasons"].get("expired", 0)
-                                 if measured_s4 is not None else None),
+        "measured_expiries_S4": measured_expiries,
     }
     return {
         "schema_version": RESULT_VERSION,
         "assumptions": {"notional": 50000.0, "starting_equity": None,
                         "funded": False, "fixed_notional_is_equal_risk": False},
-        "broad": {"denominator": len(broad), "scenarios": broad_scenarios},
-        "matched": {"denominator": len(matched), "scenarios": matched_scenarios,
-                    "episodes": _episodes(matched),
-                    "nonentry_attribution_S0": nonentry if matched else {},
+        "broad": {"silo_denominators": _silo_denominators(broad),
+                  "combined_denominator": None, "scenarios": broad_scenarios},
+        "matched": {"silo_denominators": _silo_denominators(matched),
+                    "combined_denominator": None, "scenarios": matched_scenarios,
+                    "episodes": _episode_silos(matched),
+                    "nonentry_attribution_S0": nonentry,
                     "exploratory_patterns_S0": patterns},
         "reliability": reliability,
     }

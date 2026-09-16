@@ -111,6 +111,45 @@ def terminal_state(manifest, terminal_by_id, elapsed_seconds=90, timing_valid=Tr
     return dict(body, state_sha256=digest(body))
 
 
+class SnapshotJob:
+    def __init__(self, path, terminal):
+        self.path = path
+        self.terminal = terminal
+
+    def campaign_binding(self):
+        return {"source_request_sha256": "1" * 64, "role_request_sha256": "2" * 64}
+
+    def capture_binding(self, role):
+        return {"raw_response_sha256": "8" * 64, "capture_sha256": "9" * 64}
+
+    def grade_binding(self):
+        assert self.terminal["kind"] == "published_grade"
+        return {key: deepcopy(self.terminal[key])
+                for key in ("grade_sha256", "status", "research_plan")}
+
+
+def synthetic_score(scorer, source, manifest, state, loader=None):
+    terminals = state["terminals"]
+    loader = loader or (lambda path: SnapshotJob(str(path), terminals[str(path).rsplit("/", 1)[-1]]))
+    return scorer(source, manifest, state, job_loader=loader)
+
+
+def sole_metrics(arm):
+    assert arm["combined_net_dollars"] is None
+    assert arm["combined_dollars_per_candidate"] is None
+    assert arm["combined_mtm"] is None
+    assert len(arm["silos"]) == 1
+    return arm["silos"][0]["metrics"]
+
+
+def sole_contrast(contrasts):
+    assert contrasts["combined_C_operational_minus_A"] is None
+    assert contrasts["combined_C_operational_minus_B"] is None
+    assert contrasts["combined_denominator"] is None
+    assert len(contrasts["silos"]) == 1
+    return contrasts["silos"][0]
+
+
 def test_controller_fallback_does_not_become_agent_reject():
     from scripts.research.lc_campaign_accounting import operational_plan
 
@@ -239,18 +278,19 @@ def test_score_separates_controller_fallback_from_null_judgment_and_pairs_n():
     terminal = {"case": {"kind": "external_failure", "reason": "specialist_timeout"}}
     state = terminal_state(manifest["campaign_manifest"], terminal)
     source = bars(1441); source.loc[source.index[3]] = [94.0, 95.0, 93.0, 94.0]
-    result = score_campaign(source, manifest, state)
+    result = synthetic_score(score_campaign, source, manifest, state)
     s0 = result["matched"]["scenarios"]["S0"]
-    assert result["matched"]["denominator"] == 1
-    assert s0["A"]["net_dollars"] == -3060.0
-    assert s0["C_operational"]["net_dollars"] == 0.0
-    assert s0["C_operational"]["win_rate"] is None
-    assert s0["C_judgment"]["available"] is False
-    assert s0["contrasts"] == {
-        "C_operational_minus_A": 3060.0,
-        "C_operational_minus_B": 0.0,
-        "paired_denominator": 1,
-    }
+    assert result["matched"]["silo_denominators"] == [
+        {"archetype": "liquidity_compression", "track": "hourly", "denominator": 1}]
+    assert result["matched"]["combined_denominator"] is None
+    assert sole_metrics(s0["A"])["net_dollars"] == -3060.0
+    assert sole_metrics(s0["C_operational"])["net_dollars"] == 0.0
+    assert sole_metrics(s0["C_operational"])["win_rate"] is None
+    assert sole_metrics(s0["C_judgment"])["available"] is False
+    assert sole_contrast(s0["contrasts"]) == {
+        "archetype": "liquidity_compression", "track": "hourly",
+        "C_operational_minus_A": 3060.0, "C_operational_minus_B": 0.0,
+        "paired_denominator": 1}
     assert result["reliability"]["controller_fallback_reasons"] == {"specialist_timeout": 1}
     assert result["reliability"]["deliberate_reviewed_rejects"] == 0
 
@@ -261,10 +301,10 @@ def test_fee_only_scenario_preserves_fill_and_changes_literal_sixty_dollars():
     case = campaign_case(); manifest = accounting_manifest([case])
     terminal = {"case": {"kind": "external_failure", "reason": "timeout"}}
     source = bars(1441); source.loc[source.index[3]] = [94.0, 95.0, 93.0, 94.0]
-    result = score_campaign(source, manifest,
+    result = synthetic_score(score_campaign, source, manifest,
                             terminal_state(manifest["campaign_manifest"], terminal))
-    s0 = result["broad"]["scenarios"]["S0"]["A"]
-    s1 = result["broad"]["scenarios"]["S1"]["A"]
+    s0 = sole_metrics(result["broad"]["scenarios"]["S0"]["A"])
+    s1 = sole_metrics(result["broad"]["scenarios"]["S1"]["A"])
     assert (s0["net_dollars"], s1["net_dollars"]) == (-3060.0, -3120.0)
     assert s0["admission_order"] == s1["admission_order"] == ["case"]
 
@@ -279,11 +319,12 @@ def test_measured_901_seconds_expires_enter_without_mutating_grade():
                          "research_plan": plan}}
     before = deepcopy(terminal)
     source = bars(1441)
-    result = score_campaign(source, manifest, terminal_state(
+    result = synthetic_score(score_campaign, source, manifest, terminal_state(
         manifest["campaign_manifest"], terminal, elapsed_seconds=901))
-    assert result["matched"]["scenarios"]["S0"]["C_operational"]["trades"] == 1
-    assert result["matched"]["scenarios"]["S4"]["C_operational"]["trades"] == 0
-    assert result["matched"]["scenarios"]["S4"]["C_operational"]["entry_reasons"] == {"expired": 1}
+    assert sole_metrics(result["matched"]["scenarios"]["S0"]["C_operational"])["trades"] == 1
+    measured = sole_metrics(result["matched"]["scenarios"]["S4"]["C_operational"])
+    assert measured["trades"] == 0
+    assert measured["entry_reasons"] == {"expired": 1}
     assert terminal == before
 
 
@@ -295,14 +336,14 @@ def test_invalid_measured_timing_nulls_only_s4_s5():
                          "grade_sha256": "7" * 64, "status": "research_ready",
                          "research_plan": deepcopy(case["plans"]["immediate"])}}
     state = terminal_state(manifest["campaign_manifest"], terminal, timing_valid=False)
-    result = score_campaign(bars(1441), manifest, state)
-    assert result["matched"]["scenarios"]["S0"]["C_operational"]["available"] is True
-    assert result["matched"]["scenarios"]["S4"]["C_operational"] is None
-    assert result["matched"]["scenarios"]["S4"]["C_judgment"] is None
-    assert result["matched"]["scenarios"]["S4"]["contrasts"] == {
-        "C_operational_minus_A": None, "C_operational_minus_B": None,
-        "paired_denominator": 1,
-    }
+    result = synthetic_score(score_campaign, bars(1441), manifest, state)
+    assert sole_metrics(result["matched"]["scenarios"]["S0"]["C_operational"])["available"] is True
+    measured_op = result["matched"]["scenarios"]["S4"]["C_operational"]
+    measured_judgment = result["matched"]["scenarios"]["S4"]["C_judgment"]
+    assert measured_op["silos"][0]["metrics"] is None
+    assert measured_judgment["silos"][0]["metrics"] is None
+    assert sole_contrast(result["matched"]["scenarios"]["S4"]["contrasts"])[
+        "C_operational_minus_A"] is None
 
 
 def test_decision_month_contribution_survives_cross_month_exit_and_lomo_is_subtraction():
@@ -311,24 +352,25 @@ def test_decision_month_contribution_survives_cross_month_exit_and_lomo_is_subtr
     case = campaign_case(); manifest = accounting_manifest([case])
     terminal = {"case": {"kind": "external_failure", "reason": "timeout"}}
     source = bars(1441); source.loc[source.index[3]] = [94.0, 95.0, 93.0, 94.0]
-    result = score_campaign(source, manifest,
+    result = synthetic_score(score_campaign, source, manifest,
                             terminal_state(manifest["campaign_manifest"], terminal))
-    a = result["matched"]["scenarios"]["S0"]["A"]
+    a = sole_metrics(result["matched"]["scenarios"]["S0"]["A"])
     assert a["decision_month_contributions"] == {"2026-01": -3060.0}
     assert a["leave_one_month_out"] == {"2026-01": 0.0}
-    assert result["matched"]["episodes"] == [["case"]]
+    assert result["matched"]["episodes"]["silos"][0]["episodes"] == [["case"]]
 
 
-def test_empty_matched_cohort_is_json_safe_zero_denominator_not_failure():
+def test_empty_matched_cohort_has_no_fabricated_combined_denominator():
     from scripts.research.lc_campaign_accounting import score_campaign
 
     manifest = accounting_manifest([], matched_ids=[], as_of=0)
     state = terminal_state(manifest["campaign_manifest"], {})
-    result = score_campaign(None, manifest, state)
-    assert result["matched"]["denominator"] == 0
-    assert result["matched"]["scenarios"]["S0"]["C_judgment"]["net_dollars"] == 0.0
-    assert result["matched"]["scenarios"]["S0"]["contrasts"]["paired_denominator"] == 0
-    assert result["matched"]["episodes"] == []
+    result = synthetic_score(score_campaign, None, manifest, state)
+    assert result["matched"]["silo_denominators"] == []
+    assert result["matched"]["combined_denominator"] is None
+    assert result["matched"]["scenarios"]["S0"]["C_judgment"]["silos"] == []
+    assert result["matched"]["scenarios"]["S0"]["contrasts"]["silos"] == []
+    assert result["matched"]["episodes"] == {"silos": [], "combined": None}
 
 
 def test_wait_is_post_arm_exclusive_expiry_and_pending_stop_is_causal():
@@ -340,18 +382,18 @@ def test_wait_is_post_arm_exclusive_expiry_and_pending_stop_is_causal():
 
     confirmed = bars(1441)
     confirmed.loc[confirmed.index[2], ["high", "close"]] = [102.0, 102.0]
-    result = score_campaign(confirmed, manifest, state)
-    b = result["matched"]["scenarios"]["S0"]["B"]
+    result = synthetic_score(score_campaign, confirmed, manifest, state)
+    b = sole_metrics(result["matched"]["scenarios"]["S0"]["B"])
     assert b["trades"] == 1 and b["admission_order"] == ["case"]
 
     at_expiry = bars(1441)
     at_expiry.loc[at_expiry.index[14], ["high", "close"]] = [102.0, 102.0]
-    expired = score_campaign(at_expiry, manifest, state)
-    assert expired["matched"]["scenarios"]["S0"]["B"]["entry_reasons"] == {"expired": 1}
+    expired = synthetic_score(score_campaign, at_expiry, manifest, state)
+    assert sole_metrics(expired["matched"]["scenarios"]["S0"]["B"])["entry_reasons"] == {"expired": 1}
 
     stopped = bars(1441); stopped.loc[stopped.index[1], "low"] = 94.0
-    cancelled = score_campaign(stopped, manifest, state)
-    assert cancelled["matched"]["scenarios"]["S0"]["B"]["entry_reasons"] == {"cancelled": 1}
+    cancelled = synthetic_score(score_campaign, stopped, manifest, state)
+    assert sole_metrics(cancelled["matched"]["scenarios"]["S0"]["B"])["entry_reasons"] == {"cancelled": 1}
 
 
 def test_same_open_capacity_release_and_busy_candidate_never_retries():
@@ -367,12 +409,12 @@ def test_same_open_capacity_release_and_busy_candidate_never_retries():
     terminal = {identity: {"kind": "external_failure", "reason": "timeout"}
                 for identity in ("first", "second", "third")}
     source = bars(1443); source.loc[source.index[3]] = [94.0, 95.0, 93.0, 94.0]
-    result = score_campaign(source, manifest,
+    result = synthetic_score(score_campaign, source, manifest,
                             terminal_state(manifest["campaign_manifest"], terminal))
-    a = result["matched"]["scenarios"]["S0"]["A"]
+    a = sole_metrics(result["matched"]["scenarios"]["S0"]["A"])
     assert a["admission_order"] == ["first", "second"]
     assert a["entry_reasons"] == {"admitted": 2, "skipped_busy": 1}
-    assert result["matched"]["episodes"] == [["first", "second", "third"]]
+    assert result["matched"]["episodes"]["silos"][0]["episodes"] == [["first", "second", "third"]]
 
 
 def test_nonentry_attribution_uses_a_net_sign_and_separates_reason():
@@ -381,9 +423,11 @@ def test_nonentry_attribution_uses_a_net_sign_and_separates_reason():
     case = campaign_case(); manifest = accounting_manifest([case])
     terminal = {"case": {"kind": "external_failure", "reason": "specialist_timeout"}}
     source = bars(1441); source.loc[source.index[3]] = [94.0, 95.0, 93.0, 94.0]
-    result = score_campaign(source, manifest,
+    result = synthetic_score(score_campaign, source, manifest,
                             terminal_state(manifest["campaign_manifest"], terminal))
-    assert result["matched"]["nonentry_attribution_S0"] == {
+    attribution = result["matched"]["nonentry_attribution_S0"]
+    assert attribution["combined"] is None
+    assert attribution["silos"][0]["attribution"] == {
         "specialist_timeout": {"missed_winner": 0, "avoided_loser": 1,
                                "breakeven": 0, "unknown": 0}}
 
@@ -394,12 +438,14 @@ def test_output_has_occupied_periods_and_json_safe_exploratory_denominators():
     case = campaign_case(); manifest = accounting_manifest([case])
     terminal = {"case": {"kind": "external_failure", "reason": "timeout"}}
     source = bars(1441); source.loc[source.index[3]] = [94.0, 95.0, 93.0, 94.0]
-    result = score_campaign(source, manifest,
+    result = synthetic_score(score_campaign, source, manifest,
                             terminal_state(manifest["campaign_manifest"], terminal))
-    a = result["matched"]["scenarios"]["S0"]["A"]
+    a = sole_metrics(result["matched"]["scenarios"]["S0"]["A"])
     assert a["occupied_months"] == ["2026-02"]
     assert a["occupied_weeks"] == ["2026-W05"]
-    subtype = result["matched"]["exploratory_patterns_S0"]["fields"]["hourly_subtype"]
+    pattern_report = result["matched"]["exploratory_patterns_S0"]
+    assert pattern_report["combined"] is None
+    subtype = pattern_report["silos"][0]["patterns"]["fields"]["hourly_subtype"]
     assert subtype == {"missing": 0, "groups": {
         '"synthetic"': {"candidates": 1, "a_winners": 0, "a_losers": 1,
                         "a_breakeven": 0, "a_unknown": 0}}}
@@ -411,7 +457,7 @@ def test_reliability_separates_capture_grade_fallback_and_latency_counts():
 
     case = campaign_case(); manifest = accounting_manifest([case])
     terminal = {"case": {"kind": "external_failure", "reason": "specialist_timeout"}}
-    result = score_campaign(bars(1441), manifest, terminal_state(
+    result = synthetic_score(score_campaign, bars(1441), manifest, terminal_state(
         manifest["campaign_manifest"], terminal, elapsed_seconds=91))
     assert result["reliability"] == {
         "cases": 1, "specialist_invoked": 1, "specialist_captured": 1,
@@ -436,11 +482,11 @@ def test_deliberate_reviewed_reject_is_not_counted_as_fallback():
     terminal = {"case": {"kind": "published_grade", "job_directory": "/synthetic/case",
                          "grade_sha256": "7" * 64, "status": "research_ready",
                          "research_plan": deepcopy(case["plans"]["reject"])}}
-    result = score_campaign(bars(1441), manifest,
+    result = synthetic_score(score_campaign, bars(1441), manifest,
                             terminal_state(manifest["campaign_manifest"], terminal))
     s0 = result["matched"]["scenarios"]["S0"]
-    assert s0["C_operational"]["net_dollars"] == 0.0
-    assert s0["C_judgment"]["net_dollars"] == 0.0
+    assert sole_metrics(s0["C_operational"])["net_dollars"] == 0.0
+    assert sole_metrics(s0["C_judgment"])["net_dollars"] == 0.0
     assert result["reliability"]["deliberate_reviewed_rejects"] == 1
     assert result["reliability"]["controller_fallback_reasons"] == {}
 
@@ -462,4 +508,89 @@ def test_score_rejects_rehashed_impossible_decision_path():
         {key: value for key, value in state.items() if key != "state_sha256"}
     ).encode("ascii")).hexdigest()
     with pytest.raises(ValueError, match="timing"):
-        score_campaign(bars(1441), manifest, state)
+        synthetic_score(score_campaign, bars(1441), manifest, state)
+
+
+def test_score_uses_authoritative_snapshot_validator_and_job_loader():
+    from scripts.research.lc_campaign_accounting import score_campaign
+
+    case = campaign_case(); manifest = accounting_manifest([case])
+    terminal = {"case": {"kind": "external_failure", "reason": "timeout"}}
+    state = terminal_state(manifest["campaign_manifest"], terminal)
+    bad = SnapshotJob("/synthetic/case", terminal["case"])
+    bad.campaign_binding = lambda: {
+        "source_request_sha256": "0" * 64, "role_request_sha256": "2" * 64}
+    with pytest.raises(ValueError, match="manifest|binding"):
+        synthetic_score(score_campaign, bars(1441), manifest, state,
+                        loader=lambda path: bad)
+
+
+def test_mixed_tracks_are_independent_silos_with_no_aggregate_pnl_or_contrast():
+    from scripts.research.lc_campaign_accounting import score_campaign
+
+    hourly = campaign_case("hourly", 0)
+    minute = campaign_case("minute", 0); minute["track"] = "minute"
+    cases = [hourly, minute]
+    manifest = accounting_manifest(cases, ["hourly", "minute"])
+    terminal = {identity: {"kind": "external_failure", "reason": "timeout"}
+                for identity in ("hourly", "minute")}
+    result = synthetic_score(score_campaign, bars(1441), manifest,
+                             terminal_state(manifest["campaign_manifest"], terminal))
+    arm = result["matched"]["scenarios"]["S0"]["A"]
+    assert arm["combined_net_dollars"] is None
+    assert arm["combined_dollars_per_candidate"] is None
+    assert arm["combined_mtm"] is None
+    assert {(item["identity"]["track"], tuple(item["metrics"]["admission_order"]))
+            for item in arm["silos"]} == {("hourly", ("hourly",)), ("minute", ("minute",))}
+    assert {item["identity"]["track"]
+            for item in result["broad"]["scenarios"]["S3"]["B"]["silos"]} == {
+        "hourly", "minute"}
+    contrasts = result["matched"]["scenarios"]["S0"]["contrasts"]
+    assert contrasts["combined_C_operational_minus_A"] is None
+    assert contrasts["combined_C_operational_minus_B"] is None
+    assert {(item["track"], item["paired_denominator"])
+            for item in contrasts["silos"]} == {("hourly", 1), ("minute", 1)}
+    assert {item["track"] for item in result["matched"]["episodes"]["silos"]} == {
+        "hourly", "minute"}
+    assert result["matched"]["episodes"]["combined"] is None
+    attribution = result["matched"]["nonentry_attribution_S0"]
+    patterns = result["matched"]["exploratory_patterns_S0"]
+    assert attribution["combined"] is None and patterns["combined"] is None
+    assert {item["identity"]["track"] for item in attribution["silos"]} == {
+        "hourly", "minute"}
+    assert {item["identity"]["track"] for item in patterns["silos"]} == {
+        "hourly", "minute"}
+
+
+def test_invalid_measured_timing_nulls_only_its_own_track_silo():
+    from scripts.research.assessment_evidence_guard import _canonical
+    from scripts.research.lc_campaign_accounting import score_campaign
+
+    hourly = campaign_case("hourly", 0)
+    minute = campaign_case("minute", 0); minute["track"] = "minute"
+    manifest = accounting_manifest([hourly, minute], ["hourly", "minute"])
+    terminal = {identity: {"kind": "external_failure", "reason": "timeout"}
+                for identity in ("hourly", "minute")}
+    state = terminal_state(manifest["campaign_manifest"], terminal)
+    path = state["cases"]["minute"]["decision_path"]
+    path.update(timing_valid=False, elapsed_ns=None, reason="timer_runtime_changed")
+    path["end"]["runtime_id"] = "restarted"
+    path["path_sha256"] = hashlib.sha256(_canonical(
+        {key: value for key, value in path.items() if key != "path_sha256"}
+    ).encode("ascii")).hexdigest()
+    state["state_sha256"] = hashlib.sha256(_canonical(
+        {key: value for key, value in state.items() if key != "state_sha256"}
+    ).encode("ascii")).hexdigest()
+    result = synthetic_score(score_campaign, bars(1441), manifest, state)
+    silos = {item["identity"]["track"]: item
+             for item in result["matched"]["scenarios"]["S4"]["C_operational"]["silos"]}
+    assert silos["hourly"]["metrics"] is not None
+    assert silos["minute"]["metrics"] is None
+    assert silos["minute"]["reason"] == "invalid_measured_timing"
+
+
+def test_episode_regression_does_not_duplicate_final_group():
+    from scripts.research.lc_campaign_accounting import _episodes
+
+    cases = [campaign_case("a", 0), campaign_case("b", 60), campaign_case("c", 3000)]
+    assert _episodes(cases) == [["a", "b"], ["c"]]
