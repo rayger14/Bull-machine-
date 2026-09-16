@@ -10,6 +10,18 @@ from scripts.research.assessment_evidence_guard import _canonical
 from scripts.research.lc_campaign import CampaignController, SOURCE_UNITS
 
 
+def test_nested_source_manifest_preserves_expected_absent_files():
+    from scripts.research.lc_campaign import _manifest_files
+    source = {
+        "source_manifest": {"files": {}, "replay": {"models": {"files": {
+            "missing-calibrator.pkl": None,
+        }}}},
+        "code_manifest": {"files": {}},
+        "config_manifest": {"files": {}},
+    }
+    assert _manifest_files(source) == {"missing-calibrator.pkl": None}
+
+
 def digest_bytes(value):
     return hashlib.sha256(value).hexdigest()
 
@@ -234,6 +246,23 @@ def test_source_reopens_artifacts_and_completed_bytes_are_immutable(setup):
         controller.reserve_source("2024-01", receipts["2024-01"]["directory"], reserved_hours=1)
     (Path(receipts["2024-01"]["directory"]) / "source.json").write_text("changed")
     with pytest.raises(ValueError, match="hash"): controller.status()
+
+
+def test_source_receipt_compares_lean_manifest_projection_to_full_candidates(setup):
+    controller, inventory, receipts, _, _, _ = setup
+    controller.inventory(inventory)
+    month = "2024-01"; directory = Path(receipts[month]["directory"])
+    attempt = controller.reserve_source(month, directory, reserved_hours=1)
+    write_source(directory.parent, month, [
+        ("hourly-lc:2024-01-03T12:00:00+00:00", "2024-01-03T12:00:00+00:00")])
+    source_path, manifest_path = directory / "source.json", directory / "manifest.json"
+    source = json.loads(source_path.read_text())
+    source["candidates"][0]["features"] = {"source_close": 100.0}
+    source_raw = (_canonical(source) + "\n").encode(); source_path.write_bytes(source_raw)
+    manifest = json.loads(manifest_path.read_text())
+    manifest["source_file_sha256"] = digest_bytes(source_raw)
+    manifest_path.write_bytes((_canonical(manifest) + "\n").encode())
+    assert controller.complete_source(month, attempt["attempt_id"])["month"] == month
 
 
 def test_source_reservation_rejects_preexisting_output_collision(setup):

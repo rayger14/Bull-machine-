@@ -103,7 +103,7 @@ def _manifest_files(source):
         if not isinstance(files, dict):
             raise ValueError(label + " files must be a mapping")
         for path, wanted in files.items():
-            _sha(wanted, label + " hash")
+            _sha(wanted, label + " hash", nullable=True)
             if path in expected and expected[path] != wanted:
                 raise ValueError("conflicting nested source_manifest.replay hash")
             expected[path] = wanted
@@ -305,11 +305,17 @@ class CampaignController:
                              "construction", "month", "seed", "start", "end_exclusive",
                              "source_file", "source_file_sha256", "candidate_count",
                              "input_limit_disclosures", "candidates"}
+        projected_candidates = [{
+            "candidate_id": row.get("candidate_id"),
+            "decision_time": _utc(row.get("decision_time"), "candidate decision_time").isoformat(),
+            "exposure_key": row.get("candidate_id"),
+            "track": row.get("track"),
+        } for row in source.get("candidates", [])]
         if (set(manifest) != expected_manifest or manifest["schema"] != "lc-campaign-candidate-manifest-v1"
                 or manifest["month"] != receipt["month"] or manifest["source_file"] != "source.json"
                 or manifest["source_file_sha256"] != receipt["source_sha256"]
-                or manifest["candidate_count"] != len(manifest["candidates"])
-                or manifest["candidates"] != source.get("candidates")):
+                or manifest["candidate_count"] != len(projected_candidates)
+                or manifest["candidates"] != projected_candidates):
             raise ValueError("source candidate manifest differs from source payload")
         for path, wanted in _manifest_files(source).items():
             if self._file_hasher(path) != wanted:
