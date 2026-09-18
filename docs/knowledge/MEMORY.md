@@ -1,6 +1,67 @@
 # Bull Machine Project Memory
 
+## September 17, 2026 authoritative restart override
+
+Read [CLI_HANDOFF_2026_09_17.md](CLI_HANDOFF_2026_09_17.md) first. User authorized
+commit/push/PR checkpoint publication, not deployment. Subtype/evidence preflight
+is implemented: 20 packets evidence-ready, 13 downside/7 upside; 18 unassessed
+remain. Two reviewed assessments and the separately authorized three-case
+exploratory economic reveal are finished. Jan20/25 are now outcome-exposed;
+older no-outcome/zero-role/launch-full20 instructions below are superseded.
+Single-assessor mode, its new economic comparison and live shadow integration
+remain unfinished. Preserve frozen two-role runtime; do not rerun assessments,
+reveal new outcomes, or dispatch new paid calls automatically. GitHub excludes
+private data, runtime captures and locks; same-machine checkout retains them.
+
 ## September 15, 2026 verification overrides
+
+- **FINAL September16 — full assessment lifecycle COMPLETE:** NEW
+  `lc_judgment_execution.py` plus3 real-job synthetic e2e tests (730.78s),
+  root14 prep/foundation tests pass; scoped review findings closed. Captures,
+  conditional reviewer, grades/failures, all20 terminal lock/reveal, fresh
+  start/post-start observed-balance checks implemented. `runtime_v2` prepared/
+  verified/reopened20 jobs,0attempts, no outcomes; root rechecked runtime hash
+  dcb3f4dc34b23afa727d1e684bc982fff7bdbc3b596f94e80c0fa838bebfcb8c.
+  software_readiness.json approval exists, NOT spend authorization. Latest
+  observed797.76123credits <1900 floor; next is fresh qualifying budget and
+  actual frozen20 campaign using ONE persistent lead controller process.
+  No new runner-development phase, census rerun, pilot, tuning or deployment.
+  See lc_assessment_runbook_2026_09_16.md. Earlier partial statuses superseded.
+
+- **September16 — runner foundation prepared, NOT launch-ready:** new
+  `scripts/research/lc_judgment_runner.py` plus tests; actual judgment_v1/runtime_v1
+  contains20 cloned jobs, zero attempts, no active/recovery-required roles.
+  Root prepare/verify/close/reopen succeeded. Exclusive owner, persistent ledger,
+  pinned dependencies, fresh1900-credit START-only check, dry-run no-retry
+  reservation/recovery implemented. Real dispatch/capture blocked. Next implement
+  raw/runtime capture, conditional critic, terminal/reveal wiring and post-start
+  spend tracking; then no-model end-to-end check. Budget latest observed1437.24982
+  still below floor. Do not claim market results or rerun census. Full checkpoint:
+  `lc_runner_checkpoint_2026_09_16.md`. No commits/push or production changes.
+
+- **Latest —20-case evidence preparation complete, no market launch:**
+  `results/lc_consolidated_2026_09_15/judgment_v1/` contains immutable roster,
+  evidence packets, source requests, specialist wrappers/envelopes, and
+  `preparation_binding.json` linking matching roster/evidence locks (SHA
+  147b4788a99ad7a1844954a4864a7419cac9a35a7dc3300c2c02130d42cf8726).
+  Independent review accepted causal prep; root7 new tests +54 related tests
+  pass (3 overlap), evidence replay verified20. No outcomes/roles. Next work is
+  versioned20-case capture runner reusing Jan19 lifecycle, stable in-process
+  ledger identity for measured timing, and interrupted-dispatch handling.
+  Do NOT use old controller.prepare (still contiguous rule). Budget observed
+  1589.73461 at2026-09-16T06:29:05.640Z <1900 start floor; market launch blocked
+  until fresh sufficient balance or explicit revision. No census rerun needed.
+
+- **Latest — census complete; sampling amendment approved:**31/31 source months,
+  142 total LC candidates,36 in January–July2026,16 prior-exposure exclusions,
+  20 remaining (January20–July26). User approved chronological unassessed cases
+  allowing gaps, capped at30, superseding the contiguous-block rule that gave5.
+  See `lc_sampling_amendment_2026_09_15.md`. Separate selector added; frozen
+  `run_v2` controller is unchanged and still prepares the OLD rule. NEXT: versioned
+  preparation integration, freeze20 packets/requests, readiness/budget gate,
+  at most20 specialists plus20 conditional critics; lock all decisions before
+  scoring. No market roles/outcomes yet. Do not rerun census or claim holdout
+  purity/full-history performance for the filtered sample. Older status follows.
 
 - **Consolidated campaign Tasks1–4 complete; Task5 not run:** user-approved30setup/60assessment-call ceiling is unchanged. Commits62a56ba..2488787 implement the immutable source census, bounded role/terminal ledger with monotonic decision timing, isolated hourly/minute S0–S5 accounting and restartable controller. Review fixes closed Q1/source drift and atomic publication, duplicate/late role results, nested ledger timing validation, mixed-timeframe pooling, weak snapshot validation, mutable scoring, interrupted source deadlock and reconstructed response bytes. Root final research suite1081passed in144.26s with one existing LibreSSL warning. No expanded source census, market role or new economic outcome has run. NEXT: execute inventory/source-only census, report actual candidate count/N/exclusions, freeze packets/requests, then readiness-check before paid roles. Current local ledger `.superpowers/sdd/2026-09-15-lc-consolidated-campaign/progress.md`; do not redispatch implementation or duplicate paid roles. This is engineering readiness, not profitability evidence.
 
@@ -473,3 +534,15 @@ Live code had stale hardcoded CMI weights. Backtester reads from config (correct
 - **P0 2026-09-03: live reads configs/champion/archetypes_v14rq/, NOT configs/archetypes/** (champion_paper.json archetype_config_dir). The Sept-2 LC floor deploy edited the wrong dir — floor 3.0 was never live until this fix. hob_reaction.yaml absent from live dir = why it never fired live (not a code bug). Trio diff otherwise clean (only the floor differed). RULE: any archetype YAML change must be applied to the champion dir (or the dirs reconciled) — verify deploys by resolving archetype_config_dir, never by reading configs/archetypes/.
 - [Sweep native scalper](sweep_native_scalper_2026_09_09.md) — ZeroIka equal-lows validated at 1m resolution: 6/6 years positive through EVERY stress (costs/overlap/latency), best years = our droughts; a second-machine candidate, parked pending build decision. The 1H proxy stays as-is.
 - **Identity-restoration campaign closed (2026-09-09)** — the week's spec audit of all archetypes: wick_trap directional gate SHIPPED (PF 1.37→1.49, live), exhaustion er_oversold_F SHIPPED (offline-free, blocks live top-buys), hob teachings-identity PASSED (PR #80, install pending), **sweep swept-level restoration BURIED** (PF 1.78 but starved to n=14, fresh still negative — at 1H the deep-dominant-wick proxy IS the earning engine; textbook level-anchoring starves, matching the July U1 finding). Exhaustion revival claim from the Sept-8 audit RETRACTED (config-file drift; honest baseline n=24, −$9.7K, clean reject). Lesson: restore teachings where the loose identity LOSES (hob); keep the proxy where it EARNS (sweep). Remaining queue: boost-stack cap study, golden-master+scorecard build, hob live install decision, CB review, graduation sizing.
+# September16 latest: two-case paid checkpoint completed
+
+See [checkpoint results](lc_two_case_checkpoint_results_2026_09_16.md). January20/25 specialists both rejected, separate critics found no material errors, both research_ready. Four requested Astra/high role calls; no retries/outcomes. Full paths7.68/8.58minutes expose latency beyond90-second assumption. Actual credits unknown. Runtime `judgment_v1/runtime_checkpoint_v1` contains two finalized case paths;18 remain pending and reveal remains locked. Do not rerun completed cases or automatically expand spending. The two-case adapter records unavailable billing truthfully after user instructed proceeding. This entry supersedes earlier zero-assessment checkpoints below.
+# Latest: exploratory outcomes revealed at user's request
+
+September16: [three-case scoring](lc_three_case_economics_2026_09_16.md) supersedes the no-outcomes status below for Jan19/20/25 only. Agent wait on Jan19 lost$103.29; Jan20/25 rejects avoided immediate losses$663.80/$508.02. Mechanical wait also skippedJan20 but lost$495.51 Jan25. Three-case agent sum remains negative and reject-all wins; no established edge. No new agent calls. Original locks preserved;18 cases pending. User favors one-assessor calls going forward; code cannot replace factual critic review completely and single-role execution still needs prospective implementation. Do not feed revealed outcomes to market assessors or claim untouched20-case validation.
+# Latest: September live LC winner/loser comparison
+
+See [September findings](lc_september_distinguishing_factors_2026_09_16.md). Server feature logs recovered; Sep10 hourly accumulation + bullish4H/daily, Sep11 distribution near range top despite bullish HTF, Sep15 accumulation against bearish4H/daily.21 of24 June-onward groups matched feature timestamp and exact close×1.0003 entry. High-RSI/distribution six cases include three substantial winners; reject blanket veto. Dual-bearish oversold onlytwo losses, not validated. Independent agent advises shadow-only context annotation then chronological testing. September minute source and historical timing/sizing receipts unverified. No live changes. Do not substitute Binance archive (endsAug31) for Coinbase-labeled live data or treat candle-open labels as execution times.
+# Latest: subtype/evidence preflight implemented
+
+September16: [preflight](lc_context_preflight_2026_09_16.md), `scripts/research/lc_setup_preflight.py`;77 tests pass.20 hash-bound cases evidence-ready (not trading-ready),13 downside/7 upside;18 awaiting assessment comprise11 downside/7 upside. Geometry labels are not RSI gates or proof of exhaustion; absence/breaks remain descriptive. No paid calls or production edits. Next is versioned single-assessor capture with truthful unreviewed provenance, then economic comparison; preserve older two-role contracts. Full four-stage rollout and September source-matched minute reconstruction remain incomplete.

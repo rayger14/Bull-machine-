@@ -12,6 +12,21 @@
 
 ## Status and global constraints
 
+**September17 restart override:** the census and two-role execution lifecycle
+are implemented; two reviewed cases and the authorized three-case exploratory
+reveal are complete. The full campaign is not complete. See the
+[current CLI handoff](../../knowledge/CLI_HANDOFF_2026_09_17.md) before following
+historical launch instructions below. User authorized checkpoint publication;
+the next milestone is a separate single-assessor version, not automatic spending.
+
+**Sampling amendment approved after the completed census:** the user approved
+chronological selection of all previously unassessed eligible cases, capped at30,
+allowing gaps caused by prior assessments. This supersedes the consecutive-block
+requirements below, which remain as the historical specification. See
+[sampling amendment](../../knowledge/lc_sampling_amendment_2026_09_15.md).
+The source census is complete; campaign market roles and scoring have not run.
+The implementation-not-started statement below is the original planning status.
+
 - September 15, 2026: user chose **up to 30 setups / 60 calls**. This is a ceiling, not proof that 30 eligible setups exist or a token/dollar guarantee.
 - Planning and read-only data/design review are complete; implementation, expanded source collection, market roles and economic scoring have **not** started.
 - Stay on `quant/archetype-evidence-audit` in the existing workspace. No new worktree, production/config/fusion edits, live orders, dependencies, push or PR.

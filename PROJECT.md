@@ -1,7 +1,13 @@
 # Bull Machine — start here
 
-Updated September15,2026. This is the current cross-chat/CLI handoff, not a trading
+Updated September17,2026. This is the current cross-chat/CLI handoff, not a trading
 model's training context. Check git status/log because active work may be newer.
+
+**Start with the [September17 CLI handoff](docs/knowledge/CLI_HANDOFF_2026_09_17.md).**
+It supersedes historical next-step and authorization statements below. User
+authorized commit/push/PR publication; no live deployment or new paid campaign.
+Current next implementation: a separately versioned cheaper single-assessor
+contract, followed by a frozen independent-book comparison, not another census.
 
 ## User's goal
 
@@ -25,7 +31,8 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
   and [plan](docs/superpowers/plans/2026-09-14-lc-persistent-master.md)
   remain preserved, not silently relaxed.
 - User explicitly requested planning followed by completion, with quant review.
-- No live deployment, production/config/fusion edits, fine-tuning, push or PR.
+- No live deployment, production/config/fusion edits or fine-tuning. User
+  authorized checkpoint commit/push/PR on September17.
 - Latest separately approved research direction:
   [LC context discrimination](docs/superpowers/specs/2026-09-15-lc-context-discrimination.md).
   Facts, request/grader/jobs, five-record memory and the fixed comparison ran.
@@ -50,6 +57,53 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 | Task4 actual Q1 comparison | PhaseA harness/source preflight built; root849tests pass; independent harness review and actual roles/outcomes pending |
 
 ## Latest deliverables
+
+**September16 — subtype/evidence preflight implemented:** new outcome-free `lc_setup_preflight.py` and tests;77 combined tests pass.20 frozen original packet hashes match,20 evidence-ready;13 downside/7 upside. Remaining18 comprise11 downside/7 upside; the two already revealed are not reassessed. No model calls or live changes. [Status of all four requirements and next single-assessor milestone](docs/knowledge/lc_context_preflight_2026_09_16.md). Cheaper single-role capture, new economic comparison and live shadow service remain pending; do not claim them complete.
+
+**September16 — live September LC comparison completed:** recovered actual server feature rows for Sep10 winner and Sep11/15 losers; one independent agent reviewed. Sep15 had bearish4H/daily context despite hourly accumulation; Sep11 was high-RSI/hourly distribution near its20h range top. Broader check21 matched groups shows distribution/high-RSI includes major winners (six groups,+$5,270.73), so no blanket veto. Dual-bearish oversold subgroup onlytwo losses: insufficient. Minute source/availability and sizing attribution remain unresolved. [Findings and proposed shadow-only context integration](docs/knowledge/lc_september_distinguishing_factors_2026_09_16.md). No production changes; candidate implementation design awaits approval.
+
+**September16 — user-authorized three-case economic reveal completed:** no new agent calls. Fixed90s/12bps exploratory totals: immediate -$1,166.46; mechanical wait -$598.80; agent -$103.29. Jan19 accepted wait lost; Jan20 reject matched an expired mechanical trigger; Jan25 reject avoided both baseline losses. Reject-all would beat all three here, so no profitable edge established. Jan20/25 are now outcome-exposed; full20-case reveal gate remains closed and18 decisions pending. [Economic results, sensitivities and next step](docs/knowledge/lc_three_case_economics_2026_09_16.md). User favors cheaper single-assessor calls; prospective single-role mode is not yet implemented.
+
+**September16 — TWO actual LC assessments completed:** first frozen cases January20 and January25 both chose reject; two fresh critics found no material errors; both grades are research_ready. Four role calls total, no retries or outcomes revealed. Measured full paths were 7.68 and 8.58 minutes, not the assumed90 seconds. Actual credits unavailable; no hard credit-cap claim. Remaining18 cases pending. See [results and next decision](docs/knowledge/lc_two_case_checkpoint_results_2026_09_16.md). This supersedes the older zero-paid-attempt status below. No automatic further spending.
+
+**September16 — FULL assessment lifecycle complete; paid campaign not run:**
+`lc_judgment_execution.py` now handles exact captures, conditional critic,
+immutable grades/failures, restart-safe no-retry bookkeeping and all-terminal
+reveal gating. Three end-to-end tests passed;14 root preparation/foundation
+tests passed; independent review findings closed. Real runtime_v2 verified with
+20 jobs and zero attempts. Latest observed797.76123credits <1900 start floor.
+NEXT: fresh sufficient budget (or explicit revision), then run the frozen20;
+no further runner feature phase. [Checkpoint](docs/knowledge/lc_runner_checkpoint_2026_09_16.md)
+and [operating runbook](docs/knowledge/lc_assessment_runbook_2026_09_16.md).
+
+**September16 — runner foundation prepared, full lifecycle still blocked:**
+New `lc_judgment_runner.py` prepared20 runtime jobs and reopens with zero
+specialist/reviewer attempts. It adds persistent in-process ledger ownership,
+fresh start-budget checks and synthetic no-retry recovery. Real dispatch remains
+disabled. Capture/critic/terminal lifecycle and spend tracking are NOT implemented.
+Latest local balance record1437.24982 is below1900 launch floor; not a live
+billing reading. [Exact checkpoint and next work](docs/knowledge/lc_runner_checkpoint_2026_09_16.md).
+
+**Latest execution checkpoint —20-case evidence frozen, roles blocked:**
+Versioned source preparation and20 exact causal packets/specialist requests are
+saved locally under `results/lc_consolidated_2026_09_15/judgment_v1/`, cross-bound
+by `preparation_binding.json`. Independent review accepted preparation integrity;
+root7 new sampling/preparation tests and54 related contract tests passed (3 overlap).
+No trader assessments/outcomes. NEXT: versioned20-case capture runner, persistent
+in-process timing identity and interruption handling; see
+[checkpoint and blockers](docs/knowledge/lc_sampling_amendment_2026_09_15.md).
+Observed balance1589.73461 is below existing1900 market-start gate; recheck or
+obtain explicit budget revision before paid roles. No live engine changes.
+
+**Latest sampling update — census complete, assessments pending:** all31 source
+months yielded142 LC candidates;36 lie in January–July2026 and16 are previously
+assessed, leaving20. User approved chronological unassessed selection with gaps
+instead of the longest consecutive block of5. See
+[approved amendment](docs/knowledge/lc_sampling_amendment_2026_09_15.md).
+The new selector is separate from the frozen source controller; versioned
+preparation integration, packet/request freeze and paid-role readiness remain
+next. No campaign market roles or outcome scoring have run. The older statuses
+below are historical and are superseded by this entry.
 
 **Newest — consolidated LC campaign implementation complete; no campaign run yet:**
 [Authoritative design and implementation plan](docs/superpowers/plans/2026-09-15-lc-consolidated-campaign.md).
