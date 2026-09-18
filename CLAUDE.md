@@ -1,5 +1,14 @@
 # Bull Machine v17 — Development Guidelines
 
+## Current research handoff — read first
+
+Read `PROJECT.md` and the newest dated overrides in
+`docs/knowledge/MEMORY.md` before acting. The handoff links the current approved
+goal, active plan, verified progress and local-only data requirements. The older
+architecture and performance descriptions below are historical context, not
+current research certification. Preserve the current spec's no-live/no-push
+boundaries and update the handoff at meaningful checkpoints.
+
 ## Current Architecture (2026-02-25)
 
 **v17 Whale Footprint**: 16+1 archetypes + YAML hard_gates + 301-col feature store + Optuna ATR + signal dedup + heuristic fixes + whale conflict penalty + Smart Exits V2 + $100K capital

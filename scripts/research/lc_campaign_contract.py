@@ -1,0 +1,605 @@
+"""Immutable, offline roster and terminal ledger for the LC campaign.
+
+The public manifest/result schemas intentionally accept no extensible fields.
+This keeps the controller's freeze and audit boundary explicit: role delivery
+is recorded separately from a recomputable published grade, and controller
+failures never become grades.
+"""
+from copy import deepcopy
+import fcntl
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import tempfile
+import time
+import uuid
+
+from scripts.research.assessment_evidence_guard import _canonical
+
+
+SCHEMA_VERSION = "lc_campaign_contract_v1"
+ROLES = ("specialist", "reviewer")
+MAX_CASES = MAX_ROLE_ATTEMPTS = 30
+MAX_ACTIVE = 3
+DEADLINE_SECONDS = 600
+_HEX = set("0123456789abcdef")
+DECISION_PATH_VERSION = "lc_campaign_decision_path_v1"
+
+
+def ceil_elapsed_seconds(elapsed_ns):
+    if type(elapsed_ns) is not int or elapsed_ns < 0:
+        raise ValueError("elapsed_ns must be a nonnegative integer")
+    return (elapsed_ns + 999_999_999) // 1_000_000_000
+
+
+def select_block(candidate_ids: list[str], excluded: set[str], cap: int = 30) -> list[str]:
+    """Choose earliest full contiguous unexcluded block, else longest earliest run."""
+    if type(cap) is not int or cap < 1 or cap > MAX_CASES:
+        raise ValueError("cap must be an integer from 1 through 30")
+    if not isinstance(candidate_ids, list) or not isinstance(excluded, set):
+        raise ValueError("candidate_ids must be a list and excluded a set")
+    if any(not isinstance(case_id, str) or not case_id for case_id in candidate_ids):
+        raise ValueError("candidate IDs must be nonempty strings")
+    if len(set(candidate_ids)) != len(candidate_ids):
+        raise ValueError("candidate IDs must be unique")
+    if any(not isinstance(case_id, str) for case_id in excluded):
+        raise ValueError("excluded IDs must be strings")
+    runs, run = [], []
+    for case_id in candidate_ids:
+        if case_id in excluded:
+            if run:
+                runs.append(run)
+                run = []
+        else:
+            run.append(case_id)
+    if run:
+        runs.append(run)
+    for run in runs:
+        if len(run) >= cap:
+            return run[:cap]
+    return list(max(runs, key=len)) if runs else []
+
+
+def _hash(value):
+    return hashlib.sha256(_canonical(value).encode("ascii")).hexdigest()
+
+
+def _sha(value, label):
+    if not isinstance(value, str) or len(value) != 64 or set(value) - _HEX:
+        raise ValueError(label + " must be a lowercase SHA-256")
+
+
+def _now(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+        raise ValueError("clock must return nonnegative seconds")
+    if not math.isfinite(value):
+        raise ValueError("clock must return finite seconds")
+    return value
+
+
+def _time(value, label):
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+        raise ValueError(label + " must be finite nonnegative seconds")
+
+
+def _default_job_loader(path):
+    from scripts.research.lc_published_jobs import PublishedContextResearchJob
+    return _PublishedJobAdapter(path)
+
+
+class _PublishedJobAdapter:
+    """Small read-only adapter; construction rechecks the published job chain."""
+    def __init__(self, path):
+        from scripts.research.lc_published_jobs import PublishedContextResearchJob
+        self.path = str(path)
+        self._job = PublishedContextResearchJob(path)
+
+    def _stages(self):
+        return self._job._read()
+
+    def campaign_binding(self):
+        bundle = self._stages()["request"]["payload"]
+        return {"source_request_sha256": bundle["source_request_sha256"],
+                "role_request_sha256": bundle["role_request_sha256"]}
+
+    def capture_binding(self, role):
+        stage = self._stages()[role]
+        payload = stage["payload"]
+        return {"raw_response_sha256": payload["raw_sha256"],
+                "capture_sha256": stage["sha256"]}
+
+    def grade_binding(self):
+        stage = self._stages()["grade"]
+        payload = stage["payload"]
+        return {"grade_sha256": stage["sha256"], "status": payload["status"],
+                "research_plan": deepcopy(payload["research_plan"])}
+
+    def reviewer_eligible(self):
+        try:
+            self._job.role_request("reviewer")
+        except ValueError:
+            return False
+        return True
+
+
+class CampaignLedger:
+    """Atomic immutable campaign ledger; it dispatches nothing and reads no market data.
+
+    `freeze` requires the exact manifest schema below. `finish_attempt` accepts
+    a delivered capture bound to its published job, or a controller failure.
+    `lock_terminals` accepts one terminal per frozen case: a recomputable
+    published grade or an external controller failure with its null plan.
+    """
+    def __init__(self, directory: Path, *, clock=time.time, job_loader=_default_job_loader,
+                 wall_ns=time.time_ns, monotonic_ns=time.monotonic_ns, runtime_id=None):
+        self.directory = Path(directory)
+        self.directory.mkdir(parents=True, exist_ok=True)
+        self._clock = clock
+        self._job_loader = job_loader
+        self._wall_ns = wall_ns
+        self._monotonic_ns = monotonic_ns
+        self._runtime_id = runtime_id if runtime_id is not None else uuid.uuid4().hex
+        if not isinstance(self._runtime_id, str) or not self._runtime_id:
+            raise ValueError("runtime_id must be nonempty")
+        self._lock_path = self.directory / ".lock"
+
+    def _locked(self):
+        stream = self._lock_path.open("a+")
+        fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+        return stream
+
+    def _read(self):
+        path = self.directory / "ledger.json"
+        if not path.exists():
+            return None
+        raw = path.read_bytes()
+        try:
+            value = json.loads(raw)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("invalid campaign ledger bytes") from exc
+        if _canonical(value).encode("ascii") != raw or value.get("state_sha256") != _hash(
+                {key: item for key, item in value.items() if key != "state_sha256"}):
+            raise ValueError("campaign ledger hash or bytes changed")
+        self._validate_state(value)
+        return value
+
+    def _write(self, state):
+        body = deepcopy(state); body.pop("state_sha256", None)
+        state = dict(body, state_sha256=_hash(body))
+        raw = _canonical(state).encode("ascii")
+        fd, temporary = tempfile.mkstemp(prefix=".pending-", dir=self.directory)
+        try:
+            with os.fdopen(fd, "wb") as stream:
+                stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+            os.replace(temporary, self.directory / "ledger.json")
+            directory_fd = os.open(self.directory, os.O_RDONLY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+        return deepcopy(state)
+
+    def _validate_manifest(self, manifest):
+        expected = {"schema_version", "campaign_id", "cases"}
+        if not isinstance(manifest, dict) or set(manifest) != expected:
+            raise ValueError("exact campaign manifest schema required")
+        if manifest["schema_version"] != SCHEMA_VERSION:
+            raise ValueError("unsupported campaign manifest schema")
+        if not isinstance(manifest["campaign_id"], str) or not manifest["campaign_id"]:
+            raise ValueError("campaign_id must be nonempty")
+        cases = manifest["cases"]
+        if not isinstance(cases, list) or len(cases) > MAX_CASES:
+            raise ValueError("campaign may contain at most 30 cases")
+        required = {"case_id", "job_directory", "source_request_sha256", "role_request_sha256"}
+        seen = set()
+        for case in cases:
+            if not isinstance(case, dict) or set(case) != required:
+                raise ValueError("exact case manifest schema required")
+            if not isinstance(case["case_id"], str) or not case["case_id"] or case["case_id"] in seen:
+                raise ValueError("case IDs must be unique nonempty strings")
+            if not isinstance(case["job_directory"], str) or not case["job_directory"]:
+                raise ValueError("job_directory must be nonempty")
+            _sha(case["source_request_sha256"], "source request hash")
+            _sha(case["role_request_sha256"], "role request hash")
+            binding = self._job_loader(case["job_directory"]).campaign_binding()
+            if (not isinstance(binding, dict) or set(binding) != {"source_request_sha256", "role_request_sha256"}
+                    or binding != {key: case[key] for key in binding}):
+                raise ValueError("published job binding differs from manifest")
+            seen.add(case["case_id"])
+
+    def _validate_state(self, state):
+        required = {"schema_version", "manifest", "cases", "budgets", "late_deliveries", "terminals", "terminals_locked", "state_sha256"}
+        if not isinstance(state, dict) or set(state) != required or state["schema_version"] != SCHEMA_VERSION:
+            raise ValueError("invalid campaign ledger schema")
+        self._validate_manifest(state["manifest"])
+        ids = [case["case_id"] for case in state["manifest"]["cases"]]
+        if set(state["cases"]) != set(ids) or set(state["budgets"]) != set(ROLES):
+            raise ValueError("campaign state cases or budgets differ from manifest")
+        for role, count in state["budgets"].items():
+            if type(count) is not int or not 0 <= count <= MAX_ROLE_ATTEMPTS:
+                raise ValueError("invalid role budget")
+        if (not isinstance(state["late_deliveries"], list) or not isinstance(state["terminals"], dict)
+                or type(state["terminals_locked"]) is not bool):
+            raise ValueError("invalid campaign collections")
+        case_specs = {case["case_id"]: case for case in state["manifest"]["cases"]}
+        invoked = {role: 0 for role in ROLES}; active = 0
+        for case_id, case in state["cases"].items():
+            if not isinstance(case, dict) or set(case) != {"roles", "decision_path"} or not isinstance(case["roles"], dict):
+                raise ValueError("invalid case state")
+            if set(case["roles"]) != set(ROLES):
+                raise ValueError("invalid case role schema")
+            for role, record in case["roles"].items():
+                self._validate_role_record(case_specs[case_id], role, record, state["terminals_locked"])
+                if record["attempt_id"] is not None:
+                    invoked[role] += 1
+                if record["status"] == "active":
+                    active += 1
+            self._validate_decision_path(case_specs[case_id], case["roles"], case["decision_path"], state["manifest"])
+        if invoked != state["budgets"]:
+            raise ValueError("role budget does not equal immutable invocations")
+        if active > MAX_ACTIVE:
+            raise ValueError("active role limit exceeded")
+        seen_late = set()
+        for late in state["late_deliveries"]:
+            required_late = {"case_id", "role", "attempt_id", "received_at", "result"}
+            if (not isinstance(late, dict) or set(late) != required_late or late["case_id"] not in case_specs
+                    or late["role"] not in ROLES):
+                raise ValueError("invalid late result schema")
+            key = (late["case_id"], late["role"])
+            if key in seen_late:
+                raise ValueError("multiple late results for immutable role")
+            seen_late.add(key); _time(late["received_at"], "late received_at")
+            record = state["cases"][late["case_id"]]["roles"][late["role"]]
+            if (record["status"] != "timeout" or late["attempt_id"] != record["attempt_id"]
+                    or late["received_at"] < record["deadline_at"]):
+                raise ValueError("late result does not bind timeout")
+            self._validate_attempt_result(case_specs[late["case_id"]], late["role"], late["result"])
+        if state["terminals_locked"]:
+            if set(state["terminals"]) != set(ids) or active:
+                raise ValueError("terminal lock is incomplete or has active role")
+            for case_id, terminal in state["terminals"].items():
+                self._validate_stored_terminal(case_specs[case_id], terminal)
+        elif state["terminals"]:
+            raise ValueError("terminals exist before terminal lock")
+
+    def _validate_decision_path(self, case, roles, path, manifest):
+        keys = {"schema_version", "manifest_sha256", "case_id", "source_request_sha256", "role_request_sha256",
+                "specialist_attempt_id", "start", "end", "terminal_sha256", "terminal_valid", "reason",
+                "timing_valid", "elapsed_ns", "path_sha256"}
+        if not isinstance(path, dict) or set(path) != keys or path["schema_version"] != DECISION_PATH_VERSION:
+            raise ValueError("invalid decision path schema")
+        body = {key: item for key, item in path.items() if key != "path_sha256"}
+        if path["path_sha256"] != _hash(body):
+            raise ValueError("decision path hash changed")
+        if (path["manifest_sha256"] != _hash(manifest) or path["case_id"] != case["case_id"]
+                or path["source_request_sha256"] != case["source_request_sha256"]
+                or path["role_request_sha256"] != case["role_request_sha256"]):
+            raise ValueError("decision path binding differs from manifest")
+        for name in ("start", "end"):
+            observation = path[name]
+            if observation is not None:
+                if not isinstance(observation, dict) or set(observation) != {"runtime_id", "wall_ns", "monotonic_ns"} or not isinstance(observation["runtime_id"], str) or not observation["runtime_id"]:
+                    raise ValueError("invalid timing observation")
+                for clock_name in ("wall_ns", "monotonic_ns"):
+                    if type(observation[clock_name]) is not int or observation[clock_name] < 0:
+                        raise ValueError("timing observations must be nonnegative integers")
+        specialist = roles["specialist"]
+        if path["specialist_attempt_id"] != specialist["attempt_id"]:
+            raise ValueError("decision path specialist attempt differs")
+        if path["start"] is None and path["specialist_attempt_id"] is not None:
+            raise ValueError("specialist attempt lacks sealed start")
+        if path["start"] is not None and path["specialist_attempt_id"] is None:
+            raise ValueError("decision path start lacks specialist attempt")
+        if path["end"] is None:
+            if any(path[key] is not None for key in ("terminal_sha256", "terminal_valid", "timing_valid", "reason", "elapsed_ns")):
+                raise ValueError("unfinalized decision path has terminal fields")
+            return
+        _sha(path["terminal_sha256"], "decision terminal hash")
+        if type(path["terminal_valid"]) is not bool or type(path["timing_valid"]) is not bool or not isinstance(path["reason"], (str, type(None))):
+            raise ValueError("invalid decision path terminal validity")
+        if path["elapsed_ns"] is not None and (type(path["elapsed_ns"]) is not int or path["elapsed_ns"] < 0):
+            raise ValueError("invalid decision path elapsed_ns")
+        if path["timing_valid"] is True:
+            if (path["elapsed_ns"] is None or path["reason"] is not None or path["start"] is None
+                    or path["start"]["runtime_id"] != path["end"]["runtime_id"]
+                    or path["end"]["wall_ns"] < path["start"]["wall_ns"]
+                    or path["end"]["monotonic_ns"] < path["start"]["monotonic_ns"]
+                    or path["elapsed_ns"] != path["end"]["monotonic_ns"] - path["start"]["monotonic_ns"]):
+                raise ValueError("invalid timing-valid decision path")
+        elif path["elapsed_ns"] is not None or not isinstance(path["reason"], str) or not path["reason"]:
+            raise ValueError("invalid timing-invalid decision path")
+
+    def _observation(self):
+        wall = self._wall_ns(); monotonic = self._monotonic_ns()
+        if type(wall) is not int or wall < 0 or type(monotonic) is not int or monotonic < 0:
+            raise ValueError("clock observations must be nonnegative integer nanoseconds")
+        return {"runtime_id": self._runtime_id, "wall_ns": wall, "monotonic_ns": monotonic}
+
+    def _path(self, manifest, case):
+        body = {"schema_version": DECISION_PATH_VERSION, "manifest_sha256": _hash(manifest), "case_id": case["case_id"],
+                "source_request_sha256": case["source_request_sha256"], "role_request_sha256": case["role_request_sha256"],
+                "specialist_attempt_id": None, "start": None, "end": None, "terminal_sha256": None,
+                "terminal_valid": None, "timing_valid": None, "reason": None, "elapsed_ns": None}
+        return dict(body, path_sha256=_hash(body))
+
+    def _seal_path(self, path, **changes):
+        body = {key: item for key, item in path.items() if key != "path_sha256"}
+        body.update(deepcopy(changes))
+        return dict(body, path_sha256=_hash(body))
+
+    def _validate_role_record(self, case, role, record, locked):
+        keys = {"status", "attempt_id", "started_at", "deadline_at", "finished_at", "result"}
+        if not isinstance(record, dict) or set(record) != keys:
+            raise ValueError("invalid role record schema")
+        status = record["status"]
+        if status not in {"not_invoked", "active", "delivered", "external_failure", "timeout"}:
+            raise ValueError("invalid role status")
+        if status == "not_invoked":
+            expected = {"kind": "not_invoked"} if locked else None
+            if any(record[key] is not None for key in ("attempt_id", "started_at", "deadline_at", "finished_at")) or record["result"] != expected:
+                raise ValueError("invalid not-invoked role record")
+            return
+        _sha(record["attempt_id"], "attempt id"); _time(record["started_at"], "started_at"); _time(record["deadline_at"], "deadline_at")
+        if record["attempt_id"] != _hash({"case_id": case["case_id"], "role": role, "started_at": record["started_at"]}):
+            raise ValueError("attempt id does not bind case, role and start time")
+        if record["deadline_at"] != record["started_at"] + DEADLINE_SECONDS:
+            raise ValueError("role deadline differs from 600 seconds")
+        if status == "active":
+            if record["finished_at"] is not None or record["result"] is not None:
+                raise ValueError("active role has terminal fields")
+            return
+        _time(record["finished_at"], "finished_at")
+        if record["finished_at"] < record["started_at"]:
+            raise ValueError("finished_at precedes started_at")
+        if status == "timeout":
+            expected = {"kind": "deadline_timeout", "deadline_at": record["deadline_at"]}
+            if record["finished_at"] != record["deadline_at"] or record["result"] != expected:
+                raise ValueError("invalid deadline timeout record")
+            return
+        if record["finished_at"] >= record["deadline_at"]:
+            raise ValueError("non-timeout result reached deadline")
+        result = self._validate_attempt_result(case, role, record["result"])
+        expected_status = "delivered" if result["kind"] == "delivered" else "external_failure"
+        if status != expected_status:
+            raise ValueError("role status differs from result")
+
+    def _validate_attempt_result(self, case, role, result):
+        if not isinstance(result, dict) or not isinstance(result.get("kind"), str):
+            raise ValueError("exact attempt result schema required")
+        if result["kind"] == "external_failure":
+            if set(result) != {"kind", "reason"} or not isinstance(result["reason"], str) or not result["reason"]:
+                raise ValueError("exact external failure schema required")
+            return result
+        if result["kind"] != "delivered" or set(result) != {"kind", "job_directory", "raw_response_sha256", "capture_sha256"}:
+            raise ValueError("exact delivered result schema required")
+        if result["job_directory"] != case["job_directory"]:
+            raise ValueError("delivered job differs from frozen case")
+        _sha(result["raw_response_sha256"], "raw response hash"); _sha(result["capture_sha256"], "capture hash")
+        binding = self._job_loader(result["job_directory"]).capture_binding(role)
+        if binding != {"raw_response_sha256": result["raw_response_sha256"], "capture_sha256": result["capture_sha256"]}:
+            raise ValueError("delivered capture differs from published job")
+        return result
+
+    def _validate_stored_terminal(self, case, terminal):
+        if not isinstance(terminal, dict) or not isinstance(terminal.get("kind"), str):
+            raise ValueError("invalid stored terminal schema")
+        if terminal["kind"] == "external_failure":
+            if set(terminal) != {"kind", "reason"} or not isinstance(terminal["reason"], str) or not terminal["reason"]:
+                raise ValueError("invalid external stored terminal")
+            return
+        keys = {"kind", "job_directory", "grade_sha256", "status", "research_plan"}
+        if terminal["kind"] != "published_grade" or set(terminal) != keys or terminal["job_directory"] != case["job_directory"]:
+            raise ValueError("invalid published stored terminal")
+        _sha(terminal["grade_sha256"], "grade hash")
+        grade = self._job_loader(terminal["job_directory"]).grade_binding()
+        if grade != {"grade_sha256": terminal["grade_sha256"], "status": terminal["status"], "research_plan": terminal["research_plan"]}:
+            raise ValueError("stored published grade is not recomputable")
+
+    def _expire(self, state, now):
+        for case in state["cases"].values():
+            for role in ROLES:
+                record = case["roles"][role]
+                if record["status"] == "active" and now >= record["deadline_at"]:
+                    record["status"] = "timeout"
+                    record["finished_at"] = record["deadline_at"]
+                    record["result"] = {"kind": "deadline_timeout", "deadline_at": record["deadline_at"]}
+
+    def freeze(self, manifest):
+        with self._locked() as stream:
+            self._validate_manifest(manifest)
+            state = self._read()
+            if state is not None:
+                if state["manifest"] != manifest:
+                    raise ValueError("immutable campaign manifest differs")
+                return deepcopy(manifest)
+            cases = {}
+            for case in manifest["cases"]:
+                cases[case["case_id"]] = {"roles": {
+                    role: {"status": "not_invoked", "attempt_id": None, "started_at": None,
+                           "deadline_at": None, "finished_at": None, "result": None}
+                    for role in ROLES}, "decision_path": self._path(manifest, case)}
+            self._write({"schema_version": SCHEMA_VERSION, "manifest": deepcopy(manifest), "cases": cases,
+                         "budgets": {role: 0 for role in ROLES}, "late_deliveries": [], "terminals": {},
+                         "terminals_locked": False})
+            return deepcopy(manifest)
+
+    def _state_for_write(self):
+        state = self._read()
+        if state is None:
+            raise ValueError("campaign manifest must freeze before attempts")
+        self._expire(state, _now(self._clock()))
+        return state
+
+    def start_attempt(self, case_id, role):
+        with self._locked() as stream:
+            state = self._state_for_write()
+            if role not in ROLES or case_id not in state["cases"]:
+                raise ValueError("unknown case or role")
+            if state["terminals_locked"]:
+                raise ValueError("terminal lock forbids attempts")
+            record = state["cases"][case_id]["roles"][role]
+            if record["attempt_id"] is not None:
+                raise ValueError("role already invoked")
+            if (role == "reviewer" and (state["cases"][case_id]["roles"]["specialist"]["status"] != "delivered"
+                    or self._job_loader(next(item for item in state["manifest"]["cases"] if item["case_id"] == case_id)["job_directory"]).reviewer_eligible() is not True)):
+                raise ValueError("valid delivered specialist required before reviewer")
+            if state["budgets"][role] >= MAX_ROLE_ATTEMPTS:
+                raise ValueError("role budget exhausted")
+            active = sum(record["status"] == "active" for case in state["cases"].values() for record in case["roles"].values())
+            if active >= MAX_ACTIVE:
+                raise ValueError("maximum active roles reached")
+            now = _now(self._clock())
+            record.update({"status": "active", "attempt_id": _hash({"case_id": case_id, "role": role, "started_at": now}),
+                           "started_at": now, "deadline_at": now + DEADLINE_SECONDS})
+            if role == "specialist":
+                case_spec = next(item for item in state["manifest"]["cases"] if item["case_id"] == case_id)
+                path = state["cases"][case_id]["decision_path"]
+                state["cases"][case_id]["decision_path"] = self._seal_path(
+                    path, specialist_attempt_id=record["attempt_id"], start=self._observation())
+            state["budgets"][role] += 1
+            self._write(state)
+            return deepcopy(record)
+
+    def _validate_result(self, case, role, result):
+        manifest_case = next(item for item in self._read()["manifest"]["cases"] if item["case_id"] == case)
+        return deepcopy(self._validate_attempt_result(manifest_case, role, result))
+
+    def finish_attempt(self, case_id, role, result):
+        with self._locked() as stream:
+            state = self._state_for_write()
+            if role not in ROLES or case_id not in state["cases"]:
+                raise ValueError("unknown case or role")
+            record = state["cases"][case_id]["roles"][role]
+            if record["attempt_id"] is None:
+                raise ValueError("attempt was not invoked")
+            validated = self._validate_result(case_id, role, result)
+            now = _now(self._clock())
+            if record["status"] == "timeout":
+                late = {"case_id": case_id, "role": role, "attempt_id": record["attempt_id"], "received_at": now, "result": validated}
+                prior = [item for item in state["late_deliveries"] if item["case_id"] == case_id and item["role"] == role]
+                if prior:
+                    immutable = {key: late[key] for key in ("case_id", "role", "attempt_id", "result")}
+                    prior_immutable = {key: prior[0][key] for key in immutable}
+                    if prior_immutable != immutable:
+                        raise ValueError("immutable late result differs")
+                    return {"kind": "late_delivery" if validated["kind"] == "delivered" else "late_external_failure", **deepcopy(prior[0])}
+                state["late_deliveries"].append(late); self._write(state)
+                return {"kind": "late_delivery" if validated["kind"] == "delivered" else "late_external_failure", **deepcopy(late)}
+            if record["status"] != "active":
+                if record["result"] != validated:
+                    raise ValueError("immutable attempt result differs")
+                return deepcopy(record["result"])
+            record.update({"status": "delivered" if validated["kind"] == "delivered" else "external_failure",
+                           "finished_at": now, "result": validated})
+            self._write(state)
+            return deepcopy(validated)
+
+    def _validate_terminal(self, state, case_id, terminal):
+        if not isinstance(terminal, dict) or not isinstance(terminal.get("kind"), str):
+            raise ValueError("exact terminal schema required")
+        if terminal["kind"] == "external_failure":
+            if set(terminal) != {"kind", "reason"} or not isinstance(terminal["reason"], str) or not terminal["reason"]:
+                raise ValueError("exact external terminal schema required")
+            return deepcopy(terminal)
+        if terminal["kind"] != "published_grade" or set(terminal) != {"kind", "job_directory", "grade_sha256"}:
+            raise ValueError("exact published terminal schema required")
+        manifest_case = next(item for item in state["manifest"]["cases"] if item["case_id"] == case_id)
+        if terminal["job_directory"] != manifest_case["job_directory"]:
+            raise ValueError("terminal job differs from frozen case")
+        _sha(terminal["grade_sha256"], "grade hash")
+        grade = self._job_loader(terminal["job_directory"]).grade_binding()
+        if (not isinstance(grade, dict) or set(grade) != {"grade_sha256", "status", "research_plan"}
+                or grade["grade_sha256"] != terminal["grade_sha256"]):
+            raise ValueError("published grade is not recomputable")
+        return dict(terminal, status=grade["status"], research_plan=deepcopy(grade["research_plan"]))
+
+    def finalize_case(self, case_id, terminal):
+        """Seal the recomputed terminal and local timing endpoint for one case."""
+        with self._locked() as stream:
+            state = self._state_for_write()
+            if case_id not in state["cases"] or state["terminals_locked"]:
+                raise ValueError("unknown case or terminal lock")
+            if any(record["status"] == "active" for record in state["cases"][case_id]["roles"].values()):
+                raise ValueError("active attempt prevents case finalization")
+            validated = self._validate_terminal(state, case_id, terminal)
+            terminal_sha256 = _hash(validated)
+            path = state["cases"][case_id]["decision_path"]
+            if path["end"] is not None:
+                if path["terminal_sha256"] != terminal_sha256:
+                    raise ValueError("immutable finalized terminal differs")
+                return deepcopy(path)
+            end = self._observation(); start = path["start"]
+            reason = None; elapsed = None
+            if start is None:
+                reason = "specialist_not_started"
+            elif start["runtime_id"] != self._runtime_id:
+                reason = "timer_runtime_changed"
+            elif end["wall_ns"] < start["wall_ns"] or end["monotonic_ns"] < start["monotonic_ns"]:
+                reason = "timer_clock_regressed"
+            else:
+                elapsed = end["monotonic_ns"] - start["monotonic_ns"]
+            state["cases"][case_id]["decision_path"] = self._seal_path(
+                path, end=end, terminal_sha256=terminal_sha256, terminal_valid=True,
+                timing_valid=elapsed is not None, reason=reason, elapsed_ns=elapsed)
+            self._write(state)
+            return deepcopy(state["cases"][case_id]["decision_path"])
+
+    def lock_terminals(self, terminals):
+        with self._locked() as stream:
+            state = self._state_for_write()
+            if not isinstance(terminals, dict) or set(terminals) != set(state["cases"]):
+                raise ValueError("terminal required for every frozen case")
+            if any(record["status"] == "active" for case in state["cases"].values() for record in case["roles"].values()):
+                raise ValueError("active attempt prevents terminal lock")
+            expected = {case_id: self._validate_terminal(state, case_id, item) for case_id, item in terminals.items()}
+            for case_id, terminal in expected.items():
+                path = state["cases"][case_id]["decision_path"]
+                if path["end"] is None or path["terminal_sha256"] != _hash(terminal):
+                    raise ValueError("finalized decision path terminal hash required")
+            if state["terminals_locked"]:
+                if state["terminals"] != expected:
+                    raise ValueError("immutable terminals differ")
+                return deepcopy(expected)
+            for case in state["cases"].values():
+                for record in case["roles"].values():
+                    if record["status"] == "not_invoked":
+                        record["result"] = {"kind": "not_invoked"}
+            state["terminals"] = expected
+            state["terminals_locked"] = True
+            self._write(state)
+            return deepcopy(expected)
+
+    def assert_reveal_allowed(self):
+        with self._locked() as stream:
+            state = self._state_for_write()
+            if not state["terminals_locked"] or set(state["terminals"]) != set(state["cases"]):
+                raise ValueError("all case terminals must lock before reveal")
+            self._write(state)
+            return True
+
+    def state(self):
+        with self._locked() as stream:
+            state = self._state_for_write()
+            self._write(state)
+            return deepcopy(state)
+
+
+def validate_state_snapshot(state, *, job_loader=_default_job_loader):
+    """Validate a detached ledger snapshot without opening or modifying a run directory."""
+    if not isinstance(state, dict) or "state_sha256" not in state:
+        raise ValueError("invalid campaign ledger snapshot")
+    # Canonicalization both rejects non-JSON values and ensures the same canonical
+    # representation used by persisted ledger bytes is the one being hashed.
+    _canonical(state)
+    body = {key: item for key, item in state.items() if key != "state_sha256"}
+    if state["state_sha256"] != _hash(body):
+        raise ValueError("campaign ledger snapshot hash changed")
+    validator = object.__new__(CampaignLedger)
+    validator._job_loader = job_loader
+    validator._validate_state(state)
+    return deepcopy(state)
