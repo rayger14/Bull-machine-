@@ -1,5 +1,24 @@
 # Bull Machine Project Memory
 
+## September 21, 2026 completed bounded experiment override
+
+Read [bounded results](lc_bounded_single_results_2026_09_21.md) first. Single-role
+gate/controller/four-book accounting and approved18-case experiment COMPLETE.
+94 fresh focused tests pass;554 available outcome resolutions cross-checked.
+17 actual specialists; zero market critics/retries; actual credits unknown.
+16 schema-valid unreviewed responses:13 rejects/3 waits. Feb23 failed launch and
+May10 wrong request hash remain null.18 terminals locked BEFORE outcome reveal.
+At12bps/90s immediate+$2,682.78; mechanical+$5,470.81; agent known subtotal
++$2,342.13, full policy PnL/drawdown null. Agent avoided8 immediate losers but
+missed5 winners; no demonstrated incremental advantage. No live changes.
+All18 are now exposed; do not rerun/repair assessments or launch more paid calls.
+Private artifacts: `results/lc_single_bounded_2026_09_20/run_v1/`; all8 scenarios
+in economic_result.json. Current new implementation/report are local/uncommitted,
+not published to PR83. Preserve pinned modules/protocol and historical runtimes.
+Recommended next, separately scoped: code-only chronological validation of the
+existing mechanical confirmation; agent downside-rebound thesis needs research
+before another paid campaign, not outcome-fitted threshold changes on these18.
+
 ## September 17, 2026 authoritative restart override
 
 Read [CLI_HANDOFF_2026_09_17.md](CLI_HANDOFF_2026_09_17.md) first. User authorized

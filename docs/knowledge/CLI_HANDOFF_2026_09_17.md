@@ -1,5 +1,11 @@
 # LC research: CLI restart checkpoint — September 17, 2026
 
+**Superseded September21:** read [completed bounded experiment results](lc_bounded_single_results_2026_09_21.md)
+and current PROJECT.md first. Single-assessor implementation and18-case scoring
+are complete locally; no further assessments or live promotion. The pending
+implementation/authorization statements below are historical. New work is not
+yet committed/pushed; private runtime artifacts are not on GitHub.
+
 This is developer/controller context, **not** an outcome-hidden assessor packet.
 This document supersedes older next-action instructions in PROJECT/MEMORY.
 

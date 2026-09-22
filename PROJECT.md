@@ -1,13 +1,16 @@
 # Bull Machine — start here
 
-Updated September17,2026. This is the current cross-chat/CLI handoff, not a trading
+Updated September21,2026. This is the current cross-chat/CLI handoff, not a trading
 model's training context. Check git status/log because active work may be newer.
 
-**Start with the [September17 CLI handoff](docs/knowledge/CLI_HANDOFF_2026_09_17.md).**
-It supersedes historical next-step and authorization statements below. User
-authorized commit/push/PR publication; no live deployment or new paid campaign.
-Current next implementation: a separately versioned cheaper single-assessor
-contract, followed by a frozen independent-book comparison, not another census.
+**Start with the [September21 bounded experiment results](docs/knowledge/lc_bounded_single_results_2026_09_21.md).**
+The single-assessor implementation and18-case comparison are finished.16 usable
+choices,13 rejects and3 waits;2 unavailable assessments remain null. Agent known
+subtotal+$2,342.13 versus mechanical control+$5,470.81 at12bps/90s; full agent
+policy PnL unavailable. No demonstrated incremental agent advantage, no live gate.
+Do not rerun the now-exposed cases or launch new paid roles. Recommended next:
+separately scoped code-only chronological validation of mechanical confirmation.
+Current new implementation/report remain local and uncommitted, not on PR83.
 
 ## User's goal
 
@@ -57,6 +60,17 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 | Task4 actual Q1 comparison | PhaseA harness/source preflight built; root849tests pass; independent harness review and actual roles/outcomes pending |
 
 ## Latest deliverables
+
+**September21 — bounded single-assessor experiment COMPLETE:** new separately
+versioned gate/controller/accounting;94 fresh focused regressions pass; independent
+software-review fixes closed.17 actual specialists, zero market critics/retries;
+actual billing unknown.18 terminals locked before outcomes,16 valid/unreviewed;
+one failed launch and one incorrect hash remain null. All8 scenarios scored;
+554 available resolutions cross-checked. Agent avoided8 immediate losers but
+missed5 winners; selected3 trades (2 winners/1 loser). See the newest report above
+and [frozen protocol](docs/knowledge/lc_bounded_single_protocol_2026_09_20.md).
+Private artifacts: `results/lc_single_bounded_2026_09_20/run_v1/`. This supersedes
+historical pending-single-assessor statements below, not the frozen old runs.
 
 **September16 — subtype/evidence preflight implemented:** new outcome-free `lc_setup_preflight.py` and tests;77 combined tests pass.20 frozen original packet hashes match,20 evidence-ready;13 downside/7 upside. Remaining18 comprise11 downside/7 upside; the two already revealed are not reassessed. No model calls or live changes. [Status of all four requirements and next single-assessor milestone](docs/knowledge/lc_context_preflight_2026_09_16.md). Cheaper single-role capture, new economic comparison and live shadow service remain pending; do not claim them complete.
 
