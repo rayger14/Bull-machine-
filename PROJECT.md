@@ -1,16 +1,20 @@
 # Bull Machine — start here
 
-Updated September21,2026. This is the current cross-chat/CLI handoff, not a trading
+Updated September22,2026. This is the current cross-chat/CLI handoff, not a trading
 model's training context. Check git status/log because active work may be newer.
 
-**Start with the [September21 bounded experiment results](docs/knowledge/lc_bounded_single_results_2026_09_21.md).**
-The single-assessor implementation and18-case comparison are finished.16 usable
-choices,13 rejects and3 waits;2 unavailable assessments remain null. Agent known
-subtotal+$2,342.13 versus mechanical control+$5,470.81 at12bps/90s; full agent
-policy PnL unavailable. No demonstrated incremental agent advantage, no live gate.
-Do not rerun the now-exposed cases or launch new paid roles. Recommended next:
-separately scoped code-only chronological validation of mechanical confirmation.
-Current new implementation/report remain local and uncommitted, not on PR83.
+**Start with the [September22 broad142-case results](docs/knowledge/lc_mechanical_results_2026_09_22.md)
+and [missed-rebound diagnosis](docs/knowledge/lc_missed_rebounds_2026_09_22.md).**
+The approved code-only extension and diagnosis are complete. Primary12bps/90s:
+immediate−$7,592.67, mechanical confirmation−$1,266.58 across2024–July2026.
+Both lost in2024/2025; positive2026 did not generalize. Upside contributions were
+positive, downside contributions negative; no blanket LC or confirmation promotion.
+105 root focused tests pass;1,136 outcomes cross-checked; all142 records resolved.
+No new market assessments/live changes. Prior bounded work committed1d4132d;
+new work checkpointed locally, not pushed to PR83. Private data/results stay local.
+Next requires a separately approved scope: isolated upside-LC thesis and different
+or prospective validation data. All142 are now exposed; no automatic paid calls,
+retuning or post-hoc holdout relabeling. Historical pending work below is superseded.
 
 ## User's goal
 
@@ -60,6 +64,16 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 | Task4 actual Q1 comparison | PhaseA harness/source preflight built; root849tests pass; independent harness review and actual roles/outcomes pending |
 
 ## Latest deliverables
+
+**September22 — broader fixed-rule comparison and diagnosis COMPLETE:**31 verified
+source months,142 frozen cases, four cost/delay scenarios, two independent books.
+All18 prior subtype labels and36 menu plans agree with the new adapter. No source
+replay or parameter search. Software review approved before reveal; sources retain
+monthly warm-up/missing macro/derivatives limitations. See newest reports above;
+private `results/lc_mechanical_extension_2026_09_22/run_v1/` contains input lock,
+cases, result and verification. Full-LC totals negative in every scenario; upside
+is a research candidate, not a new validated gate. No process remains running
+after checkpoint; do not launch a replacement study from historical instructions.
 
 **September21 — bounded single-assessor experiment COMPLETE:** new separately
 versioned gate/controller/accounting;94 fresh focused regressions pass; independent

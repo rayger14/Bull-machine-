@@ -1,5 +1,27 @@
 # Bull Machine Project Memory
 
+## September 22, 2026 completed broader comparison override
+
+Read [142-case results](lc_mechanical_results_2026_09_22.md) and
+[missed-rebound diagnosis](lc_missed_rebounds_2026_09_22.md) first. User-approved
+cycle complete: no new market assessors;31 saved source months verified,142 plans
+frozen before broad outcomes.12bps/90s immediate−$7,592.67 versus wait−$1,266.58;
+both negative2024/2025, positive2026. All four full-book scenarios negative.
+Upside subgroup primary immediate+$9,384.99, wait+$7,669.09; downside−$15,376.13
+and−$8,252.10. Descriptive contributions, not validated isolated strategies.
+Upside wait fails300s sensitivity; gains concentrated. No blanket confirmation
+gate or live promotion. Agent already had no-universal-HTF-veto teaching and
+acknowledged rebound evidence; making it accept more is not a demonstrated fix.
+105 root tests pass;1,136 resolutions cross-checked; software review approved
+before reveal. New adapter leaves frozen old modules/engine/config unchanged.
+Private artifacts `results/lc_mechanical_extension_2026_09_22/run_v1/`.
+Prior18-case work committed1d4132d; current work checkpointed locally, no push/PR.
+All142 now outcome-exposed. Stop: no further model assessments or tuning.
+Next separately approved scope: isolated upside-LC thesis with different or
+prospective validation; downside needs separate exhaustion/liquidation research.
+Monthly source resets, defaulted/missing derivatives and live receipts prevent
+full-live-history certification. GitHub alone cannot reproduce private artifacts.
+
 ## September 21, 2026 completed bounded experiment override
 
 Read [bounded results](lc_bounded_single_results_2026_09_21.md) first. Single-role
