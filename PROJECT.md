@@ -1,7 +1,26 @@
 # Bull Machine — start here
 
-Updated September22,2026. This is the current cross-chat/CLI handoff, not a trading
+Updated September24,2026. This is the current cross-chat/CLI handoff, not a trading
 model's training context. Check git status/log because active work may be newer.
+
+**September24 current override — structure-first LC design written, awaiting
+user review.** Read the [decision-contract specification](docs/superpowers/specs/2026-09-24-lc-structure-first-design.md)
+and [worked examples](docs/knowledge/lc_structure_first_examples_2026_09_24.md).
+User approved preparing this design: move beyond filtering fixed trades to
+source-backed entry, invalidation and destination proposals, with code retaining
+causality/risk checks. Both rebound and expansion theses remain in scope; minute
+bars supply nested execution context. This supersedes the old next-step direction
+below, not its results. No new runtime, strategy test, market-model calls or live
+changes. Four historical source hashes match frozen manifest bindings; links,
+reported choices and worked arithmetic checked. One synthetic entry example and
+four exposed historical examples are illustrations, not new assessments.
+Next: user review of written spec, then a short implementation plan for an offline
+contract/validator with synthetic tests. Economic adapter, numerical study policy
+and new paid evaluation remain separate gates. No research process is running.
+Private source requests and original responses remain under
+`results/lc_consolidated_2026_09_15/judgment_v1/` and
+`results/lc_single_bounded_2026_09_20/run_v1/`; GitHub alone lacks these artifacts.
+The design checkpoint is local only; no push/PR in this step.
 
 **Start with the [September22 broad142-case results](docs/knowledge/lc_mechanical_results_2026_09_22.md)
 and [missed-rebound diagnosis](docs/knowledge/lc_missed_rebounds_2026_09_22.md).**
@@ -28,6 +47,9 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 
 ## Current approved work
 
+- Current design: [September24 structure-first LC contract](docs/superpowers/specs/2026-09-24-lc-structure-first-design.md),
+  written but not yet user-reviewed or implemented. Earlier approved implementation
+  work below is historical; do not resume its campaigns automatically.
 - Branch: `quant/archetype-evidence-audit`; user explicitly chose continued work
   here rather than a new worktree.
 - Latest completed [integration spec](docs/superpowers/specs/2026-09-15-lc-citation-integration-design.md)
@@ -64,6 +86,13 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 | Task4 actual Q1 comparison | PhaseA harness/source preflight built; root849tests pass; independent harness review and actual roles/outcomes pending |
 
 ## Latest deliverables
+
+**September24 — design deliverable written:** structure-first proposal contract,
+code/agent responsibility split, causal level catalog, bounded trigger scope,
+explicit reuse/new-adapter boundary, and one synthetic/four historical worked
+examples. Four source-request hashes verified against manifest; arithmetic and
+document links checked. No executable strategy or profitability improvement is
+claimed. User review of the spec precedes implementation planning.
 
 **September22 — broader fixed-rule comparison and diagnosis COMPLETE:**31 verified
 source months,142 frozen cases, four cost/delay scenarios, two independent books.

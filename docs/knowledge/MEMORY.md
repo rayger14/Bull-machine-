@@ -1,5 +1,26 @@
 # Bull Machine Project Memory
 
+## September 24, 2026 structure-first design override
+
+User approved preparing the [LC decision-contract design](../superpowers/specs/2026-09-24-lc-structure-first-design.md)
+and [worked examples](lc_structure_first_examples_2026_09_24.md). Both now written;
+not implemented or yet user-reviewed. Goal is source-backed entry, invalidation
+and destination proposals, not merely a filter over the old fixed 2R menu.
+Retain downside-rebound and upside-expansion as distinct hypotheses; minute bars
+are nested execution evidence, not a replacement archetype. Code owns provenance,
+causal availability and external risk limits; agents interpret structure and
+must confront contrary evidence. No automatic broken-parent veto or acceptance
+of known winners. Old projections/scorers enforce fixed economics, so structural
+targets require a separately tested adapter, not just a prompt edit.
+Verified four saved source-request hashes against the frozen manifest, original
+choices, example arithmetic and document links. One synthetic entry illustration
+and four historical cases are development material, never hidden-assessor input.
+No model calls, new economics, engine edits, push/PR or running research process.
+Next gate: written-spec user review, then short offline contract/validator plan;
+do not automatically launch paid study or choose numerical production risk limits.
+This overrides September22's next-scope recommendation, preserving its findings
+and all142 cases' exposed status. Private artifacts remain local as in PROJECT.md.
+
 ## September 22, 2026 completed broader comparison override
 
 Read [142-case results](lc_mechanical_results_2026_09_22.md) and
