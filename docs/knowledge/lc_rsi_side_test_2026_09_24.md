@@ -39,3 +39,21 @@ cooldown timing, and 2024, the one year the capitulation side made money, gave b
 **same PnL with ~21-40% fewer trades and a smaller drawdown**, not extra profit. Doctrine tension: the class is not
 negative in EVERY year (2019 and 2024 were positive), so this is a pre-registered pass, not a "negative every era" cut.
 n=12 on the test side is small.
+
+---
+## Literature check (2026-09-24, research agent; paywalled sources = search snippets only)
+**LC after the fix is a recognized setup:** a volume-confirmed volatility-squeeze breakout with momentum-chosen direction.
+Closest relatives: Bollinger Squeeze (Method I) + %B/MFI thrust (Method II), TTM Squeeze (Carter) with a volume rule,
+Minervini VCP, Darvas box, Donchian/TSMOM (CTA). Every squeeze author picks direction by breakout/momentum; none fades it.
+The removed RSI<35 side was a Connors-style dip-buy missing Connors' two essentials: a 200-period trend filter and a fast exit.
+No published study tests "high volume + overbought continues, high volume + oversold keeps falling" on crypto 1H; our
+pre-registered result is as strong as anything found.
+
+**Pro rules LC lacks, not yet tested (cheapest first):**
+1. Relative squeeze: BB width in the bottom X% of its own ~6-month history (Bollinger's definition) instead of a fixed 0.06.
+2. Range-high trigger: the spike bar must CLOSE above the squeeze range high (Darvas/Minervini/Bollinger IV), same bar, not a wait.
+3. Keltner squeeze (TTM): BB inside Keltner(20,1.5).  4. OBV/CMF rising during the squeeze.  5. Volume dry-up before the spike (VCP).
+**Collide with buried lenses:** 200-MA/stage-2 trend filter (HTF/regime gating), multi-timeframe firing (MTF sequencing),
+wait-for-pullback entry (confirmation bars, buried 3x), 8-10 bar momentum-fade exit (exit mods 0-for-5; kills the runner).
+**Binding constraint:** ~17 LC trades per 2 years. Filters starve the sample; test #1 and #2 as SIZING BOOSTS, pre-registered,
+and judge them on live accumulation, since 2018-19 is now spent on the RSI-side test.
