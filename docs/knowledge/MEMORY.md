@@ -1,5 +1,21 @@
 # Bull Machine Project Memory
 
+## September 25, 2026 structure-contract implementation plan override
+
+User's “proceed” approves advancing the September24 design into the
+[implementation plan](../superpowers/plans/2026-09-25-lc-structure-contract.md).
+Plan written, not executed: three separate modules for causal packet projection,
+strict proposal/policy validation and pure hypothetical pre-entry checks. Public
+synthetic fixtures must run without private market archives or paid model calls.
+No strategy implementation, new test pass count, economic result or deployment
+is claimed. User must review the written plan and select execution method before
+coding; native implementation plus one final independent software review is the
+recommended lower-overhead method. Preserve existing branch and frozen modules.
+The checker never scores exits or grants execution authority. Structural-target
+outcome replay and numerical study protocol are later separate work, not implied
+authorization for another paid campaign. September24 design committed75d694f;
+current plan is local, with no push/PR or running research job.
+
 ## September 24, 2026 structure-first design override
 
 User approved preparing the [LC decision-contract design](../superpowers/specs/2026-09-24-lc-structure-first-design.md)

@@ -1,7 +1,20 @@
 # Bull Machine — start here
 
-Updated September24,2026. This is the current cross-chat/CLI handoff, not a trading
+Updated September25,2026. This is the current cross-chat/CLI handoff, not a trading
 model's training context. Check git status/log because active work may be newer.
+
+**September25 current override — design approved; implementation plan written.**
+The user's “proceed” advances the structure-first design to the
+[three-task implementation plan](docs/superpowers/plans/2026-09-25-lc-structure-contract.md).
+It covers a separate source projection, strict proposal validator and pure
+hypothetical pre-entry checker, with public synthetic tests and no new dependencies.
+No implementation, new test pass count, model assessment or outcome replay is
+claimed. Next: user review of this written plan and execution-method selection;
+recommend native implementation plus one final independent software review.
+Existing branch and all frozen/live behavior remain unchanged. No research job
+is running. Private artifacts remain local as described below; the plan's public
+tests must not depend on them. No push/PR occurred. September24 design checkpoint
+is local commit75d694f; verify git for the current planning checkpoint.
 
 **September24 current override — structure-first LC design written, awaiting
 user review.** Read the [decision-contract specification](docs/superpowers/specs/2026-09-24-lc-structure-first-design.md)
@@ -48,7 +61,8 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 ## Current approved work
 
 - Current design: [September24 structure-first LC contract](docs/superpowers/specs/2026-09-24-lc-structure-first-design.md),
-  written but not yet user-reviewed or implemented. Earlier approved implementation
+  approved September25; [implementation plan](docs/superpowers/plans/2026-09-25-lc-structure-contract.md)
+  awaits review and execution selection. Neither is implemented. Earlier approved implementation
   work below is historical; do not resume its campaigns automatically.
 - Branch: `quant/archetype-evidence-audit`; user explicitly chose continued work
   here rather than a new worktree.
@@ -86,6 +100,12 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 | Task4 actual Q1 comparison | PhaseA harness/source preflight built; root849tests pass; independent harness review and actual roles/outcomes pending |
 
 ## Latest deliverables
+
+**September25 — implementation plan written, not executed:** three modules and
+public fixture tests; explicit source/policy binding, causal levels, permitted
+proposal schema, timing/expiry and fill-time geometry checks. No model calls or
+profitability claims. User plan review precedes coding; recommend native execution
+and one final independent review to limit repeated context costs.
 
 **September24 — design deliverable written:** structure-first proposal contract,
 code/agent responsibility split, causal level catalog, bounded trigger scope,
