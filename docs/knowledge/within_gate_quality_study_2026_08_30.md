@@ -43,3 +43,18 @@ wicky flush = retail capitulation). Full scoreboard: BTC 3/3, ETH 3/3, ES 0 (1h
 and daily), LTC/LINK/ADA/SOL/DOGE fail/invert. Implication: tilt stays
 shadow-eligible on BTC evidence alone; live shadow now MANDATORY and longer
 (months) before any sizing; alt data (scratchpad parquets) re-fetchable free.
+## Addendum 5 (2026-09-05): hob_reaction identity restored to the teachings — FIRST spec-revival PASS
+
+Audit found S9 was a caricature: any 5-bar swing low counted as a "zone" (no
+displacement), freshness recorded-never-enforced, MTF confluence structurally
+dead (call passed 1H only -> 0.0 on 100% of entries, INSTITUTIONAL unreachable),
+quality composite vacuous. The masters' rule was alive inside our own losers:
+fresh+young zones 63% WR +$9.2K vs stale -$6.3K.
+
+Pre-registered redefinition (one shot): freshness IS the identity (touches<=14,
+age<=15h) + 4H confluence repaired. Silo A/B extended store:
+n 111->42, PnL $2,837->$7,354, PF 1.06->1.46, fresh 2025-26 -$4,761->+$4,387.
+ALL THREE locked clauses pass. First founding-spec restoration to pass (was
+0-for-2). Caveats: n=42; 2020/2024 negative; bounds' diagnostic saw this
+history -> clean validation = live shadow (hob never installed live; the
+audit also found its YAML absent from the live champion dir).
