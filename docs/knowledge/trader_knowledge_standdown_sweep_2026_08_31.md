@@ -43,3 +43,18 @@ What survives from the masters is exactly what survives from our 18 funerals:
 Outcome-feedback family: 2-for-2 (K=2/48h stand-down). Prediction family:
 0-for-everything. 2025 was a WHIPSAW (42% vol, 27% below-200d) invisible to
 bear detectors calibrated on 2018/2022 — which is WHY only outcome rules work.
+
+## Addendum (2026-09-02): stand-down BUILT; engine A/B = split verdict -> SHADOW ONLY
+
+Module engine/risk/stand_down.py (feature-blind, net-position pnl at final exit,
+K=2/48h -> 24h pause) wired into backtester (risk_management.stand_down.enabled)
+and live runner (mode off|shadow|enforce; shadow logs + tags signal log; enforce
+blocks + phantom-logs; runs under bypass by design). 5 unit tests.
+
+Engine A/B (full book, 2020->2026-08, V23-extended store, pre-registered
+3-clause bar): PnL $87.9K->$100.7K PASS; MaxDD -29.7%->-26.3% PASS; fresh
+2025-26 -$23.5K->-$25.5K **FAIL** (sim said +$6.2K — engine re-entry sequencing
++ full-book pause timing differ from trade-level deletion; 2023 delta -$22.2K =
+wins-cluster tension). Per protocol: **no enforce**. Ship shadow live; the live
+would-block log is the decisive validator. Enforce promotion requires a
+pre-registered shadow review (>=2 months).

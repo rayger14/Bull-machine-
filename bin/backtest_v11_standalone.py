@@ -464,6 +464,19 @@ class StandaloneBacktestEngine:
         # V23 decomposition 2026-08-29: flat-notional +17%/better DD on the
         # parity store; the dial -$16K/worse DD. Dial now independently gated.
         self.tape_dial_enabled = bool(sizing_cfg.get('tape_dial_enabled', True))
+        # Loss-triggered stand-down (regime feedback limb; see engine/risk/stand_down.py)
+        _sd_cfg = self.config.get('risk_management', {}).get('stand_down', {})
+        self._stand_down = None
+        self._sd_blocked_signals = 0
+        if _sd_cfg.get('enabled', False):
+            from engine.risk.stand_down import LossStandDown
+            self._stand_down = LossStandDown(
+                k=_sd_cfg.get('k', 2),
+                window_hours=_sd_cfg.get('window_hours', 48),
+                pause_hours=_sd_cfg.get('pause_hours', 24),
+            )
+            logger.info(f"[STAND_DOWN] enabled: K={self._stand_down.k}/"
+                        f"{_sd_cfg.get('window_hours', 48)}h -> pause {_sd_cfg.get('pause_hours', 24)}h")
         self._tape_dial = None
         if self.sizing_package_enabled:
             from engine.risk.tape_dial import compute_tape_dial
@@ -1014,6 +1027,13 @@ class StandaloneBacktestEngine:
                         f"regime={current_regime} | raw={raw_signal_count} | "
                         f"post_threshold={len(signals)}"
                     )
+
+                # Stand-down: refuse ALL entries while paused (book-level,
+                # outcome-triggered; runs regardless of bypass mode by design)
+                if signals and self._stand_down is not None and self._stand_down.blocked(ts):
+                    self._sd_blocked_signals += len(signals)
+                    self.signals_rejected += len(signals)
+                    signals = []
 
                 # Step 3c: Apply stress-scaled position limits (CMI v0)
                 if signals:
@@ -1705,6 +1725,10 @@ class StandaloneBacktestEngine:
         pos.current_quantity -= exit_quantity
         pos.total_exits_pct += exit_pct
 
+        # Stand-down: accumulate this leg's realized pnl for the position
+        if self._stand_down is not None:
+            self._stand_down.record_leg(pos_id, pnl)
+
         # Update Kelly sizer state (track consecutive losses & drawdown)
         if self.engine.kelly_sizer is not None:
             equity = self._compute_equity(fill_exit)
@@ -1732,6 +1756,8 @@ class StandaloneBacktestEngine:
                 else:
                     dust_pnl = (pos.entry_price - fill_exit) * pos.current_quantity
                 self.cash += dust_margin + dust_pnl
+            if self._stand_down is not None:
+                self._stand_down.finalize(pos_id, exit_timestamp)
             del self.positions[pos_id]
 
     # ------------------------------------------------------------------
