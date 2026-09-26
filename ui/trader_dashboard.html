@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bull Machine Frontend</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Bull Machine Strategy Workbench</h1>
+    <p>UI companion for understanding real fusion logic, thresholds, and config defaults from this repository.</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Runtime Config Snapshot</h2>
+      <p class="muted">Loads JSON from this repo so the UI reflects your actual tuning, not fixed demo constants.</p>
+      <div class="controls">
+        <label>Config Path
+          <select id="configPath">
+            <option value="configs/v171/fusion.json">configs/v171/fusion.json</option>
+            <option value="configs/v160/rc/ETH_production_v162.json">configs/v160/rc/ETH_production_v162.json</option>
+            <option value="configs/v170/assets/ETH_v17_tuned.json">configs/v170/assets/ETH_v17_tuned.json</option>
+          </select>
+        </label>
+        <button id="loadConfigBtn">Load Config</button>
+      </div>
+      <pre id="configOutput">No config loaded yet.</pre>
+    </section>
+
+    <section class="card">
+      <h2>Fusion Decision Simulator (v2)</h2>
+      <div class="controls">
+        <label>Preset
+          <select id="presetSelect">
+            <option value="balanced">Balanced</option>
+            <option value="macro_veto">Macro Veto Scenario</option>
+            <option value="low_confluence">Low Confluence Scenario</option>
+            <option value="risk_on">Risk-On Momentum Scenario</option>
+          </select>
+        </label>
+        <button id="applyPresetBtn">Apply Preset</button>
+      </div>
+
+      <div class="controls">
+        <label>Min Active Domains <input id="minDomains" type="number" min="1" max="6" value="3" /></label>
+        <label>Min Confidence <input id="minConfidence" type="number" min="0" max="1" step="0.01" value="0.65" /></label>
+        <label>Min Strength <input id="minStrength" type="number" min="0" max="1" step="0.01" value="0.60" /></label>
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Domain</th><th>Active</th><th>Direction</th><th>Strength</th><th>Confidence</th><th>Weight</th></tr>
+        </thead>
+        <tbody id="domainRows"></tbody>
+      </table>
+
+      <div class="controls">
+        <label><input id="macroSuppression" type="checkbox" /> Macro suppression flag (hard veto)</label>
+        <label>Macro Delta <input id="macroDelta" type="number" min="-0.1" max="0.1" step="0.01" value="0.00" /></label>
+        <label>Max Veto Severity <input id="maxVeto" type="number" min="0" max="1" step="0.01" value="0.30" /></label>
+      </div>
+
+      <button id="runBtn">Run Simulation</button>
+      <pre id="output"></pre>
+    </section>
+
+    <section class="card">
+      <h2>Decision Trace</h2>
+      <ol id="trace"></ol>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
