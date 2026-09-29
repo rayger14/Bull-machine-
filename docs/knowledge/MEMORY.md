@@ -1,5 +1,57 @@
 # Bull Machine Project Memory
 
+## September 29, 2026 approved practice scope / written design (newest)
+
+User approved the12-case historical practice lab; the
+[written integration design](../superpowers/specs/2026-09-29-lc-practice-lab-design.md)
+is now ready for review, not implemented. Exact first12 of the saved20 span
+January20–May3:9 source rebound/3 expansion. Design freezes proposed paper risk,
+source/catalog access, one assessor per case, matched measured latency, mechanical
+control, null/nonentry accounting and a case-chart/report deliverable. All20
+raw request hashes reverified against the old evidence lock;20 new projections
+pass and archive SHA256 matches. No real price outcome or new market role run.
+Next written-design user review, implementation plan/execution selection, then
+build and explicit paid-launch authorization. No automatic old-run restart.
+Local checkpoint includes prior scorer/test/report plus design/handoff; fresh
+regressions325 passed in51.71s, no work running. Verify git log/status for the
+commit; no push/PR/live change. Do not
+confuse a software checkpoint with a completed practice study or profitable edge.
+
+## September 29, 2026 user reorientation: real practice suite (latest direction)
+
+User wants a usable place to test real setups and feels the objective has become
+lost among software tests. Goal remains trader-informed structure-within-structure
+judgment that improves entries, LC first, then isolated expansion to other
+archetypes. Root source-only check converted all20 saved judgment-v1 source
+requests through the new packet builder with zero failures; minute archive exists.
+No outcome read or market-role call. Proposed first scope is a12-case historical
+practice report with frozen decisions, minute replay, per-case charts and matching
+code controls; rebound and expansion remain separate. This is an integration
+design proposal, not a built suite, approved paid launch or new performance result.
+Old cases remain exposed practice; no holdout relabeling. Next user scope/design
+confirmation, then concrete written integration design. Do not repeat completed
+contract work or equate test counts with trading progress. Local uncommitted
+scorer/handoff changes remain; no process is running.
+
+## September 29, 2026 structural outcome replay override (latest)
+
+User's proceed approved the separately scoped outcome replay. Added offline
+`lc_structure_outcome.py` and public synthetic tests; preserves all frozen modules
+and live behavior. Source/proposal/policy/fill revalidated; structural target,
+fill-relative holding deadline, open-gap/tie handling, theoretical risk sizing
+and one flat cost charge. Different effective stop/invalidation remains null;
+no invented post-entry management.325 final focused tests pass, including48 new;
+no work remains running. Independent review accepted the scope with no
+blocker; root reproduced/documented a failed-data hash's accepted-prefix-only
+boundary. Bare repo collection still fails at unchanged missing integration
+config. See [checkpoint](lc_structure_outcome_checkpoint_2026_09_29.md).
+No real historical outcomes or paid trading assessments, production changes,
+push/PR. Extension is local and uncommitted. Next: one frozen economic protocol
+and thin archive/lock/comparator/book integration. Do not restart completed
+contracts or launch paid roles automatically. All142 old cases remain exposed;
+old fixed-menu responses are not new structural proposals. Private archive/source
+dependencies remain as recorded in PROJECT.md; public tests are self-contained.
+
 ## September 29, 2026 implementation and review fixes verified
 
 User approved native execution; three separate LC structure modules were committed

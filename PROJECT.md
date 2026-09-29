@@ -3,6 +3,54 @@
 Updated September29,2026. This is the current cross-chat/CLI handoff, not a trading
 model's training context. Check git status/log because active work may be newer.
 
+**September29 newest checkpoint — practice-lab scope approved; written design ready.**
+The user approved the12-case historical practice lab. The
+[integration design](docs/superpowers/specs/2026-09-29-lc-practice-lab-design.md)
+now fixes the chronological January20–May3 roster (9 rebound/3 expansion),
+source/role boundaries, proposed paper policy, matched mechanical comparator,
+measured timing, null accounting and chart/report deliverable. Written-design
+review is next, then implementation planning; no practice runner or new market
+assessment/backtest has run. All20 saved source requests rebuild, their raw
+hashes match the original evidence lock, and the minute archive SHA256 matches.
+This verifies inputs, not source-to-archive aggregate equality or profitability.
+This local checkpoint includes the previous outcome scorer/tests/report and
+the new design/handoff; verify git log/status for its commit. No push/PR or live
+change. The scorer's fresh focused regression rerun passed325 tests in51.71s,
+not a practice strategy test. No work remains running. Keep all142 earlier cases
+labeled exposed; this first lab is practice, not a holdout.
+
+**September29 latest direction — user requests a practical, visible replay suite.**
+The user feels the work has lost its connection to the trading objective. Re-anchor
+on whether trader-informed nested-timeframe judgment improves LC decisions; code
+test counts are not strategy results. Source-only preflight now successfully
+projects all20 saved `judgment_v1/evidence/*_source_request.json` files through
+`build_structure_packet`; the local minute archive is present. No outcomes read,
+new market calls or study launched in this preflight. This does not certify archive
+alignment, complete live-feed coverage or a new holdout. Proposed first version:
+a reusable historical practice report on12 chronological real LC cases, separate
+rebound/expansion reporting, one assessor per case, frozen decisions before
+outcome reveal, charts and fair code comparisons. Scope is proposed, not approved
+or implemented; integration design/user review precedes code. Previously examined
+cases are explicitly practice; later unexposed/prospective evaluation is separate.
+Do not start another broad audit, census, live service or paid campaign from this
+note. Existing scorer/handoff edits remain local/uncommitted; nothing is running.
+
+**September29 latest override — structural-target outcome scorer implemented.**
+User approved proceeding from proposal checks to LC outcome replay. New isolated
+`lc_structure_outcome.py` revalidates the proposal/fill, then resolves a structural
+stop/target or fill-relative horizon on minute data, with conservative gap/tie
+handling and explicit modeled costs/size.325 final focused tests pass, including
+48 new synthetic tests. No work remains running. One independent
+software review found no blocker; its accepted-prefix-hash limitation is documented.
+Bare repo pytest still aborts on the pre-existing missing integration config.
+See [outcome checkpoint](docs/knowledge/lc_structure_outcome_checkpoint_2026_09_29.md).
+No real historical outcome or market-agent call was made. Different post-entry
+invalidation versus effective stop remains unsupported/null. Next: one frozen
+economic comparison protocol and thin archive/lock/comparator integration, not
+another contract rebuild. This code does not authorize a paid campaign or live
+orders. New extension is local and uncommitted; no push/PR. Public tests need no
+private data; real research still needs local archives/manifests below.
+
 **September29 current override — offline structure contract implemented and
 review fixes verified.** User approved native execution of the
 [three-task plan](docs/superpowers/plans/2026-09-25-lc-structure-contract.md).
@@ -75,6 +123,13 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 
 ## Current approved work
 
+- Newest:12-case historical practice scope approved; written
+  [integration design](docs/superpowers/specs/2026-09-29-lc-practice-lab-design.md)
+  ready for user review. Do not skip to paid role dispatch or reuse old campaign
+  controllers with their incompatible fixed contracts.
+- Latest approved bounded extension: [LC structural-target replay](docs/knowledge/lc_structure_outcome_checkpoint_2026_09_29.md),
+  implemented separately from all frozen scorers. Native implementation plus one
+  independent software review; no new paid market-role campaign or live changes.
 - Current design: [September24 structure-first LC contract](docs/superpowers/specs/2026-09-24-lc-structure-first-design.md),
   approved September25; [implementation plan](docs/superpowers/plans/2026-09-25-lc-structure-contract.md)
   approved for native execution September28 and now implemented with review fixes
@@ -116,6 +171,13 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 | Task4 actual Q1 comparison | PhaseA harness/source preflight built; root849tests pass; independent harness review and actual roles/outcomes pending |
 
 ## Latest deliverables
+
+**September29 — structural-target outcome adapter:** actual source/proposal/policy
+revalidation and minute-by-minute stop/target/horizon resolution, theoretical
+risk-capped sizing and costs.325 final focused tests pass, including48 new
+synthetic tests. Positive synthetic controls include both LC
+theses and immediate/wait proposals. This is outcome-calculator readiness, not
+evidence that agent judgments improve real trades. See newest report above.
 
 **September29 — offline contract complete within research scope:** separate
 causal packet, strict proposal/policy validator and hypothetical pre-entry checks.
@@ -352,17 +414,14 @@ usability, not automatic loading by every CLI or correctness of future agent wor
 1. Read this handoff, newest `docs/knowledge/MEMORY.md` overrides, then active spec
    and plan. Do not restart the entire trader audit.
 2. Inspect `git status --short` and `git log -8 --oneline`.
-3. Check local `.superpowers/sdd/2026-09-15-lc-citation-integration/progress.md` and
-   task reports if present. These are ignored local execution detail, not portable
-   truth; reconcile with commits and tests if absent.
-4. Read the consolidated campaign plan above. First incomplete task is Task1:
-   new immutable monthly source wrapper, not another D1 plan/pilot. Complete
-   implementation/readiness review before bounded source/call execution. No
-   campaign source expansion or roles have run. Preserve Jan19 and all earlier
-   runs; no retries, threshold tuning or live changes. The broader source census
-   is prospectively specified in the new plan, not permission to change old
-   sources. Historical research remains retrospective/exposed; no WFO/CPCV or
-   prospective profitability claim.
+3. Read the latest September29 practice-lab design and outcome checkpoint;
+   reconcile files/tests with git. Older `.superpowers/sdd/` ledgers are historical
+   detail; do not relaunch completed work or assume local commits reached GitHub.
+4. First unfinished stage is **user review of the written practice-lab design**,
+   then its implementation plan/execution choice, implementation and a separately
+   authorized12-call-ceiling practice run. The design fixes paper parameters and
+   exact roster, not live settings. Preserve all142 exposed cases and old runs;
+   do not relabel practice as a holdout, retry old jobs or change live rules.
 5. Update this handoff after each accepted task so another session can continue
    without relying on uncommitted plans or an agent's conversation memory.
 
