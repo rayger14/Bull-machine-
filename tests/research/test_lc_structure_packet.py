@@ -95,3 +95,18 @@ def test_parent_states_not_conflated(state, expected):
 def test_unvalidated_current_stays_unknown_not_a_new_fact():
     p = api().build_structure_packet(structure_source(lambda p:p['current'].update(validated=False)))
     assert p['context']['hourly']['status'] == 'unknown'
+
+
+@pytest.mark.parametrize('location', ['current','bound','update'])
+def test_source_extensions_cannot_leak_into_outcome_hidden_context(location):
+    def change(value):
+        targets = {'current':value['current']['source_candle'],
+                   'bound':value['evidence']['parent_4h']['bound'],
+                   'update':value['evidence']['parent_4h']['updates'][0]}
+        targets[location].update(future_outcome={'future_high':999}, free_prompt='synthetic extension')
+    s=structure_source(change);p=api().build_structure_packet(s)
+    # Assert booleans so a failure cannot pretty-print the entire large packet.
+    for marker in ('future_outcome','free_prompt','synthetic extension'):
+        leaked = marker in json.dumps(p)
+        assert leaked is False, 'source extension leaked: ' + marker
+    api().validate_structure_packet(s,p)

@@ -1,5 +1,19 @@
 # Bull Machine Project Memory
 
+## September 29, 2026 implementation and review fixes verified
+
+User approved native execution; three separate LC structure modules were committed
+in d13f914,7a8de0b,3804acf. One independent review found source-extension leakage
+and numeric overflow; root reproduced and fixed both.111 new tests and260 focused
+tests pass after hardening. Before hardening,1,259 research tests passed (existing
+LibreSSL warning); do not describe that broader count as a post-fix rerun. Bare
+repository pytest rerun still aborts at unchanged tests/test_integration_fixes.py
+missing baseline config. See [checkpoint](lc_structure_contract_checkpoint_2026_09_25.md).
+No work remains running. No market models, new outcomes, live edits or push. All results remain
+non-authorizing; proposal validity is not semantic truth or profitability.
+Next after acceptance: separate structural-target exit replay and numerical
+comparison protocol; no automatic paid study. Keep all142 exposed cases labeled.
+
 ## September 25, 2026 structure-contract implementation plan override
 
 User's “proceed” approves advancing the September24 design into the

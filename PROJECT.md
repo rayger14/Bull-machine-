@@ -1,7 +1,22 @@
 # Bull Machine — start here
 
-Updated September25,2026. This is the current cross-chat/CLI handoff, not a trading
+Updated September29,2026. This is the current cross-chat/CLI handoff, not a trading
 model's training context. Check git status/log because active work may be newer.
+
+**September29 current override — offline structure contract implemented and
+review fixes verified.** User approved native execution of the
+[three-task plan](docs/superpowers/plans/2026-09-25-lc-structure-contract.md).
+Separate packet/proposal/pre-entry modules committed d13f914,7a8de0b,3804acf.
+111 new synthetic tests;260 focused tests passed after final hardening. Before
+hardening, the entire research suite1,259 passed (existing LibreSSL warning);
+bare repository pytest was rerun and still aborts in unchanged
+integration collection on a missing config. See the
+[implementation checkpoint](docs/knowledge/lc_structure_contract_checkpoint_2026_09_25.md)
+for exact scope and evidence. One independent reviewer found source-extension
+leakage and numeric overflow; root reproduced and fixed both with regression
+tests. No work remains running. No market calls, outcome replay, live changes,
+push or PR. Next: structural-target exit replay and a frozen study
+protocol are separate next work, not an automatically authorized paid campaign.
 
 **September25 current override — design approved; implementation plan written.**
 The user's “proceed” advances the structure-first design to the
@@ -62,7 +77,8 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 
 - Current design: [September24 structure-first LC contract](docs/superpowers/specs/2026-09-24-lc-structure-first-design.md),
   approved September25; [implementation plan](docs/superpowers/plans/2026-09-25-lc-structure-contract.md)
-  awaits review and execution selection. Neither is implemented. Earlier approved implementation
+  approved for native execution September28 and now implemented with review fixes
+  verified September29. This is offline contract readiness only. Earlier approved implementation
   work below is historical; do not resume its campaigns automatically.
 - Branch: `quant/archetype-evidence-audit`; user explicitly chose continued work
   here rather than a new worktree.
@@ -100,6 +116,13 @@ guaranteed or presently certified. Archetype/arm books must remain independent.
 | Task4 actual Q1 comparison | PhaseA harness/source preflight built; root849tests pass; independent harness review and actual roles/outcomes pending |
 
 ## Latest deliverables
+
+**September29 — offline contract complete within research scope:** separate
+causal packet, strict proposal/policy validator and hypothetical pre-entry checks.
+111 new tests;260 focused regressions passed after one independent review and
+root hardening. Pre-hardening full research run1,259 passed; whole-repository
+collection remains blocked by an unchanged missing integration config. No
+economic comparison or live authority is implemented. See newest checkpoint.
 
 **September25 — implementation plan written, not executed:** three modules and
 public fixture tests; explicit source/policy binding, causal levels, permitted

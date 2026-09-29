@@ -139,3 +139,11 @@ def test_does_not_trust_invalid_proposal_or_resealed_packet():
     assert check(s,p,policy,a,e)['status']=='invalid'
     p['levels']['bar:5m:11:high']['price']=999.
     with pytest.raises(ValueError): check(s,p,policy,a,e)
+
+
+@pytest.mark.parametrize('where',['policy','fill'])
+def test_unrepresentable_numeric_input_is_invalid_not_controller_exception(where):
+    s,p,policy,a,e=fixture()
+    if where=='policy': policy['max_entry_price']=10**309
+    else: e['fill_open']=10**309
+    assert check(s,p,policy,a,e)['status']=='invalid'

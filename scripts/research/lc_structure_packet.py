@@ -37,8 +37,11 @@ COLUMNS = ('open_time', 'open', 'high', 'low', 'close', 'volume')
 
 
 def number(value, zero=False):
-    return (type(value) in (int, float) and math.isfinite(value)
-            and (value >= 0 if zero else value > 0))
+    try:
+        return (type(value) in (int, float) and math.isfinite(value)
+                and (value >= 0 if zero else value > 0))
+    except OverflowError:
+        return False
 
 
 def clock(value):
@@ -67,6 +70,40 @@ def resolve(packet, evidence_id):
     return value
 
 
+def _fields(value, names):
+    """Nested source extensions are not part of the assessor contract."""
+    if value is None:
+        return None
+    return {name: deepcopy(value[name]) for name in names.split()}
+
+
+def _context(source):
+    raw = source['context']
+    context = _fields(raw, 'version case_id candidate_id source_packet_sha256 '
+        'decision_time native_long execution_authorized source_authentication')
+    context['hourly'] = _fields(raw['hourly'], 'status close_relation swept_prior_low '
+        'swept_prior_high reclaimed_prior_low rejected_prior_high inside_bar')
+    for tf in ('1m', '5m'):
+        key = 'last_two_' + tf
+        context[key] = _fields(raw[key], 'status higher_low higher_close last_body '
+            'last_close_location postdecision_confirmation_evaluated')
+        context[key]['candles'] = [_fields(row, 'open_time open high low close volume')
+                                    for row in raw[key]['candles']]
+    for key in ('parent_1d', 'parent_4h'):
+        parent = raw[key]
+        view = _fields(parent, 'evidence_status pre_setup lifecycle lifecycle_scope '
+            'decision_state child_nested position_in_bound distance_is_unobstructed_room')
+        view['bound'] = _fields(parent['bound'], 'id lineage_id predecessor_version_id '
+            'creation_reason range_low range_high low_pivot_id high_pivot_id formation_hour available_at')
+        view['updates'] = [_fields(row, 'id available_at pre_lineage_id post_lineage_id '
+            'post_state source_break_direction') for row in parent['updates']]
+        context[key] = view
+    context['current'] = _fields(source['source_packet']['current']['source_candle'],
+                                  'open_time open high low close volume')
+    context['current_validated'] = source['source_packet']['current']['validated'] is True
+    return context
+
+
 def _project(source):
     raw = source['source_packet']
     setup, decision = clock(raw['setup_open']), clock(raw['decision_time'])
@@ -80,13 +117,7 @@ def _project(source):
     for field in ('instrument', 'data_stream_id'):
         if not isinstance(provenance[field], str) or not provenance[field].strip():
             raise ValueError('missing source identity')
-    context = deepcopy(source['context'])
-    # Preserve descriptive facts but not legacy stop-based economics.
-    for parent in ('parent_1d', 'parent_4h'):
-        context[parent].pop('ceiling_distance_r', None)
-        context[parent].pop('distance_basis', None)
-    context['current'] = deepcopy(raw['current']['source_candle'])
-    context['current_validated'] = raw['current']['validated'] is True
+    context = _context(source)
     curriculum = dict(records=deepcopy(raw['curriculum']), brief=deepcopy(source['master_brief']))
     p = dict(version=VERSION, contract_sha256=CONTRACT_SHA256, case_id=raw['case_id'],
         setup_open=setup.isoformat(), decision_time=decision.isoformat(),

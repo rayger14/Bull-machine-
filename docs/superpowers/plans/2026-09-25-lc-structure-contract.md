@@ -1,6 +1,6 @@
 # LC Structure Contract Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Build a testable offline contract for source-backed LC proposals without model calls, outcome scoring or order placement.
 
@@ -10,7 +10,7 @@
 
 **Spec:** [2026-09-24-lc-structure-first-design.md](../specs/2026-09-24-lc-structure-first-design.md)
 
-**Status:** September 25: design approved by the user's “proceed”; this implementation plan awaits review. No task below has been implemented. Recommend native execution with one independent software review at the end to limit repeated context costs.
+**Status:** Native execution approved September28; implemented September29 with one independent review and verified root fixes. All tasks below are complete within offline research scope. Final focused260 tests pass; see [checkpoint](../../knowledge/lc_structure_contract_checkpoint_2026_09_25.md) for limitations and verification chronology. No market assessment, outcome replay, merge or push.
 
 ## Global Constraints
 
@@ -81,7 +81,7 @@ def validate_structure_packet(source_request: dict, packet: dict) -> None: ...
 def structure_source() -> dict: ...
 ```
 
-- [ ] **Write failing tests** using the existing public fixture, not private price data:
+- [x] **Write failing tests** using the existing public fixture, not private price data:
 
 ```python
 from copy import deepcopy
@@ -111,8 +111,8 @@ def test_resealed_catalog_tampering_fails():
         validate_structure_packet(source, packet)
 ```
 
-- [ ] Run `env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -o addopts='' -q tests/research/test_lc_structure_packet.py`; first failure must be the missing new module/API, not a broken old fixture.
-- [ ] **Implement projection**: validate the legacy request first; build an allowlisted detached payload; iterate all supplied rows by declared column names; validate OHLC/volume, unique increasing UTC opens and completed intervals; derive raw-level availability at bar close. Unknown parent context stays unknown and has no executable parent levels. Strip old economics, rebuild local citations and hash last. Validation recomputes the packet from the original request and requires exact equality. Copy, never mutate input.
+- [x] Run `env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -o addopts='' -q tests/research/test_lc_structure_packet.py`; first failure must be the missing new module/API, not a broken old fixture.
+- [x] **Implement projection**: validate the legacy request first; build an allowlisted detached payload; iterate all supplied rows by declared column names; validate OHLC/volume, unique increasing UTC opens and completed intervals; derive raw-level availability at bar close. Unknown parent context stays unknown and has no executable parent levels. Strip old economics, rebuild local citations and hash last. Validation recomputes the packet from the original request and requires exact equality. Copy, never mutate input.
 
 ```python
 # Core source binding and reconstruction pattern for the new module:
@@ -125,8 +125,8 @@ def validate_structure_packet(source_request: dict, packet: dict) -> None:
         raise ValueError('structure packet differs from validated source')
 ```
 
-- [ ] Add parameterized mutations with explicit expected rejection: future bar close; naive time; duplicated/reversed open; high below close; NaN/boolean price; wrong source seal; unknown timeframe; unknown candle column. For gaps, assert a limitation and no fabricated rows, not automatic whole-case rejection. Assert absent parent differs from missing/unknown; post-setup parent is never pre-existing; raw highs never become confirmed pivots; equal prices retain separate IDs; every emitted citation resolves. Use existing fixture builders to make internally consistent alternative parent states; do not reseal one source field and assume deeper legacy validation will accept it.
-- [ ] Run the new packet tests plus `tests/research/test_lc_context_assessment.py` and `tests/research/test_lc_published_assessment.py`; record exact results. Commit only Task 1 files with `feat: add causal LC structure packet`.
+- [x] Add parameterized mutations with explicit expected rejection: future bar close; naive time; duplicated/reversed open; high below close; NaN/boolean price; wrong source seal; unknown timeframe; unknown candle column. For gaps, assert a limitation and no fabricated rows, not automatic whole-case rejection. Assert absent parent differs from missing/unknown; post-setup parent is never pre-existing; raw highs never become confirmed pivots; equal prices retain separate IDs; every emitted citation resolves. Use existing fixture builders to make internally consistent alternative parent states; do not reseal one source field and assume deeper legacy validation will accept it.
+- [x] Run the new packet tests plus `tests/research/test_lc_context_assessment.py` and `tests/research/test_lc_published_assessment.py`; record exact results. Commit only Task 1 files with `feat: add causal LC structure packet`.
 
 ### Task 2: Strict proposal and external-policy validation
 
@@ -149,7 +149,7 @@ preserve a well-formed proposal with `policy_sha256: null`, but Task 3 cannot
 mark it eligible. Invalid source reconstruction raises `ValueError` rather than
 being blamed on the assessor. Malformed agent JSON returns `invalid`.
 
-- [ ] **Write failing tests** and helper fixtures. The source fixture is the existing synthetic `context_request()`. Its close is 105; use `bar:5m:11:low` at 99 as stop/invalidation and `bar:5m:11:high` at 110 as destination. Include every catalog ID strictly between entry and destination in `obstacle_level_ids` (not only unique prices). Claims explicitly say “synthetic schema fixture,” not a real setup assessment. Use policy values: BTC-USD/same-stream; max entry 106; expiry 15min; horizon 60min; minimum net RR 0.5; risk budget $100; max notional $2,000; equity $1,000; leverage 2; costs 12bps; processing 90s; routing 0; tick 0.1. No fixture value becomes a production default.
+- [x] **Write failing tests** and helper fixtures. The source fixture is the existing synthetic `context_request()`. Its close is 105; use `bar:5m:11:low` at 99 as stop/invalidation and `bar:5m:11:high` at 110 as destination. Include every catalog ID strictly between entry and destination in `obstacle_level_ids` (not only unique prices). Claims explicitly say “synthetic schema fixture,” not a real setup assessment. Use policy values: BTC-USD/same-stream; max entry 106; expiry 15min; horizon 60min; minimum net RR 0.5; risk budget $100; max notional $2,000; equity $1,000; leverage 2; costs 12bps; processing 90s; routing 0; tick 0.1. No fixture value becomes a production default.
 
 ```python
 import json
@@ -174,8 +174,8 @@ def test_wrong_bound_policy_is_not_a_rejection():
     assert 'policy_binding' in result['errors']
 ```
 
-- [ ] Run the new proposal test file and observe the missing API failure.
-- [ ] **Implement** strict JSON parsing (reject duplicate keys and non-finite constants), exact field sets, bindings, decision/plan consistency, claim citation membership, chronological sequence checks, source-backed level roles and indicative geometry. Entry proposals require known validated current/hourly facts, a known native long and trustworthy cited price operands; unavailable mandatory facts permit only insufficient-evidence output, not an executable proposal. Missing optional parent structure is not missing mandatory price data. Validate policy type/units and stream identity. Compute obstacle membership from the whole catalog; no model-supplied subset may omit an intervening level. Do not enforce a bullish HTF gate or numerical fusion threshold. Do not parse prose as proof of semantic truth.
+- [x] Run the new proposal test file and observe the missing API failure.
+- [x] **Implement** strict JSON parsing (reject duplicate keys and non-finite constants), exact field sets, bindings, decision/plan consistency, claim citation membership, chronological sequence checks, source-backed level roles and indicative geometry. Entry proposals require known validated current/hourly facts, a known native long and trustworthy cited price operands; unavailable mandatory facts permit only insufficient-evidence output, not an executable proposal. Missing optional parent structure is not missing mandatory price data. Validate policy type/units and stream identity. Compute obstacle membership from the whole catalog; no model-supplied subset may omit an intervening level. Do not enforce a bullish HTF gate or numerical fusion threshold. Do not parse prose as proof of semantic truth.
 
 ```python
 def unique_object(pairs):
@@ -193,8 +193,8 @@ def reject_constant(value):
 #            parse_constant=reject_constant)
 ```
 
-- [ ] Parameterize answer mutations: wrong case/packet/curriculum/policy hash; nonexistent citation; empty opposing/competing claim; invented numeric price; unknown management field; retest trigger; future confirmation; out-of-order sequence; stop at/above entry; target at/below entry; omitted obstacle; unresolved entry thesis; reject with a plan; insufficient evidence without unknowns; execution_authorized true. Assert `invalid`, never silent repair. Check policy null separately from invalid policy; a missing policy cannot prevent a valid rejection explanation. Valid broken-parent and absent-parent packets do not fail solely for those states.
-- [ ] Run packet/proposal and old context/published tests. Commit Task 2 files with `feat: validate bounded LC structure proposals`.
+- [x] Parameterize answer mutations: wrong case/packet/curriculum/policy hash; nonexistent citation; empty opposing/competing claim; invented numeric price; unknown management field; retest trigger; future confirmation; out-of-order sequence; stop at/above entry; target at/below entry; omitted obstacle; unresolved entry thesis; reject with a plan; insufficient evidence without unknowns; execution_authorized true. Assert `invalid`, never silent repair. Check policy null separately from invalid policy; a missing policy cannot prevent a valid rejection explanation. Valid broken-parent and absent-parent packets do not fail solely for those states.
+- [x] Run packet/proposal and old context/published tests. Commit Task 2 files with `feat: validate bounded LC structure proposals`.
 
 ### Task 3: Pure pre-entry checks and acceptance checkpoint
 
@@ -210,7 +210,7 @@ def check_structure_preentry(source_request: dict, packet: dict,
 
 `execution` has `response_available_at`, `proposed_fill_at`, `fill_open`, `completed_minutes`. Minutes contain UTC `open_time`, OHLC and volume, from decision through the minute before proposed fill. No high/low/close of the fill minute is accepted. Every supplied bar must be completed by fill and form uninterrupted 1m coverage; this is a hypothetical fixture interface, not a claim of authenticated fills. Result fields: `status`, `reason`, `geometry`, `execution_authorized`; statuses `eligible_hypothetical`, `cancelled`, `not_ready`, `invalid`. All are non-authorizing and contain no PnL.
 
-- [ ] **Write failing tests** using the same 105/99/110 fixture:
+- [x] **Write failing tests** using the same 105/99/110 fixture:
 
 ```python
 import json
@@ -236,9 +236,9 @@ def test_hypothetical_fill_recomputes_room_without_authorizing():
     assert check_structure_preentry(source, packet, raw, policy, execution)['reason'] == 'entry_cap'
 ```
 
-- [ ] Run the new preentry test file and observe missing API failure.
-- [ ] **Implement**: reject malformed inputs; validate answer/source/policy; no policy returns `not_ready/missing_policy`; non-entry decisions return `not_ready/no_entry_proposal`. Arm is minute-ceiling of the later of actual response availability and decision plus policy processing, plus routing. Expiry is decision plus policy expiry; eligible fill must be strictly before expiry. Immediate permits only the first arm open. Wait requires a completed 1m close strictly above the frozen trigger, with bar open at/after arm, and fill at the next open. A trigger before arm, equality at trigger, or skipped eligible fill does not qualify. Cancel on any stop or structural-invalidation touch before entry, including during response; check fill open similarly. A gap in the evidence is `not_ready/coverage_gap`, not permission to assume no breach.
-- [ ] Round long protective stop and destination down to tick using `Decimal(str(price))`, never move anchors in the source catalog. Round entry cap down. This models a farther stop and no inflated target reward; it does not establish fill quality. Recompute at `fill_open`; cancel at/above destination, above cap, or below required net RR. Conservative round-trip cost per unit is `fill_open * roundtrip_cost_bps / 10000`. Use:
+- [x] Run the new preentry test file and observe missing API failure.
+- [x] **Implement**: reject malformed inputs; validate answer/source/policy; no policy returns `not_ready/missing_policy`; non-entry decisions return `not_ready/no_entry_proposal`. Arm is minute-ceiling of the later of actual response availability and decision plus policy processing, plus routing. Expiry is decision plus policy expiry; eligible fill must be strictly before expiry. Immediate permits only the first arm open. Wait requires a completed 1m close strictly above the frozen trigger, with bar open at/after arm, and fill at the next open. A trigger before arm, equality at trigger, or skipped eligible fill does not qualify. Cancel on any stop or structural-invalidation touch before entry, including during response; check fill open similarly. A gap in the evidence is `not_ready/coverage_gap`, not permission to assume no breach.
+- [x] Round long protective stop and destination down to tick using `Decimal(str(price))`, never move anchors in the source catalog. Round entry cap down. This models a farther stop and no inflated target reward; it does not establish fill quality. Recompute at `fill_open`; cancel at/above destination, above cap, or below required net RR. Conservative round-trip cost per unit is `fill_open * roundtrip_cost_bps / 10000`. Use:
 
 ```python
 risk_per_unit = fill_open - rounded_stop
@@ -251,16 +251,16 @@ quantity_limit = min(policy['risk_budget_usd'] / (risk_per_unit + cost_per_unit)
 
 Report that quantity only as `quantity_upper_bound`, not an executable size: lot-size rounding, stop gaps and live slippage are outside this checker. The budget is modeled risk, not a guaranteed loss cap. If structural invalidation is above the protective stop, cancellation uses that nearer level before entry; post-entry management is not implemented. Recompute/report intervening levels at actual fill; do not assume a crossed level has become support.
 
-- [ ] Test immediate/wait positive controls, both theses, exact trigger equality, pre-arm close, partial bar, skipped first fill, actual response later than assumed delay, expiry boundary, future response time, missing/duplicate/reversed minute, stop touch during processing, invalidation touch without stop touch, gap below stop, gap beyond cap/target, tick rounding, fees erasing room, NaN/boolean prices and policy absence. Assert no output has `execution_authorized: true`, order fields, exit outcomes or PnL. An `enter_proposal` positive test checks contract validity, not truth of its synthetic rationale.
-- [ ] Run all three new test files and focused frozen regressions:
+- [x] Test immediate/wait positive controls, both theses, exact trigger equality, pre-arm close, partial bar, skipped first fill, actual response later than assumed delay, expiry boundary, future response time, missing/duplicate/reversed minute, stop touch during processing, invalidation touch without stop touch, gap below stop, gap beyond cap/target, tick rounding, fees erasing room, NaN/boolean prices and policy absence. Assert no output has `execution_authorized: true`, order fields, exit outcomes or PnL. An `enter_proposal` positive test checks contract validity, not truth of its synthetic rationale.
+- [x] Run all three new test files and focused frozen regressions:
 
 ```sh
 env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m pytest -o addopts='' -q tests/research/test_lc_structure_packet.py tests/research/test_lc_structure_proposal.py tests/research/test_lc_structure_preentry.py tests/research/test_lc_context_assessment.py tests/research/test_lc_published_assessment.py tests/research/test_lc_context_facts.py tests/research/test_conditional_entry.py tests/research/test_lc_single_assessment.py
 git diff --check
 ```
 
-- [ ] Obtain one independent software review after implementation (if native execution is chosen); address factual defects and rerun affected tests. Reviewer sees source/tests, not a new market case to assess. Do not count that review as model-trading evidence.
-- [ ] Write actual commands, counts, failures and review outcome in the checkpoint. State: contract/pre-entry fixture readiness only; structural-target exit replay, capital accounting, paid agent evaluation and live service remain unimplemented. Update PROJECT/MEMORY with first unfinished action, private-data boundary and local commit/push status. Commit Task 3 files with `test: verify LC proposal pre-entry guardrails`.
+- [x] Obtain one independent software review after implementation (if native execution is chosen); address factual defects and rerun affected tests. Reviewer sees source/tests, not a new market case to assess. Do not count that review as model-trading evidence.
+- [x] Write actual commands, counts, failures and review outcome in the checkpoint. State: contract/pre-entry fixture readiness only; structural-target exit replay, capital accounting, paid agent evaluation and live service remain unimplemented. Update PROJECT/MEMORY with first unfinished action, private-data boundary and local commit/push status. Commit Task 3 files with `test: verify LC proposal pre-entry guardrails`.
 
 ## Completion boundary
 

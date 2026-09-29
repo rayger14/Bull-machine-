@@ -130,3 +130,10 @@ def test_invalid_policy_rejected_even_when_answer_rebound_to_it(field,value):
 def test_mutating_policy_invalidates_prior_answer():
     s,p,policy,a=inputs();policy['max_entry_price']=107.
     assert 'policy_binding' in grade(s,p,policy,a)['errors']
+
+
+def test_unrepresentable_integer_policy_is_invalid_not_controller_exception():
+    s,p,policy,a=inputs();policy['max_entry_price']=10**309
+    r=grade(s,p,policy,a)
+    assert r['status']=='invalid'
+    assert 'policy_number:max_entry_price' in r['errors']
