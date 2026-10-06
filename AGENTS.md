@@ -7,6 +7,11 @@ dated overrides in `docs/knowledge/MEMORY.md` and the active spec/plan linked by
 the handoff. Verify branch, git status and recent commits before resuming work.
 Do not assume this chat or another CLI's hidden memory is available.
 
+Before changing trading-concept semantics, read
+`docs/knowledge/teaching_rulebook/README.md` and its current chunk contract.
+Keep source teaching, project conventions, implemented behavior, recognition
+evidence and economic validation separate. Unresolved teachings are not passing gates.
+
 `PROJECT.md` is the short current-state entrypoint. Dated experiment
 reports are evidence; hypotheses and old performance headlines are not current
 certification. `CLAUDE.md` and `docs/knowledge/STATE_OF_THE_ENGINE.md` contain older
