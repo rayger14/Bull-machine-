@@ -16,6 +16,7 @@ Pipeline: hard_gates → fusion_score → whale_penalty → threshold_check → 
 """
 
 import logging
+import math
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 import pandas as pd
@@ -396,13 +397,37 @@ class ArchetypeInstance:
 
         This rewards multi-timeframe alignment over a single loud TF.
         """
-        # --- Primary: Graded directional scores (diversity-weighted, SM-validated) ---
-        bullish_1h = _safe_float(features.get('wyckoff_bullish_score', 0.0))
-        bearish_1h = _safe_float(features.get('wyckoff_bearish_score', 0.0))
-        bullish_4h = _safe_float(features.get('tf4h_wyckoff_bullish_score', 0.0))
-        bearish_4h = _safe_float(features.get('tf4h_wyckoff_bearish_score', 0.0))
-        bullish_1d = _safe_float(features.get('tf1d_wyckoff_bullish_score', 0.0))
-        bearish_1d = _safe_float(features.get('tf1d_wyckoff_bearish_score', 0.0))
+        prefixes = ('', 'tf4h_', 'tf1d_')
+
+        def source_available(prefix):
+            status = features.get(prefix + 'wyckoff_evidence_status', 'available')
+            source = str(features.get(prefix + 'wyckoff_evidence_source', '')).lower()
+            return (isinstance(status, str) and status == 'available'
+                    and source not in ('proxy', 'ema_proxy', 'unavailable', 'error'))
+
+        def number(key, prefix=''):
+            if not source_available(prefix):
+                return 0.0
+            try:
+                value = float(features.get(key, 0.0))
+                return value if math.isfinite(value) and value >= 0 else 0.0
+            except (TypeError, ValueError, OverflowError):
+                return 0.0
+
+        # Presence is distinct from positive support: explicit zeros/NaNs or
+        # opposite-side columns must not resurrect generic/binary evidence.
+        directional_schema = any(
+            prefix + 'wyckoff_' + side + suffix in features
+            for prefix in prefixes for side in ('bullish', 'bearish')
+            for suffix in ('_score', '_event_confidence'))
+
+        # --- Primary: existing graded directional weighting, available sources only ---
+        bullish_1h = number('wyckoff_bullish_score')
+        bearish_1h = number('wyckoff_bearish_score')
+        bullish_4h = number('tf4h_wyckoff_bullish_score', 'tf4h_')
+        bearish_4h = number('tf4h_wyckoff_bearish_score', 'tf4h_')
+        bullish_1d = number('tf1d_wyckoff_bullish_score', 'tf1d_')
+        bearish_1d = number('tf1d_wyckoff_bearish_score', 'tf1d_')
 
         # Select direction-appropriate scores
         if self.direction == 'long':
@@ -436,23 +461,26 @@ class ArchetypeInstance:
         # --- Fallback: Direction-aware event confidence (no BC leak) ---
         # Prefer directional composite if available (live system provides these)
         if self.direction == 'long':
-            dir_conf = _safe_float(features.get('wyckoff_bullish_event_confidence', 0.0))
+            dir_conf = number('wyckoff_bullish_event_confidence')
         else:
-            dir_conf = _safe_float(features.get('wyckoff_bearish_event_confidence', 0.0))
+            dir_conf = number('wyckoff_bearish_event_confidence')
         if dir_conf > 0:
             return dir_conf
 
-        # Non-directional fallback (feature store backward compat)
-        # Only use if no directional scores exist at all
-        tf4h_phase = _safe_float(features.get('tf4h_wyckoff_phase_score', 0.0))
-        wyckoff_conf = _safe_float(features.get('wyckoff_event_confidence', 0.0))
+        if directional_schema or not all(source_available(p) for p in prefixes):
+            return 0.0
+
+        # Legacy-only compatibility. These values are NOT directional or
+        # schematic confirmation; modern producers always expose their schema.
+        tf4h_phase = number('tf4h_wyckoff_phase_score', 'tf4h_')
+        wyckoff_conf = number('wyckoff_event_confidence')
         if tf4h_phase > 0 or wyckoff_conf > 0:
             return max(tf4h_phase, wyckoff_conf)
 
         # Last resort: M1/M2 binary signals
-        if features.get('tf1d_wyckoff_m1_signal') and self.direction == 'long':
+        if number('tf1d_wyckoff_m1_signal', 'tf1d_') > 0 and self.direction == 'long':
             return 0.6
-        if features.get('tf1d_wyckoff_m2_signal') and self.direction == 'short':
+        if number('tf1d_wyckoff_m2_signal', 'tf1d_') > 0 and self.direction == 'short':
             return 0.6
 
         return 0.0

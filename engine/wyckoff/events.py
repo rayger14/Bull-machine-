@@ -47,7 +47,9 @@ import numpy as np
 from typing import Tuple, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
+import json
 import logging
+from engine.wyckoff.range_evidence import RangeEvidence
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +114,55 @@ class RangeReference:
     st_count: int = 0  # Track number of STs validated (max 2 per structure)
 
 
+@dataclass(frozen=True)
+class DelayedEventEvidence:
+    """Candidate identity observed causally, available only at confirmation close."""
+    event_type: str
+    candidate_index: int
+    confirmation_index: int
+    candidate_extreme: float
+    prior_swept_boundary: float
+    candidate_parent_id: int
+    candidate_parent_context: str
+    candidate_parent_status: str
+    candidate_timestamp: pd.Timestamp
+    confirmation_timestamp: pd.Timestamp
+    available_at: pd.Timestamp
+
+
+@dataclass(frozen=True)
+class OpposingClimaxCandidate:
+    """An opposing clue, not authority to erase an established parent."""
+    event_type: str
+    candidate_index: int
+    candidate_parent_id: int
+    candidate_parent_context: str
+    open: float
+    high: float
+    low: float
+    close: float
+    volume_z: float
+    confidence: float
+    candidate_timestamp: Optional[pd.Timestamp]
+    candidate_available_at: Optional[pd.Timestamp]
+    clock_required: bool
+    volume: Optional[float] = None
+
+
+def _delayed_event_parameters(event_type: str, cfg: dict) -> tuple:
+    family = 'ut' if event_type == 'utad' else event_type
+    delay = cfg.get(f'{family}_recovery_bars', 3)
+    lookback = cfg.get(f'{family}_lookback', 20)
+    if (not isinstance(delay, (int, np.integer)) or isinstance(delay, bool) or delay < 0
+            or not isinstance(lookback, (int, np.integer)) or isinstance(lookback, bool)
+            or lookback < 1):
+        raise ValueError('Delayed Wyckoff offsets must be nonnegative integer bars; lookback must be positive')
+    # Preserve Spring B's existing same-bar convention.
+    if family == 'spring_b' and delay <= 1:
+        delay = 0
+    return delay, lookback, 'low' if family.startswith('spring') else 'high'
+
+
 class WyckoffStateMachine:
     """
     Sequential validator for Wyckoff events.
@@ -136,6 +187,12 @@ class WyckoffStateMachine:
         self.context = WyckoffContext.NONE
         self.range_ref = RangeReference()
         self.bars_in_structure = 0
+        self._parent_generation = 0  # Monotonic even through no-context intervals.
+        self.pending_opposing_climax = None
+        self.climax_evidence = []  # Current-bar lifecycle records; never scored.
+        self.range_evidence = RangeEvidence(cfg)
+        self.structural_evidence = self.range_evidence.snapshot()
+        self.anchored_confidence = {}
         # sm_m2_context_only shadow: phase-C reading without state/event change
         self.m2_shadow_c = False
 
@@ -148,13 +205,193 @@ class WyckoffStateMachine:
 
     def reset(self):
         """Reset state machine to NONE"""
+        self._parent_generation += 1
         self.state = WyckoffState.NONE
         self.context = WyckoffContext.NONE
         self.range_ref = RangeReference()
         self.bars_in_structure = 0
         self.m2_shadow_c = False
+        self.pending_opposing_climax = None
+        self.climax_evidence = []
+        self.range_evidence = RangeEvidence(self.cfg, self._parent_generation)
+        self.structural_evidence = self.range_evidence.snapshot()
 
-    def process_bar(self, bar_idx: int, row: dict, raw_events: dict) -> tuple:
+    def parent_snapshot(self) -> dict:
+        """Immutable values describing the parent before a candidate is processed."""
+        established = (
+            self.context == WyckoffContext.ACCUMULATION and self.range_ref.ar_high > 0
+        ) or (
+            self.context == WyckoffContext.DISTRIBUTION and self.range_ref.as_low > 0
+        )
+        status = 'none' if self.context == WyckoffContext.NONE else (
+            'established' if established else 'unestablished')
+        return dict(id=self._parent_generation, context=self.context.value, status=status)
+
+    def _climax_candidate(self, key, bar_idx, row, parent):
+        return OpposingClimaxCandidate(
+            key, bar_idx, parent['id'], parent['context'],
+            float(row['open']), float(row['high']), float(row['low']),
+            float(row['close']), float(row.get('volume_z', 0)),
+            float(row.get(f'{key}_confidence', 0)),
+            row.get('timestamp'), row.get('available_at'),
+            bool(row.get('clock_required', False) or 'timestamp' in row or 'available_at' in row),
+            float(row['volume']) if row.get('volume') is not None and np.isfinite(row['volume']) else None)
+
+    def _record_climax(self, status, bar_idx, row, candidate=None, **extra):
+        record = dict(vars(candidate)) if candidate is not None else {}
+        record.update(status=status, observed_index=bar_idx,
+                      observed_timestamp=row.get('timestamp'),
+                      available_at=row.get('available_at'), **extra)
+        self.climax_evidence.append({
+            k: v.isoformat() if isinstance(v, pd.Timestamp) else v
+            for k, v in record.items()})
+
+    def _discard_opposing_climax(self, status, bar_idx, row):
+        if self.pending_opposing_climax is not None:
+            self._record_climax(status, bar_idx, row, self.pending_opposing_climax)
+            self.pending_opposing_climax = None
+
+    @staticmethod
+    def _climax_time_contiguous(candidate, age, row):
+        start, available = candidate.candidate_timestamp, candidate.candidate_available_at
+        if not candidate.clock_required and start is None and available is None:
+            return True  # Legacy pretagged bar-index callers have no clock evidence.
+        times = (start, available, row.get('timestamp'), row.get('available_at'))
+        if any(not isinstance(t, pd.Timestamp) or pd.isna(t) or t.tz is None for t in times):
+            return False
+        interval = available - start
+        return (interval > pd.Timedelta(0)
+                and times[2] == start + age * interval
+                and times[3] == times[2] + interval)
+
+    def _arbitrate_climaxes(self, bar_idx, row, raw, entry_parent, validated):
+        """Mutate only the local raw copy. True means atomic replacement committed.
+
+        This conservative operational contract requires a later AR/AS AND a close
+        across the stored candle's reaction-side extreme. It does not claim to
+        recognize every gradual reversal or a complete Wyckoff schematic.
+        """
+        if raw.get('sc', False) and raw.get('bc', False):
+            self._discard_opposing_climax('cancelled_ambiguity', bar_idx, row)
+            self._record_climax('ambiguous', bar_idx, row,
+                                parent_id=entry_parent['id'], event_type='sc+bc')
+            raw['sc'] = raw['bc'] = False
+            return False
+
+        opposing = 'bc' if entry_parent['context'] == 'accumulation' else 'sc'
+        if entry_parent['status'] != 'established':
+            return False  # Preserve provisional/no-parent initialization.
+        if entry_parent['id'] != self._parent_generation:
+            # Invalidation/age has priority. Do not evade it through NONE fallback.
+            if raw.get(opposing, False):
+                self._record_climax('rejected_parent_loss', bar_idx, row,
+                                    self._climax_candidate(opposing, bar_idx, row, entry_parent))
+                raw[opposing] = False
+            return False
+
+        same_side = 'sc' if opposing == 'bc' else 'bc'
+        if raw.get(same_side, False):
+            self._discard_opposing_climax('cancelled_parent_replacement', bar_idx, row)
+            return False  # Existing same-side reset remains authoritative.
+
+        candidate = self.pending_opposing_climax
+        if candidate is not None:
+            age = bar_idx - candidate.candidate_index
+            if candidate.candidate_parent_id != self._parent_generation:
+                self._discard_opposing_climax('cancelled_parent_loss', bar_idx, row)
+            elif age > self.ar_max_bars:
+                self._discard_opposing_climax('expired', bar_idx, row)
+            elif not self._climax_time_contiguous(candidate, age, row):
+                self._discard_opposing_climax('cancelled_time_discontinuity', bar_idx, row)
+            elif age > 0:
+                continuation = (row['close'] > candidate.high if opposing == 'bc'
+                                else row['close'] < candidate.low)
+                reaction = 'as' if opposing == 'bc' else 'ar'
+                crossed = (row['close'] < candidate.low if opposing == 'bc'
+                           else row['close'] > candidate.high)
+                if continuation:
+                    self._discard_opposing_climax('cancelled_continuation', bar_idx, row)
+                elif raw.get(reaction, False) and crossed:
+                    self._parent_generation += 1
+                    if opposing == 'bc':
+                        self.context = WyckoffContext.DISTRIBUTION
+                        self.state = WyckoffState.DISTRIB_AR
+                        self.range_ref = RangeReference(
+                            context=self.context, bc_high=candidate.high,
+                            bc_volume=candidate.volume_z, bc_bar_idx=candidate.candidate_index,
+                            as_low=row['low'], as_bar_idx=bar_idx)
+                    else:
+                        self.context = WyckoffContext.ACCUMULATION
+                        self.state = WyckoffState.ACCUM_AR
+                        self.range_ref = RangeReference(
+                            context=self.context, sc_low=candidate.low,
+                            sc_volume=candidate.volume_z, sc_bar_idx=candidate.candidate_index,
+                            ar_high=row['high'], ar_bar_idx=bar_idx)
+                    self.bars_in_structure = age
+                    self.m2_shadow_c = False
+                    self.pending_opposing_climax = None
+                    validated[opposing] = validated[reaction] = True
+                    self._record_climax('confirmed', bar_idx, row, candidate,
+                                        replacement_parent_id=self._parent_generation)
+                    return True  # No same-bar follow-on transitions in a new parent.
+
+        if raw.get(opposing, False):
+            raw[opposing] = False
+            if self.pending_opposing_climax is None:
+                self.pending_opposing_climax = self._climax_candidate(
+                    opposing, bar_idx, row, entry_parent)
+        if self.pending_opposing_climax is not None:
+            self._record_climax('pending', bar_idx, row, self.pending_opposing_climax)
+        return False
+
+    def _candidate_extreme(self, key, bar_idx, row, event_metadata):
+        """None rejects evidence; omission alone permits legacy pretagged callers."""
+        if event_metadata is None:
+            return row['low' if key.startswith('spring') else 'high']
+        if not isinstance(event_metadata, dict):
+            return None
+        item = event_metadata.get(key)
+        if not isinstance(item, DelayedEventEvidence) or item.event_type != key:
+            return None
+        try:
+            delay, _, _ = _delayed_event_parameters(key, self.cfg)
+            if (not isinstance(item.candidate_index, (int, np.integer))
+                    or isinstance(item.candidate_index, bool)
+                    or item.candidate_index < 0
+                    or item.confirmation_index != bar_idx
+                    or bar_idx - item.candidate_index != delay):
+                return None
+            extreme, boundary = float(item.candidate_extreme), float(item.prior_swept_boundary)
+            if not np.isfinite([extreme, boundary]).all() or min(extreme, boundary) <= 0:
+                return None
+            if (key.startswith('spring') and extreme >= boundary) or (
+                    not key.startswith('spring') and extreme <= boundary):
+                return None
+            times = (item.candidate_timestamp, item.confirmation_timestamp, item.available_at)
+            if any(not isinstance(t, pd.Timestamp) or pd.isna(t) or t.tz is None for t in times):
+                return None
+            interval = item.available_at - item.confirmation_timestamp
+            if interval <= pd.Timedelta(0) or (
+                    item.confirmation_timestamp - item.candidate_timestamp != delay * interval):
+                return None
+            if 'timeframe' in self.cfg and interval != pd.Timedelta(str(self.cfg['timeframe']).lower()):
+                return None
+        except (ValueError, TypeError, OverflowError):
+            return None
+        now = self.parent_snapshot()
+        if (item.candidate_parent_id != now['id']
+                or item.candidate_parent_context != now['context']
+                or item.candidate_parent_status != now['status']):
+            return None
+        desired = 'accumulation' if key.startswith('spring') else 'distribution'
+        if now['status'] == 'established' and now['context'] == desired:
+            return extreme
+        if now['status'] == 'none' and now['context'] == 'none':
+            return extreme
+        return None
+
+    def process_bar(self, bar_idx: int, row: dict, raw_events: dict,
+                    event_metadata: Optional[Dict[str, DelayedEventEvidence]] = None) -> tuple:
         """
         Process one bar. Returns (validated_bools, confidence_modifiers).
 
@@ -162,10 +399,17 @@ class WyckoffStateMachine:
             bar_idx: Integer index of this bar
             row: Dict with open, high, low, close, volume_z
             raw_events: Dict of raw detector bools
+            event_metadata: Candidate provenance. Only deliberate omission uses
+                legacy current-row geometry; the batch adapter always supplies it.
 
         Returns:
             Tuple of (validated dict, modifiers dict)
         """
+        entry_parent = self.parent_snapshot()
+        self.anchored_confidence = {}
+        pending_at_entry = self.pending_opposing_climax
+        self.climax_evidence = []
+        raw_events = dict(raw_events)  # Keep detector evidence immutable to callers.
         self.bars_in_structure += 1
         validated = {k: False for k in raw_events}
         modifiers = {}
@@ -173,16 +417,25 @@ class WyckoffStateMachine:
         # Check structure age - reset if too old
         if self.bars_in_structure > self.max_structure_bars:
             self.reset()
+            if pending_at_entry is not None:
+                self._record_climax('cancelled_parent_expiry', bar_idx, row, pending_at_entry)
 
         # Check invalidation
         self._check_invalidation(row)
         if self.range_ref.invalidated:
             self.reset()
+            if pending_at_entry is not None:
+                self._record_climax('cancelled_parent_invalidation', bar_idx, row, pending_at_entry)
+
+        if self._arbitrate_climaxes(bar_idx, row, raw_events, entry_parent, validated):
+            self._update_range_evidence(bar_idx, row, validated, raw_events, event_metadata)
+            return validated, modifiers
 
         # --- ACCUMULATION PATH ---
 
-        # SC: Always valid as raw (starts new accumulation)
+        # SC: provisional/same-side initializer after opposing-climax arbitration.
         if raw_events.get('sc', False):
+            self._parent_generation += 1
             validated['sc'] = True
             self.context = WyckoffContext.ACCUMULATION
             self.state = WyckoffState.ACCUM_SC
@@ -217,19 +470,24 @@ class WyckoffStateMachine:
 
         # Spring: Requires established range (SC+AR), price near or below SC_low
         spring_tolerance = self.cfg.get('sm_spring_tolerance', 0.01)  # 1% tolerance for shallow springs
-        if raw_events.get('spring_a', False) or raw_events.get('spring_b', False):
+        for spring_key in ('spring_a', 'spring_b'):
+            if not raw_events.get(spring_key, False):
+                continue
+            candidate_low = self._candidate_extreme(spring_key, bar_idx, row, event_metadata)
+            # Only an authorized BC initializer remains in the local raw copy.
+            # A pending BC must not veto valid evidence in the surviving parent.
+            if candidate_low is None or (event_metadata is not None
+                    and raw_events.get('bc', False) and not raw_events.get('sc', False)):
+                continue
             if self.context == WyckoffContext.ACCUMULATION and self.range_ref.ar_high > 0:
                 # Spring A: must break below SC_low (classic)
                 # Spring B: within tolerance of SC_low (shallow spring)
                 sc_low_with_tolerance = self.range_ref.sc_low * (1 + spring_tolerance)
-                if row['low'] < sc_low_with_tolerance:
-                    break_pct = (self.range_ref.sc_low - row['low']) / (self.range_ref.sc_low + 1e-9)
+                if candidate_low < sc_low_with_tolerance:
+                    break_pct = (self.range_ref.sc_low - candidate_low) / (self.range_ref.sc_low + 1e-9)
                     if break_pct < self.spring_max_break_pct:
-                        if raw_events.get('spring_a', False) and row['low'] < self.range_ref.sc_low:
-                            validated['spring_a'] = True
-                        if raw_events.get('spring_b', False):
-                            validated['spring_b'] = True
-                        self.state = WyckoffState.ACCUM_SPRING
+                        if spring_key == 'spring_b' or candidate_low < self.range_ref.sc_low:
+                            validated[spring_key] = True
             elif (self.context == WyckoffContext.NONE
                   and self.cfg.get('sm_no_context_fallback', True)):
                 # No validated SC->AR structure exists — SC's triple-extreme gate
@@ -237,12 +495,12 @@ class WyckoffStateMachine:
                 # the SOS/SOW no-context fallback: keep the raw detector event at
                 # half confidence instead of discarding it. State is NOT advanced
                 # (no structure to advance).
-                if raw_events.get('spring_a', False):
-                    validated['spring_a'] = True
-                    modifiers['spring_a'] = 0.5
-                if raw_events.get('spring_b', False):
-                    validated['spring_b'] = True
-                    modifiers['spring_b'] = 0.5
+                validated[spring_key] = True
+                modifiers[spring_key] = 0.5
+
+        if self.context == WyckoffContext.ACCUMULATION and (
+                validated.get('spring_a', False) or validated.get('spring_b', False)):
+            self.state = WyckoffState.ACCUM_SPRING
 
         # SOS: Requires accumulation context, or fires with reduced confidence when no context
         if raw_events.get('sos', False):
@@ -260,7 +518,8 @@ class WyckoffStateMachine:
         # when the range is established and the bar's low HOLDS ABOVE support
         # (higher low = the M2 signature; a low below SC_low is spring
         # territory, not an M2 LPS).
-        if raw_events.get('lps', False) and self.context == WyckoffContext.ACCUMULATION:
+        if (raw_events.get('lps', False) and self.context == WyckoffContext.ACCUMULATION
+                and not self.range_evidence.blocks_local_retest(self._parent_generation, row, bar_idx)):
             if self.state == WyckoffState.ACCUM_SOS:
                 validated['lps'] = True
                 self.state = WyckoffState.ACCUM_LPS
@@ -287,9 +546,10 @@ class WyckoffStateMachine:
 
         # --- DISTRIBUTION PATH ---
 
-        # BC: Always valid as raw (starts new distribution)
+        # BC: provisional/same-side initializer after opposing-climax arbitration.
         if raw_events.get('bc', False):
             if not validated.get('sc', False):
+                self._parent_generation += 1
                 validated['bc'] = True
                 self.context = WyckoffContext.DISTRIBUTION
                 self.state = WyckoffState.DISTRIB_BC
@@ -313,27 +573,25 @@ class WyckoffStateMachine:
 
         # UT/UTAD: Requires distribution context, within tolerance of bc_high
         ut_tolerance = self.cfg.get('sm_ut_tolerance', 0.01)  # 1% — "approaches or slightly exceeds"
-        if raw_events.get('ut', False) or raw_events.get('utad', False):
+        for ut_key in ('ut', 'utad'):
+            if not raw_events.get(ut_key, False):
+                continue
+            candidate_high = self._candidate_extreme(ut_key, bar_idx, row, event_metadata)
+            if candidate_high is None:
+                continue
             if self.context == WyckoffContext.DISTRIBUTION and self.range_ref.as_low > 0:
                 bc_high_threshold = self.range_ref.bc_high * (1 - ut_tolerance)
-                if row['high'] > bc_high_threshold:
+                if candidate_high > bc_high_threshold:
                     # Allow UT from more states (not just after AS)
                     if self.state in (WyckoffState.DISTRIB_AR, WyckoffState.DISTRIB_ST,
                                      WyckoffState.DISTRIB_SOW, WyckoffState.DISTRIB_UT):
-                        if raw_events.get('ut', False):
-                            validated['ut'] = True
-                        if raw_events.get('utad', False):
-                            validated['utad'] = True
+                        validated[ut_key] = True
                         self.state = WyckoffState.DISTRIB_UT
             elif (self.context == WyckoffContext.NONE
                   and self.cfg.get('sm_no_context_fallback', True)):
                 # Mirror of the spring no-context fallback (see accumulation path).
-                if raw_events.get('ut', False):
-                    validated['ut'] = True
-                    modifiers['ut'] = 0.5
-                if raw_events.get('utad', False):
-                    validated['utad'] = True
-                    modifiers['utad'] = 0.5
+                validated[ut_key] = True
+                modifiers[ut_key] = 0.5
 
         # SOW: Requires distribution context, or fires with reduced confidence when no context
         if raw_events.get('sow', False):
@@ -349,7 +607,8 @@ class WyckoffStateMachine:
 
         # LPSY: after SOW (legacy) or M2 mirror — phase-C LPSY BEFORE any SOW,
         # lower high HOLDING BELOW resistance.
-        if raw_events.get('lpsy', False) and self.context == WyckoffContext.DISTRIBUTION:
+        if (raw_events.get('lpsy', False) and self.context == WyckoffContext.DISTRIBUTION
+                and not self.range_evidence.blocks_local_retest(self._parent_generation, row, bar_idx)):
             if self.state == WyckoffState.DISTRIB_SOW:
                 validated['lpsy'] = True
                 self.state = WyckoffState.DISTRIB_LPSY
@@ -365,7 +624,35 @@ class WyckoffStateMachine:
                 elif self.cfg.get('sm_m2_context_only', False):
                     self.m2_shadow_c = True  # shadow phase-C (see accum path)
 
+        self._update_range_evidence(bar_idx, row, validated, raw_events, event_metadata)
         return validated, modifiers
+
+    def _update_range_evidence(self, bar_idx, row, validated, raw_events, metadata):
+        """Augment the existing validator; do not rewrite raw detector thresholds."""
+        tracker = self.range_evidence
+        initial = None
+        if tracker.parent_id != self._parent_generation or tracker.context != self.context.value:
+            tracker = self.range_evidence = RangeEvidence(self.cfg, self._parent_generation, self.context.value)
+            for record in self.climax_evidence:
+                if record['status'] == 'confirmed':
+                    original = dict(record, timestamp=pd.Timestamp(record['candidate_timestamp']),
+                                    available_at=pd.Timestamp(record['candidate_available_at']))
+                    initial = (record['candidate_index'], original)
+        if self.context != WyckoffContext.NONE:
+            tracker.consume(bar_idx, row, validated, raw_events, metadata, self.get_phase_dir(), initial)
+            if tracker.reaction is not None:
+                if self.context == WyckoffContext.ACCUMULATION:
+                    self.range_ref.ar_high = tracker.reaction.high
+                    self.range_ref.ar_bar_idx = tracker.reaction.index
+                else:
+                    self.range_ref.as_low = -tracker.reaction.high
+                    self.range_ref.as_bar_idx = tracker.reaction.index
+            if tracker.emission is not None:
+                key = tracker.emission
+                validated[key] = True
+                self.anchored_confidence[key] = tracker.retest['confidence']
+                self.state = WyckoffState.ACCUM_LPS if key == 'lps' else WyckoffState.DISTRIB_LPSY
+        self.structural_evidence = tracker.snapshot()
 
     def _check_invalidation(self, row: dict):
         """Check if current structure should be invalidated"""
@@ -1522,6 +1809,33 @@ def create_wyckoff_context(df: pd.DataFrame, lookback: int = 3,
     return ctx
 
 
+def _delayed_evidence(df, cfg, key, confirmation, parents):
+    """Recover the raw detector's candidate without observing beyond confirmation."""
+    delay, lookback, price_col = _delayed_event_parameters(key, cfg)
+    candidate = confirmation - delay
+    if candidate < lookback or not isinstance(df.index, pd.DatetimeIndex):
+        return None
+    times = df.index[max(0, candidate - 1):confirmation + 1]
+    times = times.tz_localize('UTC') if times.tz is None else times.tz_convert('UTC')
+    if times.hasnans or not times.is_unique or not times.is_monotonic_increasing:
+        return None
+    try:
+        interval = pd.Timedelta(str(cfg['timeframe']).lower()) if 'timeframe' in cfg else times[1] - times[0]
+    except (ValueError, TypeError, IndexError):
+        return None
+    if interval <= pd.Timedelta(0) or not (times[1:] - times[:-1] == interval).all():
+        return None
+    prior = df[price_col].iloc[candidate - lookback:candidate]
+    boundary = prior.min() if price_col == 'low' else prior.max()
+    snap = parents[candidate]
+    return DelayedEventEvidence(
+        event_type=key, candidate_index=candidate, confirmation_index=confirmation,
+        candidate_extreme=df[price_col].iloc[candidate], prior_swept_boundary=boundary,
+        candidate_parent_id=snap['id'], candidate_parent_context=snap['context'],
+        candidate_parent_status=snap['status'], candidate_timestamp=times[1],
+        confirmation_timestamp=times[-1], available_at=times[-1] + interval)
+
+
 def _apply_state_machine_validation(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     """
     Run state machine validation over all bars.
@@ -1539,6 +1853,29 @@ def _apply_state_machine_validation(df: pd.DataFrame, cfg: dict) -> pd.DataFrame
     phase_dirs = ['neutral'] * n
     contexts = ['none'] * n
     confidence_mod_arrays = {k: np.ones(n, dtype=float) for k in event_keys}
+    delayed_keys = ('spring_a', 'spring_b', 'ut', 'utad')
+    parents = []
+    provenance = {f'wyckoff_{k}_{field}': [None] * n
+                  for k in delayed_keys for field in (
+                      'candidate_index', 'candidate_extreme', 'prior_swept_boundary',
+                      'candidate_parent_id', 'candidate_parent_context', 'candidate_parent_status',
+                      'candidate_timestamp', 'confirmation_timestamp', 'available_at', 'evidence_status')}
+    provenance['wyckoff_opposing_climax_evidence'] = [None] * n
+    provenance['wyckoff_structure_evidence'] = [None] * n
+    provenance['wyckoff_parent_id'] = [None] * n
+    # Keep raw clues distinct from delayed confirmed events. This also makes a
+    # validation-only replay use the original climax inputs, not its own output.
+    climax_inputs = {}
+    climax_confidence_overrides = {k: np.full(n, np.nan) for k in ('sc', 'bc', 'lps', 'lpsy')}
+    for k in event_keys:
+        for suffix, default in (('', False), ('_confidence', 0.0)):
+            saved = f'wyckoff_{k}_raw{suffix}'
+            source = saved if saved in df.columns else f'wyckoff_{k}{suffix}'
+            dtype = float if suffix else bool
+            values = (df[source].to_numpy(dtype=dtype, copy=True) if source in df.columns
+                      else np.full(n, default, dtype=dtype))
+            climax_inputs[k + suffix] = values
+            provenance[saved] = values
 
     # Pre-extract arrays for performance
     opens = df['open'].values
@@ -1546,22 +1883,72 @@ def _apply_state_machine_validation(df: pd.DataFrame, cfg: dict) -> pd.DataFrame
     lows = df['low'].values
     closes = df['close'].values
     volume_zs = df['volume_z'].values if 'volume_z' in df.columns else np.zeros(n)
+    volumes = df['volume'].values if 'volume' in df.columns else np.full(n, np.nan)
 
     for i in range(n):
+        parents.append(sm.parent_snapshot())
         row = {
             'open': opens[i],
             'high': highs[i],
             'low': lows[i],
             'close': closes[i],
             'volume_z': volume_zs[i],
+            'volume': volumes[i],
+            'sc_confidence': climax_inputs['sc_confidence'][i],
+            'bc_confidence': climax_inputs['bc_confidence'][i],
+            'sos_confidence': climax_inputs['sos_confidence'][i],
+            'sow_confidence': climax_inputs['sow_confidence'][i],
+            'clock_required': isinstance(df.index, pd.DatetimeIndex),
         }
+        if isinstance(df.index, pd.DatetimeIndex) and not pd.isna(df.index[i]):
+            timestamp = df.index[i]
+            timestamp = timestamp.tz_localize('UTC') if timestamp.tz is None else timestamp.tz_convert('UTC')
+            row['timestamp'] = timestamp
+            try:
+                interval = (pd.Timedelta(str(cfg['timeframe']).lower()) if 'timeframe' in cfg
+                            else df.index[i] - df.index[i - 1] if i > 0 else pd.NaT)
+                if pd.notna(interval) and interval > pd.Timedelta(0):
+                    row['available_at'] = timestamp + interval
+            except (ValueError, TypeError):
+                pass  # Never invent a close timestamp when interval is unknown.
 
         raw_events = {}
         for k in event_keys:
             col = f'wyckoff_{k}'
-            raw_events[k] = bool(df[col].iat[i]) if col in df.columns else False
+            raw_events[k] = (bool(climax_inputs[k][i]) if k in climax_inputs
+                             else bool(df[col].iat[i]) if col in df.columns else False)
 
-        validated, conf_modifiers = sm.process_bar(i, row, raw_events)
+        metadata = {}
+        for k in delayed_keys:
+            if raw_events.get(k, False):
+                item = _delayed_evidence(df, cfg, k, i, parents)
+                if item is not None:
+                    metadata[k] = item
+                    for field in ('candidate_index', 'candidate_extreme', 'prior_swept_boundary',
+                                  'candidate_parent_id', 'candidate_parent_context', 'candidate_parent_status',
+                                  'candidate_timestamp', 'confirmation_timestamp', 'available_at'):
+                        value = getattr(item, field)
+                        provenance[f'wyckoff_{k}_{field}'][i] = value.isoformat() if isinstance(value, pd.Timestamp) else value
+
+        validated, conf_modifiers = sm.process_bar(i, row, raw_events, event_metadata=metadata)
+        # The live feature adapter expects scalar cells (including its NaN
+        # handler). JSON preserves multiple same-bar lifecycle records safely.
+        provenance['wyckoff_opposing_climax_evidence'][i] = json.dumps(
+            sm.climax_evidence, sort_keys=True, separators=(',', ':'), allow_nan=False)
+        provenance['wyckoff_structure_evidence'][i] = json.dumps(
+            sm.structural_evidence, sort_keys=True, separators=(',', ':'), allow_nan=False)
+        provenance['wyckoff_parent_id'][i] = sm.parent_snapshot()['id']
+        for key, confidence in sm.anchored_confidence.items():
+            climax_confidence_overrides[key][i] = confidence
+        for record in sm.climax_evidence:
+            if record['status'] == 'confirmed':
+                climax_confidence_overrides[record['event_type']][i] = record['confidence']
+        for k in delayed_keys:
+            if raw_events.get(k, False):
+                item = metadata.get(k)
+                provenance[f'wyckoff_{k}_evidence_status'][i] = (
+                    'unavailable' if item is None else 'rejected' if not validated[k] else
+                    'structured' if item.candidate_parent_status == 'established' else 'unstructured')
 
         for k in event_keys:
             validated_arrays[k][i] = validated[k]
@@ -1578,10 +1965,16 @@ def _apply_state_machine_validation(df: pd.DataFrame, cfg: dict) -> pd.DataFrame
         col = f'wyckoff_{k}'
         conf_col = f'{col}_confidence'
         if col in df.columns and conf_col in df.columns:
+            df[conf_col] = climax_inputs[k + '_confidence']
             # Where raw detected but SM rejected -> zero confidence
-            rejected = df[col].values & ~validated_arrays[k]
+            detected = climax_inputs[k]
+            rejected = detected.astype(bool) & ~validated_arrays[k]
             df.loc[rejected, conf_col] = 0.0
             df[col] = validated_arrays[k]
+            if k in climax_confidence_overrides:
+                override = climax_confidence_overrides[k]
+                mask = np.isfinite(override)
+                df.loc[mask, conf_col] = override[mask]
 
     # Apply confidence modifiers (e.g., 0.5x for no-context SOS/SOW)
     for k in event_keys:
@@ -1602,7 +1995,9 @@ def _apply_state_machine_validation(df: pd.DataFrame, cfg: dict) -> pd.DataFrame
         if v > 0:
             logger.info(f"  SM {k}: {v} validated")
 
-    return df
+    # Object dtype keeps absent provenance absent, rather than fabricated zeros.
+    return pd.concat([df.drop(columns=list(provenance), errors='ignore'),
+                      pd.DataFrame(provenance, index=df.index, dtype=object)], axis=1)
 
 
 def _apply_htf_modulation(df: pd.DataFrame,
@@ -1775,6 +2170,12 @@ def detect_all_wyckoff_events(df: pd.DataFrame, cfg: Optional[dict] = None,
     # Phase D events
     df['wyckoff_lps'], df['wyckoff_lps_confidence'] = detect_last_point_of_support(df, cfg)
     df['wyckoff_lpsy'], df['wyckoff_lpsy_confidence'] = detect_last_point_of_supply(df, cfg)
+
+    # A fresh detector run supersedes saved inputs from any earlier validation.
+    # Validation-only replay uses these originals, including rejected retests.
+    for k in _ACCUM_EVENTS + _DISTRIB_EVENTS:
+        df[f'wyckoff_{k}_raw'] = df[f'wyckoff_{k}']
+        df[f'wyckoff_{k}_raw_confidence'] = df[f'wyckoff_{k}_confidence']
 
     # ------------------------------------------------------------------
     # v2 SHADOW columns (2026-08-20) — data collection ONLY. Deliberately

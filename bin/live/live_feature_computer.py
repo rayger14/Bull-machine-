@@ -98,6 +98,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 try:
     from engine.wyckoff.events import detect_all_wyckoff_events, create_wyckoff_context
+    from engine.wyckoff.candle_integrity import prepare_wyckoff_bars
     WYCKOFF_AVAILABLE = True
 except Exception:
     WYCKOFF_AVAILABLE = False
@@ -607,6 +608,8 @@ class LiveFeatureComputer:
         self.buffer_size = max(buffer_size, 1000)
         # Internal DataFrame buffer (columns: open, high, low, close, volume)
         self._buf: Optional[pd.DataFrame] = None
+        self._last_feature_ts: Optional[pd.Timestamp] = None
+        self._last_feature_vector: Optional[pd.Series] = None
         # Funding rate history for z-score
         self._funding_history: List[float] = []
         self._ls_history: List[float] = []  # L/S ratio history for true rolling z (audit fix 2026-07-13)
@@ -703,11 +706,16 @@ class LiveFeatureComputer:
         buf = df[['open', 'high', 'low', 'close', 'volume']].copy()
         buf = buf.tail(self.buffer_size)
 
-        # Ensure DatetimeIndex
-        if not isinstance(buf.index, pd.DatetimeIndex):
-            buf.index = pd.to_datetime(buf.index)
+        # All source candles are UTC start-stamped; naive inputs mean UTC.
+        buf.index = pd.to_datetime(buf.index, utc=True)
+        if buf.index.hasnans or not buf.index.is_unique or not buf.index.is_monotonic_increasing:
+            raise ValueError('Warmup candles require unique ordered timestamps')
+        if buf.empty:
+            raise ValueError('Warmup candles cannot be empty')
 
         self._buf = buf.copy()
+        self._last_feature_ts = None
+        self._last_feature_vector = None
         logger.info(
             f"Ingested {len(self._buf)} candles "
             f"({self._buf.index[0]} to {self._buf.index[-1]})"
@@ -719,8 +727,8 @@ class LiveFeatureComputer:
         Deep-daily-context upgrade 2026-07-20: the 1H buffer only resamples to
         ~42 daily bars, so the daily Wyckoff detectors ran with garbage rolling
         warmup and six weeks of memory. This buffer supplies real market
-        memory; _wyckoff_multi_tf_hierarchical splices it with the current
-        partial day from the 1H buffer. Safe no-op if never called.
+        memory. Wyckoff validates completed native bars and joins them to
+        completed hourly-derived days, never the current partial day.
         """
         required = {'open', 'high', 'low', 'close', 'volume'}
         col_map = {c: c.lower() for c in df.columns if c.lower() in required}
@@ -729,13 +737,11 @@ class LiveFeatureComputer:
             logger.warning("ingest_daily_candles: missing OHLCV columns, ignored")
             return
         buf = df[['open', 'high', 'low', 'close', 'volume']].copy()
-        if not isinstance(buf.index, pd.DatetimeIndex):
-            buf.index = pd.to_datetime(buf.index)
-        buf.index = buf.index.normalize()
-        buf = buf[~buf.index.duplicated(keep='last')].sort_index().tail(320)
+        # Preserve duplicates and misalignment for explicit integrity rejection.
+        buf.index = pd.to_datetime(buf.index, utc=True)
+        buf = buf.sort_index().tail(320)
         self._daily_buf = buf
-        logger.info(f"Ingested {len(buf)} daily candles "
-                    f"({buf.index[0].date()} to {buf.index[-1].date()})")
+        logger.info(f"Ingested {len(buf)} daily candle observations")
 
     def set_cme_oi_features(self, feats: dict) -> None:
         """Store the daily CME OI shadow features (set by the runner's daily
@@ -763,6 +769,9 @@ class LiveFeatureComputer:
         ts = candle.get('timestamp', candle.get('datetime', pd.Timestamp.now()))
         if not isinstance(ts, pd.Timestamp):
             ts = pd.Timestamp(ts)
+        if pd.isna(ts):
+            raise ValueError('Candle timestamp cannot be missing')
+        ts = ts.tz_localize('UTC') if ts.tzinfo is None else ts.tz_convert('UTC')
 
         new_row = pd.DataFrame(
             [{
@@ -775,10 +784,21 @@ class LiveFeatureComputer:
             index=[ts],
         )
 
-        if self._buf is None:
+        if self._buf is None or self._buf.empty:
             self._buf = new_row.copy()
         else:
-            self._buf = pd.concat([self._buf, new_row])
+            tail_ts = self._buf.index[-1]
+            if ts < tail_ts:
+                raise ValueError('Out-of-order candle update')
+            if ts == tail_ts:
+                if not np.array_equal(self._buf.iloc[-1].to_numpy(dtype=float),
+                                      new_row.iloc[0].to_numpy(dtype=float), equal_nan=True):
+                    raise ValueError('Conflicting duplicate candle update')
+                if ts == self._last_feature_ts and self._last_feature_vector is not None:
+                    return self._last_feature_vector.copy(deep=True)
+                # First poll after warmup still computes once, without appending.
+            else:
+                self._buf = pd.concat([self._buf, new_row])
 
         # Trim to buffer size
         if len(self._buf) > self.buffer_size:
@@ -988,6 +1008,8 @@ class LiveFeatureComputer:
         # -- Build Series and fill NaN ----------------------------------------
         series = pd.Series(features, name=ts)
         series = self._fill_nans(series)
+        self._last_feature_ts = ts
+        self._last_feature_vector = series.copy(deep=True)
 
         return series
 
@@ -1601,30 +1623,49 @@ class LiveFeatureComputer:
     # Private: Wyckoff Features (REAL engine)
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _wyckoff_input_status(prepared, prefix='') -> Dict[str, Any]:
+        return {
+            prefix+'wyckoff_evidence_status': prepared.status,
+            prefix+'wyckoff_evidence_reason': prepared.reason,
+            prefix+'wyckoff_evidence_source': prepared.source,
+            prefix+'wyckoff_last_input_close': (prepared.last_input_close.isoformat()
+                                                if prepared.last_input_close is not None else None),
+            prefix+'wyckoff_available_at': (prepared.available_at.isoformat()
+                                           if prepared.available_at is not None else None),
+        }
+
+    def _wyckoff_as_of(self):
+        # Input contract: update supplies a COMPLETED, UTC-start-stamped hour.
+        # This derived cutoff is not an independent wall-clock closure check.
+        return self._buf.index[-1] + pd.Timedelta(hours=1)
+
     def _wyckoff_features(self) -> Dict[str, Any]:
         """
         Real Wyckoff event detection using engine.wyckoff.events.
 
         Detects: SC, BC, AR, AS, ST, SOS, SOW, Spring A/B, UT, UTAD, LPS, LPSY
         Produces: 26 event columns + composite scores + multi-TF scores.
-        Falls back to EMA alignment proxy if engine not available.
+        Unavailable evidence scores zero; EMA alignment is a separate proxy.
 
         Uses hierarchical cross-timeframe detection: 1D -> 4H -> 1H.
         Higher-timeframe context modulates lower-timeframe confidence scores.
         """
-        out: Dict[str, Any] = {}
+        out = self._wyckoff_features_fallback()
 
-        if not WYCKOFF_AVAILABLE or self._buf is None or len(self._buf) < 30:
-            return self._wyckoff_features_fallback()
+        if not WYCKOFF_AVAILABLE or self._buf is None or self._buf.empty:
+            return out
+
+        mtf_out, htf_context_4h = self._wyckoff_multi_tf_hierarchical()
+        out.update(mtf_out)
+        hourly = prepare_wyckoff_bars(self._buf, '1h', self._wyckoff_as_of(), min_bars=30)
+        out.update(self._wyckoff_input_status(hourly))
+        if hourly.status != 'available':
+            return out
 
         try:
-            # Step 1: Run hierarchical multi-TF detection (1D -> 4H)
-            # This creates contexts and runs with HTF alignment
-            mtf_out, htf_context_4h = self._wyckoff_multi_tf_hierarchical()
-            out.update(mtf_out)
-
             # Step 2: Run 1H detection WITH 4H context for HTF alignment
-            buf_copy = self._buf.copy()
+            buf_copy = hourly.frame.copy()
             vol = buf_copy['volume'].values.astype(float)
             if len(vol) >= 20:
                 vol_mean = pd.Series(vol).rolling(20).mean().values
@@ -1632,6 +1673,7 @@ class LiveFeatureComputer:
                 buf_copy['volume_z'] = (vol - vol_mean) / (vol_std + 1e-10)
             # Recalibrated 1H thresholds (v2): aligned with feature store patcher
             _CFG_1H = {
+                'timeframe': '1h',
                 'st_lookback': 15,          # consensus 15-bar (was 30)
                 'st_volume_z_max': 0.0,     # below 20-bar mean (was 0.5)
                 'st_low_proximity': 0.03,   # 3% proximity (was 5%)
@@ -1715,8 +1757,12 @@ class LiveFeatureComputer:
             self.last_wyckoff_conviction = self._wyckoff_conviction_breakdown(last)
 
         except Exception as e:
-            logger.warning(f"Wyckoff 1H engine failed, using fallback: {e}")
+            logger.warning(f"Wyckoff 1H engine failed: {e}")
             out = self._wyckoff_features_fallback()
+            out.update(mtf_out)
+            out.update(self._wyckoff_input_status(hourly))
+            out['wyckoff_evidence_status'] = 'error'
+            out['wyckoff_evidence_reason'] = 'detector_error'
 
         return out
 
@@ -1748,6 +1794,7 @@ class LiveFeatureComputer:
         # so volume_z and range_z thresholds must be softer for 4H and 1D.
         # Without this, SC/BC (volume_z > 2.5) almost never fires on daily bars.
         _CFG_4H = {
+            'timeframe': '4h',
             'sc_volume_z_min': 1.8,     # 2.5 on 1H — 4H aggregates damp volume spikes
             'sc_range_z_min': 1.2,      # 1.5 on 1H
             'bc_volume_z_min': 1.8,
@@ -1769,6 +1816,7 @@ class LiveFeatureComputer:
             'sm_ut_tolerance': 0.015,
         }
         _CFG_1D = {
+            'timeframe': '1d',
             'sc_volume_z_min': 1.5,     # Daily bars average 24 hourly candles
             'sc_range_z_min': 1.0,
             'bc_volume_z_min': 1.5,
@@ -1792,22 +1840,17 @@ class LiveFeatureComputer:
             'sm_ut_tolerance': 0.02,
         }
 
+        daily = prepare_wyckoff_bars(self._buf, '1d', self._wyckoff_as_of(), min_bars=20,
+                                     native_daily=self._daily_buf)
+        four_hour = prepare_wyckoff_bars(self._buf, '4h', self._wyckoff_as_of(), min_bars=30)
+        out.update(self._wyckoff_input_status(daily, 'tf1d_'))
+        out.update(self._wyckoff_input_status(four_hour, 'tf4h_'))
+        ctx_1d = None
         try:
-            # ---- Step 1: 1D Wyckoff (independent, no HTF context) ----
-            ctx_1d = None
-            buf_1d = self._resample_to_tf(self._buf, '1D')
-            # DEEP DAILY CONTEXT (2026-07-20): splice real daily history under
-            # the current partial day. Without it the detectors see ~42 days
-            # (and their 20-30 bar rolling stats burn most of that as warmup).
-            if self._daily_buf is not None and len(self._daily_buf) > len(buf_1d):
-                cur_day = buf_1d.index[-1].normalize()
-                hist = self._daily_buf[self._daily_buf.index < cur_day]
-                buf_1d = pd.concat([hist, buf_1d[buf_1d.index.normalize() >= cur_day]])
-                buf_1d = buf_1d.tail(300)
-            logger.info(f"Wyckoff 1D resample: {len(buf_1d)} daily bars from {len(self._buf)} 1H bars"
-                        + (" (deep)" if self._daily_buf is not None else ""))
+            # ---- Step 1: completed 1D Wyckoff (independent) ----
+            buf_1d = daily.frame.tail(300)
             out['tf1d_daily_bars'] = len(buf_1d)
-            if len(buf_1d) >= 20:
+            if daily.status == 'available':
                 buf_1d_copy = buf_1d.copy()
                 buf_1d_copy = detect_all_wyckoff_events(buf_1d_copy, cfg=_CFG_1D)
                 # lookback=14: scan last 14 daily bars (2 weeks) for recent events.
@@ -1846,10 +1889,19 @@ class LiveFeatureComputer:
                 logger.info(f"Wyckoff 1D results: bullish={out['tf1d_wyckoff_bullish_score']:.3f}, "
                             f"bearish={out['tf1d_wyckoff_bearish_score']:.3f}, "
                             f"score={out['tf1d_wyckoff_score']:.3f}")
+        except Exception as e:
+            logger.warning(f"Wyckoff daily engine failed: {e}")
+            ctx_1d = None
+            for key in list(out):
+                if key.startswith('tf1d_wyckoff_') and ('score' in key or 'signal' in key or key.endswith('_raw')):
+                    out[key] = 0.0
+            out['tf1d_wyckoff_evidence_status'] = 'error'
+            out['tf1d_wyckoff_evidence_reason'] = 'detector_error'
 
+        try:
             # ---- Step 2: 4H Wyckoff (with 1D context) ----
-            buf_4h = self._resample_to_tf(self._buf, '4H')
-            if len(buf_4h) >= 30:
+            buf_4h = four_hour.frame
+            if four_hour.status == 'available':
                 buf_4h_copy = buf_4h.copy()
                 buf_4h_copy = detect_all_wyckoff_events(buf_4h_copy, cfg=_CFG_4H, htf_context=ctx_1d)
                 # lookback=len: scan ALL available 4H bars. At 250 bars (~42 days),
@@ -1881,7 +1933,13 @@ class LiveFeatureComputer:
                             f"score={out['tf4h_wyckoff_phase_score']:.3f}")
 
         except Exception as e:
-            logger.warning(f"Wyckoff multi-TF hierarchical failed: {e}")
+            logger.warning(f"Wyckoff 4H engine failed: {e}")
+            htf_context_4h = None
+            for key in list(out):
+                if key.startswith('tf4h_wyckoff_') and ('score' in key or key.endswith('_raw')):
+                    out[key] = 0.0
+            out['tf4h_wyckoff_evidence_status'] = 'error'
+            out['tf4h_wyckoff_evidence_reason'] = 'detector_error'
 
         return out, htf_context_4h
 
@@ -1952,33 +2010,43 @@ class LiveFeatureComputer:
 
         return out
 
-    def _wyckoff_features_fallback(self) -> Dict[str, float]:
-        """EMA alignment fallback when Wyckoff engine is not available."""
-        close = self._buf['close'].values.astype(float)
-        ema9 = self._ema(close, 9)
-        ema21 = self._ema(close, 21)
-        ema50 = self._ema(close, 50)
-        ema200 = self._ema(close, 200)
-
+    def _wyckoff_features_fallback(self) -> Dict[str, Any]:
+        """No Wyckoff evidence. EMA alignment remains a named diagnostic only."""
         alignment = 0.0
-        if ema9 > ema21: alignment += 0.333
-        if ema21 > ema50: alignment += 0.333
-        if ema50 > ema200: alignment += 0.334
+        if self._buf is not None and not self._buf.empty:
+            close = self._buf['close'].values.astype(float)
+            ema9, ema21, ema50, ema200 = (self._ema(close, n) for n in (9, 21, 50, 200))
+            if ema9 > ema21: alignment += 0.333
+            if ema21 > ema50: alignment += 0.333
+            if ema50 > ema200: alignment += 0.334
+        self.last_wyckoff_event_history = []
+        self.last_wyckoff_conviction = {}
 
-        return {
-            'wyckoff_score': alignment,
+        out = {
+            'wyckoff_ema_alignment_proxy': alignment,
+            'wyckoff_score': 0.0,
             'wyckoff_event_confidence': 0.0,
+            'wyckoff_bullish_event_confidence': 0.0,
+            'wyckoff_bearish_event_confidence': 0.0,
             'wyckoff_bullish_score': 0.0,
             'wyckoff_bearish_score': 0.0,
-            'tf1d_wyckoff_score': alignment,
+            'wyckoff_phase_dir': 'unknown',
+            'tf1d_wyckoff_score': 0.0,
             'tf1d_wyckoff_bullish_score': 0.0,
             'tf1d_wyckoff_bearish_score': 0.0,
-            'tf4h_wyckoff_phase_score': alignment,
+            'tf4h_wyckoff_phase_score': 0.0,
             'tf4h_wyckoff_bullish_score': 0.0,
             'tf4h_wyckoff_bearish_score': 0.0,
             'tf1d_wyckoff_m1_signal': 0,
             'tf1d_wyckoff_m2_signal': 0,
         }
+        for prefix in ('', 'tf4h_', 'tf1d_'):
+            out.update({prefix+'wyckoff_evidence_status': 'unavailable',
+                        prefix+'wyckoff_evidence_reason': 'engine_or_input_unavailable',
+                        prefix+'wyckoff_evidence_source': 'ema_proxy',
+                        prefix+'wyckoff_last_input_close': None,
+                        prefix+'wyckoff_available_at': None})
+        return out
 
     def _wyckoff_event_history(self, buf_with_events: pd.DataFrame, max_events: int = 20) -> list:
         """Scan all bars in buffer for recent Wyckoff events. Returns list sorted newest-first."""
@@ -2944,6 +3012,13 @@ class LiveFeatureComputer:
         - Score / ratio columns: fill with 0
         - Indicator columns: forward-fill, then 0
         """
+        # Missing provenance is unknown, not a real candidate at row zero.
+        evidence_nulls = {k: None for k in series.index
+                          if str(k).startswith(('wyckoff_', 'tf4h_wyckoff_', 'tf1d_wyckoff_'))
+                          and any(token in str(k) for token in
+                                  ('candidate_', 'confirmation_', 'prior_swept_boundary',
+                                   'available_at', 'last_input_close', 'evidence_'))
+                          and pd.isna(series[k])}
         # Score columns default to 0
         score_keys = [k for k in series.index if any(
             pat in str(k).lower() for pat in
@@ -2956,6 +3031,10 @@ class LiveFeatureComputer:
 
         # Fill remaining NaN with 0
         series = series.fillna(0.0)
+        if evidence_nulls:
+            series = series.astype(object)
+            for key in evidence_nulls:
+                series[key] = None
 
         return series
 

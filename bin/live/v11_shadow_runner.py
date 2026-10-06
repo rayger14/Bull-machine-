@@ -36,6 +36,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from engine.integrations.isolated_archetype_engine import IsolatedArchetypeEngine
+from engine.wyckoff.range_evidence import phase_c_sizing_eligible
 
 logger = logging.getLogger(__name__)
 
@@ -1347,8 +1348,12 @@ class V11ShadowRunner:
                 s.metadata['alt_basket_ret_4h'] = float(abr)
             # Wyckoff phase-C accumulation context for Boost 6 (validated 2026-08-04)
             pdir = features.get('wyckoff_phase_dir', None)
-            if isinstance(pdir, str) and pdir:
-                s.metadata['wyckoff_phase_dir'] = pdir
+            s.metadata['wyckoff_phase_dir'] = pdir if isinstance(pdir, str) and pdir else None
+            # Replace on every decision, including missing values: an earlier
+            # signal's justification must never survive unavailable evidence.
+            for key in ('wyckoff_structure_evidence', 'wyckoff_parent_id',
+                        'wyckoff_available_at', 'wyckoff_evidence_status'):
+                s.metadata[key] = features.get(key)
             # Stables rotation for Boost 7 (validated 2026-08-06)
             rot = features.get('stables_rot_rising', None)
             if rot is not None and rot == rot:
@@ -1451,14 +1456,13 @@ class V11ShadowRunner:
                     logger.info(f"[BREADTH_BOOST] wick_trap alt4h={float(abr):+.3f} "
                                 f"→ 1.25x capex sizing ({intent.allocated_size_pct:.3f})")
 
-            # Boost 6: Wyckoff phase-C accumulation context (validated 2026-08-04:
-            # C_accum long entries PF 2.07/1.50 train/hold vs 1.16/1.09 outside;
-            # battery train +$8.6K DD better, hold +$769; shadow-phase columns,
-            # zero fusion leakage). ANY long archetype.
+            # Boost 6: same multiplier/config; bare phase labels no longer
+            # authorize an increase. This structural guard is NOT economic
+            # validation of 1.25x and has not been deployed by this repair.
             if ((self.config.get('wyckoff_phase_boost') or {}).get('enabled')
                     and intent.signal.direction == 'long'):
                 pdir = sig_meta.get('wyckoff_phase_dir', None)
-                if isinstance(pdir, str) and pdir == 'C_accum':
+                if isinstance(pdir, str) and pdir == 'C_accum' and phase_c_sizing_eligible(sig_meta):
                     intent.allocated_size_pct *= 1.25
                     sig_meta['sizing_boosts']['multiplier'] *= 1.25
                     sig_meta['sizing_boosts']['capex_mult'] = \
