@@ -57,3 +57,25 @@ pre-registered result is as strong as anything found.
 wait-for-pullback entry (confirmation bars, buried 3x), 8-10 bar momentum-fade exit (exit mods 0-for-5; kills the runner).
 **Binding constraint:** ~17 LC trades per 2 years. Filters starve the sample; test #1 and #2 as SIZING BOOSTS, pre-registered,
 and judge them on live accumulation, since 2018-19 is now spent on the RSI-side test.
+
+---
+## CORRECTION + PARKED (2026-10-06): this was NOT the first direction test
+
+Reconciliation with the research branch (`quant/archetype-evidence-audit`, PR #83) found three problems with this record:
+
+1. **Prior rejected test, same session, Aug 29-30:** "LC high-side-only" REPLACED `rsi_extreme_65` with `rsi_14 min 60`
+   (silo, V23, 2020+, volume floor 1.5, `configs/archetypes/`). Result: 324 -> 291 trades, $29.8K -> $11.2K (**-$18.6K**),
+   PF 1.43 -> 1.15, DD -6.2% -> -11.4%. Verdict then: oversold-side coils were net winners at scale (2024 flipped negative
+   without them). It was recorded only as one clause in `v23_rebaseline_verdicts_2026_08_29.md`. The statement above that the
+   two sides "were never evaluated separately" is WRONG. Context compaction lost that history when this test was declared.
+2. **2018-19 was not untouched project-wide.** It served as the "virgin" lockbox for the LC volume-floor 3.0 decision on
+   Aug 31 (`within_gate_quality_study_2026_08_30.md`, Addendum 2). It was outside this test's discovery run only.
+3. **The two tests differ.** Aug 29: floor 1.5, RSI>=60 replaces the extreme gate (keeps the 60-65 band, removes oversold).
+   Sept 24: floor 3.0, RSI>=50 added to the extreme gate (= RSI>65 only). A plausible reconciliation is that the oversold
+   side's winners lived mostly in the 1.5-3.0 volume band, which floor 3.0 already removed. That is a hypothesis, not a result.
+
+**Status: PARKED.** Net evidence for the gate on the current engine is a 2020-26 PnL wash (+$48), a smaller DD, and n=12 on
+reused 2018-19 data, against a prior full-size rejection under a different floor. That is not enough for live promotion.
+The research branch's own upside definition (setup close > prior hourly high) is a different hypothesis; agreement between
+the two does not validate either. The next profit test needs reconciled definitions, engine version, sizing/boosts,
+exits, costs and data exposure, plus genuinely new data.
