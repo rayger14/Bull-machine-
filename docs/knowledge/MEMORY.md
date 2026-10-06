@@ -1,11 +1,13 @@
 # Bull Machine Project Memory
 
-## October 6 publication preparation and phase/Bojan clarification
+## October 6 published checkpoint and phase/Bojan clarification
 
 User authorized publishing the research checkpoint to existing PR #83, not merging
-or deploying. The remote was `ebaa100` and local HEAD `85923a4`, nine commits ahead.
-Publication is in progress; verify the remote and newest PROJECT status before
-claiming another CLI has the work. Public-repository scope excludes private data,
+or deploying. Nine prior unpublished commits plus code/test commit `0d6ea65` and
+documentation commit `b78a67a` were pushed. Remote and PR head were independently
+verified at `b78a67a0f9a22b335e4deed56c0f90e02b998793`; PR #83 is draft. This later
+publication receipt is documentation-only; verify newest git/remote status.
+Public-repository scope excludes private data,
 raw model/market captures, credentials, graph outputs and the old unrelated
 `scripts/research/rebuild_entry_population.py`. Selected otherwise ignored Markdown
 teaching reports/source notes are included to preserve the rulebook's dependencies.
@@ -37,7 +39,7 @@ the existing installed dependencies, not a fresh-environment installation. All
 171-file publication allowlist excludes private/generated artifacts. Heuristic
 credential checks found no matches in selected working files or 48 earlier blob
 versions, without claiming exhaustive secret detection.
-Next: finish checkpoint and resume the recorded written-contract approval boundary.
+Next: resume the recorded written-contract approval boundary.
 Three old missing MEMORY link targets remain explicitly historical/unrecovered.
 
 ## October 5 durable teaching rulebook and first chunk design

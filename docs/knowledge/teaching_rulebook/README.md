@@ -5,9 +5,10 @@ trying to implement. It connects original sources to explicit rules, current
 code gaps and small repair chunks. A trader's claim, our interpretation, a
 working implementation and a profitable strategy are four different things.
 
-Updated October 5, 2026. The files live outside the ignored `reports/` directory.
-They are eligible for Git tracking, but are not committed or on GitHub merely
-because they exist here. Historical source ledgers and experiment artifacts
+Updated October 6, 2026. The files live outside the ignored `reports/` directory.
+This rulebook and its referenced teaching notes were published in checkpoint
+`b78a67a` on `quant/archetype-evidence-audit` / draft PR #83. Publication does not
+mean the proposed contracts are implemented or approved for trading. Historical source ledgers and experiment artifacts
 remain unchanged. This is a curated index, not a complete trader archive.
 
 ## Start here

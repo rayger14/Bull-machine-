@@ -3,11 +3,15 @@
 Updated October 6, 2026. This is the current cross-chat/CLI handoff, not a trading
 model's training context. Check git status/log because active work may be newer.
 
-**October 6 publication checkpoint IN PROGRESS; not a release or deployment.**
+**October 6 research checkpoint PUBLISHED; not a release or deployment.**
 User authorized scoped commits/push and updating existing PR #83. Preserve the
-existing `quant/archetype-evidence-audit` branch. Remote was `ebaa100`; local HEAD
-`85923a4` had nine unpublished commits before this checkpoint. Publication status
-must be verified against GitHub; this paragraph does not itself certify a push.
+existing `quant/archetype-evidence-audit` branch. The nine previously unpublished
+commits plus code/test checkpoint `0d6ea65` and documentation checkpoint `b78a67a`
+were pushed successfully. GitHub branch and PR head were verified at full SHA
+`b78a67a0f9a22b335e4deed56c0f90e02b998793`. PR #83 is now draft, not merged.
+This publication-receipt follow-up changes documentation only; verify latest
+git/remote status when resuming. The PR description is being updated to preserve
+historical evidence while explicitly superseding older no-engine-change claims.
 The repository is public. Publish source/tests/specs, bounded paraphrased teaching
 receipts and handoffs, not private data, raw market/model captures or credentials.
 Six linked Markdown teaching reports and three otherwise ignored source notes
@@ -56,7 +60,7 @@ Independent bounded software review found no new Critical publication blocker,
 but explicitly denies merge/deployment and whole-phase recognition certification.
 No new engine semantics, config, live orders or paid model campaign this turn.
 
-NEXT: finish checkpoint publication, then resume the written Chunk 1 contract's
+NEXT: resume the written Chunk 1 contract's
 review/implementation boundary. Chunk 1 remains a proposed multi-bar post-escape
 pullback episode, not implemented; its twelve fresh cases are not built/frozen/run.
 Interior M2 remains separate/off. Full phase interpretation and retained-score
