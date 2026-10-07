@@ -96,6 +96,7 @@ class TrackedPosition:
     momentum_score_at_entry: float = 0.0
     smc_score_at_entry: float = 0.0
     gate_penalty_at_entry: float = 1.0
+    boost_mult_at_entry: float = 1.0
     # Structural health monitoring (for --health-mode)
     entry_health_score: float = 0.0
     entry_wyckoff_active: bool = False
@@ -155,6 +156,7 @@ class CompletedTrade:
     momentum_score_at_entry: float = 0.0
     smc_score_at_entry: float = 0.0
     gate_penalty_at_entry: float = 1.0
+    boost_mult_at_entry: float = 1.0
     position_id: str = ""
 
 
@@ -1265,6 +1267,7 @@ class StandaloneBacktestEngine:
                         self.positions[pos_id].momentum_score_at_entry = sig_meta.get('momentum_score', 0.0)
                         self.positions[pos_id].smc_score_at_entry = sig_meta.get('smc_score', 0.0)
                         self.positions[pos_id].gate_penalty_at_entry = sig_meta.get('gate_penalty', 1.0)
+                        self.positions[pos_id].boost_mult_at_entry = float((sig_meta.get('sizing_boosts') or {}).get('multiplier', 1.0) or 1.0)
                         # Health monitor baseline (only when health mode is active)
                         if self.health_mode != 'off':
                             _pos = self.positions[pos_id]
@@ -1698,6 +1701,7 @@ class StandaloneBacktestEngine:
             momentum_score_at_entry=pos.momentum_score_at_entry,
             smc_score_at_entry=pos.smc_score_at_entry,
             gate_penalty_at_entry=pos.gate_penalty_at_entry,
+            boost_mult_at_entry=pos.boost_mult_at_entry,
             position_id=pos.position_id,
         ))
 
@@ -2173,6 +2177,7 @@ class StandaloneBacktestEngine:
             'momentum_score': t.momentum_score_at_entry,
             'smc_score': t.smc_score_at_entry,
             'gate_penalty': t.gate_penalty_at_entry,
+            'boost_mult': t.boost_mult_at_entry,
             'position_id': t.position_id,
         } for t in self.trades]
 
