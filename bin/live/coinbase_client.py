@@ -80,6 +80,13 @@ RETRY_DELAYS = [2, 4, 8]                   # seconds -- exponential backoff
 CANDLE_DURATION_MS = 3600 * 1000            # 1 hour in milliseconds
 CANDLE_DURATION_S = 3600                    # 1 hour in seconds
 MAX_CANDLES_PER_REQUEST = 300               # Coinbase API limit per request
+
+# Coinbase ended INTX perpetuals on the Advanced Trade API on 2026-10-01; BTC perps moved to the derivatives
+# JSON-RPC gateway as BTC_USDC-PERPETUAL (docs: advanced-trade-apis/guides/derivatives/overview). Its public
+# candle method needs no API key. The Advanced Trade path above is kept only as a fallback.
+DRB_BASE_URL = "https://drb.coinbase.com/api/v2/"
+DRB_INSTRUMENT = "BTC_USDC-PERPETUAL"
+DRB_CANDLES_PER_REQUEST = 1000
 KEY_FILE_PATH = Path.home() / ".coinbase" / "cdp_api_key.json"
 
 
@@ -285,10 +292,66 @@ class CoinbaseAdapter:
             pd.DataFrame with DatetimeIndex (UTC) and columns:
             open, high, low, close, volume.
         """
+        df = self._fetch_ohlcv_drb(limit, resolution="60", candle_s=CANDLE_DURATION_S)
+        if len(df):
+            return df
         if self._using_sdk:
             return self._fetch_ohlcv_sdk(limit)
         else:
             return self._fetch_ohlcv_ccxt(limit)
+
+    def _fetch_ohlcv_drb(self, limit: int, resolution: str, candle_s: int) -> pd.DataFrame:
+        """Completed candles of DRB_INSTRUMENT from the Coinbase derivatives gateway (public, no auth).
+
+        Returns an empty frame on any failure so the caller can fall back to the Advanced Trade path.
+        """
+        import json
+        import urllib.parse
+        import urllib.request
+
+        empty = pd.DataFrame(columns=["open", "high", "low", "close", "volume"])
+        end_ms = int(time.time() * 1000)
+        remaining = limit + 1                                   # one extra so the in-progress candle can be dropped
+        candles = []
+        try:
+            while remaining > 0:
+                batch = min(remaining, DRB_CANDLES_PER_REQUEST)
+                start_ms = end_ms - batch * candle_s * 1000
+                query = urllib.parse.urlencode({"instrument_name": DRB_INSTRUMENT, "resolution": resolution,
+                                                "start_timestamp": start_ms, "end_timestamp": end_ms})
+
+                def _fetch(url=DRB_BASE_URL + "public/get_tradingview_chart_data?" + query):
+                    with urllib.request.urlopen(url, timeout=20) as resp:
+                        return json.load(resp)
+
+                result = (self._retry(_fetch, f"fetch_ohlcv_drb {resolution} (ending {end_ms})") or {}).get("result") or {}
+                ticks = result.get("ticks") or []
+                if result.get("status") != "ok" or not ticks:
+                    break
+                for i, t in enumerate(ticks):
+                    candles.append({"start": int(t) // 1000, "open": result["open"][i], "high": result["high"][i],
+                                    "low": result["low"][i], "close": result["close"][i],
+                                    "volume": result["volume"][i]})
+                remaining -= len(ticks)
+                end_ms = int(min(ticks)) - 1
+                if len(ticks) < batch:
+                    break
+        except Exception as exc:
+            logger.warning("fetch_ohlcv_drb %s failed for %s: %s", resolution, DRB_INSTRUMENT, exc)
+            return empty
+        if not candles:
+            logger.warning("fetch_ohlcv_drb %s returned no data for %s", resolution, DRB_INSTRUMENT)
+            return empty
+        df = self._candles_to_dataframe(candles)
+        df = df[~df.index.duplicated(keep="last")].sort_index()
+        now_ms = int(time.time() * 1000)
+        if len(df) and int(df.index[-1].timestamp() * 1000) + candle_s * 1000 > now_ms:
+            df = df.iloc[:-1]                                   # drop the in-progress candle
+        if len(df) > limit:
+            df = df.tail(limit)
+        logger.info("fetch_ohlcv_drb %s: %d completed candles of %s [%s .. %s]", resolution, len(df),
+                    DRB_INSTRUMENT, df.index[0] if len(df) else "N/A", df.index[-1] if len(df) else "N/A")
+        return df
 
     def _fetch_ohlcv_sdk(self, limit: int) -> pd.DataFrame:
         """Fetch OHLCV using coinbase-advanced-py SDK with pagination."""
@@ -522,6 +585,9 @@ class CoinbaseAdapter:
         open, high, low, close, volume; the in-progress day is excluded.
         """
         limit = min(int(limit), MAX_CANDLES_PER_REQUEST - 1)
+        df = self._fetch_ohlcv_drb(limit, resolution="1D", candle_s=86400)
+        if len(df):
+            return df
         if self._using_sdk:
             now_s = int(time.time())
             start_s = now_s - (limit + 1) * 86400
